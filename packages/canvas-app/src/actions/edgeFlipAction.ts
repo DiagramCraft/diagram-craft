@@ -1,6 +1,10 @@
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { $tStr } from '@diagram-craft/utils/localize';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { $t } from '@diagram-craft/utils/localize';
 

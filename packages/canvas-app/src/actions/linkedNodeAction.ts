@@ -1,7 +1,11 @@
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { assert } from '@diagram-craft/utils/assert';
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { createLinkedNode } from '@diagram-craft/canvas/linkedNode';

@@ -3,7 +3,7 @@ import { useRedraw } from '../hooks/useRedraw';
 import { ToggleAction } from '@diagram-craft/canvas/action';
 import { findKeyBindingsForAction, formatKeyBinding } from '@diagram-craft/canvas/keyMap';
 import { useApplication } from '../../application';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 import { Menu } from '@diagram-craft/app-components/Menu';
 
 export function ActionToggleMenuItem<K extends keyof ActionMap>(props: Props<K>) {

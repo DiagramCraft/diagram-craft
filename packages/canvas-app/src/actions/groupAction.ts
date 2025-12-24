@@ -1,4 +1,8 @@
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Box } from '@diagram-craft/geometry/box';
 import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';

@@ -1,4 +1,8 @@
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { getConnectedComponent, getConnectedComponents } from '@diagram-craft/graph/connectivity';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';

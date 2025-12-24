@@ -5,7 +5,11 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { assert } from '@diagram-craft/utils/assert';
 import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';

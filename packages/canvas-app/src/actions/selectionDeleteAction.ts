@@ -1,4 +1,4 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';

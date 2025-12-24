@@ -11,7 +11,7 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { largest } from '@diagram-craft/utils/array';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { isStringUnion } from '@diagram-craft/utils/types';
@@ -19,8 +19,17 @@ import { renderElement } from '../components/renderElement';
 import type { VNode } from '../component/vdom';
 import { Component } from '../component/component';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import type { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { type PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import type { Anchor } from '@diagram-craft/model/anchor';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '../actions/abstractSelectionAction';
+import { $tStr } from '@diagram-craft/utils/localize';
+import { ActionCriteria, type ActionMap } from '../action';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import type { Context } from '../context';
 
 type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
@@ -396,6 +405,10 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
+  getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
+    return [...super.getShapeActions(_node), 'SHAPE_CONTAINER_TOGGLE'];
+  }
+
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     const shape = getShape(node);
     return [
@@ -653,5 +666,53 @@ export class ContainerComponentOverlay extends Component<{ node: DiagramNode }> 
     } else {
       return plusIcon;
     }
+  }
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof containerShapeActions> {}
+  }
+}
+
+export const containerShapeActions = (context: Context) => ({
+  SHAPE_CONTAINER_TOGGLE: new ContainerToggleAction(context)
+});
+
+class ContainerToggleAction extends AbstractSelectionAction<Context> {
+  name = $tStr('action.SHAPE_CONTAINER_TOGGLE.name', 'Collapse/Expand');
+
+  constructor(context: Context) {
+    super(context, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  getCriteria(context: Context): Array<ActionCriteria> {
+    const cb = () => {
+      const $s = context.model.activeDiagram.selection;
+      if ($s.nodes.length !== 1) return false;
+
+      const node = $s.nodes[0];
+      if (!node) return false;
+
+      return node.nodeType === 'container';
+    };
+
+    return [
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', cb)
+    ];
+  }
+
+  execute(): void {
+    const diagram = this.context.model.activeDiagram;
+    assertRegularLayer(diagram.activeLayer);
+
+    const uow = new UnitOfWork(diagram, true);
+
+    const node = mustExist(diagram.selection.nodes[0]);
+    const nodeDefinition = node.getDefinition() as ContainerNodeDefinition;
+    nodeDefinition.toggle(node, uow);
+
+    commitWithUndo(uow, 'Expand/Collapse container');
   }
 }

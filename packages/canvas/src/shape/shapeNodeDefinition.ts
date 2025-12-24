@@ -1,5 +1,5 @@
 import type { BaseNodeComponent } from '../components/BaseNodeComponent';
-import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -16,6 +16,7 @@ import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
+import type { ActionMap } from '../action';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -155,6 +156,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getCustomPropertyDefinitions(_node: DiagramNode): ReadonlyArray<CustomPropertyDefinition> {
     return [];
+  }
+
+  getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
+    return ['SELECTION_CHANGE_SHAPE', 'SELECTION_CHANGE_TO_CONTAINER'];
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {

@@ -3,7 +3,7 @@ import { UIActions, Context, Help } from '@diagram-craft/canvas/context';
 import { Observable } from '@diagram-craft/canvas/component/component';
 import { ToolType } from '@diagram-craft/canvas/tool';
 import { Marquee } from '@diagram-craft/canvas/marquee';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 
 export interface BaseApplicationInterface<U extends UIActions = UIActions> extends Context {
   model: typeof model;

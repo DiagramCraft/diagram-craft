@@ -7,7 +7,7 @@ import {
   ToggleAction
 } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 
 type Alt = 'A-' | '';
 type Control = 'C-' | '';

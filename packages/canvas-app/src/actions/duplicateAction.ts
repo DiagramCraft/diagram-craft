@@ -1,4 +1,4 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';

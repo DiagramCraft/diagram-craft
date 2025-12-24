@@ -2,7 +2,7 @@ import {
   AbstractSelectionAction,
   ElementType,
   MultipleType
-} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';

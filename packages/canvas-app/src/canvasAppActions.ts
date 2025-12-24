@@ -1,4 +1,3 @@
-import { edgeTextAddActions } from '@diagram-craft/canvas/actions/edgeTextAddAction';
 import { clipboardActions } from './actions/clipboardAction';
 import { undoActions } from './actions/undoAction';
 import { redoActions } from './actions/redoAction';
@@ -9,7 +8,6 @@ import { alignActions } from './actions/alignAction';
 import { toggleMagnetTypeActions } from './actions/toggleMagnetTypeAction';
 import { distributeActions } from './actions/distributeAction';
 import { waypointAddActions } from './actions/waypointAddAction';
-import { waypointDeleteActions } from '@diagram-craft/canvas/actions/waypointDeleteAction';
 import { textActions } from './actions/textActions';
 import { edgeFlipActions } from './actions/edgeFlipAction';
 import { duplicateActions } from './actions/duplicateAction';
@@ -28,9 +26,10 @@ import { Application } from './application';
 import { createNavigateNodeActions } from './actions/navigateNodeAction';
 import { elementActions } from './actions/elementActions';
 import { selectionModifyActions } from './actions/selectionModifyActions';
+import { canvasActions } from '@diagram-craft/canvas/actions/canvasActions';
 
-export const defaultCanvasActions: ActionMapFactory<Application> = application => ({
-  ...edgeTextAddActions(application),
+export const canvasAppActions: ActionMapFactory<Application> = application => ({
+  ...canvasActions(application),
   ...tableActions(application),
   ...clipboardActions(application),
   ...styleCopyActions(application),
@@ -48,7 +47,6 @@ export const defaultCanvasActions: ActionMapFactory<Application> = application =
   ...toggleMagnetTypeActions(application),
   ...distributeActions(application),
   ...waypointAddActions(application),
-  ...waypointDeleteActions(application),
   ...textActions(application),
   ...edgeFlipActions(application),
   ...duplicateActions(application),
