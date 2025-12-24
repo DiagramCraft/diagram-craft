@@ -24,17 +24,24 @@ export class HoverOverlayComponent extends Component<Props> {
     const node = hoverElement as DiagramNode;
     if (isEdge(node)) return svg.g({});
 
-    const nodeDefinition = props.diagram.document.nodeDefinitions.get(node.nodeType);
-    const shapeNodeDefinition = nodeDefinition as ShapeNodeDefinition;
+    const overlayMatch = this.getOverlayComponent(node);
+    if (!overlayMatch) return svg.g({});
 
-    if (!shapeNodeDefinition.overlayComponent) return svg.g({});
+    const nodeComponent = new overlayMatch.cmp();
 
-    const nodeComponent = new shapeNodeDefinition.overlayComponent();
-    const overlay = this.subComponent(() => nodeComponent, { node });
-
+    const overlay = this.subComponent(() => nodeComponent, { node: overlayMatch.node });
     if (!overlay) return svg.g({});
 
     const transform = `${Transforms.rotate(node.bounds)} ${node.renderProps.geometry.flipH ? Transforms.flipH(node.bounds) : ''} ${node.renderProps.geometry.flipV ? Transforms.flipV(node.bounds) : ''}`;
     return svg.g({ transform: transform.trim() }, overlay);
+  }
+
+  getOverlayComponent(
+    node: DiagramNode
+  ): { node: DiagramNode; cmp: { new (): Component<{ node: DiagramNode }> } } | undefined {
+    const def = node.getDefinition() as ShapeNodeDefinition;
+    if (def.overlayComponent) return { node, cmp: def.overlayComponent };
+    else if (node.parent) return this.getOverlayComponent(node.parent as DiagramNode);
+    else return undefined;
   }
 }
