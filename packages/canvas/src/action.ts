@@ -202,3 +202,11 @@ export class NoopAction extends AbstractAction {
   name = $tStr('action.NOOP.name', 'No-op');
   execute() {}
 }
+
+declare global {
+  namespace DiagramCraft {
+    interface ActionMapExtensions {}
+  }
+}
+
+export interface ActionMap extends DiagramCraft.ActionMapExtensions {}

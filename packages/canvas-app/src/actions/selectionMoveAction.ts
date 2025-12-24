@@ -1,4 +1,4 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
+import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Point } from '@diagram-craft/geometry/point';
 import { Translation } from '@diagram-craft/geometry/transform';

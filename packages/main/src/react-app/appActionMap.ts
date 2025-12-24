@@ -2,7 +2,7 @@ import { toggleDarkModeActions } from './actions/toggleDarkMode';
 import { zoomActions } from './actions/zoomAction';
 import { sidebarActions } from './actions/SidebarAction';
 import { ActionMapFactory, KeyMap } from '@diagram-craft/canvas/keyMap';
-import { defaultCanvasActions, defaultMacKeymap } from '@diagram-craft/canvas-app/defaultActions';
+import { canvasAppActions, defaultMacKeymap } from '@diagram-craft/canvas-app/canvasAppActions';
 import { toggleHelpActions } from './actions/toggleHelp';
 import { fileNewActions } from './actions/fileNewAction';
 import { fileOpenActions } from './actions/fileOpenAction';
@@ -33,7 +33,7 @@ import { autoAlignActions } from './actions/autoAlignAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
-  ...defaultCanvasActions(application),
+  ...canvasAppActions(application),
   ...toggleHelpActions(application),
   ...toggleDarkModeActions(application),
   ...previewActions(application),

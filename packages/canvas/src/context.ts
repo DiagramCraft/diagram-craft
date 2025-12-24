@@ -5,7 +5,7 @@ import { Observable } from './component/component';
 import { ToolType } from './tool';
 import { Modifiers } from './dragDropManager';
 import type { Marquee } from './marquee';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;

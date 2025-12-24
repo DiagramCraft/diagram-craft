@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) 2025 Magnus Johansson
+ * SPDX-License-Identifier: ISC
+ */
+
 import { beforeEach, describe, expect, test } from 'vitest';
 import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { ActionContext } from '@diagram-craft/canvas/action';
+import { ActionContext } from '../action';
 import { $tStr } from '@diagram-craft/utils/localize';
 
 class TestAction extends AbstractSelectionAction {

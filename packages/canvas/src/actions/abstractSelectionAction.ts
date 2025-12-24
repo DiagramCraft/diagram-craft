@@ -1,4 +1,4 @@
-import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionContext, ActionCriteria } from '../action';
 import { LayerType } from '@diagram-craft/model/diagramLayer';
 
 export type MultipleType = 'single-only' | 'multiple-only' | 'both';

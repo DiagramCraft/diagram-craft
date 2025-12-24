@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useApplication } from '../../application';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { ActionTooltip } from '../components/ActionTooltip';
 import type { ActionName } from '@diagram-craft/canvas/keyMap';
