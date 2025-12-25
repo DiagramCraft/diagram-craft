@@ -147,7 +147,7 @@ const isStencil = (shape: string | undefined) => {
   return shape?.startsWith('stencil(');
 };
 
-const parseStencil = (shape: string | undefined) => {
+const parseStencilString = (shape: string | undefined) => {
   if (!shape) return undefined;
 
   if (!shape.startsWith('stencil(')) {
@@ -687,7 +687,7 @@ const parseShape = async (
   texts: NodeTexts,
   style: StyleManager,
   layer: RegularLayer,
-  queue: WorkQueue
+  { queue }: CellContext
 ): Promise<DiagramNode> => {
   const diagram = layer.diagram;
   if (style.shape! in shapeParsers) {
@@ -820,8 +820,7 @@ const parseEdgeLabel = (
   parent: string,
   value: string,
   $geometry: Element,
-  queue: WorkQueue,
-  uow: UnitOfWork
+  { queue, uow }: CellContext
 ) => {
   // Handle free-standing edge labels
   const edge = diagram.edgeLookup.get(parent);
@@ -845,8 +844,7 @@ const parseEdge = (
   parents: Map<string, Layer | DiagramNode | DiagramEdge>,
   isWrappedByObject: boolean,
   { $cell, $geometry, $parent }: CellElements,
-  queue: WorkQueue,
-  uow: UnitOfWork
+  { queue, uow }: CellContext
 ) => {
   // Handle edge creation
 
@@ -975,12 +973,100 @@ const parseEdge = (
   return edge;
 };
 
+const parseStencil = async (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  texts: { text: string } & Record<string, string>,
+  style: StyleManager,
+  layer: RegularLayer
+) => {
+  const stencil = mustExist(parseStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape));
+  props.custom ??= {};
+  props.custom.drawio = { shape: btoa(await decode(stencil)) };
+  return ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts);
+};
+
+const parseGroup = async (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  texts: NodeTexts,
+  style: StyleManager,
+  layer: RegularLayer,
+  { $geometry, $cell }: CellElements,
+  ctx: CellContext
+) => {
+  const { parents, uow, queue } = ctx;
+  const value = $cell.getAttribute('value')!;
+  let node: DiagramNode;
+
+  if (style.shape === 'table' || style.shape === 'tableRow') {
+    const parser = getParser(style.shape)!;
+    node = await parser(id, bounds, props, metadata, texts, style, layer, queue);
+    // TODO: Support more than stackLayout
+  } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
+    node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
+  } else if (style.num('container') === 1) {
+    const $alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
+
+    const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
+
+    node = ElementFactory.node(
+      id,
+      'container',
+      bounds,
+      layer,
+      {
+        ...props,
+        custom: {
+          ...grp.storedProps.custom,
+          container: {
+            collapsible: true,
+            mode: $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded',
+            ...($alternateBoundsRect
+              ? {
+                  bounds: `${$alternateBoundsRect.getAttribute('x')},${$alternateBoundsRect.getAttribute('y')},${$alternateBoundsRect.getAttribute('width')},${$alternateBoundsRect.getAttribute('height')},0`
+                }
+              : {}),
+            shape: grp.nodeType
+          }
+        }
+      },
+      metadata,
+      texts
+    );
+  } else {
+    node = ElementFactory.node(id, 'group', bounds, layer, props, metadata, texts);
+
+    if (
+      style.styleName !== 'group' &&
+      (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
+    ) {
+      const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
+
+      node.addChild(grp, uow);
+      queue.add(() => grp.setBounds(node!.bounds, uow));
+    }
+  }
+
+  parents.set(id, node as DiagramNode);
+  return node;
+};
+
 type CellElements = {
   $cell: Element;
   $parent: Element;
   $geometry: Element;
 };
 
+type CellContext = {
+  parents: Map<string, Layer | DiagramNode | DiagramEdge>;
+  queue: WorkQueue;
+  uow: UnitOfWork;
+};
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -995,7 +1081,8 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
     $mxGraphModel.getElementsByTagName('root').item(0)
   ).getElementsByTagName('mxCell');
 
-  const rootId = $$cells.item(0)!.getAttribute('id')!;
+  const $rootCell = $$cells.item(0)!;
+  const rootId = $rootCell.getAttribute('id')!;
 
   // Phase 1 - Determine parent child relationships
   const parentChild = getParentChildRelations($$cells, rootId);
@@ -1094,84 +1181,22 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
         }
       }
 
-      let node: DiagramElement | undefined;
-
-      // if...
-      //  isStencil
-      //  isEdge
-      //  isEdgeLabel
-      //  isText
-      //  isGroup
-      //  isNode
-
       const $els: CellElements = { $cell, $geometry, $parent };
+      const ctx: CellContext = { parents, queue, uow };
 
+      let node: DiagramElement | undefined;
       if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
-        const stencil = mustExist(parseStencil(drawioBuiltinShapes[style.shape!] ?? style.shape));
-        props.custom ??= {};
-        props.custom.drawio = { shape: btoa(await decode(stencil)) };
-        node = ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts);
+        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
       } else if ($cell.getAttribute('edge') === '1') {
-        node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, queue, uow);
+        node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
       } else if (style.styleName === 'edgeLabel') {
-        parseEdgeLabel(id, props, style, diagram, parent, value, $geometry, queue, uow);
+        parseEdgeLabel(id, props, style, diagram, parent, value, $geometry, ctx);
       } else if (style.styleName === 'text') {
         node = parseText(id, bounds, props, metadata, texts, style, layer);
       } else if (parentChild.has(id) || style.styleName === 'group') {
-        // Handle groups
-
-        if (style.shape === 'table' || style.shape === 'tableRow') {
-          const parser = getParser(style.shape)!;
-          node = await parser(id, bounds, props, metadata, texts, style, layer, queue);
-          // TODO: Support more than stackLayout
-        } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
-          node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
-        } else if (style.num('container') === 1) {
-          const $alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
-
-          const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, queue);
-
-          node = ElementFactory.node(
-            id,
-            'container',
-            bounds,
-            layer,
-            {
-              ...props,
-              custom: {
-                ...grp.storedProps.custom,
-                container: {
-                  collapsible: true,
-                  mode: $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded',
-                  ...($alternateBoundsRect
-                    ? {
-                        bounds: `${$alternateBoundsRect.getAttribute('x')},${$alternateBoundsRect.getAttribute('y')},${$alternateBoundsRect.getAttribute('width')},${$alternateBoundsRect.getAttribute('height')},0`
-                      }
-                    : {}),
-                  shape: grp.nodeType
-                }
-              }
-            },
-            metadata,
-            texts
-          );
-        } else {
-          node = ElementFactory.node(id, 'group', bounds, layer, props, metadata, texts);
-
-          if (
-            style.styleName !== 'group' &&
-            (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
-          ) {
-            const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, queue);
-
-            node.addChild(grp, uow);
-            queue.add(() => grp.setBounds(node!.bounds, uow));
-          }
-        }
-
-        parents.set(id, node as DiagramNode);
+        node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
       } else {
-        node = await parseShape(id, bounds, props, metadata, texts, style, layer, queue);
+        node = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
       }
 
       // Attach all nodes created to their parent (group and/or layer)
@@ -1325,7 +1350,7 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
 
 export const _test = {
   angleFromDirection,
-  parseStencil,
+  parseStencil: parseStencilString,
   MxPoint,
   MxGeometry,
   hasValue,
