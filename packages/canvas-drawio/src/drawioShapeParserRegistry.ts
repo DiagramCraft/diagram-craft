@@ -22,7 +22,7 @@ import {
   parseTableRow,
   parseTransparent,
   parseTriangle
-} from './shapes';
+} from './shapes/basicShapes';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 import type { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import type { StyleManager } from './styleManager';

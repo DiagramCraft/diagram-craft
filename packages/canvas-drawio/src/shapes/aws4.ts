@@ -6,12 +6,12 @@ import {
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import type { ShapeParser } from '../drawioShapeParsers';
+import type { ShapeParser } from '../drawioShapeParserRegistry';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';

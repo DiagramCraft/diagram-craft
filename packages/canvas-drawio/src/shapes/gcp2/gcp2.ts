@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../../node-types/DrawioShape.nodeType';
 import { GCPDoubleRectNodeDefinition } from './gcpDoubleRect.nodeType';
 
 const registerStencil = (

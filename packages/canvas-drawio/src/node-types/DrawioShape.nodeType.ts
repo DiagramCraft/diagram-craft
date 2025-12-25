@@ -20,7 +20,7 @@ import {
 } from '@diagram-craft/model/diagramProps';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { coalesce } from '@diagram-craft/utils/strings';
-import { DrawioStencil } from './drawioStencilLoader';
+import { DrawioStencil } from '../drawioStencilLoader';
 import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Metrics } from '@diagram-craft/utils/metrics';
 import { xNum } from '@diagram-craft/utils/xml';

@@ -30,86 +30,39 @@ import {
   parseRoundedRect,
   parseSwimlane,
   parseTriangle
-} from './shapes';
+} from './shapes/basicShapes';
 import { StyleManager } from './styleManager';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { getParser, shapeParsers } from './drawioShapeParsers';
+import { getParser, shapeParsers } from './drawioShapeParserRegistry';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { WorkQueue } from './workQueue';
-import { arrows, drawioBuiltinShapes, getLoader, load } from './drawioDefaults';
-import { isStencil, parseStencilString } from './drawioStencilUtils';
+import { arrows, drawioBuiltinShapes, LABEL_POSITIONS } from './drawioDefaults';
+import { getShapeBundle, loadShapeBundle } from './drawioShapeBundleRegistry';
+import {
+  angleFromDirection,
+  isStencilString,
+  parseStencilString,
+  MxPoint,
+  MxGeometry,
+  hasValue
+} from './drawioReaderUtils';
 
-const angleFromDirection = (s: string) => {
-  if (s === 'north') return -Math.PI / 2;
-  if (s === 'south') return Math.PI / 2;
-  if (s === 'east') return 0;
-  if (s === 'west') return Math.PI;
-  return 0;
+type CellElements = {
+  $cell: Element;
+  $parent: Element;
+  $geometry: Element;
 };
 
-const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProps & NodeProps) => {
-  let type = style.get(`${t}Arrow`);
-  const size = style.get(`${t}Size`);
-  const fill = style.get(`${t}Fill`);
-
-  if (type && type !== 'none') {
-    if (fill === '0') {
-      type += '-outline';
-    }
-
-    if (!(type in arrows)) {
-      console.warn(`Arrow type ${type} not yet supported`);
-    }
-
-    props.arrow ??= {};
-    props.arrow[t] = {
-      type: arrows[type],
-      size: parseNum(size, 6) * (type === 'circle' || type === 'circlePlus-outline' ? 20 : 11)
-    };
-    props.stroke!.color ??= 'black';
-    if (props.stroke!.color === 'default') {
-      props.stroke!.color = 'black';
-    }
-    props.fill!.color = props.stroke!.color;
-  }
-};
-
-const MxPoint = {
-  pointFrom: (offset: Element) => Point.of(xNum(offset, 'x', 0), xNum(offset, 'y', 0))
-};
-
-const MxGeometry = {
-  boundsFrom: (geometry: Element) => {
-    return {
-      x: xNum(geometry, 'x', 0),
-      y: xNum(geometry, 'y', 0),
-      w: xNum(geometry, 'width', 100),
-      h: xNum(geometry, 'height', 100),
-      r: 0
-    };
-  }
-};
-
-const hasValue = (value: string | undefined | null): value is string => {
-  if (!value || value.trim() === '') return false;
-
-  if (value.startsWith('<')) {
-    if (value.includes('<img')) return true;
-    try {
-      const d = new DOMParser().parseFromString(value, 'text/html');
-      const text = d.body.textContent;
-      return !!text && text.trim() !== '';
-    } catch (_e) {
-      // Ignore
-    }
-  }
-  return true;
+type CellContext = {
+  parents: Map<string, Layer | DiagramNode | DiagramEdge>;
+  queue: WorkQueue;
+  uow: UnitOfWork;
 };
 
 const calculateLabelNodeActualSize = (
@@ -249,28 +202,43 @@ const attachLabelNode = (
   );
 };
 
-const POSITIONS: Record<
-  string,
-  Record<string, 'nw' | 'w' | 'sw' | 'n' | 'c' | 's' | 'ne' | 'e' | 'se' | undefined>
-> = {
-  left: {
-    top: 'nw',
-    middle: 'w',
-    bottom: 'sw'
-  },
-  center: {
-    top: 'n',
-    middle: 'c',
-    bottom: 's'
-  },
-  right: {
-    top: 'ne',
-    middle: 'e',
-    bottom: 'se'
+const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow: UnitOfWork) => {
+  const diagram = edge.diagram;
+
+  const source = $cell.getAttribute('source')!;
+  if (source) {
+    const sourceNode = diagram.nodeLookup.get(source);
+    if (sourceNode) {
+      edge.setStart(
+        new PointInNodeEndpoint(
+          sourceNode,
+          _p(style.num('exitX', 0.5), style.num('exitY', 0.5)),
+          _p(style.num('exitDx', 0), style.num('exitDy', 0)),
+          'absolute'
+        ),
+        uow
+      );
+    }
+  }
+
+  const target = $cell.getAttribute('target')!;
+  if (target) {
+    const targetNode = diagram.nodeLookup.get(target);
+    if (targetNode) {
+      edge.setEnd(
+        new PointInNodeEndpoint(
+          targetNode,
+          _p(style.num('entryX', 0.5), style.num('entryY', 0.5)),
+          _p(style.num('entryDx', 0), style.num('entryDy', 0)),
+          'absolute'
+        ),
+        uow
+      );
+    }
   }
 };
 
-const getNodeProps = (style: StyleManager, isEdge: boolean) => {
+const parseNodeProps = (style: StyleManager, isEdge: boolean) => {
   const align = style.str('align');
   assertHAlign(align);
 
@@ -295,7 +263,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       valign: valign,
 
       position:
-        POSITIONS[style.str('labelPosition', 'center')]![
+        LABEL_POSITIONS[style.str('labelPosition', 'center')]![
           style.str('verticalLabelPosition', 'middle')
         ]
     },
@@ -462,43 +430,46 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   return props;
 };
 
-const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow: UnitOfWork) => {
-  const diagram = edge.diagram;
-
-  const source = $cell.getAttribute('source')!;
-  if (source) {
-    const sourceNode = diagram.nodeLookup.get(source);
-    if (sourceNode) {
-      edge.setStart(
-        new PointInNodeEndpoint(
-          sourceNode,
-          _p(style.num('exitX', 0.5), style.num('exitY', 0.5)),
-          _p(style.num('exitDx', 0), style.num('exitDy', 0)),
-          'absolute'
-        ),
-        uow
-      );
+const parseParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: string) => {
+  const parentChild = new MultiMap<string, string>();
+  for (const $cell of xIterElements($$cells)) {
+    const parent = $cell.getAttribute('parent')!;
+    if (parent !== rootId) {
+      const id = $cell.getAttribute('id')!;
+      parentChild.add(parent, id);
     }
   }
+  return parentChild;
+};
 
-  const target = $cell.getAttribute('target')!;
-  if (target) {
-    const targetNode = diagram.nodeLookup.get(target);
-    if (targetNode) {
-      edge.setEnd(
-        new PointInNodeEndpoint(
-          targetNode,
-          _p(style.num('entryX', 0.5), style.num('entryY', 0.5)),
-          _p(style.num('entryDx', 0), style.num('entryDy', 0)),
-          'absolute'
-        ),
-        uow
-      );
+const parseEdgeArrow = (t: 'start' | 'end', style: StyleManager, props: EdgeProps & NodeProps) => {
+  let type = style.get(`${t}Arrow`);
+  const size = style.get(`${t}Size`);
+  const fill = style.get(`${t}Fill`);
+
+  if (type && type !== 'none') {
+    if (fill === '0') {
+      type += '-outline';
     }
+
+    if (!(type in arrows)) {
+      console.warn(`Arrow type ${type} not yet supported`);
+    }
+
+    props.arrow ??= {};
+    props.arrow[t] = {
+      type: arrows[type],
+      size: parseNum(size, 6) * (type === 'circle' || type === 'circlePlus-outline' ? 20 : 11)
+    };
+    props.stroke!.color ??= 'black';
+    if (props.stroke!.color === 'default') {
+      props.stroke!.color = 'black';
+    }
+    props.fill!.color = props.stroke!.color;
   }
 };
 
-const readMetadata = ($parent: Element) => {
+const parseMetadata = ($parent: Element) => {
   const dest: Record<string, string> = {};
   for (const n of $parent.getAttributeNames()) {
     if (n === 'id' || n === 'label' || n === 'placeholders') continue;
@@ -509,18 +480,6 @@ const readMetadata = ($parent: Element) => {
     }
   }
   return dest;
-};
-
-const getParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: string) => {
-  const parentChild = new MultiMap<string, string>();
-  for (const $cell of xIterElements($$cells)) {
-    const parent = $cell.getAttribute('parent')!;
-    if (parent !== rootId) {
-      const id = $cell.getAttribute('id')!;
-      parentChild.add(parent, id);
-    }
-  }
-  return parentChild;
 };
 
 const parseShape = async (
@@ -547,17 +506,17 @@ const parseShape = async (
     );
   } else if (style.styleName === 'image' || style.has('image')) {
     return await parseImage(id, bounds, props, metadata, texts, style, layer, queue);
-  } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
+  } else if (style.shape?.startsWith('mxgraph.') || !!getShapeBundle(style.shape)) {
     const registry = diagram.document.nodeDefinitions;
 
-    const loader = getLoader(style.shape);
+    const loader = getShapeBundle(style.shape);
     if (!loader) {
       console.warn(`No loader found for ${style.shape}`);
       return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
     }
 
     if (!registry.hasRegistration(style.shape!)) {
-      await load(loader, registry);
+      await loadShapeBundle(loader, registry);
     }
 
     let newBounds = { ...bounds };
@@ -848,12 +807,12 @@ const parseGroup = async (
   let node: DiagramNode;
 
   if (style.shape === 'table' || style.shape === 'tableRow') {
-    const parser = getParser(style.shape)!;
+    const parser = mustExist(getParser(style.shape));
     node = await parser(id, bounds, props, metadata, texts, style, layer, queue);
     // TODO: Support more than stackLayout
   } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
     node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
-  } else if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
+  } else if (isStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
     node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
   } else if (style.num('container') === 1) {
     const $alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
@@ -928,18 +887,6 @@ const parseLabelStyles = (texts: NodeTexts, style: StyleManager) => {
   }
 };
 
-type CellElements = {
-  $cell: Element;
-  $parent: Element;
-  $geometry: Element;
-};
-
-type CellContext = {
-  parents: Map<string, Layer | DiagramNode | DiagramEdge>;
-  queue: WorkQueue;
-  uow: UnitOfWork;
-};
-
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -958,7 +905,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
   const rootId = $rootCell.getAttribute('id')!;
 
   // Phase 1 - Determine parent child relationships
-  const parentChild = getParentChildRelations($$cells, rootId);
+  const parentChild = parseParentChildRelations($$cells, rootId);
 
   // Phase 2 - process all objects
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
@@ -1001,14 +948,14 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
 
       const metadata: ElementMetadata = {};
 
-      const props = getNodeProps(style, $cell.getAttribute('edge') === '1');
+      const props = parseNodeProps(style, $cell.getAttribute('edge') === '1');
       const texts: NodeTexts = {
         text: hasValue(value) ? value : ''
       };
 
       if (wrapped) {
         metadata.data ??= {};
-        metadata.data.customData = readMetadata($parent);
+        metadata.data.customData = parseMetadata($parent);
 
         texts.text = $parent.getAttribute('label') ?? '';
       }
@@ -1025,10 +972,10 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
         parseLabelNode(id, props, style, diagram, parent, value, $geometry, ctx);
       } else if (parentChild.has(id) || style.styleName === 'group') {
         node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
-      } else if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
-        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
       } else if (style.styleName === 'text') {
         node = parseText(id, bounds, props, metadata, texts, style, layer);
+      } else if (isStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
+        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
       } else {
         node = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
       }
@@ -1183,10 +1130,6 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
 };
 
 export const _test = {
-  angleFromDirection,
-  MxPoint,
-  MxGeometry,
-  hasValue,
-  getNodeProps,
-  readMetadata
+  getNodeProps: parseNodeProps,
+  readMetadata: parseMetadata
 };

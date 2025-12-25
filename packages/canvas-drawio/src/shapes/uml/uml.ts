@@ -6,7 +6,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
-import { shapeParsers } from '../../drawioShapeParsers';
+import { shapeParsers } from '../../drawioShapeParserRegistry';
 import { NodeTexts } from '@diagram-craft/model/diagramNode';
 import { deepMerge } from '@diagram-craft/utils/object';
 import stencils from './uml.yaml';
