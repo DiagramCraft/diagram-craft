@@ -135,11 +135,9 @@ const getLoader = (shape: string | undefined): Loader | undefined => {
   return loaders.find(([r]) => shape.match(r))?.[1];
 };
 
-const load = async (
-  loader: Loader,
-  registry: NodeDefinitionRegistry,
-  alreadyLoaded: Set<Loader>
-) => {
+const alreadyLoaded = new Set<Loader>();
+
+const load = async (loader: Loader, registry: NodeDefinitionRegistry) => {
   if (alreadyLoaded.has(loader)) return;
   await loader(registry, shapeParsers);
   alreadyLoaded.add(loader);
@@ -677,6 +675,304 @@ const getParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: str
   return parentChild;
 };
 
+const parseShape = async (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  texts: NodeTexts,
+  style: StyleManager,
+  layer: RegularLayer,
+  queue: WorkQueue,
+  nodes: DiagramElement[]
+) => {
+  const diagram = layer.diagram;
+  if (style.shape! in shapeParsers) {
+    nodes.push(
+      await shapeParsers[style.shape!]!(id, bounds, props, metadata, texts, style, layer, queue)
+    );
+  } else if (style.styleName === 'image' || style.has('image')) {
+    nodes.push(await parseImage(id, bounds, props, metadata, texts, style, layer, queue));
+  } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
+    const registry = diagram.document.nodeDefinitions;
+
+    const loader = getLoader(style.shape);
+    if (!loader) {
+      console.warn(`No loader found for ${style.shape}`);
+      nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
+      return false;
+    }
+
+    if (!registry.hasRegistration(style.shape!)) {
+      await load(loader, registry);
+    }
+
+    let newBounds = { ...bounds };
+    if (style.str('direction') === 'south') {
+      const p = Point.rotateAround(
+        Point.add(newBounds, {
+          x: 0,
+          y: newBounds.w
+        }),
+        Math.PI / 2,
+        Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+      );
+
+      newBounds = {
+        ...newBounds,
+        w: newBounds.h,
+        h: newBounds.w,
+        r: Math.PI / 2,
+        x: newBounds.x + (newBounds.x - p.x),
+        y: newBounds.y + (newBounds.y - p.y)
+      };
+    } else if (style.str('direction') === 'north') {
+      const p = Point.rotateAround(
+        Point.add(newBounds, {
+          x: newBounds.h,
+          y: 0
+        }),
+        -Math.PI / 2,
+        Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+      );
+
+      newBounds = {
+        ...newBounds,
+        w: newBounds.h,
+        h: newBounds.w,
+        r: -Math.PI / 2,
+        x: newBounds.x + (newBounds.x - p.x),
+        y: newBounds.y + (newBounds.y - p.y)
+      };
+    } else if (style.str('direction') === 'west') {
+      newBounds = { ...newBounds, r: Math.PI };
+    }
+
+    const parser = getParser(style.shape);
+    if (parser) {
+      nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
+    } else {
+      nodes.push(ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts));
+    }
+  } else if (style.styleName === 'triangle') {
+    nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, layer));
+  } else if (style.styleName === 'line') {
+    nodes.push(await parseLine(id, bounds, props, metadata, texts, style, layer));
+  } else if (style.styleName === 'ellipse') {
+    nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, layer));
+  } else if (style.styleName === 'rhombus') {
+    nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, layer));
+  } else {
+    if (style.is('rounded')) {
+      nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
+    } else {
+      nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
+    }
+  }
+
+  return true;
+};
+
+const parseText = (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  texts: NodeTexts,
+  style: StyleManager,
+  layer: RegularLayer,
+  nodes: DiagramElement[]
+) => {
+  // TODO: We should be able to move these two to the global style parsing/conversion
+  if (style.str('strokeColor', 'none') === 'none') {
+    props.stroke!.enabled = false;
+  }
+
+  if (style.str('fillColor', 'none') === 'none') {
+    props.fill!.enabled = false;
+  }
+
+  nodes.push(
+    ElementFactory.node(
+      id,
+      'rect',
+      bounds,
+      layer,
+      {
+        ...props,
+        capabilities: { ...(props.capabilities ?? {}), textGrow: true }
+      },
+      metadata,
+      texts
+    )
+  );
+};
+
+const parseEdgeLabel = (
+  id: string,
+  props: NodeProps,
+  style: StyleManager,
+  diagram: Diagram,
+  parent: string,
+  value: string,
+  $geometry: Element,
+  queue: WorkQueue,
+  uow: UnitOfWork
+) => {
+  // Handle free-standing edge labels
+  const edge = diagram.edgeLookup.get(parent);
+  assert.present(edge);
+
+  const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
+
+  // Note: This used to be done with queue.add - unclear why
+  attachLabelNode(textNode, edge, $geometry, uow);
+
+  queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
+  queue.add(() => edge.invalidate(uow), 1);
+};
+
+const parseEdge = (
+  id: string,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  style: StyleManager,
+  layer: RegularLayer,
+  parents: Map<string, Layer | DiagramNode | DiagramEdge>,
+  isWrappedByObject: boolean,
+  $cell: Element,
+  $geometry: Element,
+  $parent: HTMLElement,
+  queue: WorkQueue,
+  nodes: DiagramElement[],
+  uow: UnitOfWork
+) => {
+  // Handle edge creation
+
+  // First create the node with free endpoints as the position of all connected
+  // nodes are not known at this time
+
+  const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => ({
+    ...MxPoint.pointFrom($p),
+    as: $p.getAttribute('as')
+  }));
+
+  const source = new FreeEndpoint(points.find(p => p.as === 'sourcePoint') ?? Point.ORIGIN);
+  const target = new FreeEndpoint(points.find(p => p.as === 'targetPoint') ?? Point.ORIGIN);
+
+  parseEdgeArrow('start', style, props);
+
+  // Note, apparently the lack of an arrow specified, means by default a
+  // classic end arrow is assumed
+  if (!style.has('endArrow')) style.set('endArrow', 'classic');
+  parseEdgeArrow('end', style, props);
+
+  const edgeProps = props as EdgeProps;
+
+  const isNonCurveEdgeStyle =
+    style.str('edgeStyle') === 'orthogonalEdgeStyle' ||
+    style.str('edgeStyle') === 'elbowEdgeStyle' ||
+    style.str('edgeStyle') === 'isometricEdgeStyle' ||
+    style.str('edgeStyle') === 'entityRelationEdgeStyle';
+
+  if (isNonCurveEdgeStyle) {
+    edgeProps.type = 'orthogonal';
+  }
+
+  if (style.is('curved')) {
+    if (isNonCurveEdgeStyle) {
+      edgeProps.type = 'curved';
+    } else {
+      edgeProps.type = 'bezier';
+    }
+  }
+
+  if (style.num('sourcePerimeterSpacing', 0) !== 0) {
+    edgeProps.spacing ??= {};
+    edgeProps.spacing.start = style.num('sourcePerimeterSpacing', 0);
+  }
+
+  if (style.num('targetPerimeterSpacing', 0) !== 0) {
+    edgeProps.spacing ??= {};
+    edgeProps.spacing.end = style.num('targetPerimeterSpacing', 0);
+  }
+
+  if (style.num('perimeterSpacing', 0) !== 0) {
+    edgeProps.spacing ??= {};
+    edgeProps.spacing.start = style.num('perimeterSpacing', 0);
+    edgeProps.spacing.end = style.num('perimeterSpacing', 0);
+  }
+
+  if (style.shape === 'flexArrow') {
+    edgeProps.shape = 'BlockArrow';
+    edgeProps.custom ??= {};
+    edgeProps.custom.blockArrow = {
+      width: style.num('width', 10),
+      arrowWidth: style.num('width', 10) + style.num('endWidth', 20),
+      arrowDepth: style.num('endSize', 7) * 3
+    };
+    edgeProps.fill = {
+      color: style.str('fillColor') ?? 'none'
+    };
+    edgeProps.effects = {
+      opacity: style.has('opacity') ? style.num('opacity', 100) / 100 : 1
+    };
+  }
+
+  const waypoints: Waypoint[] = [];
+  const wps = Array.from(
+    $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
+  ).map($p => MxPoint.pointFrom($p));
+  for (let i = 0; i < wps.length; i++) {
+    if (edgeProps.type === 'bezier') {
+      if (i === wps.length - 1) continue;
+
+      // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here
+      //       ...to smoothen the curve further
+
+      const next = wps[i + 1]!;
+      const midpoint = Line.midpoint(Line.of(wps[i]!, next));
+      waypoints.push({
+        point: midpoint,
+        controlPoints: {
+          cp1: Vector.scale(Point.subtract(wps[i]!, midpoint), 1),
+          cp2: Vector.scale(Point.subtract(wps[i + 1]!, midpoint), 1)
+        }
+      });
+    } else {
+      // Some times the waypoints are duplicated, so we need to filter them out
+      if (i > 0 && Point.isEqual(wps[i]!, wps[i - 1]!)) continue;
+      waypoints.push({ point: wps[i]! });
+    }
+  }
+
+  if (style.is('orthogonal')) {
+    edgeProps.type = 'orthogonal';
+  }
+
+  const edge = ElementFactory.edge(id, source, target, edgeProps, metadata, waypoints, layer);
+  nodes.push(edge);
+  parents.set(id, edge);
+
+  // Post-pone attaching the edge to the source and target nodes until all
+  // nodes have been processed
+  queue.add(() => attachEdge(edge, $cell, style, uow));
+
+  const value = isWrappedByObject ? $parent.getAttribute('label') : $cell.getAttribute('value');
+
+  if (hasValue(value)) {
+    props.stroke!.enabled = false;
+
+    const labelBg = style.str('labelBackgroundColor') ?? 'transparent';
+
+    const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
+
+    queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
+    queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
+    queue.add(() => edge.invalidate(uow), 1);
+  }
+};
+
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -684,8 +980,6 @@ const getParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: str
  *   - abc - regular value
  */
 const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
-  const alreadyLoaded = new Set<Loader>();
-
   const uow = UnitOfWork.immediate(diagram);
   const queue = new WorkQueue();
 
@@ -794,14 +1088,12 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
       }
 
       const nodes: DiagramElement[] = [];
-
-      // handle group
-      //
       // if...
       //  isStencil
       //  isEdge
       //  isEdgeLabel
       //  isText
+      //  isGroup
       //  isNode
 
       const stencil = parseStencil(drawioBuiltinShapes[style.shape!] ?? style.shape);
@@ -810,168 +1102,25 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
         nodes.push(ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts));
       } else if ($cell.getAttribute('edge') === '1') {
-        // Handle edge creation
-
-        // First create the node with free endpoints as the position of all connected
-        // nodes are not known at this time
-
-        const points = Array.from($geometry.getElementsByTagName('mxPoint')).map($p => ({
-          ...MxPoint.pointFrom($p),
-          as: $p.getAttribute('as')
-        }));
-
-        const source = new FreeEndpoint(points.find(p => p.as === 'sourcePoint') ?? Point.ORIGIN);
-        const target = new FreeEndpoint(points.find(p => p.as === 'targetPoint') ?? Point.ORIGIN);
-
-        parseEdgeArrow('start', style, props);
-
-        // Note, apparently the lack of an arrow specified, means by default a
-        // classic end arrow is assumed
-        if (!style.has('endArrow')) style.set('endArrow', 'classic');
-        parseEdgeArrow('end', style, props);
-
-        const edgeProps = props as EdgeProps;
-
-        const isNonCurveEdgeStyle =
-          style.str('edgeStyle') === 'orthogonalEdgeStyle' ||
-          style.str('edgeStyle') === 'elbowEdgeStyle' ||
-          style.str('edgeStyle') === 'isometricEdgeStyle' ||
-          style.str('edgeStyle') === 'entityRelationEdgeStyle';
-
-        if (isNonCurveEdgeStyle) {
-          edgeProps.type = 'orthogonal';
-        }
-
-        if (style.is('curved')) {
-          if (isNonCurveEdgeStyle) {
-            edgeProps.type = 'curved';
-          } else {
-            edgeProps.type = 'bezier';
-          }
-        }
-
-        if (style.num('sourcePerimeterSpacing', 0) !== 0) {
-          edgeProps.spacing ??= {};
-          edgeProps.spacing.start = style.num('sourcePerimeterSpacing', 0);
-        }
-
-        if (style.num('targetPerimeterSpacing', 0) !== 0) {
-          edgeProps.spacing ??= {};
-          edgeProps.spacing.end = style.num('targetPerimeterSpacing', 0);
-        }
-
-        if (style.num('perimeterSpacing', 0) !== 0) {
-          edgeProps.spacing ??= {};
-          edgeProps.spacing.start = style.num('perimeterSpacing', 0);
-          edgeProps.spacing.end = style.num('perimeterSpacing', 0);
-        }
-
-        if (style.shape === 'flexArrow') {
-          edgeProps.shape = 'BlockArrow';
-          edgeProps.custom ??= {};
-          edgeProps.custom.blockArrow = {
-            width: style.num('width', 10),
-            arrowWidth: style.num('width', 10) + style.num('endWidth', 20),
-            arrowDepth: style.num('endSize', 7) * 3
-          };
-          edgeProps.fill = {
-            color: style.str('fillColor') ?? 'none'
-          };
-          edgeProps.effects = {
-            opacity: style.has('opacity') ? style.num('opacity', 100) / 100 : 1
-          };
-        }
-
-        const waypoints: Waypoint[] = [];
-        const wps = Array.from(
-          $geometry.getElementsByTagName('Array').item(0)?.getElementsByTagName('mxPoint') ?? []
-        ).map($p => MxPoint.pointFrom($p));
-        for (let i = 0; i < wps.length; i++) {
-          if (edgeProps.type === 'bezier') {
-            if (i === wps.length - 1) continue;
-
-            // TODO: Maybe we should apply BezierUtils.qubicFromThreePoints here
-            //       ...to smoothen the curve further
-
-            const next = wps[i + 1]!;
-            const midpoint = Line.midpoint(Line.of(wps[i]!, next));
-            waypoints.push({
-              point: midpoint,
-              controlPoints: {
-                cp1: Vector.scale(Point.subtract(wps[i]!, midpoint), 1),
-                cp2: Vector.scale(Point.subtract(wps[i + 1]!, midpoint), 1)
-              }
-            });
-          } else {
-            // Some times the waypoints are duplicated, so we need to filter them out
-            if (i > 0 && Point.isEqual(wps[i]!, wps[i - 1]!)) continue;
-            waypoints.push({ point: wps[i]! });
-          }
-        }
-
-        if (style.is('orthogonal')) {
-          edgeProps.type = 'orthogonal';
-        }
-
-        const edge = ElementFactory.edge(id, source, target, edgeProps, metadata, waypoints, layer);
-        nodes.push(edge);
-        parents.set(id, edge);
-
-        // Post-pone attaching the edge to the source and target nodes until all
-        // nodes have been processed
-        queue.add(() => attachEdge(edge, $cell, style, uow));
-
-        const value = isWrappedByObject
-          ? $parent.getAttribute('label')
-          : $cell.getAttribute('value');
-
-        if (hasValue(value)) {
-          props.stroke!.enabled = false;
-
-          const labelBg = style.str('labelBackgroundColor') ?? 'transparent';
-
-          const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
-
-          queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
-          queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-          queue.add(() => edge.invalidate(uow), 1);
-        }
-      } else if (style.styleName === 'edgeLabel') {
-        // Handle free-standing edge labels
-        const edge = diagram.edgeLookup.get(parent);
-        assert.present(edge);
-
-        const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
-
-        // Note: This used to be done with queue.add - unclear why
-        attachLabelNode(textNode, edge, $geometry, uow);
-
-        queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-        queue.add(() => edge.invalidate(uow), 1);
-      } else if (style.styleName === 'text') {
-        // TODO: We should be able to move these two to the global style parsing/conversion
-        if (style.str('strokeColor', 'none') === 'none') {
-          props.stroke!.enabled = false;
-        }
-
-        if (style.str('fillColor', 'none') === 'none') {
-          props.fill!.enabled = false;
-        }
-
-        nodes.push(
-          ElementFactory.node(
-            id,
-            'rect',
-            bounds,
-            layer,
-            {
-              ...props,
-              capabilities: { ...(props.capabilities ?? {}), textGrow: true }
-            },
-            metadata,
-            texts
-          )
+        parseEdge(
+          id,
+          props,
+          metadata,
+          style,
+          layer,
+          parents,
+          isWrappedByObject,
+          $cell,
+          $geometry,
+          $parent,
+          queue,
+          nodes,
+          uow
         );
+      } else if (style.styleName === 'edgeLabel') {
+        parseEdgeLabel(id, props, style, diagram, parent, value, $geometry, queue, uow);
+      } else if (style.styleName === 'text') {
+        parseText(id, bounds, props, metadata, texts, style, layer, nodes);
       } else if (parentChild.has(id) || style.styleName === 'group') {
         // Handle groups
 
@@ -986,6 +1135,11 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
           nodes.push(node);
         } else if (style.num('container') === 1) {
           const alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
+
+          const grpShapeNodes: DiagramNode[] = [];
+          await parseShape(id, bounds, props, metadata, texts, style, layer, queue, grpShapeNodes);
+          assert.arrayWithExactlyOneElement(grpShapeNodes);
+
           node = ElementFactory.node(
             id,
             'container',
@@ -994,6 +1148,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
             {
               ...props,
               custom: {
+                ...grpShapeNodes[0].storedProps.custom,
                 container: {
                   collapsible: true,
                   mode: $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded',
@@ -1002,8 +1157,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
                         bounds: `${alternateBoundsRect.getAttribute('x')},${alternateBoundsRect.getAttribute('y')},${alternateBoundsRect.getAttribute('width')},${alternateBoundsRect.getAttribute('height')},0`
                       }
                     : {}),
-                  // TODO: Here we would like to use the proper shape instead - but this is somewhat complicated
-                  shape: 'rect'
+                  shape: grpShapeNodes[0].nodeType
                 }
               }
             },
@@ -1043,7 +1197,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
               }
 
               if (!registry.hasRegistration(style.shape)) {
-                await load(loader, registry, alreadyLoaded);
+                await load(loader, registry);
               }
 
               const parser = getParser(style.shape);
@@ -1100,93 +1254,8 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
 
         parents.set(id, node);
       } else {
-        if (style.shape! in shapeParsers) {
-          nodes.push(
-            await shapeParsers[style.shape!]!(
-              id,
-              bounds,
-              props,
-              metadata,
-              texts,
-              style,
-              layer,
-              queue
-            )
-          );
-        } else if (style.styleName === 'image' || style.has('image')) {
-          nodes.push(await parseImage(id, bounds, props, metadata, texts, style, layer, queue));
-        } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
-          const registry = diagram.document.nodeDefinitions;
-
-          const loader = getLoader(style.shape);
-          if (!loader) {
-            console.warn(`No loader found for ${style.shape}`);
-            nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
-            continue;
-          }
-
-          if (!registry.hasRegistration(style.shape!)) {
-            await load(loader, registry, alreadyLoaded);
-          }
-
-          let newBounds = { ...bounds };
-          if (style.str('direction') === 'south') {
-            const p = Point.rotateAround(
-              Point.add(newBounds, { x: 0, y: newBounds.w }),
-              Math.PI / 2,
-              Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-            );
-
-            newBounds = {
-              ...newBounds,
-              w: newBounds.h,
-              h: newBounds.w,
-              r: Math.PI / 2,
-              x: newBounds.x + (newBounds.x - p.x),
-              y: newBounds.y + (newBounds.y - p.y)
-            };
-          } else if (style.str('direction') === 'north') {
-            const p = Point.rotateAround(
-              Point.add(newBounds, { x: newBounds.h, y: 0 }),
-              -Math.PI / 2,
-              Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-            );
-
-            newBounds = {
-              ...newBounds,
-              w: newBounds.h,
-              h: newBounds.w,
-              r: -Math.PI / 2,
-              x: newBounds.x + (newBounds.x - p.x),
-              y: newBounds.y + (newBounds.y - p.y)
-            };
-          } else if (style.str('direction') === 'west') {
-            newBounds = { ...newBounds, r: Math.PI };
-          }
-
-          const parser = getParser(style.shape);
-          if (parser) {
-            nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
-          } else {
-            nodes.push(
-              ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts)
-            );
-          }
-        } else if (style.styleName === 'triangle') {
-          nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, layer));
-        } else if (style.styleName === 'line') {
-          nodes.push(await parseLine(id, bounds, props, metadata, texts, style, layer));
-        } else if (style.styleName === 'ellipse') {
-          nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, layer));
-        } else if (style.styleName === 'rhombus') {
-          nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, layer));
-        } else {
-          if (style.is('rounded')) {
-            nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
-          } else {
-            nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
-          }
-        }
+        const r = await parseShape(id, bounds, props, metadata, texts, style, layer, queue, nodes);
+        if (!r) continue;
       }
 
       // Attach all nodes created to their parent (group and/or layer)
