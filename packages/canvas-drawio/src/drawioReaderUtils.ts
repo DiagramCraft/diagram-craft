@@ -61,3 +61,23 @@ export const hasValue = (value: string | undefined | null): value is string => {
   }
   return true;
 };
+
+export const deflate = async (data: string) => {
+  const binaryContents = atob(data);
+
+  const arr = Uint8Array.from(binaryContents, c => c.charCodeAt(0));
+
+  const inputStream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(arr);
+      controller.close();
+    }
+  });
+
+  const ds = new DecompressionStream('deflate-raw');
+  const decompressed = await new Response(inputStream.pipeThrough(ds)).arrayBuffer();
+
+  const decoded = new TextDecoder().decode(decompressed);
+
+  return decodeURIComponent(decoded);
+};

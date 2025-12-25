@@ -46,11 +46,12 @@ import { arrows, drawioBuiltinShapes, LABEL_POSITIONS } from './drawioDefaults';
 import { getShapeBundle, loadShapeBundle } from './drawioShapeBundleRegistry';
 import {
   angleFromDirection,
+  deflate,
+  hasValue,
   isStencilString,
-  parseStencilString,
-  MxPoint,
   MxGeometry,
-  hasValue
+  MxPoint,
+  parseStencilString
 } from './drawioReaderUtils';
 
 type CellElements = {
@@ -787,7 +788,7 @@ const parseStencil = async (
 ) => {
   const stencil = mustExist(parseStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape));
   props.custom ??= {};
-  props.custom.drawio = { shape: btoa(await decode(stencil)) };
+  props.custom.drawio = { shape: btoa(await deflate(stencil)) };
   return ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts);
 };
 
@@ -1039,37 +1040,6 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
   queue.run();
 };
 
-async function decode(data: string) {
-  const binaryContents = atob(data);
-
-  const arr = Uint8Array.from(binaryContents, c => c.charCodeAt(0));
-
-  const ds = new DecompressionStream('deflate-raw');
-  const writer = ds.writable.getWriter();
-  writer.write(arr);
-  writer.close();
-
-  const reader = ds.readable.getReader();
-  const output = [];
-
-  let totalSize = 0;
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    output.push(value);
-    totalSize += value.byteLength;
-  }
-
-  const concatenated = new Uint8Array(totalSize);
-  let offset = 0;
-  for (const array of output) {
-    concatenated.set(array, offset);
-    offset += array.byteLength;
-  }
-
-  return decodeURIComponent(new TextDecoder().decode(concatenated));
-}
-
 export const drawioReader = async (contents: string, doc: DiagramDocument): Promise<void> => {
   const start = Date.now();
 
@@ -1086,8 +1056,10 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
       $diagram.childNodes.length === 1 &&
       $diagram.childNodes.item(0).nodeType === Node.TEXT_NODE
     ) {
-      const s = await decode($diagram.textContent!);
-      $mxGraphModel = parser.parseFromString(s, 'application/xml').documentElement;
+      $mxGraphModel = parser.parseFromString(
+        await deflate($diagram.textContent!),
+        'application/xml'
+      ).documentElement;
     } else {
       $mxGraphModel = $diagram.getElementsByTagName('mxGraphModel').item(0)!;
     }
