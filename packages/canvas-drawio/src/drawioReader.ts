@@ -1009,6 +1009,8 @@ const parseGroup = async (
     // TODO: Support more than stackLayout
   } else if (style.styleName === 'swimlane' && style.str('childLayout') === 'stackLayout') {
     node = await parseSwimlane(id, bounds, props, metadata, texts, style, layer);
+  } else if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
+    node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
   } else if (style.num('container') === 1) {
     const $alternateBoundsRect = $geometry.getElementsByTagName('mxRectangle').item(0);
 
@@ -1117,28 +1119,10 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
       const style = new StyleManager($cell.getAttribute('style')!, isGroup);
 
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
-      let bounds = MxGeometry.boundsFrom($geometry);
+      const bounds = MxGeometry.boundsFrom($geometry);
       bounds.r = Angle.toRad(style.num('rotation', 0));
 
-      // TODO: Is parents used for groups or only layers
-      let p = parents.get(parent);
-      if (!p) {
-        // TODO: Under which conditions is parent not found?
-        console.warn(`Parent ${parent} not found correctly for ${id}`);
-        const parentNode = diagram.nodeLookup.get(parent);
-        if (!parentNode) {
-          console.warn(`Parent ${parent} not found for ${id}`);
-          continue;
-        }
-
-        p = parentNode.layer;
-        bounds = {
-          ...bounds,
-          x: parentNode.bounds.x + bounds.x,
-          y: parentNode.bounds.y + bounds.y
-        };
-      }
-
+      const p = parents.get(parent);
       assert.present(p);
 
       const layer = p instanceof Layer ? p : p.layer;
@@ -1185,16 +1169,16 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
       const ctx: CellContext = { parents, queue, uow };
 
       let node: DiagramElement | undefined;
-      if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
-        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
-      } else if ($cell.getAttribute('edge') === '1') {
+      if ($cell.getAttribute('edge') === '1') {
         node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
       } else if (style.styleName === 'edgeLabel') {
         parseEdgeLabel(id, props, style, diagram, parent, value, $geometry, ctx);
-      } else if (style.styleName === 'text') {
-        node = parseText(id, bounds, props, metadata, texts, style, layer);
       } else if (parentChild.has(id) || style.styleName === 'group') {
         node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
+      } else if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
+        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
+      } else if (style.styleName === 'text') {
+        node = parseText(id, bounds, props, metadata, texts, style, layer);
       } else {
         node = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
       }

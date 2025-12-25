@@ -25,6 +25,9 @@ import { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Metrics } from '@diagram-craft/utils/metrics';
 import { xNum } from '@diagram-craft/utils/xml';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 
 declare global {
   namespace DiagramCraft {
@@ -536,6 +539,24 @@ class DrawioShapeComponent extends BaseNodeComponent {
             : props.node.bounds.y,
         w: props.nodeProps.text.position === 'e' ? 200 : props.node.bounds.w
       }
+    );
+
+    const flipBack = () => {
+      const dest: string[] = [];
+      if (props.nodeProps.geometry.flipV) dest.push(Transforms.flipV(props.node.bounds));
+      if (props.nodeProps.geometry.flipH) dest.push(Transforms.flipH(props.node.bounds));
+      return dest.join(' ');
+    };
+    shapeBuilder.add(
+      svg.g(
+        {},
+        ...props.node.children.map(child =>
+          svg.g(
+            { transform: `${Transforms.rotateBack(props.node.bounds)} ${flipBack()}` },
+            renderElement(this, child, props)
+          )
+        )
+      )
     );
   }
 }
