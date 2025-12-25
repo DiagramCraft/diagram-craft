@@ -67,24 +67,12 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { MultiMap } from '@diagram-craft/utils/multimap';
+import { WorkQueue } from './workQueue';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
     'stencil(tZPtDoIgFIavhv8IZv1tVveBSsm0cPjZ3QeCNlBytbU5tvc8x8N74ABwXOekogDBHOATQCiAUK5S944mdUXTRgc7IhhJSqpJ3Qhe0J5ljanBHjkVrFEUnwE8yhz14TghaXETvH1kDgDo4mVXLugKmHBF1LYLMOE771R3g3Zmenk6vcntP5RIW6FrBHYRIyOjB2RjI8MJY613E8c2/85DsLdNhI6JmdumfCZ+8nDAtgfHwoz/exAQbpwEdC4kcny8E9zAhpOS19SbNc60ZzblTLOy1M9mpcD462Lqx6h+rGPgBQ==)'
 };
-
-export class WorkQueue {
-  queue: [Array<() => void>, Array<() => void>] = [[], []];
-
-  add(work: () => void, priority: 0 | 1 = 0) {
-    this.queue[priority].push(work);
-  }
-
-  run() {
-    this.queue[0].forEach(work => work());
-    this.queue[1].forEach(work => work());
-  }
-}
 
 export type ShapeParser = (
   id: string,
@@ -812,7 +800,7 @@ const parseText = (
   );
 };
 
-const parseEdgeLabel = (
+const parseLabelNode = (
   id: string,
   props: NodeProps,
   style: StyleManager,
@@ -1016,6 +1004,7 @@ const parseGroup = async (
 
     const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
 
+    const mode = $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded';
     node = ElementFactory.node(
       id,
       'container',
@@ -1027,7 +1016,7 @@ const parseGroup = async (
           ...grp.storedProps.custom,
           container: {
             collapsible: true,
-            mode: $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded',
+            mode,
             ...($alternateBoundsRect
               ? {
                   bounds: `${$alternateBoundsRect.getAttribute('x')},${$alternateBoundsRect.getAttribute('y')},${$alternateBoundsRect.getAttribute('width')},${$alternateBoundsRect.getAttribute('height')},0`
@@ -1058,6 +1047,31 @@ const parseGroup = async (
   return node;
 };
 
+const parseLabelStyles = (texts: NodeTexts, style: StyleManager) => {
+  // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
+  // text itself is not an HTML formatted
+  if (!texts.text.startsWith('<') && texts.text !== '') {
+    const spanStyles: string[] = [];
+    const divStyles: string[] = [];
+    if (style.str('labelBackgroundColor', 'none') !== 'none')
+      spanStyles.push(`background-color: ${style.str('labelBackgroundColor')}`);
+    if (style.str('labelBorderColor', 'none') !== 'none')
+      spanStyles.push(`border: 1px solid ${style.str('labelBorderColor')}`);
+    if (style.num('textOpacity', 100) !== 100) {
+      spanStyles.push(
+        `color: color-mix(in srgb, ${style.str('fontColor')}, transparent ${100 - style.num('textOpacity', 100)}%)`
+      );
+    }
+    if (!style.is('horizontal', true)) divStyles.push('transform: rotate(-90deg)');
+    if (spanStyles.length > 0) {
+      texts.text = `<span style="${spanStyles.join(';')}">${texts.text}</span>`;
+    }
+    if (divStyles.length > 0) {
+      texts.text = `<div style="${divStyles.join(';')}">${texts.text}</div>`;
+    }
+  }
+};
+
 type CellElements = {
   $cell: Element;
   $parent: Element;
@@ -1069,6 +1083,7 @@ type CellContext = {
   queue: WorkQueue;
   uow: UnitOfWork;
 };
+
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -1142,28 +1157,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
         texts.text = $parent.getAttribute('label') ?? '';
       }
 
-      // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
-      // text itself is not an HTML formatted
-      if (!texts.text.startsWith('<') && texts.text !== '') {
-        const spanStyles: string[] = [];
-        const divStyles: string[] = [];
-        if (style.str('labelBackgroundColor', 'none') !== 'none')
-          spanStyles.push(`background-color: ${style.str('labelBackgroundColor')}`);
-        if (style.str('labelBorderColor', 'none') !== 'none')
-          spanStyles.push(`border: 1px solid ${style.str('labelBorderColor')}`);
-        if (style.num('textOpacity', 100) !== 100) {
-          spanStyles.push(
-            `color: color-mix(in srgb, ${style.str('fontColor')}, transparent ${100 - style.num('textOpacity', 100)}%)`
-          );
-        }
-        if (!style.is('horizontal', true)) divStyles.push('transform: rotate(-90deg)');
-        if (spanStyles.length > 0) {
-          texts.text = `<span style="${spanStyles.join(';')}">${texts.text}</span>`;
-        }
-        if (divStyles.length > 0) {
-          texts.text = `<div style="${divStyles.join(';')}">${texts.text}</div>`;
-        }
-      }
+      parseLabelStyles(texts, style);
 
       const $els: CellElements = { $cell, $geometry, $parent };
       const ctx: CellContext = { parents, queue, uow };
@@ -1172,7 +1166,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
       if ($cell.getAttribute('edge') === '1') {
         node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
       } else if (style.styleName === 'edgeLabel') {
-        parseEdgeLabel(id, props, style, diagram, parent, value, $geometry, ctx);
+        parseLabelNode(id, props, style, diagram, parent, value, $geometry, ctx);
       } else if (parentChild.has(id) || style.styleName === 'group') {
         node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
       } else if (isStencil(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
