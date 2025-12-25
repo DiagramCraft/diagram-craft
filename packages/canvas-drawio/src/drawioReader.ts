@@ -1173,77 +1173,11 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
             style.styleName !== 'group' &&
             (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
           ) {
-            // TODO: This is all a bit duplication - we should refactor this
-            let bgNode: DiagramNode;
-            if (style.shape! in shapeParsers) {
-              bgNode = await shapeParsers[style.shape!]!(
-                newid(),
-                bounds,
-                props,
-                metadata,
-                texts,
-                style,
-                layer,
-                queue
-              );
-            } else if (style.shape?.startsWith('mxgraph.')) {
-              const registry = diagram.document.nodeDefinitions;
+            const gShapeNodes: DiagramNode[] = [];
+            await parseShape(id, bounds, props, metadata, texts, style, layer, queue, gShapeNodes);
+            assert.arrayWithExactlyOneElement(gShapeNodes);
 
-              const loader = getLoader(style.shape);
-              if (!loader) {
-                console.warn(`No loader found for ${style.shape}`);
-                nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
-                continue;
-              }
-
-              if (!registry.hasRegistration(style.shape)) {
-                await load(loader, registry);
-              }
-
-              const parser = getParser(style.shape);
-              if (parser) {
-                bgNode = await parser(newid(), bounds, props, metadata, texts, style, layer, queue);
-              } else {
-                bgNode = ElementFactory.node(
-                  newid(),
-                  style.shape,
-                  bounds,
-                  layer,
-                  props,
-                  metadata,
-                  texts
-                );
-              }
-            } else {
-              if (style.is('rounded')) {
-                bgNode = ElementFactory.node(
-                  newid(),
-                  'rounded-rect',
-                  { ...bounds },
-                  layer,
-                  {
-                    ...props,
-                    custom: {
-                      roundedRect: {
-                        radius: style.num('arcSize', 5)
-                      }
-                    }
-                  },
-                  metadata,
-                  texts
-                );
-              } else {
-                bgNode = ElementFactory.node(
-                  newid(),
-                  'rect',
-                  { ...bounds },
-                  layer,
-                  props,
-                  metadata,
-                  texts
-                );
-              }
-            }
+            const bgNode: DiagramNode = gShapeNodes[0];
 
             node.addChild(bgNode, uow);
             queue.add(() => {
