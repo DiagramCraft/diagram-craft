@@ -7,6 +7,8 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DrawioStencil } from './drawioStencilLoader';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { getParser } from './drawioShapeParsers';
+import { getLoader } from './drawioDefaults';
 
 export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
   const mkNode = ($d: Diagram) => {
@@ -31,4 +33,23 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
     node: mkNode,
     canvasNode: mkNode
   };
+};
+
+export const isStencil = (shape: string | undefined) => {
+  return shape?.startsWith('stencil(');
+};
+
+export const parseStencilString = (shape: string | undefined) => {
+  if (!shape) return undefined;
+
+  if (!shape.startsWith('stencil(')) {
+    if (getParser(shape) || getLoader(shape)) {
+      return undefined;
+    } else {
+      console.warn(`Unsupported shape ${shape}`);
+      return undefined;
+    }
+  }
+
+  return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };

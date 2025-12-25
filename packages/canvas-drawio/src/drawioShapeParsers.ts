@@ -1,4 +1,4 @@
-import type { ShapeParser } from './drawioReader';
+import { Box } from '@diagram-craft/geometry/box';
 import {
   parseArrow,
   parseBlockArc,
@@ -23,6 +23,22 @@ import {
   parseTransparent,
   parseTriangle
 } from './shapes';
+import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
+import type { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
+import type { StyleManager } from './styleManager';
+import type { WorkQueue } from './workQueue';
+import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+
+export type ShapeParser = (
+  id: string,
+  bounds: Box,
+  props: NodeProps,
+  metadata: ElementMetadata,
+  texts: NodeTexts,
+  style: StyleManager,
+  layer: RegularLayer,
+  queue: WorkQueue
+) => Promise<DiagramNode>;
 
 export const shapeParsers: Record<string, ShapeParser> = {
   'hexagon': parseHexagon,

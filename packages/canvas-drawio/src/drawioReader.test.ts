@@ -33,18 +33,6 @@ describe('angleFromDirection', () => {
   });
 });
 
-describe('parseStencil', () => {
-  test('returns undefined for undefined input', () => {
-    expect(_test.parseStencil(undefined)).toBeUndefined();
-  });
-
-  test('extracts content from valid stencil format', () => {
-    const stencilData = 'eNqLjgUAARUAuQ==';
-    const result = _test.parseStencil(`stencil(${stencilData})`);
-    expect(result).toBe(stencilData);
-  });
-});
-
 describe('MxPoint', () => {
   const createMockElement = (x?: number, y?: number): Element => {
     const parser = new DOMParser();

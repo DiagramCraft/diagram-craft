@@ -1,6 +1,5 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { NodeTexts } from '@diagram-craft/model/diagramNode';
-import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { dataURItoBlob } from './blobUtils';
 import {
@@ -17,6 +16,7 @@ import { parseNum } from '@diagram-craft/utils/number';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { WithRequired } from '@diagram-craft/utils/types';
+import type { WorkQueue } from './workQueue';
 
 const makeShape = (
   type: string,
