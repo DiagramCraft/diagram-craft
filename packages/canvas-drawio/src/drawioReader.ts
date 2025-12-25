@@ -8,7 +8,7 @@ import { DiagramEdge, SimpleDiagramEdge, Waypoint } from '@diagram-craft/model/d
 import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/diagramEdgeUtils';
@@ -58,7 +58,6 @@ import { registerSalesforceShapes } from './shapes/salesforce';
 import { registerUMLShapes } from './shapes/uml/uml';
 import { registerAndroidShapes } from './shapes/android/android';
 import { StyleManager } from './styleManager';
-import { coalesce } from '@diagram-craft/utils/strings';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
@@ -67,6 +66,7 @@ import { getParser, shapeParsers } from './drawioShapeParsers';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 const drawioBuiltinShapes: Partial<Record<string, string>> = {
   actor:
@@ -156,11 +156,6 @@ const parseStencil = (shape: string | undefined) => {
       return undefined;
     }
   }
-
-  // TODO: Are these still needed
-  //if (shape === 'mxgraph.basic.rect') return undefined;
-  //if (shape === 'circle3') return undefined;
-  //if (shape === 'flexArrow') return undefined;
 
   return /^stencil\(([^)]+)\)$/.exec(shape)![1];
 };
@@ -471,6 +466,8 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       inheritStyle: false
     }
   };
+  props.text ??= {};
+  props.fill ??= {};
 
   if (style.num('perimeterSpacing', 0) !== 0) {
     props.routing ??= {};
@@ -485,15 +482,15 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     if (style.str('portConstraint') === 'west') props.routing.constraint = 'w';
   }
 
-  if (props.text!.color === '#') props.text!.color = 'black';
+  if (props.text.color === '#') props.text.color = 'black';
 
-  const fontStyle = parseNum(style.str('fontStyle'), 0);
-  props.text!.bold = (fontStyle & 1) !== 0;
-  props.text!.italic = (fontStyle & 2) !== 0;
-  props.text!.textDecoration = (fontStyle & 4) !== 0 ? 'underline' : 'none';
+  const fontStyle = style.num('fontStyle', 0);
+  props.text.bold = (fontStyle & 1) !== 0;
+  props.text.italic = (fontStyle & 2) !== 0;
+  props.text.textDecoration = (fontStyle & 4) !== 0 ? 'underline' : 'none';
 
-  props.text!.wrap = style.str('whiteSpace') === 'wrap';
-  props.text!.overflow =
+  props.text.wrap = style.str('whiteSpace') === 'wrap';
+  props.text.overflow =
     style.str('overflow') === 'hidden' ||
     style.str('overflow') === 'fill' ||
     style.str('overflow') === 'width'
@@ -501,10 +498,10 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
       : 'visible';
 
   if (style.str('overflow') === 'fill' || style.str('overflow') === 'width') {
-    props.text!.top = 0;
-    props.text!.bottom = 0;
-    props.text!.left = 0;
-    props.text!.right = 0;
+    props.text.top = 0;
+    props.text.bottom = 0;
+    props.text.left = 0;
+    props.text.right = 0;
   }
 
   if (
@@ -512,9 +509,9 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     style.str('gradientColor') !== 'none' &&
     style.str('gradientColor') !== 'inherit'
   ) {
-    props.fill!.type = 'gradient';
-    props.fill!.color2 = style.str('gradientColor');
-    props.fill!.gradient = {
+    props.fill.type = 'gradient';
+    props.fill.color2 = style.str('gradientColor');
+    props.fill.gradient = {
       type: 'linear',
       direction: angleFromDirection(style.str('gradientDirection') ?? 'south')
     };
@@ -562,13 +559,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
   }
 
   if (style.is('shadow')) {
-    props.shadow = {
-      enabled: true,
-      color: '#999999',
-      x: 3,
-      y: 3,
-      blur: 3
-    };
+    props.shadow = { enabled: true, color: '#999999', x: 3, y: 3, blur: 3 };
   }
 
   if (!style.is('rotatable', true)) {
@@ -599,7 +590,7 @@ const getNodeProps = (style: StyleManager, isEdge: boolean) => {
     props.capabilities.deletable = false;
   }
 
-  if (style.get('indicatorShape')) {
+  if (style.has('indicatorShape')) {
     let shape = style.get('indicatorShape');
     if (shape === 'ellipse') shape = 'disc';
 
@@ -661,7 +652,7 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow:
   }
 };
 
-const readMetadata = ($parent: HTMLElement) => {
+const readMetadata = ($parent: Element) => {
   const dest: Record<string, string> = {};
   for (const n of $parent.getAttributeNames()) {
     if (n === 'id' || n === 'label' || n === 'placeholders') continue;
@@ -674,32 +665,38 @@ const readMetadata = ($parent: HTMLElement) => {
   return dest;
 };
 
+const getParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: string) => {
+  const parentChild = new MultiMap<string, string>();
+  for (const $cell of xIterElements($$cells)) {
+    const parent = $cell.getAttribute('parent')!;
+    if (parent !== rootId) {
+      const id = $cell.getAttribute('id')!;
+      parentChild.add(parent, id);
+    }
+  }
+  return parentChild;
+};
+
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
  *   - $abc - XML element
  *   - abc - regular value
  */
-const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
+const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
   const alreadyLoaded = new Set<Loader>();
 
   const uow = UnitOfWork.immediate(diagram);
   const queue = new WorkQueue();
 
-  const parentChild = new Map<string, string[]>();
-
-  const $$cells = $el.getElementsByTagName('root').item(0)!.getElementsByTagName('mxCell');
+  const $$cells = mustExist(
+    $mxGraphModel.getElementsByTagName('root').item(0)
+  ).getElementsByTagName('mxCell');
 
   const rootId = $$cells.item(0)!.getAttribute('id')!;
 
   // Phase 1 - Determine parent child relationships
-  for (const $cell of xIterElements($$cells)) {
-    const parent = $cell.getAttribute('parent')!;
-    if (parent !== rootId) {
-      const id = $cell.getAttribute('id')!;
-      parentChild.set(parent, [...(parentChild.get(parent) ?? []), id]);
-    }
-  }
+  const parentChild = getParentChildRelations($$cells, rootId);
 
   // Phase 2 - process all objects
   const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
@@ -717,17 +714,19 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
     const parent = $cell.getAttribute('parent')!;
     const value = $cell.getAttribute('value')!;
 
+    const isGroup = parentChild.has(id) && parent !== rootId;
+
     // is layer? - first level of elements constitutes layers
     if (parent === rootId) {
-      const layer = new RegularLayer(id, coalesce(value, 'Background')!, [], diagram);
+      const layer = new RegularLayer(id, value ?? 'Background', [], diagram);
       diagram.layers.add(layer, uow);
-      if ($cell.getAttribute('visible') === '0') {
+      if (xNum($cell, 'visible', 1) === 0) {
         diagram.layers.toggleVisibility(layer);
       }
 
       parents.set(id, layer);
     } else {
-      const style = new StyleManager($cell.getAttribute('style')!, parentChild.has(id));
+      const style = new StyleManager($cell.getAttribute('style')!, isGroup);
 
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
       let bounds = MxGeometry.boundsFrom($geometry);
@@ -736,6 +735,8 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
       // TODO: Is parents used for groups or only layers
       let p = parents.get(parent);
       if (!p) {
+        // TODO: Under which conditions is parent not found?
+        console.warn(`Parent ${parent} not found correctly for ${id}`);
         const parentNode = diagram.nodeLookup.get(parent);
         if (!parentNode) {
           console.warn(`Parent ${parent} not found for ${id}`);
@@ -794,57 +795,20 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
 
       const nodes: DiagramElement[] = [];
 
-      const stencil = parseStencil(drawioBuiltinShapes[style.shape!] ?? style.shape);
+      // handle group
+      //
+      // if...
+      //  isStencil
+      //  isEdge
+      //  isEdgeLabel
+      //  isText
+      //  isNode
 
+      const stencil = parseStencil(drawioBuiltinShapes[style.shape!] ?? style.shape);
       if (stencil) {
         props.custom ??= {};
         props.custom.drawio = { shape: btoa(await decode(stencil)) };
         nodes.push(ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts));
-      } else if (style.styleName === 'text') {
-        // TODO: We should be able to move these two to the global style parsing/conversion
-        if (style.str('strokeColor', 'none') === 'none') {
-          props.stroke!.enabled = false;
-        }
-
-        if (style.str('fillColor', 'none') === 'none') {
-          props.fill!.enabled = false;
-        }
-
-        nodes.push(
-          ElementFactory.node(
-            id,
-            'rect',
-            bounds,
-            layer,
-            {
-              ...props,
-              capabilities: {
-                ...(props.capabilities ?? {}),
-                textGrow: true
-              }
-            },
-            metadata,
-            texts
-          )
-        );
-      } else if (style.styleName === 'image' || style.has('image')) {
-        nodes.push(await parseImage(id, bounds, props, metadata, texts, style, layer, queue));
-      } else if (style.styleName === 'edgeLabel') {
-        // Handle free-standing edge labels
-        const edge = diagram.edgeLookup.get(parent);
-        assert.present(edge);
-
-        const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
-
-        // Note: This used to be done with queue.add - unclear why
-        attachLabelNode(textNode, edge, $geometry, uow);
-
-        queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-        queue.add(() => edge.invalidate(uow), 1);
-      } else if (style.styleName === 'triangle') {
-        nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, layer));
-      } else if (style.styleName === 'line') {
-        nodes.push(await parseLine(id, bounds, props, metadata, texts, style, layer));
       } else if ($cell.getAttribute('edge') === '1') {
         // Handle edge creation
 
@@ -972,6 +936,42 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
           queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
           queue.add(() => edge.invalidate(uow), 1);
         }
+      } else if (style.styleName === 'edgeLabel') {
+        // Handle free-standing edge labels
+        const edge = diagram.edgeLookup.get(parent);
+        assert.present(edge);
+
+        const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
+
+        // Note: This used to be done with queue.add - unclear why
+        attachLabelNode(textNode, edge, $geometry, uow);
+
+        queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
+        queue.add(() => edge.invalidate(uow), 1);
+      } else if (style.styleName === 'text') {
+        // TODO: We should be able to move these two to the global style parsing/conversion
+        if (style.str('strokeColor', 'none') === 'none') {
+          props.stroke!.enabled = false;
+        }
+
+        if (style.str('fillColor', 'none') === 'none') {
+          props.fill!.enabled = false;
+        }
+
+        nodes.push(
+          ElementFactory.node(
+            id,
+            'rect',
+            bounds,
+            layer,
+            {
+              ...props,
+              capabilities: { ...(props.capabilities ?? {}), textGrow: true }
+            },
+            metadata,
+            texts
+          )
+        );
       } else if (parentChild.has(id) || style.styleName === 'group') {
         // Handle groups
 
@@ -1099,76 +1099,93 @@ const parseMxGraphModel = async ($el: Element, diagram: Diagram) => {
         }
 
         parents.set(id, node);
-      } else if (style.shape! in shapeParsers) {
-        nodes.push(
-          await shapeParsers[style.shape!]!(id, bounds, props, metadata, texts, style, layer, queue)
-        );
-      } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
-        const registry = diagram.document.nodeDefinitions;
-
-        const loader = getLoader(style.shape);
-        if (!loader) {
-          console.warn(`No loader found for ${style.shape}`);
-          nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
-          continue;
-        }
-
-        if (!registry.hasRegistration(style.shape!)) {
-          await load(loader, registry, alreadyLoaded);
-        }
-
-        let newBounds = { ...bounds };
-        if (style.str('direction') === 'south') {
-          const p = Point.rotateAround(
-            Point.add(newBounds, { x: 0, y: newBounds.w }),
-            Math.PI / 2,
-            Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-          );
-
-          newBounds = {
-            ...newBounds,
-            w: newBounds.h,
-            h: newBounds.w,
-            r: Math.PI / 2,
-            x: newBounds.x + (newBounds.x - p.x),
-            y: newBounds.y + (newBounds.y - p.y)
-          };
-        } else if (style.str('direction') === 'north') {
-          const p = Point.rotateAround(
-            Point.add(newBounds, { x: newBounds.h, y: 0 }),
-            -Math.PI / 2,
-            Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-          );
-
-          newBounds = {
-            ...newBounds,
-            w: newBounds.h,
-            h: newBounds.w,
-            r: -Math.PI / 2,
-            x: newBounds.x + (newBounds.x - p.x),
-            y: newBounds.y + (newBounds.y - p.y)
-          };
-        } else if (style.str('direction') === 'west') {
-          newBounds = { ...newBounds, r: Math.PI };
-        }
-
-        const parser = getParser(style.shape);
-        if (parser) {
-          nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
-        } else {
-          nodes.push(
-            ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts)
-          );
-        }
-      } else if (style.styleName === 'ellipse') {
-        nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, layer));
-      } else if (style.styleName === 'rhombus') {
-        nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, layer));
       } else {
-        if (style.is('rounded')) {
-          nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
+        if (style.shape! in shapeParsers) {
+          nodes.push(
+            await shapeParsers[style.shape!]!(
+              id,
+              bounds,
+              props,
+              metadata,
+              texts,
+              style,
+              layer,
+              queue
+            )
+          );
+        } else if (style.styleName === 'image' || style.has('image')) {
+          nodes.push(await parseImage(id, bounds, props, metadata, texts, style, layer, queue));
+        } else if (style.shape?.startsWith('mxgraph.') || !!getLoader(style.shape)) {
+          const registry = diagram.document.nodeDefinitions;
+
+          const loader = getLoader(style.shape);
+          if (!loader) {
+            console.warn(`No loader found for ${style.shape}`);
+            nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
+            continue;
+          }
+
+          if (!registry.hasRegistration(style.shape!)) {
+            await load(loader, registry, alreadyLoaded);
+          }
+
+          let newBounds = { ...bounds };
+          if (style.str('direction') === 'south') {
+            const p = Point.rotateAround(
+              Point.add(newBounds, { x: 0, y: newBounds.w }),
+              Math.PI / 2,
+              Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+            );
+
+            newBounds = {
+              ...newBounds,
+              w: newBounds.h,
+              h: newBounds.w,
+              r: Math.PI / 2,
+              x: newBounds.x + (newBounds.x - p.x),
+              y: newBounds.y + (newBounds.y - p.y)
+            };
+          } else if (style.str('direction') === 'north') {
+            const p = Point.rotateAround(
+              Point.add(newBounds, { x: newBounds.h, y: 0 }),
+              -Math.PI / 2,
+              Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+            );
+
+            newBounds = {
+              ...newBounds,
+              w: newBounds.h,
+              h: newBounds.w,
+              r: -Math.PI / 2,
+              x: newBounds.x + (newBounds.x - p.x),
+              y: newBounds.y + (newBounds.y - p.y)
+            };
+          } else if (style.str('direction') === 'west') {
+            newBounds = { ...newBounds, r: Math.PI };
+          }
+
+          const parser = getParser(style.shape);
+          if (parser) {
+            nodes.push(await parser(id, newBounds, props, metadata, texts, style, layer, queue));
+          } else {
+            nodes.push(
+              ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts)
+            );
+          }
+        } else if (style.styleName === 'triangle') {
+          nodes.push(await parseTriangle(id, bounds, props, metadata, texts, style, layer));
+        } else if (style.styleName === 'line') {
+          nodes.push(await parseLine(id, bounds, props, metadata, texts, style, layer));
+        } else if (style.styleName === 'ellipse') {
+          nodes.push(await parseEllipse(id, bounds, props, metadata, texts, style, layer));
+        } else if (style.styleName === 'rhombus') {
+          nodes.push(await parseDiamond(id, bounds, props, metadata, texts, style, layer));
         } else {
-          nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
+          if (style.is('rounded')) {
+            nodes.push(await parseRoundedRect(id, bounds, props, metadata, texts, style, layer));
+          } else {
+            nodes.push(ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts));
+          }
         }
       }
 
@@ -1319,4 +1336,14 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
   }
 
   console.log(`Duration: ${Date.now() - start}`);
+};
+
+export const _test = {
+  angleFromDirection,
+  parseStencil,
+  MxPoint,
+  MxGeometry,
+  hasValue,
+  getNodeProps,
+  readMetadata
 };
