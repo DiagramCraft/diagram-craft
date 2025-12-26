@@ -13,7 +13,7 @@ const createNode = (
   bounds: Box.asReadWrite({ x: 0, y: 0, w: width, h: height, r: 0, _discriminator: 'ro' }),
   children,
   containerInstructions: { direction },
-  elementInstructions: {}
+  elementInstructions: { width: {}, height: {} }
 });
 
 describe('layoutChildren', () => {
@@ -93,7 +93,7 @@ describe('layoutChildren', () => {
       bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 100, r: Math.PI / 4, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'horizontal' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const child3 = createNode('child3', 80, 50);
     const parent = createNode('parent', 400, 150, 'horizontal', [child1, child2, child3]);
@@ -121,7 +121,7 @@ describe('layoutChildren', () => {
       bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: Math.PI / 4, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'vertical' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const child3 = createNode('child3', 100, 60);
     const parent = createNode('parent', 200, 300, 'vertical', [child1, child2, child3]);
@@ -148,14 +148,14 @@ describe('layoutChildren', () => {
       bounds: Box.asReadWrite({ x: 0, y: 10, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'horizontal' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const child2: LayoutNode = {
       id: 'child2',
       bounds: Box.asReadWrite({ x: 0, y: 20, w: 80, h: 50, r: 0, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'horizontal' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const parent = createNode('parent', 200, 100, 'horizontal', [child1, child2]);
 
@@ -174,14 +174,14 @@ describe('layoutChildren', () => {
       bounds: Box.asReadWrite({ x: 10, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'vertical' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const child2: LayoutNode = {
       id: 'child2',
       bounds: Box.asReadWrite({ x: 20, y: 0, w: 100, h: 80, r: 0, _discriminator: 'ro' }),
       children: [],
       containerInstructions: { direction: 'vertical' },
-      elementInstructions: {}
+      elementInstructions: { width: {}, height: {} }
     };
     const parent = createNode('parent', 200, 200, 'vertical', [child1, child2]);
 
@@ -241,5 +241,368 @@ describe('layoutChildren', () => {
 
     expect(child1.bounds.x).toBe(0);
     expect(child2.bounds.x).toBe(100); // No gap
+  });
+
+  test('horizontal layout grows children with extra space', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 2 }
+    };
+    // Container is 400px, children total 200px, so 200px extra to distribute
+    // child1 gets 1/3 (66.67px), child2 gets 2/3 (133.33px)
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 400, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBeCloseTo(166.67, 1); // 100 + 200*(1/3)
+    expect(child2.bounds.w).toBeCloseTo(233.33, 1); // 100 + 200*(2/3)
+    expect(child2.bounds.x).toBeCloseTo(166.67, 1);
+  });
+
+  test('vertical layout grows children with extra space', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    // Container is 200px, children total 100px, so 100px extra to distribute equally
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 200, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.h).toBe(100); // 50 + 100/2
+    expect(child2.bounds.h).toBe(100); // 50 + 100/2
+    expect(child2.bounds.y).toBe(100);
+  });
+
+  test('grow respects maximum constraints', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { max: 120 }, height: {}, grow: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 300, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(120); // Capped at max
+  });
+
+  test('horizontal layout shrinks children when needed', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, shrink: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, shrink: 1 }
+    };
+    // Container is 200px, children total 300px, need to shrink by 100px
+    // Shrink is weighted by size: child1 shrinks by 100*(1*100)/(1*100+1*200) = 33.33
+    // child2 shrinks by 100*(1*200)/(1*100+1*200) = 66.67
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBeCloseTo(66.67, 1); // 100 - 33.33
+    expect(child2.bounds.w).toBeCloseTo(133.33, 1); // 200 - 66.67
+    expect(child2.bounds.x).toBeCloseTo(66.67, 1);
+  });
+
+  test('shrink respects minimum constraints', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { min: 80 }, height: {}, shrink: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, shrink: 1 }
+    };
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(80); // Capped at min
+  });
+
+  test('no growing without grow factors', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 400, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Sizes should remain unchanged
+    expect(child1.bounds.w).toBe(100);
+    expect(child2.bounds.w).toBe(100);
+  });
+
+  test('no shrinking without shrink factors', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 150, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 150, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Sizes should remain unchanged even though they overflow
+    expect(child1.bounds.w).toBe(150);
+    expect(child2.bounds.w).toBe(150);
+  });
+
+  test('gap is preserved when growing', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    const child2: LayoutNode = {
+      id: 'child2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    // Container: 320px, gap: 20px, children: 200px
+    // Available space: 320 - 20 = 300px, free space: 100px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 320, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2],
+      containerInstructions: { direction: 'horizontal', gap: 20 },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(150); // 100 + 50
+    expect(child2.bounds.w).toBe(150); // 100 + 50
+    expect(child2.bounds.x).toBe(170); // 150 + 20 gap
+  });
+
+  test('horizontal layout with grow preserves aspect ratio', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, grow: 1, preserveAspectRatio: true }
+    };
+    // Container is 200px, child is 100px, so 100px extra
+    // child grows to 200px width, aspect ratio 2:1, so height becomes 100px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 200, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(200);
+    expect(child1.bounds.h).toBe(100); // Maintains 2:1 aspect ratio
+  });
+
+  test('vertical layout with grow preserves aspect ratio', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {}, grow: 1, preserveAspectRatio: true }
+    };
+    // Container is 100px height, child is 50px, so 50px extra
+    // child grows to 100px height, aspect ratio 2:1, so width becomes 200px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 300, h: 100, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.h).toBe(100);
+    expect(child1.bounds.w).toBe(200); // Maintains 2:1 aspect ratio
+  });
+
+  test('horizontal layout with shrink preserves aspect ratio', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 100, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {}, shrink: 1, preserveAspectRatio: true }
+    };
+    // Container is 100px, child is 200px, needs to shrink to 100px
+    // Aspect ratio 2:1, so height becomes 50px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 200, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(100);
+    expect(child1.bounds.h).toBe(50); // Maintains 2:1 aspect ratio
+  });
+
+  test('aspect ratio preservation respects cross-axis min constraint', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 200, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: { min: 120 }, shrink: 1, preserveAspectRatio: true }
+    };
+    // Aspect ratio 1:1, shrinks from 200px to 100px width
+    // Would calculate height as 100px, but min is 120px so it becomes 120px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 300, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(100);
+    expect(child1.bounds.h).toBe(120); // Capped at min constraint
+  });
+
+  test('aspect ratio preservation respects cross-axis max constraint', () => {
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: { max: 80 }, grow: 1, preserveAspectRatio: true }
+    };
+    // Would grow height to 100px to maintain aspect, but max is 80px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 200, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.w).toBe(200);
+    expect(child1.bounds.h).toBe(80); // Capped at max
   });
 });
