@@ -2,6 +2,7 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 
 export type ContainerLayoutInstructions = {
   direction: 'vertical' | 'horizontal';
+  gap?: number;
 };
 
 export type ElementLayoutInstructions = {};
@@ -20,6 +21,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   if (layoutNode.children.length === 0) return;
 
   const direction = layoutNode.containerInstructions.direction;
+  const gap = layoutNode.containerInstructions.gap ?? 0;
   let currentOffset = 0;
 
   for (const child of layoutNode.children) {
@@ -29,10 +31,10 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     // Set child's position only in the layout direction
     if (direction === 'horizontal') {
       child.bounds.x = currentOffset;
-      currentOffset += childBoundingBox.w;
+      currentOffset += childBoundingBox.w + gap;
     } else {
       child.bounds.y = currentOffset;
-      currentOffset += childBoundingBox.h;
+      currentOffset += childBoundingBox.h + gap;
     }
 
     // Recursively layout children

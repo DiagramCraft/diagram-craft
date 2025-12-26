@@ -193,4 +193,53 @@ describe('layoutChildren', () => {
     expect(child2.bounds.x).toBe(20); // Preserved
     expect(child2.bounds.y).toBe(50);
   });
+
+  test('horizontal layout with gap', () => {
+    const child1 = createNode('child1', 100, 50);
+    const child2 = createNode('child2', 80, 50);
+    const child3 = createNode('child3', 120, 50);
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 400, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2, child3],
+      containerInstructions: { direction: 'horizontal', gap: 10 },
+      elementInstructions: {}
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.x).toBe(0);
+    expect(child2.bounds.x).toBe(110); // 100 + 10 gap
+    expect(child3.bounds.x).toBe(200); // 100 + 10 + 80 + 10
+  });
+
+  test('vertical layout with gap', () => {
+    const child1 = createNode('child1', 100, 50);
+    const child2 = createNode('child2', 100, 80);
+    const child3 = createNode('child3', 100, 60);
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 250, r: 0, _discriminator: 'ro' }),
+      children: [child1, child2, child3],
+      containerInstructions: { direction: 'vertical', gap: 15 },
+      elementInstructions: {}
+    };
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.y).toBe(0);
+    expect(child2.bounds.y).toBe(65); // 50 + 15 gap
+    expect(child3.bounds.y).toBe(160); // 50 + 15 + 80 + 15
+  });
+
+  test('gap defaults to 0 when not specified', () => {
+    const child1 = createNode('child1', 100, 50);
+    const child2 = createNode('child2', 80, 50);
+    const parent = createNode('parent', 180, 50, 'horizontal', [child1, child2]);
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.x).toBe(0);
+    expect(child2.bounds.x).toBe(100); // No gap
+  });
 });
