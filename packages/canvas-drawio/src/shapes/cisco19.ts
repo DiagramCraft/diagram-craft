@@ -55,7 +55,7 @@ export const registerCisco19Shapes = async (
   shapeParser: Record<string, ShapeParser>
 ) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/cisco19.xml',
+    '$STENCIL_ROOT/stencils/cisco19.xml',
     'Cisco19',
     '#005073',
     '#005073'

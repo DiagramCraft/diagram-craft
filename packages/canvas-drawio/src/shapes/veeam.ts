@@ -21,7 +21,7 @@ const registerStencil = (
 
 export const registerVeeamShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/veeam/veeam2.xml',
+    '$STENCIL_ROOT/stencils/veeam/veeam2.xml',
     'Veeam',
     'black',
     'white'

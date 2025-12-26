@@ -20,7 +20,12 @@ const registerStencil = (
 };
 
 export const registerAzureShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/azure.xml', 'Azure', '#00BEF2', 'white');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/azure.xml',
+    'Azure',
+    '#00BEF2',
+    'white'
+  );
 
   registerStencil(r, 'Access Control', stencils);
   registerStencil(r, 'Automation', stencils);

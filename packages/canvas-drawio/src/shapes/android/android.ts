@@ -81,7 +81,7 @@ export const registerAndroidShapes = async (
   shapeParsers: Record<string, ShapeParser>
 ) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/android/android.xml',
+    '$STENCIL_ROOT/stencils/android/android.xml',
     'Android',
     '#00BEF2',
     'white'

@@ -115,7 +115,12 @@ export const registerAWS4Shapes = async (
   r: NodeDefinitionRegistry,
   shapeParsers: Record<string, ShapeParser>
 ) => {
-  const stencils = await loadDrawioStencils('/stencils/aws4.xml', 'AWS4', '#005073', '#005073');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/aws4.xml',
+    'AWS4',
+    '#005073',
+    '#005073'
+  );
 
   shapeParsers['mxgraph.aws4.resourceIcon'] = parseAWS4Shapes;
   shapeParsers['mxgraph.aws4.group'] = parseAWS4Shapes;
