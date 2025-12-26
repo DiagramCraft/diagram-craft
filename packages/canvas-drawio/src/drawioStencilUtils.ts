@@ -1,6 +1,6 @@
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { assertDrawioShapeNodeDefinition } from './DrawioShape.nodeType';
+import { assertDrawioShapeNodeDefinition } from './node-types/DrawioShape.nodeType';
 import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

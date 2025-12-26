@@ -1,8 +1,7 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { NodeTexts } from '@diagram-craft/model/diagramNode';
-import type { WorkQueue } from './drawioReader';
 import { Angle } from '@diagram-craft/geometry/angle';
-import { dataURItoBlob } from './blobUtils';
+import { dataURItoBlob } from '../blobUtils';
 import {
   assertHAlign,
   assertVAlign,
@@ -12,11 +11,12 @@ import {
 } from '@diagram-craft/model/diagramProps';
 import { FullDirection } from '@diagram-craft/geometry/direction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { StyleManager } from './styleManager';
+import { StyleManager } from '../styleManager';
 import { parseNum } from '@diagram-craft/utils/number';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { WithRequired } from '@diagram-craft/utils/types';
+import type { WorkQueue } from '../workQueue';
 
 const makeShape = (
   type: string,
