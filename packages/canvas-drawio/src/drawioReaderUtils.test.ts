@@ -6,7 +6,8 @@ import {
   parseStencilString,
   MxPoint,
   MxGeometry,
-  hasValue
+  hasValue,
+  deflate
 } from './drawioReaderUtils';
 
 describe('angleFromDirection', () => {
@@ -255,5 +256,121 @@ describe('hasValue', () => {
 
   test('returns true for self-closing img tag', () => {
     expect(hasValue('<img src="test.png"/>')).toBe(true);
+  });
+});
+
+// Helper to create test data by compressing and encoding
+async function createCompressedData(input: string): Promise<string> {
+  // URI encode
+  const uriEncoded = encodeURIComponent(input);
+
+  // Convert to Uint8Array
+  const encoder = new TextEncoder();
+  const data = encoder.encode(uriEncoded);
+
+  // Compress using deflate-raw
+  const cs = new CompressionStream('deflate-raw');
+  const writer = cs.writable.getWriter();
+  writer.write(data);
+  writer.close();
+
+  const compressed = await new Response(cs.readable).arrayBuffer();
+
+  // Convert to base64
+  const bytes = new Uint8Array(compressed);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    // @ts-expect-error
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+describe('deflate', () => {
+  test('decompresses simple text', async () => {
+    const input = 'Hello World';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses text with special characters', async () => {
+    const input = 'Hello @#$%^&*()';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses text with spaces', async () => {
+    const input = 'This is a test with spaces';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses text with newlines', async () => {
+    const input = 'Line 1\nLine 2\nLine 3';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses text with Unicode characters', async () => {
+    const input = 'Hello 世界 🌍';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses XML-like content', async () => {
+    const input = '<mxGraphModel><root><mxCell id="0"/></root></mxGraphModel>';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses text with URI-encodable characters', async () => {
+    const input = 'test=value&key=data';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses empty string', async () => {
+    const input = '';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses single character', async () => {
+    const input = 'A';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses long text', async () => {
+    const input = 'a'.repeat(1000);
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('decompresses JSON-like content', async () => {
+    const input = '{"key":"value","number":123}';
+    const compressed = await createCompressedData(input);
+    const result = await deflate(compressed);
+    expect(result).toBe(input);
+  });
+
+  test('throws error for invalid base64', async () => {
+    await expect(deflate('not-valid-base64!!!')).rejects.toThrow();
+  });
+
+  test('throws error for valid base64 but invalid deflate data', async () => {
+    // Valid base64 that's not deflate-compressed
+    const invalidData = btoa('just plain text');
+    await expect(deflate(invalidData)).rejects.toThrow();
   });
 });
