@@ -1,7 +1,7 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
@@ -67,9 +67,28 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
     this.capabilities.rounding = false;
   }
 
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ) {
+    node.diagram.moveElement(elements, uow, node.layer, {
+      relation: 'on',
+      element: node
+    });
+  }
+
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
     // First layout all children
     super.layoutChildren(node, uow);
+
+    this.doLayoutChildren(node, uow);
+  }
+
+  private doLayoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    if (node.children.length === 0) return;
 
     const nodeProps = node.renderProps;
 
@@ -79,8 +98,7 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
         x: -node.bounds.x - node.bounds.w / 2,
         y: -node.bounds.y - node.bounds.h / 2
       }),
-      new Rotation(-node.bounds.r),
-      // Move back to 0,0
+      new Rotation(-node.bounds.r), // Move back to 0,0
       new Translation({
         x: node.bounds.w / 2,
         y: node.bounds.h / 2
@@ -132,13 +150,14 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
     }
 
     // Only trigger parent.onChildChanged in case this node has indeed changed
-    if (node.parent && isNode(node.parent) && !Box.isEqual(node.bounds, boundsBefore)) {
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
-        assert.node(node.parent!);
-
-        const parentDef = node.parent.getDefinition();
-        parentDef.onChildChanged(node.parent, uow);
-      });
+    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
+      if (isNode(node.parent)) {
+        uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+          assert.node(node.parent!);
+          const parentDef = node.parent.getDefinition();
+          parentDef.onChildChanged(node.parent, uow);
+        });
+      }
     }
   }
 
@@ -219,6 +238,8 @@ class SwimlaneComponent extends BaseNodeComponent {
     const nodeProps = props.nodeProps;
     const shapeProps = nodeProps.custom.swimlane;
 
+    // Step 1: Create a transparent base shape for mouse interactions
+    // This serves as the clickable/hoverable area and shows a highlight when dragging
     builder.noBoundaryNeeded();
     builder.add(
       svg.path({
@@ -227,7 +248,7 @@ class SwimlaneComponent extends BaseNodeComponent {
         'y': props.node.bounds.y,
         'width': props.node.bounds.w,
         'height': props.node.bounds.h,
-        'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : '#d5d5d4',
+        'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : 'none',
         'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
         'fill': 'transparent',
         'on': {
@@ -237,6 +258,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       })
     );
 
+    // Step 2: Add optional background fill for entire swimlane
     if (shapeProps.fill && nodeProps.fill.enabled !== false) {
       builder.boundaryPath(boundary.all(), {
         fill: nodeProps.fill,
@@ -244,6 +266,8 @@ class SwimlaneComponent extends BaseNodeComponent {
       });
     }
 
+    // Step 3: Render all child elements (swimlane rows)
+    // Children are wrapped in a group with rotation transform to handle rotated swimlanes
     props.node.children.forEach(child => {
       builder.add(
         svg.g(
@@ -253,6 +277,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       );
     });
 
+    // Step 4: Build the outer border (rectangle around the entire swimlane)
     const pathBuilder = new PathListBuilder();
 
     const hasOuterBorder = shapeProps.outerBorder !== false;
@@ -260,12 +285,14 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     if (hasOuterBorder) {
       if (hasTitleBorder) {
+        // If title border is enabled, outer border includes the title area
         PathBuilderHelper.rect(pathBuilder, {
           ...props.node.bounds,
           y: props.node.bounds.y,
           h: props.node.bounds.h
         });
       } else {
+        // If title border is disabled, outer border starts below the title
         PathBuilderHelper.rect(pathBuilder, {
           ...props.node.bounds,
           y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
@@ -276,12 +303,14 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     const bounds = props.node.bounds;
 
+    // Step 5: Handle the optional title area at the top
     let startY = bounds.y;
     if (shapeProps.title) {
       const titleSize = shapeProps.titleSize;
       startY += titleSize;
 
       if (hasTitleBorder) {
+        // Draw the title area as a filled rectangle at the top
         const titlePathBuilder = new PathListBuilder();
         titlePathBuilder.moveTo(Point.of(bounds.x, startY));
         titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
@@ -291,6 +320,7 @@ class SwimlaneComponent extends BaseNodeComponent {
 
         builder.path(titlePathBuilder.getPaths().all(), {
           ...nodeProps,
+          // Disable stroke if outer border is present (to avoid double borders)
           stroke:
             !nodeProps.stroke.enabled || hasOuterBorder
               ? { enabled: false, color: 'transparent' }
@@ -298,8 +328,9 @@ class SwimlaneComponent extends BaseNodeComponent {
           fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
         });
 
-        // In case we have an outer border, the above code draws a transparent outline,
-        // so we are now missing the bottom border
+        // When outer border exists, we disabled the stroke above to avoid double borders
+        // But this means we're missing the bottom border of the title area
+        // So we add just that horizontal line here
         if (hasOuterBorder) {
           const titlePathBuilder = new PathListBuilder();
           titlePathBuilder.moveTo(Point.of(bounds.x, startY));
@@ -315,15 +346,18 @@ class SwimlaneComponent extends BaseNodeComponent {
         }
       }
 
+      // Add the text content in the title area
       builder.text(this, '1', props.node.getText(), nodeProps.text, {
         ...bounds,
         h: titleSize
       });
     }
 
+    // Step 6: Add horizontal borders between child rows
     if (shapeProps.horizontalBorder !== false) {
       let y = startY;
       const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
+      // Loop through children and add lines between them (not after the last one)
       for (let i = 0; i < sortedChildren.length - 1; i++) {
         const child = sortedChildren[i];
         if (isNode(child)) {
@@ -334,6 +368,8 @@ class SwimlaneComponent extends BaseNodeComponent {
       }
     }
 
+    // Step 7: Render all the borders (outer border + horizontal dividers)
+    // Use stroke from nodeProps but no fill
     builder.path(pathBuilder.getPaths().all(), {
       ...nodeProps,
       stroke: !nodeProps.stroke.enabled

@@ -111,10 +111,26 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
+  registerStencil(reg, defaults, new SwimlaneNodeDefinition(), {
+    texts: {
+      text: 'Swimlane'
+    },
+    props: () => ({
+      custom: {
+        swimlane: {
+          title: true,
+          fill: true,
+          outerBorder: true,
+          titleBorder: true,
+          horizontalBorder: true
+        }
+      }
+    })
+  });
+
   // Hidden node definitions
   reg.register(new GenericPathNodeDefinition());
   reg.register(new PartialRectNodeDefinition());
-  reg.register(new SwimlaneNodeDefinition());
   reg.register(new TableNodeDefinition());
   reg.register(new TableRowNodeDefinition());
 

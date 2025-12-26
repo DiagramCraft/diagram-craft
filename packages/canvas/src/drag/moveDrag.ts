@@ -8,6 +8,7 @@ import { Translation } from '@diagram-craft/geometry/transform';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
 import {
+  AbstractDiagramElement,
   DiagramElement,
   isEdge,
   isNode,
@@ -186,8 +187,6 @@ export abstract class AbstractMoveDrag extends Drag {
     this.clearHighlight();
     enablePointerEvents(selection.elements);
 
-    const snapshots = this.uow.commit();
-
     if (selection.isChanged()) {
       const compoundUndoAction = new CompoundUndoableAction();
 
@@ -203,15 +202,12 @@ export abstract class AbstractMoveDrag extends Drag {
         compoundUndoAction.addAction(resizeCanvasAction);
       }
 
-      const addedElements = snapshots.onlyAdded().keys;
+      // TODO: This is actually ok at the moment, but better to perhaps have a isDiagramElement
+      const addedElements = [...this.uow.added].filter(e => e instanceof AbstractDiagramElement);
       if (addedElements.length > 0) {
         assertRegularLayer(this.diagram.activeLayer);
         compoundUndoAction.addAction(
-          new ElementAddUndoableAction(
-            addedElements.map(e => this.diagram.lookup(e)!),
-            this.diagram,
-            this.diagram.activeLayer
-          )
+          new ElementAddUndoableAction(addedElements, this.diagram, this.diagram.activeLayer)
         );
       }
 
@@ -228,9 +224,14 @@ export abstract class AbstractMoveDrag extends Drag {
           VERIFY_NOT_REACHED();
         }
 
+        // TODO: Change to use capabilities - or perhaps onDragOut
         // Move elements out of a container
       } else if (
-        selection.elements.every(e => isNode(e.parent) && e.parent?.nodeType === 'container')
+        selection.elements.every(
+          e =>
+            isNode(e.parent) &&
+            (e.parent?.nodeType === 'container' || e.parent?.nodeType === 'swimlane')
+        )
       ) {
         this.diagram.moveElement(
           selection.elements,
@@ -245,14 +246,15 @@ export abstract class AbstractMoveDrag extends Drag {
         );
       }
 
+      const snapshots = this.uow.commit();
       compoundUndoAction.addAction(
         new SnapshotUndoableAction('Move', this.diagram, snapshots.onlyUpdated())
       );
 
       if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+    } else {
+      this.uow.commit();
     }
-
-    this.uow.commit();
     selection.rebaseline();
   }
 
