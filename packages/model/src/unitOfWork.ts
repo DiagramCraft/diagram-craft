@@ -353,6 +353,18 @@ export class UnitOfWork {
     }
   }
 
+  get added() {
+    return this.#elementsToAdd.values();
+  }
+
+  get updated() {
+    return this.#elementsToUpdate.values();
+  }
+
+  get removed() {
+    return this.#elementsToRemove.values();
+  }
+
   stopTracking() {
     this.trackChanges = false;
   }
