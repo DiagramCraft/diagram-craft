@@ -1,6 +1,5 @@
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Layer } from '@diagram-craft/model/diagramLayer';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
@@ -8,7 +7,7 @@ import { DiagramEdge, SimpleDiagramEdge, Waypoint } from '@diagram-craft/model/d
 import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
-import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { clipPath } from '@diagram-craft/model/diagramEdgeUtils';
@@ -37,7 +36,6 @@ import { xIterElements, xNum } from '@diagram-craft/utils/xml';
 import { parseNum } from '@diagram-craft/utils/number';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { getParser, shapeParsers } from './drawioShapeParserRegistry';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { MultiMap } from '@diagram-craft/utils/multimap';
@@ -53,6 +51,9 @@ import {
   MxPoint,
   parseStencilString
 } from './drawioReaderUtils';
+import { sanitizeHtml } from '@diagram-craft/utils/dom';
+
+type Parent = RegularLayer | DiagramNode | DiagramEdge;
 
 type CellElements = {
   $cell: Element;
@@ -61,7 +62,7 @@ type CellElements = {
 };
 
 type CellContext = {
-  parents: Map<string, Layer | DiagramNode | DiagramEdge>;
+  parents: Map<string, Parent>;
   queue: WorkQueue;
   uow: UnitOfWork;
 };
@@ -87,7 +88,9 @@ const calculateLabelNodeActualSize = (
   css.push('line-height: 120%');
   css.push('color: black');
 
-  $el.innerHTML = value.startsWith('<') ? value : `<span style="${css.join(';')}">${value}</span>`;
+  $el.innerHTML = sanitizeHtml(
+    value.startsWith('<') ? value : `<span style="${css.join(';')}">${value}</span>`
+  );
 
   textNode.setBounds(
     {
@@ -206,7 +209,7 @@ const attachLabelNode = (
 const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow: UnitOfWork) => {
   const diagram = edge.diagram;
 
-  const source = $cell.getAttribute('source')!;
+  const source = $cell.getAttribute('source');
   if (source) {
     const sourceNode = diagram.nodeLookup.get(source);
     if (sourceNode) {
@@ -222,7 +225,7 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow:
     }
   }
 
-  const target = $cell.getAttribute('target')!;
+  const target = $cell.getAttribute('target');
   if (target) {
     const targetNode = diagram.nodeLookup.get(target);
     if (targetNode) {
@@ -483,6 +486,50 @@ const parseMetadata = ($parent: Element) => {
   return dest;
 };
 
+const applyRotation = (bounds: Box, style: StyleManager) => {
+  let newBounds = { ...bounds };
+  if (style.str('direction') === 'south') {
+    const p = Point.rotateAround(
+      Point.add(newBounds, {
+        x: 0,
+        y: newBounds.w
+      }),
+      Math.PI / 2,
+      Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+    );
+
+    newBounds = {
+      ...newBounds,
+      w: newBounds.h,
+      h: newBounds.w,
+      r: Math.PI / 2,
+      x: newBounds.x + (newBounds.x - p.x),
+      y: newBounds.y + (newBounds.y - p.y)
+    };
+  } else if (style.str('direction') === 'north') {
+    const p = Point.rotateAround(
+      Point.add(newBounds, {
+        x: newBounds.h,
+        y: 0
+      }),
+      -Math.PI / 2,
+      Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
+    );
+
+    newBounds = {
+      ...newBounds,
+      w: newBounds.h,
+      h: newBounds.w,
+      r: -Math.PI / 2,
+      x: newBounds.x + (newBounds.x - p.x),
+      y: newBounds.y + (newBounds.y - p.y)
+    };
+  } else if (style.str('direction') === 'west') {
+    newBounds = { ...newBounds, r: Math.PI };
+  }
+  return newBounds;
+};
+
 const parseShape = async (
   id: string,
   bounds: Box,
@@ -495,71 +542,24 @@ const parseShape = async (
 ): Promise<DiagramNode> => {
   const diagram = layer.diagram;
   if (style.shape! in shapeParsers) {
-    return await shapeParsers[style.shape!]!(
-      id,
-      bounds,
-      props,
-      metadata,
-      texts,
-      style,
-      layer,
-      queue
-    );
+    const parser = mustExist(shapeParsers[style.shape!]);
+    return await parser(id, bounds, props, metadata, texts, style, layer, queue);
   } else if (style.styleName === 'image' || style.has('image')) {
     return await parseImage(id, bounds, props, metadata, texts, style, layer, queue);
   } else if (style.shape?.startsWith('mxgraph.') || !!getShapeBundle(style.shape)) {
     const registry = diagram.document.nodeDefinitions;
 
-    const loader = getShapeBundle(style.shape);
-    if (!loader) {
-      console.warn(`No loader found for ${style.shape}`);
+    const bundle = getShapeBundle(style.shape);
+    if (!bundle) {
+      console.warn(`No bundle found for ${style.shape}`);
       return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
     }
 
     if (!registry.hasRegistration(style.shape!)) {
-      await loadShapeBundle(loader, registry);
+      await loadShapeBundle(bundle, registry);
     }
 
-    let newBounds = { ...bounds };
-    if (style.str('direction') === 'south') {
-      const p = Point.rotateAround(
-        Point.add(newBounds, {
-          x: 0,
-          y: newBounds.w
-        }),
-        Math.PI / 2,
-        Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-      );
-
-      newBounds = {
-        ...newBounds,
-        w: newBounds.h,
-        h: newBounds.w,
-        r: Math.PI / 2,
-        x: newBounds.x + (newBounds.x - p.x),
-        y: newBounds.y + (newBounds.y - p.y)
-      };
-    } else if (style.str('direction') === 'north') {
-      const p = Point.rotateAround(
-        Point.add(newBounds, {
-          x: newBounds.h,
-          y: 0
-        }),
-        -Math.PI / 2,
-        Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-      );
-
-      newBounds = {
-        ...newBounds,
-        w: newBounds.h,
-        h: newBounds.w,
-        r: -Math.PI / 2,
-        x: newBounds.x + (newBounds.x - p.x),
-        y: newBounds.y + (newBounds.y - p.y)
-      };
-    } else if (style.str('direction') === 'west') {
-      newBounds = { ...newBounds, r: Math.PI };
-    }
+    const newBounds = applyRotation(bounds, style);
 
     const parser = getParser(style.shape);
     if (parser) {
@@ -645,7 +645,7 @@ const parseEdge = (
   metadata: ElementMetadata,
   style: StyleManager,
   layer: RegularLayer,
-  parents: Map<string, Layer | DiagramNode | DiagramEdge>,
+  parents: Map<string, Parent>,
   isWrappedByObject: boolean,
   { $cell, $geometry, $parent }: CellElements,
   { queue, uow }: CellContext
@@ -888,6 +888,65 @@ const parseLabelStyles = (texts: NodeTexts, style: StyleManager) => {
   }
 };
 
+const attachNodeToParent = (
+  node: DiagramElement,
+  parent: Parent,
+  $geometry: Element,
+  { queue, uow }: CellContext
+) => {
+  if (parent instanceof SimpleDiagramNode) {
+    // Need to offset the bounds according to the parent
+
+    const offsetPoint = $geometry.querySelector('mxPoint[as=offset]');
+
+    // TODO: Unclear why the `&& offsetPoint` condition - needed by test6
+    const isRelative = $geometry.getAttribute('relative') === '1' && offsetPoint;
+
+    const newBounds = {
+      x:
+        (isRelative ? node.bounds.x * parent.bounds.w : node.bounds.x) +
+        parent.bounds.x +
+        (offsetPoint ? xNum(offsetPoint, 'x', 0) : 0),
+      y:
+        (isRelative ? node.bounds.y * parent.bounds.h : node.bounds.y) +
+        parent.bounds.y +
+        (offsetPoint ? xNum(offsetPoint, 'y', 0) : 0),
+      w: node.bounds.w,
+      h: node.bounds.h,
+      r: node.bounds.r
+    };
+
+    node.setBounds(newBounds, uow);
+
+    if (node instanceof SimpleDiagramEdge) {
+      const edge = node;
+      edge.waypoints.forEach(wp => {
+        edge.moveWaypoint(wp, Point.add(parent.bounds, wp.point), uow);
+      });
+    }
+
+    if (node.editProps.fill?.color === 'inherit') {
+      node.updateProps(props => {
+        props.fill!.color = parent.renderProps.fill.color;
+      }, uow);
+    }
+    if (node.editProps.stroke?.color === 'inherit') {
+      node.updateProps(props => {
+        props.stroke!.color = parent.renderProps.stroke.color;
+      }, uow);
+    }
+
+    // This needs to be deferred as adding children changes the bounds of the group
+    // meaning adding additional children will have the wrong parent bounds to resolve
+    // the group local coordinates
+    queue.add(() => parent.setChildren([...parent.children, node], uow));
+  } else if (parent instanceof RegularLayer) {
+    parent.addElement(node, uow);
+  } else {
+    VERIFY_NOT_REACHED();
+  }
+};
+
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -908,8 +967,8 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
   // Phase 1 - Determine parent child relationships
   const parentChild = parseParentChildRelations($$cells, rootId);
 
-  // Phase 2 - process all objects
-  const parents = new Map<string, Layer | DiagramNode | DiagramEdge>();
+  // Phase 2 - process all objects (cells)
+  const parents = new Map<string, Parent>();
   for (const $cell of xIterElements($$cells)) {
     const $parent = $cell.parentElement!;
     const wrapped = $parent.tagName === 'object' || $parent.tagName === 'UserObject';
@@ -920,40 +979,38 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
     // Ignore the root
     if (id === rootId) continue;
 
-    const parent = $cell.getAttribute('parent')!;
-    const value = $cell.getAttribute('value')!;
+    const parentId = mustExist($cell.getAttribute('parent'));
+    const value = $cell.getAttribute('value');
 
-    const isGroup = parentChild.has(id) && parent !== rootId;
+    const isLayer = parentId === rootId; // 1st level of elements constitutes layers
+    const isGroup = parentChild.has(id) && !isLayer;
+    const isEdge = $cell.getAttribute('edge') === '1';
 
-    // is layer? - first level of elements constitutes layers
-    if (parent === rootId) {
+    if (isLayer) {
       const layer = new RegularLayer(id, value ?? 'Background', [], diagram);
       diagram.layers.add(layer, uow);
-      if (xNum($cell, 'visible', 1) === 0) {
+      if ($cell.getAttribute('visible') === '0') {
         diagram.layers.toggleVisibility(layer);
       }
 
       parents.set(id, layer);
     } else {
-      const style = new StyleManager($cell.getAttribute('style')!, isGroup);
+      const style = new StyleManager($cell.getAttribute('style') ?? '', isGroup);
 
       const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
       const bounds = MxGeometry.boundsFrom($geometry);
       bounds.r = Angle.toRad(style.num('rotation', 0));
 
-      const p = parents.get(parent);
-      assert.present(p);
+      const parent = mustExist(parents.get(parentId));
 
-      const layer = p instanceof Layer ? p : p.layer;
-      assertRegularLayer(layer);
+      const layer = parent instanceof RegularLayer ? parent : (parent.layer as RegularLayer);
 
-      const metadata: ElementMetadata = {};
-
-      const props = parseNodeProps(style, $cell.getAttribute('edge') === '1');
+      const props = parseNodeProps(style, isEdge);
       const texts: NodeTexts = {
         text: hasValue(value) ? value : ''
       };
 
+      const metadata: ElementMetadata = {};
       if (wrapped) {
         metadata.data ??= {};
         metadata.data.customData = parseMetadata($parent);
@@ -967,11 +1024,11 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
       const ctx: CellContext = { parents, queue, uow };
 
       let node: DiagramElement | undefined;
-      if ($cell.getAttribute('edge') === '1') {
+      if (isEdge) {
         node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
       } else if (style.styleName === 'edgeLabel') {
-        parseLabelNode(id, props, style, diagram, parent, value, $geometry, ctx);
-      } else if (parentChild.has(id) || style.styleName === 'group') {
+        parseLabelNode(id, props, style, diagram, parentId, mustExist(value), $geometry, ctx);
+      } else if (isGroup || style.styleName === 'group') {
         node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
       } else if (style.styleName === 'text') {
         node = parseText(id, bounds, props, metadata, texts, style, layer);
@@ -983,55 +1040,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
 
       // Attach all nodes created to their parent (group and/or layer)
       if (node) {
-        if (p instanceof SimpleDiagramNode) {
-          // Need to offset the bounds according to the parent
-
-          const offsetPoint = $geometry.querySelector('mxPoint[as=offset]');
-
-          // TODO: Unclear why the `&& offsetPoint` condition - needed by test6
-          const isRelative = $geometry.getAttribute('relative') === '1' && offsetPoint;
-
-          const newBounds = {
-            x:
-              (isRelative ? node.bounds.x * p.bounds.w : node.bounds.x) +
-              p.bounds.x +
-              (offsetPoint ? xNum(offsetPoint, 'x', 0) : 0),
-            y:
-              (isRelative ? node.bounds.y * p.bounds.h : node.bounds.y) +
-              p.bounds.y +
-              (offsetPoint ? xNum(offsetPoint, 'y', 0) : 0),
-            w: node.bounds.w,
-            h: node.bounds.h,
-            r: node.bounds.r
-          };
-
-          node.setBounds(newBounds, uow);
-
-          if (node instanceof SimpleDiagramEdge) {
-            const edge = node;
-            edge.waypoints.forEach(wp => {
-              edge.moveWaypoint(wp, Point.add(p.bounds, wp.point), uow);
-            });
-          }
-
-          if (node.editProps.fill?.color === 'inherit') {
-            node.updateProps(props => {
-              props.fill!.color = p.renderProps.fill.color;
-            }, uow);
-          }
-          if (node.editProps.stroke?.color === 'inherit') {
-            node.updateProps(props => {
-              props.stroke!.color = p.renderProps.stroke.color;
-            }, uow);
-          }
-
-          // This needs to be deferred as adding children changes the bounds of the group
-          // meaning adding additional children will have the wrong parent bounds to resolve
-          // the group local coordinates
-          queue.add(() => p.setChildren([...p.children, node], uow));
-        } else {
-          layer.addElement(node, uow);
-        }
+        attachNodeToParent(node, parent, $geometry, ctx);
       }
     }
   }
@@ -1102,6 +1111,7 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
 };
 
 export const _test = {
-  getNodeProps: parseNodeProps,
-  readMetadata: parseMetadata
+  parseNodeProps,
+  parseMetadata,
+  applyRotation
 };

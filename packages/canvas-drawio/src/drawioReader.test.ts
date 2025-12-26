@@ -6,7 +6,7 @@ import { StyleManager } from './styleManager';
 describe('parseNodeProps', () => {
   test('sets default text properties for nodes', () => {
     const style = new StyleManager('');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.text?.fontSize).toBe(12);
     expect(props.text?.font).toBe('Helvetica');
@@ -17,14 +17,14 @@ describe('parseNodeProps', () => {
 
   test('sets default text properties for edges', () => {
     const style = new StyleManager('');
-    const props = _test.getNodeProps(style, true);
+    const props = _test.parseNodeProps(style, true);
 
     expect(props.text?.fontSize).toBe(11);
   });
 
   test('parses text alignment properties', () => {
     const style = new StyleManager('align=left;verticalAlign=top');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.text?.align).toBe('left');
     expect(props.text?.valign).toBe('top');
@@ -32,7 +32,7 @@ describe('parseNodeProps', () => {
 
   test('parses font properties', () => {
     const style = new StyleManager('fontFamily=Arial;fontColor=red;fontSize=16;fontStyle=3');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.text?.font).toBe('Arial');
     expect(props.text?.color).toBe('red');
@@ -43,14 +43,14 @@ describe('parseNodeProps', () => {
 
   test('parses fill color', () => {
     const style = new StyleManager('fillColor=blue');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.fill?.color).toBe('blue');
   });
 
   test('parses gradient properties', () => {
     const style = new StyleManager('gradientColor=red;gradientDirection=north');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.fill?.type).toBe('gradient');
     expect(props.fill?.color2).toBe('red');
@@ -60,7 +60,7 @@ describe('parseNodeProps', () => {
 
   test('parses stroke properties', () => {
     const style = new StyleManager('strokeColor=green;strokeWidth=3');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.stroke?.color).toBe('green');
     expect(props.stroke?.width).toBe(3);
@@ -68,7 +68,7 @@ describe('parseNodeProps', () => {
 
   test('parses dashed stroke pattern', () => {
     const style = new StyleManager('dashed=1;dashPattern=8 4;strokeWidth=2');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.stroke?.pattern).toBe('DASHED');
     expect(props.stroke?.patternSpacing).toBe(80);
@@ -77,14 +77,14 @@ describe('parseNodeProps', () => {
 
   test('parses opacity effect', () => {
     const style = new StyleManager('opacity=50');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.effects?.opacity).toBe(0.5);
   });
 
   test('parses sketch effect', () => {
     const style = new StyleManager('sketch=1');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.effects?.sketch).toBe(true);
     expect(props.effects?.sketchFillType).toBe('hachure');
@@ -92,14 +92,14 @@ describe('parseNodeProps', () => {
 
   test('parses glass effect', () => {
     const style = new StyleManager('glass=1');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.effects?.glass).toBe(true);
   });
 
   test('parses rounded effect', () => {
     const style = new StyleManager('rounded=1;arcSize=10');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.effects?.rounding).toBe(true);
     expect(props.effects?.roundingAmount).toBe(10);
@@ -107,7 +107,7 @@ describe('parseNodeProps', () => {
 
   test('parses shadow effect', () => {
     const style = new StyleManager('shadow=1');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.shadow?.enabled).toBe(true);
     expect(props.shadow?.color).toBe('#999999');
@@ -118,7 +118,7 @@ describe('parseNodeProps', () => {
 
   test('parses geometry flip properties', () => {
     const style = new StyleManager('shape=rect;flipH=1;flipV=1');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.geometry?.flipH).toBe(true);
     expect(props.geometry?.flipV).toBe(true);
@@ -126,7 +126,7 @@ describe('parseNodeProps', () => {
 
   test('parses capability properties', () => {
     const style = new StyleManager('rotatable=0;resizable=0;movable=0;editable=0;deletable=0');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.capabilities?.rotatable).toBe(false);
     expect(props.capabilities?.resizable).toEqual({ vertical: false, horizontal: false });
@@ -139,7 +139,7 @@ describe('parseNodeProps', () => {
     const style = new StyleManager(
       'indicatorShape=ellipse;indicatorColor=red;indicatorDirection=north;indicatorWidth=15;indicatorHeight=20'
     );
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.indicators?._default?.enabled).toBe(true);
     expect(props.indicators?._default?.shape).toBe('disc');
@@ -151,20 +151,20 @@ describe('parseNodeProps', () => {
 
   test('parses routing constraint', () => {
     const style = new StyleManager('portConstraint=north');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.routing?.constraint).toBe('n');
   });
 
   test('parses perimeter spacing', () => {
     const style = new StyleManager('perimeterSpacing=5');
-    const props = _test.getNodeProps(style, false);
+    const props = _test.parseNodeProps(style, false);
 
     expect(props.routing?.spacing).toBe(5);
   });
 });
 
-describe('readMetadata', () => {
+describe('parseMetadata', () => {
   const createElement = (attributes: Record<string, string>): HTMLElement => {
     const parser = new DOMParser();
     const doc = parser.parseFromString('<element/>', 'text/xml');
@@ -184,7 +184,7 @@ describe('readMetadata', () => {
       anotherField: 'value2'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({
       customData: 'value1',
@@ -198,7 +198,7 @@ describe('readMetadata', () => {
       data: 'value'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).not.toHaveProperty('id');
     expect(metadata).toEqual({ data: 'value' });
@@ -210,7 +210,7 @@ describe('readMetadata', () => {
       data: 'value'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).not.toHaveProperty('label');
     expect(metadata).toEqual({ data: 'value' });
@@ -222,7 +222,7 @@ describe('readMetadata', () => {
       data: 'value'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).not.toHaveProperty('placeholders');
     expect(metadata).toEqual({ data: 'value' });
@@ -231,7 +231,7 @@ describe('readMetadata', () => {
   test('returns empty object when no attributes present', () => {
     const element = createElement({});
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({});
   });
@@ -243,7 +243,7 @@ describe('readMetadata', () => {
       placeholders: '1'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({});
   });
@@ -256,7 +256,7 @@ describe('readMetadata', () => {
       field4: 'value4'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({
       field1: 'value1',
@@ -272,7 +272,7 @@ describe('readMetadata', () => {
       'x-attribute': 'test'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({
       'data-custom': 'value',
@@ -286,10 +286,111 @@ describe('readMetadata', () => {
       normalAttr: 'value'
     });
 
-    const metadata = _test.readMetadata(element);
+    const metadata = _test.parseMetadata(element);
 
     expect(metadata).toEqual({
       normalAttr: 'value'
     });
+  });
+});
+
+describe('applyRotation', () => {
+  test('returns unchanged bounds when no direction is specified', () => {
+    const style = new StyleManager('');
+    const bounds = { x: 10, y: 20, w: 100, h: 50, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result).toEqual({ x: 10, y: 20, w: 100, h: 50, r: 0 });
+  });
+
+  test('returns unchanged bounds when direction is east', () => {
+    const style = new StyleManager('direction=east');
+    const bounds = { x: 10, y: 20, w: 100, h: 50, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result).toEqual({ x: 10, y: 20, w: 100, h: 50, r: 0 });
+  });
+
+  test('applies 90 degree rotation when direction is south', () => {
+    const style = new StyleManager('direction=south');
+    const bounds = { x: 100, y: 100, w: 80, h: 40, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.r).toBe(Math.PI / 2);
+    expect(result.w).toBe(40);
+    expect(result.h).toBe(80);
+  });
+
+  test('applies -90 degree rotation when direction is north', () => {
+    const style = new StyleManager('direction=north');
+    const bounds = { x: 100, y: 100, w: 80, h: 40, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.r).toBe(-Math.PI / 2);
+    expect(result.w).toBe(40);
+    expect(result.h).toBe(80);
+  });
+
+  test('applies 180 degree rotation when direction is west', () => {
+    const style = new StyleManager('direction=west');
+    const bounds = { x: 100, y: 100, w: 80, h: 40, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.r).toBe(Math.PI);
+    expect(result.w).toBe(80);
+    expect(result.h).toBe(40);
+    expect(result.x).toBe(100);
+    expect(result.y).toBe(100);
+  });
+
+  test('correctly adjusts position for south rotation', () => {
+    const style = new StyleManager('direction=south');
+    const bounds = { x: 0, y: 0, w: 100, h: 50, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.w).toBe(50);
+    expect(result.h).toBe(100);
+    expect(result.r).toBe(Math.PI / 2);
+  });
+
+  test('correctly adjusts position for north rotation', () => {
+    const style = new StyleManager('direction=north');
+    const bounds = { x: 0, y: 0, w: 100, h: 50, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.w).toBe(50);
+    expect(result.h).toBe(100);
+    expect(result.r).toBe(-Math.PI / 2);
+  });
+
+  test('handles square bounds for south rotation', () => {
+    const style = new StyleManager('direction=south');
+    const bounds = { x: 50, y: 50, w: 100, h: 100, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result.w).toBe(100);
+    expect(result.h).toBe(100);
+    expect(result.r).toBe(Math.PI / 2);
+  });
+
+  test('preserves other properties when applying rotation', () => {
+    const style = new StyleManager('direction=south');
+    const bounds = { x: 10, y: 20, w: 100, h: 50, r: 0 };
+
+    const result = _test.applyRotation(bounds, style);
+
+    expect(result).toHaveProperty('x');
+    expect(result).toHaveProperty('y');
+    expect(result).toHaveProperty('w');
+    expect(result).toHaveProperty('h');
+    expect(result).toHaveProperty('r');
   });
 });
