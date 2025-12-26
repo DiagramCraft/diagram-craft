@@ -46,6 +46,7 @@ import {
   angleFromDirection,
   deflate,
   hasValue,
+  isHTML,
   isStencilString,
   MxGeometry,
   MxPoint,
@@ -80,16 +81,16 @@ const calculateLabelNodeActualSize = (
   $el.style.lineHeight = '0';
   document.body.appendChild($el);
 
-  const css: string[] = [];
-
-  css.push(`font-size: ${style.num('fontSize', 12)}px`);
-  css.push(`font-family: ${style.str('fontFamily') ?? 'Helvetica'}`);
-  css.push('direction: ltr');
-  css.push('line-height: 120%');
-  css.push('color: black');
+  const css = [
+    `font-size: ${style.num('fontSize', 12)}px`,
+    `font-family: ${style.str('fontFamily') ?? 'Helvetica'}`,
+    'direction: ltr',
+    'line-height: 120%',
+    'color: black'
+  ].join(';');
 
   $el.innerHTML = sanitizeHtml(
-    value.startsWith('<') ? value : `<span style="${css.join(';')}">${value}</span>`
+    value.startsWith('<') ? value : `<span style="${css}">${value}</span>`
   );
 
   textNode.setBounds(
@@ -112,10 +113,9 @@ const createLabelNode = (
   edge: DiagramEdge,
   text: string,
   props: NodeProps,
-  bgColor: string,
-  uow: UnitOfWork
+  bgColor: string
 ) => {
-  const textNode = ElementFactory.node(
+  return ElementFactory.node(
     id,
     'text',
     edge.bounds,
@@ -136,13 +136,6 @@ const createLabelNode = (
     {},
     { text }
   );
-
-  // Add text node to any parent group
-  if (edge.parent) {
-    edge.parent.setChildren([...edge.parent.children, textNode], uow);
-  }
-
-  return textNode;
 };
 
 const attachLabelNode = (
@@ -216,8 +209,8 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow:
       edge.setStart(
         new PointInNodeEndpoint(
           sourceNode,
-          _p(style.num('exitX', 0.5), style.num('exitY', 0.5)),
-          _p(style.num('exitDx', 0), style.num('exitDy', 0)),
+          Point.of(style.num('exitX', 0.5), style.num('exitY', 0.5)),
+          Point.of(style.num('exitDx', 0), style.num('exitDy', 0)),
           'absolute'
         ),
         uow
@@ -232,8 +225,8 @@ const attachEdge = (edge: DiagramEdge, $cell: Element, style: StyleManager, uow:
       edge.setEnd(
         new PointInNodeEndpoint(
           targetNode,
-          _p(style.num('entryX', 0.5), style.num('entryY', 0.5)),
-          _p(style.num('entryDx', 0), style.num('entryDy', 0)),
+          Point.of(style.num('entryX', 0.5), style.num('entryY', 0.5)),
+          Point.of(style.num('entryDx', 0), style.num('entryDy', 0)),
           'absolute'
         ),
         uow
@@ -437,10 +430,10 @@ const parseNodeProps = (style: StyleManager, isEdge: boolean) => {
 const parseParentChildRelations = ($$cells: HTMLCollectionOf<Element>, rootId: string) => {
   const parentChild = new MultiMap<string, string>();
   for (const $cell of xIterElements($$cells)) {
-    const parent = $cell.getAttribute('parent')!;
-    if (parent !== rootId) {
-      const id = $cell.getAttribute('id')!;
-      parentChild.add(parent, id);
+    const parent = $cell.getAttribute('parent');
+    if (parent && parent !== rootId) {
+      const id = $cell.getAttribute('id');
+      if (id) parentChild.add(parent, id);
     }
   }
   return parentChild;
@@ -479,55 +472,49 @@ const parseMetadata = ($parent: Element) => {
     if (n === 'id' || n === 'label' || n === 'placeholders') continue;
 
     const value = $parent.getAttribute(n);
-    if (value) {
-      dest[n] = value;
-    }
+    if (value) dest[n] = value;
   }
   return dest;
 };
 
 const applyRotation = (bounds: Box, style: StyleManager) => {
-  let newBounds = { ...bounds };
-  if (style.str('direction') === 'south') {
-    const p = Point.rotateAround(
-      Point.add(newBounds, {
-        x: 0,
-        y: newBounds.w
-      }),
-      Math.PI / 2,
-      Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-    );
+  const dir = style.str('direction');
+  switch (dir) {
+    case 'south': {
+      const p = Point.rotateAround(
+        Point.add(bounds, { x: 0, y: bounds.w }),
+        Math.PI / 2,
+        Point.add(bounds, { x: bounds.h / 2, y: bounds.w / 2 })
+      );
 
-    newBounds = {
-      ...newBounds,
-      w: newBounds.h,
-      h: newBounds.w,
-      r: Math.PI / 2,
-      x: newBounds.x + (newBounds.x - p.x),
-      y: newBounds.y + (newBounds.y - p.y)
-    };
-  } else if (style.str('direction') === 'north') {
-    const p = Point.rotateAround(
-      Point.add(newBounds, {
-        x: newBounds.h,
-        y: 0
-      }),
-      -Math.PI / 2,
-      Point.add(newBounds, { x: newBounds.h / 2, y: newBounds.w / 2 })
-    );
+      return {
+        w: bounds.h,
+        h: bounds.w,
+        r: Math.PI / 2,
+        x: bounds.x + (bounds.x - p.x),
+        y: bounds.y + (bounds.y - p.y)
+      };
+    }
+    case 'north': {
+      const p = Point.rotateAround(
+        Point.add(bounds, { x: bounds.h, y: 0 }),
+        -Math.PI / 2,
+        Point.add(bounds, { x: bounds.h / 2, y: bounds.w / 2 })
+      );
 
-    newBounds = {
-      ...newBounds,
-      w: newBounds.h,
-      h: newBounds.w,
-      r: -Math.PI / 2,
-      x: newBounds.x + (newBounds.x - p.x),
-      y: newBounds.y + (newBounds.y - p.y)
-    };
-  } else if (style.str('direction') === 'west') {
-    newBounds = { ...newBounds, r: Math.PI };
+      return {
+        w: bounds.h,
+        h: bounds.w,
+        r: -Math.PI / 2,
+        x: bounds.x + (bounds.x - p.x),
+        y: bounds.y + (bounds.y - p.y)
+      };
+    }
+    case 'west':
+      return { ...bounds, r: Math.PI };
+    default:
+      return bounds;
   }
-  return newBounds;
 };
 
 const parseShape = async (
@@ -546,7 +533,7 @@ const parseShape = async (
     return await parser(id, bounds, props, metadata, texts, style, layer, queue);
   } else if (style.styleName === 'image' || style.has('image')) {
     return await parseImage(id, bounds, props, metadata, texts, style, layer, queue);
-  } else if (style.shape?.startsWith('mxgraph.') || !!getShapeBundle(style.shape)) {
+  } else if (style.shape?.startsWith('mxgraph.') || getShapeBundle(style.shape) !== undefined) {
     const registry = diagram.document.nodeDefinitions;
 
     const bundle = getShapeBundle(style.shape);
@@ -618,10 +605,9 @@ const parseLabelNode = (
   { queue, uow }: CellContext
 ) => {
   // Handle free-standing edge labels
-  const edge = diagram.edgeLookup.get(parent);
-  assert.present(edge);
+  const edge = mustExist(diagram.edgeLookup.get(parent));
 
-  const textNode = createLabelNode(id, edge, value, props, '#ffffff', uow);
+  const textNode = createLabelNode(id, edge, value, props, '#ffffff');
 
   // Note: This used to be done with queue.add - unclear why
   attachLabelNode(textNode, edge, $geometry, uow);
@@ -758,7 +744,7 @@ const parseEdge = (
 
     const labelBg = style.str('labelBackgroundColor') ?? 'transparent';
 
-    const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg, uow);
+    const textNode = createLabelNode(`${id}-label`, edge, value, props, labelBg);
 
     queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
     queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
@@ -795,7 +781,7 @@ const parseGroup = async (
   ctx: CellContext
 ) => {
   const { parents, uow, queue } = ctx;
-  const value = $cell.getAttribute('value')!;
+  const value = $cell.getAttribute('value');
   let node: DiagramNode;
 
   if (style.shape === 'table' || style.shape === 'tableRow') {
@@ -841,7 +827,7 @@ const parseGroup = async (
 
     if (
       style.styleName !== 'group' &&
-      (style.str('fillColor') || style.str('strokeColor') || value || style.shape)
+      (style.has('fillColor') || style.has('strokeColor') || value || style.shape)
     ) {
       const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
 
@@ -850,14 +836,14 @@ const parseGroup = async (
     }
   }
 
-  parents.set(id, node as DiagramNode);
+  parents.set(id, node);
   return node;
 };
 
 const parseLabelStyles = (texts: NodeTexts, style: StyleManager) => {
   // We don't support label styles natively, so simulate using a wrapping span. Note, we only do this in case the
   // text itself is not an HTML formatted
-  if (!texts.text.startsWith('<') && texts.text !== '') {
+  if (!isHTML(texts.text) && texts.text !== '') {
     const spanStyles: string[] = [];
     const divStyles: string[] = [];
     if (style.str('labelBackgroundColor', 'none') !== 'none')
@@ -1040,28 +1026,26 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
   queue.run();
 };
 
+const XML = 'application/xml';
+
 export const drawioReader = async (contents: string, doc: DiagramDocument): Promise<void> => {
   const start = Date.now();
 
   const parser = new DOMParser();
-  const $doc = parser.parseFromString(contents, 'application/xml');
+  const $doc = parser.parseFromString(contents, XML);
 
-  const $diagrams = $doc.getElementsByTagName('diagram');
+  const $$diagrams = $doc.getElementsByTagName('diagram');
 
-  for (let i = 0; i < $diagrams.length; i++) {
-    const $diagram = $diagrams.item(i)!;
+  for (let i = 0; i < $$diagrams.length; i++) {
+    const $diagram = $$diagrams.item(i)!;
+    const $$children = $diagram.childNodes;
 
     let $mxGraphModel: Element;
-    if (
-      $diagram.childNodes.length === 1 &&
-      $diagram.childNodes.item(0).nodeType === Node.TEXT_NODE
-    ) {
-      $mxGraphModel = parser.parseFromString(
-        await deflate($diagram.textContent!),
-        'application/xml'
-      ).documentElement;
+    if ($$children.length === 1 && $$children.item(0).nodeType === Node.TEXT_NODE) {
+      const diagramString = await deflate(mustExist($diagram.textContent));
+      $mxGraphModel = parser.parseFromString(diagramString, XML).documentElement;
     } else {
-      $mxGraphModel = $diagram.getElementsByTagName('mxGraphModel').item(0)!;
+      $mxGraphModel = mustExist($diagram.getElementsByTagName('mxGraphModel').item(0));
     }
 
     const diagram = new Diagram($diagram.getAttribute('id')!, $diagram.getAttribute('name')!, doc);
@@ -1076,20 +1060,15 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
         })
       );
 
-      const pageWidth = xNum($mxGraphModel, 'pageWidth', 100);
-      const pageHeight = xNum($mxGraphModel, 'pageHeight', 100);
+      const w = xNum($mxGraphModel, 'pageWidth', 100);
+      const h = xNum($mxGraphModel, 'pageHeight', 100);
 
-      const canvasBounds = {
-        w: pageWidth,
-        h: pageHeight,
-        x: 0,
-        y: 0
-      };
+      const canvasBounds = { w, h, x: 0, y: 0 };
 
-      while (bounds.x < canvasBounds.x) canvasBounds.x -= pageWidth;
-      while (bounds.y < canvasBounds.y) canvasBounds.y -= pageHeight;
-      while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += pageWidth;
-      while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += pageHeight;
+      while (bounds.x < canvasBounds.x) canvasBounds.x -= w;
+      while (bounds.y < canvasBounds.y) canvasBounds.y -= h;
+      while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += w;
+      while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += h;
 
       diagram.bounds = canvasBounds;
 

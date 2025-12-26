@@ -46,10 +46,12 @@ export const MxGeometry = {
   }
 };
 
+export const isHTML = (value: string | undefined) => value?.startsWith('<');
+
 export const hasValue = (value: string | undefined | null): value is string => {
   if (!value || value.trim() === '') return false;
 
-  if (value.startsWith('<')) {
+  if (isHTML(value)) {
     if (value.includes('<img')) return true;
     try {
       const d = new DOMParser().parseFromString(value, 'text/html');
