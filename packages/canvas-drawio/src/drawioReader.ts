@@ -593,7 +593,6 @@ const parseText = (
   style: StyleManager,
   layer: RegularLayer
 ) => {
-  // TODO: We should be able to move these two to the global style parsing/conversion
   if (style.str('strokeColor', 'none') === 'none') {
     props.stroke!.enabled = false;
   }
@@ -602,18 +601,10 @@ const parseText = (
     props.fill!.enabled = false;
   }
 
-  return ElementFactory.node(
-    id,
-    'rect',
-    bounds,
-    layer,
-    {
-      ...props,
-      capabilities: { ...(props.capabilities ?? {}), textGrow: true }
-    },
-    metadata,
-    texts
-  );
+  props.capabilities ??= {};
+  props.capabilities.textGrow = true;
+
+  return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
 };
 
 const parseLabelNode = (
