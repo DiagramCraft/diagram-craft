@@ -20,7 +20,12 @@ const registerStencil = (
 };
 
 export const registerVeeam2dShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/veeam/2d.xml', 'Veeam', 'black', 'white');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/veeam/2d.xml',
+    'Veeam',
+    'black',
+    'white'
+  );
 
   registerStencil(r, '1FTVM', stencils);
   registerStencil(r, '1FTVM Error', stencils);
