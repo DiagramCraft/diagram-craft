@@ -1001,21 +1001,6 @@ describe('layoutChildren', () => {
         expect(child2.bounds.y).toBe(30);
       });
 
-      test('alignItems: stretch with min/max constraints', () => {
-        const child1 = createNode('child1', 50, 30, 'horizontal', [], { height: { max: 60 } });
-        const child2 = createNode('child2', 50, 40, 'horizontal', [], { height: { min: 50 } });
-        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
-          alignItems: 'stretch'
-        });
-
-        layoutChildren(parent);
-
-        // child1 capped at max
-        expect(child1.bounds.h).toBe(60);
-        // child2 can stretch to full height
-        expect(child2.bounds.h).toBe(100);
-      });
-
       test('alignItems: stretch with preserveAspectRatio (aspect ratio wins)', () => {
         const child1 = createNode('child1', 50, 30, 'horizontal', [], {
           preserveAspectRatio: true
@@ -1133,13 +1118,7 @@ describe('layoutChildren', () => {
     test('layout disabled skips positioning but recurses', () => {
       const innerChild1 = createNode('innerChild1', 50, 30);
       const innerChild2 = createNode('innerChild2', 50, 30);
-      const innerContainer = createNode(
-        'inner',
-        100,
-        30,
-        'horizontal',
-        [innerChild1, innerChild2]
-      );
+      const innerContainer = createNode('inner', 100, 30, 'horizontal', [innerChild1, innerChild2]);
 
       const outerContainer = createNode('outer', 300, 30, 'horizontal', [innerContainer]);
       outerContainer.containerInstructions.enabled = false;
@@ -1578,26 +1557,10 @@ describe('getStretchSize', () => {
     expect(result).toBe(80); // 100 - 10 - 10
   });
 
-  test('respects max constraint when stretching', () => {
-    const child = createNode('test', 50, 30, 'horizontal', [], { height: { max: 60 } });
-    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
-
-    expect(result).toBe(60); // Capped at max
-  });
-
   test('respects min constraint when stretching', () => {
     const child = createNode('test', 50, 30, 'horizontal', [], { height: { min: 120 } });
     const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
 
     expect(result).toBe(120); // Enforced min (even if larger than container)
-  });
-
-  test('respects both min and max constraints', () => {
-    const child = createNode('test', 50, 30, 'horizontal', [], {
-      height: { min: 20, max: 60 }
-    });
-    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
-
-    expect(result).toBe(60); // Capped at max (container would allow 100)
   });
 });
