@@ -1,4 +1,7 @@
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import {
+  LayoutCapableShapeNodeDefinition,
+  ShapeNodeDefinition
+} from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -212,15 +215,13 @@ const LAYOUTS: Record<string, Layout> = {
   manual: { fn: defaultLayout, primaryAxis: undefined }
 };
 
-export class ContainerNodeDefinition extends ShapeNodeDefinition {
+export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = ContainerComponentOverlay;
 
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
     this.capabilities.fill = true;
-    this.capabilities.children = true;
-    this.capabilities['can-have-layout'] = true;
   }
 
   onTransform(
@@ -258,26 +259,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
     return this.layoutChildren(node, uow);
   }
 
-  onDrop(
-    _coord: Point,
-    node: DiagramNode,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    _operation: string
-  ) {
-    node.diagram.moveElement(elements, uow, node.layer, {
-      relation: 'on',
-      element: node
-    });
-  }
-
-  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
-    // First layout all children
-    super.layoutChildren(node, uow);
-
-    this.doLayoutChildren(node.renderProps.custom.container, node, uow);
-  }
-
+  // TODO: Remove this
   protected doLayoutChildren(props: ContainerProps, node: DiagramNode, uow: UnitOfWork) {
     const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
     const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';

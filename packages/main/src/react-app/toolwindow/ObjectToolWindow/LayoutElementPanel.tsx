@@ -63,20 +63,19 @@ export const LayoutElementPanel = (props: Props) => {
             <NumberInput
               value={widthMin.val}
               onChange={widthMin.set}
-              label="min"
               defaultUnit="px"
               min={0}
               placeholder="0"
-              style={{ width: '60px' }}
+              style={{ width: '76px' }}
             />
+            <div>-</div>
             <NumberInput
               value={widthMax.val}
               onChange={widthMax.set}
-              label="max"
               defaultUnit="px"
               min={0}
               placeholder="∞"
-              style={{ width: '60px' }}
+              style={{ width: '76px' }}
             />
           </div>
         </div>
@@ -87,20 +86,19 @@ export const LayoutElementPanel = (props: Props) => {
             <NumberInput
               value={heightMin.val}
               onChange={heightMin.set}
-              label="min"
               defaultUnit="px"
               min={0}
               placeholder="0"
-              style={{ width: '60px' }}
+              style={{ width: '76px' }}
             />
+            <div>-</div>
             <NumberInput
               value={heightMax.val}
               onChange={heightMax.set}
-              label="max"
               defaultUnit="px"
               min={0}
               placeholder="∞"
-              style={{ width: '60px' }}
+              style={{ width: '76px' }}
             />
           </div>
         </div>

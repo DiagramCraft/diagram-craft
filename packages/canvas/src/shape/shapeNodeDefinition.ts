@@ -17,6 +17,8 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
+import { applyLayoutTree, buildLayoutTree } from '../layout/layoutTree';
+import { layoutChildren } from '../layout/layout';
 
 type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -240,5 +242,56 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         }
       }
     }
+  }
+}
+
+export abstract class LayoutCapableShapeNodeDefinition extends ShapeNodeDefinition {
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  protected constructor(type: string, component: NodeShapeConstructor<any>);
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  protected constructor(type: string, name: string, component: NodeShapeConstructor<any>);
+  protected constructor(
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    ...arr: [string, NodeShapeConstructor<any>] | [string, string, NodeShapeConstructor<any>]
+  ) {
+    if (arr.length === 2) super(arr[0], arr[1]);
+    else super(arr[0], arr[1], arr[2]);
+
+    this.capabilities['can-have-layout'] = true;
+    this.capabilities.children = true;
+  }
+
+  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    // First layout all children
+    super.layoutChildren(node, uow);
+
+    // Find root container
+    let layoutRoot = node;
+    while (
+      layoutRoot.parent &&
+      isNode(layoutRoot.parent) &&
+      layoutRoot.parent.getDefinition().supports('can-have-layout')
+    ) {
+      layoutRoot = layoutRoot.parent;
+    }
+
+    uow.registerOnCommitCallback('layout', layoutRoot, () => {
+      const layoutTree = buildLayoutTree(layoutRoot);
+      layoutChildren(layoutTree);
+      applyLayoutTree(layoutRoot, layoutTree, uow);
+    });
+  }
+
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ) {
+    node.diagram.moveElement(elements, uow, node.layer, {
+      relation: 'on',
+      element: node
+    });
   }
 }

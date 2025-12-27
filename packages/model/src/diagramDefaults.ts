@@ -376,11 +376,11 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     element: {
       width: {
         min: 0,
-        max: 0
+        max: 100000
       },
       height: {
         min: 0,
-        max: 0
+        max: 100000
       },
       preserveAspectRatio: false,
       grow: 0,
