@@ -286,14 +286,38 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
 };
 
 /**
- * Main layout function implementing a simplified flexbox algorithm.
+ * Calculates and applies layout to children of a layout node using a simplified flexbox algorithm.
  *
- * Algorithm overview:
- * 1. Collect child information including intrinsic min/max sizes from nested children
- * 2. Calculate available space (accounting for padding) and determine if we need to grow or shrink
- * 3. Distribute space according to flex-grow or flex-shrink factors
- * 4. Apply aspect ratio preservation if requested
- * 5. Position and size children (offset by padding), then recursively layout their children
+ * This function implements a complete layout pass including:
+ * - Intrinsic size calculation from nested children
+ * - Flex-grow and flex-shrink distribution
+ * - Aspect ratio preservation
+ * - Justify-content and align-items positioning
+ * - Container auto-sizing to fit children
+ * - Recursive layout of nested containers
+ *
+ * @param layoutNode - The node whose children should be laid out
+ *
+ * @remarks
+ * The algorithm follows these steps:
+ * 1. Skip if layout is disabled or no children exist
+ * 2. Collect child information including intrinsic min/max sizes from nested children
+ * 3. Calculate available space (accounting for padding and gaps)
+ * 4. Distribute space according to flex-grow or flex-shrink factors
+ * 5. Apply aspect ratio preservation if elements were resized
+ * 6. Auto-resize container if children don't fit
+ * 7. Position and size children (with padding and alignment)
+ * 8. Recursively layout children's children
+ *
+ * Children with `isAbsolute: true` are excluded from layout but their children are still processed.
+ * The container can grow to accommodate children that don't fit on either axis.
+ *
+ * @example
+ * ```ts
+ * const layoutTree = buildLayoutTree(containerNode);
+ * layoutChildren(layoutTree);
+ * applyLayoutTree(containerNode, layoutTree, uow);
+ * ```
  */
 export const layoutChildren = (layoutNode: LayoutNode) => {
   // If layout is explicitly disabled, only recurse to children
