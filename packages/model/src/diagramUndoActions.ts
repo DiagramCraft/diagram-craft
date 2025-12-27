@@ -109,7 +109,8 @@ export class ElementAddUndoableAction implements UndoableAction {
     private readonly elements: ReadonlyArray<DiagramElement>,
     private readonly diagram: Diagram,
     private readonly layer: RegularLayer,
-    public readonly description: string = 'Add node'
+    public readonly description: string = 'Add node',
+    private readonly parent?: DiagramElement
   ) {}
 
   undo(uow: UnitOfWork) {
@@ -117,8 +118,12 @@ export class ElementAddUndoableAction implements UndoableAction {
 
     this.elements.forEach(node => {
       uow.snapshot(node);
-      assertRegularLayer(node.layer);
-      node.layer.removeElement(node, uow);
+      if (this.parent) {
+        this.parent.removeChild(node, uow);
+      } else {
+        assertRegularLayer(node.layer);
+        node.layer.removeElement(node, uow);
+      }
     });
     this.snapshot = uow.commit();
 
@@ -133,7 +138,11 @@ export class ElementAddUndoableAction implements UndoableAction {
         if (isNode(node)) {
           node.invalidateAnchors(uow);
         }
-        this.layer.addElement(node, uow);
+        if (this.parent) {
+          this.parent.addChild(node, uow);
+        } else {
+          this.layer.addElement(node, uow);
+        }
       });
 
       if (this.snapshot) {

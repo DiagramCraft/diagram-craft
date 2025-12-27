@@ -80,6 +80,14 @@ export class DuplicateAction extends AbstractSelectionAction {
     const diagram = this.context.model.activeDiagram;
     const uow = new UnitOfWork(diagram);
 
+    // Check if all selected elements have the same parent
+    const selectedElements = diagram.selection.elements;
+    const commonParent =
+      selectedElements.length > 0 &&
+      selectedElements.every(e => e.parent === selectedElements[0]?.parent)
+        ? selectedElements[0]?.parent
+        : undefined;
+
     // Create mapping of original nodes to duplicated nodes
     const nodeMapping = new Map<string, DiagramNode>();
     const newElements: DiagramElement[] = [];
@@ -113,7 +121,13 @@ export class DuplicateAction extends AbstractSelectionAction {
 
     assertRegularLayer(diagram.activeLayer);
     diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction(newElements, diagram, diagram.activeLayer, 'Duplicate selection')
+      new ElementAddUndoableAction(
+        newElements,
+        diagram,
+        diagram.activeLayer,
+        'Duplicate selection',
+        commonParent
+      )
     );
 
     uow.commit();
