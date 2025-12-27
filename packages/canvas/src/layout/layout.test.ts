@@ -605,4 +605,160 @@ describe('layoutChildren', () => {
     expect(child1.bounds.w).toBe(200);
     expect(child1.bounds.h).toBe(80); // Capped at max
   });
+
+  test('respects intrinsic minimum from nested children (same direction)', () => {
+    // Nested horizontal containers
+    const grandchild1: LayoutNode = {
+      id: 'grandchild1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 60, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { min: 60 }, height: {} }
+    };
+    const grandchild2: LayoutNode = {
+      id: 'grandchild2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 60, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { min: 60 }, height: {} }
+    };
+    // Child container: 2 children × 60px + 10px gap = 130px minimum
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 150, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [grandchild1, grandchild2],
+      containerInstructions: { direction: 'horizontal', gap: 10 },
+      elementInstructions: { width: {}, height: {}, shrink: 1 }
+    };
+    // Parent tries to shrink child to 100px, but intrinsic min is 130px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Child should not shrink below intrinsic minimum of 130px
+    expect(child1.bounds.w).toBe(130);
+  });
+
+  test('respects intrinsic minimum from nested children (perpendicular direction)', () => {
+    // Horizontal parent with vertical child
+    const grandchild1: LayoutNode = {
+      id: 'grandchild1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 80, h: 30, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: { min: 80 }, height: {} }
+    };
+    const grandchild2: LayoutNode = {
+      id: 'grandchild2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 30, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: { min: 100 }, height: {} }
+    };
+    // Vertical child: max of children's widths = 100px minimum width
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 120, h: 60, r: 0, _discriminator: 'ro' }),
+      children: [grandchild1, grandchild2],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {}, shrink: 1 }
+    };
+    // Parent tries to shrink child to 80px, but intrinsic min width is 100px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 80, h: 100, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Child should not shrink below intrinsic minimum of 100px
+    expect(child1.bounds.w).toBe(100);
+  });
+
+  test('respects intrinsic maximum from nested children (same direction)', () => {
+    // Nested horizontal containers
+    const grandchild1: LayoutNode = {
+      id: 'grandchild1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 60, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { max: 80 }, height: {} }
+    };
+    const grandchild2: LayoutNode = {
+      id: 'grandchild2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 60, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: { max: 100 }, height: {} }
+    };
+    // Child container: 2 children with max 80 + 100 + 10px gap = 190px maximum
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 120, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [grandchild1, grandchild2],
+      containerInstructions: { direction: 'horizontal', gap: 10 },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    // Parent tries to grow child to 300px, but intrinsic max is 190px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 300, h: 50, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Child should not grow beyond intrinsic maximum of 190px
+    expect(child1.bounds.w).toBe(190);
+  });
+
+  test('respects intrinsic maximum from nested children (perpendicular direction)', () => {
+    // Horizontal parent with vertical child
+    const grandchild1: LayoutNode = {
+      id: 'grandchild1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 80, h: 30, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: { max: 100 }, height: {} }
+    };
+    const grandchild2: LayoutNode = {
+      id: 'grandchild2',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 100, h: 30, r: 0, _discriminator: 'ro' }),
+      children: [],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: { max: 120 }, height: {} }
+    };
+    // Vertical child: max of children's widths = 120px maximum width
+    const child1: LayoutNode = {
+      id: 'child1',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 80, h: 60, r: 0, _discriminator: 'ro' }),
+      children: [grandchild1, grandchild2],
+      containerInstructions: { direction: 'vertical' },
+      elementInstructions: { width: {}, height: {}, grow: 1 }
+    };
+    // Parent tries to grow child to 200px, but intrinsic max width is 120px
+    const parent: LayoutNode = {
+      id: 'parent',
+      bounds: Box.asReadWrite({ x: 0, y: 0, w: 200, h: 100, r: 0, _discriminator: 'ro' }),
+      children: [child1],
+      containerInstructions: { direction: 'horizontal' },
+      elementInstructions: { width: {}, height: {} }
+    };
+
+    layoutChildren(parent);
+
+    // Child should not grow beyond intrinsic maximum of 120px
+    expect(child1.bounds.w).toBe(120);
+  });
 });

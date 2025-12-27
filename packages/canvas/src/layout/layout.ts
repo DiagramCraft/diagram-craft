@@ -23,6 +23,88 @@ export interface LayoutNode {
   elementInstructions: ElementLayoutInstructions;
 }
 
+/**
+ * Calculate the intrinsic minimum size of a node based on its children's constraints.
+ * This returns the minimum size needed to fit all children, not including explicit min constraints.
+ */
+const getIntrinsicMinSize = (node: LayoutNode, axis: 'horizontal' | 'vertical'): number => {
+  if (node.children.length === 0) {
+    // No children - intrinsic minimum is 0 (explicit constraints handled separately)
+    return 0;
+  }
+
+  const direction = node.containerInstructions.direction;
+  const gap = node.containerInstructions.gap ?? 0;
+
+  if (direction === axis) {
+    // Children are laid out along the same axis - sum their min sizes
+    let total = 0;
+    for (const child of node.children) {
+      const intrinsicMin = getIntrinsicMinSize(child, axis);
+      const constraints = axis === 'horizontal' ? child.elementInstructions.width : child.elementInstructions.height;
+      const explicitMin = constraints?.min ?? 0;
+      total += Math.max(intrinsicMin, explicitMin);
+    }
+    return total + gap * Math.max(0, node.children.length - 1);
+  } else {
+    // Children are laid out perpendicular - take the max of their min sizes
+    let max = 0;
+    for (const child of node.children) {
+      const intrinsicMin = getIntrinsicMinSize(child, axis);
+      const constraints = axis === 'horizontal' ? child.elementInstructions.width : child.elementInstructions.height;
+      const explicitMin = constraints?.min ?? 0;
+      max = Math.max(max, Math.max(intrinsicMin, explicitMin));
+    }
+    return max;
+  }
+};
+
+/**
+ * Calculate the intrinsic maximum size of a node based on its children's constraints.
+ * This returns the maximum size the node can grow to based on children's max constraints.
+ */
+const getIntrinsicMaxSize = (node: LayoutNode, axis: 'horizontal' | 'vertical'): number => {
+  if (node.children.length === 0) {
+    // No children - no intrinsic maximum
+    return Infinity;
+  }
+
+  const direction = node.containerInstructions.direction;
+  const gap = node.containerInstructions.gap ?? 0;
+
+  if (direction === axis) {
+    // Children are laid out along the same axis - sum their max sizes
+    let total = 0;
+    for (const child of node.children) {
+      const intrinsicMax = getIntrinsicMaxSize(child, axis);
+      const constraints = axis === 'horizontal' ? child.elementInstructions.width : child.elementInstructions.height;
+      const explicitMax = constraints?.max ?? Infinity;
+      const childMax = Math.min(intrinsicMax, explicitMax);
+
+      if (childMax === Infinity) {
+        return Infinity; // If any child is unbounded, parent is unbounded
+      }
+      total += childMax;
+    }
+    return total + gap * Math.max(0, node.children.length - 1);
+  } else {
+    // Children are laid out perpendicular - take the max of their max sizes
+    let max = 0;
+    for (const child of node.children) {
+      const intrinsicMax = getIntrinsicMaxSize(child, axis);
+      const constraints = axis === 'horizontal' ? child.elementInstructions.width : child.elementInstructions.height;
+      const explicitMax = constraints?.max ?? Infinity;
+      const childMax = Math.min(intrinsicMax, explicitMax);
+
+      if (childMax === Infinity) {
+        return Infinity; // If any child is unbounded, parent is unbounded
+      }
+      max = Math.max(max, childMax);
+    }
+    return max;
+  }
+};
+
 export const layoutChildren = (layoutNode: LayoutNode) => {
   if (layoutNode.children.length === 0) return;
 
@@ -41,6 +123,14 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
       ? child.elementInstructions.width
       : child.elementInstructions.height;
 
+    // Calculate intrinsic minimum and maximum sizes based on children
+    const intrinsicMin = getIntrinsicMinSize(child, isHorizontal ? 'horizontal' : 'vertical');
+    const intrinsicMax = getIntrinsicMaxSize(child, isHorizontal ? 'horizontal' : 'vertical');
+    const explicitMin = constraints?.min ?? 0;
+    const explicitMax = constraints?.max ?? Infinity;
+    const effectiveMin = Math.max(intrinsicMin, explicitMin);
+    const effectiveMax = Math.min(intrinsicMax, explicitMax);
+
     return {
       child,
       boundingBox,
@@ -49,8 +139,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
       crossAxisSize: undefined as number | undefined,
       grow: child.elementInstructions.grow ?? 0,
       shrink: child.elementInstructions.shrink ?? 0,
-      min: constraints?.min ?? 0,
-      max: constraints?.max ?? Infinity
+      min: effectiveMin,
+      max: effectiveMax
     };
   });
 
