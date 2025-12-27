@@ -6,6 +6,7 @@ import type {
   JustifyContent,
   LayoutNode
 } from './layoutTree';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 /**
  * Default values for layout properties
@@ -30,13 +31,12 @@ const LAYOUT_DEFAULTS = {
   ENABLED: true
 } as const;
 
+type MinMax = { min?: number; max?: number };
+
 /**
  * Get constraints for a specific axis
  */
-const getAxisConstraints = (
-  node: LayoutNode,
-  axis: Axis
-): { min?: number; max?: number } | undefined => {
+const getAxisConstraints = (node: LayoutNode, axis: Axis): MinMax | undefined => {
   return axis === 'horizontal' ? node.elementInstructions?.width : node.elementInstructions?.height;
 };
 
@@ -45,9 +45,7 @@ const getAxisConstraints = (
  * @returns Object containing start padding, end padding, and total padding for the axis
  */
 const getAxisPadding = (padding: ContainerLayoutInstructions['padding'], axis: Axis) => {
-  if (!padding) {
-    return { start: 0, end: 0, total: 0 };
-  }
+  if (!padding) return { start: 0, end: 0, total: 0 };
 
   if (axis === 'horizontal') {
     const start = padding.left ?? 0;
@@ -58,6 +56,16 @@ const getAxisPadding = (padding: ContainerLayoutInstructions['padding'], axis: A
     const end = padding.bottom ?? 0;
     return { start, end, total: start + end };
   }
+};
+
+const getChildSize = (child: LayoutNode, axis: Axis, type: 'min' | 'max') => {
+  const intrinsic = getIntrinsicSize(child, axis, type);
+  const constraints = getAxisConstraints(child, axis);
+  const explicit =
+    type === 'min'
+      ? (constraints?.min ?? LAYOUT_DEFAULTS.MIN)
+      : (constraints?.max ?? LAYOUT_DEFAULTS.MAX);
+  return type === 'min' ? Math.max(intrinsic, explicit) : Math.min(intrinsic, explicit);
 };
 
 /**
@@ -105,18 +113,9 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
     // Children are laid out along the same axis - sum their sizes
     let total = 0;
     for (const child of node.children) {
-      const intrinsic = getIntrinsicSize(child, axis, type);
-      const constraints = getAxisConstraints(child, axis);
-      const explicit =
-        type === 'min'
-          ? (constraints?.min ?? LAYOUT_DEFAULTS.MIN)
-          : (constraints?.max ?? LAYOUT_DEFAULTS.MAX);
-      const childSize =
-        type === 'min' ? Math.max(intrinsic, explicit) : Math.min(intrinsic, explicit);
+      const childSize = getChildSize(child, axis, type);
 
-      if (type === 'max' && childSize === Infinity) {
-        return Infinity;
-      }
+      if (type === 'max' && childSize === Infinity) return Infinity;
       total += childSize;
     }
     return total + totalGaps + axisPadding;
@@ -124,18 +123,9 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
     // Children are laid out perpendicular - take the max of their sizes
     let result = 0;
     for (const child of node.children) {
-      const intrinsic = getIntrinsicSize(child, axis, type);
-      const constraints = getAxisConstraints(child, axis);
-      const explicit =
-        type === 'min'
-          ? (constraints?.min ?? LAYOUT_DEFAULTS.MIN)
-          : (constraints?.max ?? LAYOUT_DEFAULTS.MAX);
-      const childSize =
-        type === 'min' ? Math.max(intrinsic, explicit) : Math.min(intrinsic, explicit);
+      const childSize = getChildSize(child, axis, type);
 
-      if (type === 'max' && childSize === Infinity) {
-        return Infinity;
-      }
+      if (type === 'max' && childSize === Infinity) return Infinity;
       result = Math.max(result, childSize);
     }
     return result + axisPadding;
@@ -231,8 +221,10 @@ const calculateJustifyOffset = (
       return { initialOffset: 0, itemSpacing: freeSpace / (childCount - 1) };
 
     case 'start':
-    default:
       return { initialOffset: 0, itemSpacing: 0 };
+
+    default:
+      VERIFY_NOT_REACHED();
   }
 };
 
@@ -267,7 +259,7 @@ const calculateAlignOffset = (
       return crossPaddingStart;
 
     default:
-      return 0;
+      VERIFY_NOT_REACHED();
   }
 };
 
@@ -282,14 +274,8 @@ const getStretchSize = (
   child: LayoutNode,
   axis: Axis
 ): number | undefined => {
-  if (alignItems !== 'stretch') {
-    return undefined;
-  }
-
-  // Don't stretch if preserveAspectRatio is enabled
-  if (child.elementInstructions?.preserveAspectRatio) {
-    return undefined;
-  }
+  if (alignItems !== 'stretch') return undefined;
+  if (child.elementInstructions?.preserveAspectRatio) return undefined;
 
   const availableCrossSize = containerCrossSize - crossPaddingStart - crossPaddingEnd;
   const crossConstraints = getAxisConstraints(child, axis);
@@ -326,6 +312,12 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
       );
     }
   }
+};
+
+const positionComparator = (isHorizontal: boolean) => (a: ChildInfo, b: ChildInfo) => {
+  const aPos = isHorizontal ? a.child.bounds.x : a.child.bounds.y;
+  const bPos = isHorizontal ? b.child.bounds.x : b.child.bounds.y;
+  return aPos - bPos;
 };
 
 /**
@@ -412,11 +404,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 
   // Sort children based on their position in the layout direction
   // Stable sort preserves original order when positions are equal
-  childInfo.sort((a, b) => {
-    const aPos = isHorizontal ? a.child.bounds.x : a.child.bounds.y;
-    const bPos = isHorizontal ? b.child.bounds.x : b.child.bounds.y;
-    return aPos - bPos;
-  });
+  childInfo.sort(positionComparator(isHorizontal));
 
   // Calculate available space and determine grow/shrink
   // Use childInfo.length (non-absolute children) instead of all children

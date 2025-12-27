@@ -365,7 +365,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
       direction: 'horizontal',
       gap: 0,
       justifyContent: 'start',
-      alignItems: 'start',
+      alignItems: 'preserve',
       padding: {
         top: 0,
         right: 0,
