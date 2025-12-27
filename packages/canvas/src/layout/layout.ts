@@ -373,6 +373,44 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     applyAspectRatio(childInfo, isHorizontal);
   }
 
+  // Check if parent needs to be resized to fit children on the main axis
+  const totalFinalSize = childInfo.reduce((sum, info) => sum + info.finalSize, 0);
+  const requiredMainAxisSize = totalFinalSize + totalGaps + axisPadding;
+
+  if (requiredMainAxisSize > containerSize) {
+    // Parent is too small on main axis, resize it
+    if (isHorizontal) {
+      layoutNode.bounds.w = requiredMainAxisSize;
+    } else {
+      layoutNode.bounds.h = requiredMainAxisSize;
+    }
+  }
+
+  // Check if parent needs to be resized to fit children on the cross axis
+  const crossAxisPadding = padding
+    ? isHorizontal
+      ? (padding.top ?? 0) + (padding.bottom ?? 0)
+      : (padding.left ?? 0) + (padding.right ?? 0)
+    : 0;
+
+  const maxCrossAxisSize = childInfo.reduce((max, info) => {
+    const currentCrossSize = isHorizontal ? info.child.bounds.h : info.child.bounds.w;
+    const crossSize = info.crossAxisSize ?? currentCrossSize;
+    return Math.max(max, crossSize);
+  }, 0);
+
+  const requiredCrossAxisSize = maxCrossAxisSize + crossAxisPadding;
+  const currentCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
+
+  if (requiredCrossAxisSize > currentCrossSize) {
+    // Parent is too small on cross axis, resize it
+    if (isHorizontal) {
+      layoutNode.bounds.h = requiredCrossAxisSize;
+    } else {
+      layoutNode.bounds.w = requiredCrossAxisSize;
+    }
+  }
+
   // Position and size children (offset by padding and justify-content)
   const paddingLeft = padding?.left ?? 0;
   const paddingTop = padding?.top ?? 0;
