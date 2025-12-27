@@ -18,6 +18,7 @@ export const LayoutElementPanel = (props: Props) => {
   const preserveAspectRatio = useNodeProperty(diagram, 'layout.element.preserveAspectRatio', false);
   const grow = useNodeProperty(diagram, 'layout.element.grow', 0);
   const shrink = useNodeProperty(diagram, 'layout.element.shrink', 0);
+  const isAbsolute = useNodeProperty(diagram, 'layout.element.isAbsolute', false);
 
   useEventListener(diagram.selection, 'change', redraw);
 
@@ -106,6 +107,11 @@ export const LayoutElementPanel = (props: Props) => {
         <div className={'cmp-labeled-table__label'}>Aspect Ratio</div>
         <div className={'cmp-labeled-table__value'}>
           <Checkbox value={preserveAspectRatio.val} onChange={preserveAspectRatio.set} />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Absolute</div>
+        <div className={'cmp-labeled-table__value'}>
+          <Checkbox value={isAbsolute.val} onChange={isAbsolute.set} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Grow</div>

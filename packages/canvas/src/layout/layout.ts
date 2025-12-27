@@ -321,28 +321,31 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   const availableSize = containerSize - axisPadding;
 
   // Collect child information with effective min/max constraints
-  const childInfo: ChildInfo[] = layoutNode.children.map(child => {
-    const boundingBox = Box.boundingBox([WritableBox.asBox(child.bounds)], true);
-    const originalSize = isHorizontal ? boundingBox.w : boundingBox.h;
-    const constraints = getAxisConstraints(child, axis);
+  // Exclude children with isAbsolute: true
+  const childInfo: ChildInfo[] = layoutNode.children
+    .filter(child => !child.elementInstructions?.isAbsolute)
+    .map(child => {
+      const boundingBox = Box.boundingBox([WritableBox.asBox(child.bounds)], true);
+      const originalSize = isHorizontal ? boundingBox.w : boundingBox.h;
+      const constraints = getAxisConstraints(child, axis);
 
-    const intrinsicMin = getIntrinsicSize(child, axis, 'min');
-    const intrinsicMax = getIntrinsicSize(child, axis, 'max');
-    const effectiveMin = Math.max(intrinsicMin, constraints?.min ?? DEFAULT_MIN);
-    const effectiveMax = Math.min(intrinsicMax, constraints?.max ?? DEFAULT_MAX);
+      const intrinsicMin = getIntrinsicSize(child, axis, 'min');
+      const intrinsicMax = getIntrinsicSize(child, axis, 'max');
+      const effectiveMin = Math.max(intrinsicMin, constraints?.min ?? DEFAULT_MIN);
+      const effectiveMax = Math.min(intrinsicMax, constraints?.max ?? DEFAULT_MAX);
 
-    return {
-      child,
-      boundingBox,
-      originalSize,
-      finalSize: originalSize,
-      crossAxisSize: undefined,
-      grow: child.elementInstructions.grow ?? 0,
-      shrink: child.elementInstructions.shrink ?? 0,
-      min: effectiveMin,
-      max: effectiveMax
-    };
-  });
+      return {
+        child,
+        boundingBox,
+        originalSize,
+        finalSize: originalSize,
+        crossAxisSize: undefined,
+        grow: child.elementInstructions.grow ?? 0,
+        shrink: child.elementInstructions.shrink ?? 0,
+        min: effectiveMin,
+        max: effectiveMax
+      };
+    });
 
   // Sort children based on their position in the layout direction
   // Stable sort preserves original order when positions are equal
@@ -504,6 +507,13 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 
     currentOffset += finalSize + gap + justifyOffset.itemSpacing;
     layoutChildren(child); // Recursively layout children
+  }
+
+  // Recursively layout absolute-positioned children (they don't participate in layout but their children might)
+  for (const child of layoutNode.children) {
+    if (child.elementInstructions?.isAbsolute) {
+      layoutChildren(child);
+    }
   }
 };
 

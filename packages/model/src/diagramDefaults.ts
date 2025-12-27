@@ -384,7 +384,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
       },
       preserveAspectRatio: false,
       grow: 0,
-      shrink: 0
+      shrink: 0,
+      isAbsolute: false
     }
   }
 };

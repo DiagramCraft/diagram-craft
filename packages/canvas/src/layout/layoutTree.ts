@@ -23,6 +23,7 @@ export type ElementLayoutInstructions = {
   preserveAspectRatio?: boolean;
   grow?: number;
   shrink?: number;
+  isAbsolute?: boolean;
 };
 
 declare global {
