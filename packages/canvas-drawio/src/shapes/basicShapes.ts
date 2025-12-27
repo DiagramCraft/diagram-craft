@@ -99,8 +99,7 @@ export const parseSwimlane = makeShape('swimlane', (style, props) => {
   props.custom.swimlane = {
     title: true,
     titleBorder: true,
-    titleSize: style.num('startSize', 20),
-    horizontalBorder: false
+    titleSize: style.num('startSize', 20)
   };
 });
 

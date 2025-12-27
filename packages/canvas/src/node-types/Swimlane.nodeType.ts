@@ -1,7 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode, type NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
@@ -19,7 +18,6 @@ declare global {
     interface CustomNodePropsExtensions {
       swimlane?: {
         orientation?: 'vertical' | 'horizontal';
-        horizontalBorder?: boolean;
         outerBorder?: boolean;
         title?: boolean;
         titleBorder?: boolean;
@@ -32,7 +30,6 @@ declare global {
 
 registerCustomNodeDefaults('swimlane', {
   orientation: 'vertical',
-  horizontalBorder: true,
   outerBorder: true,
   title: false,
   titleBorder: true,
@@ -112,16 +109,6 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
         isSet: node.storedProps.custom?.swimlane?.outerBorder !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps('swimlane', props => (props.outerBorder = value), uow);
-        }
-      },
-      {
-        id: 'horizontalBorder',
-        type: 'boolean',
-        label: 'Horizontal Border',
-        value: node.renderProps.custom.swimlane.horizontalBorder,
-        isSet: node.storedProps.custom?.swimlane?.horizontalBorder !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.horizontalBorder = value), uow);
         }
       },
       {
@@ -348,31 +335,7 @@ class SwimlaneComponent extends BaseNodeComponent {
       }
     }
 
-    // Step 6: Add borders between child lanes
-    if (shapeProps.horizontalBorder !== false) {
-      const sortedChildren = props.node.children.toSorted((a, b) =>
-        isHorizontal ? a.bounds.x - b.bounds.x : a.bounds.y - b.bounds.y
-      );
-
-      let position = isHorizontal ? startX : startY;
-
-      for (let i = 0; i < sortedChildren.length - 1; i++) {
-        const child = sortedChildren[i];
-        if (isNode(child)) {
-          position += isHorizontal ? child.bounds.w : child.bounds.h;
-
-          if (isHorizontal) {
-            pathBuilder.moveTo(Point.of(position, bounds.y));
-            pathBuilder.lineTo(Point.of(position, bounds.y + bounds.h));
-          } else {
-            pathBuilder.moveTo(Point.of(bounds.x, position));
-            pathBuilder.lineTo(Point.of(bounds.x + bounds.w, position));
-          }
-        }
-      }
-    }
-
-    // Step 7: Render all the borders (outer border + lane dividers)
+    // Step 6: Render all the borders (outer border + lane dividers)
     builder.path(pathBuilder.getPaths().all(), {
       ...nodeProps,
       stroke: getStroke(),
