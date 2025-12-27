@@ -11,6 +11,7 @@ export type ElementLayoutInstructions = {
   preserveAspectRatio?: boolean;
   grow?: number;
   shrink?: number;
+  padding?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
 export interface LayoutNode {
@@ -55,16 +56,16 @@ const getAxisConstraints = (
  *      b. Get its explicit constraint (min or max)
  *      c. Min: Take max(intrinsic, explicit) - child needs at least this much
  *      d. Max: Take min(intrinsic, explicit) - child can grow at most this much
- *    - Min: Sum all child sizes + gaps (total space needed)
- *    - Max: Sum all child sizes + gaps (total space available, or Infinity if any child unbounded)
+ *    - Min: Sum all child sizes + gaps + padding (total space needed)
+ *    - Max: Sum all child sizes + gaps + padding (total space available, or Infinity if any child unbounded)
  *
  * 3. Container with children PERPENDICULAR to query axis:
  *    Example: Querying horizontal size of a vertical container
  *    - For each child:
  *      a. Recursively calculate its intrinsic size
  *      b. Combine with explicit constraints as above
- *    - Min: Take max of all children (container must fit widest child)
- *    - Max: Take max of all children (container constrained by widest child, or Infinity if any unbounded)
+ *    - Min: Take max of all children + padding (container must fit widest child)
+ *    - Max: Take max of all children + padding (container constrained by widest child, or Infinity if any unbounded)
  *
  * This ensures that containers respect their children's space requirements, preventing
  * shrinking below minimum needed or growing beyond maximum allowed by content.
@@ -77,6 +78,14 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
   const direction = node.containerInstructions.direction;
   const gap = node.containerInstructions.gap ?? DEFAULT_GAP;
   const totalGaps = gap * Math.max(0, node.children.length - 1);
+
+  // Calculate padding for this axis
+  const padding = node.elementInstructions.padding;
+  const axisPadding = padding
+    ? axis === 'horizontal'
+      ? (padding.left ?? 0) + (padding.right ?? 0)
+      : (padding.top ?? 0) + (padding.bottom ?? 0)
+    : 0;
 
   if (direction === axis) {
     // Children are laid out along the same axis - sum their sizes
@@ -94,7 +103,7 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
       }
       total += childSize;
     }
-    return total + totalGaps;
+    return total + totalGaps + axisPadding;
   } else {
     // Children are laid out perpendicular - take the max of their sizes
     let result = 0;
@@ -111,7 +120,7 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
       }
       result = Math.max(result, childSize);
     }
-    return result;
+    return result + axisPadding;
   }
 };
 
@@ -210,10 +219,10 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
  *
  * Algorithm overview:
  * 1. Collect child information including intrinsic min/max sizes from nested children
- * 2. Calculate available space and determine if we need to grow or shrink
+ * 2. Calculate available space (accounting for padding) and determine if we need to grow or shrink
  * 3. Distribute space according to flex-grow or flex-shrink factors
  * 4. Apply aspect ratio preservation if requested
- * 5. Position and size children, then recursively layout their children
+ * 5. Position and size children (offset by padding), then recursively layout their children
  */
 export const layoutChildren = (layoutNode: LayoutNode) => {
   if (layoutNode.children.length === 0) return;
@@ -221,7 +230,16 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   const axis = layoutNode.containerInstructions.direction;
   const gap = layoutNode.containerInstructions.gap ?? DEFAULT_GAP;
   const isHorizontal = axis === 'horizontal';
+  const padding = layoutNode.elementInstructions.padding;
+
+  // Calculate available space for children (container size minus padding)
   const containerSize = isHorizontal ? layoutNode.bounds.w : layoutNode.bounds.h;
+  const axisPadding = padding
+    ? isHorizontal
+      ? (padding.left ?? 0) + (padding.right ?? 0)
+      : (padding.top ?? 0) + (padding.bottom ?? 0)
+    : 0;
+  const availableSize = containerSize - axisPadding;
 
   // Collect child information with effective min/max constraints
   const childInfo: ChildInfo[] = layoutNode.children.map(child => {
@@ -250,7 +268,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   // Calculate available space and determine grow/shrink
   const totalGaps = gap * Math.max(0, layoutNode.children.length - 1);
   const totalOriginalSize = childInfo.reduce((sum, info) => sum + info.originalSize, 0);
-  const freeSpace = containerSize - totalGaps - totalOriginalSize;
+  const freeSpace = availableSize - totalGaps - totalOriginalSize;
 
   const shouldGrow = freeSpace > 0 && childInfo.some(info => info.grow > 0);
   const shouldShrink = freeSpace < 0 && childInfo.some(info => info.shrink > 0);
@@ -267,8 +285,11 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     applyAspectRatio(childInfo, isHorizontal);
   }
 
-  // Position and size children
-  let currentOffset = 0;
+  // Position and size children (offset by padding)
+  const paddingLeft = padding?.left ?? 0;
+  const paddingTop = padding?.top ?? 0;
+  let currentOffset = isHorizontal ? paddingLeft : paddingTop;
+
   for (const info of childInfo) {
     const { child, finalSize, crossAxisSize } = info;
 

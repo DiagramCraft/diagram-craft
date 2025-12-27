@@ -448,6 +448,114 @@ describe('layoutChildren', () => {
     // Child should not grow beyond intrinsic maximum of 120px
     expect(child1.bounds.w).toBe(120);
   });
+
+  test('horizontal layout applies padding', () => {
+    const child1 = createNode('child1', 100, 50);
+    const child2 = createNode('child2', 80, 50);
+    const parent = createNode(
+      'parent',
+      220,
+      70,
+      'horizontal',
+      [child1, child2],
+      { padding: { top: 10, right: 20, bottom: 10, left: 20 } }
+    );
+
+    layoutChildren(parent);
+
+    // Children should be offset by padding.left
+    expect(child1.bounds.x).toBe(20); // padding.left
+    expect(child2.bounds.x).toBe(120); // padding.left + child1.width
+
+    // Y positions should not be affected (no grow/shrink)
+    expect(child1.bounds.y).toBe(0);
+    expect(child2.bounds.y).toBe(0);
+  });
+
+  test('vertical layout applies padding', () => {
+    const child1 = createNode('child1', 100, 50);
+    const child2 = createNode('child2', 100, 80);
+    const parent = createNode(
+      'parent',
+      140,
+      160,
+      'vertical',
+      [child1, child2],
+      { padding: { top: 15, right: 20, bottom: 15, left: 20 } }
+    );
+
+    layoutChildren(parent);
+
+    // Children should be offset by padding.top
+    expect(child1.bounds.y).toBe(15); // padding.top
+    expect(child2.bounds.y).toBe(65); // padding.top + child1.height
+
+    // X positions should not be affected (no grow/shrink)
+    expect(child1.bounds.x).toBe(0);
+    expect(child2.bounds.x).toBe(0);
+  });
+
+  test('padding reduces available space for growing children', () => {
+    const child1 = createNode('child1', 100, 50, 'horizontal', [], { grow: 1 });
+    // Container: 240px width, padding: 20px left + 20px right = 40px
+    // Available space: 240 - 40 = 200px, child: 100px, free space: 100px
+    const parent = createNode(
+      'parent',
+      240,
+      50,
+      'horizontal',
+      [child1],
+      { padding: { top: 0, right: 20, bottom: 0, left: 20 } }
+    );
+
+    layoutChildren(parent);
+
+    expect(child1.bounds.x).toBe(20); // padding.left
+    expect(child1.bounds.w).toBe(200); // 100 + 100 (grew to fill available space)
+  });
+
+  test('padding is included in intrinsic size calculation', () => {
+    const grandchild1 = createNode('grandchild1', 60, 50, 'horizontal', [], { width: { min: 60 } });
+    const grandchild2 = createNode('grandchild2', 60, 50, 'horizontal', [], { width: { min: 60 } });
+    // Child container: 2 children × 60px + 10px gap + 20px padding (10+10) = 150px minimum
+    const child1 = createNode(
+      'child1',
+      150,
+      50,
+      'horizontal',
+      [grandchild1, grandchild2],
+      { shrink: 1, padding: { top: 0, right: 10, bottom: 0, left: 10 } },
+      { gap: 10 }
+    );
+    // Parent tries to shrink child to 100px, but intrinsic min is 150px
+    const parent = createNode('parent', 100, 50, 'horizontal', [child1]);
+
+    layoutChildren(parent);
+
+    // Child should not shrink below intrinsic minimum of 150px (including padding)
+    expect(child1.bounds.w).toBe(150);
+  });
+
+  test('padding with gap preserves both spacing types', () => {
+    const child1 = createNode('child1', 50, 40);
+    const child2 = createNode('child2', 50, 40);
+    const parent = createNode(
+      'parent',
+      130,
+      60,
+      'horizontal',
+      [child1, child2],
+      { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+      { gap: 10 }
+    );
+
+    layoutChildren(parent);
+
+    // First child offset by padding.left
+    expect(child1.bounds.x).toBe(10);
+    // Second child offset by padding.left + child1.width + gap
+    expect(child2.bounds.x).toBe(70); // 10 + 50 + 10
+  });
 });
 
 // Unit tests for internal helper functions
