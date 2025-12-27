@@ -14,6 +14,7 @@ const createNode = (
     rotation?: number;
     justifyContent?: 'start' | 'end' | 'center' | 'space-between';
     alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
+    padding?: { top?: number; right?: number; bottom?: number; left?: number };
   }
 ): LayoutNode => ({
   id,
@@ -23,7 +24,8 @@ const createNode = (
     direction,
     ...(options?.gap !== undefined && { gap: options.gap }),
     ...(options?.justifyContent !== undefined && { justifyContent: options.justifyContent }),
-    ...(options?.alignItems !== undefined && { alignItems: options.alignItems })
+    ...(options?.alignItems !== undefined && { alignItems: options.alignItems }),
+    ...(options?.padding !== undefined && { padding: options.padding })
   },
   elementInstructions: { width: {}, height: {}, ...elementInstructions }
 });
@@ -468,6 +470,7 @@ describe('layoutChildren', () => {
       70,
       'horizontal',
       [child1, child2],
+      {},
       { padding: { top: 10, right: 20, bottom: 10, left: 20 } }
     );
 
@@ -491,6 +494,7 @@ describe('layoutChildren', () => {
       160,
       'vertical',
       [child1, child2],
+      {},
       { padding: { top: 15, right: 20, bottom: 15, left: 20 } }
     );
 
@@ -515,6 +519,7 @@ describe('layoutChildren', () => {
       50,
       'horizontal',
       [child1],
+      {},
       { padding: { top: 0, right: 20, bottom: 0, left: 20 } }
     );
 
@@ -534,8 +539,8 @@ describe('layoutChildren', () => {
       50,
       'horizontal',
       [grandchild1, grandchild2],
-      { shrink: 1, padding: { top: 0, right: 10, bottom: 0, left: 10 } },
-      { gap: 10 }
+      { shrink: 1 },
+      { gap: 10, padding: { top: 0, right: 10, bottom: 0, left: 10 } }
     );
     // Parent tries to shrink child to 100px, but intrinsic min is 150px
     const parent = createNode('parent', 100, 50, 'horizontal', [child1]);
@@ -555,8 +560,8 @@ describe('layoutChildren', () => {
       60,
       'horizontal',
       [child1, child2],
-      { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
-      { gap: 10 }
+      {},
+      { gap: 10, padding: { top: 10, right: 10, bottom: 10, left: 10 } }
     );
 
     layoutChildren(parent);
@@ -616,9 +621,17 @@ describe('layoutChildren', () => {
       const child3 = createNode('child3', 50, 50);
       // Container: 350px, children: 150px total, free space: 200px
       // space-between: 200 / (3-1) = 100px between each child
-      const parent = createNode('parent', 350, 50, 'horizontal', [child1, child2, child3], undefined, {
-        justifyContent: 'space-between'
-      });
+      const parent = createNode(
+        'parent',
+        350,
+        50,
+        'horizontal',
+        [child1, child2, child3],
+        undefined,
+        {
+          justifyContent: 'space-between'
+        }
+      );
 
       layoutChildren(parent);
 
@@ -653,8 +666,8 @@ describe('layoutChildren', () => {
         50,
         'horizontal',
         [child1, child2],
-        { padding: { left: 10, right: 10 } },
-        { justifyContent: 'center' }
+        {},
+        { justifyContent: 'center', padding: { left: 10, right: 10 } }
       );
 
       layoutChildren(parent);
@@ -674,8 +687,8 @@ describe('layoutChildren', () => {
         50,
         'horizontal',
         [child1, child2],
-        { padding: { left: 20, right: 20 } },
-        { gap: 10, justifyContent: 'end' }
+        {},
+        { gap: 10, justifyContent: 'end', padding: { left: 20, right: 20 } }
       );
 
       layoutChildren(parent);
@@ -940,8 +953,8 @@ describe('layoutChildren', () => {
           100,
           'horizontal',
           [child1, child2],
-          { padding: { top: 10, bottom: 10 } },
-          { alignItems: 'center' }
+          {},
+          { alignItems: 'center', padding: { top: 10, bottom: 10 } }
         );
 
         layoutChildren(parent);
@@ -1027,9 +1040,17 @@ describe('layoutChildren', () => {
         const child1 = createNode('child1', 50, 20);
         const child2 = createNode('child2', 50, 60);
         const child3 = createNode('child3', 50, 40);
-        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2, child3], undefined, {
-          alignItems: 'center'
-        });
+        const parent = createNode(
+          'parent',
+          300,
+          100,
+          'horizontal',
+          [child1, child2, child3],
+          undefined,
+          {
+            alignItems: 'center'
+          }
+        );
 
         layoutChildren(parent);
 
@@ -1451,12 +1472,6 @@ describe('calculateAlignOffset', () => {
     const result = _test.calculateAlignOffset('stretch', 100, 100, 10, 10);
 
     expect(result).toBe(10); // crossPaddingStart
-  });
-
-  test('unknown alignItems returns 0', () => {
-    const result = _test.calculateAlignOffset('unknown', 100, 30, 0, 0);
-
-    expect(result).toBe(0);
   });
 });
 

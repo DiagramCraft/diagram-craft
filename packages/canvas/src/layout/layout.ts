@@ -2,11 +2,16 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 
 type Axis = 'horizontal' | 'vertical';
 
+type JustifyContent = 'start' | 'end' | 'center' | 'space-between';
+
+type AlignItems = 'start' | 'end' | 'center' | 'stretch' | 'preserve';
+
 export type ContainerLayoutInstructions = {
   direction: Axis;
   gap?: number;
-  justifyContent?: 'start' | 'end' | 'center' | 'space-between';
-  alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
+  justifyContent?: JustifyContent;
+  alignItems?: AlignItems;
+  padding?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
 export type ElementLayoutInstructions = {
@@ -15,7 +20,6 @@ export type ElementLayoutInstructions = {
   preserveAspectRatio?: boolean;
   grow?: number;
   shrink?: number;
-  padding?: { top?: number; right?: number; bottom?: number; left?: number };
 };
 
 export interface LayoutNode {
@@ -82,7 +86,7 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
   const totalGaps = gap * Math.max(0, node.children.length - 1);
 
   // Calculate padding for this axis
-  const padding = node.elementInstructions.padding;
+  const padding = node.containerInstructions.padding;
   const axisPadding = padding
     ? axis === 'horizontal'
       ? (padding.left ?? 0) + (padding.right ?? 0)
@@ -193,7 +197,7 @@ const applyShrink = (childInfo: ChildInfo[], freeSpace: number): void => {
  * Calculate the initial offset and spacing adjustments for justify-content
  */
 const calculateJustifyOffset = (
-  justifyContent: string | undefined,
+  justifyContent: JustifyContent | undefined,
   freeSpace: number,
   childCount: number
 ): { initialOffset: number; itemSpacing: number } => {
@@ -224,7 +228,7 @@ const calculateJustifyOffset = (
  * Calculate cross-axis alignment offset for a single child
  */
 const calculateAlignOffset = (
-  alignItems: string | undefined,
+  alignItems: AlignItems | undefined,
   containerCrossSize: number,
   childCrossSize: number,
   crossPaddingStart: number,
@@ -259,7 +263,7 @@ const calculateAlignOffset = (
  * Calculate cross-axis size for stretch alignment
  */
 const getStretchSize = (
-  alignItems: string | undefined,
+  alignItems: AlignItems | undefined,
   containerCrossSize: number,
   crossPaddingStart: number,
   crossPaddingEnd: number,
@@ -328,7 +332,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   const axis = layoutNode.containerInstructions.direction;
   const gap = layoutNode.containerInstructions.gap ?? DEFAULT_GAP;
   const isHorizontal = axis === 'horizontal';
-  const padding = layoutNode.elementInstructions.padding;
+  const padding = layoutNode.containerInstructions.padding;
 
   // Calculate available space for children (container size minus padding)
   const containerSize = isHorizontal ? layoutNode.bounds.w : layoutNode.bounds.h;
