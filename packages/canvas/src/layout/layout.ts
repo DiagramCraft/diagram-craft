@@ -1,47 +1,5 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
-
-type Axis = 'horizontal' | 'vertical';
-
-type JustifyContent = 'start' | 'end' | 'center' | 'space-between';
-
-type AlignItems = 'start' | 'end' | 'center' | 'stretch' | 'preserve';
-
-export type ContainerLayoutInstructions = {
-  direction: Axis;
-  gap?: number;
-  justifyContent?: JustifyContent;
-  alignItems?: AlignItems;
-  padding?: { top?: number; right?: number; bottom?: number; left?: number };
-};
-
-export type ElementLayoutInstructions = {
-  width?: { min?: number; max?: number };
-  height?: { min?: number; max?: number };
-  preserveAspectRatio?: boolean;
-  grow?: number;
-  shrink?: number;
-};
-
-declare global {
-  namespace DiagramCraft {
-    interface NodePropsExtensions {
-      layout?: {
-        container?: ContainerLayoutInstructions & { enabled?: boolean };
-        element?: ElementLayoutInstructions;
-      };
-    }
-  }
-}
-
-export interface LayoutNode {
-  id: string;
-  // Relative bounds to parent bounds
-  bounds: WritableBox;
-  children: LayoutNode[];
-
-  containerInstructions: ContainerLayoutInstructions;
-  elementInstructions: ElementLayoutInstructions;
-}
+import type { AlignItems, Axis, JustifyContent, LayoutNode } from './layoutTree';
 
 // Constants for default constraint values
 const DEFAULT_MIN = 0;
@@ -338,6 +296,14 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
  * 5. Position and size children (offset by padding), then recursively layout their children
  */
 export const layoutChildren = (layoutNode: LayoutNode) => {
+  // If layout is explicitly disabled, only recurse to children
+  if (layoutNode.containerInstructions.enabled === false) {
+    for (const child of layoutNode.children) {
+      layoutChildren(child);
+    }
+    return;
+  }
+
   if (layoutNode.children.length === 0) return;
 
   const axis = layoutNode.containerInstructions.direction;

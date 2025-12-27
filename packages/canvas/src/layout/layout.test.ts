@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { layoutChildren, _test, type LayoutNode, type ElementLayoutInstructions } from './layout';
+import { layoutChildren, _test } from './layout';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
+import type { ElementLayoutInstructions, LayoutNode } from './layoutTree';
 
 const createNode = (
   id: string,
@@ -1104,6 +1105,79 @@ describe('layoutChildren', () => {
         expect(innerChild1.bounds.y).toBe(30); // 50 - 20
         expect(innerChild2.bounds.y).toBe(25); // 50 - 25
       });
+    });
+  });
+
+  describe('enabled property', () => {
+    test('layout disabled on parent still recurses to children', () => {
+      const grandchild1 = createNode('grandchild1', 40, 30, 'horizontal', [], { grow: 1 });
+      const grandchild2 = createNode('grandchild2', 60, 30, 'horizontal', [], { grow: 1 });
+      // Child has layout enabled, should grow children
+      const child1 = createNode('child1', 200, 30, 'horizontal', [grandchild1, grandchild2]);
+
+      // Parent has layout disabled
+      const parent = createNode('parent', 400, 100, 'horizontal', [child1]);
+      parent.containerInstructions.enabled = false;
+
+      layoutChildren(parent);
+
+      // Parent should not layout child1, so child1 position should remain unchanged
+      expect(child1.bounds.x).toBe(0);
+      expect(child1.bounds.w).toBe(200); // Not resized
+
+      // But child1's children should still be laid out (grew to fill 200px)
+      expect(grandchild1.bounds.w).toBe(90); // 40 + 50 (half of 100px extra)
+      expect(grandchild2.bounds.w).toBe(110); // 60 + 50 (half of 100px extra)
+    });
+
+    test('layout disabled skips positioning but recurses', () => {
+      const innerChild1 = createNode('innerChild1', 50, 30);
+      const innerChild2 = createNode('innerChild2', 50, 30);
+      const innerContainer = createNode(
+        'inner',
+        100,
+        30,
+        'horizontal',
+        [innerChild1, innerChild2]
+      );
+
+      const outerContainer = createNode('outer', 300, 30, 'horizontal', [innerContainer]);
+      outerContainer.containerInstructions.enabled = false;
+
+      layoutChildren(outerContainer);
+
+      // Outer container should not layout its children
+      expect(innerContainer.bounds.x).toBe(0);
+
+      // But inner container should still layout its children
+      expect(innerChild1.bounds.x).toBe(0);
+      expect(innerChild2.bounds.x).toBe(50);
+    });
+
+    test('layout enabled by default when undefined', () => {
+      const child1 = createNode('child1', 50, 50, 'horizontal', [], { grow: 1 });
+      const child2 = createNode('child2', 50, 50, 'horizontal', [], { grow: 1 });
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2]);
+      // enabled is undefined, should default to enabled
+
+      layoutChildren(parent);
+
+      // Layout should be applied normally
+      expect(child1.bounds.w).toBe(150); // Grew
+      expect(child2.bounds.w).toBe(150); // Grew
+    });
+
+    test('layout explicitly enabled works normally', () => {
+      const child1 = createNode('child1', 50, 50, 'horizontal', [], { grow: 1 });
+      const child2 = createNode('child2', 50, 50, 'horizontal', [], { grow: 1 });
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2]);
+      parent.containerInstructions.enabled = true;
+
+      layoutChildren(parent);
+
+      // Layout should be applied normally
+      expect(child1.bounds.w).toBe(150); // Grew
+      expect(child2.bounds.w).toBe(150); // Grew
     });
   });
 });
