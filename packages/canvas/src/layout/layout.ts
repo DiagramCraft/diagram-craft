@@ -22,6 +22,17 @@ export type ElementLayoutInstructions = {
   shrink?: number;
 };
 
+declare global {
+  namespace DiagramCraft {
+    interface NodePropsExtensions {
+      layout?: {
+        container?: ContainerLayoutInstructions & { enabled?: boolean };
+        element?: ElementLayoutInstructions;
+      };
+    }
+  }
+}
+
 export interface LayoutNode {
   id: string;
   // Relative bounds to parent bounds

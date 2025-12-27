@@ -29,6 +29,8 @@ import { NodeAdvancedPropertiesPanel } from './NodeAdvancedPropertiesPanel';
 import { DefaultIndicatorPanel } from './DefaultIndicatorPanel';
 import { NamedIndicatorPanel } from './NamedIndicatorPanel';
 import { ToolWindow } from '../ToolWindow';
+import { LayoutContainerPanel } from './LayoutContainerPanel';
+import { LayoutElementPanel } from './LayoutElementPanel';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -183,8 +185,13 @@ export const ObjectToolWindow = () => {
       {tabs.includes('arrange') && (
         <ToolWindow.Tab id={'arrange'} title={'Arrange'}>
           <ToolWindow.TabContent>
-            <Accordion.Root disabled={true} type="multiple" defaultValue={['transform']}>
+            <Accordion.Root
+              type="multiple"
+              defaultValue={['transform', 'layout-container', 'layout-element']}
+            >
               <ElementTransformPanel />
+              <LayoutContainerPanel />
+              <LayoutElementPanel />
             </Accordion.Root>
           </ToolWindow.TabContent>
         </ToolWindow.Tab>

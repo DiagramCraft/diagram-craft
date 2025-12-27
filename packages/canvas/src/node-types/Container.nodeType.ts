@@ -220,6 +220,7 @@ export class ContainerNodeDefinition extends ShapeNodeDefinition {
 
     this.capabilities.fill = true;
     this.capabilities.children = true;
+    this.capabilities['can-have-layout'] = true;
   }
 
   onTransform(

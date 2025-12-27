@@ -121,7 +121,11 @@ export const NumberInput = (props: Props) => {
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       style={props.style ?? {}}
     >
-      {props.label && <div className={styles.cmpNumberInputLabel}>{props.label}</div>}
+      {props.label && (
+        <div className={styles.cmpNumberInputLabel} data-label-length={props.label?.length ?? 0}>
+          {props.label}
+        </div>
+      )}
       <input
         {...PropsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : undefined}
