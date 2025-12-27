@@ -251,11 +251,11 @@ const getStretchSize = (
   const availableCrossSize = containerCrossSize - crossPaddingStart - crossPaddingEnd;
   const crossConstraints = getAxisConstraints(child, axis);
 
-  // Respect min/max constraints when stretching
-  return Math.max(
-    crossConstraints?.min ?? DEFAULT_MIN,
-    Math.min(crossConstraints?.max ?? DEFAULT_MAX, availableCrossSize)
-  );
+  // When stretching, we want to fill the available space
+  // Only respect min constraint, ignore max constraint as stretch should override it
+  const minValue = crossConstraints?.min ?? DEFAULT_MIN;
+
+  return Math.max(minValue, availableCrossSize);
 };
 
 /**
