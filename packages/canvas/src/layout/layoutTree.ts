@@ -85,14 +85,18 @@ declare global {
 export interface LayoutNode {
   /** Unique identifier matching the corresponding DiagramNode */
   id: string;
+
   /** Bounds relative to parent's bounds (used during layout calculation) */
   bounds: WritableBox;
+
   /** Child nodes that participate in this node's layout */
   children: LayoutNode[];
-  /** Layout instructions when this node acts as a container */
-  containerInstructions: ContainerLayoutInstructions;
-  /** Layout instructions when this node is an element in a parent container */
-  elementInstructions: ElementLayoutInstructions;
+
+  /** Layout instructions when this node acts as a container (undefined if no container instructions) */
+  containerInstructions: ContainerLayoutInstructions | undefined;
+
+  /** Layout instructions when this node is an element in a parent container (undefined if no element instructions) */
+  elementInstructions: ElementLayoutInstructions | undefined;
 }
 
 type ParentBounds = { x: number; y: number; r: number };

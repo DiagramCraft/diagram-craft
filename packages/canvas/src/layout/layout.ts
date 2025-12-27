@@ -1,10 +1,34 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
-import type { AlignItems, Axis, JustifyContent, LayoutNode } from './layoutTree';
+import type {
+  AlignItems,
+  Axis,
+  ContainerLayoutInstructions,
+  JustifyContent,
+  LayoutNode
+} from './layoutTree';
 
-// Constants for default constraint values
-const DEFAULT_MIN = 0;
-const DEFAULT_MAX = Infinity;
-const DEFAULT_GAP = 0;
+/**
+ * Default values for layout properties
+ */
+const LAYOUT_DEFAULTS = {
+  /** Default minimum size for elements */
+  MIN: 0,
+
+  /** Default maximum size for elements */
+  MAX: Infinity,
+
+  /** Default gap between children */
+  GAP: 0,
+
+  /** Default flex-grow factor */
+  GROW: 0,
+
+  /** Default flex-shrink factor */
+  SHRINK: 0,
+
+  /** Default layout enabled state */
+  ENABLED: true
+} as const;
 
 /**
  * Get constraints for a specific axis
@@ -13,7 +37,27 @@ const getAxisConstraints = (
   node: LayoutNode,
   axis: Axis
 ): { min?: number; max?: number } | undefined => {
-  return axis === 'horizontal' ? node.elementInstructions.width : node.elementInstructions.height;
+  return axis === 'horizontal' ? node.elementInstructions?.width : node.elementInstructions?.height;
+};
+
+/**
+ * Calculate padding for a specific axis
+ * @returns Object containing start padding, end padding, and total padding for the axis
+ */
+const getAxisPadding = (padding: ContainerLayoutInstructions['padding'], axis: Axis) => {
+  if (!padding) {
+    return { start: 0, end: 0, total: 0 };
+  }
+
+  if (axis === 'horizontal') {
+    const start = padding.left ?? 0;
+    const end = padding.right ?? 0;
+    return { start, end, total: start + end };
+  } else {
+    const start = padding.top ?? 0;
+    const end = padding.bottom ?? 0;
+    return { start, end, total: start + end };
+  }
 };
 
 /**
@@ -46,21 +90,16 @@ const getAxisConstraints = (
  * shrinking below minimum needed or growing beyond maximum allowed by content.
  */
 const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): number => {
-  if (node.children.length === 0) {
-    return type === 'min' ? DEFAULT_MIN : DEFAULT_MAX;
+  if (node.children.length === 0 || !node.containerInstructions) {
+    return type === 'min' ? LAYOUT_DEFAULTS.MIN : LAYOUT_DEFAULTS.MAX;
   }
 
   const direction = node.containerInstructions.direction;
-  const gap = node.containerInstructions.gap ?? DEFAULT_GAP;
+  const gap = node.containerInstructions.gap ?? LAYOUT_DEFAULTS.GAP;
   const totalGaps = gap * Math.max(0, node.children.length - 1);
 
   // Calculate padding for this axis
-  const padding = node.containerInstructions.padding;
-  const axisPadding = padding
-    ? axis === 'horizontal'
-      ? (padding.left ?? 0) + (padding.right ?? 0)
-      : (padding.top ?? 0) + (padding.bottom ?? 0)
-    : 0;
+  const axisPadding = getAxisPadding(node.containerInstructions.padding, axis).total;
 
   if (direction === axis) {
     // Children are laid out along the same axis - sum their sizes
@@ -69,7 +108,9 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
       const intrinsic = getIntrinsicSize(child, axis, type);
       const constraints = getAxisConstraints(child, axis);
       const explicit =
-        type === 'min' ? (constraints?.min ?? DEFAULT_MIN) : (constraints?.max ?? DEFAULT_MAX);
+        type === 'min'
+          ? (constraints?.min ?? LAYOUT_DEFAULTS.MIN)
+          : (constraints?.max ?? LAYOUT_DEFAULTS.MAX);
       const childSize =
         type === 'min' ? Math.max(intrinsic, explicit) : Math.min(intrinsic, explicit);
 
@@ -86,7 +127,9 @@ const getIntrinsicSize = (node: LayoutNode, axis: Axis, type: 'min' | 'max'): nu
       const intrinsic = getIntrinsicSize(child, axis, type);
       const constraints = getAxisConstraints(child, axis);
       const explicit =
-        type === 'min' ? (constraints?.min ?? DEFAULT_MIN) : (constraints?.max ?? DEFAULT_MAX);
+        type === 'min'
+          ? (constraints?.min ?? LAYOUT_DEFAULTS.MIN)
+          : (constraints?.max ?? LAYOUT_DEFAULTS.MAX);
       const childSize =
         type === 'min' ? Math.max(intrinsic, explicit) : Math.min(intrinsic, explicit);
 
@@ -244,7 +287,7 @@ const getStretchSize = (
   }
 
   // Don't stretch if preserveAspectRatio is enabled
-  if (child.elementInstructions.preserveAspectRatio) {
+  if (child.elementInstructions?.preserveAspectRatio) {
     return undefined;
   }
 
@@ -253,7 +296,7 @@ const getStretchSize = (
 
   // When stretching, we want to fill the available space
   // Only respect min constraint, ignore max constraint as stretch should override it
-  const minValue = crossConstraints?.min ?? DEFAULT_MIN;
+  const minValue = crossConstraints?.min ?? LAYOUT_DEFAULTS.MIN;
 
   return Math.max(minValue, availableCrossSize);
 };
@@ -264,7 +307,7 @@ const getStretchSize = (
 const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void => {
   for (const info of childInfo) {
     if (
-      info.child.elementInstructions.preserveAspectRatio &&
+      info.child.elementInstructions?.preserveAspectRatio &&
       info.finalSize !== info.originalSize
     ) {
       const aspectRatio = info.child.bounds.w / info.child.bounds.h;
@@ -278,8 +321,8 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
         : info.finalSize * aspectRatio;
 
       info.crossAxisSize = Math.max(
-        crossConstraints?.min ?? DEFAULT_MIN,
-        Math.min(crossConstraints?.max ?? DEFAULT_MAX, newCrossSize)
+        crossConstraints?.min ?? LAYOUT_DEFAULTS.MIN,
+        Math.min(crossConstraints?.max ?? LAYOUT_DEFAULTS.MAX, newCrossSize)
       );
     }
   }
@@ -320,8 +363,8 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
  * ```
  */
 export const layoutChildren = (layoutNode: LayoutNode) => {
-  // If layout is explicitly disabled, only recurse to children
-  if (layoutNode.containerInstructions.enabled === false) {
+  // If no container instructions or explicitly disabled, only recurse to children
+  if (!layoutNode.containerInstructions || layoutNode.containerInstructions.enabled === false) {
     for (const child of layoutNode.children) {
       layoutChildren(child);
     }
@@ -331,18 +374,14 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   if (layoutNode.children.length === 0) return;
 
   const axis = layoutNode.containerInstructions.direction;
-  const gap = layoutNode.containerInstructions.gap ?? DEFAULT_GAP;
+  const gap = layoutNode.containerInstructions.gap ?? LAYOUT_DEFAULTS.GAP;
   const isHorizontal = axis === 'horizontal';
   const padding = layoutNode.containerInstructions.padding;
 
   // Calculate available space for children (container size minus padding)
   const containerSize = isHorizontal ? layoutNode.bounds.w : layoutNode.bounds.h;
-  const axisPadding = padding
-    ? isHorizontal
-      ? (padding.left ?? 0) + (padding.right ?? 0)
-      : (padding.top ?? 0) + (padding.bottom ?? 0)
-    : 0;
-  const availableSize = containerSize - axisPadding;
+  const mainAxisPadding = getAxisPadding(padding, axis);
+  const availableSize = containerSize - mainAxisPadding.total;
 
   // Collect child information with effective min/max constraints
   // Exclude children with isAbsolute: true
@@ -355,8 +394,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 
       const intrinsicMin = getIntrinsicSize(child, axis, 'min');
       const intrinsicMax = getIntrinsicSize(child, axis, 'max');
-      const effectiveMin = Math.max(intrinsicMin, constraints?.min ?? DEFAULT_MIN);
-      const effectiveMax = Math.min(intrinsicMax, constraints?.max ?? DEFAULT_MAX);
+      const effectiveMin = Math.max(intrinsicMin, constraints?.min ?? LAYOUT_DEFAULTS.MIN);
+      const effectiveMax = Math.min(intrinsicMax, constraints?.max ?? LAYOUT_DEFAULTS.MAX);
 
       return {
         child,
@@ -364,8 +403,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
         originalSize,
         finalSize: originalSize,
         crossAxisSize: undefined,
-        grow: child.elementInstructions.grow ?? 0,
-        shrink: child.elementInstructions.shrink ?? 0,
+        grow: child.elementInstructions?.grow ?? LAYOUT_DEFAULTS.GROW,
+        shrink: child.elementInstructions?.shrink ?? LAYOUT_DEFAULTS.SHRINK,
         min: effectiveMin,
         max: effectiveMax
       };
@@ -380,7 +419,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   });
 
   // Calculate available space and determine grow/shrink
-  const totalGaps = gap * Math.max(0, layoutNode.children.length - 1);
+  // Use childInfo.length (non-absolute children) instead of all children
+  const totalGaps = gap * Math.max(0, childInfo.length - 1);
   const totalOriginalSize = childInfo.reduce((sum, info) => sum + info.originalSize, 0);
   const freeSpace = availableSize - totalGaps - totalOriginalSize;
 
@@ -402,7 +442,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 
   // Check if parent needs to be resized to fit children on the main axis
   const totalFinalSize = childInfo.reduce((sum, info) => sum + info.finalSize, 0);
-  const requiredMainAxisSize = totalFinalSize + totalGaps + axisPadding;
+  const requiredMainAxisSize = totalFinalSize + totalGaps + mainAxisPadding.total;
 
   if (requiredMainAxisSize > containerSize) {
     // Parent is too small on main axis, resize it
@@ -414,11 +454,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   }
 
   // Check if parent needs to be resized to fit children on the cross axis
-  const crossAxisPadding = padding
-    ? isHorizontal
-      ? (padding.top ?? 0) + (padding.bottom ?? 0)
-      : (padding.left ?? 0) + (padding.right ?? 0)
-    : 0;
+  const crossAxis: Axis = isHorizontal ? 'vertical' : 'horizontal';
+  const crossAxisPadding = getAxisPadding(padding, crossAxis);
 
   const maxCrossAxisSize = childInfo.reduce((max, info) => {
     const currentCrossSize = isHorizontal ? info.child.bounds.h : info.child.bounds.w;
@@ -426,7 +463,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     return Math.max(max, crossSize);
   }, 0);
 
-  const requiredCrossAxisSize = maxCrossAxisSize + crossAxisPadding;
+  const requiredCrossAxisSize = maxCrossAxisSize + crossAxisPadding.total;
   const currentCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
 
   if (requiredCrossAxisSize > currentCrossSize) {
@@ -441,14 +478,6 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   // Position and size children (offset by padding and justify-content)
   const paddingLeft = padding?.left ?? 0;
   const paddingTop = padding?.top ?? 0;
-
-  // Cross-axis padding
-  const crossPaddingStart = padding ? (isHorizontal ? (padding.top ?? 0) : (padding.left ?? 0)) : 0;
-  const crossPaddingEnd = padding
-    ? isHorizontal
-      ? (padding.bottom ?? 0)
-      : (padding.right ?? 0)
-    : 0;
 
   // Container cross-axis size
   const containerCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
@@ -475,10 +504,10 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     const stretchSize = getStretchSize(
       layoutNode.containerInstructions.alignItems,
       containerCrossSize,
-      crossPaddingStart,
-      crossPaddingEnd,
+      crossAxisPadding.start,
+      crossAxisPadding.end,
       child,
-      isHorizontal ? 'vertical' : 'horizontal'
+      crossAxis
     );
 
     const finalCrossSize = stretchSize ?? effectiveCrossSize;
@@ -494,8 +523,8 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
       effectiveAlignItems,
       containerCrossSize,
       finalCrossSize,
-      crossPaddingStart,
-      crossPaddingEnd
+      crossAxisPadding.start,
+      crossAxisPadding.end
     );
 
     // Set position and size in both axes
@@ -544,6 +573,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 // Export internal functions for testing
 export const _test = {
   getAxisConstraints,
+  getAxisPadding,
   getIntrinsicSize,
   applyGrow,
   applyShrink,

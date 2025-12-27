@@ -1102,7 +1102,7 @@ describe('layoutChildren', () => {
 
       // Parent has layout disabled
       const parent = createNode('parent', 400, 100, 'horizontal', [child1]);
-      parent.containerInstructions.enabled = false;
+      parent.containerInstructions!.enabled = false;
 
       layoutChildren(parent);
 
@@ -1121,7 +1121,7 @@ describe('layoutChildren', () => {
       const innerContainer = createNode('inner', 100, 30, 'horizontal', [innerChild1, innerChild2]);
 
       const outerContainer = createNode('outer', 300, 30, 'horizontal', [innerContainer]);
-      outerContainer.containerInstructions.enabled = false;
+      outerContainer.containerInstructions!.enabled = false;
 
       layoutChildren(outerContainer);
 
@@ -1150,7 +1150,7 @@ describe('layoutChildren', () => {
       const child1 = createNode('child1', 50, 50, 'horizontal', [], { grow: 1 });
       const child2 = createNode('child2', 50, 50, 'horizontal', [], { grow: 1 });
       const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2]);
-      parent.containerInstructions.enabled = true;
+      parent.containerInstructions!.enabled = true;
 
       layoutChildren(parent);
 
@@ -1337,7 +1337,7 @@ describe('applyShrink', () => {
 describe('applyAspectRatio', () => {
   test('calculates cross-axis size for horizontal layout', () => {
     const child = createNode('c1', 100, 50);
-    child.elementInstructions.preserveAspectRatio = true;
+    child.elementInstructions!.preserveAspectRatio = true;
 
     const childInfo = [
       {
@@ -1361,8 +1361,8 @@ describe('applyAspectRatio', () => {
 
   test('respects cross-axis constraints', () => {
     const child = createNode('c1', 100, 50);
-    child.elementInstructions.preserveAspectRatio = true;
-    child.elementInstructions.height = { max: 80 };
+    child.elementInstructions!.preserveAspectRatio = true;
+    child.elementInstructions!.height = { max: 80 };
 
     const childInfo = [
       {
@@ -1386,7 +1386,7 @@ describe('applyAspectRatio', () => {
 
   test('does not apply if size unchanged', () => {
     const child = createNode('c1', 100, 50);
-    child.elementInstructions.preserveAspectRatio = true;
+    child.elementInstructions!.preserveAspectRatio = true;
 
     const childInfo = [
       {
