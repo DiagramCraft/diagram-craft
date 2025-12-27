@@ -454,24 +454,28 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   }
 
   // Check if parent needs to be resized to fit children on the cross axis
+  // Skip auto-sizing when alignItems is 'stretch' - children should fit the container, not vice versa
   const crossAxis: Axis = isHorizontal ? 'vertical' : 'horizontal';
   const crossAxisPadding = getAxisPadding(padding, crossAxis);
+  const alignItems = layoutNode.containerInstructions.alignItems;
 
-  const maxCrossAxisSize = childInfo.reduce((max, info) => {
-    const currentCrossSize = isHorizontal ? info.child.bounds.h : info.child.bounds.w;
-    const crossSize = info.crossAxisSize ?? currentCrossSize;
-    return Math.max(max, crossSize);
-  }, 0);
+  if (alignItems !== 'stretch') {
+    const maxCrossAxisSize = childInfo.reduce((max, info) => {
+      const currentCrossSize = isHorizontal ? info.child.bounds.h : info.child.bounds.w;
+      const crossSize = info.crossAxisSize ?? currentCrossSize;
+      return Math.max(max, crossSize);
+    }, 0);
 
-  const requiredCrossAxisSize = maxCrossAxisSize + crossAxisPadding.total;
-  const currentCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
+    const requiredCrossAxisSize = maxCrossAxisSize + crossAxisPadding.total;
+    const currentCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
 
-  if (requiredCrossAxisSize > currentCrossSize) {
-    // Parent is too small on cross axis, resize it
-    if (isHorizontal) {
-      layoutNode.bounds.h = requiredCrossAxisSize;
-    } else {
-      layoutNode.bounds.w = requiredCrossAxisSize;
+    if (requiredCrossAxisSize > currentCrossSize) {
+      // Parent is too small on cross axis, resize it
+      if (isHorizontal) {
+        layoutNode.bounds.h = requiredCrossAxisSize;
+      } else {
+        layoutNode.bounds.w = requiredCrossAxisSize;
+      }
     }
   }
 
