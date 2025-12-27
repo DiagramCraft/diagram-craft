@@ -357,6 +357,36 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
   routing: {
     spacing: 0,
     constraint: 'none'
+  },
+
+  layout: {
+    container: {
+      enabled: false,
+      direction: 'horizontal',
+      gap: 0,
+      justifyContent: 'start',
+      alignItems: 'preserve',
+      padding: {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0
+      }
+    },
+    element: {
+      width: {
+        min: 0,
+        max: 100000
+      },
+      height: {
+        min: 0,
+        max: 100000
+      },
+      preserveAspectRatio: false,
+      grow: 0,
+      shrink: 0,
+      isAbsolute: false
+    }
   }
 };
 

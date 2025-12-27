@@ -559,6 +559,13 @@ export class SimpleDiagramNode
       this.clearCache();
       this.invalidateAnchors(uow);
       this.getDefinition().onPropUpdate(this, uow);
+
+      const parent = this.parent;
+      if (isNode(parent)) {
+        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+          parent.getDefinition().onChildChanged(parent, uow);
+        });
+      }
     });
   }
 
