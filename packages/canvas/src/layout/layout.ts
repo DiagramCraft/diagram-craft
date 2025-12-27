@@ -1,9 +1,12 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 
+type Axis = 'horizontal' | 'vertical';
+
 export type ContainerLayoutInstructions = {
-  direction: 'vertical' | 'horizontal';
+  direction: Axis;
   gap?: number;
   justifyContent?: 'start' | 'end' | 'center' | 'space-between';
+  alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
 };
 
 export type ElementLayoutInstructions = {
@@ -29,8 +32,6 @@ export interface LayoutNode {
 const DEFAULT_MIN = 0;
 const DEFAULT_MAX = Infinity;
 const DEFAULT_GAP = 0;
-
-type Axis = 'horizontal' | 'vertical';
 
 /**
  * Get constraints for a specific axis
@@ -220,6 +221,71 @@ const calculateJustifyOffset = (
 };
 
 /**
+ * Calculate cross-axis alignment offset for a single child
+ */
+const calculateAlignOffset = (
+  alignItems: string | undefined,
+  containerCrossSize: number,
+  childCrossSize: number,
+  crossPaddingStart: number,
+  crossPaddingEnd: number
+): number => {
+  if (!alignItems || alignItems === 'preserve') {
+    return 0; // No change - preserve original position
+  }
+
+  const availableCrossSize = containerCrossSize - crossPaddingStart - crossPaddingEnd;
+
+  switch (alignItems) {
+    case 'start':
+      return crossPaddingStart;
+
+    case 'end':
+      return containerCrossSize - childCrossSize - crossPaddingEnd;
+
+    case 'center':
+      return crossPaddingStart + (availableCrossSize - childCrossSize) / 2;
+
+    case 'stretch':
+      // For stretch, return start position - sizing happens separately
+      return crossPaddingStart;
+
+    default:
+      return 0;
+  }
+};
+
+/**
+ * Calculate cross-axis size for stretch alignment
+ */
+const getStretchSize = (
+  alignItems: string | undefined,
+  containerCrossSize: number,
+  crossPaddingStart: number,
+  crossPaddingEnd: number,
+  child: LayoutNode,
+  axis: Axis
+): number | undefined => {
+  if (alignItems !== 'stretch') {
+    return undefined;
+  }
+
+  // Don't stretch if preserveAspectRatio is enabled
+  if (child.elementInstructions.preserveAspectRatio) {
+    return undefined;
+  }
+
+  const availableCrossSize = containerCrossSize - crossPaddingStart - crossPaddingEnd;
+  const crossConstraints = getAxisConstraints(child, axis);
+
+  // Respect min/max constraints when stretching
+  return Math.max(
+    crossConstraints?.min ?? DEFAULT_MIN,
+    Math.min(crossConstraints?.max ?? DEFAULT_MAX, availableCrossSize)
+  );
+};
+
+/**
  * Apply aspect ratio preservation for resized children
  */
 const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void => {
@@ -322,6 +388,17 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   const paddingLeft = padding?.left ?? 0;
   const paddingTop = padding?.top ?? 0;
 
+  // Cross-axis padding
+  const crossPaddingStart = padding ? (isHorizontal ? (padding.top ?? 0) : (padding.left ?? 0)) : 0;
+  const crossPaddingEnd = padding
+    ? isHorizontal
+      ? (padding.bottom ?? 0)
+      : (padding.right ?? 0)
+    : 0;
+
+  // Container cross-axis size
+  const containerCrossSize = isHorizontal ? layoutNode.bounds.h : layoutNode.bounds.w;
+
   // Calculate justify-content offset if applicable
   const justifyOffset = shouldJustify
     ? calculateJustifyOffset(
@@ -336,18 +413,65 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   for (const info of childInfo) {
     const { child, finalSize, crossAxisSize } = info;
 
-    // Set position in layout direction
+    // Calculate cross-axis size (prefer crossAxisSize from aspect ratio, else use current size)
+    const currentCrossSize = isHorizontal ? child.bounds.h : child.bounds.w;
+    const effectiveCrossSize = crossAxisSize ?? currentCrossSize;
+
+    // Check if we should stretch this child
+    const stretchSize = getStretchSize(
+      layoutNode.containerInstructions.alignItems,
+      containerCrossSize,
+      crossPaddingStart,
+      crossPaddingEnd,
+      child,
+      isHorizontal ? 'vertical' : 'horizontal'
+    );
+
+    const finalCrossSize = stretchSize ?? effectiveCrossSize;
+
+    // Determine effective alignment (if stretch fails due to preserveAspectRatio, use center)
+    const effectiveAlignItems =
+      layoutNode.containerInstructions.alignItems === 'stretch' && stretchSize === undefined
+        ? 'center'
+        : layoutNode.containerInstructions.alignItems;
+
+    // Calculate cross-axis offset
+    const crossOffset = calculateAlignOffset(
+      effectiveAlignItems,
+      containerCrossSize,
+      finalCrossSize,
+      crossPaddingStart,
+      crossPaddingEnd
+    );
+
+    // Set position and size in both axes
     if (isHorizontal) {
       child.bounds.x = currentOffset;
+      // Only set cross-axis position if alignItems is specified and not 'preserve'
+      if (effectiveAlignItems && effectiveAlignItems !== 'preserve') {
+        child.bounds.y = crossOffset; // Apply cross-axis alignment
+      }
       if (shouldGrow || shouldShrink) {
         child.bounds.w = finalSize;
         if (crossAxisSize !== undefined) child.bounds.h = crossAxisSize;
       }
+      // Apply stretch size if applicable
+      if (stretchSize !== undefined) {
+        child.bounds.h = stretchSize;
+      }
     } else {
       child.bounds.y = currentOffset;
+      // Only set cross-axis position if alignItems is specified and not 'preserve'
+      if (effectiveAlignItems && effectiveAlignItems !== 'preserve') {
+        child.bounds.x = crossOffset; // Apply cross-axis alignment
+      }
       if (shouldGrow || shouldShrink) {
         child.bounds.h = finalSize;
         if (crossAxisSize !== undefined) child.bounds.w = crossAxisSize;
+      }
+      // Apply stretch size if applicable
+      if (stretchSize !== undefined) {
+        child.bounds.w = stretchSize;
       }
     }
 
@@ -363,5 +487,7 @@ export const _test = {
   applyGrow,
   applyShrink,
   applyAspectRatio,
-  calculateJustifyOffset
+  calculateJustifyOffset,
+  calculateAlignOffset,
+  getStretchSize
 };

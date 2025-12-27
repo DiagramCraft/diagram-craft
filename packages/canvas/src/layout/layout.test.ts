@@ -9,7 +9,12 @@ const createNode = (
   direction: 'vertical' | 'horizontal' = 'horizontal',
   children: LayoutNode[] = [],
   elementInstructions?: Partial<ElementLayoutInstructions>,
-  options?: { gap?: number; rotation?: number; justifyContent?: 'start' | 'end' | 'center' | 'space-between' }
+  options?: {
+    gap?: number;
+    rotation?: number;
+    justifyContent?: 'start' | 'end' | 'center' | 'space-between';
+    alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
+  }
 ): LayoutNode => ({
   id,
   bounds: { x: 0, y: 0, w: width, h: height, r: options?.rotation ?? 0, _discriminator: 'rw' },
@@ -17,7 +22,8 @@ const createNode = (
   containerInstructions: {
     direction,
     ...(options?.gap !== undefined && { gap: options.gap }),
-    ...(options?.justifyContent !== undefined && { justifyContent: options.justifyContent })
+    ...(options?.justifyContent !== undefined && { justifyContent: options.justifyContent }),
+    ...(options?.alignItems !== undefined && { alignItems: options.alignItems })
   },
   elementInstructions: { width: {}, height: {}, ...elementInstructions }
 });
@@ -791,6 +797,294 @@ describe('layoutChildren', () => {
       expect(innerChild2.bounds.x).toBe(70); // 40 + 30
     });
   });
+
+  describe('alignItems', () => {
+    describe('horizontal layout (cross-axis = vertical)', () => {
+      test('alignItems: preserve maintains original y position (default)', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        child1.bounds.y = 5; // Set initial y position
+        child2.bounds.y = 10;
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'preserve'
+        });
+
+        layoutChildren(parent);
+
+        // Y positions should remain unchanged
+        expect(child1.bounds.y).toBe(5);
+        expect(child2.bounds.y).toBe(10);
+      });
+
+      test('alignItems: start aligns children to top', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'start'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(0);
+        expect(child2.bounds.y).toBe(0);
+      });
+
+      test('alignItems: end aligns children to bottom', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        // Container: 100px high
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'end'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(70); // 100 - 30
+        expect(child2.bounds.y).toBe(60); // 100 - 40
+      });
+
+      test('alignItems: center centers children vertically', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(35); // (100 - 30) / 2
+        expect(child2.bounds.y).toBe(30); // (100 - 40) / 2
+      });
+
+      test('alignItems: stretch stretches children to fill height', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'stretch'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.h).toBe(100);
+        expect(child2.bounds.h).toBe(100);
+        expect(child1.bounds.y).toBe(0);
+        expect(child2.bounds.y).toBe(0);
+      });
+    });
+
+    describe('vertical layout (cross-axis = horizontal)', () => {
+      test('alignItems: start aligns children to left', () => {
+        const child1 = createNode('child1', 30, 50);
+        const child2 = createNode('child2', 40, 50);
+        const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+          alignItems: 'start'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.x).toBe(0);
+        expect(child2.bounds.x).toBe(0);
+      });
+
+      test('alignItems: end aligns children to right', () => {
+        const child1 = createNode('child1', 30, 50);
+        const child2 = createNode('child2', 40, 50);
+        const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+          alignItems: 'end'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.x).toBe(70); // 100 - 30
+        expect(child2.bounds.x).toBe(60); // 100 - 40
+      });
+
+      test('alignItems: center centers children horizontally', () => {
+        const child1 = createNode('child1', 30, 50);
+        const child2 = createNode('child2', 40, 50);
+        const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.x).toBe(35); // (100 - 30) / 2
+        expect(child2.bounds.x).toBe(30); // (100 - 40) / 2
+      });
+
+      test('alignItems: stretch stretches children to fill width', () => {
+        const child1 = createNode('child1', 30, 50);
+        const child2 = createNode('child2', 40, 50);
+        const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+          alignItems: 'stretch'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.w).toBe(100);
+        expect(child2.bounds.w).toBe(100);
+        expect(child1.bounds.x).toBe(0);
+        expect(child2.bounds.x).toBe(0);
+      });
+    });
+
+    describe('integration tests', () => {
+      test('alignItems with padding', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        // Container: 100px high, padding: 10px top+bottom
+        // Available: 80px, children centered in available space
+        const parent = createNode(
+          'parent',
+          300,
+          100,
+          'horizontal',
+          [child1, child2],
+          { padding: { top: 10, bottom: 10 } },
+          { alignItems: 'center' }
+        );
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(35); // 10 + (80 - 30) / 2
+        expect(child2.bounds.y).toBe(30); // 10 + (80 - 40) / 2
+      });
+
+      test('alignItems with justifyContent (both axes aligned)', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        // Container: 300x100, children: 100px wide, 200px free horizontal
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          justifyContent: 'center',
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        // Horizontal (main axis) centered
+        expect(child1.bounds.x).toBe(100); // 0 + 100 (half of 200px free)
+        expect(child2.bounds.x).toBe(150); // 100 + 50
+        // Vertical (cross axis) centered
+        expect(child1.bounds.y).toBe(35); // (100 - 30) / 2
+        expect(child2.bounds.y).toBe(30); // (100 - 40) / 2
+      });
+
+      test('alignItems with gap (gap should not affect cross axis)', () => {
+        const child1 = createNode('child1', 50, 30);
+        const child2 = createNode('child2', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          gap: 20,
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        // Gap should only affect main axis (x positions)
+        expect(child1.bounds.x).toBe(0);
+        expect(child2.bounds.x).toBe(70); // 50 + 20 gap
+        // Cross axis should be centered
+        expect(child1.bounds.y).toBe(35);
+        expect(child2.bounds.y).toBe(30);
+      });
+
+      test('alignItems: stretch with min/max constraints', () => {
+        const child1 = createNode('child1', 50, 30, 'horizontal', [], { height: { max: 60 } });
+        const child2 = createNode('child2', 50, 40, 'horizontal', [], { height: { min: 50 } });
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'stretch'
+        });
+
+        layoutChildren(parent);
+
+        // child1 capped at max
+        expect(child1.bounds.h).toBe(60);
+        // child2 can stretch to full height
+        expect(child2.bounds.h).toBe(100);
+      });
+
+      test('alignItems: stretch with preserveAspectRatio (aspect ratio wins)', () => {
+        const child1 = createNode('child1', 50, 30, 'horizontal', [], {
+          preserveAspectRatio: true
+        });
+        const child2 = createNode('child2', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+          alignItems: 'stretch'
+        });
+
+        layoutChildren(parent);
+
+        // child1 should NOT stretch (preserveAspectRatio enabled)
+        expect(child1.bounds.h).toBe(30);
+        expect(child1.bounds.y).toBe(35); // Centered: (100 - 30) / 2
+        // child2 should stretch
+        expect(child2.bounds.h).toBe(100);
+        expect(child2.bounds.y).toBe(0);
+      });
+    });
+
+    describe('edge cases', () => {
+      test('different child sizes with alignItems: center', () => {
+        const child1 = createNode('child1', 50, 20);
+        const child2 = createNode('child2', 50, 60);
+        const child3 = createNode('child3', 50, 40);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2, child3], undefined, {
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(40); // (100 - 20) / 2
+        expect(child2.bounds.y).toBe(20); // (100 - 60) / 2
+        expect(child3.bounds.y).toBe(30); // (100 - 40) / 2
+      });
+
+      test('single child with alignItems', () => {
+        const child1 = createNode('child1', 50, 30);
+        const parent = createNode('parent', 300, 100, 'horizontal', [child1], undefined, {
+          alignItems: 'center'
+        });
+
+        layoutChildren(parent);
+
+        expect(child1.bounds.y).toBe(35); // (100 - 30) / 2
+      });
+
+      test('nested containers with different alignItems', () => {
+        const innerChild1 = createNode('innerChild1', 30, 20);
+        const innerChild2 = createNode('innerChild2', 30, 25);
+        const innerContainer = createNode(
+          'inner',
+          100,
+          50,
+          'horizontal',
+          [innerChild1, innerChild2],
+          undefined,
+          { alignItems: 'end' }
+        );
+
+        const outerChild = createNode('outerChild', 50, 30);
+        const outerContainer = createNode(
+          'outer',
+          300,
+          100,
+          'horizontal',
+          [innerContainer, outerChild],
+          undefined,
+          { alignItems: 'center' }
+        );
+
+        layoutChildren(outerContainer);
+
+        // Outer container children centered
+        expect(innerContainer.bounds.y).toBe(25); // (100 - 50) / 2
+        expect(outerChild.bounds.y).toBe(35); // (100 - 30) / 2
+
+        // Inner container children aligned to bottom
+        expect(innerChild1.bounds.y).toBe(30); // 50 - 20
+        expect(innerChild2.bounds.y).toBe(25); // 50 - 25
+      });
+    });
+  });
 });
 
 // Unit tests for internal helper functions
@@ -1101,5 +1395,120 @@ describe('calculateJustifyOffset', () => {
     const result = _test.calculateJustifyOffset('space-between', 200, 0);
 
     expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+});
+
+describe('calculateAlignOffset', () => {
+  test('returns 0 when alignItems is undefined', () => {
+    const result = _test.calculateAlignOffset(undefined, 100, 30, 0, 0);
+
+    expect(result).toBe(0);
+  });
+
+  test('returns 0 when alignItems is preserve', () => {
+    const result = _test.calculateAlignOffset('preserve', 100, 30, 0, 0);
+
+    expect(result).toBe(0);
+  });
+
+  test('start returns padding start offset', () => {
+    const result = _test.calculateAlignOffset('start', 100, 30, 10, 10);
+
+    expect(result).toBe(10); // crossPaddingStart
+  });
+
+  test('start without padding returns 0', () => {
+    const result = _test.calculateAlignOffset('start', 100, 30, 0, 0);
+
+    expect(result).toBe(0);
+  });
+
+  test('end returns correct offset', () => {
+    const result = _test.calculateAlignOffset('end', 100, 30, 0, 0);
+
+    expect(result).toBe(70); // 100 - 30
+  });
+
+  test('end with padding accounts for padding end', () => {
+    const result = _test.calculateAlignOffset('end', 100, 30, 10, 10);
+
+    expect(result).toBe(60); // 100 - 30 - 10 (paddingEnd)
+  });
+
+  test('center returns half of available space', () => {
+    const result = _test.calculateAlignOffset('center', 100, 30, 0, 0);
+
+    expect(result).toBe(35); // 0 + (100 - 30) / 2
+  });
+
+  test('center with padding centers in available space', () => {
+    const result = _test.calculateAlignOffset('center', 100, 30, 10, 10);
+
+    expect(result).toBe(35); // 10 + (80 - 30) / 2
+  });
+
+  test('stretch returns padding start offset', () => {
+    const result = _test.calculateAlignOffset('stretch', 100, 100, 10, 10);
+
+    expect(result).toBe(10); // crossPaddingStart
+  });
+
+  test('unknown alignItems returns 0', () => {
+    const result = _test.calculateAlignOffset('unknown', 100, 30, 0, 0);
+
+    expect(result).toBe(0);
+  });
+});
+
+describe('getStretchSize', () => {
+  test('returns undefined when alignItems is not stretch', () => {
+    const child = createNode('test', 50, 30);
+    const result = _test.getStretchSize('center', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns undefined when preserveAspectRatio is enabled', () => {
+    const child = createNode('test', 50, 30, 'horizontal', [], { preserveAspectRatio: true });
+    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBeUndefined();
+  });
+
+  test('returns available size when stretching without constraints', () => {
+    const child = createNode('test', 50, 30);
+    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBe(100);
+  });
+
+  test('returns available size minus padding', () => {
+    const child = createNode('test', 50, 30);
+    const result = _test.getStretchSize('stretch', 100, 10, 10, child, 'vertical');
+
+    expect(result).toBe(80); // 100 - 10 - 10
+  });
+
+  test('respects max constraint when stretching', () => {
+    const child = createNode('test', 50, 30, 'horizontal', [], { height: { max: 60 } });
+    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBe(60); // Capped at max
+  });
+
+  test('respects min constraint when stretching', () => {
+    const child = createNode('test', 50, 30, 'horizontal', [], { height: { min: 120 } });
+    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBe(120); // Enforced min (even if larger than container)
+  });
+
+  test('respects both min and max constraints', () => {
+    const child = createNode('test', 50, 30, 'horizontal', [], {
+      height: { min: 20, max: 60 }
+    });
+    const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
+
+    expect(result).toBe(60); // Capped at max (container would allow 100)
   });
 });
