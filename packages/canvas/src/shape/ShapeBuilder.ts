@@ -109,6 +109,8 @@ export class ShapeBuilder {
     onSizeChange?: (size: Extent) => void
   ) {
     if (isNode(this.props.element)) {
+      const parentBounds = this.props.element.bounds;
+      const effectiveBounds = { ...(bounds ?? parentBounds) };
       this.nodes.push(
         cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
           key: `text_${id}_${this.props.element.id}`,
@@ -116,7 +118,7 @@ export class ShapeBuilder {
           metadata: this.props.element.dataForTemplate,
           textProps: textProps ?? (this.props.elementProps as NodeProps).text,
           text: text ?? this.props.element.getText(),
-          bounds: bounds ?? this.props.element.bounds,
+          bounds: { ...effectiveBounds, r: effectiveBounds.r - parentBounds.r },
           onMouseDown: this.props.onMouseDown,
           onChange: defaultOnChange(this.props.element),
           onSizeChange: onSizeChange,

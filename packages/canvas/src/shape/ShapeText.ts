@@ -11,6 +11,7 @@ import { applyLineBreaks, applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -199,7 +200,15 @@ export class ShapeText extends Component<ShapeTextProps> {
 
     const mode = requiresForeignObject(props.text ?? '') ? 'foreignObject' : 'foreignObject';
     if (mode === 'foreignObject') {
-      return foreignObject;
+      return svg.g(
+        {
+          transform:
+            props.bounds.r === 0
+              ? ''
+              : `rotate(${Angle.toDeg(props.bounds.r)} ${Box.center(props.bounds).x} ${Box.center(props.bounds).y})`
+        },
+        foreignObject
+      );
     }
 
     foreignObject.data.class = 'svg-node__fo svg-node__fo--with-text';
