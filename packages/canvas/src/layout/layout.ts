@@ -218,11 +218,10 @@ const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void =
 export const layoutChildren = (layoutNode: LayoutNode) => {
   if (layoutNode.children.length === 0) return;
 
-  const direction = layoutNode.containerInstructions.direction;
+  const axis = layoutNode.containerInstructions.direction;
   const gap = layoutNode.containerInstructions.gap ?? DEFAULT_GAP;
-  const isHorizontal = direction === 'horizontal';
+  const isHorizontal = axis === 'horizontal';
   const containerSize = isHorizontal ? layoutNode.bounds.w : layoutNode.bounds.h;
-  const axis = isHorizontal ? 'horizontal' : 'vertical';
 
   // Collect child information with effective min/max constraints
   const childInfo: ChildInfo[] = layoutNode.children.map(child => {
@@ -291,4 +290,13 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     currentOffset += finalSize + gap;
     layoutChildren(child); // Recursively layout children
   }
+};
+
+// Export internal functions for testing
+export const _test = {
+  getAxisConstraints,
+  getIntrinsicSize,
+  applyGrow,
+  applyShrink,
+  applyAspectRatio
 };
