@@ -8,7 +8,6 @@ import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
-import { Transform } from '@diagram-craft/geometry/transform';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -220,41 +219,6 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
     super(id, name, component);
 
     this.capabilities.fill = true;
-  }
-
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    newBounds: Box,
-    previousBounds: Box,
-    uow: UnitOfWork
-  ) {
-    if (
-      newBounds.w === previousBounds.w &&
-      newBounds.h === previousBounds.h &&
-      newBounds.r === previousBounds.r
-    ) {
-      return super.onTransform(transforms, node, newBounds, previousBounds, uow);
-    }
-
-    //const isScaling = transforms.find(t => t instanceof Scale);
-
-    const newWidth = newBounds.w;
-    const newHeight = newBounds.h;
-    //const newTransforms: Array<Transform> = [...transforms];
-
-    if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
-      node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
-      //newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
-    }
-
-    /*if (!isScaling || node.renderProps.custom.container.childResize !== 'fixed') {
-      for (const child of node.children) {
-        child.transform(newTransforms, uow, true);
-      }
-    }*/
-
-    return this.layoutChildren(node, uow);
   }
 
   // TODO: Remove this

@@ -245,7 +245,19 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 }
 
-export abstract class LayoutCapableShapeNodeDefinition extends ShapeNodeDefinition {
+export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
+  getContainerPadding(node: DiagramNode): {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  };
+}
+
+export abstract class LayoutCapableShapeNodeDefinition
+  extends ShapeNodeDefinition
+  implements LayoutCapableShapeNodeDefinitionInterface
+{
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, component: NodeShapeConstructor<any>);
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -259,6 +271,31 @@ export abstract class LayoutCapableShapeNodeDefinition extends ShapeNodeDefiniti
 
     this.capabilities['can-have-layout'] = true;
     this.capabilities.children = true;
+  }
+
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    newBounds: Box,
+    previousBounds: Box,
+    uow: UnitOfWork
+  ) {
+    if (
+      newBounds.w === previousBounds.w &&
+      newBounds.h === previousBounds.h &&
+      newBounds.r === previousBounds.r
+    ) {
+      return super.onTransform(transforms, node, newBounds, previousBounds, uow);
+    }
+
+    const newWidth = newBounds.w;
+    const newHeight = newBounds.h;
+
+    if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
+      node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
+    }
+
+    return this.layoutChildren(node, uow);
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -293,5 +330,9 @@ export abstract class LayoutCapableShapeNodeDefinition extends ShapeNodeDefiniti
       relation: 'on',
       element: node
     });
+  }
+
+  getContainerPadding(_node: DiagramNode) {
+    return { left: 0, right: 0, top: 0, bottom: 0 };
   }
 }

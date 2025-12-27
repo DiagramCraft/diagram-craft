@@ -1,14 +1,11 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import { assert } from '@diagram-craft/utils/assert';
-import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transform';
-import { Box } from '@diagram-craft/geometry/box';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import { LayoutCapableShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -40,6 +37,7 @@ registerCustomNodeDefaults('swimlane', {
   fill: false
 });
 
+/*
 type RowsInOrder = Array<{
   row: DiagramNode;
   newLocalBounds?: Box;
@@ -56,37 +54,16 @@ const getRowsInOrder = (rows: DiagramNode[]): RowsInOrder => {
   dest.sort((a, b) => a.row.bounds.y - b.row.bounds.y);
 
   return dest;
-};
+};*/
 
-export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
+export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
 
     this.capabilities.fill = true;
-    this.capabilities.children = true;
     this.capabilities.rounding = false;
   }
-
-  onDrop(
-    _coord: Point,
-    node: DiagramNode,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    _operation: string
-  ) {
-    node.diagram.moveElement(elements, uow, node.layer, {
-      relation: 'on',
-      element: node
-    });
-  }
-
-  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
-    // First layout all children
-    super.layoutChildren(node, uow);
-
-    this.doLayoutChildren(node, uow);
-  }
-
+  /*
   private doLayoutChildren(node: DiagramNode, uow: UnitOfWork) {
     if (node.children.length === 0) return;
 
@@ -158,6 +135,15 @@ export class SwimlaneNodeDefinition extends ShapeNodeDefinition {
           parentDef.onChildChanged(node.parent, uow);
         });
       }
+    }
+  }*/
+
+  getContainerPadding(node: DiagramNode) {
+    if (node.renderProps.custom.swimlane.title) {
+      const titleSize = node.renderProps.custom.swimlane.titleSize;
+      return { top: titleSize, bottom: 0, right: 0, left: 0 };
+    } else {
+      return super.getContainerPadding(node);
     }
   }
 

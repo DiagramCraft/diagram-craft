@@ -1,6 +1,10 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { LayoutCapableShapeNodeDefinitionInterface } from '../shape/shapeNodeDefinition';
+import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { deepClone } from '@diagram-craft/utils/object';
 
 /**
  * Layout direction for arranging children in a container.
@@ -99,12 +103,36 @@ export interface LayoutNode {
   elementInstructions: ElementLayoutInstructions | undefined;
 }
 
+const isLayoutCapableShapeNodeDefinitionInterface = (
+  def: NodeDefinition
+): def is LayoutCapableShapeNodeDefinitionInterface => 'getContainerPadding' in def;
+
 type ParentBounds = { x: number; y: number; r: number };
 const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds): LayoutNode => {
   const layoutProps = node.renderProps.layout;
 
-  const containerInstructions = layoutProps?.container;
+  const containerInstructions: NonNullable<NodeProps['layout']>['container'] = deepClone(
+    layoutProps?.container ?? {}
+  );
   const elementInstructions = layoutProps?.element;
+
+  const def = node.getDefinition();
+  if (isLayoutCapableShapeNodeDefinitionInterface(def)) {
+    const extraPadding = def.getContainerPadding(node);
+
+    const containerPadding = containerInstructions?.padding ?? {};
+    containerPadding.left ??= 0;
+    containerPadding.right ??= 0;
+    containerPadding.top ??= 0;
+    containerPadding.bottom ??= 0;
+
+    containerInstructions.padding = {
+      left: containerPadding.left + extraPadding.left,
+      right: containerPadding.right + extraPadding.right,
+      top: containerPadding.top + extraPadding.top,
+      bottom: containerPadding.bottom + extraPadding.bottom
+    };
+  }
 
   // Calculate relative bounds
   const bounds = parentBounds
