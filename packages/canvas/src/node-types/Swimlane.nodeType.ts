@@ -37,25 +37,6 @@ registerCustomNodeDefaults('swimlane', {
   fill: false
 });
 
-/*
-type RowsInOrder = Array<{
-  row: DiagramNode;
-  newLocalBounds?: Box;
-  idx?: number;
-}>;
-
-const getRowsInOrder = (rows: DiagramNode[]): RowsInOrder => {
-  const dest: RowsInOrder = [];
-
-  for (const r of rows) {
-    dest.push({ row: r, idx: 0 });
-  }
-
-  dest.sort((a, b) => a.row.bounds.y - b.row.bounds.y);
-
-  return dest;
-};*/
-
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
@@ -63,80 +44,6 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
   }
-  /*
-  private doLayoutChildren(node: DiagramNode, uow: UnitOfWork) {
-    if (node.children.length === 0) return;
-
-    const nodeProps = node.renderProps;
-
-    const transformBack = [
-      // Rotation around center
-      new Translation({
-        x: -node.bounds.x - node.bounds.w / 2,
-        y: -node.bounds.y - node.bounds.h / 2
-      }),
-      new Rotation(-node.bounds.r), // Move back to 0,0
-      new Translation({
-        x: node.bounds.w / 2,
-        y: node.bounds.h / 2
-      })
-    ];
-    const transformForward = transformBack.map(t => t.invert()).reverse();
-
-    const children = node.children;
-    const rows = getRowsInOrder(children.filter(isNode));
-
-    // Assert all children are rows
-    //    for (const row of rows) assert.true(row.nodeType === 'tableRow');
-
-    const boundsBefore = node.bounds;
-
-    const localBounds = Transform.box(node.bounds, ...transformBack);
-    assert.true(Math.abs(localBounds.r) < 0.0001);
-
-    let maxX = 0;
-    let y = nodeProps.custom.swimlane.title ? nodeProps.custom.swimlane.titleSize : 0;
-    for (const row of rows) {
-      let targetHeight = row.row.bounds.h;
-
-      // TODO: Why is this needed
-      if (Number.isNaN(targetHeight) || !Number.isFinite(targetHeight)) targetHeight = 100;
-
-      row.newLocalBounds = {
-        x: 0,
-        w: row.row.bounds.w,
-        y,
-        h: targetHeight,
-        r: 0
-      };
-
-      maxX = Math.max(row.row.bounds.w, maxX);
-      y += targetHeight;
-    }
-
-    const newLocalBounds = {
-      ...localBounds,
-      h: y,
-      w: maxX
-    };
-
-    // Transform back
-    node.setBounds(Transform.box(newLocalBounds, ...transformForward), uow);
-    for (const r of rows) {
-      r.row.setBounds(Transform.box(r.newLocalBounds!, ...transformForward), uow);
-    }
-
-    // Only trigger parent.onChildChanged in case this node has indeed changed
-    if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
-      if (isNode(node.parent)) {
-        uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
-          assert.node(node.parent!);
-          const parentDef = node.parent.getDefinition();
-          parentDef.onChildChanged(node.parent, uow);
-        });
-      }
-    }
-  }*/
 
   getContainerPadding(node: DiagramNode) {
     if (node.renderProps.custom.swimlane.title) {
