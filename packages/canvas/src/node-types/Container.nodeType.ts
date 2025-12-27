@@ -8,16 +8,13 @@ import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
-import { Rotation, Scale, Transform, Translation } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { Transform } from '@diagram-craft/geometry/transform';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { largest } from '@diagram-craft/utils/array';
-import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { mustExist } from '@diagram-craft/utils/assert';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
-import { isStringUnion } from '@diagram-craft/utils/types';
 import { renderElement } from '../components/renderElement';
 import type { VNode } from '../component/vdom';
 import { Component } from '../component/component';
@@ -34,7 +31,7 @@ import { ActionCriteria, type ActionMap } from '../action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { Context } from '../context';
 
-type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
+/*type ContainerResize = 'none' | 'shrink' | 'grow' | 'both';
 function assertIsContainerResizeOrUndefined(
   value: string | undefined
 ): asserts value is ContainerResize | undefined {
@@ -60,17 +57,17 @@ function assertIsGapTypeOrUndefined(
   value: string | undefined
 ): asserts value is GapType | undefined {
   assert.true(value === undefined || isStringUnion(value, ['between', 'around']));
-}
+}*/
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       container?: {
-        containerResize?: ContainerResize;
+        /*        containerResize?: ContainerResize;
         childResize?: ChildResize;
         layout?: LayoutType;
         gap?: number;
-        gapType?: GapType;
+        gapType?: GapType;*/
         collapsible?: boolean;
         bounds?: string;
         mode?: 'collapsed' | 'expanded';
@@ -81,17 +78,18 @@ declare global {
 }
 
 registerCustomNodeDefaults('container', {
-  containerResize: 'none',
+  /*containerResize: 'none',
   childResize: 'fixed',
   layout: 'manual',
   gap: 0,
-  gapType: 'between',
+  gapType: 'between',*/
   collapsible: false,
   bounds: '',
   mode: 'expanded',
   shape: ''
 });
 
+/*
 type ContainerProps = NodePropsForRendering['custom']['container'];
 
 type Entry = {
@@ -110,7 +108,7 @@ type LayoutFn = (
 type Layout = {
   fn: LayoutFn;
   primaryAxis: 'x' | 'y' | undefined;
-};
+};*/
 
 const getShape = (node: DiagramNode): ShapeNodeDefinition | undefined => {
   const shape = node.renderProps.custom.container.shape;
@@ -118,7 +116,7 @@ const getShape = (node: DiagramNode): ShapeNodeDefinition | undefined => {
 
   return node.diagram.document.nodeDefinitions.get(shape) as ShapeNodeDefinition | undefined;
 };
-
+/*
 const horizontalLayout: LayoutFn = (
   node: DiagramNode,
   props: ContainerProps,
@@ -213,7 +211,7 @@ const LAYOUTS: Record<string, Layout> = {
   horizontal: { fn: horizontalLayout, primaryAxis: 'x' },
   vertical: { fn: verticalLayout, primaryAxis: 'y' },
   manual: { fn: defaultLayout, primaryAxis: undefined }
-};
+};*/
 
 export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = ContainerComponentOverlay;
@@ -239,27 +237,28 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
       return super.onTransform(transforms, node, newBounds, previousBounds, uow);
     }
 
-    const isScaling = transforms.find(t => t instanceof Scale);
+    //const isScaling = transforms.find(t => t instanceof Scale);
 
     const newWidth = newBounds.w;
     const newHeight = newBounds.h;
-    const newTransforms: Array<Transform> = [...transforms];
+    //const newTransforms: Array<Transform> = [...transforms];
 
     if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
       node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
-      newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
+      //newTransforms.push(new Scale(newWidth / newBounds.w, newHeight / newBounds.h));
     }
 
-    if (!isScaling || node.renderProps.custom.container.childResize !== 'fixed') {
+    /*if (!isScaling || node.renderProps.custom.container.childResize !== 'fixed') {
       for (const child of node.children) {
         child.transform(newTransforms, uow, true);
       }
-    }
+    }*/
 
     return this.layoutChildren(node, uow);
   }
 
   // TODO: Remove this
+  /*
   protected doLayoutChildren(props: ContainerProps, node: DiagramNode, uow: UnitOfWork) {
     const autoShrink = props.containerResize === 'shrink' || props.containerResize === 'both';
     const autoGrow = props.containerResize === 'grow' || props.containerResize === 'both';
@@ -348,7 +347,7 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
         });
       }
     }
-  }
+  }*/
 
   toggle(node: DiagramNode, uow: UnitOfWork) {
     const mode = node.renderProps.custom.container.mode;
@@ -395,7 +394,7 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     const shape = getShape(node);
     return [
-      {
+      /*{
         id: 'containerResize',
         type: 'select',
         label: 'Container Resize',
@@ -469,7 +468,7 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
           assertIsChildResizeOrUndefined(value);
           node.updateCustomProps('container', props => (props.childResize = value), uow);
         }
-      },
+      },*/
       {
         id: 'collapsible',
         type: 'boolean',
