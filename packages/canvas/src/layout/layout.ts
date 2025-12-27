@@ -344,6 +344,14 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     };
   });
 
+  // Sort children based on their position in the layout direction
+  // Stable sort preserves original order when positions are equal
+  childInfo.sort((a, b) => {
+    const aPos = isHorizontal ? a.child.bounds.x : a.child.bounds.y;
+    const bPos = isHorizontal ? b.child.bounds.x : b.child.bounds.y;
+    return aPos - bPos;
+  });
+
   // Calculate available space and determine grow/shrink
   const totalGaps = gap * Math.max(0, layoutNode.children.length - 1);
   const totalOriginalSize = childInfo.reduce((sum, info) => sum + info.originalSize, 0);
