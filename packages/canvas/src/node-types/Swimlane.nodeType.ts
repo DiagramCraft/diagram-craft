@@ -17,6 +17,7 @@ declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       swimlane?: {
+        orientation?: 'vertical' | 'horizontal';
         horizontalBorder?: boolean;
         outerBorder?: boolean;
         title?: boolean;
@@ -29,6 +30,7 @@ declare global {
 }
 
 registerCustomNodeDefaults('swimlane', {
+  orientation: 'vertical',
   horizontalBorder: true,
   outerBorder: true,
   title: false,
@@ -48,7 +50,13 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   getContainerPadding(node: DiagramNode) {
     if (node.renderProps.custom.swimlane.title) {
       const titleSize = node.renderProps.custom.swimlane.titleSize;
-      return { top: titleSize, bottom: 0, right: 0, left: 0 };
+      const orientation = node.renderProps.custom.swimlane.orientation ?? 'vertical';
+
+      if (orientation === 'horizontal') {
+        return { top: 0, bottom: 0, right: 0, left: titleSize };
+      } else {
+        return { top: titleSize, bottom: 0, right: 0, left: 0 };
+      }
     } else {
       return super.getContainerPadding(node);
     }
@@ -56,6 +64,24 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
+      {
+        id: 'orientation',
+        type: 'select',
+        label: 'Orientation',
+        value: node.renderProps.custom.swimlane.orientation,
+        options: [
+          { value: 'vertical', label: 'Vertical' },
+          { value: 'horizontal', label: 'Horizontal' }
+        ],
+        isSet: node.storedProps.custom?.swimlane?.orientation !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          node.updateCustomProps(
+            'swimlane',
+            props => (props.orientation = value as 'vertical' | 'horizontal'),
+            uow
+          );
+        }
+      },
       {
         id: 'title',
         type: 'boolean',
@@ -130,6 +156,8 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     const nodeProps = props.nodeProps;
     const shapeProps = nodeProps.custom.swimlane;
+    const orientation = shapeProps.orientation ?? 'vertical';
+    const isHorizontal = orientation === 'horizontal';
 
     // Step 1: Create a transparent base shape for mouse interactions
     // This serves as the clickable/hoverable area and shows a highlight when dragging
@@ -185,78 +213,155 @@ class SwimlaneComponent extends BaseNodeComponent {
           h: props.node.bounds.h
         });
       } else {
-        // If title border is disabled, outer border starts below the title
-        PathBuilderHelper.rect(pathBuilder, {
-          ...props.node.bounds,
-          y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
-          h: props.node.bounds.h - (shapeProps.title ? shapeProps.titleSize : 0)
-        });
+        // If title border is disabled, outer border starts after the title
+        if (isHorizontal) {
+          PathBuilderHelper.rect(pathBuilder, {
+            ...props.node.bounds,
+            x: props.node.bounds.x + (shapeProps.title ? shapeProps.titleSize : 0),
+            w: props.node.bounds.w - (shapeProps.title ? shapeProps.titleSize : 0)
+          });
+        } else {
+          PathBuilderHelper.rect(pathBuilder, {
+            ...props.node.bounds,
+            y: props.node.bounds.y + (shapeProps.title ? shapeProps.titleSize : 0),
+            h: props.node.bounds.h - (shapeProps.title ? shapeProps.titleSize : 0)
+          });
+        }
       }
     }
 
     const bounds = props.node.bounds;
 
-    // Step 5: Handle the optional title area at the top
+    // Step 5: Handle the optional title area
     let startY = bounds.y;
+    let startX = bounds.x;
+
     if (shapeProps.title) {
       const titleSize = shapeProps.titleSize;
-      startY += titleSize;
 
-      if (hasTitleBorder) {
-        // Draw the title area as a filled rectangle at the top
-        const titlePathBuilder = new PathListBuilder();
-        titlePathBuilder.moveTo(Point.of(bounds.x, startY));
-        titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
-        titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
-        titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
-        titlePathBuilder.close();
+      if (isHorizontal) {
+        startX += titleSize;
 
-        builder.path(titlePathBuilder.getPaths().all(), {
-          ...nodeProps,
-          // Disable stroke if outer border is present (to avoid double borders)
-          stroke:
-            !nodeProps.stroke.enabled || hasOuterBorder
-              ? { enabled: false, color: 'transparent' }
-              : nodeProps.stroke,
-          fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
-        });
-
-        // When outer border exists, we disabled the stroke above to avoid double borders
-        // But this means we're missing the bottom border of the title area
-        // So we add just that horizontal line here
-        if (hasOuterBorder) {
+        if (hasTitleBorder) {
+          // Draw the title area as a filled rectangle on the left
           const titlePathBuilder = new PathListBuilder();
-          titlePathBuilder.moveTo(Point.of(bounds.x, startY));
-          titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+          titlePathBuilder.moveTo(Point.of(startX, bounds.y));
+          titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
+          titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y + bounds.h));
+          titlePathBuilder.lineTo(Point.of(startX, bounds.y + bounds.h));
+          titlePathBuilder.close();
 
           builder.path(titlePathBuilder.getPaths().all(), {
             ...nodeProps,
-            stroke: !nodeProps.stroke.enabled
-              ? { enabled: false, color: 'transparent' }
-              : nodeProps.stroke,
+            // Disable stroke if outer border is present (to avoid double borders)
+            stroke:
+              !nodeProps.stroke.enabled || hasOuterBorder
+                ? { enabled: false, color: 'transparent' }
+                : nodeProps.stroke,
             fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
           });
-        }
-      }
 
-      // Add the text content in the title area
-      builder.text(this, '1', props.node.getText(), nodeProps.text, {
-        ...bounds,
-        h: titleSize
-      });
+          // When outer border exists, we disabled the stroke above to avoid double borders
+          // But this means we're missing the right border of the title area
+          // So we add just that vertical line here
+          if (hasOuterBorder) {
+            const titleBorderBuilder = new PathListBuilder();
+            titleBorderBuilder.moveTo(Point.of(startX, bounds.y));
+            titleBorderBuilder.lineTo(Point.of(startX, bounds.y + bounds.h));
+
+            builder.path(titleBorderBuilder.getPaths().all(), {
+              ...nodeProps,
+              stroke: !nodeProps.stroke.enabled
+                ? { enabled: false, color: 'transparent' }
+                : nodeProps.stroke,
+              fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
+            });
+          }
+        }
+
+        // Add the text content in the title area with 90 degree rotation (reading south to north)
+        builder.text(this, '1', props.node.getText(), nodeProps.text, {
+          x: bounds.x,
+          y: bounds.y,
+          w: titleSize,
+          h: bounds.h,
+          r: -Math.PI / 2
+        });
+      } else {
+        startY += titleSize;
+
+        if (hasTitleBorder) {
+          // Draw the title area as a filled rectangle at the top
+          const titlePathBuilder = new PathListBuilder();
+          titlePathBuilder.moveTo(Point.of(bounds.x, startY));
+          titlePathBuilder.lineTo(Point.of(bounds.x, bounds.y));
+          titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, bounds.y));
+          titlePathBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+          titlePathBuilder.close();
+
+          builder.path(titlePathBuilder.getPaths().all(), {
+            ...nodeProps,
+            // Disable stroke if outer border is present (to avoid double borders)
+            stroke:
+              !nodeProps.stroke.enabled || hasOuterBorder
+                ? { enabled: false, color: 'transparent' }
+                : nodeProps.stroke,
+            fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
+          });
+
+          // When outer border exists, we disabled the stroke above to avoid double borders
+          // But this means we're missing the bottom border of the title area
+          // So we add just that horizontal line here
+          if (hasOuterBorder) {
+            const titleBorderBuilder = new PathListBuilder();
+            titleBorderBuilder.moveTo(Point.of(bounds.x, startY));
+            titleBorderBuilder.lineTo(Point.of(bounds.x + bounds.w, startY));
+
+            builder.path(titleBorderBuilder.getPaths().all(), {
+              ...nodeProps,
+              stroke: !nodeProps.stroke.enabled
+                ? { enabled: false, color: 'transparent' }
+                : nodeProps.stroke,
+              fill: nodeProps.fill.enabled !== false ? nodeProps.fill : {}
+            });
+          }
+        }
+
+        // Add the text content in the title area
+        builder.text(this, '1', props.node.getText(), nodeProps.text, {
+          ...bounds,
+          h: titleSize
+        });
+      }
     }
 
-    // Step 6: Add horizontal borders between child rows
+    // Step 6: Add borders between child lanes
     if (shapeProps.horizontalBorder !== false) {
-      let y = startY;
-      const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
-      // Loop through children and add lines between them (not after the last one)
-      for (let i = 0; i < sortedChildren.length - 1; i++) {
-        const child = sortedChildren[i];
-        if (isNode(child)) {
-          y += child.bounds.h;
-          pathBuilder.moveTo(Point.of(bounds.x, y));
-          pathBuilder.lineTo(Point.of(bounds.x + bounds.w, y));
+      if (isHorizontal) {
+        // For horizontal orientation, draw vertical lines between lanes
+        let x = startX;
+        const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.x - b.bounds.x);
+        // Loop through children and add lines between them (not after the last one)
+        for (let i = 0; i < sortedChildren.length - 1; i++) {
+          const child = sortedChildren[i];
+          if (isNode(child)) {
+            x += child.bounds.w;
+            pathBuilder.moveTo(Point.of(x, bounds.y));
+            pathBuilder.lineTo(Point.of(x, bounds.y + bounds.h));
+          }
+        }
+      } else {
+        // For vertical orientation, draw horizontal lines between lanes
+        let y = startY;
+        const sortedChildren = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
+        // Loop through children and add lines between them (not after the last one)
+        for (let i = 0; i < sortedChildren.length - 1; i++) {
+          const child = sortedChildren[i];
+          if (isNode(child)) {
+            y += child.bounds.h;
+            pathBuilder.moveTo(Point.of(bounds.x, y));
+            pathBuilder.lineTo(Point.of(bounds.x + bounds.w, y));
+          }
         }
       }
     }
