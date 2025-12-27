@@ -3,6 +3,7 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 export type ContainerLayoutInstructions = {
   direction: 'vertical' | 'horizontal';
   gap?: number;
+  justifyContent?: 'start' | 'end' | 'center' | 'space-between';
 };
 
 export type ElementLayoutInstructions = {
@@ -188,6 +189,37 @@ const applyShrink = (childInfo: ChildInfo[], freeSpace: number): void => {
 };
 
 /**
+ * Calculate the initial offset and spacing adjustments for justify-content
+ */
+const calculateJustifyOffset = (
+  justifyContent: string | undefined,
+  freeSpace: number,
+  childCount: number
+): { initialOffset: number; itemSpacing: number } => {
+  if (!justifyContent || freeSpace <= 0) {
+    return { initialOffset: 0, itemSpacing: 0 };
+  }
+
+  switch (justifyContent) {
+    case 'end':
+      return { initialOffset: freeSpace, itemSpacing: 0 };
+
+    case 'center':
+      return { initialOffset: freeSpace / 2, itemSpacing: 0 };
+
+    case 'space-between':
+      if (childCount <= 1) {
+        return { initialOffset: 0, itemSpacing: 0 };
+      }
+      return { initialOffset: 0, itemSpacing: freeSpace / (childCount - 1) };
+
+    case 'start':
+    default:
+      return { initialOffset: 0, itemSpacing: 0 };
+  }
+};
+
+/**
  * Apply aspect ratio preservation for resized children
  */
 const applyAspectRatio = (childInfo: ChildInfo[], isHorizontal: boolean): void => {
@@ -272,6 +304,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
 
   const shouldGrow = freeSpace > 0 && childInfo.some(info => info.grow > 0);
   const shouldShrink = freeSpace < 0 && childInfo.some(info => info.shrink > 0);
+  const shouldJustify = !shouldGrow && !shouldShrink && freeSpace > 0;
 
   // Apply flex-grow or flex-shrink
   if (shouldGrow) {
@@ -285,10 +318,20 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
     applyAspectRatio(childInfo, isHorizontal);
   }
 
-  // Position and size children (offset by padding)
+  // Position and size children (offset by padding and justify-content)
   const paddingLeft = padding?.left ?? 0;
   const paddingTop = padding?.top ?? 0;
-  let currentOffset = isHorizontal ? paddingLeft : paddingTop;
+
+  // Calculate justify-content offset if applicable
+  const justifyOffset = shouldJustify
+    ? calculateJustifyOffset(
+        layoutNode.containerInstructions.justifyContent,
+        freeSpace,
+        childInfo.length
+      )
+    : { initialOffset: 0, itemSpacing: 0 };
+
+  let currentOffset = (isHorizontal ? paddingLeft : paddingTop) + justifyOffset.initialOffset;
 
   for (const info of childInfo) {
     const { child, finalSize, crossAxisSize } = info;
@@ -308,7 +351,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
       }
     }
 
-    currentOffset += finalSize + gap;
+    currentOffset += finalSize + gap + justifyOffset.itemSpacing;
     layoutChildren(child); // Recursively layout children
   }
 };
@@ -319,5 +362,6 @@ export const _test = {
   getIntrinsicSize,
   applyGrow,
   applyShrink,
-  applyAspectRatio
+  applyAspectRatio,
+  calculateJustifyOffset
 };

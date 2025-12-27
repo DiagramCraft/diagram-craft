@@ -9,12 +9,16 @@ const createNode = (
   direction: 'vertical' | 'horizontal' = 'horizontal',
   children: LayoutNode[] = [],
   elementInstructions?: Partial<ElementLayoutInstructions>,
-  options?: { gap?: number; rotation?: number }
+  options?: { gap?: number; rotation?: number; justifyContent?: 'start' | 'end' | 'center' | 'space-between' }
 ): LayoutNode => ({
   id,
   bounds: { x: 0, y: 0, w: width, h: height, r: options?.rotation ?? 0, _discriminator: 'rw' },
   children,
-  containerInstructions: { direction, ...(options?.gap !== undefined && { gap: options.gap }) },
+  containerInstructions: {
+    direction,
+    ...(options?.gap !== undefined && { gap: options.gap }),
+    ...(options?.justifyContent !== undefined && { justifyContent: options.justifyContent })
+  },
   elementInstructions: { width: {}, height: {}, ...elementInstructions }
 });
 
@@ -556,6 +560,237 @@ describe('layoutChildren', () => {
     // Second child offset by padding.left + child1.width + gap
     expect(child2.bounds.x).toBe(70); // 10 + 50 + 10
   });
+
+  describe('justifyContent', () => {
+    test('justifyContent: start positions children at the start (default behavior)', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, children: 100px total, free space: 200px
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'start'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(0);
+      expect(child2.bounds.x).toBe(50);
+    });
+
+    test('justifyContent: end positions children at the end', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, children: 100px total, free space: 200px
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'end'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(200); // 0 + 200 (free space offset)
+      expect(child2.bounds.x).toBe(250); // 200 + 50
+    });
+
+    test('justifyContent: center centers children in available space', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, children: 100px total, free space: 200px
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(100); // 0 + 100 (half of free space)
+      expect(child2.bounds.x).toBe(150); // 100 + 50
+    });
+
+    test('justifyContent: space-between distributes space evenly', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      const child3 = createNode('child3', 50, 50);
+      // Container: 350px, children: 150px total, free space: 200px
+      // space-between: 200 / (3-1) = 100px between each child
+      const parent = createNode('parent', 350, 50, 'horizontal', [child1, child2, child3], undefined, {
+        justifyContent: 'space-between'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(0);
+      expect(child2.bounds.x).toBe(150); // 0 + 50 + 100 (itemSpacing)
+      expect(child3.bounds.x).toBe(300); // 150 + 50 + 100 (itemSpacing)
+    });
+
+    test('justifyContent with gap: gap is included in total space calculation', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, children: 100px total, gap: 10px, free space: 190px
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        gap: 10,
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(95); // 0 + 95 (half of 190px free space)
+      expect(child2.bounds.x).toBe(155); // 95 + 50 + 10 (gap)
+    });
+
+    test('justifyContent with padding: padding offset applied first', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, children: 100px total, padding: 10px left+right
+      // Available space: 280px, free space: 180px
+      const parent = createNode(
+        'parent',
+        300,
+        50,
+        'horizontal',
+        [child1, child2],
+        { padding: { left: 10, right: 10 } },
+        { justifyContent: 'center' }
+      );
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(100); // 10 (padding.left) + 90 (half of 180px free space)
+      expect(child2.bounds.x).toBe(150); // 100 + 50
+    });
+
+    test('justifyContent with gap and padding', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px, padding: 20px left+right, gap: 10px
+      // Available space: 260px, children+gap: 110px, free space: 150px
+      const parent = createNode(
+        'parent',
+        300,
+        50,
+        'horizontal',
+        [child1, child2],
+        { padding: { left: 20, right: 20 } },
+        { gap: 10, justifyContent: 'end' }
+      );
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(170); // 20 (padding.left) + 150 (free space offset)
+      expect(child2.bounds.x).toBe(230); // 170 + 50 + 10 (gap)
+    });
+
+    test('justifyContent disabled when children have grow > 0', () => {
+      const child1 = createNode('child1', 50, 50, 'horizontal', [], { grow: 1 });
+      const child2 = createNode('child2', 50, 50, 'horizontal', [], { grow: 1 });
+      // Container: 300px, children: 100px total, free space: 200px
+      // With grow, children should expand to fill space, not justify
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      // Children should grow instead of being centered
+      expect(child1.bounds.x).toBe(0);
+      expect(child1.bounds.w).toBe(150); // 50 + 100 (half of free space)
+      expect(child2.bounds.x).toBe(150);
+      expect(child2.bounds.w).toBe(150);
+    });
+
+    test('justifyContent disabled when overflow with shrink', () => {
+      const child1 = createNode('child1', 100, 50, 'horizontal', [], { shrink: 1 });
+      const child2 = createNode('child2', 100, 50, 'horizontal', [], { shrink: 1 });
+      // Container: 150px, children: 200px total, free space: -50px (overflow)
+      // With shrink, children should shrink, not justify
+      const parent = createNode('parent', 150, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      // Children should shrink instead of being centered
+      expect(child1.bounds.x).toBe(0);
+      expect(child1.bounds.w).toBe(75); // 100 - 25 (half of overflow)
+      expect(child2.bounds.x).toBe(75);
+      expect(child2.bounds.w).toBe(75);
+    });
+
+    test('space-between with single child falls back to start behavior', () => {
+      const child1 = createNode('child1', 50, 50);
+      // Container: 300px, children: 50px, free space: 250px
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1], undefined, {
+        justifyContent: 'space-between'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(0); // Should be at start, not centered
+    });
+
+    test('justifyContent with zero free space does nothing', () => {
+      const child1 = createNode('child1', 100, 50);
+      const child2 = createNode('child2', 100, 50);
+      // Container: 200px, children: 200px, free space: 0px
+      const parent = createNode('parent', 200, 50, 'horizontal', [child1, child2], undefined, {
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.x).toBe(0);
+      expect(child2.bounds.x).toBe(100);
+    });
+
+    test('justifyContent in vertical layout', () => {
+      const child1 = createNode('child1', 50, 50);
+      const child2 = createNode('child2', 50, 50);
+      // Container: 300px height, children: 100px total, free space: 200px
+      const parent = createNode('parent', 50, 300, 'vertical', [child1, child2], undefined, {
+        justifyContent: 'center'
+      });
+
+      layoutChildren(parent);
+
+      expect(child1.bounds.y).toBe(100); // 0 + 100 (half of free space)
+      expect(child2.bounds.y).toBe(150); // 100 + 50
+    });
+
+    test('nested containers with different justifyContent', () => {
+      const innerChild1 = createNode('innerChild1', 30, 30);
+      const innerChild2 = createNode('innerChild2', 30, 30);
+      // Inner container: 100px, children: 60px, free space: 40px, justify: end
+      const innerContainer = createNode(
+        'inner',
+        100,
+        30,
+        'horizontal',
+        [innerChild1, innerChild2],
+        undefined,
+        { justifyContent: 'end' }
+      );
+
+      const outerChild = createNode('outerChild', 50, 30);
+      // Outer container: 300px, children: 150px, free space: 150px, justify: center
+      const outerContainer = createNode(
+        'outer',
+        300,
+        30,
+        'horizontal',
+        [innerContainer, outerChild],
+        undefined,
+        { justifyContent: 'center' }
+      );
+
+      layoutChildren(outerContainer);
+
+      // Outer container centered
+      expect(innerContainer.bounds.x).toBe(75); // 0 + 75 (half of 150px free space)
+      expect(outerChild.bounds.x).toBe(175); // 75 + 100
+
+      // Inner container justified to end
+      expect(innerChild1.bounds.x).toBe(40); // 0 + 40 (free space offset)
+      expect(innerChild2.bounds.x).toBe(70); // 40 + 30
+    });
+  });
 });
 
 // Unit tests for internal helper functions
@@ -802,5 +1037,69 @@ describe('applyAspectRatio', () => {
     _test.applyAspectRatio(childInfo, true);
 
     expect(childInfo[0]!.crossAxisSize).toBeUndefined();
+  });
+});
+
+describe('calculateJustifyOffset', () => {
+  test('returns zero offsets when justifyContent is undefined', () => {
+    const result = _test.calculateJustifyOffset(undefined, 100, 3);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+
+  test('returns zero offsets when freeSpace is zero', () => {
+    const result = _test.calculateJustifyOffset('center', 0, 3);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+
+  test('returns zero offsets when freeSpace is negative', () => {
+    const result = _test.calculateJustifyOffset('center', -50, 3);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+
+  test('start returns zero offsets', () => {
+    const result = _test.calculateJustifyOffset('start', 100, 3);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+
+  test('end returns full free space as initial offset', () => {
+    const result = _test.calculateJustifyOffset('end', 200, 3);
+
+    expect(result).toEqual({ initialOffset: 200, itemSpacing: 0 });
+  });
+
+  test('center returns half of free space as initial offset', () => {
+    const result = _test.calculateJustifyOffset('center', 200, 3);
+
+    expect(result).toEqual({ initialOffset: 100, itemSpacing: 0 });
+  });
+
+  test('space-between distributes space evenly between items', () => {
+    const result = _test.calculateJustifyOffset('space-between', 200, 3);
+
+    // 200 / (3-1) = 100px between each item
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 100 });
+  });
+
+  test('space-between with two children', () => {
+    const result = _test.calculateJustifyOffset('space-between', 150, 2);
+
+    // 150 / (2-1) = 150px between the two items
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 150 });
+  });
+
+  test('space-between with single child returns zero offsets', () => {
+    const result = _test.calculateJustifyOffset('space-between', 200, 1);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
+  });
+
+  test('space-between with zero children returns zero offsets', () => {
+    const result = _test.calculateJustifyOffset('space-between', 200, 0);
+
+    expect(result).toEqual({ initialOffset: 0, itemSpacing: 0 });
   });
 });
