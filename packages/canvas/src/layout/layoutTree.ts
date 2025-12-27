@@ -46,30 +46,62 @@ export interface LayoutNode {
   elementInstructions: ElementLayoutInstructions;
 }
 
-export const buildLayoutTree = (node: DiagramNode): LayoutNode => {
+const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: { x: number; y: number; r: number }): LayoutNode => {
   const layoutProps = node.renderProps.layout;
 
   const containerInstructions = layoutProps?.container;
   const elementInstructions = layoutProps?.element;
 
+  // Calculate relative bounds
+  const bounds = parentBounds
+    ? {
+        x: node.bounds.x - parentBounds.x,
+        y: node.bounds.y - parentBounds.y,
+        w: node.bounds.w,
+        h: node.bounds.h,
+        r: node.bounds.r - parentBounds.r,
+        _discriminator: 'rw' as const
+      }
+    : { ...node.bounds, _discriminator: 'rw' as const };
+
   // Build children recursively (only for DiagramNode children)
   const children: LayoutNode[] = node.children
     .filter((child): child is DiagramNode => child.type === 'node')
-    .map(child => buildLayoutTree(child));
+    .map(child => buildLayoutTreeRecursive(child, { x: node.bounds.x, y: node.bounds.y, r: node.bounds.r }));
 
   return {
     id: node.id,
-    bounds: { ...node.bounds, _discriminator: 'rw' as const },
+    bounds,
     children,
     containerInstructions,
     elementInstructions
   };
 };
 
-export const applyLayoutTree = (node: DiagramNode, layout: LayoutNode, uow: UnitOfWork) => {
-  // Update the node's bounds from the layout
-  uow.snapshot(node);
-  node.setBounds(WritableBox.asBox(layout.bounds), uow);
+export const buildLayoutTree = (node: DiagramNode): LayoutNode => {
+  return buildLayoutTreeRecursive(node);
+};
+
+const applyLayoutTreeRecursive = (
+  node: DiagramNode,
+  layout: LayoutNode,
+  uow: UnitOfWork,
+  parentBounds?: { x: number; y: number; r: number }
+) => {
+  // Convert relative bounds to absolute bounds
+  const absoluteBounds = parentBounds
+    ? {
+        x: parentBounds.x + layout.bounds.x,
+        y: parentBounds.y + layout.bounds.y,
+        w: layout.bounds.w,
+        h: layout.bounds.h,
+        r: parentBounds.r + layout.bounds.r,
+        _discriminator: 'rw' as const
+      }
+    : layout.bounds;
+
+  // Update the node's bounds with absolute coordinates
+  node.setBounds(WritableBox.asBox(absoluteBounds), uow);
 
   // Apply layout recursively to children
   // Match children by ID since the order might have changed
@@ -79,8 +111,23 @@ export const applyLayoutTree = (node: DiagramNode, layout: LayoutNode, uow: Unit
     if (child.type === 'node') {
       const childLayout = childLayoutMap.get(child.id);
       if (childLayout) {
-        applyLayoutTree(child as DiagramNode, childLayout, uow);
+        applyLayoutTreeRecursive(
+          child as DiagramNode,
+          childLayout,
+          uow,
+          { x: absoluteBounds.x, y: absoluteBounds.y, r: absoluteBounds.r }
+        );
       }
     }
   }
+};
+
+export const applyLayoutTree = (node: DiagramNode, layout: LayoutNode, uow: UnitOfWork) => {
+  applyLayoutTreeRecursive(node, layout, uow);
+};
+
+// Export for testing
+export const _test = {
+  buildLayoutTreeRecursive,
+  applyLayoutTreeRecursive
 };
