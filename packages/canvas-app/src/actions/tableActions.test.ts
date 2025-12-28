@@ -720,7 +720,6 @@ describe('TableDistributeAction', () => {
       id: 'table-2',
       type: 'table',
       bounds: { x: 0, y: 0, w: 300, h: 300, r: 0 },
-      // @ts-expect-error - test property
       props: {
         custom: {
           table: {
