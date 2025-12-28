@@ -15,6 +15,7 @@ import { assertRegularLayer } from '../diagramLayerUtils';
 import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Point } from '@diagram-craft/geometry/point';
+import type { NodeProps } from '../diagramProps';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -52,7 +53,7 @@ export class TestDiagramBuilder extends Diagram {
   }
 }
 
-export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
+export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box; props?: NodeProps };
 export type EdgeCreateOptions = {
   id?: string;
   startNodeId?: string;
@@ -83,7 +84,8 @@ export class TestLayerBuilder extends RegularLayer {
         h: 10,
         r: 0
       },
-      this.diagram
+      this.diagram,
+      options?.props
     );
   }
 
@@ -110,10 +112,10 @@ export class TestLayerBuilder extends RegularLayer {
 }
 
 export class TestDiagramNodeBuilder extends SimpleDiagramNode {
-  constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
+  constructor(id: string, type: string, bounds: Box, diagram: Diagram, props?: NodeProps) {
     super(id, diagram.activeLayer as RegularLayer);
     assertRegularLayer(this.layer);
-    SimpleDiagramNode.initializeNode(this, type, bounds, {}, {});
+    SimpleDiagramNode.initializeNode(this, type, bounds, props ?? {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {
