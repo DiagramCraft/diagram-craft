@@ -43,6 +43,7 @@ export const selectionMoveActions = (context: ActionContext) => {
  */
 export class SelectionMoveAction extends AbstractSelectionAction {
   name = $tStr('action.SELECTION_MOVE.name', 'Move Selection');
+  availableInCommandPalette = false;
 
   constructor(
     context: ActionContext,
