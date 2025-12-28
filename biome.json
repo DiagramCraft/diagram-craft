@@ -1,5 +1,20 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "globals": [],
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "none",
+      "arrowParentheses": "asNeeded",
+      "quoteProperties": "preserve"
+    }
+  },
   "linter": {
     "enabled": true,
     "domains": {
@@ -82,9 +97,6 @@
       "!**/vite.config.ts",
       "!**/vitest.config.ts"
     ]
-  },
-  "javascript": {
-    "globals": []
   },
   "assist": {
     "enabled": false

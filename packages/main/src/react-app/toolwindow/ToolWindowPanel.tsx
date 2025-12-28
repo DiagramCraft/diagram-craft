@@ -58,7 +58,9 @@ export const ToolWindowPanel = (props: Props) => {
                   props.onChange!(!props.value);
                 }}
                 onClick={e => {
-                  if (props.value || ref.current?.dataset['state'] === 'open') {
+                  const isOpen = ref.current?.ariaExpanded === 'true';
+                  const isChecked = props.value ?? false;
+                  if (isOpen || isChecked) {
                     e.stopPropagation();
                   }
                 }}
