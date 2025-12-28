@@ -52,21 +52,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with horizontal layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'horizontal',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       // Add two children
       const child1 = layer.addNode({
@@ -78,10 +73,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child1, uow2);
-      parent.addChild(child2, uow2);
-      uow2.commit();
+      const uow = new UnitOfWork(diagram);
+      parent.addChild(child1, uow);
+      parent.addChild(child2, uow);
+      uow.commit();
 
       diagram.selection.setElements([child1]);
 
@@ -96,21 +91,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with horizontal layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'horizontal',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       // Add two children
       const child1 = layer.addNode({
@@ -122,10 +112,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child1, uow2);
-      parent.addChild(child2, uow2);
-      uow2.commit();
+      const uow = new UnitOfWork(diagram);
+      parent.addChild(child1, uow);
+      parent.addChild(child2, uow);
+      uow.commit();
 
       diagram.selection.setElements([child2]);
 
@@ -142,21 +132,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with vertical layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 100, h: 300, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 100, h: 300, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'vertical',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       // Add two children
       const child1 = layer.addNode({
@@ -168,10 +153,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child1, uow2);
-      parent.addChild(child2, uow2);
-      uow2.commit();
+      const uow = new UnitOfWork(diagram);
+      parent.addChild(child1, uow);
+      parent.addChild(child2, uow);
+      uow.commit();
 
       diagram.selection.setElements([child1]);
 
@@ -186,21 +171,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with vertical layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 100, h: 300, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 100, h: 300, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'vertical',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       // Add two children
       const child1 = layer.addNode({
@@ -212,10 +192,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child1, uow2);
-      parent.addChild(child2, uow2);
-      uow2.commit();
+      const uow = new UnitOfWork(diagram);
+      parent.addChild(child1, uow);
+      parent.addChild(child2, uow);
+      uow.commit();
 
       diagram.selection.setElements([child2]);
 
@@ -232,21 +212,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with horizontal layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'horizontal',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       const child = layer.addNode({
         id: 'child',
@@ -270,39 +245,32 @@ describe('SelectionMoveAction', () => {
       // Create parent with horizontal layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'horizontal',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       const child = layer.addNode({
         id: 'child',
-        bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
-      });
-
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child, uow2);
-      child.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 },
+        props: {
+          layout: {
             element: {
               isAbsolute: true
             }
-          }),
-        uow2
-      );
-      uow2.commit();
+          }
+        }
+      });
+
+      const uow = new UnitOfWork(diagram);
+      parent.addChild(child, uow);
+      uow.commit();
 
       diagram.selection.setElements([child]);
 
@@ -317,21 +285,16 @@ describe('SelectionMoveAction', () => {
       // Create parent with horizontal layout
       const parent = layer.addNode({
         id: 'parent',
-        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 }
-      });
-
-      const uow = new UnitOfWork(diagram);
-      parent.updateProps(
-        p =>
-          (p.layout = {
+        bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 },
+        props: {
+          layout: {
             container: {
               direction: 'horizontal',
               enabled: true
             }
-          }),
-        uow
-      );
-      uow.commit();
+          }
+        }
+      });
 
       // Only one child - no sibling to swap with
       const child = layer.addNode({
