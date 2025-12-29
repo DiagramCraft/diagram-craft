@@ -92,6 +92,7 @@
       "!**/storybook-static/**",
       "!**/playground",
       "!**/output",
+      "!**/*.html",
       "!**/*.test.ts",
       "!**/*.stories.tsx",
       "!**/vite.config.ts",

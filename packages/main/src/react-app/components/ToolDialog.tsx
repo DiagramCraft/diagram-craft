@@ -58,8 +58,8 @@ export const ToolDialog = (props: ToolDialogProps) => {
 
       const toolDialog = toolDialogs[0] as HTMLDivElement;
       const toolbarElement = mustExist(document.querySelector('#toolbar > .cmp-toolbar'));
-      toolDialog.style.left = `${toolbarElement?.getClientRects()[0]!.x - 8}px`;
-      toolDialog.style.top = `${toolbarElement?.getClientRects()[0]!.y}px`;
+      toolDialog.style.left = `${toolbarElement!.getClientRects()[0]!.x - 8}px`;
+      toolDialog.style.top = `${toolbarElement!.getClientRects()[0]!.y}px`;
       toolDialog.style.width = `${toolbarElement?.clientWidth + 8}px`;
       toolDialog.style.height = `${toolbarElement?.clientHeight - 0.5}px`;
     });
