@@ -152,7 +152,10 @@ export const deserializeDiagramElements = (
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
-      el.setChildren(c.children?.map(c2 => nodeLookup.get(c2.id)!) ?? [], uow);
+      el.setChildren(
+        c.children?.map(c2 => (nodeLookup.get(c2.id) ?? edgeLookup.get(c2.id))!) ?? [],
+        uow
+      );
 
       if (c.parent) {
         const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
