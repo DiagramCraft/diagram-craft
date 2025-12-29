@@ -16,12 +16,15 @@ import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
+import { Box } from '@diagram-craft/geometry/box';
+
+type Orientation = 'vertical' | 'horizontal';
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       swimlane?: {
-        orientation?: 'vertical' | 'horizontal';
+        orientation?: Orientation;
         outerBorder?: boolean;
         title?: boolean;
         titleBorder?: boolean;
@@ -52,6 +55,80 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
     this.capabilities.collapsible = true;
+  }
+
+  private getCollapsedBounds(
+    currentBounds: Box,
+    orientation: Orientation,
+    titleSize: number,
+    storedBounds?: string
+  ): Box {
+    const defaultCollapsedDimensions = {
+      w: orientation === 'vertical' ? titleSize : currentBounds.w,
+      h: orientation === 'horizontal' ? titleSize : currentBounds.h
+    };
+
+    if (storedBounds && storedBounds !== '') {
+      // Use the stored collapsed bounds (user may have resized while collapsed)
+      const stored = Box.fromString(storedBounds);
+      return { ...currentBounds, w: stored.w, h: stored.h };
+    }
+
+    // First time collapsing - use default collapsed size
+    return { ...currentBounds, ...defaultCollapsedDimensions };
+  }
+
+  toggle(node: DiagramNode, uow: UnitOfWork): void {
+    const customProps = this.getCollapsibleProps(node);
+    const mode = customProps.mode ?? 'expanded';
+    const swimlaneProps = node.renderProps.custom.swimlane;
+    const orientation = swimlaneProps?.orientation ?? 'vertical';
+    const titleSize = swimlaneProps?.titleSize ?? 30;
+
+    const currentBounds = node.bounds;
+    const currentBoundsStr = Box.toString(currentBounds);
+
+    if (mode === 'expanded') {
+      // Collapsing: swap dimensions to create perpendicular appearance
+      // Vertical swimlane: keep height, set width to 2x titleSize
+      // Horizontal swimlane: keep width, set height to 2x titleSize
+      const collapsedBounds = this.getCollapsedBounds(
+        currentBounds,
+        orientation,
+        titleSize,
+        customProps.bounds
+      );
+
+      node.setBounds(collapsedBounds, uow);
+      node.updateCustomProps(
+        'swimlane',
+        props => {
+          props.mode = 'collapsed';
+          // Store current expanded bounds so we can restore them
+          props.bounds = currentBoundsStr;
+        },
+        uow
+      );
+    } else {
+      // Expanding: restore expanded bounds
+      const expandedBounds = customProps.bounds
+        ? Box.fromString(customProps.bounds)
+        : { ...currentBounds, w: 100, h: 100 };
+
+      node.setBounds(
+        { ...expandedBounds, x: currentBounds.x, y: currentBounds.y, r: currentBounds.r },
+        uow
+      );
+      node.updateCustomProps(
+        'swimlane',
+        props => {
+          props.mode = 'expanded';
+          // Store the current collapsed size so we can return to it next time
+          props.bounds = currentBoundsStr;
+        },
+        uow
+      );
+    }
   }
 
   getContainerPadding(node: DiagramNode) {
@@ -85,7 +162,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           node.updateCustomProps(
             'swimlane',
-            props => (props.orientation = value as 'vertical' | 'horizontal'),
+            props => (props.orientation = value as Orientation),
             uow
           );
         }
@@ -221,7 +298,18 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
 
     const nodeProps = props.nodeProps;
     const shapeProps = nodeProps.custom.swimlane;
-    const orientation = shapeProps.orientation ?? 'vertical';
+    const baseOrientation = shapeProps.orientation ?? 'vertical';
+
+    // Check if node is in collapsed mode - if so, swap the orientation for rendering
+    const collapsibleProps = this.def.getCollapsibleProps(props.node);
+    const isCollapsed = collapsibleProps.mode === 'collapsed';
+
+    // When collapsed, horizontal swimlanes render as vertical and vice versa
+    const orientation: Orientation = isCollapsed
+      ? baseOrientation === 'horizontal'
+        ? 'vertical'
+        : 'horizontal'
+      : baseOrientation;
     const isHorizontal = orientation === 'horizontal';
 
     // Helper to get stroke props (disabled if stroke not enabled or if suppressed)
