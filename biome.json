@@ -87,7 +87,7 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "nursery": {
-        "noFloatingPromises": "warn",
+        "noFloatingPromises": "off",
         "noUnnecessaryConditions": "off",
         "noImportCycles": {
           "level": "error",

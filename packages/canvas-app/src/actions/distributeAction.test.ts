@@ -2,12 +2,11 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { DistributeAction } from './distributeAction';
 import {
   TestDiagramBuilder,
-  TestModel,
-  TestLayerBuilder
+  TestLayerBuilder,
+  TestModel
 } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
