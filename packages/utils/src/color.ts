@@ -79,7 +79,7 @@ export const srgbToRgb = (color: Color<'srgb'>): Color<'rgb'> => {
       return val / 12.92;
     }
 
-    return (sign * (abs + 0.055)) / 1.055 ** 2.4;
+    return sign * Math.pow((abs + 0.055) / 1.055, 2.4);
   };
 
   return {
@@ -104,7 +104,7 @@ export const rgbToSrgb = (color: Color<'rgb'>): Color<'srgb'> => {
       return val * 12.92;
     }
 
-    return sign * (1.055 * abs ** (1 / 2.4) - 0.055);
+    return sign * (1.055 * Math.pow(abs, 1 / 2.4) - 0.055);
   };
 
   return {
