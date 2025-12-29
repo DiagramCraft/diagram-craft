@@ -305,17 +305,8 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
     const bounds = props.node.bounds;
 
     // Step 5: Handle the optional title area
-    let startY = bounds.y;
-    let startX = bounds.x;
-
     if (shapeProps.title) {
       const titleSize = shapeProps.titleSize;
-
-      if (isHorizontal) {
-        startX += titleSize;
-      } else {
-        startY += titleSize;
-      }
 
       if (hasTitleBorder) {
         this.renderTitleBorder(

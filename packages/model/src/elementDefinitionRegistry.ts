@@ -17,7 +17,6 @@ import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
 import type { ElementMetadata, NodeProps } from './diagramProps';
-import type { ActionMap } from '@diagram-craft/canvas/action';
 
 export type NodeCapability =
   | 'children'
@@ -87,7 +86,6 @@ export interface NodeDefinition {
 
   supports(capability: NodeCapability): boolean;
   getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
-  getShapeActions(node: DiagramNode): ReadonlyArray<keyof ActionMap>;
 
   getBoundingPath(node: DiagramNode): PathList;
 
