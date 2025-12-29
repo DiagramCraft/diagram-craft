@@ -4,7 +4,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { ElementFactory } from './elementFactory';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { transformElements } from './diagramElement';
+import { transformElements, findCommonAncestor } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
@@ -308,6 +308,126 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       // Then clear them
       element.setTags([], UnitOfWork.immediate(d1));
       expect(element.tags).toEqual([]);
+    });
+  });
+
+  describe('findCommonAncestor', () => {
+    it('should return direct parent when both elements share same parent', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent = ElementFactory.emptyNode('parent', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent, uow);
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBe(parent);
+    });
+
+    it('should return grandparent when elements have different parents', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const grandparent = ElementFactory.emptyNode('grandparent', layer1);
+      const parent1 = ElementFactory.emptyNode('parent1', layer1);
+      const parent2 = ElementFactory.emptyNode('parent2', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(grandparent, uow);
+        grandparent.addChild(parent1, uow);
+        grandparent.addChild(parent2, uow);
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBe(grandparent);
+    });
+
+    it('should return undefined when no common ancestor exists', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent1 = ElementFactory.emptyNode('parent1', layer1);
+      const parent2 = ElementFactory.emptyNode('parent2', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent1, uow);
+        layer1.addElement(parent2, uow);
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should return undefined when one element is ancestor of another', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent = ElementFactory.emptyNode('parent', layer1);
+      const child = ElementFactory.emptyNode('child', layer1);
+      const grandchild = ElementFactory.emptyNode('grandchild', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent, uow);
+        parent.addChild(child, uow);
+        child.addChild(grandchild, uow);
+      });
+
+      const lca = findCommonAncestor(parent, grandchild);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should return undefined when both elements are at layer level', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const node1 = ElementFactory.emptyNode('node1', layer1);
+      const node2 = ElementFactory.emptyNode('node2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(node1, uow);
+        layer1.addElement(node2, uow);
+      });
+
+      const lca = findCommonAncestor(node1, node2);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should find common ancestor in deep nesting', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const root = ElementFactory.emptyNode('root', layer1);
+      const a = ElementFactory.emptyNode('a', layer1);
+      const b = ElementFactory.emptyNode('b', layer1);
+      const c = ElementFactory.emptyNode('c', layer1);
+      const node1 = ElementFactory.emptyNode('node1', layer1);
+      const node2 = ElementFactory.emptyNode('node2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(root, uow);
+        root.addChild(a, uow);
+        a.addChild(b, uow);
+        b.addChild(node1, uow);
+        root.addChild(c, uow);
+        c.addChild(node2, uow);
+      });
+
+      const lca = findCommonAncestor(node1, node2);
+      expect(lca).toBe(root);
     });
   });
 });

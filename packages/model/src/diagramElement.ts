@@ -458,6 +458,32 @@ export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   return path.length > 0 ? path[path.length - 1]! : element;
 };
 
+/**
+ * Finds the closest common ancestor between two diagram elements.
+ *
+ * @param {DiagramElement} element1 - The first diagram element.
+ * @param {DiagramElement} element2 - The second diagram element.
+ * @returns {DiagramElement | undefined} The common ancestor of the two elements,
+ * or undefined if no common ancestor exists.
+ */
+export const findCommonAncestor = (
+  element1: DiagramElement,
+  element2: DiagramElement
+): DiagramElement | undefined => {
+  const path1 = getDiagramElementPath(element1);
+  const path2 = getDiagramElementPath(element2);
+
+  const ancestors1 = new Set(path1);
+
+  for (const ancestor of path2) {
+    if (ancestors1.has(ancestor)) {
+      return ancestor;
+    }
+  }
+
+  return undefined;
+};
+
 export const transformElements = (
   elements: ReadonlyArray<DiagramElement>,
   transforms: ReadonlyArray<Transform>,
