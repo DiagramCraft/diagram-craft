@@ -311,13 +311,13 @@
   }
 }
 
-.svg-container__toggle {
+.svg-collapsible__toggle {
   stroke: var(--accent-9);
   fill: var(--accent-3);
   cursor: pointer;
 }
 
-.svg-container__toggle:hover {
+.svg-collapsible__toggle:hover {
 }
 
 @keyframes search-match {

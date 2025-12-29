@@ -1,7 +1,7 @@
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import type { LayoutCapableShapeNodeDefinitionInterface } from '../shape/shapeNodeDefinition';
+import type { LayoutCapableShapeNodeDefinitionInterface } from '../shape/layoutCapableShapeNodeDefinition';
 import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { deepClone } from '@diagram-craft/utils/object';

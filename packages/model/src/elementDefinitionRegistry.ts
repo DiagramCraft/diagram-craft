@@ -27,7 +27,8 @@ export type NodeCapability =
   | 'connect-to-boundary'
   | 'anchors-configurable'
   | 'can-be-container'
-  | 'can-have-layout';
+  | 'can-have-layout'
+  | 'collapsible';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {

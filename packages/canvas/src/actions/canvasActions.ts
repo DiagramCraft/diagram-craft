@@ -1,11 +1,11 @@
 import { ActionMapFactory } from '../keyMap';
 import type { Context } from '../context';
-import { containerShapeActions } from '../node-types/Container.nodeType';
+import { collapsibleNodeActions } from '../shape/collapsible';
 import { waypointDeleteActions } from './waypointDeleteAction';
 import { edgeTextAddActions } from './edgeTextAddAction';
 
 export const canvasActions: ActionMapFactory<Context> = context => ({
-  ...containerShapeActions(context),
+  ...collapsibleNodeActions(context),
   ...edgeTextAddActions(context),
   ...waypointDeleteActions(context)
 });
