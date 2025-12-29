@@ -7,6 +7,7 @@ import { unique, uniqueWithCount } from '@diagram-craft/utils/array';
 import { useRedraw } from './useRedraw';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
 import type { Property, PropertyInfo } from '@diagram-craft/model/property';
+import { isObj } from '@diagram-craft/utils/object';
 
 export type PropertyHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -112,6 +113,9 @@ export const makePropertyArrayHook = <
     const accessor = new DynamicAccessor<TObj>();
 
     const defaultValue = defaultValueOverride ?? (defaults.get(path) as TValue);
+    const defaultValueSerialized = isObj(defaultValue)
+      ? JSON.stringify(defaultValue)
+      : defaultValue;
     const [value, setValue] = useState<TValue>(defaultValue);
     const [multiple, setMultiple] = useState(false);
     const [values, setValues] = useState<Array<{ val: TValue; count: number }> | undefined>();
@@ -138,7 +142,7 @@ export const makePropertyArrayHook = <
     };
     subscribe(obj, handler);
     // biome-ignore lint/correctness/useExhaustiveDependencies: This is correct
-    useEffect(handler, [defaultValue, obj, path]);
+    useEffect(handler, [defaultValueSerialized, obj, path]);
 
     let isSet = true;
     if (!multiple) {
@@ -177,9 +181,11 @@ export const makePropertyArrayHook = <
 
 // TODO: Potentially add merge support
 // TODO: Add better typing
-export class PropertyArrayUndoableAction<TItem, TObj, TPath extends PropPath<TObj> = PropPath<TObj>>
-  implements UndoableAction
-{
+export class PropertyArrayUndoableAction<
+  TItem,
+  TObj,
+  TPath extends PropPath<TObj> = PropPath<TObj>
+> implements UndoableAction {
   #accessor = new DynamicAccessor<TObj>();
 
   constructor(
