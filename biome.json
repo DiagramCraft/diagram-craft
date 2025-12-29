@@ -24,6 +24,7 @@
       "!!**/storybook-static",
       "!!**/playground",
       "!!**/output",
+      "!**/*.png",
       "!**/eslintrc.cjs",
       "!**/*.js",
       "!**/.storybook",
@@ -86,6 +87,7 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "nursery": {
+        "noFloatingPromises": "warn",
         "noUnnecessaryConditions": "off",
         "noImportCycles": {
           "level": "error",
