@@ -132,7 +132,7 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
   }
 
   async execute(): Promise<void> {
-    const url = this.context.model.activeDocument.url;
+    const url = this.context.model.activeDocument.url ?? 'diagram';
     assert.present(url);
 
     serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
