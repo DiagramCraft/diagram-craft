@@ -324,10 +324,11 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
       // Add the text content in the title area
       if (isHorizontal) {
         builder.text(this, '1', props.node.getText(), nodeProps.text, {
-          x: bounds.x,
-          y: bounds.y,
-          w: titleSize,
-          h: bounds.h,
+          ...bounds,
+          h: titleSize,
+          w: bounds.h,
+          x: bounds.x - bounds.h / 2 + titleSize / 2,
+          y: bounds.y + (bounds.h - titleSize) / 2,
           r: -Math.PI / 2
         });
       } else {
