@@ -75,6 +75,10 @@ export abstract class LayoutCapableShapeNodeDefinition
     // First layout all children
     super.layoutChildren(node, uow);
 
+    if (this.getCollapsibleProps(node).mode === 'collapsed') {
+      return;
+    }
+
     // Find root container
     let layoutRoot = node;
     while (
