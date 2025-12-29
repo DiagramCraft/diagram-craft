@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -14,6 +14,25 @@
       "arrowParentheses": "asNeeded",
       "quoteProperties": "preserve"
     }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!!**/dist",
+      "!!**/sample",
+      "!!**/coverage",
+      "!!**/storybook-static",
+      "!!**/playground",
+      "!!**/output",
+      "!**/*.png",
+      "!**/eslintrc.cjs",
+      "!**/*.js",
+      "!**/.storybook",
+      "!**/.*",
+      "!**/*.html",
+      "!**/vite.config.ts",
+      "!**/vitest.config.ts"
+    ]
   },
   "linter": {
     "enabled": true,
@@ -68,6 +87,7 @@
         "noDangerouslySetInnerHtml": "off"
       },
       "nursery": {
+        "noFloatingPromises": "warn",
         "noUnnecessaryConditions": "off",
         "noImportCycles": {
           "level": "error",
@@ -80,23 +100,7 @@
         "noBarrelFile": "error"
       }
     },
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/eslintrc.cjs",
-      "!**/*.js",
-      "!**/.storybook",
-      "!**/.*",
-      "!**/sample/**",
-      "!**/coverage/**",
-      "!**/storybook-static/**",
-      "!**/playground",
-      "!**/output",
-      "!**/*.test.ts",
-      "!**/*.stories.tsx",
-      "!**/vite.config.ts",
-      "!**/vitest.config.ts"
-    ]
+    "includes": ["**", "!**/*.test.ts", "!**/*.stories.tsx"]
   },
   "assist": {
     "enabled": false

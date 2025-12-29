@@ -6,6 +6,7 @@ import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
@@ -48,7 +49,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       {diagram.selection.type === 'single-node' && (
         <>
           <Menu.SubMenu label={'Shape Actions'}>
-            {diagram.selection.nodes[0]!.getDefinition()
+            {(diagram.selection.nodes[0]!.getDefinition() as ShapeNodeDefinition)
               .getShapeActions(diagram.selection.nodes[0]!)
               .map(e => (
                 <ActionMenuItem key={e} action={e} arg={{}} />

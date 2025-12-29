@@ -4,7 +4,10 @@ import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/path
 import { DiagramNode, type NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import { LayoutCapableShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import {
+  CollapsibleProps,
+  LayoutCapableShapeNodeDefinition
+} from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -12,6 +15,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { CollapsibleOverlayComponent } from '../shape/collapsible';
 
 declare global {
   namespace DiagramCraft {
@@ -23,7 +27,7 @@ declare global {
         titleBorder?: boolean;
         titleSize?: number;
         fill?: boolean;
-      };
+      } & CollapsibleProps;
     }
   }
 }
@@ -34,15 +38,20 @@ registerCustomNodeDefaults('swimlane', {
   title: false,
   titleBorder: true,
   titleSize: 30,
-  fill: false
+  fill: false,
+  collapsible: false,
+  bounds: '',
+  mode: 'expanded'
 });
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
+  overlayComponent = CollapsibleOverlayComponent;
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
 
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
+    this.capabilities.collapsible = true;
   }
 
   getContainerPadding(node: DiagramNode) {
@@ -62,6 +71,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
+      ...this.getCollapsiblePropertyDefinitions(node),
       {
         id: 'orientation',
         type: 'select',
@@ -136,7 +146,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 }
 
 // TODO: Support fill (should be only for title)
-class SwimlaneComponent extends BaseNodeComponent {
+class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
   private renderTitleBorder(
     builder: ShapeBuilder,
     bounds: { x: number; y: number; w: number; h: number },
@@ -253,14 +263,16 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     // Step 3: Render all child elements (e.g. swimlane rows)
     // Children are wrapped in a group with rotation transform to handle rotated swimlanes
-    props.node.children.forEach(child => {
-      builder.add(
-        svg.g(
-          { transform: Transforms.rotateBack(props.node.bounds) },
-          renderElement(this, child, props)
-        )
-      );
-    });
+    if (this.def.shouldRenderChildren(props.node)) {
+      props.node.children.forEach(child => {
+        builder.add(
+          svg.g(
+            { transform: Transforms.rotateBack(props.node.bounds) },
+            renderElement(this, child, props)
+          )
+        );
+      });
+    }
 
     // Step 4: Build the outer border (rectangle around the entire swimlane)
     const pathBuilder = new PathListBuilder();
@@ -293,17 +305,8 @@ class SwimlaneComponent extends BaseNodeComponent {
     const bounds = props.node.bounds;
 
     // Step 5: Handle the optional title area
-    let startY = bounds.y;
-    let startX = bounds.x;
-
     if (shapeProps.title) {
       const titleSize = shapeProps.titleSize;
-
-      if (isHorizontal) {
-        startX += titleSize;
-      } else {
-        startY += titleSize;
-      }
 
       if (hasTitleBorder) {
         this.renderTitleBorder(

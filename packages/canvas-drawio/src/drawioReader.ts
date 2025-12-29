@@ -6,7 +6,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge, SimpleDiagramEdge, Waypoint } from '@diagram-craft/model/diagramEdge';
 import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { Vector } from '@diagram-craft/geometry/vector';

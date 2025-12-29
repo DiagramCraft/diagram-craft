@@ -17,7 +17,6 @@ import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
 import type { ElementMetadata, NodeProps } from './diagramProps';
-import type { ActionMap } from '@diagram-craft/canvas/action';
 
 export type NodeCapability =
   | 'children'
@@ -27,7 +26,8 @@ export type NodeCapability =
   | 'connect-to-boundary'
   | 'anchors-configurable'
   | 'can-be-container'
-  | 'can-have-layout';
+  | 'can-have-layout'
+  | 'collapsible';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {
@@ -86,7 +86,6 @@ export interface NodeDefinition {
 
   supports(capability: NodeCapability): boolean;
   getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
-  getShapeActions(node: DiagramNode): ReadonlyArray<keyof ActionMap>;
 
   getBoundingPath(node: DiagramNode): PathList;
 
@@ -125,6 +124,92 @@ if (typeof window !== 'undefined') {
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {}
+  }
+}
+
+export type Stencil = {
+  id: string;
+  name?: string;
+  node: (diagram: Diagram) => DiagramNode;
+  canvasNode: (diagram: Diagram) => DiagramNode;
+};
+
+export type StencilPackage = {
+  id: string;
+  name: string;
+  group?: string;
+  stencils: Array<Stencil>;
+};
+
+export type StencilEvents = {
+  /* Stencils registered, activated or deactivated */
+  change: { stencilRegistry: StencilRegistry };
+};
+
+const DELIMITER = '@@';
+
+export class StencilRegistry extends EventEmitter<StencilEvents> {
+  private stencils = new Map<string, StencilPackage>();
+  private activeStencils = new Set<string>();
+
+  register(pkg: StencilPackage, activate = false) {
+    const stencils = pkg.stencils.map(s => ({
+      ...s,
+      id: pkg.id + DELIMITER + s.id
+    }));
+
+    if (this.stencils.has(pkg.id)) {
+      this.stencils.get(pkg.id)!.stencils = unique(
+        [...(this.stencils.get(pkg.id)?.stencils ?? []), ...stencils],
+        e => e.id
+      );
+    } else {
+      this.stencils.set(pkg.id, { ...pkg, stencils });
+    }
+
+    if (activate) {
+      this.activeStencils.add(pkg.id);
+    }
+
+    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+  }
+
+  getStencil(id: string) {
+    assert.true(id.includes(DELIMITER), 'Invalid id');
+    const [pkgId] = safeSplit(id, DELIMITER, 2);
+    return this.get(pkgId).stencils.find(s => s.id === id);
+  }
+
+  get(id: string): StencilPackage {
+    return this.stencils.get(id)!;
+  }
+
+  activate(id: string) {
+    this.activeStencils.add(id);
+
+    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+  }
+
+  getActiveStencils() {
+    return [...this.activeStencils.values()]
+      .filter(s => this.stencils.has(s))
+      .map(s => this.stencils.get(s)!);
+  }
+
+  search(s: string): Stencil[] {
+    const results: Stencil[] = [];
+    for (const pkg of this.stencils.values()) {
+      if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
+        results.push(...pkg.stencils);
+      } else {
+        for (const stencil of pkg.stencils) {
+          if (stencil.name?.toLowerCase().includes(s.toLowerCase())) {
+            results.push(stencil);
+          }
+        }
+      }
+    }
+    return results;
   }
 }
 
@@ -297,89 +382,3 @@ export const registerStencil = (
     canvasNode: makeStencilNode(def, 'canvas', opts)
   });
 };
-
-export type Stencil = {
-  id: string;
-  name?: string;
-  node: (diagram: Diagram) => DiagramNode;
-  canvasNode: (diagram: Diagram) => DiagramNode;
-};
-
-export type StencilPackage = {
-  id: string;
-  name: string;
-  group?: string;
-  stencils: Array<Stencil>;
-};
-
-export type StencilEvents = {
-  /* Stencils registered, activated or deactivated */
-  change: { stencilRegistry: StencilRegistry };
-};
-
-const DELIMITER = '@@';
-
-export class StencilRegistry extends EventEmitter<StencilEvents> {
-  private stencils = new Map<string, StencilPackage>();
-  private activeStencils = new Set<string>();
-
-  register(pkg: StencilPackage, activate = false) {
-    const stencils = pkg.stencils.map(s => ({
-      ...s,
-      id: pkg.id + DELIMITER + s.id
-    }));
-
-    if (this.stencils.has(pkg.id)) {
-      this.stencils.get(pkg.id)!.stencils = unique(
-        [...(this.stencils.get(pkg.id)?.stencils ?? []), ...stencils],
-        e => e.id
-      );
-    } else {
-      this.stencils.set(pkg.id, { ...pkg, stencils });
-    }
-
-    if (activate) {
-      this.activeStencils.add(pkg.id);
-    }
-
-    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
-  }
-
-  getStencil(id: string) {
-    assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = safeSplit(id, DELIMITER, 2);
-    return this.get(pkgId).stencils.find(s => s.id === id);
-  }
-
-  get(id: string): StencilPackage {
-    return this.stencils.get(id)!;
-  }
-
-  activate(id: string) {
-    this.activeStencils.add(id);
-
-    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
-  }
-
-  getActiveStencils() {
-    return [...this.activeStencils.values()]
-      .filter(s => this.stencils.has(s))
-      .map(s => this.stencils.get(s)!);
-  }
-
-  search(s: string): Stencil[] {
-    const results: Stencil[] = [];
-    for (const pkg of this.stencils.values()) {
-      if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
-        results.push(...pkg.stencils);
-      } else {
-        for (const stencil of pkg.stencils) {
-          if (stencil.name?.toLowerCase().includes(s.toLowerCase())) {
-            results.push(stencil);
-          }
-        }
-      }
-    }
-    return results;
-  }
-}

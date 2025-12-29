@@ -17,10 +17,8 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
-import { applyLayoutTree, buildLayoutTree } from '../layout/layoutTree';
-import { layoutChildren } from '../layout/layout';
 
-type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
+export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
@@ -60,7 +58,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'anchors-configurable': true,
       'rounding': true,
       'can-be-container': true,
-      'can-have-layout': false
+      'can-have-layout': false,
+      'collapsible': false
     };
   }
 
@@ -118,13 +117,25 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     } else if (anchorStrategy === 'north-south') {
       return [
         { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-        { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+        {
+          id: '2',
+          start: Point.of(0.5, 0),
+          type: 'point',
+          isPrimary: true,
+          normal: -Math.PI / 2
+        },
         { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
       ] satisfies Anchor[];
     } else if (anchorStrategy === 'east-west') {
       return [
         { id: '3', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
-        { id: '4', start: Point.of(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+        {
+          id: '4',
+          start: Point.of(0, 0.5),
+          type: 'point',
+          isPrimary: true,
+          normal: Math.PI
+        },
         { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
       ] satisfies Anchor[];
     } else if (anchorStrategy === 'directions') {
@@ -242,97 +253,5 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         }
       }
     }
-  }
-}
-
-export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
-  getContainerPadding(node: DiagramNode): {
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-  };
-}
-
-export abstract class LayoutCapableShapeNodeDefinition
-  extends ShapeNodeDefinition
-  implements LayoutCapableShapeNodeDefinitionInterface
-{
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  protected constructor(type: string, component: NodeShapeConstructor<any>);
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  protected constructor(type: string, name: string, component: NodeShapeConstructor<any>);
-  protected constructor(
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    ...arr: [string, NodeShapeConstructor<any>] | [string, string, NodeShapeConstructor<any>]
-  ) {
-    if (arr.length === 2) super(arr[0], arr[1]);
-    else super(arr[0], arr[1], arr[2]);
-
-    this.capabilities['can-have-layout'] = true;
-    this.capabilities.children = true;
-  }
-
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    newBounds: Box,
-    previousBounds: Box,
-    uow: UnitOfWork
-  ) {
-    if (
-      newBounds.w === previousBounds.w &&
-      newBounds.h === previousBounds.h &&
-      newBounds.r === previousBounds.r
-    ) {
-      return super.onTransform(transforms, node, newBounds, previousBounds, uow);
-    }
-
-    const newWidth = newBounds.w;
-    const newHeight = newBounds.h;
-
-    if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
-      node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
-    }
-
-    return this.layoutChildren(node, uow);
-  }
-
-  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
-    // First layout all children
-    super.layoutChildren(node, uow);
-
-    // Find root container
-    let layoutRoot = node;
-    while (
-      layoutRoot.parent &&
-      isNode(layoutRoot.parent) &&
-      layoutRoot.parent.getDefinition().supports('can-have-layout')
-    ) {
-      layoutRoot = layoutRoot.parent;
-    }
-
-    uow.registerOnCommitCallback('layout', layoutRoot, () => {
-      const layoutTree = buildLayoutTree(layoutRoot);
-      layoutChildren(layoutTree);
-      applyLayoutTree(layoutRoot, layoutTree, uow);
-    });
-  }
-
-  onDrop(
-    _coord: Point,
-    node: DiagramNode,
-    elements: ReadonlyArray<DiagramElement>,
-    uow: UnitOfWork,
-    _operation: string
-  ) {
-    node.diagram.moveElement(elements, uow, node.layer, {
-      relation: 'on',
-      element: node
-    });
-  }
-
-  getContainerPadding(_node: DiagramNode) {
-    return { left: 0, right: 0, top: 0, bottom: 0 };
   }
 }
