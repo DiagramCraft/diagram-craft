@@ -57,6 +57,27 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.collapsible = true;
   }
 
+  private getCollapsedBounds(
+    currentBounds: Box,
+    orientation: Orientation,
+    titleSize: number,
+    storedBounds?: string
+  ): Box {
+    const defaultCollapsedDimensions = {
+      w: orientation === 'vertical' ? titleSize * 2 : currentBounds.w,
+      h: orientation === 'horizontal' ? titleSize * 2 : currentBounds.h
+    };
+
+    if (storedBounds && storedBounds !== '') {
+      // Use the stored collapsed bounds (user may have resized while collapsed)
+      const stored = Box.fromString(storedBounds);
+      return { ...currentBounds, w: stored.w, h: stored.h };
+    }
+
+    // First time collapsing - use default collapsed size
+    return { ...currentBounds, ...defaultCollapsedDimensions };
+  }
+
   toggle(node: DiagramNode, uow: UnitOfWork): void {
     const customProps = this.getCollapsibleProps(node);
     const mode = customProps.mode ?? 'expanded';
@@ -71,26 +92,12 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
       // Collapsing: swap dimensions to create perpendicular appearance
       // Vertical swimlane: keep height, set width to 2x titleSize
       // Horizontal swimlane: keep width, set height to 2x titleSize
-
-      let collapsedBounds: Box;
-
-      // Check if bounds field has stored collapsed size from a previous collapse
-      if (customProps.bounds && customProps.bounds !== '') {
-        // Use the stored collapsed bounds (user may have resized while collapsed)
-        const parts = Box.fromString(customProps.bounds);
-        collapsedBounds = {
-          ...currentBounds,
-          w: parts.w ?? (orientation === 'vertical' ? titleSize * 2 : currentBounds.w),
-          h: parts.h ?? (orientation === 'horizontal' ? titleSize * 2 : currentBounds.h)
-        };
-      } else {
-        // First time collapsing - use default collapsed size
-        collapsedBounds = {
-          ...currentBounds,
-          w: orientation === 'vertical' ? titleSize * 2 : currentBounds.w,
-          h: orientation === 'horizontal' ? titleSize * 2 : currentBounds.h
-        };
-      }
+      const collapsedBounds = this.getCollapsedBounds(
+        currentBounds,
+        orientation,
+        titleSize,
+        customProps.bounds
+      );
 
       node.setBounds(collapsedBounds, uow);
       node.updateCustomProps(
@@ -104,22 +111,9 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
       );
     } else {
       // Expanding: restore expanded bounds
-      let expandedBounds: Box;
-
-      if (customProps.bounds === '' || !customProps.bounds) {
-        // No stored bounds - use default
-        expandedBounds = { ...currentBounds, w: 100, h: 100 };
-      } else {
-        // Restore the stored expanded bounds
-        const parts = Box.fromString(customProps.bounds);
-        expandedBounds = {
-          x: parts.x ?? currentBounds.x,
-          y: parts.y ?? currentBounds.y,
-          w: parts.w ?? 100,
-          h: parts.h ?? 100,
-          r: parts.r ?? currentBounds.r
-        };
-      }
+      const expandedBounds = customProps.bounds
+        ? Box.fromString(customProps.bounds)
+        : { ...currentBounds, w: 100, h: 100 };
 
       node.setBounds(
         { ...expandedBounds, x: currentBounds.x, y: currentBounds.y, r: currentBounds.r },
@@ -311,12 +305,11 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
     const isCollapsed = collapsibleProps.mode === 'collapsed';
 
     // When collapsed, horizontal swimlanes render as vertical and vice versa
-    let orientation: Orientation;
-    if (isCollapsed) {
-      orientation = baseOrientation === 'horizontal' ? 'vertical' : 'horizontal';
-    } else {
-      orientation = baseOrientation;
-    }
+    const orientation: Orientation = isCollapsed
+      ? baseOrientation === 'horizontal'
+        ? 'vertical'
+        : 'horizontal'
+      : baseOrientation;
     const isHorizontal = orientation === 'horizontal';
 
     // Helper to get stroke props (disabled if stroke not enabled or if suppressed)
