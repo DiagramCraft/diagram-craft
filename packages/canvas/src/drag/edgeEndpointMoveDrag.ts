@@ -11,7 +11,8 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -126,6 +127,9 @@ export class EdgeEndpointMoveDrag extends Drag {
       removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
     }
 
+    // Update edge parent based on connected nodes
+    this.updateEdgeParent();
+
     commitWithUndo(this.uow, 'Move edge endpoint');
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
 
@@ -210,6 +214,48 @@ export class EdgeEndpointMoveDrag extends Drag {
       this.edge.setStart(endpoint, this.uow);
     } else {
       this.edge.setEnd(endpoint, this.uow);
+    }
+  }
+
+  private updateEdgeParent() {
+    const start = this.edge.start instanceof ConnectedEndpoint ? this.edge.start.node : undefined;
+    const end = this.edge.end instanceof ConnectedEndpoint ? this.edge.end.node : undefined;
+    const connectedCount = (start ? 1 : 0) + (end ? 1 : 0);
+    const currentParent = this.edge.parent;
+
+    // Only update parent when both connected or both disconnected
+    if (connectedCount === 1) return;
+
+    // Both endpoints connected - find common ancestor
+    let targetParent = connectedCount === 2 ? findCommonAncestor(start!, end!) : undefined;
+
+    // Only update if parent actually changed
+    if (targetParent === currentParent) return;
+
+    // Remove from current parent if exists
+    if (currentParent && isNode(currentParent)) {
+      currentParent.removeChild(this.edge, this.uow);
+
+      // If moving to layer level (no targetParent), add back to layer
+      if (!targetParent && isRegularLayer(this.edge.layer)) {
+        this.edge.layer.addElement(this.edge, this.uow);
+      }
+    }
+
+    // Add to new parent if specified
+    if (targetParent && isNode(targetParent)) {
+      // If currently at layer level, remove from layer's elements
+      if (!currentParent && isRegularLayer(this.edge.layer)) {
+        const elements = this.edge.layer.elements;
+        if (elements.includes(this.edge)) {
+          this.edge.layer.setElements(
+            elements.filter(e => e !== this.edge),
+            this.uow
+          );
+        }
+      }
+
+      targetParent.addChild(this.edge, this.uow);
     }
   }
 }
