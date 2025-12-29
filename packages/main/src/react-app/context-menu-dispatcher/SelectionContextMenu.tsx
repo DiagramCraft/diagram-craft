@@ -166,6 +166,14 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <Menu.Separator />
         <ActionMenuItem action={'ALIGN_CENTER_HORIZONTAL'} />
         <ActionMenuItem action={'ALIGN_CENTER_VERTICAL'} />
+        <Menu.Separator />
+        <ActionMenuItem action={'ALIGN_WIDTH'} />
+        <ActionMenuItem action={'ALIGN_HEIGHT'} />
+      </Menu.SubMenu>
+
+      <Menu.SubMenu label={'Distribute'}>
+        <ActionMenuItem action={'DISTRIBUTE_HORIZONTAL'} />
+        <ActionMenuItem action={'DISTRIBUTE_VERTICAL'} />
       </Menu.SubMenu>
 
       <Menu.SubMenu label={'Arrange'} disabled={diagram.selection.elements.length === 1}>

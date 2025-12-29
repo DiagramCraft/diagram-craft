@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { AlignAction } from './alignAction';
+import { AlignAction, DimensionAlignAction } from './alignAction';
 import {
   TestDiagramBuilder,
   TestModel,
@@ -208,6 +208,66 @@ describe('AlignActions', () => {
       // child2: center should be at 35, so x = 35 - 60/2 = 5
       expect(child1.bounds.x).toBe(10);
       expect(child2.bounds.x).toBe(5);
+    });
+  });
+});
+
+describe('DimensionAlignAction', () => {
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
+
+  beforeEach(() => {
+    diagram = TestModel.newDiagram();
+    layer = diagram.newLayer();
+  });
+
+  describe('align width', () => {
+    test('should align width of all selected elements to the first element', () => {
+      const e1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 50, r: 0 } });
+      const e2 = layer.addNode({ bounds: { x: 20, y: 20, w: 70, h: 60, r: 0 } });
+      const e3 = layer.addNode({ bounds: { x: 30, y: 30, w: 150, h: 40, r: 0 } });
+
+      diagram.selection.setElements([e1, e2, e3]);
+      new DimensionAlignAction('width', $tStr('', ''), mkContext(diagram)).execute();
+
+      expect(e1.bounds.w).toBe(100);
+      expect(e2.bounds.w).toBe(100);
+      expect(e3.bounds.w).toBe(100);
+
+      // Verify positions haven't changed
+      expect(e1.bounds.x).toBe(10);
+      expect(e2.bounds.x).toBe(20);
+      expect(e3.bounds.x).toBe(30);
+
+      // Verify heights haven't changed
+      expect(e1.bounds.h).toBe(50);
+      expect(e2.bounds.h).toBe(60);
+      expect(e3.bounds.h).toBe(40);
+    });
+  });
+
+  describe('align height', () => {
+    test('should align height of all selected elements to the first element', () => {
+      const e1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 100, r: 0 } });
+      const e2 = layer.addNode({ bounds: { x: 20, y: 20, w: 60, h: 70, r: 0 } });
+      const e3 = layer.addNode({ bounds: { x: 30, y: 30, w: 40, h: 150, r: 0 } });
+
+      diagram.selection.setElements([e1, e2, e3]);
+      new DimensionAlignAction('height', $tStr('', ''), mkContext(diagram)).execute();
+
+      expect(e1.bounds.h).toBe(100);
+      expect(e2.bounds.h).toBe(100);
+      expect(e3.bounds.h).toBe(100);
+
+      // Verify positions haven't changed
+      expect(e1.bounds.y).toBe(10);
+      expect(e2.bounds.y).toBe(20);
+      expect(e3.bounds.y).toBe(30);
+
+      // Verify widths haven't changed
+      expect(e1.bounds.w).toBe(50);
+      expect(e2.bounds.w).toBe(60);
+      expect(e3.bounds.w).toBe(40);
     });
   });
 });

@@ -38,6 +38,16 @@ export const alignActions = (context: ActionContext) => ({
     'center-vertical',
     $tStr('action.ALIGN_CENTER_VERTICAL.name', 'Align Centers Vertically'),
     context
+  ),
+  ALIGN_WIDTH: new DimensionAlignAction(
+    'width',
+    $tStr('action.ALIGN_WIDTH.name', 'Align Width'),
+    context
+  ),
+  ALIGN_HEIGHT: new DimensionAlignAction(
+    'height',
+    $tStr('action.ALIGN_HEIGHT.name', 'Align Height'),
+    context
   )
 });
 
@@ -166,5 +176,41 @@ export class AlignAction extends AbstractSelectionAction {
       if (isNode(e) && e.renderProps.capabilities.movable === false) return;
       e.setBounds({ ...e.bounds, x: x - e.bounds.w * offset }, uow);
     });
+  }
+}
+
+type DimensionMode = 'width' | 'height';
+
+export class DimensionAlignAction extends AbstractSelectionAction {
+  constructor(
+    private readonly mode: DimensionMode,
+    public readonly name: TranslatedString,
+    context: ActionContext
+  ) {
+    super(context, MultipleType.MultipleOnly, ElementType.Node);
+  }
+
+  execute(): void {
+    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+
+    const elements = this.context.model.activeDiagram.selection.elements;
+    assert.arrayNotEmpty(elements);
+
+    const first = elements[0];
+    const targetDimension = this.mode === 'width' ? first.bounds.w : first.bounds.h;
+
+    elements.forEach(e => {
+      if (isNode(e) && e.renderProps.capabilities.movable === false) return;
+
+      if (this.mode === 'width') {
+        e.setBounds({ ...e.bounds, w: targetDimension }, uow);
+      } else {
+        e.setBounds({ ...e.bounds, h: targetDimension }, uow);
+      }
+    });
+
+    commitWithUndo(uow, `Align ${this.mode}`);
+
+    this.emit('actionTriggered', {});
   }
 }
