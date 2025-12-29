@@ -38,7 +38,7 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
       // After collapse, width should remain the same
       // Height should be 2x titleSize (2 * 30 = 60)
       expect(horizontalSwimlane.bounds.w).toBe(initialBounds.w);
-      expect(horizontalSwimlane.bounds.h).toBe(60);
+      expect(horizontalSwimlane.bounds.h).toBe(30);
 
       // Check mode is set to collapsed
       const collapsedProps = swimlaneDefinition.getCollapsibleProps(horizontalSwimlane);
@@ -113,7 +113,7 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
       // After collapse, height should remain the same
       // Width should be 2x titleSize (2 * 30 = 60)
       expect(verticalSwimlane.bounds.h).toBe(initialBounds.h);
-      expect(verticalSwimlane.bounds.w).toBe(60);
+      expect(verticalSwimlane.bounds.w).toBe(30);
 
       // Check mode is set to collapsed
       const collapsedProps = swimlaneDefinition.getCollapsibleProps(verticalSwimlane);
@@ -183,7 +183,7 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
       swimlaneDefinition.toggle(swimlane, uow);
 
       // Collapsed height should be 2x titleSize for horizontal swimlane
-      expect(swimlane.bounds.h).toBe(customTitleSize * 2);
+      expect(swimlane.bounds.h).toBe(customTitleSize);
       // Width should remain unchanged
       expect(swimlane.bounds.w).toBe(400);
     });
@@ -209,7 +209,7 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
 
       // Collapse (default: w=60, h=200 - height stays the same)
       swimlaneDefinition.toggle(swimlane, uow);
-      expect(swimlane.bounds.w).toBe(60);
+      expect(swimlane.bounds.w).toBe(30);
       expect(swimlane.bounds.h).toBe(200);
 
       // Manually resize while collapsed

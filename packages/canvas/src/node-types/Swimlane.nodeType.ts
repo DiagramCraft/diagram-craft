@@ -64,8 +64,8 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     storedBounds?: string
   ): Box {
     const defaultCollapsedDimensions = {
-      w: orientation === 'vertical' ? titleSize * 2 : currentBounds.w,
-      h: orientation === 'horizontal' ? titleSize * 2 : currentBounds.h
+      w: orientation === 'vertical' ? titleSize : currentBounds.w,
+      h: orientation === 'horizontal' ? titleSize : currentBounds.h
     };
 
     if (storedBounds && storedBounds !== '') {
