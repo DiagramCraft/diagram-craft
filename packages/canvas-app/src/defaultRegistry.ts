@@ -31,13 +31,13 @@ import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.nodeType';
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
 import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/Table.nodeType';
-import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
@@ -111,34 +111,18 @@ export const defaultNodeRegistry = () => {
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
   registerStencil(reg, arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
-  registerStencil(reg, defaults, new SwimlaneNodeDefinition(), {
-    texts: {
-      text: 'Swimlane'
-    },
-    props: () => ({
-      custom: {
-        swimlane: {
-          title: true,
-          fill: true,
-          outerBorder: true,
-          titleBorder: true,
-          horizontalBorder: true
-        }
-      }
-    })
-  });
-
   // Hidden node definitions
   reg.register(new GenericPathNodeDefinition());
   reg.register(new PartialRectNodeDefinition());
   reg.register(new TableNodeDefinition());
   reg.register(new TableRowNodeDefinition());
+  reg.register(new SwimlaneNodeDefinition());
+
+  defaults.stencils.push(...loadStencilsFromYaml(stencils));
 
   const stencilRegistry = reg.stencilRegistry;
   stencilRegistry.register(defaults);
   stencilRegistry.register(arrows, true);
-
-  defaults.stencils.push(...loadStencilsFromYaml(stencils));
 
   return reg;
 };
