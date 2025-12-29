@@ -12,6 +12,20 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { Box } from '@diagram-craft/geometry/box';
+import type { VNode } from '../component/vdom';
+import { Component } from '../component/component';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '../actions/abstractSelectionAction';
+import { $tStr } from '@diagram-craft/utils/localize';
+import { ActionCriteria, type ActionMap } from '../action';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import type { Context } from '../context';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 declare global {
   namespace DiagramCraft {
@@ -23,6 +37,9 @@ declare global {
         titleBorder?: boolean;
         titleSize?: number;
         fill?: boolean;
+        collapsible?: boolean;
+        bounds?: string;
+        mode?: 'collapsed' | 'expanded';
       };
     }
   }
@@ -34,16 +51,63 @@ registerCustomNodeDefaults('swimlane', {
   title: false,
   titleBorder: true,
   titleSize: 30,
-  fill: false
+  fill: false,
+  collapsible: false,
+  bounds: '',
+  mode: 'expanded'
 });
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
+  overlayComponent = SwimlaneComponentOverlay;
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
 
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
   }
+
+  toggle(node: DiagramNode, uow: UnitOfWork) {
+    const mode = node.renderProps.custom.swimlane.mode;
+
+    const currentBounds = Box.toString(node.bounds);
+    const previousBounds =
+      node.renderProps.custom.swimlane.bounds === ''
+        ? Box.fromCorners(
+            Point.of(node.bounds.x, node.bounds.y),
+            Point.of(node.bounds.x + 100, node.bounds.y + 50)
+          )
+        : Box.fromString(node.renderProps.custom.swimlane.bounds);
+
+    node.setBounds(
+      { ...previousBounds, x: node.bounds.x, y: node.bounds.y, r: node.bounds.r },
+      uow
+    );
+
+    if (mode === 'expanded') {
+      node.updateCustomProps(
+        'swimlane',
+        props => {
+          props.mode = 'collapsed';
+          props.bounds = currentBounds;
+        },
+        uow
+      );
+    } else {
+      node.updateCustomProps(
+        'swimlane',
+        props => {
+          props.mode = 'expanded';
+          props.bounds = currentBounds;
+        },
+        uow
+      );
+    }
+  }
+
+  getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
+    return [...super.getShapeActions(_node), 'SHAPE_SWIMLANE_TOGGLE'];
+  }
+
 
   getContainerPadding(node: DiagramNode) {
     if (node.renderProps.custom.swimlane.title) {
@@ -62,6 +126,16 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
     return [
+      {
+        id: 'collapsible',
+        type: 'boolean',
+        label: 'Collapsible',
+        value: node.renderProps.custom.swimlane.collapsible,
+        isSet: node.storedProps.custom?.swimlane?.collapsible !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          node.updateCustomProps('swimlane', props => (props.collapsible = value), uow);
+        }
+      },
       {
         id: 'orientation',
         type: 'select',
@@ -253,7 +327,8 @@ class SwimlaneComponent extends BaseNodeComponent {
 
     // Step 3: Render all child elements (e.g. swimlane rows)
     // Children are wrapped in a group with rotation transform to handle rotated swimlanes
-    props.node.children.forEach(child => {
+    if (props.node.renderProps.custom.swimlane.mode === 'expanded') {
+      props.node.children.forEach(child => {
       builder.add(
         svg.g(
           { transform: Transforms.rotateBack(props.node.bounds) },
@@ -261,6 +336,7 @@ class SwimlaneComponent extends BaseNodeComponent {
         )
       );
     });
+    }
 
     // Step 4: Build the outer border (rectangle around the entire swimlane)
     const pathBuilder = new PathListBuilder();
@@ -341,5 +417,140 @@ class SwimlaneComponent extends BaseNodeComponent {
       stroke: getStroke(),
       fill: { enabled: false, color: 'transparent' }
     });
+  }
+}
+
+export class SwimlaneComponentOverlay extends Component<{ node: DiagramNode }> {
+  render(props: { node: DiagramNode }): VNode {
+    const swimlaneProps = props.node.renderProps.custom.swimlane;
+
+    if (!swimlaneProps.collapsible) return svg.g({});
+
+    const iconSize = 8;
+    const iconPadding = 4;
+    const iconX = props.node.bounds.x + iconPadding;
+    const iconY = props.node.bounds.y + iconPadding;
+
+    const minusIcon = svg.g(
+      {
+        class: 'svg-swimlane__toggle svg-hover-overlay',
+        on: {
+          pointerdown: () => {
+            const uow = new UnitOfWork(props.node.diagram, true);
+            nodeDefinition.toggle(props.node, uow);
+            commitWithUndo(uow, 'Toggle swimlane');
+            this.redraw();
+          }
+        }
+      },
+      svg.rect({
+        'x': iconX,
+        'y': iconY,
+        'width': iconSize,
+        'height': iconSize,
+        'stroke-width': 1,
+        'rx': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.15,
+        'y1': iconY + iconSize * 0.5,
+        'x2': iconX + iconSize * 0.85,
+        'y2': iconY + iconSize * 0.5,
+        'stroke-width': 1.5
+      })
+    );
+
+    const plusIcon = svg.g(
+      {
+        'class': 'svg-swimlane__toggle svg-hover-overlay',
+        'data-hover': 'true',
+        'on': {
+          pointerdown: () => {
+            const uow = new UnitOfWork(props.node.diagram, true);
+            nodeDefinition.toggle(props.node, uow);
+            commitWithUndo(uow, 'Toggle swimlane');
+            this.redraw();
+          }
+        }
+      },
+      svg.rect({
+        'x': iconX,
+        'y': iconY,
+        'width': iconSize,
+        'height': iconSize,
+        'stroke-width': 1,
+        'rx': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.15,
+        'y1': iconY + iconSize * 0.5,
+        'x2': iconX + iconSize * 0.85,
+        'y2': iconY + iconSize * 0.5,
+        'stroke-width': 1.5
+      }),
+      svg.line({
+        'x1': iconX + iconSize * 0.5,
+        'y1': iconY + iconSize * 0.15,
+        'x2': iconX + iconSize * 0.5,
+        'y2': iconY + iconSize * 0.85,
+        'stroke-width': 1.5
+      })
+    );
+
+    const nodeDefinition = props.node.getDefinition() as SwimlaneNodeDefinition;
+
+    if (swimlaneProps.mode === 'expanded') {
+      return minusIcon;
+    } else {
+      return plusIcon;
+    }
+  }
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface ActionMapExtensions extends ReturnType<typeof swimlaneShapeActions> {}
+  }
+}
+
+export const swimlaneShapeActions = (context: Context) => ({
+  SHAPE_SWIMLANE_TOGGLE: new SwimlaneToggleAction(context)
+});
+
+class SwimlaneToggleAction extends AbstractSelectionAction<Context> {
+  name = $tStr('action.SHAPE_SWIMLANE_TOGGLE.name', 'Collapse/Expand');
+
+  constructor(context: Context) {
+    super(context, MultipleType.SingleOnly, ElementType.Node);
+  }
+
+  getCriteria(context: Context): Array<ActionCriteria> {
+    const cb = () => {
+      const $s = context.model.activeDiagram.selection;
+      if ($s.nodes.length !== 1) return false;
+
+      const node = $s.nodes[0];
+      if (!node) return false;
+
+      return node.nodeType === 'swimlane';
+    };
+
+    return [
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'add', cb),
+      ActionCriteria.EventTriggered(context.model.activeDiagram.selection, 'remove', cb)
+    ];
+  }
+
+  execute(): void {
+    const diagram = this.context.model.activeDiagram;
+    assertRegularLayer(diagram.activeLayer);
+
+    const uow = new UnitOfWork(diagram, true);
+
+    const node = mustExist(diagram.selection.nodes[0]);
+    const nodeDefinition = node.getDefinition() as SwimlaneNodeDefinition;
+    nodeDefinition.toggle(node, uow);
+
+    commitWithUndo(uow, 'Expand/Collapse swimlane');
   }
 }
