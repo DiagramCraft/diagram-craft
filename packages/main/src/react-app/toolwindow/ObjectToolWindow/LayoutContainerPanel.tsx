@@ -6,6 +6,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbArrowsHorizontal, TbArrowsVertical } from 'react-icons/tb';
 
 export const LayoutContainerPanel = (props: Props) => {
@@ -15,6 +16,7 @@ export const LayoutContainerPanel = (props: Props) => {
   const enabled = useNodeProperty(diagram, 'layout.container.enabled');
   const direction = useNodeProperty(diagram, 'layout.container.direction');
   const gap = useNodeProperty(diagram, 'layout.container.gap');
+  const autoShrink = useNodeProperty(diagram, 'layout.container.autoShrink');
   const justifyContent = useNodeProperty(diagram, 'layout.container.justifyContent');
   const alignItems = useNodeProperty(diagram, 'layout.container.alignItems');
   const paddingTop = useNodeProperty(diagram, 'layout.container.padding.top');
@@ -65,6 +67,11 @@ export const LayoutContainerPanel = (props: Props) => {
             min={0}
             style={{ width: '60px' }}
           />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
+        <div className={'cmp-labeled-table__value'}>
+          <Checkbox value={autoShrink.val ?? false} onChange={autoShrink.set} />
         </div>
 
         <div className={'cmp-labeled-table__label'}>Justify</div>

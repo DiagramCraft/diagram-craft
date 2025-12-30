@@ -49,6 +49,8 @@ export type ContainerLayoutInstructions = {
   padding?: { top?: number; right?: number; bottom?: number; left?: number };
   /** Whether layout is enabled for this container (default: true) */
   enabled?: boolean;
+  /** Whether container should shrink to fit children when no children have grow set (default: false) */
+  autoShrink?: boolean;
 };
 
 /**

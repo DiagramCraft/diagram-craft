@@ -16,6 +16,7 @@ const createNode = (
     justifyContent?: 'start' | 'end' | 'center' | 'space-between';
     alignItems?: 'start' | 'end' | 'center' | 'stretch' | 'preserve';
     padding?: { top?: number; right?: number; bottom?: number; left?: number };
+    autoShrink?: boolean;
   }
 ): LayoutNode => ({
   id,
@@ -26,7 +27,8 @@ const createNode = (
     ...(options?.gap !== undefined && { gap: options.gap }),
     ...(options?.justifyContent !== undefined && { justifyContent: options.justifyContent }),
     ...(options?.alignItems !== undefined && { alignItems: options.alignItems }),
-    ...(options?.padding !== undefined && { padding: options.padding })
+    ...(options?.padding !== undefined && { padding: options.padding }),
+    ...(options?.autoShrink !== undefined && { autoShrink: options.autoShrink })
   },
   elementInstructions: { width: {}, height: {}, ...elementInstructions }
 });
@@ -1562,5 +1564,250 @@ describe('getStretchSize', () => {
     const result = _test.getStretchSize('stretch', 100, 0, 0, child, 'vertical');
 
     expect(result).toBe(120); // Enforced min (even if larger than container)
+  });
+});
+
+describe('autoShrink', () => {
+  describe('horizontal layout', () => {
+    test('shrinks container to fit children when autoShrink is enabled', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 60, 30);
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 50 + 60 = 110
+      expect(parent.bounds.w).toBe(110);
+      expect(parent.bounds.h).toBe(50); // Height unchanged
+    });
+
+    test('does not shrink when autoShrink is disabled (default)', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 60, 30);
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2]);
+
+      layoutChildren(parent);
+
+      // Container should keep its original size
+      expect(parent.bounds.w).toBe(300);
+      expect(parent.bounds.h).toBe(50);
+    });
+
+    test('does not shrink when any child has grow (grow takes priority)', () => {
+      const child1 = createNode('child1', 50, 30, 'horizontal', [], { grow: 1 });
+      const child2 = createNode('child2', 60, 30);
+      const parent = createNode('parent', 300, 50, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should not shrink because child1 has grow
+      expect(parent.bounds.w).toBe(300);
+      // Child1 should grow to fill available space
+      expect(child1.bounds.w).toBe(240); // 300 - 60 = 240
+    });
+
+    test('accounts for gap when shrinking', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 60, 30);
+      const child3 = createNode('child3', 40, 30);
+      const parent = createNode(
+        'parent',
+        400,
+        50,
+        'horizontal',
+        [child1, child2, child3],
+        undefined,
+        {
+          autoShrink: true,
+          gap: 10
+        }
+      );
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 50 + 60 + 40 + (2 * 10) = 170
+      expect(parent.bounds.w).toBe(170);
+    });
+
+    test('accounts for padding when shrinking', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 60, 30);
+      const parent = createNode('parent', 400, 50, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true,
+        padding: { left: 10, right: 15 }
+      });
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 50 + 60 + 10 + 15 = 135
+      expect(parent.bounds.w).toBe(135);
+    });
+
+    test('still grows when children do not fit', () => {
+      const child1 = createNode('child1', 150, 30);
+      const child2 = createNode('child2', 200, 30);
+      const parent = createNode('parent', 100, 50, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should grow to: 150 + 200 = 350
+      expect(parent.bounds.w).toBe(350);
+    });
+  });
+
+  describe('vertical layout', () => {
+    test('shrinks container to fit children when autoShrink is enabled', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 50, 40);
+      const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 30 + 40 = 70
+      expect(parent.bounds.h).toBe(70);
+      expect(parent.bounds.w).toBe(100); // Width unchanged
+    });
+
+    test('does not shrink when autoShrink is disabled (default)', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 50, 40);
+      const parent = createNode('parent', 100, 300, 'vertical', [child1, child2]);
+
+      layoutChildren(parent);
+
+      // Container should keep its original size
+      expect(parent.bounds.h).toBe(300);
+      expect(parent.bounds.w).toBe(100);
+    });
+
+    test('does not shrink when any child has grow (grow takes priority)', () => {
+      const child1 = createNode('child1', 50, 30, 'horizontal', [], { grow: 1 });
+      const child2 = createNode('child2', 50, 40);
+      const parent = createNode('parent', 100, 300, 'vertical', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should not shrink because child1 has grow
+      expect(parent.bounds.h).toBe(300);
+      // Child1 should grow to fill available space
+      expect(child1.bounds.h).toBe(260); // 300 - 40 = 260
+    });
+
+    test('accounts for gap when shrinking', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 50, 40);
+      const child3 = createNode('child3', 50, 25);
+      const parent = createNode(
+        'parent',
+        100,
+        400,
+        'vertical',
+        [child1, child2, child3],
+        undefined,
+        {
+          autoShrink: true,
+          gap: 5
+        }
+      );
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 30 + 40 + 25 + (2 * 5) = 105
+      expect(parent.bounds.h).toBe(105);
+    });
+
+    test('accounts for padding when shrinking', () => {
+      const child1 = createNode('child1', 50, 30);
+      const child2 = createNode('child2', 50, 40);
+      const parent = createNode('parent', 100, 400, 'vertical', [child1, child2], undefined, {
+        autoShrink: true,
+        padding: { top: 10, bottom: 20 }
+      });
+
+      layoutChildren(parent);
+
+      // Container should shrink to: 30 + 40 + 10 + 20 = 100
+      expect(parent.bounds.h).toBe(100);
+    });
+
+    test('still grows when children do not fit', () => {
+      const child1 = createNode('child1', 50, 150);
+      const child2 = createNode('child2', 50, 200);
+      const parent = createNode('parent', 100, 100, 'vertical', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should grow to: 150 + 200 = 350
+      expect(parent.bounds.h).toBe(350);
+    });
+  });
+
+  describe('edge cases', () => {
+    test('works with nested layouts', () => {
+      const grandchild1 = createNode('grandchild1', 30, 20);
+      const grandchild2 = createNode('grandchild2', 40, 20);
+      const child1 = createNode(
+        'child1',
+        200,
+        50,
+        'horizontal',
+        [grandchild1, grandchild2],
+        undefined,
+        {
+          autoShrink: true
+        }
+      );
+      const child2 = createNode('child2', 60, 30);
+      const parent = createNode('parent', 500, 200, 'vertical', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Child1 should shrink to fit grandchildren: 30 + 40 = 70
+      expect(child1.bounds.w).toBe(70);
+      // Parent should shrink to fit children: 50 + 30 = 80
+      expect(parent.bounds.h).toBe(80);
+    });
+
+    test('does not shrink below children size even with explicit constraints', () => {
+      const child1 = createNode('child1', 100, 30);
+      const child2 = createNode('child2', 150, 30);
+      const parent = createNode('parent', 50, 50, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Container should grow to fit children even with autoShrink
+      expect(parent.bounds.w).toBe(250); // 100 + 150
+    });
+
+    test('only shrinks main axis, not cross axis', () => {
+      const child1 = createNode('child1', 50, 20);
+      const child2 = createNode('child2', 60, 15);
+      const parent = createNode('parent', 300, 100, 'horizontal', [child1, child2], undefined, {
+        autoShrink: true
+      });
+
+      layoutChildren(parent);
+
+      // Main axis (width) should shrink
+      expect(parent.bounds.w).toBe(110);
+      // Cross axis (height) should auto-grow to fit tallest child
+      expect(parent.bounds.h).toBe(100); // Not shrinking, stays at original
+    });
   });
 });
