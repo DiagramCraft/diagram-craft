@@ -111,6 +111,10 @@ export const DocumentTabs = (props: Props) => {
               className="cmp-document-tabs__tab-trigger util-vcenter"
               value={d.id}
               id={`tab-${d.id}`}
+              onDoubleClick={() => {
+                const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
+                application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
+              }}
             >
               <DocumentsContextMenu
                 rootId={d.id}

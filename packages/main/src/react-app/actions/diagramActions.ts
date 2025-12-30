@@ -124,7 +124,8 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
           title: 'Rename diagram',
           description: 'Enter a new name for the diagram.',
           saveButtonLabel: 'Rename',
-          value: diagram.name
+          value: diagram.name,
+          selectOnOpen: true
         },
         async name => {
           const oldName = diagram.name;
