@@ -6,13 +6,19 @@
   bottom: 10px;
   left: 10px;
 
+  .svg-node--container-outline {
+    stroke: transparent;
+  }
+
   .preview__tools {
     position: absolute;
     right: 15px;
     top: 10px;
+
     button {
       margin-left: 0.5rem;
       color: black;
+
       svg {
         width: 1.5rem;
         height: 1.5rem;
@@ -32,6 +38,7 @@
     > div {
       position: absolute;
       inset: 0;
+
       > svg {
         background: var(--canvas-bg2);
       }
@@ -40,6 +47,7 @@
     .svg-node, .svg-edge {
       cursor: default;
     }
+
     .svg-node--with-action .svg-node {
       cursor: pointer;
     }

@@ -4,15 +4,11 @@ import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/path
 import { DiagramNode, type NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  CollapsibleProps,
-  LayoutCapableShapeNodeDefinition
-} from '../shape/layoutCapableShapeNodeDefinition';
+import { CollapsibleProps, LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
@@ -49,6 +45,7 @@ registerCustomNodeDefaults('swimlane', {
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
+
   constructor() {
     super('swimlane', 'Swimlane', SwimlaneComponent);
 
@@ -326,13 +323,12 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
     builder.noBoundaryNeeded();
     builder.add(
       svg.path({
+        'class': 'svg-node--container-outline',
         'd': svgPath,
         'x': props.node.bounds.x,
         'y': props.node.bounds.y,
         'width': props.node.bounds.w,
         'height': props.node.bounds.h,
-        'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : 'none',
-        'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
         'fill': 'transparent',
         'on': {
           mousedown: props.onMouseDown,

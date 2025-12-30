@@ -1,7 +1,4 @@
-import {
-  CollapsibleProps,
-  LayoutCapableShapeNodeDefinition
-} from '../shape/layoutCapableShapeNodeDefinition';
+import { CollapsibleProps, LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -9,7 +6,6 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
 import { type PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import type { Anchor } from '@diagram-craft/model/anchor';
@@ -56,14 +52,14 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
       ...this.getCollapsiblePropertyDefinitions(node),
       ...(shape
         ? [
-            {
-              id: 'delimiter',
-              type: 'delimiter',
-              label: shape.name,
-              isSet: false
-            } as CustomPropertyDefinition,
-            ...shape.getCustomPropertyDefinitions(node)
-          ]
+          {
+            id: 'delimiter',
+            type: 'delimiter',
+            label: shape.name,
+            isSet: false
+          } as CustomPropertyDefinition,
+          ...shape.getCustomPropertyDefinitions(node)
+        ]
         : [])
     ];
   }
@@ -111,13 +107,12 @@ export class ContainerComponent extends BaseNodeComponent<ContainerNodeDefinitio
       builder.noBoundaryNeeded();
       builder.add(
         svg.path({
+          'class': 'svg-node--container-outline',
           'd': svgPath,
           'x': props.node.bounds.x,
           'y': props.node.bounds.y,
           'width': props.node.bounds.w,
           'height': props.node.bounds.h,
-          'stroke': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? '#30A46C' : '#d5d5d4',
-          'stroke-width': hasHighlight(props.node, Highlights.NODE__DROP_TARGET) ? 3 : 1,
           'fill': 'transparent',
           'on': {
             mousedown: props.onMouseDown
