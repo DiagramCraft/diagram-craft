@@ -15,6 +15,12 @@
       "quoteProperties": "preserve"
     }
   },
+  "css": {
+    "formatter": {
+      "indentWidth": 2,
+      "indentStyle": "space"
+    }
+  },
   "files": {
     "includes": [
       "**",

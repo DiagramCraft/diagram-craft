@@ -176,6 +176,14 @@
 body {
   --right-indent: 0;
   --left-indent: 0;
+
+  .hide_container {
+    --container-outline: transparent;
+  }
+
+  &:not(.hide_container) {
+    --container-outline: #d5d5d4;
+  }
 }
 
 body.no-select * {
@@ -383,6 +391,11 @@ table {
   & > div > span {
     display: inline;
     margin-top: -2px;
+  }
+
+  .cmp-toggle-button-group > button {
+    margin-left: 2px;
+    margin-right: 2px;
   }
 }
 
@@ -1129,11 +1142,6 @@ foreignObject {
 .svg-node--highlight-node__highlight .svg-node__boundary {
   stroke-width: 2px !important;
   stroke: var(--accent-fg) !important;
-}
-
-.svg-node--highlight-node__drop-target .svg-node__boundary {
-  stroke-width: 3px !important;
-  stroke: #30A46C !important;
 }
 
 .svg-node--highlight-node__edge-connect---point .svg-node__boundary {

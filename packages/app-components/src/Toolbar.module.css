@@ -51,13 +51,19 @@
     background-color: var(--cmp-bg);
   }
 
-
+  &:has(+ .cmp-toolbar__button--more) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
   .cmp-toolbar__button--more {
     width: 10px;
     margin-left: -2px;
     margin-right: 2px;
     border: none;
     padding: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 
     & > svg {
       width: 80%;
