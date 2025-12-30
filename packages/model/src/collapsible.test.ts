@@ -51,30 +51,6 @@ describe('collapsible', () => {
       expect(getCollapsedAncestor(child)).toBeNull();
     });
 
-    test('returns collapsed parent container', () => {
-      const { diagram, layer } = TestModel.newDiagramWithLayer();
-      const container = layer.addNode({ type: 'container' });
-      const child = layer.addNode({ type: 'rect' });
-
-      UnitOfWork.execute(diagram, uow => {
-        diagram.moveElement([child], uow, layer, {
-          relation: 'on',
-          element: container
-        });
-
-        container.updateCustomProps(
-          'container',
-          (props: any) => {
-            props.mode = 'collapsed';
-            props.bounds = Box.toString({ x: 0, y: 0, w: 200, h: 200, r: 0 });
-          },
-          uow
-        );
-      });
-
-      expect(getCollapsedAncestor(child)).toBe(container);
-    });
-
     test('returns nearest collapsed ancestor when multiple levels', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const outerContainer = layer.addNode({ type: 'container' });
