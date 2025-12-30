@@ -4,7 +4,10 @@ import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/path
 import { DiagramNode, type NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import { CollapsibleProps, LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
+import {
+  CollapsibleProps,
+  LayoutCapableShapeNodeDefinition
+} from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -13,6 +16,7 @@ import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { Box } from '@diagram-craft/geometry/box';
+import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 
 type Orientation = 'vertical' | 'horizontal';
 
@@ -126,6 +130,9 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
         uow
       );
     }
+
+    // Invalidate all edges connected to descendants so they recalculate positions
+    invalidateDescendantEdges(node, uow);
   }
 
   getContainerPadding(node: DiagramNode) {

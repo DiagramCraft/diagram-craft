@@ -15,6 +15,7 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
+import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 
 export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
   getContainerPadding(node: DiagramNode): {
@@ -153,6 +154,9 @@ export abstract class LayoutCapableShapeNodeDefinition
         uow
       );
     }
+
+    // Invalidate all edges connected to descendants so they recalculate positions
+    invalidateDescendantEdges(node, uow);
   }
 
   /**
