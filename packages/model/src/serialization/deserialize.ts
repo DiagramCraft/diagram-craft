@@ -161,15 +161,15 @@ export const deserializeDiagramElements = (
         const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
         el._setParent(resolvedParent);
       }
-    }
 
-    if (n.type === 'edge') {
-      const edge = edgeLookup.get(n.id)!;
-      if (n.labelNodes && n.labelNodes.length > 0) {
-        edge.setLabelNodes(
-          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
-          uow
-        );
+      if (c.type === 'edge') {
+        const edge = edgeLookup.get(c.id)!;
+        if (c.labelNodes && c.labelNodes.length > 0) {
+          edge.setLabelNodes(
+            c.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
+            uow
+          );
+        }
       }
     }
   }
