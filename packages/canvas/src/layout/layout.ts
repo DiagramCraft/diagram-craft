@@ -432,8 +432,21 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
   const totalFinalSize = childInfo.reduce((sum, info) => sum + info.finalSize, 0);
   const requiredMainAxisSize = totalFinalSize + totalGaps + mainAxisPadding.total;
 
+  let shouldResizeContainer = false;
   if (requiredMainAxisSize > containerSize) {
-    // Parent is too small on main axis, resize it
+    // Parent is too small on main axis, resize it to grow
+    shouldResizeContainer = true;
+  } else if (
+    layoutNode.containerInstructions.autoShrink &&
+    !shouldGrow &&
+    requiredMainAxisSize < containerSize
+  ) {
+    // Parent is too large on main axis and autoShrink is enabled
+    // Only shrink if no children have grow (shouldGrow would be true if any child has grow > 0)
+    shouldResizeContainer = true;
+  }
+
+  if (shouldResizeContainer) {
     if (isHorizontal) {
       layoutNode.bounds.w = requiredMainAxisSize;
     } else {
