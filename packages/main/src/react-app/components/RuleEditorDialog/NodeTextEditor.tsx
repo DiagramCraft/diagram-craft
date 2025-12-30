@@ -34,6 +34,7 @@ export const NodeTextEditor: Editor = props => {
       left={makeProperty($p, 'text.left', nodeDefaults, onChange)}
       bottom={makeProperty($p, 'text.bottom', nodeDefaults, onChange)}
       right={makeProperty($p, 'text.right', nodeDefaults, onChange)}
+      shrink={makeProperty($p, 'text.shrink', nodeDefaults, onChange)}
     />
   );
 };

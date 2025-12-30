@@ -24,6 +24,8 @@ import { MultiProperty } from './types';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 
 type FormProps = {
   diagram: Diagram;
@@ -42,6 +44,7 @@ type FormProps = {
   align: Property<HAlign>;
   valign: Property<VAlign>;
   lineHeight: Property<number>;
+  shrink: Property<boolean>;
 };
 
 class FormatProperty extends MultiProperty<string[]> {
@@ -117,204 +120,217 @@ export const NodeTextPanelForm = ({
   right,
   align,
   valign,
-  lineHeight
+  lineHeight,
+  shrink
 }: FormProps) => {
   const fonts = $cfg.fonts;
 
   const format = new FormatProperty(isBold, isItalic, textDecoration);
 
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Font:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <PropertyEditor
-          property={fontSize}
-          render={props => (
-            <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
-          )}
-        />
-        <PropertyEditor
-          property={font}
-          render={props => (
-            <Select.Root {...props}>
-              {Object.entries(fonts).map(([label, value]) => (
-                <Select.Item key={value} value={value}>
-                  {label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-          )}
-        />
-      </div>
-
-      <div></div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <PropertyEditor
-          property={format}
-          render={props => (
-            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'multiple'}>
-              <ToggleButtonGroup.Item value={'bold'}>
-                <TbBold />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'italic'}>
-                <TbItalic />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'underline'}>
-                <TbUnderline />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'strikethrough'}>
-                <TbStrikethrough />
-              </ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
-          )}
-        />
-
-        <PropertyEditor
-          property={textTransform as Property<string>}
-          render={props => (
-            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-              <ToggleButtonGroup.Item value={'capitalize'}>
-                <TbLetterCase />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'uppercase'}>
-                <TbLetterCaseUpper />
-              </ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
-          )}
-        />
-      </div>
-
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={color}
-          render={props => (
-            <ColorPicker
-              {...props}
-              palette={$cfg.palette.primary}
-              customPalette={$d.document.customPalette}
-              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-            />
-          )}
-          renderValue={props => <ColorPreview {...props} />}
-        />
-      </div>
-
-      <div className={'cmp-labeled-table__label'}>Align:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <PropertyEditor
-          property={align as Property<string>}
-          render={props => (
-            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-              <ToggleButtonGroup.Item value={'left'}>
-                <TbAlignLeft />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'center'}>
-                <TbAlignCenter />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'right'}>
-                <TbAlignRight />
-              </ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
-          )}
-        />
-
-        <PropertyEditor
-          property={valign as Property<string>}
-          render={props => (
-            <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-              <ToggleButtonGroup.Item value={'top'}>
-                <RxTextAlignTop />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'middle'}>
-                <RxTextAlignMiddle />
-              </ToggleButtonGroup.Item>
-              <ToggleButtonGroup.Item value={'bottom'}>
-                <RxTextAlignBottom />
-              </ToggleButtonGroup.Item>
-            </ToggleButtonGroup.Root>
-          )}
-        />
-      </div>
-
-      <div className={'cmp-labeled-table__label'}>Line height:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={lineHeight}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => (
-            <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
-          )}
-        />
-      </div>
-
-      <div
-        className={'cmp-labeled-table__label'}
-        style={{ alignSelf: 'start', marginTop: '0.25rem' }}
-      >
-        Spacing:
-      </div>
-      <div className={'cmp-labeled-table__value'}>
-        <div
-          style={{
-            display: 'grid',
-            maxWidth: '10rem',
-            gap: '0.2rem',
-            gridTemplateAreas: '"gap1 top gap2" "left bottom right"',
-            gridTemplateRows: 'repeat(2, 1fr)',
-            gridTemplateColumns: 'repeat(3, 1fr)'
-          }}
-        >
-          <div style={{ gridArea: 'gap1' }}></div>
-          <div style={{ gridArea: 'gap2' }}></div>
+    <>
+      <div className={'cmp-labeled-table'}>
+        <div className={'cmp-labeled-table__label'}>Font:</div>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
           <PropertyEditor
-            property={top}
+            property={fontSize}
             render={props => (
-              <NumberInput
-                {...props}
-                defaultUnit={'px'}
-                min={0}
-                style={{ gridArea: 'top', width: '100%' }}
-              />
+              <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
             )}
           />
           <PropertyEditor
-            property={left}
+            property={font}
             render={props => (
-              <NumberInput
-                {...props}
-                defaultUnit={'px'}
-                min={0}
-                style={{ gridArea: 'left', width: '100%' }}
-              />
-            )}
-          />
-          <PropertyEditor
-            property={bottom}
-            render={props => (
-              <NumberInput
-                {...props}
-                defaultUnit={'px'}
-                min={0}
-                style={{ gridArea: 'bottom', width: '100%' }}
-              />
-            )}
-          />
-          <PropertyEditor
-            property={right}
-            render={props => (
-              <NumberInput
-                {...props}
-                defaultUnit={'px'}
-                min={0}
-                style={{ gridArea: 'right', width: '100%' }}
-              />
+              <Select.Root {...props}>
+                {Object.entries(fonts).map(([label, value]) => (
+                  <Select.Item key={value} value={value}>
+                    {label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
             )}
           />
         </div>
+
+        <div></div>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <PropertyEditor
+            property={format}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'multiple'}>
+                <ToggleButtonGroup.Item value={'bold'}>
+                  <TbBold />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'italic'}>
+                  <TbItalic />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'underline'}>
+                  <TbUnderline />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'strikethrough'}>
+                  <TbStrikethrough />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
+
+          <PropertyEditor
+            property={textTransform as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'capitalize'}>
+                  <TbLetterCase />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'uppercase'}>
+                  <TbLetterCaseUpper />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Color:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={color}
+            render={props => (
+              <ColorPicker
+                {...props}
+                palette={$cfg.palette.primary}
+                customPalette={$d.document.customPalette}
+                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              />
+            )}
+            renderValue={props => <ColorPreview {...props} />}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Align:</div>
+        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <PropertyEditor
+            property={align as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'left'}>
+                  <TbAlignLeft />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'center'}>
+                  <TbAlignCenter />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'right'}>
+                  <TbAlignRight />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
+
+          <PropertyEditor
+            property={valign as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'top'}>
+                  <RxTextAlignTop />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'middle'}>
+                  <RxTextAlignMiddle />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'bottom'}>
+                  <RxTextAlignBottom />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
+        </div>
+
+        <div
+          className={'cmp-labeled-table__label'}
+          style={{ alignSelf: 'start', marginTop: '0.25rem' }}
+        >
+          Spacing:
+        </div>
+        <div className={'cmp-labeled-table__value'}>
+          <div
+            style={{
+              display: 'grid',
+              maxWidth: '10rem',
+              gap: '0.2rem',
+              gridTemplateAreas: '"gap1 top gap2" "left bottom right"',
+              gridTemplateRows: 'repeat(2, 1fr)',
+              gridTemplateColumns: 'repeat(3, 1fr)'
+            }}
+          >
+            <div style={{ gridArea: 'gap1' }}></div>
+            <div style={{ gridArea: 'gap2' }}></div>
+            <PropertyEditor
+              property={top}
+              render={props => (
+                <NumberInput
+                  {...props}
+                  defaultUnit={'px'}
+                  min={0}
+                  style={{ gridArea: 'top', width: '100%' }}
+                />
+              )}
+            />
+            <PropertyEditor
+              property={left}
+              render={props => (
+                <NumberInput
+                  {...props}
+                  defaultUnit={'px'}
+                  min={0}
+                  style={{ gridArea: 'left', width: '100%' }}
+                />
+              )}
+            />
+            <PropertyEditor
+              property={bottom}
+              render={props => (
+                <NumberInput
+                  {...props}
+                  defaultUnit={'px'}
+                  min={0}
+                  style={{ gridArea: 'bottom', width: '100%' }}
+                />
+              )}
+            />
+            <PropertyEditor
+              property={right}
+              render={props => (
+                <NumberInput
+                  {...props}
+                  defaultUnit={'px'}
+                  min={0}
+                  style={{ gridArea: 'right', width: '100%' }}
+                />
+              )}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div style={{ marginTop: '0.5rem' }}></div>
+      <Collapsible label={'Advanced'}>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Line height:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={lineHeight}
+              formatValue={v => round(v * 100)}
+              storeValue={v => v / 100}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
+              )}
+            />
+          </div>
+
+          <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor property={shrink} render={props => <Checkbox {...props} />} />
+          </div>
+        </div>
+      </Collapsible>
+    </>
   );
 };
 
@@ -336,6 +352,7 @@ export const NodeTextPanel = (props: Props) => {
   const left = useNodeProperty($d, 'text.left');
   const bottom = useNodeProperty($d, 'text.bottom');
   const right = useNodeProperty($d, 'text.right');
+  const shrink = useNodeProperty($d, 'text.shrink');
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
@@ -356,6 +373,7 @@ export const NodeTextPanel = (props: Props) => {
         align={align}
         valign={valign}
         lineHeight={lineHeight}
+        shrink={shrink}
       />
     </ToolWindowPanel>
   );

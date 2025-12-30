@@ -21,6 +21,12 @@ export const NodeAdvancedPropertiesEditor: Editor = props => {
       rotatable={makeProperty($p, 'capabilities.rotatable', nodeDefaults, onChange)}
       inheritStyle={makeProperty($p, 'capabilities.inheritStyle', nodeDefaults, onChange)}
       routingSpacing={makeProperty($p, 'routing.spacing', nodeDefaults, onChange)}
+      adjustSizeBasedOnText={makeProperty(
+        $p,
+        'capabilities.adjustSizeBasedOnText',
+        nodeDefaults,
+        onChange
+      )}
     />
   );
 };

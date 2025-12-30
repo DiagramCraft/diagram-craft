@@ -20,6 +20,7 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 export type NodeComponentProps = {
   element: DiagramNode;
@@ -66,20 +67,31 @@ export class BaseNodeComponent<
       const { bounds } = props.node;
 
       // Note: we want label nodes to always be as small as possible
-      if (width > bounds.w || height > bounds.h || props.node.isLabelNode()) {
+      const shouldShrink = props.node.isLabelNode() || props.nodeProps.text.shrink;
+      if (width > bounds.w || height > bounds.h || shouldShrink) {
         const newBounds = {
           x: bounds.x,
           y: bounds.y,
           r: bounds.r,
-          h: props.node.isLabelNode() ? height : Math.max(height, bounds.h),
-          w: props.node.isLabelNode() ? width : Math.max(width, bounds.w)
+          h: shouldShrink ? height : Math.max(height, bounds.h),
+          w: shouldShrink ? width : Math.max(width, bounds.w)
         };
 
         if (props.node.renderProps.text.align === 'center' && width > bounds.w) {
           newBounds.x = bounds.x - (width - bounds.w) / 2;
         }
 
-        UnitOfWork.execute(props.node.diagram, uow => props.node.setBounds(newBounds, uow), true);
+        UnitOfWork.execute(
+          props.node.diagram,
+          uow => {
+            props.node.setBounds(newBounds, uow);
+            const parent = props.node.parent;
+            if (isNode(parent)) {
+              parent.getDefinition().onChildChanged(parent, uow);
+            }
+          },
+          true
+        );
       }
     };
   }
@@ -88,7 +100,7 @@ export class BaseNodeComponent<
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     shapeBuilder.boundaryPath(boundary.all());
 
-    if (props.nodeProps.capabilities.textGrow) {
+    if (props.nodeProps.capabilities.adjustSizeBasedOnText) {
       shapeBuilder.text(
         this,
         '1',

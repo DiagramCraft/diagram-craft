@@ -15,6 +15,7 @@ type FormProps = {
   rotatable: Property<boolean>;
   inheritStyle: Property<boolean>;
   routingSpacing: Property<number>;
+  adjustSizeBasedOnText: Property<boolean>;
 };
 
 export const NodeAdvancedPropertiesPanelForm = ({
@@ -25,7 +26,8 @@ export const NodeAdvancedPropertiesPanelForm = ({
   deletable,
   rotatable,
   inheritStyle,
-  routingSpacing
+  routingSpacing,
+  adjustSizeBasedOnText
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
@@ -37,6 +39,14 @@ export const NodeAdvancedPropertiesPanelForm = ({
       <div className={'cmp-labeled-table__label'}>Resize Vertically:</div>
       <div className={'cmp-labeled-table__value'}>
         <PropertyEditor property={resizableV} render={props => <Checkbox {...props} />} />
+      </div>
+
+      <div className={'cmp-labeled-table__label'}>Resize Based On Text:</div>
+      <div className={'cmp-labeled-table__value'}>
+        <PropertyEditor
+          property={adjustSizeBasedOnText}
+          render={props => <Checkbox {...props} />}
+        />
       </div>
 
       <div className={'cmp-labeled-table__label'}>Movable:</div>
@@ -85,6 +95,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
   const rotatable = useNodeProperty(diagram, 'capabilities.rotatable');
   const inheritStyle = useNodeProperty(diagram, 'capabilities.inheritStyle');
   const routingSpacing = useNodeProperty(diagram, 'routing.spacing');
+  const adjustSizeBasedOnText = useNodeProperty(diagram, 'capabilities.adjustSizeBasedOnText');
 
   return (
     <ToolWindowPanel
@@ -102,6 +113,7 @@ export const NodeAdvancedPropertiesPanel = (props: Props) => {
         rotatable={rotatable}
         inheritStyle={inheritStyle}
         routingSpacing={routingSpacing}
+        adjustSizeBasedOnText={adjustSizeBasedOnText}
       />
     </ToolWindowPanel>
   );
