@@ -322,7 +322,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     deletable: true,
     movable: true,
     rotatable: true,
-    textGrow: false,
+    adjustSizeBasedOnText: false,
     inheritStyle: true
   },
 
@@ -343,7 +343,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     bottom: 6,
     wrap: true,
     overflow: 'visible',
-    position: 'c'
+    position: 'c',
+    shrink: false
   },
 
   anchors: {

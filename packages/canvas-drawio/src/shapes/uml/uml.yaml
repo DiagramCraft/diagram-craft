@@ -29,19 +29,22 @@ stencils:
               font: Helvetica
               bold: false
               lineHeight: 0.97
-              top: 7
-              bottom: 7
+              top: 9
+              bottom: 4
               left: 6
               right: 6
               align: left
               valign: top
               flipV: false
+              shrink: true
             fill:
               enabled: false
             stroke:
               color: none
               width: 1
               enabled: false
+            capabilities:
+              adjustSizeBasedOnText: true
             style: default
         - id: cWmGFZhKdYEZwk7NpRVw-5
           type: node
@@ -86,12 +89,15 @@ stencils:
               right: 6
               align: left
               valign: top
+              shrink: true
             fill:
               enabled: false
             stroke:
               color: none
               width: 1
               enabled: false
+            capabilities:
+              adjustSizeBasedOnText: true
             style: default
       texts:
         text: Classname
@@ -119,6 +125,19 @@ stencils:
             titleSize: 26
             horizontalBorder: false
         style: default
+        layout:
+          container:
+            enabled: true
+            direction: 'vertical'
+            gap: 0
+            autoShrink: true
+            justifyContent: 'start'
+            alignItems: 'stretch'
+            padding:
+              top: 0
+              right: 0
+              bottom: 0
+              left: 0
   - id: object
     name: Object
     node:

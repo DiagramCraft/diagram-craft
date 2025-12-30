@@ -192,7 +192,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
     };
     movable?: boolean;
     rotatable?: boolean;
-    textGrow?: boolean;
+    adjustSizeBasedOnText?: boolean;
     editable?: boolean;
     deletable?: boolean;
     inheritStyle?: boolean;
@@ -235,6 +235,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
     wrap?: boolean;
     overflow?: 'hidden' | 'visible';
     position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
+    shrink?: boolean;
   };
 
   anchors?: {

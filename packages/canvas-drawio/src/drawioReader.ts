@@ -589,7 +589,7 @@ const parseText = (
   }
 
   props.capabilities ??= {};
-  props.capabilities.textGrow = true;
+  props.capabilities.adjustSizeBasedOnText = true;
 
   return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
 };
@@ -809,7 +809,7 @@ const parseGroup = async (
           ...grp.storedProps.custom,
           _collapsible: {
             mode,
-            collapsible: true,
+            collapsible: true
           },
           container: {
             ...($alternateBoundsRect
