@@ -176,10 +176,13 @@
 body {
   --right-indent: 0;
   --left-indent: 0;
-  --container-outline: #d5d5d4;
 
   .hide_container {
     --container-outline: transparent;
+  }
+
+  &:not(.hide_container) {
+    --container-outline: #d5d5d4;
   }
 }
 
@@ -388,6 +391,11 @@ table {
   & > div > span {
     display: inline;
     margin-top: -2px;
+  }
+
+  .cmp-toggle-button-group > button {
+    margin-left: 2px;
+    margin-right: 2px;
   }
 }
 

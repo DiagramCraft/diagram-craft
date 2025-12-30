@@ -20,6 +20,7 @@ import { selectionExecuteActionActions } from './actions/selectionExecuteActionA
 import { diagramActions } from './actions/diagramActions';
 import { geometryActions } from './actions/geometryActions';
 import { toggleRulerActions } from './actions/toggleRulerAction';
+import { toggleContainerBorderActions } from './actions/toggleContainerBorderAction';
 import { commentActions } from './actions/commentActions';
 import { commandPaletteActions } from './actions/commandPaletteAction';
 import { modelCenterActions } from './actions/modelCenterAction';
@@ -52,6 +53,7 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...diagramActions(application),
   ...geometryActions(application),
   ...toggleRulerActions(application),
+  ...toggleContainerBorderActions(application),
   ...commentActions(application),
   ...commandPaletteActions(application),
   ...modelCenterActions(application),
