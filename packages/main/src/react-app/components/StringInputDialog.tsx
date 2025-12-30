@@ -16,8 +16,18 @@ export const StringInputDialog = (props: Props) => {
   useEffect(() => {
     if (!props.open) return;
     setTimeout(() => {
-      inputRef.current?.focus();
-      areaRef.current?.focus();
+      if (inputRef.current) {
+        inputRef.current.focus();
+        if (props.selectOnOpen) {
+          inputRef.current.select();
+        }
+      }
+      if (areaRef.current) {
+        areaRef.current.focus();
+        if (props.selectOnOpen) {
+          areaRef.current.select();
+        }
+      }
     }, 100);
   });
   return (
@@ -51,7 +61,11 @@ export const StringInputDialog = (props: Props) => {
           type={'text'}
           size={40}
           value={props.value ?? ''}
-          onKeyDown={_e => {
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              props.onOk?.(inputRef.current!.value);
+            }
             // TODO: Why is this needed?
             //e.stopPropagation();
           }}
