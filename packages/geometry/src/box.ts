@@ -433,5 +433,29 @@ export const Box = {
   fromString(s: string): Box {
     const [x, y, w, h, r] = safeSplit(s, ',', 5, 5);
     return { x: Number(x), y: Number(y), w: Number(w), h: Number(h), r: Number(r) };
+  },
+
+  /**
+   * Projects a point onto the boundary of a box.
+   * Finds the closest point on the box boundary to the given point.
+   *
+   * @param point The point to project
+   * @param box The box to project onto
+   * @returns The closest point on the box boundary
+   */
+  projectPointToBoundary(point: Point, box: Box): Point {
+    const edges = [Box.line(box, 'n'), Box.line(box, 'e'), Box.line(box, 's'), Box.line(box, 'w')];
+
+    const result = edges.reduce<{ point: Point; distance: number } | null>((closest, edge) => {
+      const projected = Line.projectPoint(edge, point);
+      const distance = Point.distance(point, projected);
+
+      if (!closest || distance < closest.distance) {
+        return { point: projected, distance };
+      }
+      return closest;
+    }, null);
+
+    return result?.point ?? point;
   }
 };

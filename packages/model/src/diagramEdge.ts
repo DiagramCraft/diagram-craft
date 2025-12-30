@@ -5,31 +5,13 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import {
-  AbstractDiagramElement,
-  DiagramElement,
-  type DiagramElementCRDT,
-  isEdge,
-  isNode
-} from './diagramElement';
+import { AbstractDiagramElement, DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
-import {
-  AnchorEndpoint,
-  ConnectedEndpoint,
-  Endpoint,
-  FreeEndpoint,
-  PointInNodeEndpoint
-} from './endpoint';
+import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
+import { getCollapsedAncestor } from './collapsible';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import {
-  isHorizontal,
-  isParallel,
-  isPerpendicular,
-  isReadable,
-  isVertical,
-  type LabelNode
-} from './labelNode';
+import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical, type LabelNode } from './labelNode';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
@@ -936,6 +918,21 @@ export class SimpleDiagramEdge
    */
   private _getNormalDirection(endpoint: Endpoint) {
     if (isConnected(endpoint)) {
+      // Check if the node is inside a collapsed container
+      const collapsedAncestor = getCollapsedAncestor(endpoint.node);
+
+      if (collapsedAncestor) {
+        // When collapsed, calculate normal based on the collapsed container's boundary
+        const boundingPath = collapsedAncestor.getDefinition().getBoundingPath(collapsedAncestor);
+
+        const paths = boundingPath.all();
+
+        const t = boundingPath.projectPoint(endpoint.position);
+        const tangent = paths[t.pathIdx]!.tangentAt(t.offset);
+
+        return Direction.fromVector(Vector.tangentToNormal(tangent));
+      }
+
       if (endpoint instanceof AnchorEndpoint && endpoint.getAnchor().normal !== undefined) {
         return Direction.fromAngle(endpoint.getAnchor().normal! + endpoint.node.bounds.r, true);
       }

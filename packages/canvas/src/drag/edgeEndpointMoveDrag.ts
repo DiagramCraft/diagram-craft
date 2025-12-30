@@ -227,7 +227,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     if (connectedCount === 1) return;
 
     // Both endpoints connected - find common ancestor
-    let targetParent = connectedCount === 2 ? findCommonAncestor(start!, end!) : undefined;
+    const targetParent = connectedCount === 2 ? findCommonAncestor(start!, end!) : undefined;
 
     // Only update if parent actually changed
     if (targetParent === currentParent) return;

@@ -1,4 +1,4 @@
-import { CollapsibleProps, LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
+import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -17,15 +17,12 @@ declare global {
     interface CustomNodePropsExtensions {
       container?: {
         shape?: string;
-      } & CollapsibleProps;
+      };
     }
   }
 }
 
 registerCustomNodeDefaults('container', {
-  collapsible: false,
-  bounds: '',
-  mode: 'expanded',
   shape: ''
 });
 

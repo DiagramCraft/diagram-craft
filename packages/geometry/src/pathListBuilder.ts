@@ -619,9 +619,9 @@ export const PathBuilderHelper = {
    */
   rect: (b: PathListBuilder, box: Box) => {
     b.moveTo(Point.of(box.x, box.y));
-    b.lineTo(Point.of(box.x + box.w, box.y));
-    b.lineTo(Point.of(box.x + box.w, box.y + box.h));
     b.lineTo(Point.of(box.x, box.y + box.h));
+    b.lineTo(Point.of(box.x + box.w, box.y + box.h));
+    b.lineTo(Point.of(box.x + box.w, box.y));
     b.close();
   }
 };

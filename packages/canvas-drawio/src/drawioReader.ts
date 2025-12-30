@@ -807,9 +807,11 @@ const parseGroup = async (
         ...props,
         custom: {
           ...grp.storedProps.custom,
-          container: {
-            collapsible: true,
+          _collapsible: {
             mode,
+            collapsible: true,
+          },
+          container: {
             ...($alternateBoundsRect
               ? {
                   bounds: `${$alternateBoundsRect.getAttribute('x')},${$alternateBoundsRect.getAttribute('y')},${$alternateBoundsRect.getAttribute('width')},${$alternateBoundsRect.getAttribute('height')},0`
