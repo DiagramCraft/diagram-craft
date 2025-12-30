@@ -10,6 +10,7 @@ import {
 import { UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import { TestModel } from './test-support/testModel';
+import { AnchorEndpoint } from './endpoint';
 
 describe('collapsible', () => {
   describe('getCollapsedAncestor', () => {
@@ -356,6 +357,75 @@ describe('collapsible', () => {
       expect(descendants).toHaveLength(2);
       expect(descendants).toContain(parent);
       expect(descendants).toContain(child);
+    });
+  });
+
+  describe('edge integration', () => {
+    test('edge endpoint positions adjust to collapsed container boundary', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const childInContainer = layer.addNode({ type: 'rect' });
+      const externalNode = layer.addNode({ type: 'rect' });
+
+      UnitOfWork.execute(diagram, uow => {
+        // Position container at (100, 100) with size 200x200
+        container.setBounds({ x: 100, y: 100, w: 200, h: 200, r: 0 }, uow);
+
+        // Position child inside container at (150, 150) with size 50x50
+        childInContainer.setBounds({ x: 150, y: 150, w: 50, h: 50, r: 0 }, uow);
+
+        // Position external node at (400, 150)
+        externalNode.setBounds({ x: 400, y: 150, w: 50, h: 50, r: 0 }, uow);
+
+        // Make child a child of container
+        diagram.moveElement([childInContainer], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      // Create edge from child to external node
+      const edge = layer.addEdge();
+      UnitOfWork.execute(diagram, uow => {
+        edge.setStart(new AnchorEndpoint(childInContainer, 'c'), uow);
+        edge.setEnd(new AnchorEndpoint(externalNode, 'c'), uow);
+      });
+
+      // Before collapse: edge start should be at child's center (175, 175)
+      expect(edge.start.position.x).toBeCloseTo(175, 1);
+      expect(edge.start.position.y).toBeCloseTo(175, 1);
+
+      // Collapse the container
+      UnitOfWork.execute(diagram, uow => {
+        container.updateProps((p: any) => {
+          p.custom = p.custom ?? {};
+          p.custom.container = p.custom.container ?? {};
+          p.custom.container.mode = 'collapsed';
+          p.custom.container.bounds = Box.toString(container.bounds);
+        }, uow);
+        container.setBounds({ x: 100, y: 100, w: 200, h: 50, r: 0 }, uow);
+      });
+
+      // After collapse: edge start should be on container boundary, not at original child position
+      const startPos = edge.start.position;
+
+      // The start position should be on the collapsed container's boundary
+      // Container is at x:[100,300], y:[100,150]
+      expect(startPos.x).toBeGreaterThanOrEqual(100);
+      expect(startPos.x).toBeLessThanOrEqual(300);
+      expect(startPos.y).toBeGreaterThanOrEqual(100);
+      expect(startPos.y).toBeLessThanOrEqual(150);
+
+      // The position should be on the boundary (either x or y at the edge)
+      const onBoundary =
+        Math.abs(startPos.x - 100) < 1 ||
+        Math.abs(startPos.x - 300) < 1 ||
+        Math.abs(startPos.y - 100) < 1 ||
+        Math.abs(startPos.y - 150) < 1;
+      expect(onBoundary).toBe(true);
+
+      // Edge path should be calculable without errors
+      expect(() => edge.path()).not.toThrow();
     });
   });
 });
