@@ -4,10 +4,7 @@ import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/path
 import { DiagramNode, type NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  CollapsibleProps,
-  LayoutCapableShapeNodeDefinition
-} from '../shape/layoutCapableShapeNodeDefinition';
+import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -30,7 +27,7 @@ declare global {
         titleBorder?: boolean;
         titleSize?: number;
         fill?: boolean;
-      } & CollapsibleProps;
+      };
     }
   }
 }
@@ -42,9 +39,6 @@ registerCustomNodeDefaults('swimlane', {
   titleBorder: true,
   titleSize: 30,
   fill: false,
-  collapsible: false,
-  bounds: '',
-  mode: 'expanded'
 });
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -102,7 +96,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
       node.setBounds(collapsedBounds, uow);
       node.updateCustomProps(
-        'swimlane',
+        '_collapsible',
         props => {
           props.mode = 'collapsed';
           // Store current expanded bounds so we can restore them
@@ -121,7 +115,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
         uow
       );
       node.updateCustomProps(
-        'swimlane',
+        '_collapsible',
         props => {
           props.mode = 'expanded';
           // Store the current collapsed size so we can return to it next time

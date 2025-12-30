@@ -292,7 +292,7 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
 
       const uow = new UnitOfWork(diagram, true);
       swimlane.updateCustomProps(
-        'swimlane',
+        '_collapsible',
         (props: any) => {
           props.collapsible = true;
         },

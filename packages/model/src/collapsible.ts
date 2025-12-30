@@ -15,12 +15,9 @@ import { EffectsRegistry } from './effect';
 export const getCollapsedAncestor = (node: DiagramNode): DiagramNode | null => {
   let current = node.parent;
   while (current && isNode(current)) {
-    const def = current.getDefinition();
-    if (def.supports?.('collapsible')) {
-      const customProps = current.renderProps.custom[def.type as 'container'];
-      if (customProps?.mode === 'collapsed') {
-        return current;
-      }
+    const customProps = current.renderProps.custom['_collapsible'];
+    if (customProps?.mode === 'collapsed') {
+      return current;
     }
     current = current.parent;
   }
@@ -39,7 +36,7 @@ export const getCollapsedAncestor = (node: DiagramNode): DiagramNode | null => {
 export const getExpandedBounds = (node: DiagramNode): Box => {
   const def = node.getDefinition();
   if (def.supports?.('collapsible')) {
-    const customProps = node.renderProps.custom[def.type as 'container'];
+    const customProps = node.renderProps.custom['_collapsible'];
     if (customProps?.mode === 'collapsed' && customProps?.bounds) {
       const storedBounds = Box.fromString(customProps.bounds);
       return {

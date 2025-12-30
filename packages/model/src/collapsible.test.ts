@@ -126,7 +126,7 @@ describe('collapsible', () => {
 
       UnitOfWork.execute(diagram, uow => {
         node.updateCustomProps(
-          'container',
+          '_collapsible',
           (props: any) => {
             props.mode = 'collapsed';
             props.bounds = Box.toString({ x: 5, y: 15, w: 200, h: 300, r: 0.3 });
@@ -175,7 +175,7 @@ describe('collapsible', () => {
         });
 
         container.updateCustomProps(
-          'container',
+          '_collapsible',
           (props: any) => {
             props.mode = 'collapsed';
             props.bounds = Box.toString({ x: 0, y: 0, w: 200, h: 200, r: 0 });
@@ -210,7 +210,7 @@ describe('collapsible', () => {
         });
 
         container.updateCustomProps(
-          'container',
+          '_collapsible',
           (props: any) => {
             props.mode = 'collapsed';
             props.bounds = Box.toString({ x: 0, y: 0, w: 100, h: 100, r: 0 });
@@ -399,9 +399,9 @@ describe('collapsible', () => {
       UnitOfWork.execute(diagram, uow => {
         container.updateProps((p: any) => {
           p.custom = p.custom ?? {};
-          p.custom.container = p.custom.container ?? {};
-          p.custom.container.mode = 'collapsed';
-          p.custom.container.bounds = Box.toString(container.bounds);
+          p.custom._collapsible = p.custom._collapsible ?? {};
+          p.custom._collapsible.mode = 'collapsed';
+          p.custom._collapsible.bounds = Box.toString(container.bounds);
         }, uow);
         container.setBounds({ x: 100, y: 100, w: 200, h: 50, r: 0 }, uow);
       });

@@ -16,6 +16,24 @@ import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/l
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
+import { registerCustomNodeDefaults } from "@diagram-craft/model/diagramDefaults";
+
+type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      _collapsible?: CollapsibleProps
+    }
+  }
+}
+
+registerCustomNodeDefaults('_collapsible', {
+  collapsible: false,
+  bounds: '',
+  mode: 'expanded'
+});
+
 
 export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
   getContainerPadding(node: DiagramNode): {
@@ -26,7 +44,6 @@ export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinitio
   };
 }
 
-export type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
 
 export abstract class LayoutCapableShapeNodeDefinition
   extends ShapeNodeDefinition
@@ -137,7 +154,7 @@ export abstract class LayoutCapableShapeNodeDefinition
 
     if (mode === 'expanded') {
       node.updateCustomProps(
-        this.type as 'container',
+        '_collapsible',
         props => {
           props.mode = 'collapsed';
           props.bounds = currentBounds;
@@ -146,7 +163,7 @@ export abstract class LayoutCapableShapeNodeDefinition
       );
     } else {
       node.updateCustomProps(
-        this.type as 'container',
+        '_collapsible',
         props => {
           props.mode = 'expanded';
           props.bounds = currentBounds;
@@ -174,7 +191,7 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Get collapsible properties for reading state
    */
   getCollapsibleProps(node: DiagramNode): CollapsibleProps {
-    const customProps = node.renderProps.custom[this.type as 'container'];
+    const customProps = node.renderProps.custom['_collapsible'];
     return {
       collapsible: customProps?.collapsible ?? false,
       mode: customProps?.mode ?? 'expanded',
@@ -186,8 +203,8 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Get standard collapsible custom property definitions
    */
   protected getCollapsiblePropertyDefinitions(node: DiagramNode): CustomPropertyDefinition[] {
-    const customProps = node.renderProps.custom[this.type as 'container'];
-    const storedProps = node.storedProps.custom?.[this.type as 'container'];
+    const customProps = node.renderProps.custom['_collapsible'];
+    const storedProps = node.storedProps.custom?.['_collapsible'];
 
     return [
       {
@@ -198,7 +215,7 @@ export abstract class LayoutCapableShapeNodeDefinition
         isSet: storedProps?.collapsible !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           node.updateCustomProps(
-            this.type as 'container',
+            '_collapsible',
             props => (props.collapsible = value ?? false),
             uow
           );
