@@ -315,6 +315,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
                     y: e.y - b.top
                   })
                 );
+                e.preventDefault();
+                e.stopPropagation();
               }
 
               CollaborationConfig.Backend.awareness?.updateCursor({
