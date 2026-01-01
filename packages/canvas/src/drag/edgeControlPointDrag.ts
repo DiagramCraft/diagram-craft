@@ -65,4 +65,8 @@ export class EdgeControlPointDrag extends Drag {
 
     this.context.help.pop('EdgeControlPointDrag');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }

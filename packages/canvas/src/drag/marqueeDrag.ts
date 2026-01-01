@@ -52,4 +52,6 @@ export class MarqueeDrag extends Drag {
     }
     this.context.marquee.pendingElements = pending;
   }
+
+  cancel() {}
 }

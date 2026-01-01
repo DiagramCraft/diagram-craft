@@ -29,7 +29,13 @@ export const bindDocumentDragAndDrop = () => {
   });
   document.addEventListener('mouseup', event => {
     const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
+    if (!drag) return;
+    if (!drag.isGlobal) {
+      // In case we drop outside of the canvas, we need to cancel the drag
+      drag.cancel();
+      DRAG_DROP_MANAGER.clear();
+      return;
+    }
 
     drag.onDragEnd(new DragEvents.DragEnd(event.currentTarget!));
     DRAG_DROP_MANAGER.clear();
@@ -110,6 +116,8 @@ export abstract class Drag extends EventEmitter<{
   abstract onDrag(_event: DragEvents.DragStart): void;
 
   abstract onDragEnd(_event: DragEvents.DragEnd): void;
+
+  abstract cancel(): void;
 
   onKeyDown(_event: DragEvents.DragKeyDown): void {}
 

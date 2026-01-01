@@ -205,4 +205,8 @@ export class ResizeDrag extends Drag {
     newBounds.x = globalTarget.x;
     newBounds.y = globalTarget.y;
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }

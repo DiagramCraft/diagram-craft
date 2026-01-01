@@ -43,4 +43,8 @@ export class LabelAttachmentPointDrag extends Drag {
   onDragEnd(): void {
     commitWithUndo(this.uow, 'Move label node');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }
