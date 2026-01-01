@@ -64,7 +64,7 @@ import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
 import { CanvasTooltip } from './react-app/CanvasTooltip';
-import { bindDocumentDragAndDrop, DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
+import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
 import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
 import { Preview } from './react-app/Preview';
 import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
@@ -90,6 +90,7 @@ import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredActi
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { usePanOnDrag } from '@diagram-craft/main/react-app/hooks/usePanOnDrag';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -138,45 +139,6 @@ const updateApplicationModel = ($d: Diagram, app: Application, callback: Progres
     }
   }
   app.ready = true;
-};
-
-const usePanOnDrag = ($d: Diagram, userState: UserState) => {
-  useEffect(() => {
-    const callback = (e: MouseEvent) => {
-      const drag = DRAG_DROP_MANAGER.current();
-      if (drag && !drag.isGlobal) {
-        const canvas = CanvasDomHelper.diagramElement($d);
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-
-        rect.x += userState.panelLeftWidth;
-        rect.width -= userState.panelLeftWidth;
-        rect.width -= userState.panelRightWidth;
-
-        const panAmount = { x: 0, y: 0 };
-
-        if (e.x < rect.left) {
-          panAmount.x = -(rect.left - e.x);
-        } else if (e.x > rect.right) {
-          panAmount.x = e.x - rect.right;
-        }
-        if (e.y < rect.top) {
-          panAmount.y = -(rect.top - e.y);
-        } else if (e.y > rect.bottom) {
-          panAmount.y = e.y - rect.bottom;
-        }
-
-        panAmount.x *= $d.viewBox.zoomLevel;
-        panAmount.y *= $d.viewBox.zoomLevel;
-
-        // Pan document
-        $d.viewBox.pan(Point.add($d.viewBox.offset, panAmount));
-      }
-    };
-
-    document.addEventListener('mousemove', callback);
-    return () => document.removeEventListener('mousemove', callback);
-  }, [$d, userState.panelLeftWidth, userState.panelRightWidth]);
 };
 
 export const App = (props: {
