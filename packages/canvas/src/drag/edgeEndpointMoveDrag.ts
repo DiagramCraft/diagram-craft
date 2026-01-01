@@ -138,6 +138,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   cancel() {
+    CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
     this.uow.abort();
   }
 

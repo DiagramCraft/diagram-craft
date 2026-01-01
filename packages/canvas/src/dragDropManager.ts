@@ -56,7 +56,16 @@ export const bindDocumentDragAndDrop = () => {
   });
   document.addEventListener('keydown', event => {
     const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
+    if (!drag) return;
+
+    // Cancel any drag on hitting Escape
+    if (event.key === 'Escape') {
+      drag.cancel();
+      DRAG_DROP_MANAGER.clear();
+      return;
+    }
+
+    if (!drag.isGlobal) return;
 
     drag.onKeyDown(event);
   });
