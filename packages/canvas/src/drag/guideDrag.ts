@@ -83,6 +83,10 @@ export class GuideMoveDrag extends BaseGuideDrag {
 
     this.emit('dragEnd');
   }
+
+  cancel() {
+    this.diagram.updateGuide(this.guide.id, { position: this.originalPosition });
+  }
 }
 
 export class GuideCreateDrag extends BaseGuideDrag {
@@ -134,4 +138,6 @@ export class GuideCreateDrag extends BaseGuideDrag {
 
     this.emit('dragEnd');
   }
+
+  cancel() {}
 }

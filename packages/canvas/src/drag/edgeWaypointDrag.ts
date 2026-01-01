@@ -29,4 +29,8 @@ export class EdgeWaypointDrag extends Drag {
     commitWithUndo(this.uow, 'Move Waypoint');
     this.context.help.pop('EdgeWaypointDrag');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }

@@ -38,4 +38,8 @@ export class ShapeControlPointDrag extends Drag {
   onDragEnd(): void {
     commitWithUndo(this.uow, 'Adjust shape');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }

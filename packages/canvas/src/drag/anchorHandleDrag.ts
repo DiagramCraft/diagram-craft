@@ -93,6 +93,15 @@ export class AnchorHandleDrag extends Drag {
     this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node.id, this.edge.id);
   }
 
+  cancel() {
+    this.delegate.cancel();
+    UnitOfWork.execute(this.node.diagram, uow => {
+      this.edge.layer.removeElement(this.edge, uow);
+      this.edge.detach(uow);
+    });
+    this.node.diagram.selection.setElements([]);
+  }
+
   onDrag(event: DragEvents.DragStart): void {
     this.delegate.onDrag(event);
   }

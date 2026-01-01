@@ -355,6 +355,10 @@ export class MoveDrag extends AbstractMoveDrag {
     this.context.help.pop('MoveDrag');
   }
 
+  cancel() {
+    this.uow.abort();
+  }
+
   private duplicate() {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);

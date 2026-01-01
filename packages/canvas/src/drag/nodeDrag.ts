@@ -67,4 +67,8 @@ export class NodeDrag extends Drag {
 
     this.context.help.pop('NodeDrag');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }
