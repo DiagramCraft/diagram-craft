@@ -90,7 +90,7 @@ import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredActi
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
-import { usePanOnDrag } from '@diagram-craft/main/react-app/hooks/usePanOnDrag';
+import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
