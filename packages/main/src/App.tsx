@@ -90,6 +90,7 @@ import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredActi
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -359,6 +360,8 @@ export const App = (props: {
   useEventListener(doc.props.query, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
+
+  usePanOnDrag($d, userState.current!);
 
   return (
     <PortalContextProvider>
