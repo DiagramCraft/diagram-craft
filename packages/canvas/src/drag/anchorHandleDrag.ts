@@ -26,7 +26,8 @@ export class AnchorHandleDrag extends Drag {
     super();
 
     const diagram = this.node.diagram;
-    assertRegularLayer(diagram.activeLayer);
+    const layer = diagram.activeLayer;
+    assertRegularLayer(layer);
 
     this.edge = ElementFactory.edge(
       newid(),
@@ -37,16 +38,15 @@ export class AnchorHandleDrag extends Drag {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      diagram.activeLayer
+      layer
     );
 
     diagram.undoManager.setMark();
 
-    const uow = new UnitOfWork(diagram);
-    diagram.activeLayer.addElement(this.edge, uow);
-
-    uow.updateElement(this.node);
-    uow.commit();
+    UnitOfWork.execute(diagram, uow => {
+      layer.addElement(this.edge, uow);
+      uow.updateElement(this.node);
+    });
 
     diagram.selection.setElements([this.edge]);
 

@@ -5,7 +5,6 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert } from '@diagram-craft/utils/assert';
 import { $tStr } from '@diagram-craft/utils/localize';
@@ -57,12 +56,14 @@ class ElementConvertToNameAction extends AbstractSelectionAction {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
     const primaryText = node.getText();
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
-    node.updateMetadata(metadata => (metadata.name = primaryText), uow);
-    node.setText('%name%', uow);
-
-    commitWithUndo(uow, 'Convert to named element');
+    UnitOfWork.executeWithUndo(
+      this.context.model.activeDiagram,
+      'Convert to named element',
+      uow => {
+        node.updateMetadata(metadata => (metadata.name = primaryText), uow);
+        node.setText('%name%', uow);
+      }
+    );
   }
 }
 

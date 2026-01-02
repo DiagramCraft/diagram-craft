@@ -4,7 +4,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
@@ -97,36 +96,34 @@ export class AlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Align ${this.mode}`, uow => {
+      // Get elements to align - either selected nodes or children of a single selected node
+      const elements = this.getElementsToAlign();
+      assert.arrayNotEmpty(elements);
 
-    // Get elements to align - either selected nodes or children of a single selected node
-    const elements = this.getElementsToAlign();
-    assert.arrayNotEmpty(elements);
+      const first = elements[0];
 
-    const first = elements[0];
-
-    switch (this.mode) {
-      case 'top':
-        this.alignY(first.bounds.y, 0, uow, elements);
-        break;
-      case 'bottom':
-        this.alignY(first.bounds.y + first.bounds.h, 1, uow, elements);
-        break;
-      case 'center-horizontal':
-        this.alignY(first.bounds.y + first.bounds.h / 2, 0.5, uow, elements);
-        break;
-      case 'left':
-        this.alignX(first.bounds.x, 0, uow, elements);
-        break;
-      case 'right':
-        this.alignX(first.bounds.x + first.bounds.w, 1, uow, elements);
-        break;
-      case 'center-vertical':
-        this.alignX(first.bounds.x + first.bounds.w / 2, 0.5, uow, elements);
-        break;
-    }
-
-    commitWithUndo(uow, `Align ${this.mode}`);
+      switch (this.mode) {
+        case 'top':
+          this.alignY(first.bounds.y, 0, uow, elements);
+          break;
+        case 'bottom':
+          this.alignY(first.bounds.y + first.bounds.h, 1, uow, elements);
+          break;
+        case 'center-horizontal':
+          this.alignY(first.bounds.y + first.bounds.h / 2, 0.5, uow, elements);
+          break;
+        case 'left':
+          this.alignX(first.bounds.x, 0, uow, elements);
+          break;
+        case 'right':
+          this.alignX(first.bounds.x + first.bounds.w, 1, uow, elements);
+          break;
+        case 'center-vertical':
+          this.alignX(first.bounds.x + first.bounds.w / 2, 0.5, uow, elements);
+          break;
+      }
+    });
 
     this.emit('actionTriggered', {});
   }
@@ -191,25 +188,23 @@ export class DimensionAlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Align ${this.mode}`, uow => {
+      const elements = this.context.model.activeDiagram.selection.elements;
+      assert.arrayNotEmpty(elements);
 
-    const elements = this.context.model.activeDiagram.selection.elements;
-    assert.arrayNotEmpty(elements);
+      const first = elements[0];
+      const targetDimension = this.mode === 'width' ? first.bounds.w : first.bounds.h;
 
-    const first = elements[0];
-    const targetDimension = this.mode === 'width' ? first.bounds.w : first.bounds.h;
+      elements.forEach(e => {
+        if (isNode(e) && e.renderProps.capabilities.movable === false) return;
 
-    elements.forEach(e => {
-      if (isNode(e) && e.renderProps.capabilities.movable === false) return;
-
-      if (this.mode === 'width') {
-        e.setBounds({ ...e.bounds, w: targetDimension }, uow);
-      } else {
-        e.setBounds({ ...e.bounds, h: targetDimension }, uow);
-      }
+        if (this.mode === 'width') {
+          e.setBounds({ ...e.bounds, w: targetDimension }, uow);
+        } else {
+          e.setBounds({ ...e.bounds, h: targetDimension }, uow);
+        }
+      });
     });
-
-    commitWithUndo(uow, `Align ${this.mode}`);
 
     this.emit('actionTriggered', {});
   }

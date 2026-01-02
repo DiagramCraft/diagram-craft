@@ -6,7 +6,6 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
@@ -50,29 +49,27 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
 
           const node = stencil.node(diagram);
 
-          const uow = new UnitOfWork(diagram, true);
+          UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+            for (const e of diagram.selection.elements) {
+              if (isNode(e)) {
+                e.changeNodeType(node.nodeType, uow);
 
-          for (const e of diagram.selection.elements) {
-            if (isNode(e)) {
-              e.changeNodeType(node.nodeType, uow);
+                e.updateProps(props => {
+                  for (const k of getTypedKeys(props)) {
+                    delete props[k];
+                  }
+                  const storedProps = deepClone(node.storedProps);
+                  for (const k of getTypedKeys(storedProps)) {
+                    // @ts-expect-error
+                    props[k] = storedProps[k];
+                  }
+                }, uow);
 
-              e.updateProps(props => {
-                for (const k of getTypedKeys(props)) {
-                  delete props[k];
-                }
-                const storedProps = deepClone(node.storedProps);
-                for (const k of getTypedKeys(storedProps)) {
-                  // @ts-expect-error
-                  props[k] = storedProps[k];
-                }
-              }, uow);
-
-              // Add any source children
-              node.children.forEach(c => e.addChild(c.duplicate(), uow));
+                // Add any source children
+                node.children.forEach(c => e.addChild(c.duplicate(), uow));
+              }
             }
-          }
-
-          commitWithUndo(uow, 'Change shape');
+          });
         }
       });
     };
@@ -124,18 +121,16 @@ export class SelectionChangeToContainerAction extends AbstractSelectionAction<Ap
     const diagram = this.context.model.activeDiagram;
     assertRegularLayer(diagram.activeLayer);
 
-    const uow = new UnitOfWork(diagram, true);
+    UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+      const node = mustExist(diagram.selection.nodes[0]);
+      const originalShape = node.nodeType;
 
-    const node = mustExist(diagram.selection.nodes[0]);
-    const originalShape = node.nodeType;
-
-    node.changeNodeType('container', uow);
-    node.updateProps(props => {
-      props.custom ??= {};
-      props.custom.container ??= {};
-      props.custom.container.shape = originalShape;
-    }, uow);
-
-    commitWithUndo(uow, 'Change shape');
+      node.changeNodeType('container', uow);
+      node.updateProps(props => {
+        props.custom ??= {};
+        props.custom.container ??= {};
+        props.custom.container.shape = originalShape;
+      }, uow);
+    });
   }
 }
