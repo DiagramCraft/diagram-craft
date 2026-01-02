@@ -32,6 +32,7 @@ import { DelegatingDiagramNode } from '../delegatingDiagramNode';
 import type { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
+import { UOW } from '@diagram-craft/model/uow';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -68,7 +69,11 @@ export const deserializeDiagramElements = (
 ) => {
   nodeLookup ??= new ElementLookup<DiagramNode>();
   edgeLookup ??= new ElementLookup<DiagramEdge>();
-  uow ??= new UnitOfWork(diagram, false, true);
+
+  if (uow === undefined) {
+    UOW.begin(diagram, { _noSnapshot: true });
+    uow = UOW.uow();
+  }
 
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
