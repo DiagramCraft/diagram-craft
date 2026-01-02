@@ -5,9 +5,9 @@ import type { DiagramEdge } from './diagramEdge';
 import { TestModel } from './test-support/testModel';
 import { PointInNodeEndpoint } from './endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import { _test } from './edgePathBuilder.orthogonal';
+import { UOW } from '@diagram-craft/model/uow';
 
 const r = new Random(123456);
 
@@ -32,14 +32,10 @@ for (let i = 0; i < 100; i++) {
   const node2 = layer.addNode({ bounds: randomBounds() });
   const edge = layer.addEdge();
   edges.push(edge);
-  edge.setStart(
-    new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
-  );
-  edge.setEnd(
-    new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
-  );
+  UOW.execute(diagram, () => {
+    edge.setStart(new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'), UOW.uow());
+    edge.setEnd(new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'), UOW.uow());
+  });
 }
 
 describe('orthogonal routing', () => {
