@@ -81,13 +81,13 @@ describe('SpatialIndex', () => {
       const layer = diagram.newLayer();
 
       const node1 = layer.createNode({ bounds: { x: 10, y: 10, w: 10, h: 10, r: 0 } });
-      UnitOfWork.execute(diagram, uow => layer.addElement(node1, uow));
+      UnitOfWork.execute(diagram, {}, uow => layer.addElement(node1, uow));
 
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1.length).toBe(1);
 
       const node2 = layer.createNode({ bounds: { x: 20, y: 20, w: 10, h: 10, r: 0 } });
-      UnitOfWork.execute(diagram, uow => layer.addElement(node2, uow));
+      UnitOfWork.execute(diagram, {}, uow => layer.addElement(node2, uow));
 
       const results2 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results2.length).toBe(2);

@@ -10,7 +10,7 @@ describe('serializeDiagramElement', () => {
       const diagram = TestModel.newDiagram();
       const node = diagram.newLayer().addNode();
       const tags = ['tag1', 'tag2', 'important'];
-      node.setTags(tags, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => node.setTags(tags, uow));
 
       // Act
       const serialized = serializeDiagramElement(node);
@@ -24,7 +24,7 @@ describe('serializeDiagramElement', () => {
       const diagram = TestModel.newDiagram();
       const edge = diagram.newLayer().addEdge();
       const tags = ['connection', 'flow', 'critical'];
-      edge.setTags(tags, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => edge.setTags(tags, uow));
 
       // Act
       const serialized = serializeDiagramElement(edge);
@@ -49,7 +49,7 @@ describe('serializeDiagramElement', () => {
       // Setup
       const diagram = TestModel.newDiagram();
       const node = diagram.newLayer().addNode();
-      node.setTags([], UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => node.setTags([], uow));
 
       // Act
       const serialized = serializeDiagramElement(node);

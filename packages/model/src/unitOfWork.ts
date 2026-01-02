@@ -133,6 +133,11 @@ const registry =
         unregister: () => {}
       };
 
+type ExecuteOpts = {
+  silent?: boolean;
+  _noCommit?: boolean;
+};
+
 export class UnitOfWork {
   uid = newid();
 
@@ -159,15 +164,54 @@ export class UnitOfWork {
     registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
   }
 
-  static immediate(diagram: Diagram) {
-    return new UnitOfWork(diagram, false, true);
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
+  static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T;
+  static execute<T>(
+    diagram: Diagram,
+    optsOrCb: ExecuteOpts | ((uow: UnitOfWork) => T),
+    cb?: (uow: UnitOfWork) => T
+  ): T {
+    const uow = new UnitOfWork(diagram);
+
+    if (typeof optsOrCb === 'function') {
+      // Called with (diagram, cb)
+      const result = optsOrCb(uow);
+      uow.commit();
+      return result;
+    } else {
+      // Called with (diagram, opts, cb)
+      const result = cb!(uow);
+      if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
+      else uow.abort();
+      return result;
+    }
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, silent = false): T {
+  static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T>;
+  static async executeAsync<T>(
+    diagram: Diagram,
+    opts: ExecuteOpts,
+    cb: (uow: UnitOfWork) => Promise<T>
+  ): Promise<T>;
+  static async executeAsync<T>(
+    diagram: Diagram,
+    optsOrCb: ExecuteOpts | ((uow: UnitOfWork) => T),
+    cb?: (uow: UnitOfWork) => Promise<T>
+  ): Promise<T> {
     const uow = new UnitOfWork(diagram);
-    const result = cb(uow);
-    uow.commit(silent);
-    return result;
+
+    if (typeof optsOrCb === 'function') {
+      // Called with (diagram, cb)
+      const result = await optsOrCb(uow);
+      uow.commit();
+      return result;
+    } else {
+      // Called with (diagram, opts, cb)
+      const result = await cb!(uow);
+      if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
+      else uow.abort();
+      return result;
+    }
   }
 
   snapshot(element: Trackable) {

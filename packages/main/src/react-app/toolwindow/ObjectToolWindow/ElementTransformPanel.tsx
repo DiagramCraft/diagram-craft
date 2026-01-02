@@ -134,7 +134,7 @@ export const ElementTransformPanel = (props: Props) => {
       newBounds.y = newBounds.y - prevPos.y * transformedBounds.h + newPos.y * newBounds.h;
     }
 
-    UnitOfWork.execute(diagram, uow => {
+    UnitOfWork.execute(diagram, {}, uow => {
       const selectedElement = diagram.selection.elements[0];
       assert.present(selectedElement);
       const transforms = TransformFactory.fromTo(

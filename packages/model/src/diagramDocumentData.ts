@@ -63,7 +63,9 @@ const makeDataListener =
   };
 
 const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
-  document.data._schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]!));
+  UnitOfWork.execute(document.diagrams[0]!, { _noCommit: true }, uow =>
+    document.data._schemas.removeAndClearUsage(s, uow)
+  );
 };
 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {

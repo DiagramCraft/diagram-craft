@@ -154,7 +154,8 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
     element => element.metadata,
     element => element.metadata,
     () => [],
-    (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateMetadata(cb, uow)),
+    (diagram, element, cb) =>
+      UnitOfWork.execute(diagram, {}, uow => element.updateMetadata(cb, uow)),
     (diagram, handler) => {
       useEventListener(diagram.selection, 'change', handler);
     },

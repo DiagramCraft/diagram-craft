@@ -26,9 +26,9 @@ describe('textToDiagram', () => {
     test('updates existing single label node', () => {
       const edge = layer.addEdge({ id: 'e1' });
       const labelNode = layer.createNode({ id: 'label1', type: 'text' });
-      labelNode.setText('Original', UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => labelNode.setText('Original', uow));
 
-      edge.addChild(labelNode, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
       edge.labelNodes.push(labelNode.asLabelNode());
 
       const uow = new UnitOfWork(diagram, true);
@@ -56,11 +56,11 @@ describe('textToDiagram', () => {
       const label1 = layer.createNode({ id: 'label1', type: 'text' });
       const label2 = layer.createNode({ id: 'label2', type: 'text' });
 
-      label1.setText('Label 1', UnitOfWork.immediate(diagram));
-      label2.setText('Label 2', UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => label1.setText('Label 1', uow));
+      UnitOfWork.execute(diagram, uow => label2.setText('Label 2', uow));
 
-      edge.addChild(label1, UnitOfWork.immediate(diagram));
-      edge.addChild(label2, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => edge.addChild(label1, uow));
+      UnitOfWork.execute(diagram, uow => edge.addChild(label2, uow));
       edge.labelNodes.push(label1.asLabelNode());
       edge.labelNodes.push(label2.asLabelNode());
 
@@ -208,7 +208,7 @@ describe('textToDiagram', () => {
   describe('textToDiagram - update existing elements', () => {
     test('updates node text', () => {
       const node = layer.addNode({ id: '1', type: 'text' });
-      node.setText('Original', UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => node.setText('Original', uow));
 
       const elements: ParsedElement[] = [
         { id: '1', type: 'node', shape: 'text', name: 'Updated', line: 0 }
@@ -225,9 +225,11 @@ describe('textToDiagram', () => {
 
     test('updates node props', () => {
       const node = layer.addNode({ id: '1', type: 'rect' });
-      node.updateProps(props => {
-        props.fill = { color: '#ff0000' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.fill = { color: '#ff0000' };
+        }, uow)
+      );
 
       const elements: ParsedElement[] = [
         {
@@ -253,8 +255,8 @@ describe('textToDiagram', () => {
       const n2 = layer.addNode({ id: 'n2', type: 'rect' });
       layer.addNode({ id: 'n3', type: 'rect' });
       const edge = layer.addEdge({ id: 'e1' });
-      edge.setStart(new AnchorEndpoint(n1, 'c'), UnitOfWork.immediate(diagram));
-      edge.setEnd(new AnchorEndpoint(n2, 'c'), UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => edge.setStart(new AnchorEndpoint(n1, 'c'), uow));
+      UnitOfWork.execute(diagram, uow => edge.setEnd(new AnchorEndpoint(n2, 'c'), uow));
 
       // Must include all nodes in parsed elements too, otherwise they will be removed
       const elements: ParsedElement[] = [
@@ -277,8 +279,8 @@ describe('textToDiagram', () => {
     test('updates edge label', () => {
       const edge = layer.addEdge({ id: 'e1' });
       const label = layer.createNode({ id: 'label1', type: 'text' });
-      label.setText('Original', UnitOfWork.immediate(diagram));
-      edge.addChild(label, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => label.setText('Original', uow));
+      UnitOfWork.execute(diagram, uow => edge.addChild(label, uow));
       edge.labelNodes.push(label.asLabelNode());
 
       const elements: ParsedElement[] = [
@@ -338,8 +340,8 @@ describe('textToDiagram', () => {
     test('updates nested children', () => {
       const parent = layer.addNode({ id: 'parent', type: 'group' });
       const child = layer.createNode({ id: 'child', type: 'text' });
-      child.setText('Original', UnitOfWork.immediate(diagram));
-      parent.addChild(child, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => child.setText('Original', uow));
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
 
       const elements: ParsedElement[] = [
         {

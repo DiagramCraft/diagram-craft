@@ -76,13 +76,14 @@ describe('TableRowMoveAction', () => {
     });
 
     // Build hierarchy (reverse order)
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellB, uow);
+      row1.addChild(cellA, uow);
+      row2.addChild(cellD, uow);
+      row2.addChild(cellC, uow);
+      table.addChild(row2, uow);
+      table.addChild(row1, uow);
+    });
 
     context = {
       model: {
@@ -190,13 +191,14 @@ describe('TableColumnMoveAction', () => {
     });
 
     // Build hierarchy (reverse order)
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellB, uow);
+      row1.addChild(cellA, uow);
+      row2.addChild(cellD, uow);
+      row2.addChild(cellC, uow);
+      table.addChild(row2, uow);
+      table.addChild(row1, uow);
+    });
 
     context = {
       model: {
@@ -301,13 +303,14 @@ describe('TableInsertAction', () => {
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellB, uow);
+      row1.addChild(cellA, uow);
+      row2.addChild(cellD, uow);
+      row2.addChild(cellC, uow);
+      table.addChild(row2, uow);
+      table.addChild(row1, uow);
+    });
 
     context = {
       model: {
@@ -460,13 +463,17 @@ describe('TableRemoveAction', () => {
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    // TODO: Why two UnitOfWork
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellA, uow);
+      row1.addChild(cellB, uow);
+      row2.addChild(cellC, uow);
+      row2.addChild(cellD, uow);
+      table.addChild(row2, uow);
+    });
+    UnitOfWork.execute(diagram, uow => {
+      table.addChild(row1, uow);
+    });
 
     context = {
       model: {
@@ -644,19 +651,20 @@ describe('TableDistributeAction', () => {
       bounds: { x: 150, y: 200, w: 150, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellA1, uow);
-    row1.addChild(cellA2, uow);
-    row1.addChild(cellA3, uow);
-    row2.addChild(cellB1, uow);
-    row2.addChild(cellB2, uow);
-    row2.addChild(cellB3, uow);
-    row3.addChild(cellC1, uow);
-    row3.addChild(cellC2, uow);
-    row3.addChild(cellC3, uow);
-    table.addChild(row3, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellA1, uow);
+      row1.addChild(cellA2, uow);
+      row1.addChild(cellA3, uow);
+      row2.addChild(cellB1, uow);
+      row2.addChild(cellB2, uow);
+      row2.addChild(cellB3, uow);
+      row3.addChild(cellC1, uow);
+      row3.addChild(cellC2, uow);
+      row3.addChild(cellC3, uow);
+      table.addChild(row3, uow);
+      table.addChild(row2, uow);
+      table.addChild(row1, uow);
+    });
 
     context = {
       model: {
@@ -762,13 +770,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 0, y: 200, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellB, uow);
-    row3.addChild(cellC, uow);
-    table2.addChild(row3, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellA, uow);
+      row2.addChild(cellB, uow);
+      row3.addChild(cellC, uow);
+      table2.addChild(row3, uow);
+      table2.addChild(row2, uow);
+      table2.addChild(row1, uow);
+    });
 
     diagram2.selection.setElements([cellA]);
 
@@ -833,13 +842,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 100, y: 80, w: 100, h: 120, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellA, uow);
+      row1.addChild(cellB, uow);
+      row2.addChild(cellC, uow);
+      row2.addChild(cellD, uow);
+      table2.addChild(row2, uow);
+      table2.addChild(row1, uow);
+    });
 
     diagram2.selection.setElements([cellA]);
 
@@ -902,13 +912,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 50, y: 100, w: 150, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellA, uow);
+      row1.addChild(cellB, uow);
+      row2.addChild(cellC, uow);
+      row2.addChild(cellD, uow);
+      table2.addChild(row2, uow);
+      table2.addChild(row1, uow);
+    });
 
     diagram2.selection.setElements([cellA]);
 

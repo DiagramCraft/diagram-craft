@@ -6,6 +6,8 @@ import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
+import { ElementLookup } from '@diagram-craft/model/elementLookup';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 export const loadStencilsFromYaml = (stencils: any) => {
@@ -23,10 +25,19 @@ export const loadStencilsFromYaml = (stencils: any) => {
         )
       );
 
-      const node = deserializeDiagramElements([stencil.node], dest, layer)[0] as DiagramNode;
-      layer.addElement(node, UnitOfWork.immediate(diagram));
+      return UnitOfWork.execute(diagram, uow => {
+        const node = deserializeDiagramElements(
+          [stencil.node],
+          dest,
+          layer,
+          new ElementLookup<DiagramNode>(),
+          new ElementLookup<DiagramEdge>(),
+          uow
+        )[0] as DiagramNode;
+        layer.addElement(node, uow);
 
-      return node;
+        return node;
+      });
     };
     dest.push({
       id: stencil.id,

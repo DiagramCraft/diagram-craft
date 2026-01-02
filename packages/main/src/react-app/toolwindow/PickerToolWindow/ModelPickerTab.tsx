@@ -132,18 +132,20 @@ const makeTemplateNode = (
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
-  node.setBounds({ ...node.bounds, x: 0, y: 0 }, UnitOfWork.immediate(node.diagram));
+  UnitOfWork.execute(node.diagram, uow => {
+    node.setBounds({ ...node.bounds, x: 0, y: 0 }, uow);
 
-  node.updateMetadata(cb => {
-    cb.data ??= {};
-    cb.data.data ??= [];
+    node.updateMetadata(cb => {
+      cb.data ??= {};
+      cb.data.data ??= [];
 
-    cb.data.data = cb.data.data.filter(e => e.schema !== schema.id);
+      cb.data.data = cb.data.data.filter(e => e.schema !== schema.id);
 
-    cb.data.data.push(makeDataReference(item, schema));
+      cb.data.data.push(makeDataReference(item, schema));
 
-    cb.data.templateId = template.id;
-  }, UnitOfWork.immediate(node.diagram));
+      cb.data.templateId = template.id;
+    }, uow);
+  });
 
   diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };

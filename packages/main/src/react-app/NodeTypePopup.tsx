@@ -72,7 +72,7 @@ export const NodeTypePopup = (props: Props) => {
   const undo = useCallback(() => {
     const edge = diagram.edgeLookup.get(props.edgeId);
     assert.present(edge);
-    UnitOfWork.execute(diagram, uow => {
+    UnitOfWork.execute(diagram, {}, uow => {
       assertRegularLayer(edge.layer);
       edge.layer.removeElement(edge, uow);
     });
@@ -102,7 +102,7 @@ export const NodeTypePopup = (props: Props) => {
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-      layer.addElement(node, UnitOfWork.immediate(dest));
+      UnitOfWork.execute(dest, uow => layer.addElement(node, uow));
 
       return [n, dest];
     });

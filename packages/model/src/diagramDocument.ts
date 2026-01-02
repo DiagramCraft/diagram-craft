@@ -220,22 +220,23 @@ export class DiagramDocument
   async load() {
     const loadedTypes = new Set<string>();
     for (const diagram of this.diagramIterator({ nest: true })) {
-      const uow = UnitOfWork.immediate(diagram);
-      for (const element of diagram.allElements()) {
-        if (isNode(element)) {
-          const s = element.nodeType;
-          if (!this.nodeDefinitions.hasRegistration(s)) {
-            if (!(await this.nodeDefinitions.load(s))) {
-              console.warn(`Node definition ${s} not loaded`);
-            } else {
+      await UnitOfWork.executeAsync(diagram, async uow => {
+        for (const element of diagram.allElements()) {
+          if (isNode(element)) {
+            const s = element.nodeType;
+            if (!this.nodeDefinitions.hasRegistration(s)) {
+              if (!(await this.nodeDefinitions.load(s))) {
+                console.warn(`Node definition ${s} not loaded`);
+              } else {
+                element.invalidate(uow);
+                loadedTypes.add(s);
+              }
+            } else if (loadedTypes.has(s)) {
               element.invalidate(uow);
-              loadedTypes.add(s);
             }
-          } else if (loadedTypes.has(s)) {
-            element.invalidate(uow);
           }
         }
-      }
+      });
     }
   }
 }

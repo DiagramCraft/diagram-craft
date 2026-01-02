@@ -933,99 +933,100 @@ const attachNodeToParent = (
  *   - abc - regular value
  */
 const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
-  const uow = UnitOfWork.immediate(diagram);
-  const queue = new WorkQueue();
+  await UnitOfWork.executeAsync(diagram, async uow => {
+    const queue = new WorkQueue();
 
-  const $$cells = mustExist(
-    $mxGraphModel.getElementsByTagName('root').item(0)
-  ).getElementsByTagName('mxCell');
+    const $$cells = mustExist(
+      $mxGraphModel.getElementsByTagName('root').item(0)
+    ).getElementsByTagName('mxCell');
 
-  const $rootCell = $$cells.item(0)!;
-  const rootId = $rootCell.getAttribute('id')!;
+    const $rootCell = $$cells.item(0)!;
+    const rootId = $rootCell.getAttribute('id')!;
 
-  // Phase 1 - Determine parent child relationships
-  const parentChild = parseParentChildRelations($$cells, rootId);
+    // Phase 1 - Determine parent child relationships
+    const parentChild = parseParentChildRelations($$cells, rootId);
 
-  // Phase 2 - process all objects (cells)
-  const parents = new Map<string, Parent>();
-  for (const $cell of xIterElements($$cells)) {
-    const $parent = $cell.parentElement!;
-    const wrapped = $parent.tagName === 'object' || $parent.tagName === 'UserObject';
+    // Phase 2 - process all objects (cells)
+    const parents = new Map<string, Parent>();
+    for (const $cell of xIterElements($$cells)) {
+      const $parent = $cell.parentElement!;
+      const wrapped = $parent.tagName === 'object' || $parent.tagName === 'UserObject';
 
-    const id = $cell.getAttribute('id') ?? (wrapped ? $parent.getAttribute('id') : newid());
-    assert.present(id);
+      const id = $cell.getAttribute('id') ?? (wrapped ? $parent.getAttribute('id') : newid());
+      assert.present(id);
 
-    // Ignore the root
-    if (id === rootId) continue;
+      // Ignore the root
+      if (id === rootId) continue;
 
-    const parentId = mustExist($cell.getAttribute('parent'));
-    const value = $cell.getAttribute('value');
+      const parentId = mustExist($cell.getAttribute('parent'));
+      const value = $cell.getAttribute('value');
 
-    const isLayer = parentId === rootId; // 1st level of elements constitutes layers
-    const isGroup = parentChild.has(id) && !isLayer;
-    const isEdge = $cell.getAttribute('edge') === '1';
+      const isLayer = parentId === rootId; // 1st level of elements constitutes layers
+      const isGroup = parentChild.has(id) && !isLayer;
+      const isEdge = $cell.getAttribute('edge') === '1';
 
-    if (isLayer) {
-      const layer = new RegularLayer(id, value ?? 'Background', [], diagram);
-      diagram.layers.add(layer, uow);
-      if ($cell.getAttribute('visible') === '0') {
-        diagram.layers.toggleVisibility(layer);
-      }
+      if (isLayer) {
+        const layer = new RegularLayer(id, value ?? 'Background', [], diagram);
+        diagram.layers.add(layer, uow);
+        if ($cell.getAttribute('visible') === '0') {
+          diagram.layers.toggleVisibility(layer);
+        }
 
-      parents.set(id, layer);
-    } else {
-      const style = new StyleManager($cell.getAttribute('style') ?? '', isGroup);
-
-      const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
-      const bounds = MxGeometry.boundsFrom($geometry);
-      bounds.r = Angle.toRad(style.num('rotation', 0));
-
-      const parent = mustExist(parents.get(parentId));
-
-      const layer = parent instanceof RegularLayer ? parent : (parent.layer as RegularLayer);
-
-      const props = parseNodeProps(style, isEdge);
-      const texts: NodeTexts = {
-        text: hasValue(value) ? value : ''
-      };
-
-      const metadata: ElementMetadata = {};
-      if (wrapped) {
-        metadata.data ??= {};
-        metadata.data.customData = parseMetadata($parent);
-
-        texts.text = $parent.getAttribute('label') ?? '';
-      }
-
-      parseLabelStyles(texts, style);
-
-      const $els: CellElements = { $cell, $geometry, $parent };
-      const ctx: CellContext = { parents, queue, uow };
-
-      let node: DiagramElement | undefined;
-      if (isEdge) {
-        node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
-      } else if (style.styleName === 'edgeLabel') {
-        parseLabelNode(id, props, style, diagram, parentId, mustExist(value), $geometry, ctx);
-      } else if (isGroup || style.styleName === 'group') {
-        node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
-      } else if (style.styleName === 'text') {
-        node = parseText(id, bounds, props, metadata, texts, style, layer);
-      } else if (isStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
-        node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
+        parents.set(id, layer);
       } else {
-        node = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
-      }
+        const style = new StyleManager($cell.getAttribute('style') ?? '', isGroup);
 
-      // Attach all nodes created to their parent (group and/or layer)
-      if (node) {
-        attachNodeToParent(node, parent, $geometry, ctx);
+        const $geometry = $cell.getElementsByTagName('mxGeometry').item(0)!;
+        const bounds = MxGeometry.boundsFrom($geometry);
+        bounds.r = Angle.toRad(style.num('rotation', 0));
+
+        const parent = mustExist(parents.get(parentId));
+
+        const layer = parent instanceof RegularLayer ? parent : (parent.layer as RegularLayer);
+
+        const props = parseNodeProps(style, isEdge);
+        const texts: NodeTexts = {
+          text: hasValue(value) ? value : ''
+        };
+
+        const metadata: ElementMetadata = {};
+        if (wrapped) {
+          metadata.data ??= {};
+          metadata.data.customData = parseMetadata($parent);
+
+          texts.text = $parent.getAttribute('label') ?? '';
+        }
+
+        parseLabelStyles(texts, style);
+
+        const $els: CellElements = { $cell, $geometry, $parent };
+        const ctx: CellContext = { parents, queue, uow };
+
+        let node: DiagramElement | undefined;
+        if (isEdge) {
+          node = parseEdge(id, props, metadata, style, layer, parents, wrapped, $els, ctx);
+        } else if (style.styleName === 'edgeLabel') {
+          parseLabelNode(id, props, style, diagram, parentId, mustExist(value), $geometry, ctx);
+        } else if (isGroup || style.styleName === 'group') {
+          node = await parseGroup(id, bounds, props, metadata, texts, style, layer, $els, ctx);
+        } else if (style.styleName === 'text') {
+          node = parseText(id, bounds, props, metadata, texts, style, layer);
+        } else if (isStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape)) {
+          node = await parseStencil(id, bounds, props, metadata, texts, style, layer);
+        } else {
+          node = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
+        }
+
+        // Attach all nodes created to their parent (group and/or layer)
+        if (node) {
+          attachNodeToParent(node, parent, $geometry, ctx);
+        }
       }
     }
-  }
 
-  // Phase 3 - run all remaining tasks
-  queue.run();
+    // Phase 3 - run all remaining tasks
+    queue.run();
+  });
 };
 
 const XML = 'application/xml';

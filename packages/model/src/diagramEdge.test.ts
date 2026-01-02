@@ -23,8 +23,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   });
   afterEach(backend.afterEach);
 
-  const resetUow = () => (model.uow = UnitOfWork.immediate(model.diagram1));
-
   describe('start/end', () => {
     it('should set start/end to FreeEndpoint', () => {
       // **** Act
@@ -54,7 +52,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // ***** Setup
       const node1 = model.layer1.addNode();
       const node2 = model.layer1.addNode();
-      node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow =>
+        node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, uow)
+      );
 
       // **** Act
       model.reset();
@@ -117,7 +117,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // ***** Setup
       const node1 = model.layer1.addNode();
       const node2 = model.layer1.addNode();
-      node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow =>
+        node2.setBounds({ x: 200, y: 200, w: 10, h: 10, r: 0 }, uow)
+      );
 
       // **** Act
       model.reset();
@@ -216,10 +218,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should return the concatenated names of connected nodes if no label nodes or metadata name', () => {
       const start = model.layer1.addNode();
-      start.setText('StartNode', model.uow);
+      UnitOfWork.execute(model.diagram1, uow => start.setText('StartNode', uow));
 
       const end = model.layer1.addNode();
-      end.setText('EndNode', model.uow);
+      UnitOfWork.execute(model.diagram1, uow => end.setText('EndNode', uow));
 
       // **** Act
       model.reset();
@@ -248,10 +250,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should return a box defined by the start and end positions', () => {
       // **** Setup
       const startNode = model.layer1.addNode();
-      startNode.setBounds({ x: 10, y: 20, w: 10, h: 10, r: 0 }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow =>
+        startNode.setBounds({ x: 10, y: 20, w: 10, h: 10, r: 0 }, uow)
+      );
 
       const endNode = model.layer1.addNode();
-      endNode.setBounds({ x: 100, y: 200, w: 10, h: 10, r: 0 }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow =>
+        endNode.setBounds({ x: 100, y: 200, w: 10, h: 10, r: 0 }, uow)
+      );
 
       // **** Act
       model.reset();
@@ -274,8 +280,12 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should trigger an elementChange event', () => {
       // **** Setup
-      edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), model.uow);
-      edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), model.uow);
+      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow =>
+        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
+      );
+      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow =>
+        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
+      );
 
       // **** Act
       UnitOfWork.execute(model.diagram1, uow =>
@@ -336,7 +346,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should append the child to the children array if no relation is provided', () => {
       // **** Act
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Verify
       expect(edge1.children[edge1.children.length - 1]).toBe(child);
@@ -346,17 +356,19 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should update both parent and child in UnitOfWork', () => {
       // **** Act
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addChild(child, uow);
 
-      // **** Verify
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(child, 'update')).toBe(true);
+        // **** Verify
+        expect(uow.contains(edge1, 'update')).toBe(true);
+        expect(uow.contains(child, 'update')).toBe(true);
+      });
     });
 
     it('should be added to the diagram if it is not already present', () => {
       // **** Act
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Verify
       expect(model.diagram1.lookup(child.id)).toBe(child);
@@ -366,7 +378,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should be added to labelNodes if it is a label node', () => {
       // **** Act
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Verify
       expect(edge1.labelNodes?.length).toBe(1);
@@ -380,10 +392,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should not add the child if it is already present', () => {
       // **** Act
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Verify
-      expect(() => edge1.addChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow => expect(() => edge1.addChild(child, uow)).toThrow());
     });
 
     it('should not add the child if it is already present in a different diagram', () => {
@@ -393,7 +405,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const otherEdge = otherDiagram.newLayer().addEdge();
 
       // **** Verify
-      expect(() => otherEdge.addChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow =>
+        expect(() => otherEdge.addChild(child, uow)).toThrow()
+      );
     });
 
     it('should fail is the child is an edge', () => {
@@ -401,7 +415,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const child = model.layer1.addEdge();
 
       // **** Verify
-      expect(() => edge1.addChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow => expect(() => edge1.addChild(child, uow)).toThrow());
     });
   });
 
@@ -413,7 +427,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       resetListeners(model.elementChange);
 
@@ -434,10 +448,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should remove the child from the labelNodes array if it is a label node', () => {
       // **** Setup
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Act
-      edge1.removeChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.removeChild(child, uow));
 
       // **** Verify
       expect(edge1.labelNodes?.length).toBe(0);
@@ -447,21 +461,24 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should fail if the child is not present', () => {
       // **** Verify
       const child = model.layer1.createNode();
-      expect(() => edge1.removeChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow =>
+        expect(() => edge1.removeChild(child, uow)).toThrow()
+      );
     });
 
     it('should update both parent and child in UnitOfWork', () => {
       // **** Setup
       const child = model.layer1.createNode();
-      edge1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 
       // **** Act
-      resetUow();
-      edge1.removeChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.removeChild(child, uow);
 
-      // **** Verify
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(child, 'remove')).toBe(true);
+        // **** Verify
+        expect(uow.contains(edge1, 'update')).toBe(true);
+        expect(uow.contains(child, 'remove')).toBe(true);
+      });
     });
   });
 
@@ -489,20 +506,21 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       // **** Setup
       const child1 = model.layer1.createNode();
       const child2 = model.layer1.createNode();
-      edge1.addChild(child1, model.uow);
-      edge1.addChild(child2, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child1, uow));
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child2, uow));
 
       // **** Act
-      resetUow();
-      edge1.setChildren([child1], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.setChildren([child1], uow);
 
-      // **** Verify
-      expect(edge1.children).toEqual([child1]);
-      if (model.doc2) expect(edge2?.children).toHaveLength(1);
+        // **** Verify
+        expect(edge1.children).toEqual([child1]);
+        if (model.doc2) expect(edge2?.children).toHaveLength(1);
 
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(child1, 'update')).toBe(true);
-      expect(model.uow.contains(child2, 'remove')).toBe(true);
+        expect(uow.contains(edge1, 'update')).toBe(true);
+        expect(uow.contains(child1, 'update')).toBe(true);
+        expect(uow.contains(child2, 'remove')).toBe(true);
+      });
     });
   });
 
@@ -529,7 +547,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode2 = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      edge1.setLabelNodes([labelNode1, labelNode2], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode1, labelNode2], uow));
 
       // **** Verify
       expect(edge1.labelNodes).toEqual([labelNode1, labelNode2]);
@@ -537,7 +555,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       if (model.doc2) expect(edge2?.labelNodes).toHaveLength(2);
 
       // **** Act
-      edge1.setLabelNodes([labelNode1], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode1], uow));
 
       // **** Verify
       expect(edge1.labelNodes).toEqual([labelNode1]);
@@ -551,7 +569,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode2 = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      edge1.setLabelNodes([labelNode1, labelNode2], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode1, labelNode2], uow));
 
       // **** Verify
       expect(edge1.children).toEqual([labelNode1.node(), labelNode2.node()]);
@@ -559,7 +577,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       if (model.doc2) expect(edge2?.children).toHaveLength(2);
 
       // **** Act
-      edge1.setLabelNodes([labelNode1], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode1], uow));
 
       // **** Verify
       expect(edge1.children).toEqual([labelNode1.node()]);
@@ -590,11 +608,13 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      edge1.addLabelNode(labelNode, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addLabelNode(labelNode, uow);
 
-      // **** Verify
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(labelNode.node(), 'update')).toBe(true);
+        // **** Verify
+        expect(uow.contains(edge1, 'update')).toBe(true);
+        expect(uow.contains(labelNode.node(), 'update')).toBe(true);
+      });
     });
 
     it('should fail if the label node is already present', () => {
@@ -602,10 +622,12 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      edge1.addLabelNode(labelNode, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addLabelNode(labelNode, uow));
 
       // **** Verify
-      expect(() => edge1.addLabelNode(labelNode, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow =>
+        expect(() => edge1.addLabelNode(labelNode, uow)).toThrow()
+      );
     });
 
     it('should update children', () => {
@@ -613,7 +635,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      edge1.addChild(labelNode.node(), model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(labelNode.node(), uow));
 
       // **** Verify
       expect(edge1.children).toEqual([labelNode.node()]);
@@ -625,7 +647,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should remove the label node from the label nodes array', () => {
       // **** Setup
       const labelNode = model.layer1.createNode().asLabelNode();
-      edge1.addLabelNode(labelNode, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge1.addLabelNode(labelNode, uow));
 
       const elementChange = [vi.fn(), vi.fn()];
       model.diagram1.on('elementChange', elementChange[0]!);
@@ -651,7 +673,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       // **** Verify
-      expect(() => edge1.removeLabelNode(labelNode, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow =>
+        expect(() => edge1.removeLabelNode(labelNode, uow)).toThrow()
+      );
     });
   });
 
@@ -674,8 +698,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should add waypoint to straight edge in an ordered way', () => {
       // Act
-      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
-      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addWaypoint({ point: { x: 75, y: 75 } }, uow);
+        edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow);
+      });
 
       // Verify
       expect(edge1.waypoints).toHaveLength(2);
@@ -692,8 +718,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('removeWaypoint', () => {
     it('should remove waypoint', () => {
       // Setup
-      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
-      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addWaypoint({ point: { x: 75, y: 75 } }, uow);
+        edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow);
+      });
 
       // Act
       model.reset();
@@ -714,8 +742,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('moveWaypoint', () => {
     it('should move waypoint', () => {
       // Setup
-      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
-      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addWaypoint({ point: { x: 75, y: 75 } }, uow);
+        edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow);
+      });
 
       // Act
       model.reset();
@@ -736,8 +766,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('replaceWaypoint', () => {
     it('should replace waypoint', () => {
       // Setup
-      edge1.addWaypoint({ point: { x: 75, y: 75 } }, model.uow);
-      edge1.addWaypoint({ point: { x: 5, y: 5 } }, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.addWaypoint({ point: { x: 75, y: 75 } }, uow);
+        edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow);
+      });
 
       // Act
       model.reset();

@@ -306,7 +306,8 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       // Setup
       const [root1, root2] = backend.syncedDocs();
 
-      const document1 = TestModel.newDocument();
+      const diagram1 = TestModel.newDiagram();
+      const document1 = diagram1.document;
       const instance1 = new DiagramDocumentDataSchemas(root1, document1);
       const instance2 = root2
         ? new DiagramDocumentDataSchemas(root2, TestModel.newDocument())
@@ -330,7 +331,7 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
       expect(instance1.getMetadata('1')).toEqual(metadata);
 
       // Act - remove the schema
-      instance1.removeAndClearUsage(schema, UnitOfWork.immediate(document1.diagrams[0]!));
+      UnitOfWork.execute(diagram1, uow => instance1.removeAndClearUsage(schema, uow));
 
       // Verify - metadata should be removed
       expect(instance1.getMetadata('1')).toEqual({

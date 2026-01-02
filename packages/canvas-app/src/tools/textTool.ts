@@ -87,7 +87,7 @@ export class TextTool extends AbstractTool {
 
     const drag = new ResizeDrag(this.diagram, 'se', this.startPoint);
     drag.on('dragEnd', () => {
-      UnitOfWork.execute(this.diagram, uow => {
+      UnitOfWork.execute(this.diagram, {}, uow => {
         this.node?.setBounds(
           {
             ...this.node.bounds,

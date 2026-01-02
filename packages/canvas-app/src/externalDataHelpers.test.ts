@@ -14,9 +14,11 @@ describe('getExternalDataStatus()', () => {
   it('should return "none" if data array does not contain schemaId', () => {
     const diagram = TestModel.newDiagram();
     const element = diagram.newLayer().createNode();
-    element.updateMetadata(p => {
-      p.data = { data: [{ schema: 'otherSchema', type: 'external', data: {} }] };
-    }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow =>
+      element.updateMetadata(p => {
+        p.data = { data: [{ schema: 'otherSchema', type: 'external', data: {} }] };
+      }, uow)
+    );
 
     const result = getExternalDataStatus(element, 'testSchema');
     expect(result).toBe('none');
@@ -25,9 +27,11 @@ describe('getExternalDataStatus()', () => {
   it('should return "linked" if an external item with matching schemaId exists', () => {
     const diagram = TestModel.newDiagram();
     const element = diagram.newLayer().createNode();
-    element.updateMetadata(p => {
-      p.data = { data: [{ schema: 'testSchema', type: 'external', data: {} }] };
-    }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow =>
+      element.updateMetadata(p => {
+        p.data = { data: [{ schema: 'testSchema', type: 'external', data: {} }] };
+      }, uow)
+    );
 
     const result = getExternalDataStatus(element, 'testSchema');
     expect(result).toBe('linked');
@@ -36,9 +40,11 @@ describe('getExternalDataStatus()', () => {
   it('should return "unlinked" if a non-external item with matching schemaId exists', () => {
     const diagram = TestModel.newDiagram();
     const element = diagram.newLayer().createNode();
-    element.updateMetadata(p => {
-      p.data = { data: [{ schema: 'testSchema', type: 'schema', data: {} }] };
-    }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow =>
+      element.updateMetadata(p => {
+        p.data = { data: [{ schema: 'testSchema', type: 'schema', data: {} }] };
+      }, uow)
+    );
 
     const result = getExternalDataStatus(element, 'testSchema');
     expect(result).toBe('unlinked');

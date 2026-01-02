@@ -260,9 +260,8 @@ export const App = (props: {
         progressCallback
       );
       const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
-      diagram.layers.add(
-        new RegularLayer(newid(), 'Default', [], diagram),
-        UnitOfWork.immediate(diagram)
+      UnitOfWork.execute(diagram, uow =>
+        diagram.layers.add(new RegularLayer(newid(), 'Default', [], diagram), uow)
       );
       doc.addDiagram(diagram);
 

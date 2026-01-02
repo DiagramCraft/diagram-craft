@@ -276,23 +276,19 @@ export const parseImage = async (
     if (props.fill?.image?.url) {
       const img = new Image();
       img.onload = () => {
-        UnitOfWork.execute(
-          diagram,
-          uow => {
-            node.updateProps(props => {
-              if (props.custom!.drawioImage!.imageWidth === '0') {
-                props.custom!.drawioImage!.imageWidth = img.width.toString();
-              }
-              if (props.custom!.drawioImage!.imageHeight === '0') {
-                props.custom!.drawioImage!.imageHeight = img.height.toString();
-              }
+        UnitOfWork.execute(diagram, { silent: true }, uow => {
+          node.updateProps(props => {
+            if (props.custom!.drawioImage!.imageWidth === '0') {
+              props.custom!.drawioImage!.imageWidth = img.width.toString();
+            }
+            if (props.custom!.drawioImage!.imageHeight === '0') {
+              props.custom!.drawioImage!.imageHeight = img.height.toString();
+            }
 
-              props.fill!.image!.w = img.width;
-              props.fill!.image!.h = img.height;
-            }, uow);
-          },
-          true
-        );
+            props.fill!.image!.w = img.width;
+            props.fill!.image!.h = img.height;
+          }, uow);
+        });
       };
       img.src = props.fill.image.url!;
     }

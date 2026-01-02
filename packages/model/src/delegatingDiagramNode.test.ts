@@ -34,7 +34,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod-layer-1', 'Modification Layer', model.diagram1, []);
-    model.diagram1.layers.add(modLayer, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow => model.diagram1.layers.add(modLayer, uow));
 
     model.diagram1.layers.active = model.layer1;
 
@@ -49,7 +49,9 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       baseNode,
       modLayer
     );
-    modLayer.modifyChange(baseNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow =>
+      modLayer.modifyChange(baseNode.id, delegatingNode, uow)
+    );
 
     if (modLayer2) {
       delegatingNode2 = modLayer2.elements.find(
