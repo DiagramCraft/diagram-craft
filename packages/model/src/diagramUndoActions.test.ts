@@ -82,26 +82,27 @@ describe('ElementAddUndoableAction', () => {
     const edge = layer.createEdge({ id: 'edge1' });
 
     // Connect edge to nodes
-    const uow = UnitOfWork.immediate(diagram);
-    edge.setStart(new AnchorEndpoint(node1, 'c'), uow);
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
+    UnitOfWork.execute(diagram, uow => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), uow);
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
 
-    const action = new ElementAddUndoableAction([edge], diagram, layer);
-    layer.addElement(edge, uow);
+      const action = new ElementAddUndoableAction([edge], diagram, layer);
+      layer.addElement(edge, uow);
 
-    // Verify edge is connected initially
-    expect((edge.start as AnchorEndpoint).node).toBe(node1);
-    expect((edge.end as AnchorEndpoint).node).toBe(node2);
+      // Verify edge is connected initially
+      expect((edge.start as AnchorEndpoint).node).toBe(node1);
+      expect((edge.end as AnchorEndpoint).node).toBe(node2);
 
-    // Test undo - edge should be removed
-    UnitOfWork.execute(diagram, uow => action.undo(uow));
-    expect(diagram.lookup('edge1')).toBeUndefined();
+      // Test undo - edge should be removed
+      action.undo(uow);
+      expect(diagram.lookup('edge1')).toBeUndefined();
 
-    // Test redo - edge should be restored with connections
-    action.redo();
-    expect(diagram.lookup('edge1')).toBe(edge);
-    expect((edge.start as AnchorEndpoint).node).toBe(node1);
-    expect((edge.end as AnchorEndpoint).node).toBe(node2);
+      // Test redo - edge should be restored with connections
+      action.redo();
+      expect(diagram.lookup('edge1')).toBe(edge);
+      expect((edge.start as AnchorEndpoint).node).toBe(node1);
+      expect((edge.end as AnchorEndpoint).node).toBe(node2);
+    });
   });
 });
 

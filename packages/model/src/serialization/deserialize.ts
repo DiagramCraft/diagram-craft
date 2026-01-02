@@ -320,38 +320,40 @@ const deserializeDiagrams = <T extends Diagram>(
     //  3. Load all modifications
 
     // Create layers
-    for (const l of $d.layers) {
-      switch (l.layerType) {
-        case 'regular':
-        case 'basic': {
-          const layer = new RegularLayer(l.id, l.name, [], newDiagram);
-          if (l.isLocked) layer.locked = true;
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
+    UnitOfWork.execute(newDiagram, () => {
+      for (const l of $d.layers) {
+        switch (l.layerType) {
+          case 'regular':
+          case 'basic': {
+            const layer = new RegularLayer(l.id, l.name, [], newDiagram);
+            if (l.isLocked) layer.locked = true;
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          case 'reference': {
+            const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
+              diagramId: l.diagramId,
+              layerId: l.layerId
+            });
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          case 'rule': {
+            const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules);
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          case 'modification': {
+            const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
+            if (l.isLocked) layer.locked = true;
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          default:
+            throw new VerifyNotReached();
         }
-        case 'reference': {
-          const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
-            diagramId: l.diagramId,
-            layerId: l.layerId
-          });
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        case 'rule': {
-          const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules);
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        case 'modification': {
-          const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
-          if (l.isLocked) layer.locked = true;
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        default:
-          throw new VerifyNotReached();
       }
-    }
+    });
 
     // Fill layers with elements
     for (const l of $d.layers) {

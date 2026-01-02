@@ -24,14 +24,15 @@ export const createThumbnailForNode = (
 ) => {
   const diagram = createDiagram(definitions);
 
-  const uow = UnitOfWork.immediate(diagram);
-  const layer = new RegularLayer(newid(), newid(), [], diagram);
-  diagram.layers.add(layer, uow);
+  return UnitOfWork.execute(diagram, uow => {
+    const layer = new RegularLayer(newid(), newid(), [], diagram);
+    diagram.layers.add(layer, uow);
 
-  const node = factory(diagram, layer);
-  layer.addElement(node, uow);
+    const node = factory(diagram, layer);
+    layer.addElement(node, uow);
 
-  return { diagram, layer, node };
+    return { diagram, layer, node };
+  });
 };
 
 export const createThumbnailForEdge = (
@@ -40,12 +41,13 @@ export const createThumbnailForEdge = (
 ) => {
   const diagram = createDiagram(definitions);
 
-  const uow = UnitOfWork.immediate(diagram);
-  const layer = new RegularLayer(newid(), newid(), [], diagram);
-  diagram.layers.add(layer, uow);
+  return UnitOfWork.execute(diagram, uow => {
+    const layer = new RegularLayer(newid(), newid(), [], diagram);
+    diagram.layers.add(layer, uow);
 
-  const edge = factory(diagram, layer);
-  layer.addElement(edge, uow);
+    const edge = factory(diagram, layer);
+    layer.addElement(edge, uow);
 
-  return { diagram, layer, edge };
+    return { diagram, layer, edge };
+  });
 };

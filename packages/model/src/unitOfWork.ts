@@ -193,6 +193,32 @@ export class UnitOfWork {
     }
   }
 
+  static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T>;
+  static async executeAsync<T>(
+    diagram: Diagram,
+    opts: ExecuteOpts,
+    cb: (uow: UnitOfWork) => Promise<T>
+  ): Promise<T>;
+  static async executeAsync<T>(
+    diagram: Diagram,
+    optsOrCb: ExecuteOpts | ((uow: UnitOfWork) => T),
+    cb?: (uow: UnitOfWork) => Promise<T>
+  ): Promise<T> {
+    const uow = new UnitOfWork(diagram);
+
+    if (typeof optsOrCb === 'function') {
+      // Called with (diagram, cb)
+      const result = await optsOrCb(uow);
+      uow.commit();
+      return result;
+    } else {
+      // Called with (diagram, opts, cb)
+      const result = await cb!(uow);
+      if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
+      return result;
+    }
+  }
+
   snapshot(element: Trackable) {
     if (!this.trackChanges) return;
     if (this.#snapshots.has(element.id)) return;
