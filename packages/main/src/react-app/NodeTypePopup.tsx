@@ -102,7 +102,7 @@ export const NodeTypePopup = (props: Props) => {
       const node = n.node(dest);
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-      layer.addElement(node, UnitOfWork.immediate(dest));
+      UnitOfWork.execute(dest, uow => layer.addElement(node, uow));
 
       return [n, dest];
     });

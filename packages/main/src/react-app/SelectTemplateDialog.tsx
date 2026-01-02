@@ -22,7 +22,7 @@ const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): 
     (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
     definitions
   );
-  node.setBounds({ ...node.bounds, x: 0, y: 0 }, UnitOfWork.immediate(node.diagram));
+  UnitOfWork.execute(node.diagram, uow => node.setBounds({ ...node.bounds, x: 0, y: 0 }, uow));
 
   diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };

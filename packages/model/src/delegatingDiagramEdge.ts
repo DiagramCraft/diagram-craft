@@ -77,7 +77,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<EdgeProps>(propsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidate(uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });

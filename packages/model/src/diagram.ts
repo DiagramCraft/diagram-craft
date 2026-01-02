@@ -82,7 +82,7 @@ export const DocumentBuilder = {
   empty: (id: string, name: string, document: DiagramDocument) => {
     const diagram = new Diagram(id, name, document);
     const layer = new RegularLayer('default', 'Default', [], diagram);
-    diagram.layers.add(layer, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => diagram.layers.add(layer, uow));
     return { diagram, layer };
   }
 };

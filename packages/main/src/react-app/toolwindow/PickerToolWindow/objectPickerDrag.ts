@@ -201,41 +201,36 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.#elements = cloneElements(
-      sourceLayer.elements,
-      activeLayer,
-      UnitOfWork.immediate(this.diagram)
+    this.#elements = UnitOfWork.execute(this.diagram, uow =>
+      cloneElements(sourceLayer.elements, activeLayer, uow)
     );
 
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
 
     const scaleX = this.source.bounds.w / bounds.w;
     const scaleY = this.source.bounds.h / bounds.h;
-    assignNewBounds(
-      this.#elements,
-      point,
-      Point.of(scaleX, scaleY),
-      UnitOfWork.immediate(this.diagram)
-    );
 
-    const uow = UnitOfWork.immediate(this.diagram);
-    this.#elements.forEach(e => {
-      activeLayer.addElement(e, UnitOfWork.immediate(this.diagram));
-      if (isNode(e)) {
-        e.updateMetadata(meta => {
-          if (meta.style === DefaultStyles.node.default) {
-            meta.style = this.diagram.document.styles.activeNodeStylesheet.id;
-          }
-          if (meta.textStyle === DefaultStyles.text.default) {
-            meta.textStyle = this.diagram.document.styles.activeTextStylesheet.id;
-          }
-        }, uow);
-      } else if (isEdge(e)) {
-        e.updateMetadata(
-          meta => (meta.style = this.diagram.document.styles.activeEdgeStylesheet.id),
-          uow
-        );
-      }
+    UnitOfWork.execute(this.diagram, uow => {
+      assignNewBounds(this.#elements, point, Point.of(scaleX, scaleY), uow);
+
+      this.#elements.forEach(e => {
+        activeLayer.addElement(e, uow);
+        if (isNode(e)) {
+          e.updateMetadata(meta => {
+            if (meta.style === DefaultStyles.node.default) {
+              meta.style = this.diagram.document.styles.activeNodeStylesheet.id;
+            }
+            if (meta.textStyle === DefaultStyles.text.default) {
+              meta.textStyle = this.diagram.document.styles.activeTextStylesheet.id;
+            }
+          }, uow);
+        } else if (isEdge(e)) {
+          e.updateMetadata(
+            meta => (meta.style = this.diagram.document.styles.activeEdgeStylesheet.id),
+            uow
+          );
+        }
+      });
     });
 
     new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();

@@ -189,19 +189,20 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   );
 
   // Add both node and edge to the diagram
-  const uow = UnitOfWork.immediate(diagram);
-  activeLayer.addElement(newNode, uow);
-  activeLayer.addElement(newEdge, uow);
+  UnitOfWork.execute(diagram, uow => {
+    activeLayer.addElement(newNode, uow);
+    activeLayer.addElement(newEdge, uow);
 
-  // Apply active styles
-  newNode.updateMetadata(meta => {
-    meta.style = diagram.document.styles.activeNodeStylesheet.id;
-    meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
-  }, uow);
+    // Apply active styles
+    newNode.updateMetadata(meta => {
+      meta.style = diagram.document.styles.activeNodeStylesheet.id;
+      meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+    }, uow);
 
-  newEdge.updateMetadata(meta => {
-    meta.style = diagram.document.styles.activeEdgeStylesheet.id;
-  }, uow);
+    newEdge.updateMetadata(meta => {
+      meta.style = diagram.document.styles.activeEdgeStylesheet.id;
+    }, uow);
+  });
 
   diagram.undoManager.addAndExecute(
     new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)

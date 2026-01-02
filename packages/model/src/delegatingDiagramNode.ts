@@ -67,7 +67,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<NodeProps>(propsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidate(uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -94,7 +94,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localTexts = new CRDTObject<NodeTexts>(textsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidate(uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -108,9 +108,11 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
     if (opts?.props) this.#localProps.set(opts?.props as NodeProps);
     // TODO: Fix this
-    this.updateProps(p => {
-      p.hidden = false;
-    }, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.execute(this.diagram, { _noCommit: true }, uow =>
+      this.updateProps(p => {
+        p.hidden = false;
+      }, uow)
+    );
 
     if (opts?.metadata) this._metadata.set(opts?.metadata);
   }

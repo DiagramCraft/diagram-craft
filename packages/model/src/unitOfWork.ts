@@ -164,13 +164,6 @@ export class UnitOfWork {
     registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
   }
 
-  /**
-   * @deprecated
-   */
-  static immediate(diagram: Diagram) {
-    return new UnitOfWork(diagram, false, true);
-  }
-
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(
