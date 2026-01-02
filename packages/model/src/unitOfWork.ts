@@ -139,6 +139,8 @@ type ExecuteOpts = {
   _noCommit?: boolean;
 };
 
+type ExecWithUndoOpts = Omit<ExecuteOpts, '_noCommit'> & { label: string; _onlyUpdates?: boolean };
+
 export class UnitOfWork {
   uid = newid();
 
@@ -236,12 +238,12 @@ export class UnitOfWork {
   static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T;
   static executeWithUndo<T>(
     diagram: Diagram,
-    opts: Omit<ExecuteOpts, '_noCommit'> & { label: string },
+    opts: ExecWithUndoOpts,
     cb: (uow: UnitOfWork) => T
   ): T;
   static executeWithUndo<T>(
     diagram: Diagram,
-    optsOrCb: (Omit<ExecuteOpts, '_noCommit'> & { label: string }) | string,
+    optsOrCb: ExecWithUndoOpts | string,
     cb: (uow: UnitOfWork) => T
   ): T {
     const uow = new UnitOfWork(diagram, true);
@@ -252,7 +254,7 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'string') {
       commitWithUndo(uow, optsOrCb);
     } else {
-      commitWithUndo(uow, optsOrCb.label);
+      commitWithUndo(uow, optsOrCb.label, optsOrCb._onlyUpdates ?? false);
     }
     return result;
   }

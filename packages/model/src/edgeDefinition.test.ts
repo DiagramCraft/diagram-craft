@@ -4,7 +4,6 @@ import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
 import { AbstractEdgeDefinition } from './edgeDefinition';
 import { RegularLayer } from './diagramLayerRegular';
-import { SnapshotUndoableAction } from './diagramUndoActions';
 import type { DiagramEdge } from './diagramEdge';
 import type { DiagramDocument } from './diagramDocument';
 import type { DiagramNode } from './diagramNode';
@@ -55,11 +54,9 @@ describe('baseEdgeDefinition', () => {
         const def = new TestBaseEdgeDefinition('test', 'test');
 
         // **** Act
-        const uow = new UnitOfWork(dia1, true);
-        def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
-
-        const snapshots = uow.commit();
-        dia1.undoManager.add(new SnapshotUndoableAction('Split', dia1, snapshots.onlyUpdated()));
+        UnitOfWork.executeWithUndo(dia1, { _onlyUpdates: true, label: 'Split' }, uow => {
+          def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
+        });
 
         // **** Verify
         expect(layer1.elements).toHaveLength(3);
@@ -73,11 +70,9 @@ describe('baseEdgeDefinition', () => {
 
         const def = new TestBaseEdgeDefinition('test', 'test');
 
-        const uow = new UnitOfWork(dia1, true);
-        def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
-
-        const snapshots = uow.commit();
-        dia1.undoManager.add(new SnapshotUndoableAction('Split', dia1, snapshots.onlyUpdated()));
+        UnitOfWork.executeWithUndo(dia1, { _onlyUpdates: true, label: 'Split' }, uow =>
+          def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split')
+        );
 
         // **** Act
         dia1.undoManager.undo();

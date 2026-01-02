@@ -7,9 +7,15 @@ import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { hasSameElements } from '@diagram-craft/utils/array';
 
-export const commitWithUndo = (uow: UnitOfWork, description: string) => {
+export const commitWithUndo = (uow: UnitOfWork, description: string, onlyUpdates = false) => {
   const snapshots = uow.commit();
-  uow.diagram.undoManager.add(new SnapshotUndoableAction(description, uow.diagram, snapshots));
+  uow.diagram.undoManager.add(
+    new SnapshotUndoableAction(
+      description,
+      uow.diagram,
+      onlyUpdates ? snapshots.onlyUpdated() : snapshots
+    )
+  );
 };
 
 const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork) => {
