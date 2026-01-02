@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { TestModel } from './test-support/testModel';
-import { UnitOfWork } from './unitOfWork';
 import { UOW } from '@diagram-craft/model/uow';
 
 describe('SpatialIndex', () => {
@@ -104,9 +103,9 @@ describe('SpatialIndex', () => {
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1.length).toBe(2);
 
-      const uow = new UnitOfWork(diagram);
-      layer.removeElement(node2, uow);
-      uow.commit();
+      UOW.begin(diagram, { _noSnapshot: true });
+      layer.removeElement(node2, UOW.uow());
+      UOW.uow().commit();
 
       const results2 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results2.length).toBe(1);
