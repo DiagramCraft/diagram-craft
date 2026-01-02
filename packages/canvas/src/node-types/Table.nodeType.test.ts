@@ -1,9 +1,9 @@
-import { describe, expect, test, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { TableHelper } from './Table.nodeType';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('TableHelper', () => {
   let diagram: Diagram;
@@ -61,13 +61,14 @@ describe('TableHelper', () => {
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW._executeNoSnapshots(diagram, () => {
+      row1.addChild(cellB, UOW.uow());
+      row1.addChild(cellA, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
   });
 
   describe('constructor and basic properties', () => {

@@ -7,10 +7,10 @@ import {
   defaultEdgeRegistry,
   defaultNodeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { SnapManager } from './snapManager';
+import { UOW } from '@diagram-craft/model/uow';
 
 const r = new Random(123456);
 
@@ -32,11 +32,11 @@ const { diagram: d } = DocumentBuilder.empty(
   new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
 );
 
-UnitOfWork.execute(d, uow => {
+UOW.execute(d, () => {
   for (let i = 0; i < 1000; i++) {
     (d.activeLayer as RegularLayer).addElement(
       ElementFactory.node(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),
-      uow
+      UOW.uow()
     );
   }
 });

@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { Diagram, DocumentBuilder } from './diagram';
 import { TestModel } from './test-support/testModel';
 import { newid } from '@diagram-craft/utils/id';
-import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -147,23 +147,23 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = TestModel.newDiagram();
 
       const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
-      diagram.layers.add(layer1, new UnitOfWork(diagram));
-
       const layer2 = new RegularLayer(newid(), 'Layer 2', [], diagram);
-      diagram.layers.add(layer2, new UnitOfWork(diagram));
 
-      const uow = new UnitOfWork(diagram);
-      const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
-      const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
-      layer1.addElement(node1, uow);
-      layer2.addElement(node2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        diagram.layers.add(layer1, UOW.uow());
+        diagram.layers.add(layer2, UOW.uow());
 
-      expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
-      diagram.layers.toggleVisibility(layer1);
-      expect(diagram.visibleElements()).toStrictEqual([node2]);
-      diagram.layers.toggleVisibility(layer2);
-      expect(diagram.visibleElements()).toStrictEqual([]);
+        const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
+        const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
+        layer1.addElement(node1, UOW.uow());
+        layer2.addElement(node2, UOW.uow());
+
+        expect(diagram.visibleElements().map(e => e.id)).toStrictEqual([node1.id, node2.id]);
+        diagram.layers.toggleVisibility(layer1);
+        expect(diagram.visibleElements().map(e => e.id)).toStrictEqual([node2.id]);
+        diagram.layers.toggleVisibility(layer2);
+        expect(diagram.visibleElements()).toStrictEqual([]);
+      });
     });
   });
 

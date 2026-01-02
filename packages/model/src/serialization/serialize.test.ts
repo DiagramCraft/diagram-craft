@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TestModel } from '../test-support/testModel';
 import { serializeDiagramElement } from './serialize';
-import { UnitOfWork } from '../unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('serializeDiagramElement', () => {
   describe('tags', () => {
@@ -10,7 +10,7 @@ describe('serializeDiagramElement', () => {
       const diagram = TestModel.newDiagram();
       const node = diagram.newLayer().addNode();
       const tags = ['tag1', 'tag2', 'important'];
-      node.setTags(tags, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => node.setTags(tags, UOW.uow()));
 
       // Act
       const serialized = serializeDiagramElement(node);
@@ -24,7 +24,7 @@ describe('serializeDiagramElement', () => {
       const diagram = TestModel.newDiagram();
       const edge = diagram.newLayer().addEdge();
       const tags = ['connection', 'flow', 'critical'];
-      edge.setTags(tags, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => edge.setTags(tags, UOW.uow()));
 
       // Act
       const serialized = serializeDiagramElement(edge);
@@ -49,7 +49,7 @@ describe('serializeDiagramElement', () => {
       // Setup
       const diagram = TestModel.newDiagram();
       const node = diagram.newLayer().addNode();
-      node.setTags([], UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => node.setTags([], UOW.uow()));
 
       // Act
       const serialized = serializeDiagramElement(node);

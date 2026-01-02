@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { SwimlaneNodeDefinition } from './Swimlane.nodeType';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
   let swimlaneDefinition: SwimlaneNodeDefinition;
@@ -20,32 +20,33 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 400, h: 200, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      horizontalSwimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'horizontal';
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        horizontalSwimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'horizontal';
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      const initialBounds = { ...horizontalSwimlane.bounds };
+        const initialBounds = { ...horizontalSwimlane.bounds };
 
-      // Collapse the swimlane
-      swimlaneDefinition.toggle(horizontalSwimlane, uow);
+        // Collapse the swimlane
+        swimlaneDefinition.toggle(horizontalSwimlane, UOW.uow());
 
-      // After collapse, width should remain the same
-      // Height should be 2x titleSize (2 * 30 = 60)
-      expect(horizontalSwimlane.bounds.w).toBe(initialBounds.w);
-      expect(horizontalSwimlane.bounds.h).toBe(30);
+        // After collapse, width should remain the same
+        // Height should be 2x titleSize (2 * 30 = 60)
+        expect(horizontalSwimlane.bounds.w).toBe(initialBounds.w);
+        expect(horizontalSwimlane.bounds.h).toBe(30);
 
-      // Check mode is set to collapsed
-      const collapsedProps = swimlaneDefinition.getCollapsibleProps(horizontalSwimlane);
-      expect(collapsedProps.mode).toBe('collapsed');
+        // Check mode is set to collapsed
+        const collapsedProps = swimlaneDefinition.getCollapsibleProps(horizontalSwimlane);
+        expect(collapsedProps.mode).toBe('collapsed');
 
-      // Check expanded bounds are saved
-      expect(collapsedProps.bounds).toContain(`${initialBounds.h}`);
+        // Check expanded bounds are saved
+        expect(collapsedProps.bounds).toContain(`${initialBounds.h}`);
+      });
     });
 
     test('collapsed horizontal swimlane expands back to original size', () => {
@@ -57,31 +58,32 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 400, h: 200, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      horizontalSwimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'horizontal';
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        horizontalSwimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'horizontal';
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      const initialBounds = { ...horizontalSwimlane.bounds };
+        const initialBounds = { ...horizontalSwimlane.bounds };
 
-      // Collapse
-      swimlaneDefinition.toggle(horizontalSwimlane, uow);
+        // Collapse
+        swimlaneDefinition.toggle(horizontalSwimlane, UOW.uow());
 
-      // Expand
-      swimlaneDefinition.toggle(horizontalSwimlane, uow);
+        // Expand
+        swimlaneDefinition.toggle(horizontalSwimlane, UOW.uow());
 
-      // Should return to original dimensions
-      expect(horizontalSwimlane.bounds.w).toBe(initialBounds.w);
-      expect(horizontalSwimlane.bounds.h).toBe(initialBounds.h);
+        // Should return to original dimensions
+        expect(horizontalSwimlane.bounds.w).toBe(initialBounds.w);
+        expect(horizontalSwimlane.bounds.h).toBe(initialBounds.h);
 
-      // Check mode is set to expanded
-      const expandedProps = swimlaneDefinition.getCollapsibleProps(horizontalSwimlane);
-      expect(expandedProps.mode).toBe('expanded');
+        // Check mode is set to expanded
+        const expandedProps = swimlaneDefinition.getCollapsibleProps(horizontalSwimlane);
+        expect(expandedProps.mode).toBe('expanded');
+      });
     });
   });
 
@@ -95,29 +97,30 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 200, h: 400, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      verticalSwimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'vertical';
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        verticalSwimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'vertical';
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      const initialBounds = { ...verticalSwimlane.bounds };
+        const initialBounds = { ...verticalSwimlane.bounds };
 
-      // Collapse the swimlane
-      swimlaneDefinition.toggle(verticalSwimlane, uow);
+        // Collapse the swimlane
+        swimlaneDefinition.toggle(verticalSwimlane, UOW.uow());
 
-      // After collapse, height should remain the same
-      // Width should be 2x titleSize (2 * 30 = 60)
-      expect(verticalSwimlane.bounds.h).toBe(initialBounds.h);
-      expect(verticalSwimlane.bounds.w).toBe(30);
+        // After collapse, height should remain the same
+        // Width should be 2x titleSize (2 * 30 = 60)
+        expect(verticalSwimlane.bounds.h).toBe(initialBounds.h);
+        expect(verticalSwimlane.bounds.w).toBe(30);
 
-      // Check mode is set to collapsed
-      const collapsedProps = swimlaneDefinition.getCollapsibleProps(verticalSwimlane);
-      expect(collapsedProps.mode).toBe('collapsed');
+        // Check mode is set to collapsed
+        const collapsedProps = swimlaneDefinition.getCollapsibleProps(verticalSwimlane);
+        expect(collapsedProps.mode).toBe('collapsed');
+      });
     });
 
     test('collapsed vertical swimlane expands back to original size', () => {
@@ -129,31 +132,32 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 200, h: 400, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      verticalSwimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'vertical';
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        verticalSwimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'vertical';
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      const initialBounds = { ...verticalSwimlane.bounds };
+        const initialBounds = { ...verticalSwimlane.bounds };
 
-      // Collapse
-      swimlaneDefinition.toggle(verticalSwimlane, uow);
+        // Collapse
+        swimlaneDefinition.toggle(verticalSwimlane, UOW.uow());
 
-      // Expand
-      swimlaneDefinition.toggle(verticalSwimlane, uow);
+        // Expand
+        swimlaneDefinition.toggle(verticalSwimlane, UOW.uow());
 
-      // Should return to original dimensions
-      expect(verticalSwimlane.bounds.w).toBe(initialBounds.w);
-      expect(verticalSwimlane.bounds.h).toBe(initialBounds.h);
+        // Should return to original dimensions
+        expect(verticalSwimlane.bounds.w).toBe(initialBounds.w);
+        expect(verticalSwimlane.bounds.h).toBe(initialBounds.h);
 
-      // Check mode is set to expanded
-      const expandedProps = swimlaneDefinition.getCollapsibleProps(verticalSwimlane);
-      expect(expandedProps.mode).toBe('expanded');
+        // Check mode is set to expanded
+        const expandedProps = swimlaneDefinition.getCollapsibleProps(verticalSwimlane);
+        expect(expandedProps.mode).toBe('expanded');
+      });
     });
   });
 
@@ -168,24 +172,26 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
       });
 
       const customTitleSize = 50;
-      const uow = new UnitOfWork(diagram, true);
-      swimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'horizontal';
-          props.collapsible = true;
-          props.titleSize = customTitleSize;
-        },
-        uow
-      );
 
-      // Collapse
-      swimlaneDefinition.toggle(swimlane, uow);
+      UOW.execute(diagram, () => {
+        swimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'horizontal';
+            props.collapsible = true;
+            props.titleSize = customTitleSize;
+          },
+          UOW.uow()
+        );
 
-      // Collapsed height should be 2x titleSize for horizontal swimlane
-      expect(swimlane.bounds.h).toBe(customTitleSize);
-      // Width should remain unchanged
-      expect(swimlane.bounds.w).toBe(400);
+        // Collapse
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
+
+        // Collapsed height should be 2x titleSize for horizontal swimlane
+        expect(swimlane.bounds.h).toBe(customTitleSize);
+        // Width should remain unchanged
+        expect(swimlane.bounds.w).toBe(400);
+      });
     });
 
     test('remembers manually resized collapsed size', () => {
@@ -197,34 +203,35 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 400, h: 200, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      swimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.orientation = 'vertical';
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        swimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.orientation = 'vertical';
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      // Collapse (default: w=60, h=200 - height stays the same)
-      swimlaneDefinition.toggle(swimlane, uow);
-      expect(swimlane.bounds.w).toBe(30);
-      expect(swimlane.bounds.h).toBe(200);
+        // Collapse (default: w=60, h=200 - height stays the same)
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
+        expect(swimlane.bounds.w).toBe(30);
+        expect(swimlane.bounds.h).toBe(200);
 
-      // Manually resize while collapsed
-      swimlane.setBounds({ ...swimlane.bounds, w: 100 }, uow);
-      expect(swimlane.bounds.w).toBe(100);
+        // Manually resize while collapsed
+        swimlane.setBounds({ ...swimlane.bounds, w: 100 }, UOW.uow());
+        expect(swimlane.bounds.w).toBe(100);
 
-      // Expand
-      swimlaneDefinition.toggle(swimlane, uow);
-      expect(swimlane.bounds.w).toBe(400); // Back to original width
-      expect(swimlane.bounds.h).toBe(200); // Back to original height
+        // Expand
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
+        expect(swimlane.bounds.w).toBe(400); // Back to original width
+        expect(swimlane.bounds.h).toBe(200); // Back to original height
 
-      // Collapse again - should remember the resized width of 100
-      swimlaneDefinition.toggle(swimlane, uow);
-      expect(swimlane.bounds.w).toBe(100); // Remembers manual resize
-      expect(swimlane.bounds.h).toBe(200); // Still keeps original height
+        // Collapse again - should remember the resized width of 100
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
+        expect(swimlane.bounds.w).toBe(100); // Remembers manual resize
+        expect(swimlane.bounds.h).toBe(200); // Still keeps original height
+      });
     });
   });
 
@@ -238,29 +245,30 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 400, h: 200, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      swimlane.updateCustomProps(
-        'swimlane',
-        (props: any) => {
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        swimlane.updateCustomProps(
+          'swimlane',
+          (props: any) => {
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      // Initially should render children
-      expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(true);
+        // Initially should render children
+        expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(true);
 
-      // Collapse
-      swimlaneDefinition.toggle(swimlane, uow);
+        // Collapse
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
 
-      // Should not render children when collapsed
-      expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(false);
+        // Should not render children when collapsed
+        expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(false);
 
-      // Expand
-      swimlaneDefinition.toggle(swimlane, uow);
+        // Expand
+        swimlaneDefinition.toggle(swimlane, UOW.uow());
 
-      // Should render children again
-      expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(true);
+        // Should render children again
+        expect(swimlaneDefinition.shouldRenderChildren(swimlane)).toBe(true);
+      });
     });
   });
 
@@ -290,19 +298,20 @@ describe('SwimlaneNodeDefinition - Collapse Behavior', () => {
         bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram, true);
-      swimlane.updateCustomProps(
-        '_collapsible',
-        (props: any) => {
-          props.collapsible = true;
-        },
-        uow
-      );
+      UOW.execute(diagram, () => {
+        swimlane.updateCustomProps(
+          '_collapsible',
+          (props: any) => {
+            props.collapsible = true;
+          },
+          UOW.uow()
+        );
 
-      const props = swimlaneDefinition.getCollapsibleProps(swimlane);
+        const props = swimlaneDefinition.getCollapsibleProps(swimlane);
 
-      expect(props.collapsible).toBe(true);
-      expect(props.mode).toBe('expanded');
+        expect(props.collapsible).toBe(true);
+        expect(props.mode).toBe('expanded');
+      });
     });
   });
 });

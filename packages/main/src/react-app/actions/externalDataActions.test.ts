@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { ExternalDataLinkUpdateTemplate } from './externalDataActions';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import { newid } from '@diagram-craft/utils/id';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('ExternalDataLinkUpdateTemplate', () => {
   let action: ExternalDataLinkUpdateTemplate;
@@ -176,22 +176,12 @@ describe('ExternalDataLinkUpdateTemplate', () => {
 
       const templateId = newid();
 
-      node1.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node2.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node1.updateProps(p => {
-        p.text = { color: '#ff0000', fontSize: 12 };
-      }, UnitOfWork.immediate(diagram));
-
-      node2.updateProps(p => {
-        p.text = { color: '#ff0000', fontSize: 12 };
-      }, UnitOfWork.immediate(diagram));
-
+      UOW.execute(diagram, () => {
+        node1.updateMetadata(m => (m.data = { templateId }), UOW.uow());
+        node2.updateMetadata(m => (m.data = { templateId }), UOW.uow());
+        node1.updateProps(p => (p.text = { color: '#ff0000', fontSize: 12 }), UOW.uow());
+        node2.updateProps(p => (p.text = { color: '#ff0000', fontSize: 12 }), UOW.uow());
+      });
       const oldTemplate = {
         ...serializeDiagramElement(node1),
         props: { text: { color: '#ff0000', fontSize: 12 } }
@@ -224,13 +214,10 @@ describe('ExternalDataLinkUpdateTemplate', () => {
       const node1 = layer.addNode();
       const templateId = newid();
 
-      node1.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node1.updateProps(p => {
-        p.text = { fontSize: 12, italic: true };
-      }, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => {
+        node1.updateMetadata(m => (m.data = { templateId }), UOW.uow());
+        node1.updateProps(p => (p.text = { fontSize: 12, italic: true }), UOW.uow());
+      });
 
       const oldTemplate = {
         ...serializeDiagramElement(node1),

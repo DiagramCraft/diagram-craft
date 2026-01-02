@@ -149,6 +149,7 @@ export class UnitOfWork {
   #onCommitCallbacks = new Map<string, ActionCallback>();
 
   changeType: ChangeType = 'non-interactive';
+  isCommited: boolean = false;
 
   constructor(
     readonly diagram: Diagram,
@@ -258,6 +259,7 @@ export class UnitOfWork {
 
     registry.unregister(this);
 
+    this.isCommited = true;
     return new ElementsSnapshot(this.#snapshots);
   }
 

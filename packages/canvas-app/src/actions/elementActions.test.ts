@@ -1,9 +1,9 @@
-import { describe, test, expect } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { _test } from './elementActions';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { UOW } from '@diagram-craft/model/uow';
 
 const { ElementConvertToNameAction } = _test;
 
@@ -22,9 +22,8 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
 
-    node.setText('My Node Text', uow);
+    UOW.execute(diagram, () => node.setText('My Node Text', UOW.uow()));
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));
@@ -39,12 +38,13 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
 
-    node.setText('%name%', uow);
-    node.updateMetadata(metadata => {
-      metadata.name = 'Some Name';
-    }, uow);
+    UOW.execute(diagram, () => {
+      node.setText('%name%', UOW.uow());
+      node.updateMetadata(metadata => {
+        metadata.name = 'Some Name';
+      }, UOW.uow());
+    });
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));
@@ -56,12 +56,13 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
 
-    node.setText('Some Text', uow);
-    node.updateMetadata(metadata => {
-      metadata.name = 'Existing Name';
-    }, uow);
+    UOW.execute(diagram, () => {
+      node.setText('Some Text', UOW.uow());
+      node.updateMetadata(metadata => {
+        metadata.name = 'Existing Name';
+      }, UOW.uow());
+    });
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));

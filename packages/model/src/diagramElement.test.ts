@@ -7,6 +7,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { transformElements, findCommonAncestor } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
   beforeEach(backend.beforeEach);
@@ -22,7 +23,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       expect(element.id).toBe('id1');
       if (doc2) expect(layer1_2!.elements[0]!.id).toBe('id1');
@@ -39,59 +40,12 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       expect(element.type).toBe('node');
       if (doc2) expect(layer1_2!.elements[0]!.type).toBe('node');
     });
   });
-
-  /*  describe('setHighlights', () => {
-    it('should set highlights', () => {
-      const [root1, root2] = backend.syncedDocs();
-
-      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-
-      const d1 = TestModel.newDiagramWithLayer(root1);
-      const layer1 = d1.layers.all[0] as RegularLayer;
-      const layer1_2 = doc2?.diagrams[0].layers.all[0] as RegularLayer;
-
-      const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
-
-      element.highlights = ['h1', 'h2'];
-      expect(element.highlights).toStrictEqual(['h1', 'h2']);
-      if (doc2) expect(layer1_2!.elements[0].highlights).toStrictEqual(['h1', 'h2']);
-
-      element.highlights = ['h3'];
-      expect(element.highlights).toStrictEqual(['h3']);
-      if (doc2) expect(layer1_2!.elements[0].highlights).toStrictEqual(['h3']);
-    });
-
-    it('should emit elementHighlighted event', async () => {
-      const [root1, root2] = backend.syncedDocs();
-
-      const d1 = TestModel.newDiagramWithLayer(root1);
-      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-
-      const layer1 = d1.layers.all[0] as RegularLayer;
-
-      const highlightedEvent1 = vi.fn();
-      const highlightedEvent2 = vi.fn();
-
-      const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
-
-      d1.on('elementHighlighted', highlightedEvent1);
-      doc2?.diagrams[0].on('elementHighlighted', highlightedEvent2);
-
-      element.highlights = ['h1', 'h2'];
-      await sleep(20);
-
-      expect(highlightedEvent1).toBeCalledTimes(1);
-      if (doc2) expect(highlightedEvent2).toBeCalledTimes(1);
-    });
-  });*/
 
   describe('updateMetadata', () => {
     it('should update metadata', () => {
@@ -103,9 +57,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.updateMetadata(m => (m.style = 'lorem'), UOW.uow()));
 
       expect(element.metadata.style).toBe('lorem');
       if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
@@ -122,12 +76,12 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const changeEvent2 = vi.fn();
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       d1.on('elementChange', changeEvent1);
       doc2?.diagrams[0]!.on('elementChange', changeEvent2);
 
-      UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
+      UOW.execute(d1, () => element.updateMetadata(m => (m.style = 'lorem'), UOW.uow()));
 
       expect(changeEvent1).toBeCalledTimes(1);
       if (doc2) expect(changeEvent2).toBeCalledTimes(1);
@@ -144,7 +98,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       expect(element.tags).toEqual([]);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual([]);
@@ -159,9 +113,10 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
-
-      element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => {
+        layer1.addElement(element, UOW.uow());
+        element.setTags(['important', 'draft'], UOW.uow());
+      });
 
       expect(element.tags).toEqual(['important', 'draft']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['important', 'draft']);
@@ -178,9 +133,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['tag1', 'tag2'], UOW.uow()));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
@@ -195,10 +150,10 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['old1', 'old2'], UnitOfWork.immediate(d1));
-      element.setTags(['new1', 'new2'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['old1', 'old2'], UOW.uow()));
+      UOW.execute(d1, () => element.setTags(['new1', 'new2'], UOW.uow()));
 
       expect(element.tags).toEqual(['new1', 'new2']);
       expect(element.tags).not.toContain('old1');
@@ -217,9 +172,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UOW.uow()));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -230,9 +185,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UOW.uow()));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
     });
@@ -243,9 +198,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UOW.uow()));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -258,9 +213,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
-      element.setTags(['element-tag1', 'element-tag2'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['element-tag1', 'element-tag2'], UOW.uow()));
 
       expect(d1.document.tags.has('element-tag1')).toBe(true);
       expect(d1.document.tags.has('element-tag2')).toBe(true);
@@ -281,14 +236,14 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       // Put something in cache
       element.cache.set('name', 'test-value');
       expect(element.cache.get('name')).toBe('test-value');
 
       // Setting tags should clear the cache
-      element.setTags(['test-tag'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['test-tag'], UOW.uow()));
 
       expect(element.cache.get('name')).toBeUndefined();
     });
@@ -299,14 +254,14 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => layer1.addElement(element, UOW.uow()));
 
       // First set some tags
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags(['tag1', 'tag2'], UOW.uow()));
       expect(element.tags).toEqual(['tag1', 'tag2']);
 
       // Then clear them
-      element.setTags([], UnitOfWork.immediate(d1));
+      UOW.execute(d1, () => element.setTags([], UOW.uow()));
       expect(element.tags).toEqual([]);
     });
   });
@@ -439,39 +394,38 @@ describe('transformElements', () => {
     const diagram = TestModel.newDiagram();
     diagram.newLayer();
 
-    const uow = new UnitOfWork(diagram);
+    UOW.execute(diagram, () => {
+      const layer = diagram.activeLayer;
+      assertRegularLayer(layer);
 
-    const layer = diagram.activeLayer;
-    assertRegularLayer(layer);
+      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
+      layer.addElement(node1, UOW.uow());
 
-    const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
-    layer.addElement(node1, uow);
+      const node2 = ElementFactory.node(
+        '2',
+        'rect',
+        {
+          x: 100,
+          y: 100,
+          w: 100,
+          h: 100,
+          r: 0
+        },
+        layer,
+        {},
+        {}
+      );
+      layer.addElement(node2, UOW.uow());
 
-    const node2 = ElementFactory.node(
-      '2',
-      'rect',
-      {
-        x: 100,
-        y: 100,
-        w: 100,
-        h: 100,
-        r: 0
-      },
-      layer,
-      {},
-      {}
-    );
-    layer.addElement(node2, uow);
+      const nodes = [node1, node2];
 
-    const nodes = [node1, node2];
+      const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
+      const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
 
-    const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
-    const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
+      transformElements(nodes, TransformFactory.fromTo(before, after), UOW.uow());
 
-    transformElements(nodes, TransformFactory.fromTo(before, after), uow);
-    uow.commit();
-
-    expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
-    expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+      expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
+      expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+    });
   });
 });

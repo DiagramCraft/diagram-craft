@@ -16,6 +16,7 @@ import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UOW } from '@diagram-craft/model/uow';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -28,43 +29,42 @@ export const NodeTypePopup = (props: Props) => {
       const dimension = 50;
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
-      const uow = new UnitOfWork(diagram, true);
+      UOW.execute(diagram, () => {
+        assertRegularLayer(diagram.activeLayer);
+        const node = cloneElements(
+          [registration.node(diagram)],
+          diagram.activeLayer
+        )[0] as DiagramNode;
 
-      assertRegularLayer(diagram.activeLayer);
-      const node = cloneElements(
-        [registration.node(diagram)],
-        diagram.activeLayer,
-        uow
-      )[0] as DiagramNode;
+        assignNewBounds([node], nodePosition, { x: 1, y: 1 }, UOW.uow());
+        node.updateMetadata(meta => {
+          meta.style = diagram.document.styles.activeNodeStylesheet.id;
+          meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+        }, UOW.uow());
 
-      assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
-      node.updateMetadata(meta => {
-        meta.style = diagram.document.styles.activeNodeStylesheet.id;
-        meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
-      }, uow);
+        assertRegularLayer(diagram.activeLayer);
+        diagram.activeLayer.addElement(node, UOW.uow());
 
-      assertRegularLayer(diagram.activeLayer);
-      diagram.activeLayer.addElement(node, uow);
+        const edge = diagram.edgeLookup.get(props.edgeId);
+        assert.present(edge);
 
-      const edge = diagram.edgeLookup.get(props.edgeId);
-      assert.present(edge);
+        edge.setEnd(new AnchorEndpoint(node, 'c'), UOW.uow());
 
-      edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
+        const snapshots = UOW.uow().commit();
 
-      const snapshots = uow.commit();
+        // The last action on the undo stack is adding the edge, so we need to pop it and
+        // add a compound action
+        UOW.uow().diagram.undoManager.add(
+          new CompoundUndoableAction([
+            ...UOW.uow().diagram.undoManager.getToMark(),
+            new SnapshotUndoableAction('Add element', UOW.uow().diagram, snapshots)
+          ])
+        );
 
-      // The last action on the undo stack is adding the edge, so we need to pop it and
-      // add a compound action
-      uow.diagram.undoManager.add(
-        new CompoundUndoableAction([
-          ...uow.diagram.undoManager.getToMark(),
-          new SnapshotUndoableAction('Add element', uow.diagram, snapshots)
-        ])
-      );
+        diagram.document.props.recentStencils.register(registration.id);
 
-      diagram.document.props.recentStencils.register(registration.id);
-
-      props.onClose();
+        props.onClose();
+      });
     },
     [diagram, props]
   );

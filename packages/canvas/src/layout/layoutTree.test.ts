@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { buildLayoutTree, applyLayoutTree } from './layoutTree';
+import { applyLayoutTree, buildLayoutTree } from './layoutTree';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('buildLayoutTree', () => {
   test('root node keeps absolute bounds', () => {
@@ -44,10 +44,10 @@ describe('buildLayoutTree', () => {
         y: 100,
         w: 40,
         h: 20,
-        r: (Math.PI / 6) + (Math.PI / 18) // 40 degrees (30 + 10)
+        r: Math.PI / 6 + Math.PI / 18 // 40 degrees (30 + 10)
       }
     });
-    parent.addChild(child, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
     const layoutTree = buildLayoutTree(parent);
 
@@ -69,8 +69,10 @@ describe('buildLayoutTree', () => {
     const child1 = layer.createNode({ bounds: { x: 120, y: 130, w: 200, h: 100, r: 0.5 } });
     const grandchild = layer.createNode({ bounds: { x: 130, y: 140, w: 50, h: 30, r: 0.7 } });
 
-    root.addChild(child1, UnitOfWork.immediate(diagram));
-    child1.addChild(grandchild, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => {
+      root.addChild(child1, UOW.uow());
+      child1.addChild(grandchild, UOW.uow());
+    });
 
     const layoutTree = buildLayoutTree(root);
 
@@ -105,8 +107,7 @@ describe('applyLayoutTree', () => {
     layoutTree.bounds.w = 300;
     layoutTree.bounds.h = 250;
 
-    const uow = UnitOfWork.immediate(diagram);
-    applyLayoutTree(root, layoutTree, uow);
+    UOW.execute(diagram, () => applyLayoutTree(root, layoutTree, UOW.uow()));
 
     expect(root.bounds.x).toBe(200);
     expect(root.bounds.y).toBe(150);
@@ -119,15 +120,14 @@ describe('applyLayoutTree', () => {
     const layer = diagram.newLayer();
     const parent = layer.addNode({ bounds: { x: 100, y: 100, w: 400, h: 200, r: 0 } });
     const child = layer.createNode({ bounds: { x: 110, y: 100, w: 40, h: 20, r: 0 } });
-    parent.addChild(child, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
     const layoutTree = buildLayoutTree(parent);
     // Modify child's relative position
     layoutTree.children[0]!.bounds.x = 50; // New relative position
     layoutTree.children[0]!.bounds.y = 25;
 
-    const uow = UnitOfWork.immediate(diagram);
-    applyLayoutTree(parent, layoutTree, uow);
+    UOW.execute(diagram, () => applyLayoutTree(parent, layoutTree, UOW.uow()));
 
     // Child should have absolute position = parent + relative
     expect(child.bounds.x).toBe(150); // 100 + 50
@@ -144,10 +144,10 @@ describe('applyLayoutTree', () => {
         y: 100,
         w: 40,
         h: 20,
-        r: (Math.PI / 6) + (Math.PI / 18)
+        r: Math.PI / 6 + Math.PI / 18
       }
     });
-    parent.addChild(child, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
     const layoutTree = buildLayoutTree(parent);
     // Child should have relative rotation of PI/18 (10 degrees)
@@ -156,8 +156,7 @@ describe('applyLayoutTree', () => {
     // Modify child's relative rotation
     layoutTree.children[0]!.bounds.r = Math.PI / 9; // 20 degrees
 
-    const uow = UnitOfWork.immediate(diagram);
-    applyLayoutTree(parent, layoutTree, uow);
+    UOW.execute(diagram, () => applyLayoutTree(parent, layoutTree, UOW.uow()));
 
     // Child should have absolute rotation = parent + relative
     expect(child.bounds.r).toBeCloseTo(Math.PI / 6 + Math.PI / 9, 10); // 30 + 20 = 50 degrees
@@ -169,13 +168,12 @@ describe('applyLayoutTree', () => {
     const parent = layer.addNode({ bounds: { x: 100, y: 50, w: 400, h: 200, r: 0.3 } });
     const child1 = layer.createNode({ bounds: { x: 120, y: 80, w: 150, h: 80, r: 0.5 } });
     const child2 = layer.createNode({ bounds: { x: 280, y: 80, w: 100, h: 80, r: 0.6 } });
-    parent.addChild(child1, UnitOfWork.immediate(diagram));
-    parent.addChild(child2, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => parent.addChild(child1, UOW.uow()));
+    UOW.execute(diagram, () => parent.addChild(child2, UOW.uow()));
 
     // Build layout tree and apply it back without modifications
     const layoutTree = buildLayoutTree(parent);
-    const uow = UnitOfWork.immediate(diagram);
-    applyLayoutTree(parent, layoutTree, uow);
+    UOW.execute(diagram, () => applyLayoutTree(parent, layoutTree, UOW.uow()));
 
     // Bounds should be unchanged
     expect(parent.bounds.x).toBe(100);

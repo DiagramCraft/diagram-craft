@@ -1,9 +1,9 @@
-import { describe, test, expect } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { defaultSerializer } from './serializer';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { UOW } from '@diagram-craft/model/uow';
 
 const serialize = (layer: RegularLayer) => defaultSerializer.serialize(layer);
 
@@ -20,7 +20,7 @@ describe('serializer', () => {
   test('converts node with text', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '2', type: 'text' });
-    node.setText('Hello World', UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => node.setText('Hello World', UOW.uow()));
 
     const result = serialize(layer);
 
@@ -30,10 +30,12 @@ describe('serializer', () => {
   test('converts node with custom props', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '3', type: 'rect' });
-    node.updateProps(props => {
-      props.stroke = { enabled: false };
-      props.fill = { enabled: true, color: '#ff0000' };
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateProps(props => {
+        props.stroke = { enabled: false };
+        props.fill = { enabled: true, color: '#ff0000' };
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -49,9 +51,11 @@ describe('serializer', () => {
   test('converts node with metadata name', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '4', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.name = 'TestNode';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.name = 'TestNode';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -65,10 +69,12 @@ describe('serializer', () => {
   test('converts node with custom styles', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '5', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.style = 'custom-style';
-      metadata.textStyle = 'custom-text-style';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.style = 'custom-style';
+        metadata.textStyle = 'custom-text-style';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -84,10 +90,12 @@ describe('serializer', () => {
   test('filters out default styles', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '6', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.style = 'default';
-      metadata.textStyle = 'default-text-default';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.style = 'default';
+        metadata.textStyle = 'default-text-default';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -99,8 +107,10 @@ describe('serializer', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const parent = layer.addNode({ id: 'parent', type: 'group' });
     const child = layer.createNode({ id: 'child', type: 'text' });
-    child.setText('Child text', UnitOfWork.immediate(layer.diagram));
-    parent.addChild(child, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      child.setText('Child text', UOW.uow());
+      parent.addChild(child, UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -126,8 +136,10 @@ describe('serializer', () => {
     const edge = layer.addEdge({ id: 'e1' });
 
     // Connect edge to nodes using AnchorEndpoint
-    edge.setStart(new AnchorEndpoint(node1, 'c'), UnitOfWork.immediate(layer.diagram));
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -140,10 +152,10 @@ describe('serializer', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const edge = layer.addEdge({ id: 'e1' });
     const labelNode = layer.createNode({ id: 'label1', type: 'text' });
-    labelNode.setText('Edge Label', UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => labelNode.setText('Edge Label', UOW.uow()));
 
     // Add label node as child of edge
-    edge.addChild(labelNode, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => edge.addChild(labelNode, UOW.uow()));
     edge.labelNodes.push(labelNode.asLabelNode());
 
     const result = serialize(layer);
@@ -162,9 +174,11 @@ describe('serializer', () => {
   test('converts edge with custom props', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const edge = layer.addEdge({ id: 'e1' });
-    edge.updateProps(props => {
-      props.stroke = { color: '#ff0000', width: 3 };
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      edge.updateProps(props => {
+        props.stroke = { color: '#ff0000', width: 3 };
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -193,12 +207,14 @@ describe('serializer', () => {
     const grandchild1 = layer.createNode({ id: 'grandchild1', type: 'text' });
     const grandchild2 = layer.createNode({ id: 'grandchild2', type: 'text' });
 
-    grandchild1.setText('GC 1', UnitOfWork.immediate(layer.diagram));
-    grandchild2.setText('GC 2', UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      grandchild1.setText('GC 1', UOW.uow());
+      grandchild2.setText('GC 2', UOW.uow());
 
-    child1.addChild(grandchild1, UnitOfWork.immediate(layer.diagram));
-    child1.addChild(grandchild2, UnitOfWork.immediate(layer.diagram));
-    parent.addChild(child1, UnitOfWork.immediate(layer.diagram));
+      child1.addChild(grandchild1, UOW.uow());
+      child1.addChild(grandchild2, UOW.uow());
+      parent.addChild(child1, UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -220,10 +236,12 @@ describe('serializer', () => {
   test('converts node with both text and props', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '1', type: 'text' });
-    node.setText('Test Text', UnitOfWork.immediate(layer.diagram));
-    node.updateProps(props => {
-      props.stroke = { enabled: false };
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      node.setText('Test Text', UOW.uow());
+      node.updateProps(props => {
+        props.stroke = { enabled: false };
+      }, UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -234,9 +252,11 @@ describe('serializer', () => {
   test('converts edge with only style set', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '1', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.style = 'custom-style';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.style = 'custom-style';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -246,9 +266,11 @@ describe('serializer', () => {
   test('converts edge with only textStyle set', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '1', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.textStyle = 'h1';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.textStyle = 'h1';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -258,9 +280,11 @@ describe('serializer', () => {
   test('filters out default-text style', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: '1', type: 'rect' });
-    node.updateMetadata(metadata => {
-      metadata.style = 'default-text';
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateMetadata(metadata => {
+        metadata.style = 'default-text';
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 
@@ -292,8 +316,10 @@ describe('serializer', () => {
     const node2 = layer.addNode({ id: 'node 2', type: 'rect' });
     const edge = layer.addEdge({ id: 'edge 1' });
 
-    edge.setStart(new AnchorEndpoint(node1, 'c'), UnitOfWork.immediate(layer.diagram));
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -307,8 +333,10 @@ describe('serializer', () => {
     const node2 = layer.addNode({ id: 'simpleNode', type: 'rect' });
     const edge = layer.addEdge({ id: 'e1' });
 
-    edge.setStart(new AnchorEndpoint(node1, 'c'), UnitOfWork.immediate(layer.diagram));
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -320,8 +348,10 @@ describe('serializer', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const parent = layer.addNode({ id: 'parent node', type: 'group' });
     const child = layer.createNode({ id: 'child node', type: 'text' });
-    child.setText('Child text', UnitOfWork.immediate(layer.diagram));
-    parent.addChild(child, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () => {
+      child.setText('Child text', UOW.uow());
+      parent.addChild(child, UOW.uow());
+    });
 
     const result = serialize(layer);
 
@@ -335,9 +365,11 @@ describe('serializer', () => {
   test('converts node with ID containing spaces and props', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({ id: 'my node', type: 'rect' });
-    node.updateProps(props => {
-      props.stroke = { enabled: false };
-    }, UnitOfWork.immediate(layer.diagram));
+    UOW.execute(layer.diagram, () =>
+      node.updateProps(props => {
+        props.stroke = { enabled: false };
+      }, UOW.uow())
+    );
 
     const result = serialize(layer);
 

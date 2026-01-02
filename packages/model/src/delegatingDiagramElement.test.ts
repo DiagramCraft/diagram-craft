@@ -8,6 +8,7 @@ import type { DiagramNode } from './diagramNode';
 import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramNode } from './delegatingDiagramNode';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) => {
   let model: StandardTestModel;
@@ -33,7 +34,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod', 'Modification', model.diagram1, []);
-    model.diagram1.layers.add(modLayer, UnitOfWork.immediate(model.diagram1));
+    UOW.execute(model.diagram1, () => model.diagram1.layers.add(modLayer, UOW.uow()));
 
     model.diagram1.layers.active = model.layer1;
 
@@ -44,7 +45,9 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     // Create a delegating node by modifying the delegate
     delegatingNode = new DelegatingDiagramNode(`do-${baseNode.id}`, baseNode, modLayer);
-    modLayer.modifyChange(baseNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
+    UOW.execute(model.diagram1, () =>
+      modLayer.modifyChange(baseNode.id, delegatingNode, UOW.uow())
+    );
 
     if (modLayer2) {
       delegatingNode2 = modLayer2.elements.find(

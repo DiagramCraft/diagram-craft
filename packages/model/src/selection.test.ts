@@ -1,7 +1,7 @@
 import { Selection } from './selection';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { TestDiagramBuilder, TestModel, TestLayerBuilder } from './test-support/testModel';
-import { UnitOfWork } from './unitOfWork';
+import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/testModel';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('selection', () => {
   let diagram: TestDiagramBuilder;
@@ -154,7 +154,7 @@ describe('selection', () => {
     selection.setElements([node]);
     expect(selection.isChanged()).toBe(false);
 
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UOW.uow()));
     expect(selection.isChanged()).toBe(true);
   });
 
@@ -174,9 +174,10 @@ describe('selection', () => {
     const parent = layer.addNode();
     const child = layer.addNode();
     const grandchild = layer.addNode();
-
-    parent.addChild(child, UnitOfWork.immediate(diagram));
-    child.addChild(grandchild, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => {
+      parent.addChild(child, UOW.uow());
+      child.addChild(grandchild, UOW.uow());
+    });
 
     selection.setElements([grandchild]);
 
@@ -191,7 +192,7 @@ describe('selection', () => {
     const node = layer.addNode({ bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 } });
 
     selection.setElements([node]);
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UOW.uow()));
 
     expect(selection.isChanged()).toBe(true);
 
@@ -209,7 +210,7 @@ describe('selection', () => {
     expect(selection.bounds.r).toBe(45);
 
     const boundsBeforeRecalc = selection.bounds;
-    node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, UOW.uow()));
     selection.recalculateBoundingBox();
 
     expect(selection.bounds).toEqual(boundsBeforeRecalc);
