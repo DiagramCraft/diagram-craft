@@ -63,8 +63,10 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('connected node - should set bounds correctly', () => {
       // Setup
       const edge1 = model.layer1.addEdge();
-      edge1.setStart(new AnchorEndpoint(node1, 'c'), model.uow);
-      edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.setStart(new AnchorEndpoint(node1, 'c'), uow);
+        edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), uow);
+      });
 
       const edge2 = model.doc2
         ? (model.diagram2!.edgeLookup.get(edge1.id)! as DiagramEdge)
@@ -97,8 +99,10 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('connected node - should undo correctly', () => {
       // Setup
       const edge1 = model.layer1.addEdge();
-      edge1.setStart(new AnchorEndpoint(node1, 'c'), model.uow);
-      edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        edge1.setStart(new AnchorEndpoint(node1, 'c'), uow);
+        edge1.setEnd(new FreeEndpoint({ x: -100, y: -100 }), uow);
+      });
 
       const edge2 = model.doc2
         ? (model.diagram2!.edgeLookup.get(edge1.id)! as DiagramEdge)
@@ -146,7 +150,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('detachCRDT', () => {
     it('text is kept when detaching', () => {
       const node = model.layer1.addNode();
-      node.setText('LabelNodeName', model.uow);
+      UnitOfWork.execute(model.diagram1, uow => node.setText('LabelNodeName', uow));
 
       expect(node.getText()).toBe('LabelNodeName');
       if (model.doc2) {
@@ -202,7 +206,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const edge = model.layer1.addEdge();
 
       const labelNode = node1.asLabelNode();
-      edge.setLabelNodes([labelNode], model.uow);
+      UnitOfWork.execute(model.diagram1, uow => edge.setLabelNodes([labelNode], uow));
 
       expect(node1.labelNode()!.node()).toEqual(node1);
       if (model.doc2) expect(node2?.labelNode()!.node().id).toBe(node1.id);
@@ -229,8 +233,10 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
   describe('name', () => {
     it('should return "nodeType / id" when no metadata name or text is available', () => {
-      node1.updateMetadata(metadata => (metadata.name = ''), model.uow);
-      node1.setText('', model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        node1.updateMetadata(metadata => (metadata.name = ''), uow);
+        node1.setText('', uow);
+      });
 
       expect(node1.name).toBe(`${node1.nodeType} / ${node1.id}`);
       if (model.doc2) expect(node2?.name).toBe(`${node1.nodeType} / ${node1.id}`);
@@ -238,18 +244,19 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
     it('should return metadata name if set', () => {
       const customName = 'Custom Node Name';
-      node1.updateMetadata(metadata => (metadata.name = customName), model.uow);
+      UnitOfWork.execute(model.diagram1, uow =>
+        node1.updateMetadata(metadata => (metadata.name = customName), uow)
+      );
 
       expect(node1.name).toBe(customName);
       if (model.doc2) expect(node2?.name).toBe(customName);
     });
 
     it('should format name based on text template if text is available', () => {
-      node1.setText('Hello, %value%!', model.uow);
-      node1.updateMetadata(
-        metadata => (metadata.data = { customData: { value: 'Node1' } }),
-        model.uow
-      );
+      UnitOfWork.execute(model.diagram1, uow => {
+        node1.setText('Hello, %value%!', uow);
+        node1.updateMetadata(metadata => (metadata.data = { customData: { value: 'Node1' } }), uow);
+      });
 
       expect(node1.name).toBe('Hello, Node1!');
       if (model.doc2) expect(node2?.name).toBe('Hello, Node1!');
@@ -283,7 +290,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
     it('should append the child to the children array if no relation is provided', () => {
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => node1.addChild(child, uow));
 
       expect(node1.children[node1.children.length - 1]).toBe(child);
       if (model.doc2) expect(node2!.children[node2!.children.length - 1]!.id).toBe(child.id);
@@ -291,30 +298,34 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
     it('should update both parent and child in UnitOfWork', () => {
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        node1.addChild(child, uow);
 
-      expect(model.uow.contains(node1, 'update')).toBe(true);
-      expect(model.uow.contains(child, 'update')).toBe(true);
+        expect(uow.contains(node1, 'update')).toBe(true);
+        expect(uow.contains(child, 'update')).toBe(true);
+      });
     });
 
     it('should be added to the diagram if it is not already present', () => {
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => node1.addChild(child, uow));
       expect(model.diagram1.lookup(child.id)).toBe(child);
       if (model.doc2) expect(model.diagram2!.lookup(child.id)?.id).toBe(child.id);
     });
 
     it('should not add the child if it is already present', () => {
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
-      expect(() => node1.addChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow => {
+        node1.addChild(child, uow);
+        expect(() => node1.addChild(child, uow)).toThrow();
+      });
     });
 
     it('should not add the child if it is already present in a different diagram', () => {
       const child = model.layer1.createNode();
       const otherDiagram = TestModel.newDiagram();
       const other = otherDiagram.newLayer().createNode();
-      expect(() => other.addChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow => expect(() => other.addChild(child, uow)).toThrow());
     });
   });
 
@@ -322,7 +333,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('should remove the child from the children array', () => {
       // **** Setup
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow => node1.addChild(child, uow));
 
       const elementRemove = [vi.fn(), vi.fn()];
       model.diagram1.on('elementRemove', elementRemove[0]!);
@@ -344,12 +355,14 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
     it('should fail if the child is not present', () => {
       const child = model.layer1.createNode();
-      expect(() => node1.removeChild(child, model.uow)).toThrow();
+      UnitOfWork.execute(model.diagram1, uow =>
+        expect(() => node1.removeChild(child, uow)).toThrow()
+      );
     });
 
     it('should update both parent and child in UnitOfWork', () => {
       const child = model.layer1.createNode();
-      node1.addChild(child, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => node1.addChild(child, uow));
 
       UnitOfWork.execute(model.diagram1, uow => {
         node1.removeChild(child, uow);
@@ -382,8 +395,10 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('should remove all children from the previous set', () => {
       const child1 = model.layer1.createNode();
       const child2 = model.layer1.createNode();
-      node1.addChild(child1, model.uow);
-      node1.addChild(child2, model.uow);
+      UnitOfWork.execute(model.diagram1, uow => {
+        node1.addChild(child1, uow);
+        node1.addChild(child2, uow);
+      });
 
       UnitOfWork.execute(model.diagram1, uow => {
         node1.setChildren([child1], uow);
