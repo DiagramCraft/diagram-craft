@@ -144,9 +144,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   addAndExecute(action: UndoableAction) {
     this.add(action);
 
-    const uow = new UnitOfWork(this.diagram);
-    action.redo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
 
     this.emit('execute', { action, type: 'redo' });
   }
@@ -160,9 +158,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     this.redoableActions.push(action);
     this.prune();
 
-    const uow = new UnitOfWork(this.diagram);
-    action.undo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.undo(uow));
 
     this.emit('execute', { action: action, type: 'undo' });
   }
@@ -176,9 +172,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     this.undoableActions.push(action);
     this.prune();
 
-    const uow = new UnitOfWork(this.diagram);
-    action.redo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
 
     this.emit('execute', { action: action, type: 'undo' });
   }
