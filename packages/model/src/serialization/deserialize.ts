@@ -60,15 +60,14 @@ const deserializeEndpoint = (
 
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
-  diagram: Diagram,
   layer: RegularLayer | ModificationLayer,
+  uow: UnitOfWork,
   nodeLookup?: ElementLookup<DiagramNode>,
-  edgeLookup?: ElementLookup<DiagramEdge>,
-  uow?: UnitOfWork
+  edgeLookup?: ElementLookup<DiagramEdge>
 ) => {
   nodeLookup ??= new ElementLookup<DiagramNode>();
   edgeLookup ??= new ElementLookup<DiagramEdge>();
-  uow ??= new UnitOfWork(diagram, false, true);
+  /*uow ??= new UnitOfWork(diagram, false, true);*/
 
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
@@ -361,13 +360,8 @@ const deserializeDiagrams = <T extends Diagram>(
         const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
         assert.present(layer);
 
-        const elements = deserializeDiagramElements(
-          l.elements,
-          newDiagram,
-          layer,
-          nodeLookup,
-          edgeLookup
-        );
+        const elements = deserializeDiagramElements(l.elements, layer, uow, nodeLookup, edgeLookup);
+
         layer.setElements(elements, uow);
 
         // Need to invalidate and clear cache, as this may have been

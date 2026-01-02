@@ -19,7 +19,7 @@ const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): 
 
   const tpl = deepClone(template.template);
   const { node, diagram } = createThumbnailForNode(
-    (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
+    (_diagram, layer, uow) => deserializeDiagramElements([tpl], layer, uow)[0] as DiagramNode,
     definitions
   );
   UnitOfWork.execute(node.diagram, uow => node.setBounds({ ...node.bounds, x: 0, y: 0 }, uow));

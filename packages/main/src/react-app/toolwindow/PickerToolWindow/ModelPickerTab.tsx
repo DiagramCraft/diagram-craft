@@ -129,7 +129,7 @@ const makeTemplateNode = (
 
   const tpl = deepClone(template.template);
   const { node, diagram } = createThumbnailForNode(
-    (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
+    (_diagram, layer, uow) => deserializeDiagramElements([tpl], layer, uow)[0] as DiagramNode,
     definitions
   );
   UnitOfWork.execute(node.diagram, uow => {

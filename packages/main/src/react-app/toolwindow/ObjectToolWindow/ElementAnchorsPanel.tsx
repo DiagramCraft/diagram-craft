@@ -52,11 +52,10 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
           uow =>
             deserializeDiagramElements(
               [serializedNode],
-              d,
               layer,
+              uow,
               new ElementLookup<DiagramNode>(),
-              new ElementLookup<DiagramEdge>(),
-              uow
+              new ElementLookup<DiagramEdge>()
             )[0] as DiagramNode
         );
       },

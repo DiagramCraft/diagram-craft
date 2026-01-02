@@ -19,7 +19,7 @@ const createDiagram = (defs: Definitions) => {
 };
 
 export const createThumbnailForNode = (
-  factory: (diagram: Diagram, layer: RegularLayer) => DiagramNode,
+  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramNode,
   definitions: Definitions
 ) => {
   const diagram = createDiagram(definitions);
@@ -28,7 +28,7 @@ export const createThumbnailForNode = (
     const layer = new RegularLayer(newid(), newid(), [], diagram);
     diagram.layers.add(layer, uow);
 
-    const node = factory(diagram, layer);
+    const node = factory(diagram, layer, uow);
     layer.addElement(node, uow);
 
     return { diagram, layer, node };
@@ -36,7 +36,7 @@ export const createThumbnailForNode = (
 };
 
 export const createThumbnailForEdge = (
-  factory: (diagram: Diagram, layer: RegularLayer) => DiagramEdge,
+  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramEdge,
   definitions: Definitions
 ) => {
   const diagram = createDiagram(definitions);
@@ -45,7 +45,7 @@ export const createThumbnailForEdge = (
     const layer = new RegularLayer(newid(), newid(), [], diagram);
     diagram.layers.add(layer, uow);
 
-    const edge = factory(diagram, layer);
+    const edge = factory(diagram, layer, uow);
     layer.addElement(edge, uow);
 
     return { diagram, layer, edge };
