@@ -60,7 +60,7 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
   edge => edge.editProps,
   edge => edge.storedProps,
   (edge, path) => edge.getPropsInfo(path),
-  (diagram, element, cb) => UnitOfWork.execute(diagram, {}, uow => element.updateProps(cb, uow)),
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selection, 'change', handler);
   },
@@ -91,7 +91,7 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
   node => node.editProps,
   node => node.storedProps,
   (node, path, defaultValue) => node.getPropsInfo(path, defaultValue),
-  (diagram, element, cb) => UnitOfWork.execute(diagram, {}, uow => element.updateProps(cb, uow)),
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selection, 'change', handler);
   },
@@ -124,7 +124,7 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
   element => element.editProps,
   element => element.storedProps,
   (element, path) => element.getPropsInfo(path),
-  (diagram, element, cb) => UnitOfWork.execute(diagram, {}, uow => element.updateProps(cb, uow)),
+  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
   (diagram, handler) => {
     useEventListener(diagram.selection, 'change', handler);
   },

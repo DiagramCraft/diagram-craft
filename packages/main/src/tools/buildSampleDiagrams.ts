@@ -55,7 +55,7 @@ const writeArrow = (
     },
     []
   );
-  layer.addElement(n, UnitOfWork.immediate(diagram));
+  UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
@@ -82,7 +82,7 @@ const writeArrow = (
         [],
         layer
       );
-      layer.addElement(edge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
     }
   }
 
@@ -106,7 +106,7 @@ const writeArrow = (
       {},
       { text: '' }
     );
-    layer.addElement(n, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
     const edge = ElementFactory.edge(
       newid(),
@@ -130,9 +130,9 @@ const writeArrow = (
       [],
       layer
     );
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
 
-    layer.stackModify([n], 10, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => layer.stackModify([n], 10, uow));
   }
 };
 
@@ -273,7 +273,7 @@ const SHAPES_DEFS = [
           [],
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
@@ -294,7 +294,7 @@ const SHAPES_DEFS = [
           [],
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       }
     });
     return 'rotated-primary-anchors';
@@ -387,7 +387,7 @@ const writeShape = (
     },
     []
   );
-  layer.addElement(n, UnitOfWork.immediate(diagram));
+  UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 70;
   let maxX = startX;

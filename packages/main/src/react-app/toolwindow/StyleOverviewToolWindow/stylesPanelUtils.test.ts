@@ -12,10 +12,12 @@ describe('stylesPanelUtils', () => {
     test('extracts fill props for nodes when filter is "fill"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.fill = { color: '#ff0000' };
-        props.stroke = { color: '#00ff00' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.fill = { color: '#ff0000' };
+          props.stroke = { color: '#00ff00' };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'fill', true);
 
@@ -37,10 +39,12 @@ describe('stylesPanelUtils', () => {
     test('extracts stroke props for nodes when filter is "stroke"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.stroke = { color: '#00ff00', width: 2 };
-        props.fill = { color: '#ff0000' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.stroke = { color: '#00ff00', width: 2 };
+          props.fill = { color: '#ff0000' };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'stroke', true);
 
@@ -53,10 +57,12 @@ describe('stylesPanelUtils', () => {
       layer.addNode({ id: 'start' });
       layer.addNode({ id: 'end' });
       const edge = layer.addEdge({ startNodeId: 'start', endNodeId: 'end' });
-      edge.updateProps(props => {
-        props.stroke = { color: '#00ff00', width: 2 };
-        props.arrow = { start: { type: 'SQUARE' }, end: { type: 'ARROW' } };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        edge.updateProps(props => {
+          props.stroke = { color: '#00ff00', width: 2 };
+          props.arrow = { start: { type: 'SQUARE' }, end: { type: 'ARROW' } };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(edge.storedProps, 'stroke', false);
 
@@ -67,10 +73,12 @@ describe('stylesPanelUtils', () => {
     test('extracts shadow props when filter is "shadow"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.shadow = { enabled: true, color: '#000000' };
-        props.fill = { color: '#ff0000' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.shadow = { enabled: true, color: '#000000' };
+          props.fill = { color: '#ff0000' };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'shadow', true);
 
@@ -81,10 +89,12 @@ describe('stylesPanelUtils', () => {
     test('extracts effects props when filter is "effects"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.effects = { blur: 5, opacity: 0.8 };
-        props.fill = { color: '#ff0000' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.effects = { blur: 5, opacity: 0.8 };
+          props.fill = { color: '#ff0000' };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'effects', true);
 
@@ -95,10 +105,12 @@ describe('stylesPanelUtils', () => {
     test('extracts text props for nodes when filter is "text"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.text = { font: 'Arial', fontSize: 14 };
-        props.fill = { color: '#ff0000' };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.text = { font: 'Arial', fontSize: 14 };
+          props.fill = { color: '#ff0000' };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'text', true);
 
@@ -120,14 +132,16 @@ describe('stylesPanelUtils', () => {
     test('extracts all appearance props for nodes when filter is "all"', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
-      node.updateProps(props => {
-        props.fill = { color: '#ff0000' };
-        props.stroke = { color: '#00ff00' };
-        props.shadow = { enabled: true };
-        props.effects = { blur: 5 };
-        props.text = { font: 'Arial' };
-        props.geometry = { flipV: true };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        node.updateProps(props => {
+          props.fill = { color: '#ff0000' };
+          props.stroke = { color: '#00ff00' };
+          props.shadow = { enabled: true };
+          props.effects = { blur: 5 };
+          props.text = { font: 'Arial' };
+          props.geometry = { flipV: true };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(node.storedProps, 'all', true);
 
@@ -144,12 +158,14 @@ describe('stylesPanelUtils', () => {
       layer.addNode({ id: 'start' });
       layer.addNode({ id: 'end' });
       const edge = layer.addEdge({ startNodeId: 'start', endNodeId: 'end' });
-      edge.updateProps(props => {
-        props.stroke = { color: '#00ff00' };
-        props.shadow = { enabled: true };
-        props.effects = { opacity: 5 };
-        props.arrow = { start: { type: 'SQUARE' } };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        edge.updateProps(props => {
+          props.stroke = { color: '#00ff00' };
+          props.shadow = { enabled: true };
+          props.effects = { opacity: 5 };
+          props.arrow = { start: { type: 'SQUARE' } };
+        }, uow)
+      );
 
       const result = extractPropsToConsider(edge.storedProps, 'all', false);
 

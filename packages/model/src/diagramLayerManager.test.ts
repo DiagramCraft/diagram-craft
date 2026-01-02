@@ -11,7 +11,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       const allLayers = diagram1.layers.all;
       expect(allLayers).toEqual([layer1, layer2]);
@@ -21,11 +21,11 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       // Act
       const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       // Verify
       const allLayers = diagram1.layers.all;
@@ -36,10 +36,10 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       // Act
-      diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       // Verify
       expect(diagram1.layers.all).toEqual([layer2]);
@@ -70,7 +70,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toEqual([layer1, layer2]);
@@ -80,7 +80,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, diagram2, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       // Act
       diagram1.layers.toggleVisibility(layer1);
@@ -96,7 +96,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       diagram1.layers.toggleVisibility(layer1 as any);
       diagram1.layers.toggleVisibility(layer1 as any);
@@ -112,7 +112,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       // Act
       const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       // Verify
       expect(diagram1.layers.all).toContain(newLayer);
@@ -126,9 +126,8 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const { diagram1 } = standardTestModel(backend);
 
       const newLayer = new TestLayerBuilder('newLayer', diagram1);
-      const uow = UnitOfWork.immediate(diagram1);
 
-      diagram1.layers.add(newLayer, uow);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toContain(newLayer);
@@ -139,9 +138,8 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const { diagram1 } = standardTestModel(backend);
 
       const newLayer = new TestLayerBuilder('newLayer', diagram1);
-      const uow = UnitOfWork.immediate(diagram1);
 
-      diagram1.layers.add(newLayer, uow);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       const activeLayer = diagram1.layers.active;
       expect(activeLayer).toBe(newLayer);
@@ -154,7 +152,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const { diagram1, diagram2, layer1 } = standardTestModel(backend);
 
       // Act
-      diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       // Verify
       expect(diagram1.layers.all).not.toContain(layer1);
@@ -167,9 +165,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
 
-      const uow = UnitOfWork.immediate(diagram1);
-
-      diagram1.layers.remove(layer1, uow);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).not.toContain(layer1);
@@ -203,7 +199,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       });
 
       const newLayer = new RegularLayer('remote-layer', 'Remote Layer', [], diagram1);
-      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       expect(addedLayers).toHaveLength(1);
       expect(addedLayers[0]!.id).toBe('remote-layer');
@@ -233,7 +229,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         removedLayers.push(layer);
       });
 
-      diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       expect(removedLayers).toHaveLength(1);
       expect(removedLayers[0]!.id).toBe(layer1.id);
@@ -263,7 +259,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         updatedLayers.push(layer);
       });
 
-      layer1.setName('Remote Update', UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => layer1.setName('Remote Update', uow));
 
       expect(updatedLayers).toHaveLength(1);
       expect(updatedLayers[0]!.id).toBe(layer1.id);
@@ -287,11 +283,11 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       });
 
       const layer2 = new RegularLayer('layer-2', 'Layer 2', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
-      layer1.setName('Updated Layer 1', UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => layer1.setName('Updated Layer 1', uow));
 
-      diagram1.layers.remove(layer2, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer2, uow));
 
       expect(events).toHaveLength(3);
       expect(events).toEqual([

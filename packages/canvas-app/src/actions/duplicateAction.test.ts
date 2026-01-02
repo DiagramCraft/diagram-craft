@@ -127,7 +127,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -180,7 +180,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       // Select only one node and the edge
       diagram.selection.setElements([node1, connectedEdge]);
@@ -223,7 +223,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -344,10 +344,7 @@ describe('DuplicateAction', () => {
         .filter(isNode)
         .filter(
           n =>
-            n.id !== parent1.id &&
-            n.id !== parent2.id &&
-            n.id !== child1.id &&
-            n.id !== child2.id
+            n.id !== parent1.id && n.id !== parent2.id && n.id !== child1.id && n.id !== child2.id
         );
 
       expect(duplicatedNodes).toHaveLength(2);

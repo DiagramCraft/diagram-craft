@@ -85,7 +85,7 @@ describe('ReferenceLayer', () => {
       // Setup
       const diagram = TestModel.newDiagram();
       const targetLayer = new RegularLayer('target-layer', 'Target Layer', [], diagram);
-      diagram.layers.add(targetLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(targetLayer, uow));
 
       const reference = {
         layerId: targetLayer.id,
@@ -93,7 +93,7 @@ describe('ReferenceLayer', () => {
       };
 
       const referenceLayer = new ReferenceLayer('ref-layer', 'Reference Layer', diagram, reference);
-      diagram.layers.add(referenceLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(referenceLayer, uow));
 
       // Act
       const snapshot = referenceLayer.snapshot();

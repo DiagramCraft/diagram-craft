@@ -33,7 +33,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod', 'Modification', model.diagram1, []);
-    model.diagram1.layers.add(modLayer, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow => model.diagram1.layers.add(modLayer, uow));
 
     model.diagram1.layers.active = model.layer1;
 
@@ -44,7 +44,9 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     // Create a delegating node by modifying the delegate
     delegatingNode = new DelegatingDiagramNode(`do-${baseNode.id}`, baseNode, modLayer);
-    modLayer.modifyChange(baseNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow =>
+      modLayer.modifyChange(baseNode.id, delegatingNode, uow)
+    );
 
     if (modLayer2) {
       delegatingNode2 = modLayer2.elements.find(
@@ -58,7 +60,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
   describe('metadata', () => {
     it('should return delegate metadata when no override is set', () => {
       // Setup - set some metadata on the delegate
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { foo: 'bar' } };
         }, uow)
@@ -76,14 +78,14 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     it('should merge delegate metadata with overridden metadata', () => {
       // Setup - set metadata on delegate
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { delegateKey: 'delegateValue' } };
         }, uow)
       );
 
       // Act - override some metadata on delegating node
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateMetadata(metadata => {
           metadata.data = { customData: { overrideKey: 'overrideValue' } };
         }, uow)
@@ -108,14 +110,14 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     it('should override delegate metadata keys with same name', () => {
       // Setup - set metadata on delegate
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { key: 'delegateValue' } };
         }, uow)
       );
 
       // Act - override the same key on delegating node
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateMetadata(metadata => {
           metadata.data = { customData: { key: 'overrideValue' } };
         }, uow)
@@ -139,7 +141,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateMetadata(metadata => {
           metadata.data = {
             customData: { testKey: 'testValue' }
@@ -160,7 +162,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
 
     it('should not affect delegate metadata', () => {
       // Setup - set delegate metadata
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateMetadata(metadata => {
           metadata.data = { customData: { delegateKey: 'delegateValue' } };
         }, uow)
@@ -169,7 +171,7 @@ describe.each(Backends.all())('DelegatingDiagramElement [%s]', (_name, backend) 
       const originalDelegateMetadata = { ...baseNode.metadata };
 
       // Act - update delegating node metadata
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateMetadata(metadata => {
           metadata.data = { customData: { overrideKey: 'overrideValue' } };
         }, uow)

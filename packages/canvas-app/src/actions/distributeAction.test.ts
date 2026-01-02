@@ -57,9 +57,10 @@ describe('DistributeAction', () => {
       const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
       const child2 = layer.addNode({ bounds: { x: 20, y: 20, w: 50, h: 50, r: 0 } });
 
-      const uow = UnitOfWork.immediate(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       diagram.selection.setElements([parent]);
       const action = new DistributeAction('horizontal', $tStr('', ''), mkContext(diagram));
@@ -71,8 +72,7 @@ describe('DistributeAction', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
       const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
 
-      const uow = UnitOfWork.immediate(diagram);
-      parent.addChild(child1, uow);
+      UnitOfWork.execute(diagram, uow => parent.addChild(child1, uow));
 
       diagram.selection.setElements([parent]);
       const action = new DistributeAction('horizontal', $tStr('', ''), mkContext(diagram));
@@ -131,10 +131,11 @@ describe('DistributeAction', () => {
       const child2 = layer.addNode({ bounds: { x: 250, y: 10, w: 50, h: 50, r: 0 } });
       const child3 = layer.addNode({ bounds: { x: 100, y: 10, w: 50, h: 50, r: 0 } });
 
-      const uow = UnitOfWork.immediate(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      parent.addChild(child3, uow);
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+        parent.addChild(child3, uow);
+      });
 
       diagram.selection.setElements([parent]);
       new DistributeAction('horizontal', $tStr('', ''), mkContext(diagram)).execute();
@@ -151,10 +152,11 @@ describe('DistributeAction', () => {
       const child2 = layer.addNode({ bounds: { x: 10, y: 250, w: 50, h: 50, r: 0 } });
       const child3 = layer.addNode({ bounds: { x: 10, y: 100, w: 50, h: 50, r: 0 } });
 
-      const uow = UnitOfWork.immediate(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      parent.addChild(child3, uow);
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+        parent.addChild(child3, uow);
+      });
 
       diagram.selection.setElements([parent]);
       new DistributeAction('vertical', $tStr('', ''), mkContext(diagram)).execute();

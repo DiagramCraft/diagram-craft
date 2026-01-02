@@ -17,7 +17,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         { id: 'rule1', name: 'Rule 1', actions: [], type: 'node', clauses: [] },
         { id: 'rule2', name: 'Rule 2', actions: [], type: 'node', clauses: [] }
       ]);
-      diagram1.layers.add(ruleLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(ruleLayer, uow));
 
       // Verify
       const rules = ruleLayer.rules;
@@ -46,10 +46,10 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         { id: 'rule1', name: 'Rule 1', actions: [], type: 'node', clauses: [] },
         { id: 'rule2', name: 'Rule 2', actions: [], type: 'node', clauses: [] }
       ]);
-      diagram1.layers.add(ruleLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(ruleLayer, uow));
 
       // Act
-      ruleLayer.addRule({ ...newRule, type: 'node' }, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => ruleLayer.addRule({ ...newRule, type: 'node' }, uow));
 
       const rules = ruleLayer.rules;
       expect(rules).toHaveLength(3);
@@ -71,10 +71,10 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         { id: 'rule1', name: 'Rule 1', actions: [], type: 'node', clauses: [] },
         { id: 'rule2', name: 'Rule 2', actions: [], type: 'node', clauses: [] }
       ]);
-      diagram1.layers.add(ruleLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(ruleLayer, uow));
 
       // Act
-      ruleLayer.removeRule(ruleLayer.rules[1]!, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => ruleLayer.removeRule(ruleLayer.rules[1]!, uow));
 
       // Verify
       const rules = ruleLayer.rules;
@@ -97,15 +97,13 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         { id: 'rule1', name: 'Rule 1', actions: [], type: 'node', clauses: [] },
         { id: 'rule2', name: 'Rule 2', actions: [], type: 'node', clauses: [] }
       ]);
-      diagram1.layers.add(ruleLayer, UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(ruleLayer, uow));
 
       const newRule = { id: 'rule3', name: 'Rule 3', clauses: [], actions: [] };
 
       // Act
-      ruleLayer.replaceRule(
-        ruleLayer.rules[0]!,
-        { type: 'node', ...newRule },
-        UnitOfWork.immediate(diagram1)
+      UnitOfWork.execute(diagram1, uow =>
+        ruleLayer.replaceRule(ruleLayer.rules[0]!, { type: 'node', ...newRule }, uow)
       );
 
       // Verify
@@ -131,7 +129,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
       });
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
-      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(ruleLayer, uow));
 
       const element = layer.elements[0]!;
 
@@ -155,7 +153,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
       };
 
-      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => ruleLayer.addRule(rule, uow));
       const adjustments = ruleLayer.adjustments();
 
       expect(adjustments.has(element.id)).toBe(true);
@@ -167,7 +165,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
       });
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
-      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(ruleLayer, uow));
 
       const element = layer.elements[0]!;
 
@@ -204,7 +202,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
       };
 
-      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => ruleLayer.addRule(rule, uow));
       const adjustments = ruleLayer.adjustments();
 
       expect(adjustments.has(element.id)).toBe(true);
@@ -216,7 +214,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
       });
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
-      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(ruleLayer, uow));
 
       const element = layer.elements[0]!;
 
@@ -241,7 +239,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
       };
 
-      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => ruleLayer.addRule(rule, uow));
       const adjustments = ruleLayer.adjustments();
 
       expect(adjustments.has(element.id)).toBe(true);
@@ -253,7 +251,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
       });
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
-      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(ruleLayer, uow));
 
       const element = layer.elements[0]!;
 
@@ -265,7 +263,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
       };
 
-      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => ruleLayer.addRule(rule, uow));
       const adjustments = ruleLayer.adjustments();
 
       expect(adjustments.has(element.id)).toBe(false);
@@ -277,7 +275,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         nodes: [{ id: 'node-1', bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } }]
       });
       const ruleLayer = new RuleLayer('layer1', 'Test Layer', diagram, []);
-      diagram.layers.add(ruleLayer, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => diagram.layers.add(ruleLayer, uow));
 
       const element = layer.elements[0]!;
 
@@ -302,7 +300,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
         actions: [{ id: 'action1', type: 'set-props' as const, props: {} }]
       };
 
-      ruleLayer.addRule(rule, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => ruleLayer.addRule(rule, uow));
       const adjustments = ruleLayer.adjustments();
 
       expect(adjustments.has(element.id)).toBe(false);

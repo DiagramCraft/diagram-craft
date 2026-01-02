@@ -22,7 +22,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.id).toBe('id1');
       if (doc2) expect(layer1_2!.elements[0]!.id).toBe('id1');
@@ -39,7 +39,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.type).toBe('node');
       if (doc2) expect(layer1_2!.elements[0]!.type).toBe('node');
@@ -103,9 +103,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
 
       expect(element.metadata.style).toBe('lorem');
       if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
@@ -122,12 +122,12 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const changeEvent2 = vi.fn();
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       d1.on('elementChange', changeEvent1);
       doc2?.diagrams[0]!.on('elementChange', changeEvent2);
 
-      UnitOfWork.execute(d1, {}, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
+      UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
 
       expect(changeEvent1).toBeCalledTimes(1);
       if (doc2) expect(changeEvent2).toBeCalledTimes(1);
@@ -144,7 +144,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.tags).toEqual([]);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual([]);
@@ -159,9 +159,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['important', 'draft'], uow));
 
       expect(element.tags).toEqual(['important', 'draft']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['important', 'draft']);
@@ -178,9 +178,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
@@ -195,10 +195,10 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['old1', 'old2'], UnitOfWork.immediate(d1));
-      element.setTags(['new1', 'new2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['old1', 'old2'], uow));
+      UnitOfWork.execute(d1, uow => element.setTags(['new1', 'new2'], uow));
 
       expect(element.tags).toEqual(['new1', 'new2']);
       expect(element.tags).not.toContain('old1');
@@ -217,9 +217,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -230,9 +230,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
     });
@@ -243,9 +243,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -258,9 +258,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['element-tag1', 'element-tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['element-tag1', 'element-tag2'], uow));
 
       expect(d1.document.tags.has('element-tag1')).toBe(true);
       expect(d1.document.tags.has('element-tag2')).toBe(true);
@@ -281,14 +281,14 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       // Put something in cache
       element.cache.set('name', 'test-value');
       expect(element.cache.get('name')).toBe('test-value');
 
       // Setting tags should clear the cache
-      element.setTags(['test-tag'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['test-tag'], uow));
 
       expect(element.cache.get('name')).toBeUndefined();
     });
@@ -299,14 +299,14 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       // First set some tags
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2'], uow));
       expect(element.tags).toEqual(['tag1', 'tag2']);
 
       // Then clear them
-      element.setTags([], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags([], uow));
       expect(element.tags).toEqual([]);
     });
   });
@@ -320,7 +320,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(parent, uow);
         parent.addChild(child1, uow);
         parent.addChild(child2, uow);
@@ -340,7 +340,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(grandparent, uow);
         grandparent.addChild(parent1, uow);
         grandparent.addChild(parent2, uow);
@@ -361,7 +361,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(parent1, uow);
         layer1.addElement(parent2, uow);
         parent1.addChild(child1, uow);
@@ -380,7 +380,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child = ElementFactory.emptyNode('child', layer1);
       const grandchild = ElementFactory.emptyNode('grandchild', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(parent, uow);
         parent.addChild(child, uow);
         child.addChild(grandchild, uow);
@@ -397,7 +397,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const node1 = ElementFactory.emptyNode('node1', layer1);
       const node2 = ElementFactory.emptyNode('node2', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(node1, uow);
         layer1.addElement(node2, uow);
       });
@@ -417,7 +417,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const node1 = ElementFactory.emptyNode('node1', layer1);
       const node2 = ElementFactory.emptyNode('node2', layer1);
 
-      UnitOfWork.execute(d1, {}, uow => {
+      UnitOfWork.execute(d1, uow => {
         layer1.addElement(root, uow);
         root.addChild(a, uow);
         a.addChild(b, uow);

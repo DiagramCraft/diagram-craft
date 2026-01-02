@@ -154,7 +154,7 @@ describe('selection', () => {
     selection.setElements([node]);
     expect(selection.isChanged()).toBe(false);
 
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, uow));
     expect(selection.isChanged()).toBe(true);
   });
 
@@ -175,8 +175,8 @@ describe('selection', () => {
     const child = layer.addNode();
     const grandchild = layer.addNode();
 
-    parent.addChild(child, UnitOfWork.immediate(diagram));
-    child.addChild(grandchild, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+    UnitOfWork.execute(diagram, uow => child.addChild(grandchild, uow));
 
     selection.setElements([grandchild]);
 
@@ -191,7 +191,7 @@ describe('selection', () => {
     const node = layer.addNode({ bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 } });
 
     selection.setElements([node]);
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, uow));
 
     expect(selection.isChanged()).toBe(true);
 
@@ -209,7 +209,7 @@ describe('selection', () => {
     expect(selection.bounds.r).toBe(45);
 
     const boundsBeforeRecalc = selection.bounds;
-    node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, uow));
     selection.recalculateBoundingBox();
 
     expect(selection.bounds).toEqual(boundsBeforeRecalc);

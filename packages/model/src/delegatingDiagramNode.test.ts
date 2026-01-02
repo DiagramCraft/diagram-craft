@@ -34,7 +34,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod-layer-1', 'Modification Layer', model.diagram1, []);
-    model.diagram1.layers.add(modLayer, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow => model.diagram1.layers.add(modLayer, uow));
 
     model.diagram1.layers.active = model.layer1;
 
@@ -49,7 +49,9 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       baseNode,
       modLayer
     );
-    modLayer.modifyChange(baseNode.id, delegatingNode, UnitOfWork.immediate(model.diagram1));
+    UnitOfWork.execute(model.diagram1, uow =>
+      modLayer.modifyChange(baseNode.id, delegatingNode, uow)
+    );
 
     if (modLayer2) {
       delegatingNode2 = modLayer2.elements.find(
@@ -76,7 +78,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
     it('should return delegate bounds after delegate changes', () => {
       // Act - change the delegate node bounds
       const newBounds = { x: 100, y: 200, w: 150, h: 140, r: 0 };
-      UnitOfWork.execute(model.diagram1, {}, uow => baseNode.setBounds(newBounds, uow));
+      UnitOfWork.execute(model.diagram1, uow => baseNode.setBounds(newBounds, uow));
 
       // Verify
       expect(delegatingNode.bounds).toEqual(newBounds);
@@ -88,7 +90,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
     it('should return overridden bounds when set', () => {
       // Act - set overridden bounds on the delegating node
       const newBounds: Box = { x: 30, y: 40, w: 60, h: 70, r: 0 };
-      UnitOfWork.execute(model.diagram1, {}, uow => delegatingNode.setBounds(newBounds, uow));
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setBounds(newBounds, uow));
 
       // Verify
       expect(delegatingNode.bounds).toEqual(newBounds);
@@ -109,7 +111,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       const newBounds: Box = { x: 25, y: 35, w: 80, h: 90, r: 0 };
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow => delegatingNode.setBounds(newBounds, uow));
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setBounds(newBounds, uow));
 
       // Verify
       expect(delegatingNode.bounds).toEqual(newBounds);
@@ -128,7 +130,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       const newBounds: Box = { x: 999, y: 888, w: 777, h: 666, r: 0 };
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow => delegatingNode.setBounds(newBounds, uow));
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setBounds(newBounds, uow));
 
       // Verify
       expect(delegatingNode.bounds).toEqual(newBounds);
@@ -145,7 +147,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
   describe('storedProps', () => {
     it('should return delegate props when no override is set', () => {
       // Setup - set some props on the delegate
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateProps(props => {
           props.stroke = { color: 'blue', width: 2 };
         }, uow)
@@ -164,7 +166,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
 
     it('should merge delegate props with overridden props', () => {
       // Setup - set props on delegate
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         baseNode.updateProps(props => {
           props.stroke = { color: 'blue', width: 2 };
           props.fill = { color: 'green' };
@@ -172,7 +174,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       );
 
       // Act - override some props on delegating node
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateProps(props => {
           props.stroke = { color: 'red', width: 3 };
         }, uow)
@@ -200,7 +202,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateProps(props => {
           props.stroke = { color: 'orange', width: 4 };
           props.fill = { color: 'cyan' };
@@ -227,7 +229,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         delegatingNode.updateCustomProps(
           'star',
           props => {
@@ -252,7 +254,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
   describe('getText', () => {
     it('should return delegate text when no override is set', () => {
       // Setup - set text on delegate
-      UnitOfWork.execute(model.diagram1, {}, uow => baseNode.setText('Delegate Text', uow));
+      UnitOfWork.execute(model.diagram1, uow => baseNode.setText('Delegate Text', uow));
 
       // Verify
       expect(delegatingNode.getText()).toBe('Delegate Text');
@@ -266,10 +268,10 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
 
     it('should return overridden text when set', () => {
       // Setup - set text on delegate
-      UnitOfWork.execute(model.diagram1, {}, uow => baseNode.setText('Delegate Text', uow));
+      UnitOfWork.execute(model.diagram1, uow => baseNode.setText('Delegate Text', uow));
 
       // Act - override text on delegating node
-      UnitOfWork.execute(model.diagram1, {}, uow => delegatingNode.setText('Override Text', uow));
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('Override Text', uow));
 
       // Verify
       expect(delegatingNode.getText()).toBe('Override Text');
@@ -289,7 +291,7 @@ describe.each(Backends.all())('DelegatingDiagramNode [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow => delegatingNode.setText('New Text', uow));
+      UnitOfWork.execute(model.diagram1, uow => delegatingNode.setText('New Text', uow));
 
       // Verify
       expect(delegatingNode.getText()).toBe('New Text');

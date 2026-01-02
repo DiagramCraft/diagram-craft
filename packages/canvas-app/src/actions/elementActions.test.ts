@@ -22,9 +22,8 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
 
-    node.setText('My Node Text', uow);
+    UnitOfWork.execute(diagram, uow => node.setText('My Node Text', uow));
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));
@@ -39,12 +38,13 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
 
-    node.setText('%name%', uow);
-    node.updateMetadata(metadata => {
-      metadata.name = 'Some Name';
-    }, uow);
+    UnitOfWork.execute(diagram, uow => {
+      node.setText('%name%', uow);
+      node.updateMetadata(metadata => {
+        metadata.name = 'Some Name';
+      }, uow);
+    });
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));
@@ -56,12 +56,12 @@ describe('ElementConvertToNameElementAction', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const node = layer.addNode();
-    const uow = UnitOfWork.immediate(diagram);
-
-    node.setText('Some Text', uow);
-    node.updateMetadata(metadata => {
-      metadata.name = 'Existing Name';
-    }, uow);
+    UnitOfWork.execute(diagram, uow => {
+      node.setText('Some Text', uow);
+      node.updateMetadata(metadata => {
+        metadata.name = 'Existing Name';
+      }, uow);
+    });
     diagram.selection.setElements([node]);
 
     const action = new ElementConvertToNameAction(mkContext(diagram));

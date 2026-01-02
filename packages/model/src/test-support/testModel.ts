@@ -48,7 +48,7 @@ export class TestDiagramBuilder extends Diagram {
 
   newLayer(id?: string) {
     const layer = new TestLayerBuilder(id ?? (this.layers.all.length + 1).toString(), this);
-    this.layers.add(layer, UnitOfWork.immediate(this));
+    UnitOfWork.execute(this, uow => this.layers.add(layer, uow));
     return layer;
   }
 }
@@ -69,7 +69,7 @@ export class TestLayerBuilder extends RegularLayer {
 
   addNode(options?: NodeCreateOptions) {
     const node = this.createNode(options);
-    this.addElement(node, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.addElement(node, uow));
     return node;
   }
 
@@ -91,7 +91,7 @@ export class TestLayerBuilder extends RegularLayer {
 
   addEdge(options?: EdgeCreateOptions) {
     const edge = this.createEdge(options);
-    this.addElement(edge, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.execute(this.diagram, uow => this.addElement(edge, uow));
     return edge;
   }
 

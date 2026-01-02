@@ -57,7 +57,7 @@ describe('DiagramGraph', () => {
       [],
       layer
     );
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => layer.addElement(edge, uow));
 
     const graph = new DiagramGraph(layer);
 
@@ -94,8 +94,8 @@ describe('DiagramGraph', () => {
       [],
       layer
     );
-    layer.addElement(edge1, UnitOfWork.immediate(diagram));
-    layer.addElement(edge2, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => layer.addElement(edge1, uow));
+    UnitOfWork.execute(diagram, uow => layer.addElement(edge2, uow));
 
     const graph = new DiagramGraph(layer);
 
@@ -155,10 +155,12 @@ describe('DiagramGraph', () => {
       layer
     );
 
-    layer.addElement(edge1, UnitOfWork.immediate(diagram));
-    layer.addElement(edge2, UnitOfWork.immediate(diagram));
-    layer.addElement(edge3, UnitOfWork.immediate(diagram));
-    layer.addElement(edge4, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => {
+      layer.addElement(edge1, uow);
+      layer.addElement(edge2, uow);
+      layer.addElement(edge3, uow);
+      layer.addElement(edge4, uow);
+    });
 
     const graph = new DiagramGraph(layer);
 
