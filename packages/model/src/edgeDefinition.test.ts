@@ -64,7 +64,7 @@ describe('baseEdgeDefinition', () => {
         if (doc2) expect(layer1_2!.elements).toHaveLength(3);
       });
 
-      it.only('should undo', async () => {
+      it('should undo', async () => {
         // **** Setup
         const doc1serialized = await serializeDiagramDocument(dia1.document);
         const doc2serialized = doc2 ? await serializeDiagramDocument(doc2) : undefined;
