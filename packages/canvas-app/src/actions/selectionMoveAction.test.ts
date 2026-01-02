@@ -73,10 +73,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       diagram.selection.setElements([child1]);
 
@@ -112,10 +112,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       diagram.selection.setElements([child2]);
 
@@ -153,10 +153,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       diagram.selection.setElements([child1]);
 
@@ -192,10 +192,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       diagram.selection.setElements([child2]);
 
@@ -228,9 +228,7 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child, uow2);
-      uow2.commit();
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
 
       diagram.selection.setElements([child]);
 
@@ -268,9 +266,7 @@ describe('SelectionMoveAction', () => {
         }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
 
       diagram.selection.setElements([child]);
 
@@ -302,9 +298,7 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child, uow2);
-      uow2.commit();
+      UnitOfWork.execute(diagram, uow2 => parent.addChild(child, uow2));
 
       diagram.selection.setElements([child]);
 

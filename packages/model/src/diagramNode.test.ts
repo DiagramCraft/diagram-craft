@@ -7,7 +7,6 @@ import {
 } from './test-support/collaborationModelTestUtils';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagram } from './serialization/serialize';
-import { commitWithUndo } from './diagramUndoActions';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import type { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
@@ -48,9 +47,9 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      const uow2 = new UnitOfWork(model.diagram1, true, false);
-      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
-      commitWithUndo(uow2, 'Move');
+      UnitOfWork.executeWithUndo(model.diagram1, 'Move', uow2 =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2)
+      );
 
       // Act
       model.diagram1.undoManager.undo();
@@ -111,9 +110,9 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      const uow2 = new UnitOfWork(model.diagram1, true, false);
-      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
-      commitWithUndo(uow2, 'Move');
+      UnitOfWork.executeWithUndo(model.diagram1, 'Move', uow =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
+      );
 
       // Act
       model.diagram1.undoManager.undo();

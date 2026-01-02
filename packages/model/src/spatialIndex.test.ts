@@ -103,9 +103,7 @@ describe('SpatialIndex', () => {
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1.length).toBe(2);
 
-      const uow = new UnitOfWork(diagram);
-      layer.removeElement(node2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => layer.removeElement(node2, uow));
 
       const results2 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results2.length).toBe(1);
@@ -121,9 +119,9 @@ describe('SpatialIndex', () => {
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1[0]).toBe(node);
 
-      const uow = new UnitOfWork(diagram);
-      node.setBounds({ x: 100, y: 100, w: 10, h: 10, r: 0 }, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow =>
+        node.setBounds({ x: 100, y: 100, w: 10, h: 10, r: 0 }, uow)
+      );
 
       const results2 = Array.from(diagram.index.near({ x: 100, y: 100 }));
       expect(results2[0]).toBe(node);

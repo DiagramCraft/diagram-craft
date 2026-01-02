@@ -9,6 +9,7 @@ import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 type ActionCallback = () => void;
 
@@ -214,6 +215,27 @@ export class UnitOfWork {
     }
   }
 
+  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T;
+  static executeWithUndo<T>(
+    diagram: Diagram,
+    opts: Omit<ExecuteOpts, '_noCommit'> & { label: string },
+    cb: (uow: UnitOfWork) => T
+  ): T;
+  static executeWithUndo<T>(
+    diagram: Diagram,
+    optsOrCb: (Omit<ExecuteOpts, '_noCommit'> & { label: string }) | string,
+    cb: (uow: UnitOfWork) => T
+  ): T {
+    const uow = new UnitOfWork(diagram, true);
+
+    const result = cb(uow);
+    if (typeof optsOrCb === 'string') {
+      commitWithUndo(uow, optsOrCb);
+    } else {
+      commitWithUndo(uow, optsOrCb.label);
+    }
+    return result;
+  }
   snapshot(element: Trackable) {
     if (!this.trackChanges) return;
     if (this.#snapshots.has(element.id)) return;

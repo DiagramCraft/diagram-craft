@@ -41,15 +41,13 @@ describe('baseEdgeDefinition', () => {
         layer1 = dia1.newLayer('layer');
         layer1_2 = doc2 ? (doc2.diagrams[0]!.layers.all[0] as RegularLayer) : undefined;
 
-        const uow = new UnitOfWork(dia1);
+        UnitOfWork.execute(dia1, uow => {
+          node = layer1.addNode({ bounds: { x: 40, y: 40, w: 20, h: 20, r: 0 } });
 
-        node = layer1.addNode({ bounds: { x: 40, y: 40, w: 20, h: 20, r: 0 } });
-
-        edge = layer1.addEdge();
-        edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
-        edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
-
-        uow.commit();
+          edge = layer1.addEdge();
+          edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
+          edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
+        });
       });
 
       it('should split edge', () => {
