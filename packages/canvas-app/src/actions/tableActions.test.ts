@@ -1,16 +1,15 @@
-import { describe, expect, test, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import {
-  TableRowMoveAction,
   TableColumnMoveAction,
+  TableDistributeAction,
   TableInsertAction,
   TableRemoveAction,
-  TableDistributeAction
+  TableRowMoveAction
 } from './tableActions';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { UOW } from '@diagram-craft/model/uow';
 
 describe('TableRowMoveAction', () => {
@@ -464,13 +463,14 @@ describe('TableRemoveAction', () => {
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW._executeNoSnapshots(diagram, () => {
+      row1.addChild(cellA, UOW.uow());
+      row1.addChild(cellB, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
 
     context = {
       model: {
@@ -648,19 +648,20 @@ describe('TableDistributeAction', () => {
       bounds: { x: 150, y: 200, w: 150, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellA1, uow);
-    row1.addChild(cellA2, uow);
-    row1.addChild(cellA3, uow);
-    row2.addChild(cellB1, uow);
-    row2.addChild(cellB2, uow);
-    row2.addChild(cellB3, uow);
-    row3.addChild(cellC1, uow);
-    row3.addChild(cellC2, uow);
-    row3.addChild(cellC3, uow);
-    table.addChild(row3, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW._executeNoSnapshots(diagram, () => {
+      row1.addChild(cellA1, UOW.uow());
+      row1.addChild(cellA2, UOW.uow());
+      row1.addChild(cellA3, UOW.uow());
+      row2.addChild(cellB1, UOW.uow());
+      row2.addChild(cellB2, UOW.uow());
+      row2.addChild(cellB3, UOW.uow());
+      row3.addChild(cellC1, UOW.uow());
+      row3.addChild(cellC2, UOW.uow());
+      row3.addChild(cellC3, UOW.uow());
+      table.addChild(row3, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
 
     context = {
       model: {

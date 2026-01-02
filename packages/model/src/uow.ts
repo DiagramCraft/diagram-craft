@@ -58,7 +58,7 @@ export const UOW = {
       label: opts?.label ?? '',
       type: type,
       diagram: diagram,
-      _uow: new UnitOfWork(diagram, opts?._noSnapshot !== true, false),
+      _uow: new UnitOfWork(diagram, opts?._noSnapshot !== true, opts?._noSnapshot ?? false),
       metadata: opts?.metadata ?? {}
     });
     return id;
@@ -67,6 +67,10 @@ export const UOW = {
   end: (id: string) => {
     const u = mustExist(uowStack.pop());
     if (u.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
+
+    if (!u._uow.trackChanges && u._uow.isThrowaway) {
+      return;
+    }
 
     if (u.type === 'reversible') {
       commitWithUndo(u._uow, u.label);

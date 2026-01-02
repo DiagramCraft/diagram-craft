@@ -4,7 +4,6 @@ import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UOW } from '@diagram-craft/model/uow';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('TableHelper', () => {
   let diagram: Diagram;
@@ -62,15 +61,14 @@ describe('TableHelper', () => {
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    // TODO: Why can't we do all of these in the same UOW
-    UOW.execute(diagram, () => {
+    UOW._executeNoSnapshots(diagram, () => {
       row1.addChild(cellB, UOW.uow());
       row1.addChild(cellA, UOW.uow());
       row2.addChild(cellD, UOW.uow());
       row2.addChild(cellC, UOW.uow());
       table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
     });
-    table.addChild(row1, UnitOfWork.immediate(diagram));
   });
 
   describe('constructor and basic properties', () => {
