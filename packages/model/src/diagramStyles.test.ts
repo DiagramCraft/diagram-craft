@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
-import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
+import { StylesheetSnapshot } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/testModel';
 import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
@@ -123,7 +123,9 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
 
       const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
 
-      stylesheet.restore(snapshot, UnitOfWork.immediate(null!));
+      UOW._executeNoSnapshots(TestModel.newDiagram(), () =>
+        stylesheet.restore(snapshot, UOW.uow())
+      );
 
       expect(stylesheet.name).toBe('Restored Name');
       expect(stylesheet.props).toEqual({ fill: { color: 'red' } });
@@ -560,7 +562,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles1.addStylesheet('custom-node', customNodeStyle);
 
       // Act
-      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () => styles1.deleteStylesheet('custom-node', UOW.uow()));
 
       // Verify
       expect(styles1.getNodeStyle('custom-node')).toBeUndefined();
@@ -576,7 +578,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Try to delete the default node stylesheet
-      styles.deleteStylesheet(defaultNodeStyleId, UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        styles.deleteStylesheet(defaultNodeStyleId, UOW.uow())
+      );
 
       // Verify it was not deleted
       expect(styles.getNodeStyle(defaultNodeStyleId)).toBeDefined();
@@ -611,7 +615,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       expect(styles.activeNodeStylesheet.id).toBe('custom-node-2');
 
       // Delete custom-node-2
-      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        styles.deleteStylesheet('custom-node-2', UOW.uow())
+      );
 
       // Verify active stylesheet is updated
       expect(styles.activeNodeStylesheet.id).not.toBe('custom-node-2');
@@ -798,7 +804,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setProps({ fill: { color: 'red' } }, styles1, UnitOfWork.immediate(null!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        customNodeStyle.setProps({ fill: { color: 'red' } }, styles1, UOW.uow())
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('update-test');
@@ -828,7 +836,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setName('New Name', styles1, UnitOfWork.immediate(null!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        customNodeStyle.setName('New Name', styles1, UOW.uow())
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('name-test');
@@ -858,7 +868,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         removedStylesheets.push(stylesheet);
       });
 
-      styles1.deleteStylesheet('delete-test', UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () => styles1.deleteStylesheet('delete-test', UOW.uow()));
 
       expect(removedStylesheets).toHaveLength(1);
       expect(removedStylesheets[0]!).toBe('delete-test');
@@ -906,7 +916,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setProps({ fill: { color: 'red' } }, styles, UnitOfWork.immediate(null!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        customNodeStyle.setProps({ fill: { color: 'red' } }, styles, UOW.uow())
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('local-update');
@@ -932,7 +944,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setName('New Name', styles, UnitOfWork.immediate(null!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        customNodeStyle.setName('New Name', styles, UOW.uow())
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('local-name');
@@ -958,7 +972,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         removedStylesheets.push(stylesheet);
       });
 
-      styles.deleteStylesheet('local-delete', UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () => styles.deleteStylesheet('local-delete', UOW.uow()));
 
       expect(removedStylesheets).toHaveLength(1);
       expect(removedStylesheets[0]!).toBe('local-delete');
@@ -996,9 +1010,11 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       );
       styles1.addStylesheet('multi-2', style2);
 
-      style1.setName('Updated Multi 1', styles1, UnitOfWork.immediate(null!));
+      UOW.execute(TestModel.newDiagram(), () =>
+        style1.setName('Updated Multi 1', styles1, UOW.uow())
+      );
 
-      styles1.deleteStylesheet('multi-2', UnitOfWork.immediate(document.diagrams[0]!));
+      UOW.execute(TestModel.newDiagram(), () => styles1.deleteStylesheet('multi-2', UOW.uow()));
 
       expect(events).toHaveLength(4);
       expect(events).toEqual([
