@@ -351,11 +351,11 @@ export const ElementAnchorsPanel = (props: Props) => {
             disabled={disabled}
             diagram={diagram}
             onChange={() => {
-              const uow = new UnitOfWork(diagram, false);
-              diagram.selection.nodes.forEach(node => {
-                node.invalidateAnchors(uow);
+              UnitOfWork.execute(diagram, uow => {
+                diagram.selection.nodes.forEach(node => {
+                  node.invalidateAnchors(uow);
+                });
               });
-              uow.commit();
             }}
           />
         )}

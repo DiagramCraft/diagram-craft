@@ -393,51 +393,49 @@ const writeShape = (
   let maxX = startX;
   let x = startX;
 
-  const uow = new UnitOfWork(diagram);
+  UnitOfWork.execute(diagram, uow => {
+    for (let i = 0; i < SHAPES_DEFS.length; i++) {
+      const def = SHAPES_DEFS[i]!;
+      const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
+      n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
+      n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
+      const name = def(n, uow);
+      n.invalidateAnchors(uow);
+      layer.addElement(n, uow);
 
-  for (let i = 0; i < SHAPES_DEFS.length; i++) {
-    const def = SHAPES_DEFS[i]!;
-    const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
-    n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
-    n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
-    const name = def(n, uow);
-    n.invalidateAnchors(uow);
-    layer.addElement(n, uow);
+      const label = ElementFactory.node(
+        `${shape}-${i}-label`,
+        'text',
+        {
+          x: x,
+          y: y - 45,
+          w: 300,
+          h: 20,
+          r: 0
+        },
+        layer,
+        {
+          text: {
+            align: 'left'
+          }
+        },
+        {},
+        {
+          text: name
+        },
+        []
+      );
+      layer.addElement(label, uow);
 
-    const label = ElementFactory.node(
-      `${shape}-${i}-label`,
-      'text',
-      {
-        x: x,
-        y: y - 45,
-        w: 300,
-        h: 20,
-        r: 0
-      },
-      layer,
-      {
-        text: {
-          align: 'left'
-        }
-      },
-      {},
-      {
-        text: name
-      },
-      []
-    );
-    layer.addElement(label, uow);
+      x += xDiff;
+      maxX = Math.max(maxX, x);
 
-    x += xDiff;
-    maxX = Math.max(maxX, x);
-
-    if (i % shapesPerLine === shapesPerLine - 1) {
-      x = startX;
-      y += yDiff;
+      if (i % shapesPerLine === shapesPerLine - 1) {
+        x = startX;
+        y += yDiff;
+      }
     }
-  }
-
-  uow.commit();
+  });
 
   return { x: maxX, y: y + 150 };
 };

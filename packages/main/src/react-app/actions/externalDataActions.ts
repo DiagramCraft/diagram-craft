@@ -24,7 +24,7 @@ import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
-import type { NodeProps, EdgeProps } from '@diagram-craft/model/diagramProps';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { $tStr } from '@diagram-craft/utils/localize';
 
 export const externalDataActions = (application: Application) => ({

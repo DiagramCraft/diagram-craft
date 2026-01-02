@@ -5,13 +5,32 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { AbstractDiagramElement, DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
+import {
+  AnchorEndpoint,
+  ConnectedEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint
+} from './endpoint';
 import { getCollapsedAncestor } from './collapsible';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical, type LabelNode } from './labelNode';
+import {
+  isHorizontal,
+  isParallel,
+  isPerpendicular,
+  isReadable,
+  isVertical,
+  type LabelNode
+} from './labelNode';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';

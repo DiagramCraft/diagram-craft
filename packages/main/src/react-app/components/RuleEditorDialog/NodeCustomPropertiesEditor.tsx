@@ -76,9 +76,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
               .getCustomPropertyDefinitions(node)}
             onChange={(_value: CustomPropertyDefinition) => {
               return (cb: (uow: UnitOfWork) => void) => {
-                const uow = new UnitOfWork($d, false);
-                cb(uow);
-                uow.abort();
+                UnitOfWork.execute($d, { _noCommit: true }, cb);
 
                 $p.custom = node.storedProps.custom;
                 onChange();
