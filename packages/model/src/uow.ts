@@ -51,6 +51,9 @@ export const UOW = {
   },
 
   begin: (diagram: Diagram, opts?: UOWOpts) => {
+    const current = uowStack.at(-1);
+    if (current && current.type === 'reversible') throw new Error('Cannot nest reversible UOW');
+
     const id = newid();
     const type = opts?.label ? 'reversible' : 'irreversible';
     uowStack.push({
