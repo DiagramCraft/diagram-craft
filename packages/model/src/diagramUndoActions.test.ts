@@ -81,7 +81,7 @@ describe('ElementAddUndoableAction', () => {
     const node2 = layer.addNode();
     const edge = layer.createEdge({ id: 'edge1' });
 
-    UOW.execute(diagram, () => {
+    UOW._executeNoSnapshots(diagram, () => {
       // Connect edge to nodes
       edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
       edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());

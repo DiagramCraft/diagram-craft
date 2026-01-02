@@ -9,7 +9,6 @@ import { hasSameElements } from '@diagram-craft/utils/array';
 
 export const commitWithUndo = (uow: UnitOfWork, description: string) => {
   const snapshots = uow.commit();
-  console.log('snapshots', snapshots);
   uow.diagram.undoManager.add(new SnapshotUndoableAction(description, uow.diagram, snapshots));
 };
 
