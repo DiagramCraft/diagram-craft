@@ -17,6 +17,7 @@ import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 enum State {
   INSIDE,
@@ -201,10 +202,8 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.#elements = cloneElements(
-      sourceLayer.elements,
-      activeLayer,
-      UnitOfWork.immediate(this.diagram)
+    this.#elements = UOW.execute(this.diagram, () =>
+      cloneElements(sourceLayer.elements, activeLayer)
     );
 
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));

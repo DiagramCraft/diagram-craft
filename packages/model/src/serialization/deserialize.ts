@@ -64,125 +64,123 @@ export const deserializeDiagramElements = (
   diagram: Diagram,
   layer: RegularLayer | ModificationLayer,
   nodeLookup?: ElementLookup<DiagramNode>,
-  edgeLookup?: ElementLookup<DiagramEdge>,
-  uow?: UnitOfWork
+  edgeLookup?: ElementLookup<DiagramEdge>
 ) => {
-  nodeLookup ??= new ElementLookup<DiagramNode>();
-  edgeLookup ??= new ElementLookup<DiagramEdge>();
+  return UOW.nested(diagram, { _noSnapshot: true }, () => {
+    nodeLookup ??= new ElementLookup<DiagramNode>();
+    edgeLookup ??= new ElementLookup<DiagramEdge>();
 
-  if (uow === undefined) {
-    UOW.begin(diagram, { _noSnapshot: true });
-    uow = UOW.uow();
-  }
+    const uow = UOW.uow();
 
-  // Pass 1: create placeholders for all nodes
-  for (const n of diagramElements) {
-    for (const c of unfoldGroup(n)) {
-      if (c.type !== 'node') continue;
+    // Pass 1: create placeholders for all nodes
+    for (const n of diagramElements) {
+      for (const c of unfoldGroup(n)) {
+        if (c.type !== 'node') continue;
 
-      COMPATIBILITY: {
-        // Note: this is for backwards compatibility only
-        // biome-ignore lint/suspicious/noExplicitAny: false positive
-        const textProps: any = c.props.text;
-        if (textProps?.text && (!c.texts || !c.texts.text)) {
-          c.texts ??= { text: textProps.text };
-          c.texts.text = textProps.text;
-          delete textProps.text;
+        COMPATIBILITY: {
+          // Note: this is for backwards compatibility only
+          // biome-ignore lint/suspicious/noExplicitAny: false positive
+          const textProps: any = c.props.text;
+          if (textProps?.text && (!c.texts || !c.texts.text)) {
+            c.texts ??= { text: textProps.text };
+            c.texts.text = textProps.text;
+            delete textProps.text;
+          }
+        }
+
+        const node = ElementFactory.node(
+          c.id,
+          c.nodeType,
+          c.bounds,
+          layer,
+          c.props,
+          {
+            style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
+            ...c.metadata
+          },
+          c.texts,
+          c.anchors
+        );
+        node.setTags(c.tags ?? [], uow);
+        nodeLookup.set(c.id, node);
+      }
+    }
+
+    // Pass 2: create placeholders for all edges
+    for (const n of diagramElements) {
+      for (const e of unfoldGroup(n)) {
+        if (e.type !== 'edge') continue;
+
+        const { start, end } = e;
+
+        const startEndpoint = deserializeEndpoint(start, nodeLookup);
+        const endEndpoint = deserializeEndpoint(end, nodeLookup);
+
+        const edge = ElementFactory.edge(
+          e.id,
+          startEndpoint,
+          endEndpoint,
+          e.props,
+          {
+            style: 'default-edge',
+            ...e.metadata
+          },
+          e.waypoints ?? [],
+          layer
+        );
+        edge.setTags(e.tags ?? [], uow);
+
+        if (isSerializedEndpointAnchor(start)) {
+          const startNode = nodeLookup.get(start.node.id)!;
+          startNode._addEdge(start.anchor, edge);
+        } else if (isSerializedEndpointPointInNode(start)) {
+          const startNode = nodeLookup.get(start.node.id)!;
+          startNode._addEdge(undefined, edge);
+        }
+
+        if (isSerializedEndpointAnchor(end)) {
+          const endNode = nodeLookup.get(end.node.id)!;
+          endNode._addEdge(end.anchor, edge);
+        } else if (isSerializedEndpointPointInNode(end)) {
+          const endNode = nodeLookup.get(end.node.id)!;
+          endNode._addEdge(undefined, edge);
+        }
+
+        edgeLookup.set(e.id, edge);
+      }
+    }
+
+    // Pass 3: resolve relations
+    for (const n of diagramElements) {
+      for (const c of unfoldGroup(n)) {
+        const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
+        el.setChildren(
+          c.children?.map(c2 => (nodeLookup!.get(c2.id) ?? edgeLookup!.get(c2.id))!) ?? [],
+          uow
+        );
+
+        if (c.parent) {
+          const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
+          el._setParent(resolvedParent);
+        }
+
+        if (c.type === 'edge') {
+          const edge = edgeLookup.get(c.id)!;
+          if (c.labelNodes && c.labelNodes.length > 0) {
+            edge.setLabelNodes(
+              c.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup!.get(ln.id)! })),
+              uow
+            );
+          }
         }
       }
-
-      const node = ElementFactory.node(
-        c.id,
-        c.nodeType,
-        c.bounds,
-        layer,
-        c.props,
-        {
-          style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
-          ...c.metadata
-        },
-        c.texts,
-        c.anchors
-      );
-      node.setTags(c.tags ?? [], uow);
-      nodeLookup.set(c.id, node);
     }
-  }
 
-  // Pass 2: create placeholders for all edges
-  for (const n of diagramElements) {
-    for (const e of unfoldGroup(n)) {
-      if (e.type !== 'edge') continue;
-
-      const { start, end } = e;
-
-      const startEndpoint = deserializeEndpoint(start, nodeLookup);
-      const endEndpoint = deserializeEndpoint(end, nodeLookup);
-
-      const edge = ElementFactory.edge(
-        e.id,
-        startEndpoint,
-        endEndpoint,
-        e.props,
-        {
-          style: 'default-edge',
-          ...e.metadata
-        },
-        e.waypoints ?? [],
-        layer
-      );
-      edge.setTags(e.tags ?? [], uow);
-
-      if (isSerializedEndpointAnchor(start)) {
-        const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(start.anchor, edge);
-      } else if (isSerializedEndpointPointInNode(start)) {
-        const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(undefined, edge);
-      }
-
-      if (isSerializedEndpointAnchor(end)) {
-        const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(end.anchor, edge);
-      } else if (isSerializedEndpointPointInNode(end)) {
-        const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(undefined, edge);
-      }
-
-      edgeLookup.set(e.id, edge);
-    }
-  }
-
-  // Pass 3: resolve relations
-  for (const n of diagramElements) {
-    for (const c of unfoldGroup(n)) {
-      const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
-      el.setChildren(
-        c.children?.map(c2 => (nodeLookup.get(c2.id) ?? edgeLookup.get(c2.id))!) ?? [],
-        uow
-      );
-
-      if (c.parent) {
-        const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
-        el._setParent(resolvedParent);
-      }
-
-      if (c.type === 'edge') {
-        const edge = edgeLookup.get(c.id)!;
-        if (c.labelNodes && c.labelNodes.length > 0) {
-          edge.setLabelNodes(
-            c.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
-            uow
-          );
-        }
-      }
-    }
-  }
-
-  // Pass 4: gather all elements - only keep the top-level elements
-  return diagramElements
-    .map(n => (n.type === 'node' ? nodeLookup.get(n.id)! : edgeLookup.get(n.id)!))
-    .filter(e => e.parent === undefined);
+    // Pass 4: gather all elements - only keep the top-level elements
+    return diagramElements
+      .map(n => (n.type === 'node' ? nodeLookup!.get(n.id)! : edgeLookup!.get(n.id)!))
+      .filter(e => e.parent === undefined);
+  });
 };
 
 export const deserializeDiagramDocument = async <T extends Diagram>(

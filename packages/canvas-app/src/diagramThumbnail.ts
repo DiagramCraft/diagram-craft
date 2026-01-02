@@ -7,6 +7,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { UOW } from '@diagram-craft/model/uow';
 
 const createDiagram = (defs: Definitions) => {
   const id = newid();
@@ -40,12 +41,13 @@ export const createThumbnailForEdge = (
 ) => {
   const diagram = createDiagram(definitions);
 
-  const uow = UnitOfWork.immediate(diagram);
-  const layer = new RegularLayer(newid(), newid(), [], diagram);
-  diagram.layers.add(layer, uow);
+  return UOW.execute(diagram, () => {
+    const layer = new RegularLayer(newid(), newid(), [], diagram);
+    diagram.layers.add(layer, UOW.uow());
 
-  const edge = factory(diagram, layer);
-  layer.addElement(edge, uow);
+    const edge = factory(diagram, layer);
+    layer.addElement(edge, UOW.uow());
 
-  return { diagram, layer, edge };
+    return { diagram, layer, edge };
+  });
 };

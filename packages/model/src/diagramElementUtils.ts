@@ -25,8 +25,8 @@ const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) =>
 
 export const cloneElements = (
   elements: readonly DiagramElement[],
-  targetLayer: RegularLayer,
-  uow: UnitOfWork
+  targetLayer: RegularLayer
+  //  uow: UnitOfWork
 ) => {
   const source = elements.map(e => deepClone(serializeDiagramElement(e)));
 
@@ -39,8 +39,7 @@ export const cloneElements = (
     targetLayer.diagram,
     targetLayer,
     new ElementLookup<DiagramNode>(),
-    new ElementLookup<DiagramEdge>(),
-    uow
+    new ElementLookup<DiagramEdge>()
   );
 };
 

@@ -6,6 +6,8 @@ import { assert } from '@diagram-craft/utils/assert';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { UOW } from '@diagram-craft/model/uow';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -46,11 +48,10 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const uow = new UnitOfWork(diagram, true);
 
-        const node = cloneElements(
-          [stencil.node(diagram)],
-          diagram.activeLayer,
-          UnitOfWork.immediate(diagram)
-        )[0]!;
+        const node = UOW.execute(
+          diagram,
+          () => cloneElements([stencil.node(diagram)], diagram.activeLayer as RegularLayer)[0]!
+        );
 
         assignNewBounds(
           [node],

@@ -45,6 +45,7 @@ import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGro
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { UOW } from '@diagram-craft/model/uow';
 
 const NODE_CACHE = new Map<string, DiagramNode>();
 const PICKER_CANVAS_SIZE = 42;
@@ -129,7 +130,11 @@ const makeTemplateNode = (
 
   const tpl = deepClone(template.template);
   const { node, diagram } = createThumbnailForNode(
-    (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
+    (diagram, layer) =>
+      UOW.execute(
+        diagram,
+        () => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode
+      ),
     definitions
   );
   node.setBounds({ ...node.bounds, x: 0, y: 0 }, UnitOfWork.immediate(node.diagram));

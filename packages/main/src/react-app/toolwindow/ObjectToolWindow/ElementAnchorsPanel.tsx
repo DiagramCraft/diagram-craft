@@ -46,16 +46,16 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
     const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailForNode(
       (d, layer) => {
         const serializedNode = serializeDiagramElement(selectedNode);
-        const uow = UnitOfWork.immediate(d);
 
-        return deserializeDiagramElements(
-          [serializedNode],
-          d,
-          layer,
-          new ElementLookup<DiagramNode>(),
-          new ElementLookup<DiagramEdge>(),
-          uow
-        )[0] as DiagramNode;
+        return UnitOfWork.execute(d, () => {
+          return deserializeDiagramElements(
+            [serializedNode],
+            d,
+            layer,
+            new ElementLookup<DiagramNode>(),
+            new ElementLookup<DiagramEdge>()
+          )[0] as DiagramNode;
+        });
       },
       diagram.document.definitions
     );

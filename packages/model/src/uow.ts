@@ -23,6 +23,19 @@ type UOWOpts = {
 };
 
 export const UOW = {
+  nested: <T>(diagram: Diagram, opts: UOWOpts, op: () => T) => {
+    if (UOW.exists()) {
+      return op();
+    } else {
+      const id = UOW.begin(diagram, opts);
+      try {
+        return op();
+      } finally {
+        UOW.end(id);
+      }
+    }
+  },
+
   execute: <T>(diagram: Diagram, op: () => T) => {
     const id = UOW.begin(diagram);
     try {
@@ -69,11 +82,13 @@ export const UOW = {
 
   end: (id: string) => {
     const u = mustExist(uowStack.pop());
-    if (u.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
+    if (u.id !== id) throw new Error(`Invalid UOW ID: ${id}, stack=${uowStack.map(e => e.id)}`);
 
     if (!u._uow.trackChanges && u._uow.isThrowaway) {
       return;
     }
+
+    if (u._uow.isCommited) return;
 
     if (u.type === 'reversible') {
       commitWithUndo(u._uow, u.label);
@@ -105,6 +120,10 @@ export const UOW = {
     return mustExist(uowStack.at(-1));
   },
 
+  exists: () => {
+    return uowStack.length > 0;
+  },
+
   /*notify: () => {
     mustExist(uowStack.at(-1))._uow.notify();
   },*/
@@ -117,3 +136,7 @@ export const UOW = {
 
   Tracking: {}
 };
+
+setInterval(() => {
+  if (uowStack.length > 0) console.log(uowStack.length);
+}, 1000);
