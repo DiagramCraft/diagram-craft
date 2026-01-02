@@ -42,4 +42,8 @@ export class GenericPathControlPointDrag extends Drag {
 
     this.context.help.pop('GenericPathControlPointDrag');
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }

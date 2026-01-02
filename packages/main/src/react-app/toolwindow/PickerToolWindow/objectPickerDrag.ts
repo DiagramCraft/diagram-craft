@@ -85,6 +85,12 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     }
   }
 
+  cancel() {
+    this.diagram.selection.clear();
+    this.diagram.selection.setElements(this.#originalSelectionState);
+    this.removeElement();
+  }
+
   onDragEnter(event: DragEvents.DragEnter) {
     const svgElement = getAncestorWithClass(
       event.target as HTMLElement,

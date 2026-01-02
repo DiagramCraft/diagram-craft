@@ -69,4 +69,8 @@ export class RotateDrag extends Drag {
     selection.forceRotation(undefined);
     selection.rebaseline();
   }
+
+  cancel() {
+    this.uow.abort();
+  }
 }
