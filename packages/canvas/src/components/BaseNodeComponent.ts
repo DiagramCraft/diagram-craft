@@ -81,17 +81,13 @@ export class BaseNodeComponent<
           newBounds.x = bounds.x - (width - bounds.w) / 2;
         }
 
-        UnitOfWork.execute(
-          props.node.diagram,
-          uow => {
-            props.node.setBounds(newBounds, uow);
-            const parent = props.node.parent;
-            if (isNode(parent)) {
-              parent.getDefinition().onChildChanged(parent, uow);
-            }
-          },
-          true
-        );
+        UnitOfWork.execute(props.node.diagram, { silent: true }, uow => {
+          props.node.setBounds(newBounds, uow);
+          const parent = props.node.parent;
+          if (isNode(parent)) {
+            parent.getDefinition().onChildChanged(parent, uow);
+          }
+        });
       }
     };
   }

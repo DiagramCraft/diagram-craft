@@ -106,7 +106,7 @@ export class EdgeTool extends AbstractTool {
         removeHighlight(this.diagram.lookup(this.currentElement), Highlights.NODE__EDGE_CONNECT);
       }
       if (Point.distance(edge.end.position, edge.start.position) < 5) {
-        UnitOfWork.execute(this.diagram, uow => {
+        UnitOfWork.execute(this.diagram, {}, uow => {
           edge.setEnd(
             new FreeEndpoint({
               x: edge.start.position.x + 10,

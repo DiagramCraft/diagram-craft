@@ -32,7 +32,7 @@ const { diagram: d } = DocumentBuilder.empty(
   new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
 );
 
-UnitOfWork.execute(d, uow => {
+UnitOfWork.execute(d, {}, uow => {
   for (let i = 0; i < 1000; i++) {
     (d.activeLayer as RegularLayer).addElement(
       ElementFactory.node(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),

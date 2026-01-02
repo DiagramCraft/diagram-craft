@@ -674,7 +674,7 @@ export class SimpleDiagramNode
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
     if (this.#anchors.get() === undefined) {
-      UnitOfWork.execute(this.diagram, uow => {
+      UnitOfWork.execute(this.diagram, {}, uow => {
         this.invalidateAnchors(uow);
       });
     }

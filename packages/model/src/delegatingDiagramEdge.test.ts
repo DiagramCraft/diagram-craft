@@ -60,7 +60,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
   describe('storedProps', () => {
     it('should return delegate props when no override is set', () => {
       // Setup - set some props on the delegate
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         baseEdge.updateProps(props => {
           props.stroke = { color: 'blue', width: 2 };
         }, uow)
@@ -79,7 +79,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     it('should merge delegate props with overridden props', () => {
       // Setup - set props on delegate
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         baseEdge.updateProps(props => {
           props.stroke = { color: 'blue', width: 2 };
           props.arrow = { end: { type: 'BALL_FILLED', size: 10 } };
@@ -87,7 +87,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       );
 
       // Act - override some props on delegating edge
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         delegatingEdge.updateProps(props => {
           props.stroke = { color: 'red', width: 3 };
         }, uow)
@@ -115,7 +115,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         delegatingEdge.updateProps(props => {
           props.stroke = { color: 'orange', width: 4 };
           props.arrow = { end: { type: 'BAR', size: 15 } };
@@ -142,7 +142,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         delegatingEdge.updateCustomProps(
           'blockArrow',
           props => {
@@ -167,7 +167,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
   describe('waypoints', () => {
     it('should return delegate waypoints when no override is set', () => {
       // Setup - add waypoints to delegate
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         baseEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
         baseEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
       });
@@ -187,12 +187,12 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     it('should return overridden waypoints when set', () => {
       // Setup - add waypoints to delegate
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         baseEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
       });
 
       // Act - add waypoint to delegating edge
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.addWaypoint({ point: { x: 50, y: 50 } }, uow);
       });
 
@@ -214,7 +214,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
   describe('removeWaypoint', () => {
     it('should remove waypoint and sync via CRDT', () => {
       // Setup - add waypoints
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
         delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
       });
@@ -222,7 +222,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       // Act
       model.reset();
       const waypointToRemove = delegatingEdge.waypoints[0]!;
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.removeWaypoint(waypointToRemove, uow);
       });
 
@@ -241,17 +241,17 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     it('should not affect delegate waypoints', () => {
       // Setup - add waypoint to delegate
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         baseEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
       });
 
       // Act - add then remove waypoint on delegating edge
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
       });
 
       const waypointToRemove = delegatingEdge.waypoints[1]!;
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.removeWaypoint(waypointToRemove, uow);
       });
 
@@ -270,7 +270,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
   describe('moveWaypoint', () => {
     it('should move waypoint and sync via CRDT', () => {
       // Setup - add waypoints
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
         delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
       });
@@ -278,7 +278,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       // Act
       model.reset();
       const waypointToMove = delegatingEdge.waypoints[0]!;
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.moveWaypoint(waypointToMove, { x: 50, y: 50 }, uow);
       });
 
@@ -298,13 +298,13 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     it('should not affect delegate waypoints', () => {
       // Setup - add waypoint to delegate
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         baseEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
       });
 
       // Act - move waypoint on delegating edge
       const waypointToMove = delegatingEdge.waypoints[0]!;
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.moveWaypoint(waypointToMove, { x: 99, y: 88 }, uow);
       });
 
@@ -323,14 +323,14 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
   describe('replaceWaypoint', () => {
     it('should replace waypoint and sync via CRDT', () => {
       // Setup - add waypoints
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
         delegatingEdge.addWaypoint({ point: { x: 20, y: 20 } }, uow);
       });
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.replaceWaypoint(0, { point: { x: 50, y: 50 } }, uow);
       });
 
@@ -350,12 +350,12 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     it('should not affect delegate waypoints', () => {
       // Setup - add waypoint to delegate
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         baseEdge.addWaypoint({ point: { x: 10, y: 10 } }, uow);
       });
 
       // Act - replace waypoint on delegating edge
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.replaceWaypoint(0, { point: { x: 99, y: 88 } }, uow);
       });
 
@@ -387,7 +387,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       const originalStart = baseEdge.start;
 
       // Act - set new start on delegating edge
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.setStart(new FreeEndpoint({ x: 100, y: 200 }), uow);
       });
 
@@ -407,7 +407,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.setStart(new FreeEndpoint({ x: 50, y: 75 }), uow);
       });
 
@@ -439,7 +439,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       const originalEnd = baseEdge.end;
 
       // Act - set new end on delegating edge
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.setEnd(new FreeEndpoint({ x: 300, y: 400 }), uow);
       });
 
@@ -459,7 +459,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       model.reset();
 
       // Act
-      UnitOfWork.execute(model.diagram1, uow => {
+      UnitOfWork.execute(model.diagram1, {}, uow => {
         delegatingEdge.setEnd(new FreeEndpoint({ x: 150, y: 175 }), uow);
       });
 

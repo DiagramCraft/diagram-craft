@@ -127,7 +127,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       d1.on('elementChange', changeEvent1);
       doc2?.diagrams[0]!.on('elementChange', changeEvent2);
 
-      UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
+      UnitOfWork.execute(d1, {}, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
 
       expect(changeEvent1).toBeCalledTimes(1);
       if (doc2) expect(changeEvent2).toBeCalledTimes(1);
@@ -320,7 +320,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(parent, uow);
         parent.addChild(child1, uow);
         parent.addChild(child2, uow);
@@ -340,7 +340,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(grandparent, uow);
         grandparent.addChild(parent1, uow);
         grandparent.addChild(parent2, uow);
@@ -361,7 +361,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child1 = ElementFactory.emptyNode('child1', layer1);
       const child2 = ElementFactory.emptyNode('child2', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(parent1, uow);
         layer1.addElement(parent2, uow);
         parent1.addChild(child1, uow);
@@ -380,7 +380,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const child = ElementFactory.emptyNode('child', layer1);
       const grandchild = ElementFactory.emptyNode('grandchild', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(parent, uow);
         parent.addChild(child, uow);
         child.addChild(grandchild, uow);
@@ -397,7 +397,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const node1 = ElementFactory.emptyNode('node1', layer1);
       const node2 = ElementFactory.emptyNode('node2', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(node1, uow);
         layer1.addElement(node2, uow);
       });
@@ -417,7 +417,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const node1 = ElementFactory.emptyNode('node1', layer1);
       const node2 = ElementFactory.emptyNode('node2', layer1);
 
-      UnitOfWork.execute(d1, uow => {
+      UnitOfWork.execute(d1, {}, uow => {
         layer1.addElement(root, uow);
         root.addChild(a, uow);
         a.addChild(b, uow);

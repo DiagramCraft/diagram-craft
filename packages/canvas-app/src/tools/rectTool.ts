@@ -78,7 +78,7 @@ export class RectTool extends AbstractTool {
       Point.subtract(this.startPoint, { x: 5, y: 5 })
     );
     drag.on('dragEnd', () => {
-      UnitOfWork.execute(this.diagram, uow => {
+      UnitOfWork.execute(this.diagram, {}, uow => {
         this.node?.setBounds(
           {
             ...this.node.bounds,

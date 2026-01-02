@@ -48,12 +48,12 @@ class RedrawAction extends AbstractAction {
     const diagram = this.context.model.activeDiagram;
     assert.arrayNotEmpty(diagram.selection.nodes);
 
-    UnitOfWork.execute(diagram, uow => {
+    UnitOfWork.execute(diagram, {}, uow => {
       diagram.selection.nodes[0]!.transform([new Translation({ x: 10, y: 10 })], uow);
     });
 
     setTimeout(() => {
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.selection.nodes[0]!.transform([new Translation({ x: -10, y: -10 })], uow);
       });
     }, 200);

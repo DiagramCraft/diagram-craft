@@ -26,7 +26,7 @@ describe('collapsible', () => {
       const parent = layer.addNode({ type: 'rect' });
       const child = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child], uow, layer, {
           relation: 'on',
           element: parent
@@ -41,7 +41,7 @@ describe('collapsible', () => {
       const container = layer.addNode({ type: 'container' });
       const child = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child], uow, layer, {
           relation: 'on',
           element: container
@@ -56,7 +56,7 @@ describe('collapsible', () => {
       const container = layer.addNode({ type: 'container' });
       const child = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child], uow, layer, {
           relation: 'on',
           element: container
@@ -81,7 +81,7 @@ describe('collapsible', () => {
       const innerContainer = layer.addNode({ type: 'container' });
       const child = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([innerContainer], uow, layer, {
           relation: 'on',
           element: outerContainer
@@ -124,7 +124,7 @@ describe('collapsible', () => {
         bounds: { x: 10, y: 20, w: 50, h: 50, r: 0 }
       });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         node.updateCustomProps(
           '_collapsible',
           (props: any) => {
@@ -168,7 +168,7 @@ describe('collapsible', () => {
         bounds: { x: 50, y: 50, w: 100, h: 100, r: 0 }
       });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child], uow, layer, {
           relation: 'on',
           element: container
@@ -203,7 +203,7 @@ describe('collapsible', () => {
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 1.2 }
       });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child], uow, layer, {
           relation: 'on',
           element: container
@@ -262,7 +262,7 @@ describe('collapsible', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         node.updateProps((p: any) => {
           p.geometry = p.geometry ?? {};
           p.geometry.flipH = true;
@@ -280,7 +280,7 @@ describe('collapsible', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const node = layer.addNode();
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         node.updateProps((p: any) => {
           p.geometry = p.geometry ?? {};
           p.geometry.flipV = true;
@@ -323,7 +323,7 @@ describe('collapsible', () => {
       const child1 = layer.addNode({ type: 'rect' });
       const child2 = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([child1, child2], uow, layer, {
           relation: 'on',
           element: parent
@@ -342,7 +342,7 @@ describe('collapsible', () => {
       const parent = layer.addNode({ type: 'container' });
       const child = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         diagram.moveElement([parent], uow, layer, {
           relation: 'on',
           element: grandparent
@@ -367,7 +367,7 @@ describe('collapsible', () => {
       const childInContainer = layer.addNode({ type: 'rect' });
       const externalNode = layer.addNode({ type: 'rect' });
 
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         // Position container at (100, 100) with size 200x200
         container.setBounds({ x: 100, y: 100, w: 200, h: 200, r: 0 }, uow);
 
@@ -386,7 +386,7 @@ describe('collapsible', () => {
 
       // Create edge from child to external node
       const edge = layer.addEdge();
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         edge.setStart(new AnchorEndpoint(childInContainer, 'c'), uow);
         edge.setEnd(new AnchorEndpoint(externalNode, 'c'), uow);
       });
@@ -396,7 +396,7 @@ describe('collapsible', () => {
       expect(edge.start.position.y).toBeCloseTo(175, 1);
 
       // Collapse the container
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.execute(diagram, {}, uow => {
         container.updateProps((p: any) => {
           p.custom = p.custom ?? {};
           p.custom._collapsible = p.custom._collapsible ?? {};

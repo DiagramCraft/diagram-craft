@@ -28,10 +28,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('start/end', () => {
     it('should set start/end to FreeEndpoint', () => {
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
       );
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
       );
 
@@ -58,13 +58,13 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setStart(
           new PointInNodeEndpoint(node1, undefined, { x: 0.5, y: 0.5 }, 'relative'),
           uow
         )
       );
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setEnd(
           new PointInNodeEndpoint(node2, { x: 1, y: 1 }, { x: 10, y: 10 }, 'absolute'),
           uow
@@ -121,10 +121,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setStart(new AnchorEndpoint(node1, 'c'), uow)
       );
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setEnd(new AnchorEndpoint(node2, 'c', { x: 0.25, y: 0.25 }), uow)
       );
 
@@ -170,7 +170,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should return the name from the first label node if label nodes exist', () => {
       // **** Act
       const node = model.layer1.addNode();
-      UnitOfWork.execute(model.diagram1, uow => node.setText('LabelNodeName', uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => node.setText('LabelNodeName', uow));
 
       // **** Verify
       expect(node.getText()).toBe('LabelNodeName');
@@ -185,7 +185,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       const labelNode = node.asLabelNode();
-      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode], uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.setLabelNodes([labelNode], uow));
 
       // **** Verify
       expect(edge1.name).toBe('LabelNodeName');
@@ -198,7 +198,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should return the metadata name if no label nodes and metadata name is set', () => {
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.updateMetadata(props => {
           props.name = 'MetadataName';
           return props;
@@ -223,10 +223,12 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setStart(new AnchorEndpoint(start, 'c'), uow)
       );
-      UnitOfWork.execute(model.diagram1, uow => edge1.setEnd(new AnchorEndpoint(end, 'c'), uow));
+      UnitOfWork.execute(model.diagram1, {}, uow =>
+        edge1.setEnd(new AnchorEndpoint(end, 'c'), uow)
+      );
 
       // **** Verify
       expect(edge1.name).toBe('StartNode - EndNode');
@@ -255,10 +257,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setStart(new AnchorEndpoint(startNode, 'c'), uow)
       );
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setEnd(new AnchorEndpoint(endNode, 'c'), uow)
       );
 
@@ -278,7 +280,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), model.uow);
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.setBounds({ x: 15, y: 25, w: 90, h: 180, r: 0 }, uow)
       );
 
@@ -307,7 +309,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.addNode().asLabelNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode], uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.setLabelNodes([labelNode], uow));
 
       // **** Verify
       expect(edge1.labelNodes).toEqual([labelNode]);
@@ -323,7 +325,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should set the parent of the child correctly', () => {
       // **** Act
       const child = model.layer1.createNode();
-      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.addChild(child, uow));
 
       expect(child.parent!.id).toBe(edge1.id);
       expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
@@ -418,7 +420,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       resetListeners(model.elementChange);
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.removeChild(child, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.removeChild(child, uow));
 
       // **** Verify
       expect(edge1.children.length).toBe(0);
@@ -472,7 +474,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const child2 = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.setChildren([child1, child2], uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.setChildren([child1, child2], uow));
 
       // **** Verify
       expect(edge1.children).toEqual([child1, child2]);
@@ -512,7 +514,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.setLabelNodes([labelNode], uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.setLabelNodes([labelNode], uow));
 
       // **** Verify
       expect(edge1.labelNodes).toEqual([labelNode]);
@@ -574,7 +576,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const labelNode = model.layer1.createNode().asLabelNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.addLabelNode(labelNode, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.addLabelNode(labelNode, uow));
 
       // **** Verify
       expect(edge1.labelNodes).toEqual([labelNode]);
@@ -632,7 +634,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       if (model.diagram2) model.diagram2.on('elementChange', elementChange[1]!);
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => edge1.removeLabelNode(labelNode, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.removeLabelNode(labelNode, uow));
 
       // **** Verify
       expect(edge1.labelNodes).toHaveLength(0);
@@ -659,7 +661,9 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     it('should add waypoint to straight edge', () => {
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow => edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow =>
+        edge1.addWaypoint({ point: { x: 5, y: 5 } }, uow)
+      );
 
       // Verify
       expect(edge1.waypoints).toHaveLength(1);
@@ -697,7 +701,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow => edge1.removeWaypoint(edge1.waypoints[0]!, uow));
+      UnitOfWork.execute(model.diagram1, {}, uow => edge1.removeWaypoint(edge1.waypoints[0]!, uow));
 
       // Verify
       expect(edge1.waypoints).toHaveLength(1);
@@ -719,7 +723,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.moveWaypoint(edge1.waypoints[0]!, { x: 50, y: 50 }, uow)
       );
 
@@ -741,7 +745,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.replaceWaypoint(1, { point: { x: 50, y: 50 } }, uow)
       );
 
@@ -758,7 +762,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('updateProps', () => {
     it('should update simple props', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.updateProps(p => {
           p.stroke ??= {};
           p.stroke.color = 'red';
@@ -778,7 +782,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('updateCustomProps', () => {
     it('should update custom props', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.execute(model.diagram1, {}, uow =>
         edge1.updateCustomProps(
           'blockArrow',
           p => {

@@ -133,6 +133,10 @@ const registry =
         unregister: () => {}
       };
 
+type ExecuteOpts = {
+  silent?: boolean;
+};
+
 export class UnitOfWork {
   uid = newid();
 
@@ -163,10 +167,10 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, false, true);
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, silent = false): T {
+  static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram);
     const result = cb(uow);
-    uow.commit(silent);
+    uow.commit(opts.silent);
     return result;
   }
 

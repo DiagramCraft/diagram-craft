@@ -133,7 +133,7 @@ export class ElementAddUndoableAction implements UndoableAction {
   }
 
   redo() {
-    UnitOfWork.execute(this.diagram, uow => {
+    UnitOfWork.execute(this.diagram, {}, uow => {
       this.elements.forEach(node => {
         if (isNode(node)) {
           node.invalidateAnchors(uow);

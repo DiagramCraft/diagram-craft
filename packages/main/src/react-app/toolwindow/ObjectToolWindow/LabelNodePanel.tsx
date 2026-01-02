@@ -54,7 +54,7 @@ export const LabelNodePanel = (props: Props) => {
             <Select.Root
               value={type}
               onChange={v => {
-                UnitOfWork.execute(edge.diagram, uow => {
+                UnitOfWork.execute(edge.diagram, {}, uow => {
                   // biome-ignore lint/suspicious/noExplicitAny: false positive
                   node.updateLabelNode({ type: v as any, offset: { x: 0, y: 0 } }, uow);
                 });
@@ -73,7 +73,7 @@ export const LabelNodePanel = (props: Props) => {
             <Slider
               value={round(timeOffset * 100)}
               onChange={v => {
-                UnitOfWork.execute(edge.diagram, uow => {
+                UnitOfWork.execute(edge.diagram, {}, uow => {
                   node.updateLabelNode({ timeOffset: Number(v) / 100 }, uow);
                 });
               }}
@@ -87,7 +87,7 @@ export const LabelNodePanel = (props: Props) => {
               value={round(offset.x)}
               style={{ width: '50px' }}
               onChange={v => {
-                UnitOfWork.execute(edge.diagram, uow => {
+                UnitOfWork.execute(edge.diagram, {}, uow => {
                   node.updateLabelNode({ offset: { x: Number(v), y: offset.y } }, uow);
                 });
               }}
@@ -98,7 +98,7 @@ export const LabelNodePanel = (props: Props) => {
                 value={round(offset.y)}
                 style={{ width: '50px' }}
                 onChange={v => {
-                  UnitOfWork.execute(edge.diagram, uow => {
+                  UnitOfWork.execute(edge.diagram, {}, uow => {
                     node.updateLabelNode({ offset: { x: offset.x, y: Number(v) } }, uow);
                   });
                 }}
@@ -108,7 +108,7 @@ export const LabelNodePanel = (props: Props) => {
               type={'secondary'}
               className={'util-square'}
               onClick={() => {
-                UnitOfWork.execute(edge.diagram, uow => {
+                UnitOfWork.execute(edge.diagram, {}, uow => {
                   node.updateLabelNode({ offset: { x: 0, y: 0 } }, uow);
                 });
               }}
