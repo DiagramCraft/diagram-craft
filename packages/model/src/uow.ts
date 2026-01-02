@@ -19,11 +19,21 @@ const uowStack: UOWInternal[] = [];
 type UOWOpts = {
   label?: string;
   metadata?: UOWMetadata;
+  _noSnapshot?: boolean;
 };
 
 export const UOW = {
   execute: <T>(diagram: Diagram, op: () => T) => {
     const id = UOW.begin(diagram);
+    try {
+      return op();
+    } finally {
+      UOW.end(id);
+    }
+  },
+
+  _executeNoSnapshots: <T>(diagram: Diagram, op: () => T) => {
+    const id = UOW.begin(diagram, { _noSnapshot: true });
     try {
       return op();
     } finally {
@@ -48,7 +58,7 @@ export const UOW = {
       label: opts?.label ?? '',
       type: type,
       diagram: diagram,
-      _uow: new UnitOfWork(diagram, true, false),
+      _uow: new UnitOfWork(diagram, opts?._noSnapshot !== true, false),
       metadata: opts?.metadata ?? {}
     });
     return id;

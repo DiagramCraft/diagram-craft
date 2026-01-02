@@ -17,8 +17,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let node2: DiagramNode | undefined;
   let model: StandardTestModel;
 
-  const resetUow = () => (model.uow = UnitOfWork.immediate(model.diagram1));
-
   beforeEach(() => {
     backend.beforeEach();
 
@@ -32,8 +30,8 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('bounds', () => {
     it('simple node only - should set bounds correctly', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
-        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
+      UOW.execute(model.diagram1, () =>
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, UOW.uow())
       );
 
       // Verify
@@ -387,14 +385,15 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       node1.addChild(child1, model.uow);
       node1.addChild(child2, model.uow);
 
-      resetUow();
-      node1.setChildren([child1], model.uow);
-      expect(node1.children).toEqual([child1]);
-      if (model.doc2) expect(node2!.children.map(c => c.id)).toEqual([child1.id]);
+      UOW._executeNoSnapshots(model.diagram1, () => {
+        node1.setChildren([child1], UOW.uow());
+        expect(node1.children).toEqual([child1]);
+        if (model.doc2) expect(node2!.children.map(c => c.id)).toEqual([child1.id]);
 
-      expect(model.uow.contains(node1, 'update')).toBe(true);
-      expect(model.uow.contains(child1, 'update')).toBe(true);
-      expect(model.uow.contains(child2, 'remove')).toBe(true);
+        expect(UOW.uow().contains(node1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child2, 'remove')).toBe(true);
+      });
     });
   });
 

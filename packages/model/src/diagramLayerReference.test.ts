@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ReferenceLayer } from './diagramLayerReference';
-import { UnitOfWork } from './unitOfWork';
 import { RegularLayer } from './diagramLayerRegular';
 import { TestModel } from './test-support/testModel';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('ReferenceLayer', () => {
   describe('constructor', () => {
@@ -85,7 +85,7 @@ describe('ReferenceLayer', () => {
       // Setup
       const diagram = TestModel.newDiagram();
       const targetLayer = new RegularLayer('target-layer', 'Target Layer', [], diagram);
-      diagram.layers.add(targetLayer, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => diagram.layers.add(targetLayer, UOW.uow()));
 
       const reference = {
         layerId: targetLayer.id,
@@ -93,7 +93,7 @@ describe('ReferenceLayer', () => {
       };
 
       const referenceLayer = new ReferenceLayer('ref-layer', 'Reference Layer', diagram, reference);
-      diagram.layers.add(referenceLayer, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => diagram.layers.add(referenceLayer, UOW.uow()));
 
       // Act
       const snapshot = referenceLayer.snapshot();

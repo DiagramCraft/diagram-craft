@@ -9,6 +9,7 @@ import {
 } from './test-support/collaborationModelTestUtils';
 import { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let edge1: DiagramEdge;
@@ -23,16 +24,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   });
   afterEach(backend.afterEach);
 
-  const resetUow = () => (model.uow = UnitOfWork.immediate(model.diagram1));
-
   describe('start/end', () => {
     it('should set start/end to FreeEndpoint', () => {
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow =>
-        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
+      UOW.execute(model.diagram1, () =>
+        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), UOW.uow())
       );
-      UnitOfWork.execute(model.diagram1, uow =>
-        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
+      UOW.execute(model.diagram1, () =>
+        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), UOW.uow())
       );
 
       // **** Verify
@@ -456,12 +455,13 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       edge1.addChild(child, model.uow);
 
       // **** Act
-      resetUow();
-      edge1.removeChild(child, model.uow);
+      UOW.execute(model.diagram1, () => {
+        edge1.removeChild(child, UOW.uow());
 
-      // **** Verify
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(child, 'remove')).toBe(true);
+        // **** Verify
+        expect(UOW.uow().contains(edge1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child, 'remove')).toBe(true);
+      });
     });
   });
 
@@ -493,16 +493,17 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       edge1.addChild(child2, model.uow);
 
       // **** Act
-      resetUow();
-      edge1.setChildren([child1], model.uow);
+      UOW._executeNoSnapshots(model.diagram1, () => {
+        edge1.setChildren([child1], UOW.uow());
 
-      // **** Verify
-      expect(edge1.children).toEqual([child1]);
-      if (model.doc2) expect(edge2?.children).toHaveLength(1);
+        // **** Verify
+        expect(edge1.children).toEqual([child1]);
+        if (model.doc2) expect(edge2?.children).toHaveLength(1);
 
-      expect(model.uow.contains(edge1, 'update')).toBe(true);
-      expect(model.uow.contains(child1, 'update')).toBe(true);
-      expect(model.uow.contains(child2, 'remove')).toBe(true);
+        expect(UOW.uow().contains(edge1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child2, 'remove')).toBe(true);
+      });
     });
   });
 
