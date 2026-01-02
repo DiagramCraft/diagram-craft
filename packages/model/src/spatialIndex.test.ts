@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('SpatialIndex', () => {
   describe('near', () => {
@@ -81,13 +82,13 @@ describe('SpatialIndex', () => {
       const layer = diagram.newLayer();
 
       const node1 = layer.createNode({ bounds: { x: 10, y: 10, w: 10, h: 10, r: 0 } });
-      UnitOfWork.execute(diagram, uow => layer.addElement(node1, uow));
+      UOW.execute(diagram, () => layer.addElement(node1, UOW.uow()));
 
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1.length).toBe(1);
 
       const node2 = layer.createNode({ bounds: { x: 20, y: 20, w: 10, h: 10, r: 0 } });
-      UnitOfWork.execute(diagram, uow => layer.addElement(node2, uow));
+      UOW.execute(diagram, () => layer.addElement(node2, UOW.uow()));
 
       const results2 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results2.length).toBe(2);
@@ -121,9 +122,7 @@ describe('SpatialIndex', () => {
       const results1 = Array.from(diagram.index.near({ x: 10, y: 10 }));
       expect(results1[0]).toBe(node);
 
-      const uow = new UnitOfWork(diagram);
-      node.setBounds({ x: 100, y: 100, w: 10, h: 10, r: 0 }, uow);
-      uow.commit();
+      UOW.execute(diagram, () => node.setBounds({ x: 100, y: 100, w: 10, h: 10, r: 0 }, UOW.uow()));
 
       const results2 = Array.from(diagram.index.near({ x: 100, y: 100 }));
       expect(results2[0]).toBe(node);

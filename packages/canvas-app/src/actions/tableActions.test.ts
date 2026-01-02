@@ -11,6 +11,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('TableRowMoveAction', () => {
   let diagram: Diagram;
@@ -76,13 +77,14 @@ describe('TableRowMoveAction', () => {
     });
 
     // Build hierarchy (reverse order)
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW.execute(diagram, () => {
+      row1.addChild(cellB, UOW.uow());
+      row1.addChild(cellA, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
 
     context = {
       model: {
@@ -190,13 +192,14 @@ describe('TableColumnMoveAction', () => {
     });
 
     // Build hierarchy (reverse order)
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW.execute(diagram, () => {
+      row1.addChild(cellB, UOW.uow());
+      row1.addChild(cellA, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
 
     context = {
       model: {
@@ -301,13 +304,14 @@ describe('TableInsertAction', () => {
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    UOW.execute(diagram, () => {
+      row1.addChild(cellB, UOW.uow());
+      row1.addChild(cellA, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      table.addChild(row2, UOW.uow());
+      table.addChild(row1, UOW.uow());
+    });
 
     context = {
       model: {
@@ -762,13 +766,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 0, y: 200, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellB, uow);
-    row3.addChild(cellC, uow);
-    table2.addChild(row3, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UOW.execute(diagram2, () => {
+      row1.addChild(cellA, UOW.uow());
+      row2.addChild(cellB, UOW.uow());
+      row3.addChild(cellC, UOW.uow());
+      table2.addChild(row3, UOW.uow());
+      table2.addChild(row2, UOW.uow());
+      table2.addChild(row1, UOW.uow());
+    });
 
     diagram2.selection.setElements([cellA]);
 
@@ -833,13 +838,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 100, y: 80, w: 100, h: 120, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UOW.execute(diagram2, () => {
+      row1.addChild(cellA, UOW.uow());
+      row1.addChild(cellB, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      table2.addChild(row2, UOW.uow());
+      table2.addChild(row1, UOW.uow());
+    });
 
     diagram2.selection.setElements([cellA]);
 
@@ -902,13 +908,14 @@ describe('TableDistributeAction', () => {
       bounds: { x: 50, y: 100, w: 150, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram2);
-    row1.addChild(cellA, uow);
-    row1.addChild(cellB, uow);
-    row2.addChild(cellC, uow);
-    row2.addChild(cellD, uow);
-    table2.addChild(row2, uow);
-    table2.addChild(row1, uow);
+    UOW.execute(diagram2, () => {
+      row1.addChild(cellA, UOW.uow());
+      row1.addChild(cellB, UOW.uow());
+      row2.addChild(cellC, UOW.uow());
+      row2.addChild(cellD, UOW.uow());
+      table2.addChild(row2, UOW.uow());
+      table2.addChild(row1, UOW.uow());
+    });
 
     diagram2.selection.setElements([cellA]);
 

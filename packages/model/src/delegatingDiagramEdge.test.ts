@@ -9,6 +9,7 @@ import { ModificationLayer } from './diagramLayerModification';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
 import { FreeEndpoint } from './endpoint';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => {
   let model: StandardTestModel;
@@ -31,7 +32,7 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
 
     // Create a modification layer and add it to the diagram
     modLayer = new ModificationLayer('mod-layer-1', 'Modification Layer', model.diagram1, []);
-    model.diagram1.layers.add(modLayer, UnitOfWork.immediate(model.diagram1));
+    UOW.execute(model.diagram1, () => model.diagram1.layers.add(modLayer, UOW.uow()));
 
     model.diagram1.layers.active = model.layer1;
 
@@ -46,7 +47,9 @@ describe.each(Backends.all())('DelegatingDiagramEdge [%s]', (_name, backend) => 
       baseEdge,
       modLayer
     );
-    modLayer.modifyChange(baseEdge.id, delegatingEdge, UnitOfWork.immediate(model.diagram1));
+    UOW.execute(model.diagram1, () =>
+      modLayer.modifyChange(baseEdge.id, delegatingEdge, UOW.uow())
+    );
 
     if (modLayer2) {
       delegatingEdge2 = modLayer2.elements.find(

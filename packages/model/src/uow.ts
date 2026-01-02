@@ -2,22 +2,28 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
+type UOWMetadata = Record<string, unknown>;
 type UOWInternal = {
   id: string;
   label: string;
-  type: 'regular' | 'isolated';
+  type: 'reversible' | 'irreversible';
   diagram?: Diagram;
   _uow: UnitOfWork;
-  metadata: Record<string, unknown>;
+  metadata: UOWMetadata;
 };
 
 const uowStack: UOWInternal[] = [];
 
+type UOWOpts = {
+  label?: string;
+  metadata?: UOWMetadata;
+};
+
 export const UOW = {
-  with: <T>(diagram: Diagram, s: string, op: () => T) => {
-    const id = UOW.begin(diagram, s);
+  execute: <T>(diagram: Diagram, op: () => T) => {
+    const id = UOW.begin(diagram);
     try {
       return op();
     } finally {
@@ -25,31 +31,46 @@ export const UOW = {
     }
   },
 
-  begin: (diagram: Diagram, s: string) => {
+  executeWithUndo: <T>(diagram: Diagram, s: string, op: () => T) => {
+    const id = UOW.begin(diagram, { label: s });
+    try {
+      return op();
+    } finally {
+      UOW.end(id);
+    }
+  },
+
+  begin: (diagram: Diagram, opts?: UOWOpts) => {
     const id = newid();
+    const type = opts?.label ? 'reversible' : 'irreversible';
     uowStack.push({
       id,
-      label: s,
-      type: 'regular',
+      label: opts?.label ?? '',
+      type: type,
       diagram: diagram,
       _uow: new UnitOfWork(diagram, true, false),
-      metadata: {}
+      metadata: opts?.metadata ?? {}
     });
     return id;
   },
 
-  end: (id?: string) => {
+  end: (id: string) => {
     const u = mustExist(uowStack.pop());
-    if (id && u?.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
-    u._uow.commit();
+    if (u.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
+
+    if (u.type === 'reversible') {
+      commitWithUndo(u._uow, u.label);
+    } else {
+      u._uow.commit();
+    }
   },
 
-  abort: (id?: string) => {
+  abort: (id: string) => {
     const u = mustExist(uowStack.pop());
-    if (id && u?.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
+    if (u.id !== id) throw new Error(`Invalid UOW ID: ${id}`);
     u._uow.abort();
   },
-
+  /*
   metadata: () => {
     return mustExist(uowStack.at(-1)).metadata;
   },
@@ -62,43 +83,19 @@ export const UOW = {
   onAfterEnd: (cb: () => void, id?: string) => {},
 
   onAbort: (cb: () => void, id?: string) => {},
-
+*/
   current: () => {
-    const p = uowStack.at(-1);
-    return p ? p.type : undefined;
+    return mustExist(uowStack.at(-1));
   },
 
-  notify: () => {
+  /*notify: () => {
     mustExist(uowStack.at(-1))._uow.notify();
-  },
+  },*/
 
-  addOperation: (op: UndoableAction) => {},
+  //addOperation: (op: UndoableAction) => {},
 
   uow: () => {
     return mustExist(uowStack.at(-1))._uow;
-  },
-
-  Isolated: {
-    with: <T>(diagram: Diagram, s: string, op: () => T) => {
-      const id = UOW.Isolated.begin(diagram, s);
-      try {
-        return op();
-      } finally {
-        UOW.end(id);
-      }
-    },
-    begin: (diagram: Diagram, s: string) => {
-      const id = newid();
-      uowStack.push({
-        id,
-        label: s,
-        type: 'isolated',
-        diagram: diagram,
-        _uow: new UnitOfWork(diagram, true, false),
-        metadata: {}
-      });
-      return id;
-    }
   },
 
   Tracking: {}

@@ -7,6 +7,7 @@ import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import type { NodeProps } from './diagramProps';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {
@@ -35,8 +36,9 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const name = 'Test stylesheet';
       const initialProps = { fill: { color: 'blue' } };
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+      const d = TestModel.newDiagram();
+      const styles1 = new DiagramStyles(root1, d.document, true);
+      const styles2 = root2 ? new DiagramStyles(root2, d.document, true) : undefined;
 
       const stylesheet = Stylesheet.fromSnapshot(
         type,
@@ -47,7 +49,7 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
 
       // Act
       const newProps = { fill: { color: 'red' } };
-      stylesheet.setProps(newProps, styles1, UnitOfWork.immediate(null!));
+      UOW.execute(d, () => stylesheet.setProps(newProps, styles1, UOW.uow()));
 
       // Verify
       expect(stylesheet.props).toEqual(newProps);
@@ -68,14 +70,15 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const newName = 'New Name';
       const props = { fill: { color: 'blue' } };
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const d = TestModel.newDiagram();
+      const styles1 = new DiagramStyles(root1, d.document, true);
       const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles1.crdt.factory);
       styles1.addStylesheet(id, stylesheet);
 
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+      const styles2 = root2 ? new DiagramStyles(root2, d.document, true) : undefined;
 
       // Act
-      stylesheet.setName(newName, styles1, UnitOfWork.immediate(null!));
+      UOW.execute(d, () => stylesheet.setName(newName, styles1, UOW.uow()));
 
       expect(stylesheet.name).toBe(newName);
       if (styles2) {
@@ -627,11 +630,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Set a stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UOW.execute(diagram, () =>
+        styles.setStylesheet(element as any, defaultNodeStyleId, UOW.uow(), true)
       );
 
       expect(element.metadata.style).toBe(defaultNodeStyleId);
@@ -648,11 +648,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultTextStyleId = styles.textStyles[0]!.id;
 
       // Set a text stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultTextStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UOW.execute(diagram, () =>
+        styles.setStylesheet(element as any, defaultTextStyleId, UOW.uow(), true)
       );
 
       expect(element.metadata.textStyle).toBe(defaultTextStyleId);
@@ -681,11 +678,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       styles.addStylesheet('custom-node', customNodeStyle);
 
       // Set the default node stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UOW.execute(diagram, () =>
+        styles.setStylesheet(element as any, defaultNodeStyleId, UOW.uow(), true)
       );
 
       // Verify the active node stylesheet was updated

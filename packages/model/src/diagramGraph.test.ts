@@ -5,7 +5,7 @@ import { AnchorEndpoint } from './endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { ElementFactory } from './elementFactory';
 import { newid } from '@diagram-craft/utils/id';
-import { UnitOfWork } from './unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('DiagramGraph', () => {
   let diagram: TestDiagramBuilder;
@@ -57,7 +57,7 @@ describe('DiagramGraph', () => {
       [],
       layer
     );
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(edge, UOW.uow()));
 
     const graph = new DiagramGraph(layer);
 
@@ -94,8 +94,8 @@ describe('DiagramGraph', () => {
       [],
       layer
     );
-    layer.addElement(edge1, UnitOfWork.immediate(diagram));
-    layer.addElement(edge2, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(edge1, UOW.uow()));
+    UOW.execute(diagram, () => layer.addElement(edge2, UOW.uow()));
 
     const graph = new DiagramGraph(layer);
 
@@ -155,10 +155,10 @@ describe('DiagramGraph', () => {
       layer
     );
 
-    layer.addElement(edge1, UnitOfWork.immediate(diagram));
-    layer.addElement(edge2, UnitOfWork.immediate(diagram));
-    layer.addElement(edge3, UnitOfWork.immediate(diagram));
-    layer.addElement(edge4, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(edge1, UOW.uow()));
+    UOW.execute(diagram, () => layer.addElement(edge2, UOW.uow()));
+    UOW.execute(diagram, () => layer.addElement(edge3, UOW.uow()));
+    UOW.execute(diagram, () => layer.addElement(edge4, UOW.uow()));
 
     const graph = new DiagramGraph(layer);
 

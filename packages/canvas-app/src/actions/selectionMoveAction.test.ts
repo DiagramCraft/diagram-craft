@@ -1,13 +1,13 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { SelectionMoveAction } from './selectionMoveAction';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { model } from '@diagram-craft/canvas/modelState';
 import {
   TestDiagramBuilder,
-  TestModel,
-  TestLayerBuilder
+  TestLayerBuilder,
+  TestModel
 } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { UOW } from '@diagram-craft/model/uow';
 
 const context: ActionContext = { model };
 
@@ -73,10 +73,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent.addChild(child1, UOW.uow());
+        parent.addChild(child2, UOW.uow());
+      });
 
       diagram.selection.setElements([child1]);
 
@@ -112,10 +112,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent.addChild(child1, UOW.uow());
+        parent.addChild(child2, UOW.uow());
+      });
 
       diagram.selection.setElements([child2]);
 
@@ -153,10 +153,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent.addChild(child1, UOW.uow());
+        parent.addChild(child2, UOW.uow());
+      });
 
       diagram.selection.setElements([child1]);
 
@@ -192,10 +192,10 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent.addChild(child1, UOW.uow());
+        parent.addChild(child2, UOW.uow());
+      });
 
       diagram.selection.setElements([child2]);
 
@@ -228,9 +228,7 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child, uow2);
-      uow2.commit();
+      UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
       diagram.selection.setElements([child]);
 
@@ -268,9 +266,7 @@ describe('SelectionMoveAction', () => {
         }
       });
 
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child, uow);
-      uow.commit();
+      UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
       diagram.selection.setElements([child]);
 
@@ -302,9 +298,7 @@ describe('SelectionMoveAction', () => {
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
 
-      const uow2 = new UnitOfWork(diagram);
-      parent.addChild(child, uow2);
-      uow2.commit();
+      UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
       diagram.selection.setElements([child]);
 

@@ -7,10 +7,10 @@ import {
 } from './test-support/collaborationModelTestUtils';
 import type { DiagramNode } from './diagramNode';
 import { serializeDiagram } from './serialization/serialize';
-import { commitWithUndo } from './diagramUndoActions';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import type { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let node1: TestDiagramNodeBuilder;
@@ -50,9 +50,9 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      const uow2 = new UnitOfWork(model.diagram1, true, false);
-      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
-      commitWithUndo(uow2, 'Move');
+      UOW.executeWithUndo(model.diagram1, 'Move', () => {
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, UOW.uow());
+      });
 
       // Act
       model.diagram1.undoManager.undo();
@@ -109,9 +109,9 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      const uow2 = new UnitOfWork(model.diagram1, true, false);
-      node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
-      commitWithUndo(uow2, 'Move');
+      UOW.executeWithUndo(model.diagram1, 'Move', () => {
+        node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, UOW.uow());
+      });
 
       // Act
       model.diagram1.undoManager.undo();
@@ -353,10 +353,11 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = model.layer1.createNode();
       node1.addChild(child, model.uow);
 
-      resetUow();
-      node1.removeChild(child, model.uow);
-      expect(model.uow.contains(node1, 'update')).toBe(true);
-      expect(model.uow.contains(child, 'remove')).toBe(true);
+      UOW.execute(model.diagram1, () => {
+        node1.removeChild(child, UOW.uow());
+        expect(UOW.uow().contains(node1, 'update')).toBe(true);
+        expect(UOW.uow().contains(child, 'remove')).toBe(true);
+      });
     });
   });
 

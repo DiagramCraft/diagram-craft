@@ -10,9 +10,9 @@ import { ActionContext } from '@diagram-craft/canvas/action';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { UOW } from '@diagram-craft/model/uow';
 
 const mkContext = (d: Diagram) => {
   return {
@@ -127,7 +127,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => layer.addElement(connectedEdge, UOW.uow()));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -180,7 +180,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => layer.addElement(connectedEdge, UOW.uow()));
 
       // Select only one node and the edge
       diagram.selection.setElements([node1, connectedEdge]);
@@ -223,7 +223,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UOW.execute(diagram, () => layer.addElement(connectedEdge, UOW.uow()));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -290,10 +290,10 @@ describe('DuplicateAction', () => {
       const child2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Set parent for both children
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent.addChild(child1, UOW.uow());
+        parent.addChild(child2, UOW.uow());
+      });
 
       expect(child1.parent).toBe(parent);
       expect(child2.parent).toBe(parent);
@@ -326,10 +326,10 @@ describe('DuplicateAction', () => {
       const child2 = layer.addNode({ bounds: { x: 610, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set different parents
-      const uow = new UnitOfWork(diagram);
-      parent1.addChild(child1, uow);
-      parent2.addChild(child2, uow);
-      uow.commit();
+      UOW.execute(diagram, () => {
+        parent1.addChild(child1, UOW.uow());
+        parent2.addChild(child2, UOW.uow());
+      });
 
       expect(child1.parent).toBe(parent1);
       expect(child2.parent).toBe(parent2);
@@ -344,10 +344,7 @@ describe('DuplicateAction', () => {
         .filter(isNode)
         .filter(
           n =>
-            n.id !== parent1.id &&
-            n.id !== parent2.id &&
-            n.id !== child1.id &&
-            n.id !== child2.id
+            n.id !== parent1.id && n.id !== parent2.id && n.id !== child1.id && n.id !== child2.id
         );
 
       expect(duplicatedNodes).toHaveLength(2);
@@ -363,9 +360,7 @@ describe('DuplicateAction', () => {
       const orphan = layer.addNode({ bounds: { x: 600, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set parent only for child
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child, uow);
-      uow.commit();
+      UOW.execute(diagram, () => parent.addChild(child, UOW.uow()));
 
       expect(child.parent).toBe(parent);
       expect(orphan.parent).toBeUndefined();

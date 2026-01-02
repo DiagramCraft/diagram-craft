@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { ElementAddUndoableAction, ElementDeleteUndoableAction } from './diagramUndoActions';
 import { TestModel } from './test-support/testModel';
-import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint } from './endpoint';
+import { UOW } from '@diagram-craft/model/uow';
 
 describe('ElementAddUndoableAction', () => {
   test('should undo node addition', () => {
@@ -10,11 +10,11 @@ describe('ElementAddUndoableAction', () => {
     const node = layer.createNode({ id: 'node1' });
 
     const action = new ElementAddUndoableAction([node], diagram, layer);
-    layer.addElement(node, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(node, UOW.uow()));
 
     expect(diagram.lookup('node1')).toBe(node);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(diagram.lookup('node1')).toBeUndefined();
     expect(layer.elements).toHaveLength(0);
@@ -25,9 +25,9 @@ describe('ElementAddUndoableAction', () => {
     const node = layer.createNode({ id: 'node1' });
 
     const action = new ElementAddUndoableAction([node], diagram, layer);
-    layer.addElement(node, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(node, UOW.uow()));
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
     expect(diagram.lookup('node1')).toBeUndefined();
 
     action.redo();
@@ -41,11 +41,11 @@ describe('ElementAddUndoableAction', () => {
     const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([edge], diagram, layer);
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => layer.addElement(edge, UOW.uow()));
 
     expect(diagram.lookup('edge1')).toBe(edge);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(diagram.lookup('edge1')).toBeUndefined();
     expect(layer.elements).toHaveLength(0);
@@ -58,18 +58,20 @@ describe('ElementAddUndoableAction', () => {
     const edge = layer.createEdge({ id: 'edge1' });
 
     const action = new ElementAddUndoableAction([node1, node2, edge], diagram, layer);
-    layer.addElement(node1, UnitOfWork.immediate(diagram));
-    layer.addElement(node2, UnitOfWork.immediate(diagram));
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => {
+      layer.addElement(node1, UOW.uow());
+      layer.addElement(node2, UOW.uow());
+      layer.addElement(edge, UOW.uow());
 
-    expect(layer.elements).toHaveLength(3);
+      expect(layer.elements).toHaveLength(3);
 
-    action.undo(UnitOfWork.immediate(diagram));
+      action.undo(UOW.uow());
 
-    expect(layer.elements).toHaveLength(0);
-    expect(diagram.lookup('node1')).toBeUndefined();
-    expect(diagram.lookup('node2')).toBeUndefined();
-    expect(diagram.lookup('edge1')).toBeUndefined();
+      expect(layer.elements).toHaveLength(0);
+      expect(diagram.lookup('node1')).toBeUndefined();
+      expect(diagram.lookup('node2')).toBeUndefined();
+      expect(diagram.lookup('edge1')).toBeUndefined();
+    });
   });
 
   test('should handle edge-node connections correctly', () => {
@@ -79,27 +81,28 @@ describe('ElementAddUndoableAction', () => {
     const node2 = layer.addNode();
     const edge = layer.createEdge({ id: 'edge1' });
 
-    // Connect edge to nodes
-    const uow = UnitOfWork.immediate(diagram);
-    edge.setStart(new AnchorEndpoint(node1, 'c'), uow);
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
+    UOW.execute(diagram, () => {
+      // Connect edge to nodes
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
 
-    const action = new ElementAddUndoableAction([edge], diagram, layer);
-    layer.addElement(edge, uow);
+      const action = new ElementAddUndoableAction([edge], diagram, layer);
+      layer.addElement(edge, UOW.uow());
 
-    // Verify edge is connected initially
-    expect((edge.start as AnchorEndpoint).node).toBe(node1);
-    expect((edge.end as AnchorEndpoint).node).toBe(node2);
+      // Verify edge is connected initially
+      expect((edge.start as AnchorEndpoint).node).toBe(node1);
+      expect((edge.end as AnchorEndpoint).node).toBe(node2);
 
-    // Test undo - edge should be removed
-    action.undo(UnitOfWork.immediate(diagram));
-    expect(diagram.lookup('edge1')).toBeUndefined();
+      // Test undo - edge should be removed
+      action.undo(UOW.uow());
+      expect(diagram.lookup('edge1')).toBeUndefined();
 
-    // Test redo - edge should be restored with connections
-    action.redo();
-    expect(diagram.lookup('edge1')).toBe(edge);
-    expect((edge.start as AnchorEndpoint).node).toBe(node1);
-    expect((edge.end as AnchorEndpoint).node).toBe(node2);
+      // Test redo - edge should be restored with connections
+      action.redo();
+      expect(diagram.lookup('edge1')).toBe(edge);
+      expect((edge.start as AnchorEndpoint).node).toBe(node1);
+      expect((edge.end as AnchorEndpoint).node).toBe(node2);
+    });
   });
 });
 
@@ -109,12 +112,12 @@ describe('ElementDeleteUndoableAction', () => {
     const node = layer.addNode({ id: 'node1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node], false);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(diagram.lookup('node1')).toBeUndefined();
     expect(layer.elements).toHaveLength(0);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(diagram.lookup('node1')).toBe(node);
     expect(layer.elements).toHaveLength(1);
@@ -125,12 +128,12 @@ describe('ElementDeleteUndoableAction', () => {
     const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [edge], false);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(diagram.lookup('edge1')).toBeUndefined();
     expect(layer.elements).toHaveLength(0);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(diagram.lookup('edge1')).toBe(edge);
     expect(layer.elements).toHaveLength(1);
@@ -143,11 +146,11 @@ describe('ElementDeleteUndoableAction', () => {
     const edge = layer.addEdge({ id: 'edge1' });
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node1, node2, edge], false);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(layer.elements).toHaveLength(0);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(layer.elements).toHaveLength(3);
     expect(diagram.lookup('node1')).toBe(node1);
@@ -163,9 +166,10 @@ describe('ElementDeleteUndoableAction', () => {
     const edge = layer.addEdge();
 
     // Connect edge to nodes
-    const uow = UnitOfWork.immediate(diagram);
-    edge.setStart(new AnchorEndpoint(node1, 'c'), uow);
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
+    UOW.execute(diagram, () => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+    });
 
     // Verify connections before deletion
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
@@ -175,12 +179,12 @@ describe('ElementDeleteUndoableAction', () => {
 
     // Delete and restore edge
     const action = new ElementDeleteUndoableAction(diagram, layer, [edge], false);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(node1.edges).not.toContain(edge);
     expect(node2.edges).not.toContain(edge);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     // Verify connections are restored
     expect((edge.start as AnchorEndpoint).node).toBe(node1);
@@ -197,9 +201,10 @@ describe('ElementDeleteUndoableAction', () => {
     const edge = layer.addEdge();
 
     // Connect edge to nodes
-    const uow = UnitOfWork.immediate(diagram);
-    edge.setStart(new AnchorEndpoint(node1, 'c'), uow);
-    edge.setEnd(new AnchorEndpoint(node2, 'c'), uow);
+    UOW.execute(diagram, () => {
+      edge.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+    });
 
     // Verify connections before deletion
     expect(node1.edges).toContain(edge);
@@ -207,9 +212,9 @@ describe('ElementDeleteUndoableAction', () => {
 
     // Delete and restore node1
     const action = new ElementDeleteUndoableAction(diagram, layer, [node1], false);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     // Verify node1 connection is restored
     expect(node1.edges).toContain(edge);
@@ -226,11 +231,12 @@ describe('ElementDeleteUndoableAction', () => {
     const edge2 = layer.addEdge({ id: 'edge2' });
 
     // Connect edges to nodes
-    const uow = UnitOfWork.immediate(diagram);
-    edge1.setStart(new AnchorEndpoint(node1, 'c'), uow);
-    edge1.setEnd(new AnchorEndpoint(node2, 'c'), uow);
-    edge2.setStart(new AnchorEndpoint(node1, 't'), uow);
-    edge2.setEnd(new AnchorEndpoint(node2, 'b'), uow);
+    UOW.execute(diagram, () => {
+      edge1.setStart(new AnchorEndpoint(node1, 'c'), UOW.uow());
+      edge1.setEnd(new AnchorEndpoint(node2, 'c'), UOW.uow());
+      edge2.setStart(new AnchorEndpoint(node1, 't'), UOW.uow());
+      edge2.setEnd(new AnchorEndpoint(node2, 'b'), UOW.uow());
+    });
 
     // Delete all elements and restore
     const action = new ElementDeleteUndoableAction(
@@ -239,11 +245,11 @@ describe('ElementDeleteUndoableAction', () => {
       [node1, node2, edge1, edge2],
       false
     );
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(layer.elements).toHaveLength(0);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     // Verify all elements and connections are restored
     expect(layer.elements).toHaveLength(4);
@@ -271,11 +277,11 @@ describe('ElementDeleteUndoableAction', () => {
     expect(diagram.selection.elements).toContain(node);
 
     const action = new ElementDeleteUndoableAction(diagram, layer, [node], true);
-    action.redo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.redo(UOW.uow()));
 
     expect(diagram.selection.elements).toHaveLength(0);
 
-    action.undo(UnitOfWork.immediate(diagram));
+    UOW.execute(diagram, () => action.undo(UOW.uow()));
 
     expect(diagram.selection.elements).toContain(node);
   });

@@ -4,6 +4,7 @@ import { TestLayerBuilder } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { UOW } from './uow';
 
 describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
   describe('all', () => {
@@ -11,7 +12,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(layer2, UOW.uow()));
 
       const allLayers = diagram1.layers.all;
       expect(allLayers).toEqual([layer1, layer2]);
@@ -21,11 +22,11 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(layer2, UOW.uow()));
 
       // Act
       const newLayer = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(newLayer, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(newLayer, UOW.uow()));
 
       // Verify
       const allLayers = diagram1.layers.all;
@@ -36,7 +37,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(layer2, UOW.uow()));
 
       // Act
       diagram1.layers.remove(layer1, UnitOfWork.immediate(diagram1));
@@ -80,7 +81,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, diagram2, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(layer2, UOW.uow()));
 
       // Act
       diagram1.layers.toggleVisibility(layer1);
@@ -96,7 +97,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       // Setup
       const { diagram1, layer1 } = standardTestModel(backend);
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
-      diagram1.layers.add(layer2, UnitOfWork.immediate(diagram1));
+      UOW.execute(diagram1, () => diagram1.layers.add(layer2, UOW.uow()));
 
       diagram1.layers.toggleVisibility(layer1 as any);
       diagram1.layers.toggleVisibility(layer1 as any);
@@ -126,9 +127,8 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const { diagram1 } = standardTestModel(backend);
 
       const newLayer = new TestLayerBuilder('newLayer', diagram1);
-      const uow = UnitOfWork.immediate(diagram1);
 
-      diagram1.layers.add(newLayer, uow);
+      UOW.execute(diagram1, () => diagram1.layers.add(newLayer, UOW.uow()));
 
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toContain(newLayer);
@@ -139,9 +139,8 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const { diagram1 } = standardTestModel(backend);
 
       const newLayer = new TestLayerBuilder('newLayer', diagram1);
-      const uow = UnitOfWork.immediate(diagram1);
 
-      diagram1.layers.add(newLayer, uow);
+      UOW.execute(diagram1, () => diagram1.layers.add(newLayer, UOW.uow()));
 
       const activeLayer = diagram1.layers.active;
       expect(activeLayer).toBe(newLayer);
