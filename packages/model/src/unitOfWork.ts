@@ -189,6 +189,7 @@ export class UnitOfWork {
       // Called with (diagram, opts, cb)
       const result = cb!(uow);
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
+      else uow.abort();
       return result;
     }
   }
@@ -215,6 +216,7 @@ export class UnitOfWork {
       // Called with (diagram, opts, cb)
       const result = await cb!(uow);
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
+      else uow.abort();
       return result;
     }
   }

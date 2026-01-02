@@ -276,7 +276,7 @@ export class SimpleDiagramNode
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
     if (this.#anchors.get() === undefined) {
-      this.invalidateAnchors(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidateAnchors(uow));
     }
   }
 
@@ -776,7 +776,9 @@ export class SimpleDiagramNode
       const newElement = c.duplicate(context, id ? `${id}-${i}` : undefined);
       newChildren.push(newElement);
     }
-    node.setChildren(newChildren, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.execute(this.diagram, { _noCommit: true }, uow =>
+      node.setChildren(newChildren, uow)
+    );
     context.targetElementsInGroup.set(this.id, node);
 
     if (!isTopLevel) return node;
