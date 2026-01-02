@@ -871,36 +871,34 @@ export class SimpleDiagramEdge
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
-    const uow = new UnitOfWork(this.diagram);
+    return UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+      const edge = SimpleDiagramEdge._create(
+        id ?? newid(),
+        this.start,
+        this.end,
+        deepClone(this.#props) as EdgeProps,
+        deepClone(this.metadata),
+        deepClone(this.waypoints) as Array<Waypoint>,
+        this.layer
+      );
 
-    const edge = SimpleDiagramEdge._create(
-      id ?? newid(),
-      this.start,
-      this.end,
-      deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata),
-      deepClone(this.waypoints) as Array<Waypoint>,
-      this.layer
-    );
+      ctx?.targetElementsInGroup.set(this.id, edge);
 
-    ctx?.targetElementsInGroup.set(this.id, edge);
+      // Clone any label nodes
+      const newLabelNodes: ResolvedLabelNode[] = [];
+      for (let i = 0; i < edge.labelNodes.length; i++) {
+        const l = edge.labelNodes[i]!;
 
-    // Clone any label nodes
-    const newLabelNodes: ResolvedLabelNode[] = [];
-    for (let i = 0; i < edge.labelNodes.length; i++) {
-      const l = edge.labelNodes[i]!;
+        const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
+        newLabelNodes.push({
+          ...l,
+          node: () => newNode
+        });
+      }
+      edge.setLabelNodes(newLabelNodes, uow);
 
-      const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
-      newLabelNodes.push({
-        ...l,
-        node: () => newNode
-      });
-    }
-    edge.setLabelNodes(newLabelNodes, uow);
-
-    uow.abort();
-
-    return edge;
+      return edge;
+    });
   }
 
   /* ***** ***** ******************************************************************************************** */

@@ -4,7 +4,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class LabelAttachmentPointDrag extends Drag {
   private readonly uow: UnitOfWork;
@@ -15,7 +14,7 @@ export class LabelAttachmentPointDrag extends Drag {
     private path: Path
   ) {
     super();
-    this.uow = new UnitOfWork(this.edge.diagram, true);
+    this.uow = UnitOfWork.begin(this.edge.diagram);
   }
 
   onDrag(event: DragEvents.DragStart): void {
@@ -41,7 +40,7 @@ export class LabelAttachmentPointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    commitWithUndo(this.uow, 'Move label node');
+    this.uow.commitWithUndo('Move label node');
   }
 
   cancel() {

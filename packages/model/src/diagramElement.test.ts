@@ -439,39 +439,38 @@ describe('transformElements', () => {
     const diagram = TestModel.newDiagram();
     diagram.newLayer();
 
-    const uow = new UnitOfWork(diagram);
+    UnitOfWork.execute(diagram, uow => {
+      const layer = diagram.activeLayer;
+      assertRegularLayer(layer);
 
-    const layer = diagram.activeLayer;
-    assertRegularLayer(layer);
+      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
+      layer.addElement(node1, uow);
 
-    const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
-    layer.addElement(node1, uow);
+      const node2 = ElementFactory.node(
+        '2',
+        'rect',
+        {
+          x: 100,
+          y: 100,
+          w: 100,
+          h: 100,
+          r: 0
+        },
+        layer,
+        {},
+        {}
+      );
+      layer.addElement(node2, uow);
 
-    const node2 = ElementFactory.node(
-      '2',
-      'rect',
-      {
-        x: 100,
-        y: 100,
-        w: 100,
-        h: 100,
-        r: 0
-      },
-      layer,
-      {},
-      {}
-    );
-    layer.addElement(node2, uow);
+      const nodes = [node1, node2];
 
-    const nodes = [node1, node2];
+      const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
+      const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
 
-    const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
-    const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
+      transformElements(nodes, TransformFactory.fromTo(before, after), uow);
 
-    transformElements(nodes, TransformFactory.fromTo(before, after), uow);
-    uow.commit();
-
-    expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
-    expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+      expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
+      expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+    });
   });
 });

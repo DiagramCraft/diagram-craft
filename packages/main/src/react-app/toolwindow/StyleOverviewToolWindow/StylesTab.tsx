@@ -15,7 +15,7 @@ import {
 } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
@@ -95,23 +95,21 @@ export const StylesTab = () => {
 
   const handleStyleReset = useCallback(
     (elements: DiagramElement[], differences: Partial<ElementProps>) => {
-      const uow = new UnitOfWork(diagram, true);
+      UnitOfWork.executeWithUndo(diagram, 'Reset styles', uow => {
+        const accessor = new DynamicAccessor<ElementProps>();
+        const paths = accessor.paths(differences);
 
-      const accessor = new DynamicAccessor<ElementProps>();
-      const paths = accessor.paths(differences);
+        // Sort paths by length, longest first
+        paths.sort((a, b) => b.length - a.length);
 
-      // Sort paths by length, longest first
-      paths.sort((a, b) => b.length - a.length);
-
-      for (const element of elements) {
-        element.updateProps(props => {
-          for (const path of paths) {
-            accessor.set(props, path, undefined);
-          }
-        }, uow);
-      }
-
-      commitWithUndo(uow, 'Reset styles');
+        for (const element of elements) {
+          element.updateProps(props => {
+            for (const path of paths) {
+              accessor.set(props, path, undefined);
+            }
+          }, uow);
+        }
+      });
     },
     [diagram]
   );

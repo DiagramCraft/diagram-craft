@@ -7,7 +7,6 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
 import {
-  commitWithUndo,
   ElementDeleteUndoableAction,
   SnapshotUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
@@ -248,9 +247,9 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
           value: layer.name
         },
         async name => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          layer.setName(name, uow);
-          commitWithUndo(uow, `Rename layer`);
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Rename layer', uow => {
+            layer.setName(name, uow);
+          });
         }
       )
     );
@@ -364,13 +363,12 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
     precondition.is.present(id);
 
     const diagram = this.context.model.activeDiagram;
-    const uow = new UnitOfWork(diagram, true);
-
     const layer = diagram.layers.byId(id)!;
     assert.present(layer);
 
-    diagram.moveElement(diagram.selection.elements, uow, layer);
-    commitWithUndo(uow, `Move to layer ${layer.name}`);
+    UnitOfWork.executeWithUndo(diagram, `Move to layer ${layer.name}`, uow => {
+      diagram.moveElement(diagram.selection.elements, uow, layer);
+    });
   }
 }
 

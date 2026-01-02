@@ -4,7 +4,6 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
@@ -17,7 +16,7 @@ export class RotateDrag extends Drag {
 
   constructor(private readonly diagram: Diagram) {
     super();
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -62,8 +61,7 @@ export class RotateDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
-      this.uow.stopTracking();
-      commitWithUndo(this.uow, 'Rotate');
+      this.uow.commitWithUndo('Rotate');
     }
 
     selection.forceRotation(undefined);

@@ -7,7 +7,6 @@ import {
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -150,9 +149,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   }
 
   const onChange = (value: CustomPropertyDefinition) => (cb: (uow: UnitOfWork) => void) => {
-    const uow = new UnitOfWork(diagram, true);
-    cb(uow);
-    commitWithUndo(uow, `Change ${value.label}`);
+    UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
   };
 
   return (

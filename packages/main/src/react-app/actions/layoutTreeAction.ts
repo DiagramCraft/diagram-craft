@@ -4,7 +4,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -86,41 +85,39 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
 
     if (positions.size === 0) return;
 
-    const uow = new UnitOfWork(diagram, true);
-
-    // Ensure all anchors are centered
-    for (const edge of tree.edges) {
-      const e = edge.data;
-      if (e.start instanceof AnchorEndpoint) {
-        edge.data.setStart(new AnchorEndpoint(e.start.node, 'c', e.start.offset), uow);
+    UnitOfWork.executeWithUndo(diagram, 'Layout tree', uow => {
+      // Ensure all anchors are centered
+      for (const edge of tree.edges) {
+        const e = edge.data;
+        if (e.start instanceof AnchorEndpoint) {
+          edge.data.setStart(new AnchorEndpoint(e.start.node, 'c', e.start.offset), uow);
+        }
+        if (e.end instanceof AnchorEndpoint) {
+          edge.data.setEnd(new AnchorEndpoint(e.end.node, 'c', e.end.offset), uow);
+        }
       }
-      if (e.end instanceof AnchorEndpoint) {
-        edge.data.setEnd(new AnchorEndpoint(e.end.node, 'c', e.end.offset), uow);
+
+      // Get the root's current position to keep it in place
+      const rootPosition = positions.get(rootElement.id);
+      if (!rootPosition) return;
+
+      const rootOffset = {
+        x: rootElement.bounds.x - rootPosition.x,
+        y: rootElement.bounds.y - rootPosition.y
+      };
+
+      // Move all nodes according to their relative positions
+      for (const [nodeId, position] of positions) {
+        const node = diagram.lookup(nodeId);
+        if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
+          const newBounds = {
+            ...node.bounds,
+            x: position.x + rootOffset.x,
+            y: position.y + rootOffset.y
+          };
+          node.setBounds(newBounds, uow);
+        }
       }
-    }
-
-    // Get the root's current position to keep it in place
-    const rootPosition = positions.get(rootElement.id);
-    if (!rootPosition) return;
-
-    const rootOffset = {
-      x: rootElement.bounds.x - rootPosition.x,
-      y: rootElement.bounds.y - rootPosition.y
-    };
-
-    // Move all nodes according to their relative positions
-    for (const [nodeId, position] of positions) {
-      const node = diagram.lookup(nodeId);
-      if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
-        const newBounds = {
-          ...node.bounds,
-          x: position.x + rootOffset.x,
-          y: position.y + rootOffset.y
-        };
-        node.setBounds(newBounds, uow);
-      }
-    }
-
-    commitWithUndo(uow, 'Layout tree');
+    });
   }
 }

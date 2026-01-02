@@ -6,7 +6,6 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
@@ -27,7 +26,7 @@ export class ResizeDrag extends Drag {
     private offset: Point
   ) {
     super();
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
     this.originalBounds = this.diagram.selection.bounds;
   }
 
@@ -162,7 +161,7 @@ export class ResizeDrag extends Drag {
 
     if (selection.isChanged()) {
       this.uow.stopTracking();
-      commitWithUndo(this.uow, 'Resize');
+      this.uow.commitWithUndo('Resize');
     } else {
       this.uow.abort();
     }

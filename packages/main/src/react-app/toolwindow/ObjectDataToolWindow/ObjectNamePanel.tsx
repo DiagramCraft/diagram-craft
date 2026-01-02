@@ -7,7 +7,6 @@ import { useElementMetadata } from '../../hooks/useProperty';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { unique } from '@diagram-craft/utils/array';
 
 type ObjectNamePanelProps = {
@@ -34,13 +33,12 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
 
   const handleTagsChange = useCallback(
     (newTags: string[]) => {
-      const uow = new UnitOfWork($d, true);
-
-      $d.selection.elements.forEach(element => {
-        element.setTags(newTags, uow);
+      UnitOfWork.executeWithUndo($d, 'Update element tags', uow => {
+        $d.selection.elements.forEach(element => {
+          element.setTags(newTags, uow);
+        });
       });
 
-      commitWithUndo(uow, 'Update element tags');
       redraw();
     },
     [$d, redraw]

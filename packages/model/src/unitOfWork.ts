@@ -156,6 +156,8 @@ export class UnitOfWork {
 
   changeType: ChangeType = 'non-interactive';
 
+  isAborted = false;
+
   constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
@@ -163,6 +165,14 @@ export class UnitOfWork {
     public isRemote: boolean = false
   ) {
     registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+  }
+
+  static begin(diagram: Diagram) {
+    return new UnitOfWork(diagram, true);
+  }
+
+  commitWithUndo(m: string) {
+    commitWithUndo(this, m);
   }
 
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
@@ -177,11 +187,15 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'function') {
       // Called with (diagram, cb)
       const result = optsOrCb(uow);
+      if (uow.isAborted) return result;
+
       uow.commit();
       return result;
     } else {
       // Called with (diagram, opts, cb)
       const result = cb!(uow);
+      if (uow.isAborted) return result;
+
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
       else uow.abort();
       return result;
@@ -204,11 +218,15 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'function') {
       // Called with (diagram, cb)
       const result = await optsOrCb(uow);
+      if (uow.isAborted) return result;
+
       uow.commit();
       return result;
     } else {
       // Called with (diagram, opts, cb)
       const result = await cb!(uow);
+      if (uow.isAborted) return result;
+
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
       else uow.abort();
       return result;
@@ -229,6 +247,8 @@ export class UnitOfWork {
     const uow = new UnitOfWork(diagram, true);
 
     const result = cb(uow);
+    if (uow.isAborted) return result;
+
     if (typeof optsOrCb === 'string') {
       commitWithUndo(uow, optsOrCb);
     } else {
@@ -329,6 +349,7 @@ export class UnitOfWork {
 
   abort() {
     registry.unregister(this);
+    this.isAborted = true;
   }
 
   private processEvents(silent = false) {

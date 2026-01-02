@@ -308,8 +308,6 @@ const deserializeDiagrams = <T extends Diagram>(
     const newDiagram = diagramFactory($d, doc);
     newDiagram.bounds = $d.canvas;
 
-    //const uow = new UnitOfWork(newDiagram);
-
     // This needs to be done in multiple steps as later steps depend on earlier ones:
     //
     //  1. Create all layers

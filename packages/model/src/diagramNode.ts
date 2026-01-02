@@ -226,9 +226,10 @@ export class SimpleDiagramNode
 
         this.clearCache();
 
-        const uow = new UnitOfWork(this.diagram, false, true);
-        this.invalidateAnchors(uow);
-        this.getDefinition().onPropUpdate(this, uow);
+        UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+          this.invalidateAnchors(uow);
+          this.getDefinition().onPropUpdate(this, uow);
+        });
       }
     });
     this.#nodeType.init('rect');
@@ -834,10 +835,10 @@ export class SimpleDiagramNode
           newEnd = new FreeEndpoint(e.end.position);
         }
 
-        const uow = new UnitOfWork(this.diagram);
-        e.setStart(newStart, uow);
-        e.setEnd(newEnd, uow);
-        uow.abort();
+        UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+          e.setStart(newStart, uow);
+          e.setEnd(newEnd, uow);
+        });
       }
     }
 

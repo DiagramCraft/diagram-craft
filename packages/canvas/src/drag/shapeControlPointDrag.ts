@@ -1,7 +1,6 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export class ShapeControlPointDrag extends Drag {
@@ -11,7 +10,7 @@ export class ShapeControlPointDrag extends Drag {
     private readonly callback: (pos: Point, uow: UnitOfWork) => string
   ) {
     super();
-    this.uow = new UnitOfWork(this.element.diagram, true);
+    this.uow = UnitOfWork.begin(this.element.diagram);
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -36,7 +35,7 @@ export class ShapeControlPointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    commitWithUndo(this.uow, 'Adjust shape');
+    this.uow.commitWithUndo('Adjust shape');
   }
 
   cancel() {
