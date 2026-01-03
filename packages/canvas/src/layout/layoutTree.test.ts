@@ -47,7 +47,7 @@ describe('buildLayoutTree', () => {
         r: Math.PI / 6 + Math.PI / 18 // 40 degrees (30 + 10)
       }
     });
-    UnitOfWork.execute(diagram, {}, uow => parent.addChild(child, uow));
+    UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
 
     const layoutTree = buildLayoutTree(parent);
 

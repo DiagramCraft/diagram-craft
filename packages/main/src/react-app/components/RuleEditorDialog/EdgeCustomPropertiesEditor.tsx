@@ -75,7 +75,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
               .getCustomPropertyDefinitions(edge)}
             onChange={(_value: CustomPropertyDefinition) => {
               return (cb: (uow: UnitOfWork) => void) => {
-                UnitOfWork.execute($d, { _noCommit: true }, cb);
+                UnitOfWork.executeSilently($d, cb);
 
                 $p.custom = edge.storedProps.custom;
                 onChange();

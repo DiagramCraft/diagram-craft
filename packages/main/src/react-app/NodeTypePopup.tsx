@@ -60,7 +60,7 @@ export const NodeTypePopup = (props: Props) => {
   const undo = useCallback(() => {
     const edge = diagram.edgeLookup.get(props.edgeId);
     assert.present(edge);
-    UnitOfWork.execute(diagram, {}, uow => {
+    UnitOfWork.execute(diagram, uow => {
       assertRegularLayer(edge.layer);
       edge.layer.removeElement(edge, uow);
     });

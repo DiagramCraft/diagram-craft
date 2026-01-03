@@ -51,7 +51,7 @@ export class RegularLayer extends Layer<RegularLayer> {
       }
     );
 
-    UnitOfWork.execute(diagram, { _noCommit: true }, uow => {
+    UnitOfWork.executeSilently(diagram, uow => {
       elements.forEach(e => this.addElement(e, uow));
     });
   }

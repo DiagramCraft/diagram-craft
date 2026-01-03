@@ -34,7 +34,7 @@ describe.each(Backends.all())('StyleCopyAction [%s]', (_name, backend) => {
       const node1 = model.layer1.addNode();
 
       // Set some style properties on node1
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.updateProps(props => {
           props.stroke ??= {};
           props.stroke.color = 'red';
@@ -51,7 +51,7 @@ describe.each(Backends.all())('StyleCopyAction [%s]', (_name, backend) => {
 
       // Create a new node with different styles
       const node2 = model.layer1.addNode();
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node2.updateProps(props => {
           props.stroke ??= {};
           props.stroke.color = 'green';

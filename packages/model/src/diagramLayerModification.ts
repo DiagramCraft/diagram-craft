@@ -140,7 +140,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       }
     );
 
-    UnitOfWork.execute(diagram, { _noCommit: true }, uow => {
+    UnitOfWork.executeSilently(diagram, uow => {
       for (const m of modifications) {
         if (m.type === ModificationType.Add) {
           assert.present(m.element);

@@ -11,7 +11,7 @@ describe('diagramEdgeUtils', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const edge = layer.addEdge();
 
-      UnitOfWork.execute(diagram, {}, uow => {
+      UnitOfWork.execute(diagram, uow => {
         edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
         edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
       });
@@ -27,7 +27,7 @@ describe('diagramEdgeUtils', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const edge = layer.addEdge();
 
-      UnitOfWork.execute(diagram, {}, uow => {
+      UnitOfWork.execute(diagram, uow => {
         edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
         edge.setEnd(new FreeEndpoint({ x: 100, y: 0 }), uow);
       });
@@ -45,7 +45,7 @@ describe('diagramEdgeUtils', () => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const edge = layer.addEdge();
 
-      UnitOfWork.execute(diagram, {}, uow => {
+      UnitOfWork.execute(diagram, uow => {
         edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
         edge.setEnd(new FreeEndpoint({ x: 100, y: 0 }), uow);
       });

@@ -226,7 +226,7 @@ export class SimpleDiagramNode
 
         this.clearCache();
 
-        UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+        UnitOfWork.executeSilently(this.diagram, uow => {
           this.invalidateAnchors(uow);
           this.getDefinition().onPropUpdate(this, uow);
         });
@@ -277,7 +277,7 @@ export class SimpleDiagramNode
     //       events etc - so important that everything is set up before
     //       that to avoid flashing of incorrect formatting/style
     if (this.#anchors.get() === undefined) {
-      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidateAnchors(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidateAnchors(uow));
     }
   }
 
@@ -675,7 +675,7 @@ export class SimpleDiagramNode
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
     if (this.#anchors.get() === undefined) {
-      UnitOfWork.execute(this.diagram, {}, uow => {
+      UnitOfWork.execute(this.diagram, uow => {
         this.invalidateAnchors(uow);
       });
     }
@@ -777,9 +777,7 @@ export class SimpleDiagramNode
       const newElement = c.duplicate(context, id ? `${id}-${i}` : undefined);
       newChildren.push(newElement);
     }
-    UnitOfWork.execute(this.diagram, { _noCommit: true }, uow =>
-      node.setChildren(newChildren, uow)
-    );
+    UnitOfWork.executeSilently(this.diagram, uow => node.setChildren(newChildren, uow));
     context.targetElementsInGroup.set(this.id, node);
 
     if (!isTopLevel) return node;
@@ -835,7 +833,7 @@ export class SimpleDiagramNode
           newEnd = new FreeEndpoint(e.end.position);
         }
 
-        UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+        UnitOfWork.executeSilently(this.diagram, uow => {
           e.setStart(newStart, uow);
           e.setEnd(newEnd, uow);
         });

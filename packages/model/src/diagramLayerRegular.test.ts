@@ -78,7 +78,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       const layerDoc2 = doc2 ? doc2.diagrams[0]!.layers.all[0] : undefined;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      UnitOfWork.execute(d1, {}, uow => layer1.addElement(element, uow));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
       expect(layer1.elements.length).toEqual(1);
       expect(elementAdd1).toBeCalledTimes(1);
       if (doc2) {
@@ -92,7 +92,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
         expect((layerDoc2 as RegularLayer).elements.length).toEqual(0);
       }
 
-      UnitOfWork.execute(d1, {}, uow => layer1.addElement(element, uow));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
       expect(layer1.elements.length).toEqual(1);
       expect(elementAdd1).toBeCalledTimes(2);
       if (doc2) {

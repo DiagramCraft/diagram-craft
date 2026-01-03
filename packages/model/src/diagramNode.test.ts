@@ -29,7 +29,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('bounds', () => {
     it('simple node only - should set bounds correctly', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
       );
 
@@ -73,7 +73,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       // Act
       model.reset();
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
       );
 
@@ -131,7 +131,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       }
 
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
       );
 
@@ -268,7 +268,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, {}, uow => node1.addChild(child, uow));
+      UnitOfWork.execute(model.diagram1, uow => node1.addChild(child, uow));
 
       // **** Verify
       expect(child.parent).toBe(node1);
@@ -332,14 +332,14 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('should remove the child from the children array', () => {
       // **** Setup
       const child = model.layer1.createNode();
-      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow => node1.addChild(child, uow));
+      UnitOfWork.executeSilently(model.diagram1, uow => node1.addChild(child, uow));
 
       const elementRemove = [vi.fn(), vi.fn()];
       model.diagram1.on('elementRemove', elementRemove[0]!);
       if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, {}, uow => node1.removeChild(child, uow));
+      UnitOfWork.execute(model.diagram1, uow => node1.removeChild(child, uow));
 
       // **** Verify
       expect(node1.children.length).toBe(0);
@@ -378,7 +378,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child2 = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, {}, uow => node1.setChildren([child1, child2], uow));
+      UnitOfWork.execute(model.diagram1, uow => node1.setChildren([child1, child2], uow));
 
       // **** Verify
       expect(node1.children).toEqual([child1, child2]);
@@ -414,7 +414,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('setText', () => {
     it('should set text', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow => node1.setText('Hello', uow));
+      UnitOfWork.execute(model.diagram1, uow => node1.setText('Hello', uow));
 
       // Verify
       expect(node1.getText()).toBe('Hello');
@@ -427,7 +427,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
     it('should set alternate text', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow => node1.setText('Hello', uow, 'alt'));
+      UnitOfWork.execute(model.diagram1, uow => node1.setText('Hello', uow, 'alt'));
 
       // Verify
       expect(node1.getText('alt')).toBe('Hello');
@@ -442,7 +442,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('updateProps', () => {
     it('should set props correctly', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.updateProps(props => {
           props.stroke ??= {};
           props.stroke.color = 'red';
@@ -462,7 +462,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   describe('updateCustomProps', () => {
     it('should set custom props correctly', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, {}, uow =>
+      UnitOfWork.execute(model.diagram1, uow =>
         node1.updateCustomProps(
           'star',
           props => {

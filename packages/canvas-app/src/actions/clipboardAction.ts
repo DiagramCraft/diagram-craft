@@ -110,7 +110,7 @@ export class ClipboardCopyAction extends AbstractSelectionAction {
 
   private deleteSelection() {
     const diagram = this.context.model.activeDiagram;
-    UnitOfWork.execute(diagram, {}, uow => {
+    UnitOfWork.execute(diagram, uow => {
       for (const element of diagram.selection.elements) {
         assertRegularLayer(element.layer);
         element.layer.removeElement(element, uow);
