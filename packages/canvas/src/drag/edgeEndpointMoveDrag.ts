@@ -13,7 +13,6 @@ import {
 } from '@diagram-craft/model/endpoint';
 import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
@@ -37,7 +36,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     protected context: Context
   ) {
     super();
-    this.uow = new UnitOfWork(this.edge.diagram, true);
+    this.uow = UnitOfWork.begin(this.edge.diagram);
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'move';
 
@@ -130,7 +129,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     // Update edge parent based on connected nodes
     this.updateEdgeParent();
 
-    commitWithUndo(this.uow, 'Move edge endpoint');
+    this.uow.commitWithUndo('Move edge endpoint');
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
 
     this.context.help.pop('EdgeEndpointMoveDrag');

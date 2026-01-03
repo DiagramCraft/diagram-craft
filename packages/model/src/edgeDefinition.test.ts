@@ -4,7 +4,6 @@ import { FreeEndpoint } from './endpoint';
 import { UnitOfWork } from './unitOfWork';
 import { AbstractEdgeDefinition } from './edgeDefinition';
 import { RegularLayer } from './diagramLayerRegular';
-import { SnapshotUndoableAction } from './diagramUndoActions';
 import type { DiagramEdge } from './diagramEdge';
 import type { DiagramDocument } from './diagramDocument';
 import type { DiagramNode } from './diagramNode';
@@ -41,15 +40,13 @@ describe('baseEdgeDefinition', () => {
         layer1 = dia1.newLayer('layer');
         layer1_2 = doc2 ? (doc2.diagrams[0]!.layers.all[0] as RegularLayer) : undefined;
 
-        const uow = new UnitOfWork(dia1);
+        UnitOfWork.execute(dia1, uow => {
+          node = layer1.addNode({ bounds: { x: 40, y: 40, w: 20, h: 20, r: 0 } });
 
-        node = layer1.addNode({ bounds: { x: 40, y: 40, w: 20, h: 20, r: 0 } });
-
-        edge = layer1.addEdge();
-        edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
-        edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
-
-        uow.commit();
+          edge = layer1.addEdge();
+          edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
+          edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
+        });
       });
 
       it('should split edge', () => {
@@ -57,11 +54,9 @@ describe('baseEdgeDefinition', () => {
         const def = new TestBaseEdgeDefinition('test', 'test');
 
         // **** Act
-        const uow = new UnitOfWork(dia1, true);
-        def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
-
-        const snapshots = uow.commit();
-        dia1.undoManager.add(new SnapshotUndoableAction('Split', dia1, snapshots.onlyUpdated()));
+        UnitOfWork.executeWithUndo(dia1, { _onlyUpdates: true, label: 'Split' }, uow => {
+          def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
+        });
 
         // **** Verify
         expect(layer1.elements).toHaveLength(3);
@@ -75,11 +70,9 @@ describe('baseEdgeDefinition', () => {
 
         const def = new TestBaseEdgeDefinition('test', 'test');
 
-        const uow = new UnitOfWork(dia1, true);
-        def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
-
-        const snapshots = uow.commit();
-        dia1.undoManager.add(new SnapshotUndoableAction('Split', dia1, snapshots.onlyUpdated()));
+        UnitOfWork.executeWithUndo(dia1, { _onlyUpdates: true, label: 'Split' }, uow =>
+          def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split')
+        );
 
         // **** Act
         dia1.undoManager.undo();

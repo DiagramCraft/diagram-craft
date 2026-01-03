@@ -290,10 +290,10 @@ describe('DuplicateAction', () => {
       const child2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Set parent for both children
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
 
       expect(child1.parent).toBe(parent);
       expect(child2.parent).toBe(parent);
@@ -326,10 +326,10 @@ describe('DuplicateAction', () => {
       const child2 = layer.addNode({ bounds: { x: 610, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set different parents
-      const uow = new UnitOfWork(diagram);
-      parent1.addChild(child1, uow);
-      parent2.addChild(child2, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => {
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
 
       expect(child1.parent).toBe(parent1);
       expect(child2.parent).toBe(parent2);
@@ -360,9 +360,7 @@ describe('DuplicateAction', () => {
       const orphan = layer.addNode({ bounds: { x: 600, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set parent only for child
-      const uow = new UnitOfWork(diagram);
-      parent.addChild(child, uow);
-      uow.commit();
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
 
       expect(child.parent).toBe(parent);
       expect(orphan.parent).toBeUndefined();

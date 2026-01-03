@@ -16,7 +16,6 @@ import {
   type SimplifiedNodeType
 } from './aiDiagramTypes';
 import {
-  commitWithUndo,
   ElementAddUndoableAction,
   ElementDeleteUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
@@ -48,9 +47,9 @@ export class AIModel {
         this.diagram.undoManager.addAndExecute(this.handleCreateOrAdd(simplified));
         break;
       case 'modify': {
-        const uow = new UnitOfWork(this.diagram, true);
-        this.handleModify(simplified, uow);
-        commitWithUndo(uow, 'AI Changes');
+        UnitOfWork.executeWithUndo(this.diagram, 'AI Changes', uow => {
+          this.handleModify(simplified, uow);
+        });
         break;
       }
       case 'replace':

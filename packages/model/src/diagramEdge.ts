@@ -5,13 +5,32 @@ import { Box } from '@diagram-craft/geometry/box';
 import { PointOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { CubicSegment, LineSegment } from '@diagram-craft/geometry/pathSegment';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { AbstractDiagramElement, DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
+import {
+  AbstractDiagramElement,
+  DiagramElement,
+  type DiagramElementCRDT,
+  isEdge,
+  isNode
+} from './diagramElement';
 import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
-import { AnchorEndpoint, ConnectedEndpoint, Endpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
+import {
+  AnchorEndpoint,
+  ConnectedEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint
+} from './endpoint';
 import { getCollapsedAncestor } from './collapsible';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
-import { isHorizontal, isParallel, isPerpendicular, isReadable, isVertical, type LabelNode } from './labelNode';
+import {
+  isHorizontal,
+  isParallel,
+  isPerpendicular,
+  isReadable,
+  isVertical,
+  type LabelNode
+} from './labelNode';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
@@ -852,36 +871,34 @@ export class SimpleDiagramEdge
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
-    const uow = new UnitOfWork(this.diagram);
+    return UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+      const edge = SimpleDiagramEdge._create(
+        id ?? newid(),
+        this.start,
+        this.end,
+        deepClone(this.#props) as EdgeProps,
+        deepClone(this.metadata),
+        deepClone(this.waypoints) as Array<Waypoint>,
+        this.layer
+      );
 
-    const edge = SimpleDiagramEdge._create(
-      id ?? newid(),
-      this.start,
-      this.end,
-      deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata),
-      deepClone(this.waypoints) as Array<Waypoint>,
-      this.layer
-    );
+      ctx?.targetElementsInGroup.set(this.id, edge);
 
-    ctx?.targetElementsInGroup.set(this.id, edge);
+      // Clone any label nodes
+      const newLabelNodes: ResolvedLabelNode[] = [];
+      for (let i = 0; i < edge.labelNodes.length; i++) {
+        const l = edge.labelNodes[i]!;
 
-    // Clone any label nodes
-    const newLabelNodes: ResolvedLabelNode[] = [];
-    for (let i = 0; i < edge.labelNodes.length; i++) {
-      const l = edge.labelNodes[i]!;
+        const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
+        newLabelNodes.push({
+          ...l,
+          node: () => newNode
+        });
+      }
+      edge.setLabelNodes(newLabelNodes, uow);
 
-      const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
-      newLabelNodes.push({
-        ...l,
-        node: () => newNode
-      });
-    }
-    edge.setLabelNodes(newLabelNodes, uow);
-
-    uow.abort();
-
-    return edge;
+      return edge;
+    });
   }
 
   /* ***** ***** ******************************************************************************************** */

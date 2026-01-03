@@ -7,8 +7,6 @@ import {
   StylesheetType
 } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -82,12 +80,12 @@ export const ElementStylesheetPanel = (props: Props) => {
               value={$s.val}
               isIndeterminate={$s.hasMultipleValues}
               onChange={v => {
-                const uow = new UnitOfWork($d, true);
-                $d.selection.elements.forEach(n => {
-                  $d.document.styles.setStylesheet(n, v!, uow, true);
+                UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
+                  $d.selection.elements.forEach(n => {
+                    $d.document.styles.setStylesheet(n, v!, uow, true);
+                  });
+                  $s.set(v);
                 });
-                $s.set(v);
-                commitWithUndo(uow, 'Change stylesheet');
               }}
             >
               {styleList.map(e => (
@@ -104,11 +102,11 @@ export const ElementStylesheetPanel = (props: Props) => {
               <MenuButton.Menu>
                 <Menu.Item
                   onClick={() => {
-                    const uow = new UnitOfWork($d, true);
-                    $d.selection.elements.forEach(n => {
-                      $d.document.styles.setStylesheet(n, $s.val, uow, true);
+                    UnitOfWork.executeWithUndo($d, 'Reapply style', uow => {
+                      $d.selection.elements.forEach(n => {
+                        $d.document.styles.setStylesheet(n, $s.val, uow, true);
+                      });
                     });
-                    commitWithUndo(uow, 'Reapply style');
                   }}
                 >
                   Reset
@@ -116,20 +114,20 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <Menu.Item
                   onClick={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                    const uow = new UnitOfWork($d, true);
-                    const stylesheet = $d.document.styles.get($s.val);
-                    if (stylesheet) {
-                      const commonProps = getCommonProps(
-                        $d.selection.elements.map(e => e.editProps)
-                      ) as NodeProps & EdgeProps;
-                      stylesheet.setProps(
-                        isText ? { text: commonProps.text } : commonProps,
-                        $d.document.styles,
-                        uow
-                      );
-                      $d.document.styles.reapplyStylesheet(stylesheet, uow);
-                    }
-                    commitWithUndo(uow, 'Redefine style');
+                    UnitOfWork.executeWithUndo($d, 'Redefine style', uow => {
+                      const stylesheet = $d.document.styles.get($s.val);
+                      if (stylesheet) {
+                        const commonProps = getCommonProps(
+                          $d.selection.elements.map(e => e.editProps)
+                        ) as NodeProps & EdgeProps;
+                        stylesheet.setProps(
+                          isText ? { text: commonProps.text } : commonProps,
+                          $d.document.styles,
+                          uow
+                        );
+                        $d.document.styles.reapplyStylesheet(stylesheet, uow);
+                      }
+                    });
                   }}
                 >
                   Save
@@ -160,23 +158,18 @@ export const ElementStylesheetPanel = (props: Props) => {
                             },
                             $d.document.styles.crdt.factory
                           );
-                          const uow = new UnitOfWork($d, true);
 
-                          $d.document.styles.addStylesheet(s.id, s, uow);
-                          $d.document.styles.setStylesheet(
-                            $d.selection.elements[0]!,
-                            id,
-                            uow,
-                            true
-                          );
+                          UnitOfWork.executeWithUndo($d, 'Add style', uow => {
+                            $d.document.styles.addStylesheet(s.id, s, uow);
+                            $d.document.styles.setStylesheet(
+                              $d.selection.elements[0]!,
+                              id,
+                              uow,
+                              true
+                            );
 
-                          const snapshots = uow.commit();
-                          uow.diagram.undoManager.add(
-                            new CompoundUndoableAction([
-                              new AddStylesheetUndoableAction(uow.diagram, s),
-                              new SnapshotUndoableAction('Add style', uow.diagram, snapshots)
-                            ])
-                          );
+                            uow.add(new AddStylesheetUndoableAction(uow.diagram, s));
+                          });
                         }
                       )
                     );
@@ -196,18 +189,12 @@ export const ElementStylesheetPanel = (props: Props) => {
                           cancelLabel: 'No'
                         },
                         () => {
-                          const uow = new UnitOfWork($d, true);
+                          UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
+                            const s = $d.document.styles.get($s.val)!;
+                            $d.document.styles.deleteStylesheet($s.val, uow);
 
-                          const s = $d.document.styles.get($s.val)!;
-                          $d.document.styles.deleteStylesheet($s.val, uow);
-
-                          const snapshots = uow.commit();
-                          uow.diagram.undoManager.add(
-                            new CompoundUndoableAction([
-                              new DeleteStylesheetUndoableAction(uow.diagram, s),
-                              new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                            ])
-                          );
+                            uow.add(new DeleteStylesheetUndoableAction(uow.diagram, s));
+                          });
                         }
                       )
                     );
@@ -238,10 +225,10 @@ export const ElementStylesheetPanel = (props: Props) => {
                           value: $d.document.styles.get($s.val)?.name ?? ''
                         },
                         v => {
-                          const uow = new UnitOfWork($d, true);
-                          const stylesheet = $d.document.styles.get($s.val)!;
-                          stylesheet.setName(v, $d.document.styles, uow);
-                          commitWithUndo(uow, 'Rename style');
+                          UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
+                            const stylesheet = $d.document.styles.get($s.val)!;
+                            stylesheet.setName(v, $d.document.styles, uow);
+                          });
                         }
                       )
                     );
@@ -263,13 +250,11 @@ export const ElementStylesheetPanel = (props: Props) => {
           onSave={e => {
             const style = dialogProps.style;
 
-            const uow = new UnitOfWork($d, true);
             const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
-              stylesheet.setProps(e, $d.document.styles, uow);
-              commitWithUndo(uow, 'Modify style');
-            } else {
-              uow.abort();
+              UnitOfWork.executeWithUndo($d, 'Modify style', uow => {
+                stylesheet.setProps(e, $d.document.styles, uow);
+              });
             }
 
             setDialogProps(undefined);

@@ -201,11 +201,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       );
       // Only trigger invalidation in case the value has changed to true
       if (this.hasEdgesWithLineHops && this.hasEdgesWithLineHops !== old) {
-        if (!(this.activeLayer instanceof RegularLayer)) return;
+        const layer = this.activeLayer;
+        if (!(layer instanceof RegularLayer)) return;
 
-        const uow = new UnitOfWork(this);
-        this.activeLayer.elements.filter(isEdge).forEach(e => e.invalidate(uow));
-        uow.commit();
+        UnitOfWork.execute(this, uow =>
+          layer.elements.filter(isEdge).forEach(e => e.invalidate(uow))
+        );
       }
     };
     this.#releasables.add(

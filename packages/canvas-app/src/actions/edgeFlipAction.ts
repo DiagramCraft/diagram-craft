@@ -1,5 +1,4 @@
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import {
   AbstractSelectionAction,
   ElementType,
@@ -26,11 +25,10 @@ export class EdgeFlipAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    for (const edge of this.context.model.activeDiagram.selection.edges) {
-      edge.flip(uow);
-    }
-
-    commitWithUndo(uow, 'Flip edge');
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Flip edge', uow => {
+      for (const edge of this.context.model.activeDiagram.selection.edges) {
+        edge.flip(uow);
+      }
+    });
   }
 }

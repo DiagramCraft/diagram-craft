@@ -2,7 +2,6 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
@@ -106,25 +105,26 @@ export class TableDistributeAction extends AbstractSelectionAction {
   execute(): void {
     const helper = TableHelper.get(this.context.model.activeDiagram);
     const table = helper.tableNode;
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     if (this.type === 'row') {
-      const titleSize = table.renderProps.custom.table.title
-        ? table.renderProps.custom.table.titleSize
-        : 0;
-      const availableHeight = table.bounds.h - titleSize;
-      const rowHeight = availableHeight / helper.rows.length;
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Distribute rows', uow => {
+        const titleSize = table.renderProps.custom.table.title
+          ? table.renderProps.custom.table.titleSize
+          : 0;
+        const availableHeight = table.bounds.h - titleSize;
+        const rowHeight = availableHeight / helper.rows.length;
 
-      helper.rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
-      commitWithUndo(uow, 'Distribute rows');
+        helper.rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
+      });
     } else {
-      const colCount = helper.getColumnCount();
-      const columnWidth = table.bounds.w / colCount;
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Distribute columns', uow => {
+        const colCount = helper.getColumnCount();
+        const columnWidth = table.bounds.w / colCount;
 
-      for (let i = 0; i < colCount; i++) {
-        adjustColumnWidth(i, helper, columnWidth, uow);
-      }
-      commitWithUndo(uow, 'Distribute columns');
+        for (let i = 0; i < colCount; i++) {
+          adjustColumnWidth(i, helper, columnWidth, uow);
+        }
+      });
     }
   }
 }
@@ -151,21 +151,21 @@ export class TableRemoveAction extends AbstractSelectionAction {
     const helper = TableHelper.get(this.context.model.activeDiagram);
     assert.true(helper.isTable());
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
     if (this.type === 'row') {
-      const row = helper.getCellRow()!;
-      removeElement(row, uow);
-      commitWithUndo(uow, 'Remove row');
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Remove row', uow => {
+        const row = helper.getCellRow()!;
+        removeElement(row, uow);
+      });
     } else {
-      const colIdx = helper.getCellColumnIndex();
-      if (colIdx === undefined) return;
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Remove column', uow => {
+        const colIdx = helper.getCellColumnIndex();
+        if (colIdx === undefined) return;
 
-      for (const row of helper.rows) {
-        const cell = row.children[colIdx]!;
-        removeElement(cell, uow);
-      }
-      commitWithUndo(uow, 'Remove column');
+        for (const row of helper.rows) {
+          const cell = row.children[colIdx]!;
+          removeElement(cell, uow);
+        }
+      });
     }
 
     this.context.model.activeDiagram.selection.clear();
@@ -200,60 +200,59 @@ export class TableInsertAction extends AbstractSelectionAction {
 
   execute(): void {
     const helper = TableHelper.get(this.context.model.activeDiagram);
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
 
     if (this.type === 'row') {
-      const rowIdx = helper.getCellRowIndex();
-      if (rowIdx === undefined) return;
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert row', uow => {
+        const rowIdx = helper.getCellRowIndex();
+        if (rowIdx === undefined) return;
 
-      const rows = helper.getRowsSorted();
-      const current = rows[rowIdx]!;
-      const newRow = current.duplicate();
+        const rows = helper.getRowsSorted();
+        const current = rows[rowIdx]!;
+        const newRow = current.duplicate();
 
-      // Shift rows below the insertion point
-      const startIdx = rowIdx + (this.position === -1 ? 0 : 1);
-      for (let i = startIdx; i < rows.length; i++) {
-        const r = rows[i]!;
-        const t = TransformFactory.fromTo(r.bounds, {
-          ...r.bounds,
-          y: r.bounds.y + newRow.bounds.h
-        });
-        r.transform(t, uow);
-      }
-
-      addElement(newRow, helper.tableNode, uow, {
-        ref: current,
-        type: this.position === -1 ? 'before' : 'after'
-      });
-
-      commitWithUndo(uow, 'Insert row');
-    } else {
-      const colIdx = helper.getCellColumnIndex();
-      if (colIdx === undefined) return;
-
-      for (const row of helper.rows) {
-        const columns = helper.getColumnsSorted(row);
-        const cell = columns[colIdx]!;
-        const newCell = cell.duplicate();
-
-        // Shift columns after the insertion point
-        const startIdx = colIdx + (this.position === -1 ? 0 : 1);
-        for (let i = startIdx; i < columns.length; i++) {
-          const c = columns[i]!;
-          const t = TransformFactory.fromTo(c.bounds, {
-            ...c.bounds,
-            x: c.bounds.x + newCell.bounds.w
+        // Shift rows below the insertion point
+        const startIdx = rowIdx + (this.position === -1 ? 0 : 1);
+        for (let i = startIdx; i < rows.length; i++) {
+          const r = rows[i]!;
+          const t = TransformFactory.fromTo(r.bounds, {
+            ...r.bounds,
+            y: r.bounds.y + newRow.bounds.h
           });
-          c.transform(t, uow);
+          r.transform(t, uow);
         }
 
-        addElement(newCell, row, uow, {
-          ref: cell,
+        addElement(newRow, helper.tableNode, uow, {
+          ref: current,
           type: this.position === -1 ? 'before' : 'after'
         });
-      }
+      });
+    } else {
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert column', uow => {
+        const colIdx = helper.getCellColumnIndex();
+        if (colIdx === undefined) return;
 
-      commitWithUndo(uow, 'Insert column');
+        for (const row of helper.rows) {
+          const columns = helper.getColumnsSorted(row);
+          const cell = columns[colIdx]!;
+          const newCell = cell.duplicate();
+
+          // Shift columns after the insertion point
+          const startIdx = colIdx + (this.position === -1 ? 0 : 1);
+          for (let i = startIdx; i < columns.length; i++) {
+            const c = columns[i]!;
+            const t = TransformFactory.fromTo(c.bounds, {
+              ...c.bounds,
+              x: c.bounds.x + newCell.bounds.w
+            });
+            c.transform(t, uow);
+          }
+
+          addElement(newCell, row, uow, {
+            ref: cell,
+            type: this.position === -1 ? 'before' : 'after'
+          });
+        }
+      });
     }
   }
 }
@@ -302,20 +301,23 @@ export class TableRowMoveAction extends AbstractSelectionAction {
     const targetIdx = rowIdx + this.direction;
     if (targetIdx < 0 || targetIdx >= rows.length) return;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    const currentRow = rows[rowIdx]!;
-    const targetRow = rows[targetIdx]!;
+    UnitOfWork.executeWithUndo(
+      this.context.model.activeDiagram,
+      this.direction === -1 ? 'Move row up' : 'Move row down',
+      uow => {
+        const currentRow = rows[rowIdx]!;
+        const targetRow = rows[targetIdx]!;
 
-    swapPositions(currentRow, targetRow, 'y', uow);
+        swapPositions(currentRow, targetRow, 'y', uow);
 
-    // Reorder children - top-most row is last in children array
-    helper.tableNode.removeChild(currentRow, uow);
-    helper.tableNode.addChild(currentRow, uow, {
-      ref: targetRow,
-      type: this.direction === -1 ? 'after' : 'before'
-    });
-
-    commitWithUndo(uow, this.direction === -1 ? 'Move row up' : 'Move row down');
+        // Reorder children - top-most row is last in children array
+        helper.tableNode.removeChild(currentRow, uow);
+        helper.tableNode.addChild(currentRow, uow, {
+          ref: targetRow,
+          type: this.direction === -1 ? 'after' : 'before'
+        });
+      }
+    );
   }
 }
 
@@ -360,27 +362,29 @@ export class TableColumnMoveAction extends AbstractSelectionAction {
     const colIdx = helper.getCellColumnIndex();
     if (colIdx === undefined) return;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    UnitOfWork.executeWithUndo(
+      this.context.model.activeDiagram,
+      this.direction === -1 ? 'Move column left' : 'Move column right',
+      uow => {
+        for (const row of helper.rows) {
+          const columns = helper.getColumnsSorted(row);
 
-    for (const row of helper.rows) {
-      const columns = helper.getColumnsSorted(row);
+          const targetIdx = colIdx + this.direction;
+          if (targetIdx < 0 || targetIdx >= columns.length) return;
 
-      const targetIdx = colIdx + this.direction;
-      if (targetIdx < 0 || targetIdx >= columns.length) return;
+          const currentCell = columns[colIdx]!;
+          const targetCell = columns[targetIdx]!;
 
-      const currentCell = columns[colIdx]!;
-      const targetCell = columns[targetIdx]!;
+          swapPositions(currentCell, targetCell, 'x', uow);
 
-      swapPositions(currentCell, targetCell, 'x', uow);
-
-      // Reorder children - right-most column is first in children array
-      row.removeChild(currentCell, uow);
-      row.addChild(currentCell, uow, {
-        ref: targetCell,
-        type: this.direction === -1 ? 'before' : 'after'
-      });
-    }
-
-    commitWithUndo(uow, this.direction === -1 ? 'Move column left' : 'Move column right');
+          // Reorder children - right-most column is first in children array
+          row.removeChild(currentCell, uow);
+          row.addChild(currentCell, uow, {
+            ref: targetCell,
+            type: this.direction === -1 ? 'before' : 'after'
+          });
+        }
+      }
+    );
   }
 }

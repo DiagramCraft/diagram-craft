@@ -1,6 +1,5 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
@@ -55,10 +54,9 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 
           assert.present(rule, `Rule with id ${ruleId} not found`);
 
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
-          layer.removeRule(rule, uow);
-          commitWithUndo(uow, 'Delete rule');
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Delete rule', uow => {
+            layer.removeRule(rule, uow);
+          });
         }
       )
     );
@@ -89,9 +87,9 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
           rule: rule
         },
         (rule: AdjustmentRule) => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          layer.replaceRule(rule, rule, uow);
-          commitWithUndo(uow, 'Update rule');
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Update rule', uow => {
+            layer.replaceRule(rule, rule, uow);
+          });
         }
       )
     );
@@ -139,9 +137,9 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Applicati
           rule: rule
         },
         (rule: AdjustmentRule) => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          layer.addRule(rule, uow);
-          commitWithUndo(uow, 'Add rule');
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Add rule', uow => {
+            layer.addRule(rule, uow);
+          });
         }
       )
     );

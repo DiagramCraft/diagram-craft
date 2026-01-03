@@ -26,7 +26,6 @@ import { LayerContextMenu } from './LayerContextMenu';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
@@ -88,34 +87,33 @@ const LayerEntry = (props: { layer: Layer }) => {
   const dropTarget = useDropTarget(
     [LAYER_INSTANCES, ELEMENT_INSTANCES],
     ev => {
-      const uow = new UnitOfWork(diagram, true);
-      if (ev[ELEMENT_INSTANCES]) {
-        diagram.moveElement(
-          JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
-          uow,
-          layer
-        );
-      } else if (ev[LAYER_INSTANCES]) {
-        let relation: 'above' | 'below' = 'below';
-        const instances: string[] = [];
-        if (ev[LAYER_INSTANCES].before) {
-          instances.push(...JSON.parse(ev[LAYER_INSTANCES].before));
-          relation = 'above';
-        } else if (ev[LAYER_INSTANCES].after) {
-          instances.push(...JSON.parse(ev[LAYER_INSTANCES].after));
-          relation = 'below';
-        } else {
-          VERIFY_NOT_REACHED();
+      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+        if (ev[ELEMENT_INSTANCES]) {
+          diagram.moveElement(
+            JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
+            uow,
+            layer
+          );
+        } else if (ev[LAYER_INSTANCES]) {
+          let relation: 'above' | 'below' = 'below';
+          const instances: string[] = [];
+          if (ev[LAYER_INSTANCES].before) {
+            instances.push(...JSON.parse(ev[LAYER_INSTANCES].before));
+            relation = 'above';
+          } else if (ev[LAYER_INSTANCES].after) {
+            instances.push(...JSON.parse(ev[LAYER_INSTANCES].after));
+            relation = 'below';
+          } else {
+            VERIFY_NOT_REACHED();
+          }
+
+          diagram.layers.move(
+            instances.map((id: string) => diagram.layers.byId(id)!),
+            uow,
+            { relation, layer: layer }
+          );
         }
-
-        diagram.layers.move(
-          instances.map((id: string) => diagram.layers.byId(id)!),
-          uow,
-          { relation, layer: layer }
-        );
-      }
-
-      commitWithUndo(uow, 'Change stack');
+      });
     },
     {
       split: m => (m === LAYER_INSTANCES ? [0.5, 0, 0.5] : [0, 1, 0])
@@ -322,9 +320,9 @@ const ModificationEntry = (props: {
         <span
           style={{ cursor: 'pointer' }}
           onClick={e => {
-            const uow = new UnitOfWork(props.diagram, true);
-            props.layer.clearModification(m.id, uow);
-            commitWithUndo(uow, 'Clear modification');
+            UnitOfWork.executeWithUndo(props.diagram, 'Clear modification', uow => {
+              props.layer.clearModification(m.id, uow);
+            });
             e.preventDefault();
             e.stopPropagation();
           }}
@@ -362,18 +360,17 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         VERIFY_NOT_REACHED();
       }
 
-      const uow = new UnitOfWork(diagram, true);
-      diagram.moveElement(
-        instances.map((id: string) => diagram.lookup(id)!),
-        uow,
-        e.layer,
-        {
-          relation,
-          element: e
-        }
-      );
-
-      commitWithUndo(uow, 'Change stack');
+      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+        diagram.moveElement(
+          instances.map((id: string) => diagram.lookup(id)!),
+          uow,
+          e.layer,
+          {
+            relation,
+            element: e
+          }
+        );
+      });
     },
     {
       split: () => (childrenAllowed ? [0.25, 0.5, 0.25] : [0.5, 0, 0.5])

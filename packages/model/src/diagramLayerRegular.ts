@@ -51,9 +51,9 @@ export class RegularLayer extends Layer<RegularLayer> {
       }
     );
 
-    const uow = new UnitOfWork(diagram);
-    elements.forEach(e => this.addElement(e, uow));
-    uow.abort();
+    UnitOfWork.execute(diagram, { _noCommit: true }, uow => {
+      elements.forEach(e => this.addElement(e, uow));
+    });
   }
 
   get elements(): ReadonlyArray<DiagramElement> {

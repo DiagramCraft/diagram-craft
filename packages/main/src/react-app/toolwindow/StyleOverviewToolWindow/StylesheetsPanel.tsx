@@ -15,8 +15,6 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import {
   ElementStylesheetDialog,
   STYLESHEET_EDITORS
@@ -176,16 +174,11 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           cancelLabel: 'No'
         },
         () => {
-          const uow = new UnitOfWork(diagram, true);
-          diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
+          UnitOfWork.executeWithUndo(diagram, 'Delete style', uow => {
+            diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
 
-          const snapshots = uow.commit();
-          diagram.undoManager.add(
-            new CompoundUndoableAction([
-              new DeleteStylesheetUndoableAction(diagram, stylesheet),
-              new SnapshotUndoableAction('Delete style', diagram, snapshots)
-            ])
-          );
+            uow.add(new DeleteStylesheetUndoableAction(diagram, stylesheet));
+          });
         }
       )
     );
@@ -202,9 +195,9 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           value: stylesheet.name
         },
         v => {
-          const uow = new UnitOfWork(diagram, true);
-          stylesheet.setName(v, diagram.document.styles, uow);
-          commitWithUndo(uow, 'Rename style');
+          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow =>
+            stylesheet.setName(v, diagram.document.styles, uow)
+          );
         }
       )
     );
@@ -225,11 +218,11 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
 
     if (elementsToApply.length === 0) return;
 
-    const uow = new UnitOfWork(diagram, true);
-    for (const element of elementsToApply) {
-      diagram.document.styles.setStylesheet(element, stylesheet.id, uow, true);
-    }
-    commitWithUndo(uow, 'Apply stylesheet');
+    UnitOfWork.executeWithUndo(diagram, 'Apply stylesheet', uow => {
+      for (const element of elementsToApply) {
+        diagram.document.styles.setStylesheet(element, stylesheet.id, uow, true);
+      }
+    });
   };
 
   const groups = useMemo(() => {
@@ -321,13 +314,11 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           onSave={e => {
             const style = dialogProps.style;
 
-            const uow = new UnitOfWork(diagram, true);
             const stylesheet = diagram.document.styles.get(style.id);
             if (stylesheet) {
-              stylesheet.setProps(e, diagram.document.styles, uow);
-              commitWithUndo(uow, 'Modify style');
-            } else {
-              uow.abort();
+              UnitOfWork.executeWithUndo(diagram, 'Modify style', uow =>
+                stylesheet.setProps(e, diagram.document.styles, uow)
+              );
             }
 
             setDialogProps(undefined);

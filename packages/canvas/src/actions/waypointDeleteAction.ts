@@ -1,7 +1,6 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
 import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { precondition } from '@diagram-craft/utils/assert';
 import { smallest } from '@diagram-craft/utils/array';
 import { Point } from '@diagram-craft/geometry/point';
@@ -48,9 +47,8 @@ export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg
       (a, b) => a.d - b.d
     )!.idx;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    edge.removeWaypoint(edge.waypoints[closestWaypointIndex]!, uow);
-
-    commitWithUndo(uow, 'Delete waypoint');
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Delete waypoint', uow =>
+      edge.removeWaypoint(edge.waypoints[closestWaypointIndex]!, uow)
+    );
   }
 }

@@ -15,14 +15,12 @@ import {
 } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
 import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { AddStylesheetUndoableAction, Stylesheet } from '@diagram-craft/model/diagramStyles';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { newid } from '@diagram-craft/utils/id';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -95,23 +93,21 @@ export const StylesTab = () => {
 
   const handleStyleReset = useCallback(
     (elements: DiagramElement[], differences: Partial<ElementProps>) => {
-      const uow = new UnitOfWork(diagram, true);
+      UnitOfWork.executeWithUndo(diagram, 'Reset styles', uow => {
+        const accessor = new DynamicAccessor<ElementProps>();
+        const paths = accessor.paths(differences);
 
-      const accessor = new DynamicAccessor<ElementProps>();
-      const paths = accessor.paths(differences);
+        // Sort paths by length, longest first
+        paths.sort((a, b) => b.length - a.length);
 
-      // Sort paths by length, longest first
-      paths.sort((a, b) => b.length - a.length);
-
-      for (const element of elements) {
-        element.updateProps(props => {
-          for (const path of paths) {
-            accessor.set(props, path, undefined);
-          }
-        }, uow);
-      }
-
-      commitWithUndo(uow, 'Reset styles');
+        for (const element of elements) {
+          element.updateProps(props => {
+            for (const path of paths) {
+              accessor.set(props, path, undefined);
+            }
+          }, uow);
+        }
+      });
     },
     [diagram]
   );
@@ -153,23 +149,17 @@ export const StylesTab = () => {
               diagram.document.styles.crdt.factory
             );
 
-            const uow = new UnitOfWork(diagram, true);
+            UnitOfWork.executeWithUndo(diagram, 'Create stylesheet', uow => {
+              // Add stylesheet to document
+              diagram.document.styles.addStylesheet(id, stylesheet, uow);
 
-            // Add stylesheet to document
-            diagram.document.styles.addStylesheet(id, stylesheet, uow);
+              // Set the stylesheet on all matching elements
+              for (const element of combo.elements) {
+                diagram.document.styles.setStylesheet(element, id, uow, true);
+              }
 
-            // Set the stylesheet on all matching elements
-            for (const element of combo.elements) {
-              diagram.document.styles.setStylesheet(element, id, uow, true);
-            }
-
-            const snapshots = uow.commit();
-            diagram.undoManager.add(
-              new CompoundUndoableAction([
-                new AddStylesheetUndoableAction(diagram, stylesheet),
-                new SnapshotUndoableAction('Create stylesheet', diagram, snapshots)
-              ])
-            );
+              uow.add(new AddStylesheetUndoableAction(diagram, stylesheet));
+            });
           }
         )
       );

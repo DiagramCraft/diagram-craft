@@ -1,6 +1,5 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Application } from '../application';
 import { StringInputDialogCommand } from '../dialogs';
 import {
@@ -80,15 +79,13 @@ export class TextAction extends AbstractToggleAction {
   execute(): void {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
-    node.updateProps(p => {
-      p.text ??= {};
-      p.text[this.prop] ??= false;
-      p.text[this.prop] = !node.renderProps.text[this.prop];
-    }, uow);
-
-    commitWithUndo(uow, `Text: ${this.prop}`);
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Text: ${this.prop}`, uow => {
+      node.updateProps(p => {
+        p.text ??= {};
+        p.text[this.prop] ??= false;
+        p.text[this.prop] = !node.renderProps.text[this.prop];
+      }, uow);
+    });
 
     this.state = !!node.renderProps.text[this.prop];
     this.emit('actionChanged');
@@ -139,18 +136,20 @@ export class TextDecorationAction extends AbstractToggleAction {
   execute(): void {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-
-    node.updateProps(p => {
-      p.text ??= {};
-      if (p.text.textDecoration === this.prop) {
-        p.text.textDecoration = 'none';
-      } else {
-        p.text.textDecoration = this.prop;
+    UnitOfWork.executeWithUndo(
+      this.context.model.activeDiagram,
+      `Text decoration: ${this.prop}`,
+      uow => {
+        node.updateProps(p => {
+          p.text ??= {};
+          if (p.text.textDecoration === this.prop) {
+            p.text.textDecoration = 'none';
+          } else {
+            p.text.textDecoration = this.prop;
+          }
+        }, uow);
       }
-    }, uow);
-
-    commitWithUndo(uow, `Text decoration`);
+    );
 
     this.state = node.renderProps.text.textDecoration === this.prop;
     this.emit('actionChanged');
@@ -197,9 +196,9 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
             htmlOutput = markdownInput;
           }
 
-          const uow = new UnitOfWork(selectedItem.diagram, true);
-          selectedItem.setText(htmlOutput, uow);
-          commitWithUndo(uow, 'Edit text');
+          UnitOfWork.executeWithUndo(selectedItem.diagram, 'Edit text', uow =>
+            selectedItem.setText(htmlOutput, uow)
+          );
         }
       )
     );

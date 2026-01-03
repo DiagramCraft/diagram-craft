@@ -6,7 +6,6 @@ import {
 import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
-  commitWithUndo,
   ElementAddUndoableAction,
   ElementDeleteUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
@@ -82,11 +81,11 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
           cancelLabel: 'Cancel'
         },
         () => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          for (const el of nodes) {
-            el.convertToPath(uow);
-          }
-          commitWithUndo(uow, 'Convert to path');
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Convert to path', uow => {
+            for (const el of nodes) {
+              el.convertToPath(uow);
+            }
+          });
         }
       )
     );

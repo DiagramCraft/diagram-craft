@@ -8,6 +8,7 @@ import { useRedraw } from './useRedraw';
 import { Defaults } from '@diagram-craft/model/diagramDefaults';
 import type { Property, PropertyInfo } from '@diagram-craft/model/property';
 import { isObj } from '@diagram-craft/utils/object';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 export type PropertyHook<TBase, TObj> = <
   K extends PropPath<TObj>,
@@ -190,33 +191,33 @@ export class PropertyArrayUndoableAction<
 
   constructor(
     public readonly description: string,
+    private readonly diagram: Diagram,
     private readonly items: TItem[],
     private readonly path: TPath,
     // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly before: any[],
     // biome-ignore lint/suspicious/noExplicitAny: false positive
     private readonly after: any,
-    private readonly uowFactory: () => UnitOfWork,
     private readonly updateObj: (item: TItem, uow: UnitOfWork, cb: (obj: TObj) => void) => void
   ) {}
 
   undo(): void {
-    this.items.forEach((e, idx) => {
-      const uow = this.uowFactory();
-      this.updateObj(e, uow, p => {
-        this.#accessor.set(p, this.path, this.before[idx]);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.items.forEach((e, idx) => {
+        this.updateObj(e, uow, p => {
+          this.#accessor.set(p, this.path, this.before[idx]);
+        });
       });
-      uow.commit();
     });
   }
 
   redo(): void {
-    this.items.forEach(e => {
-      const uow = this.uowFactory();
-      this.updateObj(e, uow, p => {
-        this.#accessor.set(p, this.path, this.after);
+    UnitOfWork.execute(this.diagram, uow => {
+      this.items.forEach(e => {
+        this.updateObj(e, uow, p => {
+          this.#accessor.set(p, this.path, this.after);
+        });
       });
-      uow.commit();
     });
   }
 }

@@ -1,7 +1,6 @@
 import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
@@ -77,14 +76,12 @@ export class DistributeAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Distribute ${this.mode}`, uow => {
+      const boundsOrientation = this.mode === 'vertical' ? 'y' : 'x';
+      const boundsSize = this.mode === 'vertical' ? 'h' : 'w';
 
-    const boundsOrientation = this.mode === 'vertical' ? 'y' : 'x';
-    const boundsSize = this.mode === 'vertical' ? 'h' : 'w';
-
-    this.calculateAndUpdateBounds(boundsOrientation, boundsSize, uow);
-
-    commitWithUndo(uow, `Distribute ${this.mode}`);
+      this.calculateAndUpdateBounds(boundsOrientation, boundsSize, uow);
+    });
 
     this.emit('actionTriggered', {});
   }

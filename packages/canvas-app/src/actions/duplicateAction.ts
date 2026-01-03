@@ -78,62 +78,60 @@ export class DuplicateAction extends AbstractSelectionAction {
 
   execute() {
     const diagram = this.context.model.activeDiagram;
-    const uow = new UnitOfWork(diagram);
 
-    // Check if all selected elements have the same parent
-    const selectedElements = diagram.selection.elements;
-    const commonParent =
-      selectedElements.length > 0 &&
-      selectedElements.every(e => e.parent === selectedElements[0]?.parent)
-        ? selectedElements[0]?.parent
-        : undefined;
+    UnitOfWork.executeWithUndo(diagram, 'Duplicate selection', uow => {
+      // Check if all selected elements have the same parent
+      const selectedElements = diagram.selection.elements;
+      const commonParent =
+        selectedElements.length > 0 &&
+        selectedElements.every(e => e.parent === selectedElements[0]?.parent)
+          ? selectedElements[0]?.parent
+          : undefined;
 
-    // Create mapping of original nodes to duplicated nodes
-    const nodeMapping = new Map<string, DiagramNode>();
-    const newElements: DiagramElement[] = [];
+      // Create mapping of original nodes to duplicated nodes
+      const nodeMapping = new Map<string, DiagramNode>();
+      const newElements: DiagramElement[] = [];
 
-    // Duplicate selected nodes
-    for (const node of diagram.selection.nodes) {
-      const newNode = node.duplicate();
-      newNode.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
-      nodeMapping.set(node.id, newNode);
-      newElements.push(newNode);
-    }
+      // Duplicate selected nodes
+      for (const node of diagram.selection.nodes) {
+        const newNode = node.duplicate();
+        newNode.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
+        nodeMapping.set(node.id, newNode);
+        newElements.push(newNode);
+      }
 
-    // Duplicate edges with proper reconnection logic
-    for (const originalEdge of diagram.selection.edges) {
-      const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
-      const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
+      // Duplicate edges with proper reconnection logic
+      for (const originalEdge of diagram.selection.edges) {
+        const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
+        const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
 
-      const newEdge = ElementFactory.edge(
-        newid(),
-        newStart,
-        newEnd,
-        deepClone(originalEdge.storedProps),
-        originalEdge.metadata,
-        [...originalEdge.waypoints],
-        originalEdge.layer
+        const newEdge = ElementFactory.edge(
+          newid(),
+          newStart,
+          newEnd,
+          deepClone(originalEdge.storedProps),
+          originalEdge.metadata,
+          [...originalEdge.waypoints],
+          originalEdge.layer
+        );
+
+        newEdge.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
+        newElements.push(newEdge);
+      }
+
+      assertRegularLayer(diagram.activeLayer);
+      uow.addAndExecute(
+        new ElementAddUndoableAction(
+          newElements,
+          diagram,
+          diagram.activeLayer,
+          'Duplicate selection',
+          commonParent
+        )
       );
-
-      newEdge.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
-      newElements.push(newEdge);
-    }
-
-    assertRegularLayer(diagram.activeLayer);
-    diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction(
-        newElements,
-        diagram,
-        diagram.activeLayer,
-        'Duplicate selection',
-        commonParent
-      )
-    );
-
-    uow.commit();
-
-    diagram.selection.clear();
-    diagram.selection.setElements(newElements);
+      diagram.selection.clear();
+      diagram.selection.setElements(newElements);
+    });
 
     this.emit('actionTriggered', {});
   }

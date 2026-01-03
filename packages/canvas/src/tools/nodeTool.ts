@@ -6,7 +6,6 @@ import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -74,9 +73,9 @@ export class NodeTool extends AbstractTool {
               cancelLabel: 'Cancel'
             },
             () => {
-              const uow = new UnitOfWork(this.diagram, true);
-              el.convertToPath(uow);
-              commitWithUndo(uow, 'Convert to path');
+              UnitOfWork.executeWithUndo(this.diagram, 'Convert to path', uow =>
+                el.convertToPath(uow)
+              );
               this.diagram.selection.setElements([el]);
             }
           )

@@ -147,17 +147,18 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = TestModel.newDiagram();
 
       const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
-      diagram.layers.add(layer1, new UnitOfWork(diagram));
-
       const layer2 = new RegularLayer(newid(), 'Layer 2', [], diagram);
-      diagram.layers.add(layer2, new UnitOfWork(diagram));
 
-      const uow = new UnitOfWork(diagram);
       const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
       const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
-      layer1.addElement(node1, uow);
-      layer2.addElement(node2, uow);
-      uow.commit();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.layers.add(layer1, uow);
+        diagram.layers.add(layer2, uow);
+
+        layer1.addElement(node1, uow);
+        layer2.addElement(node2, uow);
+      });
 
       expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
       diagram.layers.toggleVisibility(layer1);

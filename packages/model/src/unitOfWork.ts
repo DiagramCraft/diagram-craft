@@ -9,6 +9,8 @@ import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
+import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { UndoableAction } from '@diagram-craft/model/undoManager';
 
 type ActionCallback = () => void;
 
@@ -19,7 +21,7 @@ const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
   let uow = remoteUnitOfWorkRegistry.get(diagram.id);
   if (!uow) {
-    uow = new UnitOfWork(diagram, false, false, true);
+    uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
     uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
       remoteUnitOfWorkRegistry.delete(diagram.id);
@@ -138,6 +140,8 @@ type ExecuteOpts = {
   _noCommit?: boolean;
 };
 
+type ExecWithUndoOpts = Omit<ExecuteOpts, '_noCommit'> & { label: string; _onlyUpdates?: boolean };
+
 export class UnitOfWork {
   uid = newid();
 
@@ -153,15 +157,35 @@ export class UnitOfWork {
 
   #onCommitCallbacks = new Map<string, ActionCallback>();
 
+  #undoableActions: UndoableAction[] = [];
+
   changeType: ChangeType = 'non-interactive';
 
-  constructor(
+  isAborted = false;
+
+  private constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
     registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+  }
+
+  static remote(diagram: Diagram) {
+    return new UnitOfWork(diagram, false, false, true);
+  }
+
+  static begin(diagram: Diagram) {
+    return new UnitOfWork(diagram, true);
+  }
+
+  get undoableActions() {
+    return this.#undoableActions;
+  }
+
+  commitWithUndo(m: string) {
+    commitWithUndo(this, m);
   }
 
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
@@ -176,11 +200,15 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'function') {
       // Called with (diagram, cb)
       const result = optsOrCb(uow);
+      if (uow.isAborted) return result;
+
       uow.commit();
       return result;
     } else {
       // Called with (diagram, opts, cb)
       const result = cb!(uow);
+      if (uow.isAborted) return result;
+
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
       else uow.abort();
       return result;
@@ -203,15 +231,52 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'function') {
       // Called with (diagram, cb)
       const result = await optsOrCb(uow);
+      if (uow.isAborted) return result;
+
       uow.commit();
       return result;
     } else {
       // Called with (diagram, opts, cb)
       const result = await cb!(uow);
+      if (uow.isAborted) return result;
+
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
       else uow.abort();
       return result;
     }
+  }
+
+  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T;
+  static executeWithUndo<T>(
+    diagram: Diagram,
+    opts: ExecWithUndoOpts,
+    cb: (uow: UnitOfWork) => T
+  ): T;
+  static executeWithUndo<T>(
+    diagram: Diagram,
+    optsOrCb: ExecWithUndoOpts | string,
+    cb: (uow: UnitOfWork) => T
+  ): T {
+    const uow = new UnitOfWork(diagram, true);
+
+    const result = cb(uow);
+    if (uow.isAborted) return result;
+
+    if (typeof optsOrCb === 'string') {
+      commitWithUndo(uow, optsOrCb);
+    } else {
+      commitWithUndo(uow, optsOrCb.label, optsOrCb._onlyUpdates ?? false);
+    }
+    return result;
+  }
+
+  add(action: UndoableAction) {
+    this.#undoableActions.push(action);
+  }
+
+  addAndExecute(action: UndoableAction) {
+    action.redo(this);
+    this.#undoableActions.push(action);
   }
 
   snapshot(element: Trackable) {
@@ -307,6 +372,7 @@ export class UnitOfWork {
 
   abort() {
     registry.unregister(this);
+    this.isAborted = true;
   }
 
   private processEvents(silent = false) {

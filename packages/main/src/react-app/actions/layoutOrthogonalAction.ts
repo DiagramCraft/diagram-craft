@@ -4,7 +4,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -84,58 +83,59 @@ export class LayoutOrthogonalAction extends AbstractSelectionAction<Application>
 
     if (positions.size === 0) return;
 
-    const uow = new UnitOfWork(diagram, true);
+    UnitOfWork.executeWithUndo(diagram, 'Layout orthogonal', uow => {
+      // Center all edge anchors for edges in the layout
+      const adjacencyList = graph.adjacencyList();
+      const edgesToCenter = new Set<string>();
 
-    // Center all edge anchors for edges in the layout
-    const adjacencyList = graph.adjacencyList();
-    const edgesToCenter = new Set<string>();
-
-    for (const nodeId of positions.keys()) {
-      const neighbors = adjacencyList.get(nodeId) ?? [];
-      for (const { edge } of neighbors) {
-        if (positions.has(edge.from) && positions.has(edge.to)) {
-          edgesToCenter.add(edge.id);
+      for (const nodeId of positions.keys()) {
+        const neighbors = adjacencyList.get(nodeId) ?? [];
+        for (const { edge } of neighbors) {
+          if (positions.has(edge.from) && positions.has(edge.to)) {
+            edgesToCenter.add(edge.id);
+          }
         }
       }
-    }
 
-    for (const edgeId of edgesToCenter) {
-      const element = diagram.lookup(edgeId);
-      if (element && isEdge(element)) {
-        if (element.start instanceof AnchorEndpoint) {
-          element.setStart(new AnchorEndpoint(element.start.node, 'c', element.start.offset), uow);
-        }
-        if (element.end instanceof AnchorEndpoint) {
-          element.setEnd(new AnchorEndpoint(element.end.node, 'c', element.end.offset), uow);
+      for (const edgeId of edgesToCenter) {
+        const element = diagram.lookup(edgeId);
+        if (element && isEdge(element)) {
+          if (element.start instanceof AnchorEndpoint) {
+            element.setStart(
+              new AnchorEndpoint(element.start.node, 'c', element.start.offset),
+              uow
+            );
+          }
+          if (element.end instanceof AnchorEndpoint) {
+            element.setEnd(new AnchorEndpoint(element.end.node, 'c', element.end.offset), uow);
+          }
         }
       }
-    }
 
-    // Get the first selected node's current position to keep it in place
-    const firstNode = selectedNodes[0];
-    if (!firstNode) return;
+      // Get the first selected node's current position to keep it in place
+      const firstNode = selectedNodes[0];
+      if (!firstNode) return;
 
-    const firstPosition = positions.get(firstNode.id);
-    if (!firstPosition) return;
+      const firstPosition = positions.get(firstNode.id);
+      if (!firstPosition) return;
 
-    const rootOffset = {
-      x: firstNode.bounds.x - firstPosition.x,
-      y: firstNode.bounds.y - firstPosition.y
-    };
+      const rootOffset = {
+        x: firstNode.bounds.x - firstPosition.x,
+        y: firstNode.bounds.y - firstPosition.y
+      };
 
-    // Move all nodes according to their relative positions
-    for (const [nodeId, position] of positions) {
-      const node = diagram.lookup(nodeId);
-      if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
-        const newBounds = {
-          ...node.bounds,
-          x: position.x + rootOffset.x,
-          y: position.y + rootOffset.y
-        };
-        node.setBounds(newBounds, uow);
+      // Move all nodes according to their relative positions
+      for (const [nodeId, position] of positions) {
+        const node = diagram.lookup(nodeId);
+        if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
+          const newBounds = {
+            ...node.bounds,
+            x: position.x + rootOffset.x,
+            y: position.y + rootOffset.y
+          };
+          node.setBounds(newBounds, uow);
+        }
       }
-    }
-
-    commitWithUndo(uow, 'Layout orthogonal');
+    });
   }
 }

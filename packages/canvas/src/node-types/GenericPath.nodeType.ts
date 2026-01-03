@@ -10,7 +10,6 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Zoom } from '../components/zoom';
@@ -65,15 +64,15 @@ class GenericPathComponent extends BaseNodeComponent {
       if (e.metaKey) {
         editablePath.straighten(dp);
 
-        const uow = new UnitOfWork(props.node.diagram, true);
-        editablePath.commitToNode(uow);
-        commitWithUndo(uow, 'Convert to line');
+        UnitOfWork.executeWithUndo(props.node.diagram, 'Convert to line', uow =>
+          editablePath.commitToNode(uow)
+        );
       } else {
         const idx = editablePath.addWaypoint(editablePath.toLocalCoordinate(dp));
 
-        const uow = new UnitOfWork(props.node.diagram, true);
-        editablePath.commitToNode(uow);
-        commitWithUndo(uow, 'Add waypoint');
+        UnitOfWork.executeWithUndo(props.node.diagram, 'Add waypoint', uow =>
+          editablePath.commitToNode(uow)
+        );
 
         this.setSelectedWaypoints([idx]);
       }
@@ -216,13 +215,12 @@ class GenericPathComponent extends BaseNodeComponent {
                 e.stopPropagation();
               },
               dblclick: e => {
-                const uow = new UnitOfWork(props.node.diagram, true);
-
                 const wp = editablePath.waypoints[idx]!;
                 if (e.metaKey) {
-                  editablePath.deleteWaypoint(wp);
-                  editablePath.commitToNode(uow);
-                  commitWithUndo(uow, 'Delete waypoint');
+                  UnitOfWork.executeWithUndo(props.node.diagram, 'Delete waypoint', uow => {
+                    editablePath.deleteWaypoint(wp);
+                    editablePath.commitToNode(uow);
+                  });
                 }
                 e.stopPropagation();
               }

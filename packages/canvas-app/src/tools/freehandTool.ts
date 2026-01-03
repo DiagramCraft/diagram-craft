@@ -115,10 +115,8 @@ export class FreehandTool extends AbstractTool {
       {}
     );
 
-    const uow = new UnitOfWork(this.diagram);
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.activeLayer.addElement(node, uow);
-    uow.commit();
+    assertRegularLayer(layer);
+    UnitOfWork.execute(this.diagram, uow => layer.addElement(node, uow));
 
     this.path!.remove();
     this.points = [];

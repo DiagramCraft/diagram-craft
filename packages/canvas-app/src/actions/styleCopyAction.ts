@@ -6,7 +6,6 @@ import {
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -80,26 +79,26 @@ export class StylePasteAction extends AbstractSelectionAction<ActionContext, Pas
   execute(arg: Partial<PasteArg>): void {
     const elements = arg.elements ?? this.context.model.activeDiagram.selection.elements;
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    for (const e of elements) {
-      if (isNode(e)) {
-        e.updateProps(p => {
-          for (const k in currentNodeStyle) {
-            // @ts-expect-error
-            p[k] = deepMerge({}, p[k], currentNodeStyle[k]);
-          }
-        }, uow);
-      } else if (isEdge(e)) {
-        e.updateProps(p => {
-          for (const k in currentEdgeStyle) {
-            // @ts-expect-error
-            p[k] = deepMerge({}, p[k], currentEdgeStyle[k]);
-          }
-        }, uow);
-      } else {
-        VERIFY_NOT_REACHED();
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Style Paste', uow => {
+      for (const e of elements) {
+        if (isNode(e)) {
+          e.updateProps(p => {
+            for (const k in currentNodeStyle) {
+              // @ts-expect-error
+              p[k] = deepMerge({}, p[k], currentNodeStyle[k]);
+            }
+          }, uow);
+        } else if (isEdge(e)) {
+          e.updateProps(p => {
+            for (const k in currentEdgeStyle) {
+              // @ts-expect-error
+              p[k] = deepMerge({}, p[k], currentEdgeStyle[k]);
+            }
+          }, uow);
+        } else {
+          VERIFY_NOT_REACHED();
+        }
       }
-    }
-    commitWithUndo(uow, 'Style Paste');
+    });
   }
 }

@@ -70,11 +70,11 @@ export const useEdgeProperty: PropertyArrayHook<Diagram, EdgeProps> = makeProper
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramEdge, EdgeProps>(
           message ?? `Change edge ${path}`,
+          diagram,
           edges,
           path,
           oldValue,
           newValue,
-          () => new UnitOfWork(diagram),
           (edge: DiagramEdge, uow: UnitOfWork, cb) => edge.updateProps(cb, uow)
         )
       );
@@ -101,11 +101,11 @@ export const useNodeProperty: PropertyArrayHook<Diagram, NodeProps> = makeProper
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramNode, NodeProps>(
           message ?? `Change node ${path}`,
+          diagram,
           nodes,
           path,
           oldValue,
           newValue,
-          () => new UnitOfWork(diagram),
           (node: DiagramNode, uow: UnitOfWork, cb) => node.updateProps(cb, uow)
         )
       );
@@ -134,11 +134,11 @@ export const useElementProperty: PropertyArrayHook<Diagram, ElementProps> = make
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramElement, ElementProps>(
           message ?? `Change element ${path}`,
+          diagram,
           elements,
           path,
           oldValue,
           newValue,
-          () => new UnitOfWork(diagram),
           (el: DiagramElement, uow: UnitOfWork, cb) => el.updateProps(cb, uow)
         )
       );
@@ -165,11 +165,11 @@ export const useElementMetadata: PropertyArrayHook<Diagram, ElementMetadata> =
         diagram.undoManager.add(
           new PropertyArrayUndoableAction<DiagramElement, ElementMetadata>(
             message ?? `Change element ${path}`,
+            diagram,
             elements,
             path,
             oldValue,
             newValue,
-            () => new UnitOfWork(diagram),
             (el: DiagramElement, uow: UnitOfWork, cb) => el.updateMetadata(cb, uow)
           )
         );

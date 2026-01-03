@@ -12,7 +12,6 @@ import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ManageSavedSearchesDialog } from './ManageSavedSearchesDialog';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
@@ -119,11 +118,11 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     application.ui.showDialog(
       new RuleEditorDialogCommand({ rule: rule }, (editedRule: AdjustmentRule) => {
         const diagram = application.model.activeDiagram;
-        const uow = new UnitOfWork(diagram, true);
 
-        const ruleLayer = new RuleLayer(newid(), editedRule.name, diagram, [editedRule]);
-        diagram.layers.add(ruleLayer, uow);
-        commitWithUndo(uow, 'Create rule layer');
+        UnitOfWork.executeWithUndo(diagram, 'Create rule layer', uow => {
+          const ruleLayer = new RuleLayer(newid(), editedRule.name, diagram, [editedRule]);
+          diagram.layers.add(ruleLayer, uow);
+        });
       })
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);

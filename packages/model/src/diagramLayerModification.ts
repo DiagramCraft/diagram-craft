@@ -140,19 +140,19 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       }
     );
 
-    const uow = new UnitOfWork(diagram);
-    for (const m of modifications) {
-      if (m.type === ModificationType.Add) {
-        assert.present(m.element);
-        this.modifyAdd(m.id, m.element, uow);
-      } else if (m.type === ModificationType.Remove) {
-        this.modifyRemove(m.id, uow);
-      } else if (m.type === ModificationType.Change) {
-        assert.present(m.element);
-        this.modifyChange(m.id, m.element, uow);
+    UnitOfWork.execute(diagram, { _noCommit: true }, uow => {
+      for (const m of modifications) {
+        if (m.type === ModificationType.Add) {
+          assert.present(m.element);
+          this.modifyAdd(m.id, m.element, uow);
+        } else if (m.type === ModificationType.Remove) {
+          this.modifyRemove(m.id, uow);
+        } else if (m.type === ModificationType.Change) {
+          assert.present(m.element);
+          this.modifyChange(m.id, m.element, uow);
+        }
       }
-    }
-    uow.abort();
+    });
   }
 
   resolve() {

@@ -1,7 +1,6 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
 export class EdgeWaypointDrag extends Drag {
@@ -13,7 +12,7 @@ export class EdgeWaypointDrag extends Drag {
     private context: Context
   ) {
     super();
-    this.uow = new UnitOfWork(this.edge.diagram, true);
+    this.uow = UnitOfWork.begin(this.edge.diagram);
 
     this.context.help.push('EdgeWaypointDrag', 'Move waypoint');
   }
@@ -26,7 +25,7 @@ export class EdgeWaypointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    commitWithUndo(this.uow, 'Move Waypoint');
+    this.uow.commitWithUndo('Move Waypoint');
     this.context.help.pop('EdgeWaypointDrag');
   }
 

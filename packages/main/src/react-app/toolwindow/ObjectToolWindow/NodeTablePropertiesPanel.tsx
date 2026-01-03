@@ -11,7 +11,6 @@ import {
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from '../../hooks/useTable';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
@@ -42,9 +41,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
       <div className={'cmp-labeled-table'}>
         {Object.entries(customProperties).map(([key, value]) => {
           const prop = asProperty(value, cb => {
-            const uow = new UnitOfWork(diagram, true);
-            cb(uow);
-            commitWithUndo(uow, `Change ${value.label}`);
+            UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
           });
 
           if (value.type === 'number') {

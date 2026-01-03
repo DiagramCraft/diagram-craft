@@ -8,10 +8,8 @@ import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import {
   ElementAddUndoableAction,
-  ElementDeleteUndoableAction,
-  SnapshotUndoableAction
+  ElementDeleteUndoableAction
 } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
@@ -82,311 +80,302 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
   const layer = diagram.activeLayer;
   assertRegularLayer(layer);
 
-  const uow = new UnitOfWork(diagram, true);
+  UnitOfWork.executeWithUndo(diagram, 'Update diagram', uow => {
+    // Collect all parsed element IDs
+    const parsedIds = collectElementIds(elements);
 
-  // Collect all parsed element IDs
-  const parsedIds = collectElementIds(elements);
-
-  // Collect existing element IDs in the active layer
-  const existingIds = new Set<string>();
-  const existingElements = new Map<string, DiagramElement>();
-  for (const element of layer.elements) {
-    existingIds.add(element.id);
-    existingElements.set(element.id, element);
-  }
-
-  // Track elements to be removed
-  const elementsToRemove: DiagramElement[] = [];
-
-  // Track last created/processed node for smart placement
-  let lastReferenceNode: DiagramNode | undefined;
-
-  // Process removals (elements in diagram but not in parsed data)
-  for (const id of existingIds) {
-    if (!parsedIds.has(id)) {
-      const element = existingElements.get(id)!;
-      uow.snapshot(element);
-      element.layer.removeElement(element, uow);
-      elementsToRemove.push(element);
+    // Collect existing element IDs in the active layer
+    const existingIds = new Set<string>();
+    const existingElements = new Map<string, DiagramElement>();
+    for (const element of layer.elements) {
+      existingIds.add(element.id);
+      existingElements.set(element.id, element);
     }
-  }
 
-  // Process updates and additions
-  const processElement = (parsedElement: ParsedElement): DiagramElement | undefined => {
-    const existingElement = diagram.lookup(parsedElement.id);
+    // Track elements to be removed
+    const elementsToRemove: DiagramElement[] = [];
 
-    if (existingElement) {
-      // Update existing element
-      uow.snapshot(existingElement);
+    // Track last created/processed node for smart placement
+    let lastReferenceNode: DiagramNode | undefined;
 
-      if (parsedElement.type === 'node' && isNode(existingElement)) {
-        // Update text
-        if (parsedElement.name !== undefined) {
-          existingElement.setText(parsedElement.name, uow);
-        }
+    // Process removals (elements in diagram but not in parsed data)
+    for (const id of existingIds) {
+      if (!parsedIds.has(id)) {
+        const element = existingElements.get(id)!;
+        uow.snapshot(element);
+        element.layer.removeElement(element, uow);
+        elementsToRemove.push(element);
+      }
+    }
 
-        // Update props
-        if (parsedElement.props) {
-          existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<NodeProps>);
-          }, uow);
-        }
+    // Process updates and additions
+    const processElement = (parsedElement: ParsedElement): DiagramElement | undefined => {
+      const existingElement = diagram.lookup(parsedElement.id);
 
-        // Update metadata
-        if (parsedElement.metadata) {
-          existingElement.updateMetadata(metadata => {
-            Object.assign(metadata, parsedElement.metadata);
-          }, uow);
-        }
+      if (existingElement) {
+        // Update existing element
+        uow.snapshot(existingElement);
 
-        // Update stylesheets
-        if (parsedElement.stylesheet) {
-          existingElement.updateMetadata(metadata => {
-            metadata.style = parsedElement.stylesheet!;
-          }, uow);
-        }
-        if (parsedElement.textStylesheet) {
-          existingElement.updateMetadata(metadata => {
-            metadata.textStyle = parsedElement.textStylesheet!;
-          }, uow);
-        }
+        if (parsedElement.type === 'node' && isNode(existingElement)) {
+          // Update text
+          if (parsedElement.name !== undefined) {
+            existingElement.setText(parsedElement.name, uow);
+          }
 
-        // Update reference for next node placement
-        if (existingElement.parent === undefined) {
-          lastReferenceNode = existingElement;
-        }
+          // Update props
+          if (parsedElement.props) {
+            existingElement.updateProps(props => {
+              deepMerge(props, parsedElement.props as Partial<NodeProps>);
+            }, uow);
+          }
 
-        // Process children
-        if (parsedElement.children) {
-          for (const child of parsedElement.children) {
-            processElement(child);
+          // Update metadata
+          if (parsedElement.metadata) {
+            existingElement.updateMetadata(metadata => {
+              Object.assign(metadata, parsedElement.metadata);
+            }, uow);
+          }
+
+          // Update stylesheets
+          if (parsedElement.stylesheet) {
+            existingElement.updateMetadata(metadata => {
+              metadata.style = parsedElement.stylesheet!;
+            }, uow);
+          }
+          if (parsedElement.textStylesheet) {
+            existingElement.updateMetadata(metadata => {
+              metadata.textStyle = parsedElement.textStylesheet!;
+            }, uow);
+          }
+
+          // Update reference for next node placement
+          if (existingElement.parent === undefined) {
+            lastReferenceNode = existingElement;
+          }
+
+          // Process children
+          if (parsedElement.children) {
+            for (const child of parsedElement.children) {
+              processElement(child);
+            }
+          }
+        } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
+          // Update edge props
+          if (parsedElement.props) {
+            existingElement.updateProps(props => {
+              deepMerge(props, parsedElement.props as Partial<EdgeProps>);
+            }, uow);
+          }
+
+          // Update metadata
+          if (parsedElement.metadata) {
+            existingElement.updateMetadata(metadata => {
+              Object.assign(metadata, parsedElement.metadata);
+            }, uow);
+          }
+
+          // Update stylesheet
+          if (parsedElement.stylesheet) {
+            existingElement.updateMetadata(metadata => {
+              metadata.style = parsedElement.stylesheet!;
+            }, uow);
+          }
+
+          // Update connections (from/to)
+          if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
+            if (parsedElement.from) {
+              const fromNode = diagram.lookup(parsedElement.from);
+              if (fromNode && isNode(fromNode)) {
+                existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
+              }
+            }
+            if (parsedElement.to) {
+              const toNode = diagram.lookup(parsedElement.to);
+              if (toNode && isNode(toNode)) {
+                existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
+              }
+            }
+          }
+
+          // Update label node if present
+          if (parsedElement.label !== undefined) {
+            updateOrCreateLabelNode(existingElement, parsedElement.label, uow, layer);
+          } else if (existingElement.labelNodes.length > 0) {
+            // If no label is specified but edge has label nodes, remove them
+            for (const ln of existingElement.labelNodes) {
+              const node = ln.node();
+              uow.snapshot(node);
+              layer.removeElement(node, uow);
+            }
+            existingElement.setLabelNodes([], uow);
           }
         }
-      } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
-        // Update edge props
-        if (parsedElement.props) {
-          existingElement.updateProps(props => {
-            deepMerge(props, parsedElement.props as Partial<EdgeProps>);
-          }, uow);
-        }
 
-        // Update metadata
-        if (parsedElement.metadata) {
-          existingElement.updateMetadata(metadata => {
+        uow.updateElement(existingElement);
+        return existingElement;
+      } else {
+        // Add new element
+        let newElement: DiagramElement | undefined;
+
+        if (parsedElement.type === 'node') {
+          // Determine initial bounds for the new node
+          let bounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+
+          if (lastReferenceNode) {
+            // Use placeNode to find a suitable position relative to the previous node
+            bounds = placeNode(bounds, lastReferenceNode, diagram, {
+              considerAllLayers: false
+            });
+          } else {
+            // First node: place at diagram center
+            const centerX = diagram.bounds.x + diagram.bounds.w / 2;
+            const centerY = diagram.bounds.y + diagram.bounds.h / 2;
+            bounds = { x: centerX - 50, y: centerY - 50, w: 100, h: 100, r: 0 };
+          }
+
+          const props: NodePropsForEditing = {};
+          const metadata: ElementMetadata = {};
+
+          if (parsedElement.props) Object.assign(props, parsedElement.props);
+          if (parsedElement.metadata) Object.assign(metadata, parsedElement.metadata);
+
+          // Apply stylesheets
+          if (parsedElement.stylesheet) {
+            metadata.style = parsedElement.stylesheet;
+          }
+          if (parsedElement.textStylesheet) {
+            metadata.textStyle = parsedElement.textStylesheet;
+          }
+
+          newElement = ElementFactory.node(
+            parsedElement.id,
+            parsedElement.shape,
+            bounds,
+            layer,
+            props,
+            metadata,
+            { text: parsedElement.name ?? '' }
+          );
+
+          layer.addElement(newElement, uow);
+
+          // Update reference for next node placement
+          if (isNode(newElement)) {
+            lastReferenceNode = newElement;
+          }
+
+          // Process children
+          if (parsedElement.children) {
+            for (const child of parsedElement.children) {
+              processElement(child);
+            }
+          }
+        } else if (parsedElement.type === 'edge') {
+          // Create new edge
+          const props: EdgePropsForEditing = {};
+          const metadata: ElementMetadata = {};
+
+          // Apply props
+          if (parsedElement.props) {
+            Object.assign(props, parsedElement.props);
+          }
+
+          // Apply metadata
+          if (parsedElement.metadata) {
             Object.assign(metadata, parsedElement.metadata);
-          }, uow);
-        }
+          }
 
-        // Update stylesheet
-        if (parsedElement.stylesheet) {
-          existingElement.updateMetadata(metadata => {
-            metadata.style = parsedElement.stylesheet!;
-          }, uow);
-        }
+          // Apply stylesheet
+          if (parsedElement.stylesheet) {
+            metadata.style = parsedElement.stylesheet;
+          }
 
-        // Update connections (from/to)
-        if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
+          // Determine endpoints
+          let start: FreeEndpoint | AnchorEndpoint;
+          let end: FreeEndpoint | AnchorEndpoint;
+
           if (parsedElement.from) {
             const fromNode = diagram.lookup(parsedElement.from);
-            if (fromNode && isNode(fromNode)) {
-              existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
-            }
+            start =
+              fromNode && isNode(fromNode)
+                ? new AnchorEndpoint(fromNode, 'c')
+                : new FreeEndpoint({ x: 0, y: 0 });
+          } else {
+            start = new FreeEndpoint({ x: 100, y: 100 });
           }
+
           if (parsedElement.to) {
             const toNode = diagram.lookup(parsedElement.to);
-            if (toNode && isNode(toNode)) {
-              existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
-            }
+            end =
+              toNode && isNode(toNode)
+                ? new AnchorEndpoint(toNode, 'c')
+                : new FreeEndpoint({ x: 200, y: 200 });
+          } else {
+            end = new FreeEndpoint({ x: 200, y: 200 });
+          }
+
+          newElement = ElementFactory.edge(
+            parsedElement.id,
+            start,
+            end,
+            props,
+            metadata,
+            [],
+            layer
+          );
+
+          layer.addElement(newElement, uow);
+
+          // Create label node if label text is provided
+          if (parsedElement.label && isEdge(newElement)) {
+            updateOrCreateLabelNode(newElement, parsedElement.label, uow, layer);
           }
         }
 
-        // Update label node if present
-        if (parsedElement.label !== undefined) {
-          updateOrCreateLabelNode(existingElement, parsedElement.label, uow, layer);
-        } else if (existingElement.labelNodes.length > 0) {
-          // If no label is specified but edge has label nodes, remove them
-          for (const ln of existingElement.labelNodes) {
-            const node = ln.node();
-            uow.snapshot(node);
-            layer.removeElement(node, uow);
-          }
-          existingElement.setLabelNodes([], uow);
+        if (newElement) {
+          uow.addElement(newElement);
         }
+
+        return newElement;
       }
+    };
 
-      uow.updateElement(existingElement);
-      return existingElement;
-    } else {
-      // Add new element
-      let newElement: DiagramElement | undefined;
-
-      if (parsedElement.type === 'node') {
-        // Determine initial bounds for the new node
-        let bounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
-
-        if (lastReferenceNode) {
-          // Use placeNode to find a suitable position relative to the previous node
-          bounds = placeNode(bounds, lastReferenceNode, diagram, {
-            considerAllLayers: false
-          });
-        } else {
-          // First node: place at diagram center
-          const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-          const centerY = diagram.bounds.y + diagram.bounds.h / 2;
-          bounds = { x: centerX - 50, y: centerY - 50, w: 100, h: 100, r: 0 };
-        }
-
-        const props: NodePropsForEditing = {};
-        const metadata: ElementMetadata = {};
-
-        if (parsedElement.props) Object.assign(props, parsedElement.props);
-        if (parsedElement.metadata) Object.assign(metadata, parsedElement.metadata);
-
-        // Apply stylesheets
-        if (parsedElement.stylesheet) {
-          metadata.style = parsedElement.stylesheet;
-        }
-        if (parsedElement.textStylesheet) {
-          metadata.textStyle = parsedElement.textStylesheet;
-        }
-
-        newElement = ElementFactory.node(
-          parsedElement.id,
-          parsedElement.shape,
-          bounds,
-          layer,
-          props,
-          metadata,
-          { text: parsedElement.name ?? '' }
-        );
-
-        layer.addElement(newElement, uow);
-
-        // Update reference for next node placement
-        if (isNode(newElement)) {
-          lastReferenceNode = newElement;
-        }
-
-        // Process children
-        if (parsedElement.children) {
-          for (const child of parsedElement.children) {
-            processElement(child);
-          }
-        }
-      } else if (parsedElement.type === 'edge') {
-        // Create new edge
-        const props: EdgePropsForEditing = {};
-        const metadata: ElementMetadata = {};
-
-        // Apply props
-        if (parsedElement.props) {
-          Object.assign(props, parsedElement.props);
-        }
-
-        // Apply metadata
-        if (parsedElement.metadata) {
-          Object.assign(metadata, parsedElement.metadata);
-        }
-
-        // Apply stylesheet
-        if (parsedElement.stylesheet) {
-          metadata.style = parsedElement.stylesheet;
-        }
-
-        // Determine endpoints
-        let start: FreeEndpoint | AnchorEndpoint;
-        let end: FreeEndpoint | AnchorEndpoint;
-
-        if (parsedElement.from) {
-          const fromNode = diagram.lookup(parsedElement.from);
-          start =
-            fromNode && isNode(fromNode)
-              ? new AnchorEndpoint(fromNode, 'c')
-              : new FreeEndpoint({ x: 0, y: 0 });
-        } else {
-          start = new FreeEndpoint({ x: 100, y: 100 });
-        }
-
-        if (parsedElement.to) {
-          const toNode = diagram.lookup(parsedElement.to);
-          end =
-            toNode && isNode(toNode)
-              ? new AnchorEndpoint(toNode, 'c')
-              : new FreeEndpoint({ x: 200, y: 200 });
-        } else {
-          end = new FreeEndpoint({ x: 200, y: 200 });
-        }
-
-        newElement = ElementFactory.edge(parsedElement.id, start, end, props, metadata, [], layer);
-
-        layer.addElement(newElement, uow);
-
-        // Create label node if label text is provided
-        if (parsedElement.label && isEdge(newElement)) {
-          updateOrCreateLabelNode(newElement, parsedElement.label, uow, layer);
-        }
-      }
-
-      if (newElement) {
-        uow.addElement(newElement);
-      }
-
-      return newElement;
+    // Process all top-level elements
+    for (const element of elements) {
+      processElement(element);
     }
-  };
 
-  // Process all top-level elements
-  for (const element of elements) {
-    processElement(element);
-  }
+    // Commit the UnitOfWork
+    const snapshots = uow.commit();
 
-  // Commit the UnitOfWork
-  const snapshots = uow.commit();
+    // Update selection to remove any elements that were removed
+    if (elementsToRemove.length > 0) {
+      const removedIds = new Set(elementsToRemove.map(e => e.id));
+      const currentSelection = diagram.selection.elements;
+      const updatedSelection = currentSelection.filter(e => !removedIds.has(e.id));
 
-  // Update selection to remove any elements that were removed
-  if (elementsToRemove.length > 0) {
-    const removedIds = new Set(elementsToRemove.map(e => e.id));
-    const currentSelection = diagram.selection.elements;
-    const updatedSelection = currentSelection.filter(e => !removedIds.has(e.id));
-
-    if (updatedSelection.length !== currentSelection.length) {
-      diagram.selection.setElements(updatedSelection);
+      if (updatedSelection.length !== currentSelection.length) {
+        diagram.selection.setElements(updatedSelection);
+      }
     }
-  }
 
-  // Create compound undoable action
-  const compoundAction = new CompoundUndoableAction();
+    // Add undoable action for removals
+    if (elementsToRemove.length > 0) {
+      uow.add(new ElementDeleteUndoableAction(diagram, layer, elementsToRemove, false));
+    }
 
-  // Add undoable action for removals
-  if (elementsToRemove.length > 0) {
-    compoundAction.addAction(
-      new ElementDeleteUndoableAction(diagram, layer, elementsToRemove, false)
-    );
-  }
-
-  // Add undoable actions for additions
-  const addedElements = snapshots.onlyAdded().keys;
-  if (addedElements.length > 0) {
-    compoundAction.addAction(
-      new ElementAddUndoableAction(
-        addedElements.map(id => diagram.lookup(id)!),
-        diagram,
-        layer
-      )
-    );
-  }
-
-  // Add undoable action for updates (via snapshot)
-  const updatedSnapshots = snapshots.onlyUpdated();
-  if (updatedSnapshots.keys.length > 0) {
-    compoundAction.addAction(
-      new SnapshotUndoableAction('Update diagram', diagram, updatedSnapshots)
-    );
-  }
-
-  if (compoundAction.hasActions()) {
-    diagram.undoManager.add(compoundAction);
-  }
+    // Add undoable actions for additions
+    const addedElements = snapshots.onlyAdded().keys;
+    if (addedElements.length > 0) {
+      uow.add(
+        new ElementAddUndoableAction(
+          addedElements.map(id => diagram.lookup(id)!),
+          diagram,
+          layer
+        )
+      );
+    }
+  });
 };
 
 export const _test = {

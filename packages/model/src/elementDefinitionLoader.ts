@@ -14,7 +14,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {
     const mkNode = (diagram: Diagram) => {
-      const { diagram: dest, layer } = DocumentBuilder.empty(
+      const { layer } = DocumentBuilder.empty(
         newid(),
         stencil.name,
         new DiagramDocument(
@@ -28,11 +28,10 @@ export const loadStencilsFromYaml = (stencils: any) => {
       return UnitOfWork.execute(diagram, uow => {
         const node = deserializeDiagramElements(
           [stencil.node],
-          dest,
           layer,
+          uow,
           new ElementLookup<DiagramNode>(),
-          new ElementLookup<DiagramEdge>(),
-          uow
+          new ElementLookup<DiagramEdge>()
         )[0] as DiagramNode;
         layer.addElement(node, uow);
 

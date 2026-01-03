@@ -52,11 +52,10 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
           uow =>
             deserializeDiagramElements(
               [serializedNode],
-              d,
               layer,
+              uow,
               new ElementLookup<DiagramNode>(),
-              new ElementLookup<DiagramEdge>(),
-              uow
+              new ElementLookup<DiagramEdge>()
             )[0] as DiagramNode
         );
       },
@@ -352,11 +351,11 @@ export const ElementAnchorsPanel = (props: Props) => {
             disabled={disabled}
             diagram={diagram}
             onChange={() => {
-              const uow = new UnitOfWork(diagram, false);
-              diagram.selection.nodes.forEach(node => {
-                node.invalidateAnchors(uow);
+              UnitOfWork.execute(diagram, uow => {
+                diagram.selection.nodes.forEach(node => {
+                  node.invalidateAnchors(uow);
+                });
               });
-              uow.commit();
             }}
           />
         )}

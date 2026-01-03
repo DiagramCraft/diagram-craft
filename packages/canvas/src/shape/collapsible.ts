@@ -3,7 +3,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { VNode } from '../component/vdom';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import {
   AbstractSelectionAction,
   ElementType,
@@ -40,9 +39,9 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
         class: 'svg-collapsible__toggle svg-hover-overlay',
         on: {
           pointerdown: () => {
-            const uow = new UnitOfWork(props.node.diagram, true);
-            def.toggle(props.node, uow);
-            commitWithUndo(uow, 'Toggle collapse/expand');
+            UnitOfWork.executeWithUndo(props.node.diagram, 'Toggle collapse/expand', uow =>
+              def.toggle(props.node, uow)
+            );
             this.redraw();
           }
         }
@@ -70,9 +69,9 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
         'data-hover': 'true',
         'on': {
           pointerdown: () => {
-            const uow = new UnitOfWork(props.node.diagram, true);
-            def.toggle(props.node, uow);
-            commitWithUndo(uow, 'Toggle collapse/expand');
+            UnitOfWork.executeWithUndo(props.node.diagram, 'Toggle collapse/expand', uow =>
+              def.toggle(props.node, uow)
+            );
             this.redraw();
           }
         }
@@ -141,13 +140,11 @@ export class CollapsibleToggleAction extends AbstractSelectionAction<Context> {
     const diagram = this.context.model.activeDiagram;
     assertRegularLayer(diagram.activeLayer);
 
-    const uow = new UnitOfWork(diagram, true);
-
-    const node = mustExist(diagram.selection.nodes[0]);
-    const nodeDefinition = node.getDefinition() as LayoutCapableShapeNodeDefinition;
-    nodeDefinition.toggle(node, uow);
-
-    commitWithUndo(uow, 'Expand/Collapse');
+    UnitOfWork.executeWithUndo(diagram, 'Expand/Collapse', uow => {
+      const node = mustExist(diagram.selection.nodes[0]);
+      const nodeDefinition = node.getDefinition() as LayoutCapableShapeNodeDefinition;
+      nodeDefinition.toggle(node, uow);
+    });
   }
 }
 

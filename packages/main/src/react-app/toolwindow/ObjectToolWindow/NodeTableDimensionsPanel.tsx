@@ -5,7 +5,6 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { useDiagram } from '../../../application';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
@@ -24,61 +23,57 @@ export const NodeTableDimensionsPanel = (props: Props) => {
 
   const updateRows = (r: number) => {
     if (r > rows) {
-      const uow = new UnitOfWork(diagram, true);
-
-      for (let n = 0; n < r - rows; n++) {
-        const row = (table.children.at(-1) as DiagramNode).duplicate();
-        uow.snapshot(row);
-        table.addChild(row, uow);
-        assertRegularLayer(table.layer);
-        table.layer.addElement(row, uow);
-      }
-
-      commitWithUndo(uow, 'Adding row');
+      UnitOfWork.executeWithUndo(diagram, 'Adding row', uow => {
+        for (let n = 0; n < r - rows; n++) {
+          const row = (table.children.at(-1) as DiagramNode).duplicate();
+          uow.snapshot(row);
+          table.addChild(row, uow);
+          assertRegularLayer(table.layer);
+          table.layer.addElement(row, uow);
+        }
+      });
     } else if (r < rows) {
-      const uow = new UnitOfWork(diagram, true);
-      for (let n = 0; n < rows - r; n++) {
-        const row = table.children.at(-1) as DiagramNode;
-        uow.snapshot(row);
-        table.removeChild(row, uow);
-        assertRegularLayer(row.layer);
-        row.layer.removeElement(row, uow);
-      }
-      commitWithUndo(uow, 'Deleting row');
+      UnitOfWork.executeWithUndo(diagram, 'Delete row', uow => {
+        for (let n = 0; n < rows - r; n++) {
+          const row = table.children.at(-1) as DiagramNode;
+          uow.snapshot(row);
+          table.removeChild(row, uow);
+          assertRegularLayer(row.layer);
+          row.layer.removeElement(row, uow);
+        }
+      });
     }
   };
 
   const updateColumns = (c: number) => {
     if (c > columns) {
-      const uow = new UnitOfWork(diagram, true);
-
-      for (let n = 0; n < c - columns; n++) {
-        for (let i = 0; i < rows; i++) {
-          const row = table.children[i] as DiagramNode;
-          for (let j = columns; j < c; j++) {
-            const child = (row.children.at(-1) as DiagramNode).duplicate();
-            uow.snapshot(child);
-            row.addChild(child, uow);
-            assertRegularLayer(table.layer);
-            table.layer.addElement(child, uow);
+      UnitOfWork.executeWithUndo(diagram, 'Adding column', uow => {
+        for (let n = 0; n < c - columns; n++) {
+          for (let i = 0; i < rows; i++) {
+            const row = table.children[i] as DiagramNode;
+            for (let j = columns; j < c; j++) {
+              const child = (row.children.at(-1) as DiagramNode).duplicate();
+              uow.snapshot(child);
+              row.addChild(child, uow);
+              assertRegularLayer(table.layer);
+              table.layer.addElement(child, uow);
+            }
           }
         }
-      }
-
-      commitWithUndo(uow, 'Adding column');
+      });
     } else if (c < columns) {
-      const uow = new UnitOfWork(diagram, true);
-      for (let n = 0; n < columns - c; n++) {
-        for (let i = 0; i < rows; i++) {
-          const row = table.children[i] as DiagramNode;
-          const child = row.children.at(-1) as DiagramNode;
-          uow.snapshot(child);
-          row.removeChild(child, uow);
-          assertRegularLayer(table.layer);
-          table.layer.removeElement(child, uow);
+      UnitOfWork.executeWithUndo(diagram, 'Delete column', uow => {
+        for (let n = 0; n < columns - c; n++) {
+          for (let i = 0; i < rows; i++) {
+            const row = table.children[i] as DiagramNode;
+            const child = row.children.at(-1) as DiagramNode;
+            uow.snapshot(child);
+            row.removeChild(child, uow);
+            assertRegularLayer(table.layer);
+            table.layer.removeElement(child, uow);
+          }
         }
-      }
-      commitWithUndo(uow, 'Deleting column');
+      });
     }
   };
 

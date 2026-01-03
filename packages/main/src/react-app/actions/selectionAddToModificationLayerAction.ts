@@ -5,7 +5,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { DelegatingDiagramNode } from '@diagram-craft/model/delegatingDiagramNode';
 import { DelegatingDiagramEdge } from '@diagram-craft/model/delegatingDiagramEdge';
@@ -55,25 +54,24 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
       return;
     }
 
-    const uow = new UnitOfWork(diagram, true);
-    const newDelegatingElements = [];
+    const newDelegatingElements: DiagramElement[] = [];
 
-    for (const element of diagram.selection.elements) {
-      let delegatingElement: DiagramElement;
+    UnitOfWork.executeWithUndo(diagram, 'Add to modification layer', uow => {
+      for (const element of diagram.selection.elements) {
+        let delegatingElement: DiagramElement;
 
-      if (isNode(element)) {
-        delegatingElement = new DelegatingDiagramNode(newid(), element, layer);
-      } else if (isEdge(element)) {
-        delegatingElement = new DelegatingDiagramEdge(newid(), element, layer);
-      } else {
-        VERIFY_NOT_REACHED();
+        if (isNode(element)) {
+          delegatingElement = new DelegatingDiagramNode(newid(), element, layer);
+        } else if (isEdge(element)) {
+          delegatingElement = new DelegatingDiagramEdge(newid(), element, layer);
+        } else {
+          VERIFY_NOT_REACHED();
+        }
+
+        layer.modifyChange(element.id, delegatingElement, uow);
+        newDelegatingElements.push(delegatingElement);
       }
-
-      layer.modifyChange(element.id, delegatingElement, uow);
-      newDelegatingElements.push(delegatingElement);
-    }
-
-    commitWithUndo(uow, 'Add to modification layer');
+    });
 
     // Update selection to the new delegating elements
     diagram.selection.setElements(newDelegatingElements);

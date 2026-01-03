@@ -31,9 +31,9 @@ describe('textToDiagram', () => {
       UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
       edge.labelNodes.push(labelNode.asLabelNode());
 
-      const uow = new UnitOfWork(diagram, true);
-      const result = updateOrCreateLabelNode(edge, 'Updated', uow, layer);
-      uow.commit();
+      const result = UnitOfWork.execute(diagram, uow =>
+        updateOrCreateLabelNode(edge, 'Updated', uow, layer)
+      );
 
       expect(result.id).toBe('label1');
       expect(result.getText()).toBe('Updated');
@@ -42,9 +42,9 @@ describe('textToDiagram', () => {
     test('creates new label node when none exists', () => {
       const edge = layer.addEdge({ id: 'e1' });
 
-      const uow = new UnitOfWork(diagram, true);
-      const result = updateOrCreateLabelNode(edge, 'New Label', uow, layer);
-      uow.commit();
+      const result = UnitOfWork.execute(diagram, uow =>
+        updateOrCreateLabelNode(edge, 'New Label', uow, layer)
+      );
 
       expect(result.getText()).toBe('New Label');
       expect(edge.labelNodes.length).toBe(1);
@@ -64,9 +64,9 @@ describe('textToDiagram', () => {
       edge.labelNodes.push(label1.asLabelNode());
       edge.labelNodes.push(label2.asLabelNode());
 
-      const uow = new UnitOfWork(diagram, true);
-      const result = updateOrCreateLabelNode(edge, 'Single Label', uow, layer);
-      uow.commit();
+      const result = UnitOfWork.execute(diagram, uow =>
+        updateOrCreateLabelNode(edge, 'Single Label', uow, layer)
+      );
 
       expect(result.getText()).toBe('Single Label');
       expect(edge.labelNodes.length).toBe(1);
@@ -74,10 +74,9 @@ describe('textToDiagram', () => {
 
     test('throws error when called on non-edge element', () => {
       const node = layer.addNode({ id: 'n1', type: 'rect' });
-      const uow = new UnitOfWork(diagram, true);
 
       expect(() => {
-        updateOrCreateLabelNode(node, 'Test', uow, layer);
+        UnitOfWork.execute(diagram, uow => updateOrCreateLabelNode(node, 'Test', uow, layer));
       }).toThrow('Element is not an edge');
     });
   });

@@ -36,11 +36,10 @@ export const cloneElements = (
 
   return deserializeDiagramElements(
     source,
-    targetLayer.diagram,
     targetLayer,
+    uow,
     new ElementLookup<DiagramNode>(),
-    new ElementLookup<DiagramEdge>(),
-    uow
+    new ElementLookup<DiagramEdge>()
   );
 };
 

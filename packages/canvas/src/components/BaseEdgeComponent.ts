@@ -125,12 +125,15 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
             on: {
               mousedown: (e: MouseEvent) => {
                 if (e.button !== 0) return;
-                const uow = new UnitOfWork($d);
-                const idx = props.element.addWaypoint(
-                  { point: $d.viewBox.toDiagramPoint(EventHelper.point(e)) },
-                  uow
-                );
-                uow.commit();
+
+                // TODO: This waypoint will not be undone
+
+                const idx = UnitOfWork.execute($d, uow => {
+                  return props.element.addWaypoint(
+                    { point: $d.viewBox.toDiagramPoint(EventHelper.point(e)) },
+                    uow
+                  );
+                });
 
                 DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();

@@ -4,7 +4,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -100,48 +99,46 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
 
     if (positions.size === 0) return;
 
-    const uow = new UnitOfWork(diagram, true);
+    UnitOfWork.executeWithUndo(diagram, 'Layout force-directed', uow => {
+      // Center all edge anchors for edges in the layout
+      const adjacencyList = graph.adjacencyList();
+      const edgesToCenter = new Set<string>();
 
-    // Center all edge anchors for edges in the layout
-    const adjacencyList = graph.adjacencyList();
-    const edgesToCenter = new Set<string>();
-
-    for (const nodeId of positions.keys()) {
-      const neighbors = adjacencyList.get(nodeId) ?? [];
-      for (const { edge } of neighbors) {
-        // Only center edges between nodes in the layout
-        if (positions.has(edge.from) && positions.has(edge.to)) {
-          edgesToCenter.add(edge.id);
+      for (const nodeId of positions.keys()) {
+        const neighbors = adjacencyList.get(nodeId) ?? [];
+        for (const { edge } of neighbors) {
+          // Only center edges between nodes in the layout
+          if (positions.has(edge.from) && positions.has(edge.to)) {
+            edgesToCenter.add(edge.id);
+          }
         }
       }
-    }
 
-    for (const edgeId of edgesToCenter) {
-      const element = diagram.lookup(edgeId);
-      if (element && !isNode(element)) {
-        const edge = element as DiagramEdge;
-        if (edge.start instanceof AnchorEndpoint) {
-          edge.setStart(new AnchorEndpoint(edge.start.node, 'c', edge.start.offset), uow);
-        }
-        if (edge.end instanceof AnchorEndpoint) {
-          edge.setEnd(new AnchorEndpoint(edge.end.node, 'c', edge.end.offset), uow);
+      for (const edgeId of edgesToCenter) {
+        const element = diagram.lookup(edgeId);
+        if (element && !isNode(element)) {
+          const edge = element as DiagramEdge;
+          if (edge.start instanceof AnchorEndpoint) {
+            edge.setStart(new AnchorEndpoint(edge.start.node, 'c', edge.start.offset), uow);
+          }
+          if (edge.end instanceof AnchorEndpoint) {
+            edge.setEnd(new AnchorEndpoint(edge.end.node, 'c', edge.end.offset), uow);
+          }
         }
       }
-    }
 
-    // Apply new positions to nodes
-    for (const [nodeId, position] of positions) {
-      const node = diagram.lookup(nodeId);
-      if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
-        const newBounds = {
-          ...node.bounds,
-          x: position.x - node.bounds.w / 2,
-          y: position.y - node.bounds.h / 2
-        };
-        node.setBounds(newBounds, uow);
+      // Apply new positions to nodes
+      for (const [nodeId, position] of positions) {
+        const node = diagram.lookup(nodeId);
+        if (node && isNode(node) && node.renderProps.capabilities.movable !== false) {
+          const newBounds = {
+            ...node.bounds,
+            x: position.x - node.bounds.w / 2,
+            y: position.y - node.bounds.h / 2
+          };
+          node.setBounds(newBounds, uow);
+        }
       }
-    }
-
-    commitWithUndo(uow, 'Layout force-directed');
+    });
   }
 }

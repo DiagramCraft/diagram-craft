@@ -75,11 +75,11 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
       diagram.undoManager.add(
         new PropertyArrayUndoableAction<DiagramNode, NodeProps>(
           `Change node ${path}`,
+          diagram,
           nodes,
           path,
           oldValue,
           newValue,
-          () => new UnitOfWork(diagram),
           (node: DiagramNode, uow: UnitOfWork, cb) => node.updateProps(cb, uow)
         )
       );
