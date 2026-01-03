@@ -7,8 +7,6 @@ import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
@@ -28,40 +26,30 @@ export const NodeTypePopup = (props: Props) => {
       const dimension = 50;
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
-      const uow = new UnitOfWork(diagram, true);
+      UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+        assertRegularLayer(diagram.activeLayer);
+        const node = cloneElements(
+          [registration.node(diagram)],
+          diagram.activeLayer,
+          uow
+        )[0] as DiagramNode;
 
-      assertRegularLayer(diagram.activeLayer);
-      const node = cloneElements(
-        [registration.node(diagram)],
-        diagram.activeLayer,
-        uow
-      )[0] as DiagramNode;
+        assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
+        node.updateMetadata(meta => {
+          meta.style = diagram.document.styles.activeNodeStylesheet.id;
+          meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+        }, uow);
 
-      assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
-      node.updateMetadata(meta => {
-        meta.style = diagram.document.styles.activeNodeStylesheet.id;
-        meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
-      }, uow);
+        assertRegularLayer(diagram.activeLayer);
+        diagram.activeLayer.addElement(node, uow);
 
-      assertRegularLayer(diagram.activeLayer);
-      diagram.activeLayer.addElement(node, uow);
+        const edge = diagram.edgeLookup.get(props.edgeId);
+        assert.present(edge);
 
-      const edge = diagram.edgeLookup.get(props.edgeId);
-      assert.present(edge);
+        edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
 
-      edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
-
-      const snapshots = uow.commit();
-
-      // The last action on the undo stack is adding the edge, so we need to pop it and
-      // add a compound action
-      uow.diagram.undoManager.add(
-        new CompoundUndoableAction([
-          ...uow.diagram.undoManager.getToMark(),
-          new SnapshotUndoableAction('Add element', uow.diagram, snapshots)
-        ])
-      );
-
+        uow.diagram.undoManager.getToMark().forEach(a => uow.add(a));
+      });
       diagram.document.props.recentStencils.register(registration.id);
 
       props.onClose();
