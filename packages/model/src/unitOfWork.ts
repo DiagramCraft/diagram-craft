@@ -140,7 +140,7 @@ type ExecuteOpts = {
   _noCommit?: boolean;
 };
 
-type ExecWithUndoOpts = Omit<ExecuteOpts, '_noCommit'> & { label: string; _onlyUpdates?: boolean };
+type ExecWithUndoOpts = Omit<ExecuteOpts, '_noCommit'> & { label: string };
 
 export class UnitOfWork {
   uid = newid();
@@ -265,7 +265,7 @@ export class UnitOfWork {
     if (typeof optsOrCb === 'string') {
       commitWithUndo(uow, optsOrCb);
     } else {
-      commitWithUndo(uow, optsOrCb.label, optsOrCb._onlyUpdates ?? false);
+      commitWithUndo(uow, optsOrCb.label);
     }
     return result;
   }
