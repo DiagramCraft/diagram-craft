@@ -83,7 +83,8 @@ export class SnapshotUndoableAction implements UndoableAction {
 
     for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
       // Addition must be handled differently ... and explicitly before this
-      assert.present(snapshot);
+      // TODO: We must implement this properly
+      if (!snapshot) continue;
 
       if (snapshot._snapshotType === 'layer') {
         const layer = this.diagram.layers.byId(id);
