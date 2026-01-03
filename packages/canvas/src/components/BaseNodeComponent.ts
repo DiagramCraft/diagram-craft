@@ -81,7 +81,9 @@ export class BaseNodeComponent<
           newBounds.x = bounds.x - (width - bounds.w) / 2;
         }
 
-        UnitOfWork.execute(props.node.diagram, { silent: true }, uow => {
+        UnitOfWork.execute(props.node.diagram, uow => {
+          uow.metadata.nonDirty = true;
+
           props.node.setBounds(newBounds, uow);
           const parent = props.node.parent;
           if (isNode(parent)) {

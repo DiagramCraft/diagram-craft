@@ -182,7 +182,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       });
 
       const newLayer = new RegularLayer('new-layer', 'New Layer', [], diagram1);
-      UnitOfWork.execute(diagram1, {}, uow => diagram1.layers.add(newLayer, uow));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(newLayer, uow));
 
       expect(addedLayers).toHaveLength(1);
       expect(addedLayers[0]!.id).toBe('new-layer');
@@ -214,7 +214,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         removedLayers.push(layer);
       });
 
-      UnitOfWork.execute(diagram1, {}, uow => diagram1.layers.remove(layer1, uow));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       expect(removedLayers).toHaveLength(1);
       expect(removedLayers[0]!.id).toBe(layer1.id);
@@ -243,7 +243,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         updatedLayers.push(layer);
       });
 
-      UnitOfWork.execute(diagram1, {}, uow => layer1.setName('Updated Name', uow));
+      UnitOfWork.execute(diagram1, uow => layer1.setName('Updated Name', uow));
 
       expect(updatedLayers).toHaveLength(1);
       expect(updatedLayers[0]!.id).toBe(layer1.id);

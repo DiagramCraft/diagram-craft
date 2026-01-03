@@ -276,7 +276,9 @@ export const parseImage = async (
     if (props.fill?.image?.url) {
       const img = new Image();
       img.onload = () => {
-        UnitOfWork.execute(diagram, { silent: true }, uow => {
+        UnitOfWork.execute(diagram, uow => {
+          uow.metadata.nonDirty = true;
+
           node.updateProps(props => {
             if (props.custom!.drawioImage!.imageWidth === '0') {
               props.custom!.drawioImage!.imageWidth = img.width.toString();

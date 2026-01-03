@@ -135,9 +135,13 @@ const registry =
         unregister: () => {}
       };
 
-type ExecuteOpts = {
-  silent?: boolean;
-};
+declare global {
+  namespace DiagramCraft {
+    interface UnitOfWorkMetadata {
+      nonDirty?: boolean;
+    }
+  }
+}
 
 export class UnitOfWork {
   uid = newid();
@@ -159,6 +163,8 @@ export class UnitOfWork {
   changeType: ChangeType = 'non-interactive';
 
   isAborted = false;
+
+  metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
   private constructor(
     readonly diagram: Diagram,
@@ -185,31 +191,14 @@ export class UnitOfWork {
     commitWithUndo(this, m);
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
-  static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T;
-  static execute<T>(
-    diagram: Diagram,
-    optsOrCb: ExecuteOpts | ((uow: UnitOfWork) => T),
-    cb?: (uow: UnitOfWork) => T
-  ): T {
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram);
 
-    if (typeof optsOrCb === 'function') {
-      // Called with (diagram, cb)
-      const result = optsOrCb(uow);
-      if (uow.isAborted) return result;
+    const result = cb(uow);
+    if (uow.isAborted) return result;
 
-      uow.commit();
-      return result;
-    } else {
-      // Called with (diagram, opts, cb)
-      const result = cb!(uow);
-      if (uow.isAborted) return result;
-
-      uow.commit(optsOrCb.silent);
-
-      return result;
-    }
+    uow.commit();
+    return result;
   }
 
   static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
@@ -325,12 +314,12 @@ export class UnitOfWork {
     return this.#snapshots;
   }
 
-  commit(silent = false) {
+  commit() {
     this.changeType = 'non-interactive';
 
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
-    this.processEvents(silent);
+    this.processEvents();
 
     if (this.#shouldUpdateDiagram) {
       this.diagram.emit('diagramChange', { diagram: this.diagram });
@@ -346,7 +335,7 @@ export class UnitOfWork {
     this.isAborted = true;
   }
 
-  private processEvents(silent = false) {
+  private processEvents() {
     // At this point, any elements have been added and or removed
     if (!this.isRemote) {
       this.#elementsToRemove.forEach(e => e.invalidate(this));
@@ -393,7 +382,10 @@ export class UnitOfWork {
             this.diagram.emit('elementAdd', { element: e as DiagramElement });
             break;
           case 'update':
-            this.diagram.emit('elementChange', { element: e as DiagramElement, silent });
+            this.diagram.emit('elementChange', {
+              element: e as DiagramElement,
+              silent: this.metadata.nonDirty
+            });
             break;
           case 'remove':
             this.diagram.emit('elementRemove', { element: e as DiagramElement });
