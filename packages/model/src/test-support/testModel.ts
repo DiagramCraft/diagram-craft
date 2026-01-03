@@ -69,7 +69,7 @@ export class TestLayerBuilder extends RegularLayer {
 
   addNode(options?: NodeCreateOptions) {
     const node = this.createNode(options);
-    UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.addElement(node, uow));
+    UnitOfWork.executeSilently(this.diagram, uow => this.addElement(node, uow));
     return node;
   }
 

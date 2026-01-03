@@ -137,10 +137,9 @@ const registry =
 
 type ExecuteOpts = {
   silent?: boolean;
-  _noCommit?: boolean;
 };
 
-type ExecWithUndoOpts = Omit<ExecuteOpts, '_noCommit'> & { label: string };
+type ExecWithUndoOpts = ExecuteOpts & { label: string };
 
 export class UnitOfWork {
   uid = newid();
@@ -188,6 +187,15 @@ export class UnitOfWork {
     commitWithUndo(this, m);
   }
 
+  static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram);
+    try {
+      return cb(uow);
+    } finally {
+      if (!uow.isAborted) uow.abort();
+    }
+  }
+
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(
@@ -211,39 +219,19 @@ export class UnitOfWork {
 
       if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
       else uow.abort();
+
       return result;
     }
   }
 
-  static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T>;
-  static async executeAsync<T>(
-    diagram: Diagram,
-    opts: ExecuteOpts,
-    cb: (uow: UnitOfWork) => Promise<T>
-  ): Promise<T>;
-  static async executeAsync<T>(
-    diagram: Diagram,
-    optsOrCb: ExecuteOpts | ((uow: UnitOfWork) => T),
-    cb?: (uow: UnitOfWork) => Promise<T>
-  ): Promise<T> {
+  static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T> {
     const uow = new UnitOfWork(diagram);
 
-    if (typeof optsOrCb === 'function') {
-      // Called with (diagram, cb)
-      const result = await optsOrCb(uow);
-      if (uow.isAborted) return result;
+    const result = await cb(uow);
+    if (uow.isAborted) return result;
 
-      uow.commit();
-      return result;
-    } else {
-      // Called with (diagram, opts, cb)
-      const result = await cb!(uow);
-      if (uow.isAborted) return result;
-
-      if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
-      else uow.abort();
-      return result;
-    }
+    uow.commit();
+    return result;
   }
 
   static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T;

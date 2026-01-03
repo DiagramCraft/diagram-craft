@@ -280,12 +280,10 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
     it('should trigger an elementChange event', () => {
       // **** Setup
-      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow =>
-        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
-      );
-      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow =>
-        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
-      );
+      UnitOfWork.executeSilently(model.diagram1, uow => {
+        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
+        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow);
+      });
 
       // **** Act
       UnitOfWork.execute(model.diagram1, uow =>

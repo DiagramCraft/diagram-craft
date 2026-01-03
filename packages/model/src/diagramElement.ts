@@ -202,7 +202,7 @@ export abstract class AbstractDiagramElement
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      UnitOfWork.execute(this._diagram, { _noCommit: true }, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this._diagram, uow => this.invalidate(uow));
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
     });

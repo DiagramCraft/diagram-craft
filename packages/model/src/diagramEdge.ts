@@ -871,7 +871,7 @@ export class SimpleDiagramEdge
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
-    return UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => {
+    return UnitOfWork.executeSilently(this.diagram, uow => {
       const edge = SimpleDiagramEdge._create(
         id ?? newid(),
         this.start,

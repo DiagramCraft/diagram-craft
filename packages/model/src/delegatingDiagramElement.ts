@@ -56,7 +56,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      UnitOfWork.execute(this.diagram, { _noCommit: true }, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate(uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
