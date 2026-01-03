@@ -21,7 +21,7 @@ const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
   let uow = remoteUnitOfWorkRegistry.get(diagram.id);
   if (!uow) {
-    uow = new UnitOfWork(diagram, false, false, true);
+    uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
     uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
       remoteUnitOfWorkRegistry.delete(diagram.id);
@@ -163,13 +163,17 @@ export class UnitOfWork {
 
   isAborted = false;
 
-  constructor(
+  private constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
     registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+  }
+
+  static remote(diagram: Diagram) {
+    return new UnitOfWork(diagram, false, false, true);
   }
 
   static begin(diagram: Diagram) {
