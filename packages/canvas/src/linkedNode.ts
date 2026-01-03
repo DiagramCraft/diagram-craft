@@ -9,8 +9,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Box } from '@diagram-craft/geometry/box';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
@@ -24,123 +22,119 @@ export const createLinkedNode = (
   direction: Direction
 ) => {
   const diagram = node.diagram;
-  assertRegularLayer(diagram.activeLayer);
-  assertRegularLayer(node.diagram.activeLayer);
 
-  const uow = new UnitOfWork(diagram);
-  const newNode = node.duplicate();
+  return UnitOfWork.executeWithUndo(diagram, 'Link to new node', uow => {
+    assertRegularLayer(diagram.activeLayer);
+    assertRegularLayer(node.diagram.activeLayer);
 
-  if (direction === 'w') {
-    newNode.transform([new Translation({ x: -(OFFSET + node.bounds.w), y: 0 })], uow);
-  } else if (direction === 'e') {
-    newNode.transform([new Translation({ x: OFFSET + node.bounds.w, y: 0 })], uow);
-  } else if (direction === 'n') {
-    newNode.transform([new Translation({ x: 0, y: -(OFFSET + node.bounds.h) })], uow);
-  } else {
-    newNode.transform([new Translation({ x: 0, y: OFFSET + node.bounds.h })], uow);
-  }
+    const newNode = node.duplicate();
 
-  // We need to determine the correct anchor before we adjust along the secondary axis
-  // ... as we want when creating multiple nodes that all connect to the "same" anchor
-  let distance = Number.MAX_SAFE_INTEGER;
-  let shortest: Anchor | undefined;
-  for (const anchor of newNode.anchors) {
-    const d = Point.distance(
-      node._getAnchorPosition(sourceAnchorId),
-      newNode._getAnchorPosition(anchor.id)
-    );
-    if (d < distance) {
-      distance = d;
-      shortest = anchor;
+    if (direction === 'w') {
+      newNode.transform([new Translation({ x: -(OFFSET + node.bounds.w), y: 0 })], uow);
+    } else if (direction === 'e') {
+      newNode.transform([new Translation({ x: OFFSET + node.bounds.w, y: 0 })], uow);
+    } else if (direction === 'n') {
+      newNode.transform([new Translation({ x: 0, y: -(OFFSET + node.bounds.h) })], uow);
+    } else {
+      newNode.transform([new Translation({ x: 0, y: OFFSET + node.bounds.h })], uow);
     }
-  }
-  assert.present(shortest, 'Could not find shortest anchor');
 
-  const extent = direction === 'w' || direction === 'e' ? 'h' : 'w';
-  const coord = direction === 'w' || direction === 'e' ? 'y' : 'x';
+    // We need to determine the correct anchor before we adjust along the secondary axis
+    // ... as we want when creating multiple nodes that all connect to the "same" anchor
+    let distance = Number.MAX_SAFE_INTEGER;
+    let shortest: Anchor | undefined;
+    for (const anchor of newNode.anchors) {
+      const d = Point.distance(
+        node._getAnchorPosition(sourceAnchorId),
+        newNode._getAnchorPosition(anchor.id)
+      );
+      if (d < distance) {
+        distance = d;
+        shortest = anchor;
+      }
+    }
+    assert.present(shortest, 'Could not find shortest anchor');
 
-  const origBounds = newNode.bounds;
+    const extent = direction === 'w' || direction === 'e' ? 'h' : 'w';
+    const coord = direction === 'w' || direction === 'e' ? 'y' : 'x';
 
-  // Move "right"
-  let secondaryOffset = 0;
-  do {
-    const intersectingNode = diagram.activeLayer.elements.find(e =>
-      Box.intersects(e.bounds, newNode.bounds)
-    );
-    if (!intersectingNode) break;
+    const origBounds = newNode.bounds;
 
-    secondaryOffset += intersectingNode.bounds[extent] + SECONDARY_OFFSET;
+    // Move "right"
+    let secondaryOffset = 0;
+    do {
+      const intersectingNode = diagram.activeLayer.elements.find(e =>
+        Box.intersects(e.bounds, newNode.bounds)
+      );
+      if (!intersectingNode) break;
 
-    newNode.setBounds(
+      secondaryOffset += intersectingNode.bounds[extent] + SECONDARY_OFFSET;
+
+      newNode.setBounds(
+        {
+          ...newNode.bounds,
+          [coord]: origBounds[coord] + secondaryOffset
+        },
+        uow
+      );
+    } while (true);
+
+    const rightSecondaryOffset = secondaryOffset;
+    const rightBounds = newNode.bounds;
+
+    // Move "left"
+    newNode.setBounds(origBounds, uow);
+    secondaryOffset = 0;
+    do {
+      const intersectingNode = diagram.activeLayer.elements.find(e =>
+        Box.intersects(e.bounds, newNode.bounds)
+      );
+      if (!intersectingNode) break;
+
+      secondaryOffset -= intersectingNode.bounds[extent] + SECONDARY_OFFSET;
+
+      newNode.setBounds(
+        {
+          ...newNode.bounds,
+          [coord]: origBounds[coord] + secondaryOffset
+        },
+        uow
+      );
+    } while (true);
+
+    // Keep the best direction
+    if (Math.abs(rightSecondaryOffset) < Math.abs(secondaryOffset)) {
+      newNode.setBounds(rightBounds, uow);
+    }
+
+    // In case the stylesheet doesn't include an end arrow, we add
+    // a default one
+    const styles = diagram.document.styles.activeEdgeStylesheet.props;
+    const additionalStyles: Partial<EdgeProps> = {};
+    if (!styles.arrow?.end?.type) {
+      additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
+    }
+
+    const edge = ElementFactory.edge(
+      newid(),
+      new AnchorEndpoint(node, sourceAnchorId),
+      new AnchorEndpoint(newNode, shortest.id),
+      additionalStyles,
       {
-        ...newNode.bounds,
-        [coord]: origBounds[coord] + secondaryOffset
+        style: diagram.document.styles.activeEdgeStylesheet.id
       },
-      uow
+      [],
+      node.layer
     );
-  } while (true);
 
-  const rightSecondaryOffset = secondaryOffset;
-  const rightBounds = newNode.bounds;
-
-  // Move "left"
-  newNode.setBounds(origBounds, uow);
-  secondaryOffset = 0;
-  do {
-    const intersectingNode = diagram.activeLayer.elements.find(e =>
-      Box.intersects(e.bounds, newNode.bounds)
-    );
-    if (!intersectingNode) break;
-
-    secondaryOffset -= intersectingNode.bounds[extent] + SECONDARY_OFFSET;
-
-    newNode.setBounds(
-      {
-        ...newNode.bounds,
-        [coord]: origBounds[coord] + secondaryOffset
-      },
-      uow
-    );
-  } while (true);
-
-  // Keep the best direction
-  if (Math.abs(rightSecondaryOffset) < Math.abs(secondaryOffset)) {
-    newNode.setBounds(rightBounds, uow);
-  }
-
-  // In case the stylesheet doesn't include an end arrow, we add
-  // a default one
-  const styles = diagram.document.styles.activeEdgeStylesheet.props;
-  const additionalStyles: Partial<EdgeProps> = {};
-  if (!styles.arrow?.end?.type) {
-    additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
-  }
-
-  const edge = ElementFactory.edge(
-    newid(),
-    new AnchorEndpoint(node, sourceAnchorId),
-    new AnchorEndpoint(newNode, shortest.id),
-    additionalStyles,
-    {
-      style: diagram.document.styles.activeEdgeStylesheet.id
-    },
-    [],
-    node.layer
-  );
-
-  const resizeAction = createResizeToFitAction(node.diagram, newNode.bounds);
-  node.diagram.undoManager.addAndExecute(
-    new CompoundUndoableAction([
+    uow.addAndExecute(
       new ElementAddUndoableAction(
         [newNode, edge],
         node.diagram,
         node.diagram.activeLayer,
         'Link to new node'
-      ),
-      ...(resizeAction ? [resizeAction] : [])
-    ])
-  );
-  uow.commit();
-
-  return newNode;
+      )
+    );
+    return newNode;
+  });
 };

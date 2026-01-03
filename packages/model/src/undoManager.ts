@@ -29,9 +29,11 @@ export class CompoundUndoableAction implements UndoableAction {
   private readonly actions: UndoableAction[];
 
   name: string | undefined;
+  readonly #description: string | undefined;
 
-  constructor(actions?: UndoableAction[]) {
+  constructor(actions?: UndoableAction[], description?: string) {
     this.actions = actions ?? [];
+    this.#description = description;
   }
 
   addAction(action: UndoableAction | undefined) {
@@ -43,7 +45,7 @@ export class CompoundUndoableAction implements UndoableAction {
   }
 
   get description() {
-    return this.actions.map(a => a.description).join(', ');
+    return this.#description ?? this.actions.map(a => a.description).join(', ');
   }
 
   undo(uow: UnitOfWork) {

@@ -15,8 +15,6 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import {
   ElementStylesheetDialog,
   STYLESHEET_EDITORS
@@ -176,16 +174,11 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           cancelLabel: 'No'
         },
         () => {
-          const uow = new UnitOfWork(diagram, true);
-          diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
+          UnitOfWork.executeWithUndo(diagram, 'Delete style', uow => {
+            diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
 
-          const snapshots = uow.commit();
-          diagram.undoManager.add(
-            new CompoundUndoableAction([
-              new DeleteStylesheetUndoableAction(diagram, stylesheet),
-              new SnapshotUndoableAction('Delete style', diagram, snapshots)
-            ])
-          );
+            uow.add(new DeleteStylesheetUndoableAction(diagram, stylesheet));
+          });
         }
       )
     );

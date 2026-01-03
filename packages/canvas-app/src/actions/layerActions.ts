@@ -5,11 +5,8 @@ import {
 } from '@diagram-craft/canvas/action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
-import {
-  ElementDeleteUndoableAction,
-  SnapshotUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
+import { UndoableAction } from '@diagram-craft/model/undoManager';
+import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -70,35 +67,25 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     const performDelete = (layer: Layer) => {
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Delete layer', uow => {
+        for (const ref of layer.getInboundReferences()) {
+          ref.diagram.layers.remove(ref, uow);
+        }
 
-      for (const ref of layer.getInboundReferences()) {
-        ref.diagram.layers.remove(ref, uow);
-      }
+        this.context.model.activeDiagram.layers.remove(layer, uow);
 
-      this.context.model.activeDiagram.layers.remove(layer, uow);
-
-      const snapshots = uow.commit();
-      this.context.model.activeDiagram.undoManager.add(
-        new CompoundUndoableAction([
-          new SnapshotUndoableAction(
-            'Delete layer',
-            this.context.model.activeDiagram,
-            snapshots.onlyUpdated()
-          ),
-          ...(layer instanceof RegularLayer
-            ? [
-                new ElementDeleteUndoableAction(
-                  this.context.model.activeDiagram,
-                  layer,
-                  layer.elements,
-                  false
-                )
-              ]
-            : []),
-          new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
-        ])
-      );
+        if (layer instanceof RegularLayer) {
+          uow.add(
+            new ElementDeleteUndoableAction(
+              this.context.model.activeDiagram,
+              layer,
+              layer.elements,
+              false
+            )
+          );
+        }
+        uow.add(new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer));
+      });
     };
 
     // TODO: This should be a confirm dialog
@@ -270,23 +257,18 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
       this.context.ui.showDialog(
         new ReferenceLayerDialogCommand(async ({ diagramId, layerId, name }) => {
           const diagram = this.context.model.activeDiagram;
-          const uow = new UnitOfWork(diagram, true);
 
-          const layer = new ReferenceLayer(
-            newid(),
-            typeof name === 'string' ? name : 'New Layer',
-            diagram,
-            { diagramId, layerId }
-          );
-          diagram.layers.add(layer, uow);
+          UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+            const layer = new ReferenceLayer(
+              newid(),
+              typeof name === 'string' ? name : 'New Layer',
+              diagram,
+              { diagramId, layerId }
+            );
+            diagram.layers.add(layer, uow);
 
-          const snapshots = uow.commit();
-          diagram.undoManager.add(
-            new CompoundUndoableAction([
-              new LayerAddUndoableAction(diagram, layer),
-              new SnapshotUndoableAction('Add layer', diagram, snapshots)
-            ])
-          );
+            uow.add(new LayerAddUndoableAction(diagram, layer));
+          });
         })
       );
     } else {
@@ -305,33 +287,33 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
           },
           async name => {
             const diagram = this.context.model.activeDiagram;
-            const uow = new UnitOfWork(diagram, true);
 
-            const layer =
-              this.type === 'rule'
-                ? new RuleLayer(newid(), typeof name === 'string' ? name : 'New Layer', diagram, [])
-                : this.type === 'modification'
-                  ? new ModificationLayer(
+            UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+              const layer =
+                this.type === 'rule'
+                  ? new RuleLayer(
                       newid(),
                       typeof name === 'string' ? name : 'New Layer',
                       diagram,
                       []
                     )
-                  : new RegularLayer(
-                      newid(),
-                      typeof name === 'string' ? name : 'New Layer',
-                      [],
-                      diagram
-                    );
-            diagram.layers.add(layer, uow);
+                  : this.type === 'modification'
+                    ? new ModificationLayer(
+                        newid(),
+                        typeof name === 'string' ? name : 'New Layer',
+                        diagram,
+                        []
+                      )
+                    : new RegularLayer(
+                        newid(),
+                        typeof name === 'string' ? name : 'New Layer',
+                        [],
+                        diagram
+                      );
+              diagram.layers.add(layer, uow);
 
-            const snapshots = uow.commit();
-            diagram.undoManager.add(
-              new CompoundUndoableAction([
-                new LayerAddUndoableAction(diagram, layer),
-                new SnapshotUndoableAction('Add layer', diagram, snapshots)
-              ])
-            );
+              uow.add(new LayerAddUndoableAction(diagram, layer));
+            });
           }
         )
       );
@@ -377,19 +359,14 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
 
   execute(): void {
     const diagram = this.context.model.activeDiagram;
-    const uow = new UnitOfWork(diagram, true);
 
-    const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
-    diagram.layers.add(layer, uow);
+    UnitOfWork.executeWithUndo(diagram, 'Move to new layer', uow => {
+      const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
+      diagram.layers.add(layer, uow);
 
-    diagram.moveElement(diagram.selection.elements, uow, layer);
+      diagram.moveElement(diagram.selection.elements, uow, layer);
 
-    const snapshots = uow.commit();
-    uow.diagram.undoManager.add(
-      new CompoundUndoableAction([
-        new LayerAddUndoableAction(uow.diagram, layer),
-        new SnapshotUndoableAction('Move to new layer', uow.diagram, snapshots)
-      ])
-    );
+      uow.add(new LayerAddUndoableAction(uow.diagram, layer));
+    });
   }
 }

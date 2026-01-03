@@ -16,12 +16,8 @@ import {
 } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
-import {
-  ElementAddUndoableAction,
-  SnapshotUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
+import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
@@ -75,7 +71,7 @@ export abstract class AbstractMoveDrag extends Drag {
     super();
 
     precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
@@ -188,8 +184,6 @@ export abstract class AbstractMoveDrag extends Drag {
     enablePointerEvents(selection.elements);
 
     if (selection.isChanged()) {
-      const compoundUndoAction = new CompoundUndoableAction();
-
       const resizeCanvasAction = createResizeToFitAction(
         this.diagram,
         Box.boundingBox(
@@ -199,14 +193,14 @@ export abstract class AbstractMoveDrag extends Drag {
       );
       if (resizeCanvasAction) {
         resizeCanvasAction.redo();
-        compoundUndoAction.addAction(resizeCanvasAction);
+        this.uow.add(resizeCanvasAction);
       }
 
       // TODO: This is actually ok at the moment, but better to perhaps have a isDiagramElement
       const addedElements = [...this.uow.added].filter(e => e instanceof AbstractDiagramElement);
       if (addedElements.length > 0) {
         assertRegularLayer(this.diagram.activeLayer);
-        compoundUndoAction.addAction(
+        this.uow.add(
           new ElementAddUndoableAction(addedElements, this.diagram, this.diagram.activeLayer)
         );
       }
@@ -246,12 +240,7 @@ export abstract class AbstractMoveDrag extends Drag {
         );
       }
 
-      const snapshots = this.uow.commit();
-      compoundUndoAction.addAction(
-        new SnapshotUndoableAction('Move', this.diagram, snapshots.onlyUpdated())
-      );
-
-      if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+      this.uow.commitWithUndo('Move');
     } else {
       this.uow.commit();
     }

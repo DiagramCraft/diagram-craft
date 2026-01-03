@@ -7,8 +7,6 @@ import {
   StylesheetType
 } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -160,23 +158,18 @@ export const ElementStylesheetPanel = (props: Props) => {
                             },
                             $d.document.styles.crdt.factory
                           );
-                          const uow = new UnitOfWork($d, true);
 
-                          $d.document.styles.addStylesheet(s.id, s, uow);
-                          $d.document.styles.setStylesheet(
-                            $d.selection.elements[0]!,
-                            id,
-                            uow,
-                            true
-                          );
+                          UnitOfWork.executeWithUndo($d, 'Add style', uow => {
+                            $d.document.styles.addStylesheet(s.id, s, uow);
+                            $d.document.styles.setStylesheet(
+                              $d.selection.elements[0]!,
+                              id,
+                              uow,
+                              true
+                            );
 
-                          const snapshots = uow.commit();
-                          uow.diagram.undoManager.add(
-                            new CompoundUndoableAction([
-                              new AddStylesheetUndoableAction(uow.diagram, s),
-                              new SnapshotUndoableAction('Add style', uow.diagram, snapshots)
-                            ])
-                          );
+                            uow.add(new AddStylesheetUndoableAction(uow.diagram, s));
+                          });
                         }
                       )
                     );
@@ -196,18 +189,12 @@ export const ElementStylesheetPanel = (props: Props) => {
                           cancelLabel: 'No'
                         },
                         () => {
-                          const uow = new UnitOfWork($d, true);
+                          UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
+                            const s = $d.document.styles.get($s.val)!;
+                            $d.document.styles.deleteStylesheet($s.val, uow);
 
-                          const s = $d.document.styles.get($s.val)!;
-                          $d.document.styles.deleteStylesheet($s.val, uow);
-
-                          const snapshots = uow.commit();
-                          uow.diagram.undoManager.add(
-                            new CompoundUndoableAction([
-                              new DeleteStylesheetUndoableAction(uow.diagram, s),
-                              new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                            ])
-                          );
+                            uow.add(new DeleteStylesheetUndoableAction(uow.diagram, s));
+                          });
                         }
                       )
                     );

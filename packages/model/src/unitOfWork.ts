@@ -10,6 +10,7 @@ import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { UndoableAction } from '@diagram-craft/model/undoManager';
 
 type ActionCallback = () => void;
 
@@ -156,6 +157,8 @@ export class UnitOfWork {
 
   #onCommitCallbacks = new Map<string, ActionCallback>();
 
+  #undoableActions: UndoableAction[] = [];
+
   changeType: ChangeType = 'non-interactive';
 
   isAborted = false;
@@ -171,6 +174,10 @@ export class UnitOfWork {
 
   static begin(diagram: Diagram) {
     return new UnitOfWork(diagram, true);
+  }
+
+  get undoableActions() {
+    return this.#undoableActions;
   }
 
   commitWithUndo(m: string) {
@@ -258,6 +265,16 @@ export class UnitOfWork {
     }
     return result;
   }
+
+  add(action: UndoableAction) {
+    this.#undoableActions.push(action);
+  }
+
+  addAndExecute(action: UndoableAction) {
+    action.redo(this);
+    this.#undoableActions.push(action);
+  }
+
   snapshot(element: Trackable) {
     if (!this.trackChanges) return;
     if (this.#snapshots.has(element.id)) return;
