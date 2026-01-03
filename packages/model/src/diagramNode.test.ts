@@ -332,7 +332,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     it('should remove the child from the children array', () => {
       // **** Setup
       const child = model.layer1.createNode();
-      UnitOfWork.execute(model.diagram1, { _noCommit: true }, uow => node1.addChild(child, uow));
+      UnitOfWork.executeSilently(model.diagram1, uow => node1.addChild(child, uow));
 
       const elementRemove = [vi.fn(), vi.fn()];
       model.diagram1.on('elementRemove', elementRemove[0]!);

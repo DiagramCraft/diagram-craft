@@ -139,8 +139,6 @@ type ExecuteOpts = {
   silent?: boolean;
 };
 
-type ExecWithUndoOpts = ExecuteOpts & { label: string };
-
 export class UnitOfWork {
   uid = newid();
 
@@ -187,15 +185,6 @@ export class UnitOfWork {
     commitWithUndo(this, m);
   }
 
-  static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram);
-    try {
-      return cb(uow);
-    } finally {
-      if (!uow.isAborted) uow.abort();
-    }
-  }
-
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(diagram: Diagram, opts: ExecuteOpts, cb: (uow: UnitOfWork) => T): T;
   static execute<T>(
@@ -217,10 +206,18 @@ export class UnitOfWork {
       const result = cb!(uow);
       if (uow.isAborted) return result;
 
-      if (!optsOrCb?._noCommit) uow.commit(optsOrCb.silent);
-      else uow.abort();
+      uow.commit(optsOrCb.silent);
 
       return result;
+    }
+  }
+
+  static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram);
+    try {
+      return cb(uow);
+    } finally {
+      if (!uow.isAborted) uow.abort();
     }
   }
 
@@ -234,27 +231,13 @@ export class UnitOfWork {
     return result;
   }
 
-  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T;
-  static executeWithUndo<T>(
-    diagram: Diagram,
-    opts: ExecWithUndoOpts,
-    cb: (uow: UnitOfWork) => T
-  ): T;
-  static executeWithUndo<T>(
-    diagram: Diagram,
-    optsOrCb: ExecWithUndoOpts | string,
-    cb: (uow: UnitOfWork) => T
-  ): T {
+  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram, true);
 
     const result = cb(uow);
     if (uow.isAborted) return result;
 
-    if (typeof optsOrCb === 'string') {
-      commitWithUndo(uow, optsOrCb);
-    } else {
-      commitWithUndo(uow, optsOrCb.label);
-    }
+    commitWithUndo(uow, label);
     return result;
   }
 
