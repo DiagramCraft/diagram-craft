@@ -23,9 +23,9 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
   if (!uow) {
     uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
-    uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
-      remoteUnitOfWorkRegistry.delete(diagram.id);
-    });
+    uow.registerOnCommitCallback('remoteCleanup', undefined, () =>
+      remoteUnitOfWorkRegistry.delete(diagram.id)
+    );
   }
   return uow;
 };
@@ -83,12 +83,6 @@ type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOW
 
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
-
-  onlyUpdated() {
-    return new ElementsSnapshot(
-      new Map([...this.snapshots.entries()].filter(([, v]) => v !== undefined))
-    );
-  }
 
   onlyAdded() {
     return new ElementsSnapshot(
@@ -433,11 +427,11 @@ export class UnitOfWork {
     return new Set([...this.#elements.filter(e => e.type === 'add').map(e => e.trackable)]);
   }
 
-  get updated() {
+  private get updated() {
     return new Set([...this.#elements.filter(e => e.type === 'update').map(e => e.trackable)]);
   }
 
-  get removed() {
+  private get removed() {
     return new Set([...this.#elements.filter(e => e.type === 'remove').map(e => e.trackable)]);
   }
 
