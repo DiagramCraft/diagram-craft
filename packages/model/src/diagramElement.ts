@@ -378,6 +378,7 @@ export abstract class AbstractDiagramElement
     this._children.values.forEach(c => {
       uow.updateElement(c);
     });
+
     uow.updateElement(this);
   }
 

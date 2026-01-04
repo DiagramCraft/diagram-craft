@@ -160,7 +160,6 @@ export class ResizeDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
-      this.uow.stopTracking();
       this.uow.commitWithUndo('Resize');
     } else {
       this.uow.abort();
