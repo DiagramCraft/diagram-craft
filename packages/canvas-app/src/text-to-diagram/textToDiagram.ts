@@ -332,10 +332,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           }
         }
 
-        if (newElement) {
-          uow.addElement(newElement);
-        }
-
         return newElement;
       }
     };

@@ -169,7 +169,7 @@ export abstract class AbstractDiagramElement
           this._diagram.register(e);
 
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.addElement(e);
+          uow.addElement(e, this, this.children.length - 1);
           uow.updateElement(this);
         },
         onRemoteChange: e => {
@@ -179,7 +179,7 @@ export abstract class AbstractDiagramElement
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.removeElement(e);
+          uow.removeElement(e, this);
           uow.updateElement(this);
         },
         onInit: e => this._diagram.register(e)
@@ -371,7 +371,7 @@ export abstract class AbstractDiagramElement
     oldChildren
       .filter(c => !children.includes(c))
       .forEach(c => {
-        uow.removeElement(c);
+        uow.removeElement(c, this);
         c._setParent(undefined);
       });
 
@@ -435,7 +435,7 @@ export abstract class AbstractDiagramElement
     // TODO: We should clear nodeLookup and edgeLookup here
 
     uow.updateElement(this);
-    uow.removeElement(child);
+    uow.removeElement(child, this);
   }
 
   get comments() {

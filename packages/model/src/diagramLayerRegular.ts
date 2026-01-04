@@ -33,7 +33,7 @@ export class RegularLayer extends Layer<RegularLayer> {
       {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
-          uow.addElement(e);
+          uow.addElement(e, this, this.#elements.size - 1);
           this.processElementForAdd(e);
         },
         onRemoteChange: e => {
@@ -42,7 +42,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(diagram);
-          uow.removeElement(e);
+          uow.removeElement(e, this);
         },
         onInit: e => {
           diagram.emit('elementAdd', { element: e });
@@ -124,7 +124,7 @@ export class RegularLayer extends Layer<RegularLayer> {
 
     if (!element.parent && !this.#elements.has(element.id)) this.#elements.add(element.id, element);
     this.processElementForAdd(element);
-    uow.addElement(element);
+    uow.addElement(element, this, this.#elements.size - 1);
     uow.updateElement(this);
   }
 
@@ -136,7 +136,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     });
 
     element.detach(uow);
-    uow.removeElement(element);
+    uow.removeElement(element, this);
     uow.updateElement(this);
   }
 
@@ -149,14 +149,14 @@ export class RegularLayer extends Layer<RegularLayer> {
     for (const e of added) {
       this.#elements.add(e.id, e);
       this.processElementForAdd(e);
-      uow.addElement(e);
+      uow.addElement(e, this, this.#elements.size - 1);
     }
 
     for (const e of removed) {
       e.detachCRDT(() => {
         this.#elements.remove(e.id);
       });
-      uow.removeElement(e);
+      uow.removeElement(e, this);
     }
 
     this.#elements.setOrder(elements.map(e => e.id));

@@ -220,7 +220,7 @@ export class LayerManager
     this.#visibleLayers.set(layer.id, true);
     this.#activeLayer = layer;
     uow.updateElement(this);
-    uow.addElement(layer);
+    uow.addElement(layer, this, this.#layers.size - 1);
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
@@ -231,7 +231,7 @@ export class LayerManager
       this.diagram.selection.clear();
     }
     uow.updateElement(this);
-    uow.removeElement(layer);
+    uow.removeElement(layer, this);
   }
 
   invalidate(_uow: UnitOfWork) {

@@ -251,7 +251,7 @@ export class UnitOfWork {
     this.#elements.push({ type: 'update', trackable: element });
   }
 
-  removeElement(element: Trackable) {
+  removeElement(element: Trackable, _parent: any) {
     assert.true(
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before removing element'
@@ -259,7 +259,7 @@ export class UnitOfWork {
     this.#elements.push({ type: 'remove', trackable: element });
   }
 
-  addElement(element: Trackable) {
+  addElement(element: Trackable, _parent: any, _idx: number) {
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }

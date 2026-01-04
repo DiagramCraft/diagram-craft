@@ -103,7 +103,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
           if (e.type === ModificationType.Add) {
-            uow.addElement(e.element!);
+            uow.addElement(e.element!, this, this.#modifications.size - 1);
             this.processElementForAdd(e.element!);
           } else if (e.type === ModificationType.Change || e.type === ModificationType.Remove) {
             if (e.element) uow.updateElement(e.element);
@@ -119,7 +119,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(diagram);
           if (e.type === ModificationType.Add) {
-            uow.removeElement(e.element!);
+            uow.removeElement(e.element!, this);
           } else if (e.type === ModificationType.Change || e.type === ModificationType.Remove) {
             if (e.element) uow.updateElement(e.element);
             if (e.type === ModificationType.Remove) uow.updateElement(diagram.lookup(e.id)!);
@@ -186,7 +186,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
     this.processElementForAdd(el);
 
-    uow.addElement(el);
+    uow.addElement(el, this, this.#modifications.size - 1);
     uow.updateElement(this);
   }
 
@@ -198,7 +198,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
     this.processElementForAdd(el);
 
-    uow.addElement(el);
+    uow.addElement(el, this, this.#modifications.size - 1);
     uow.updateElement(this);
   }
 
@@ -210,7 +210,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
     if (m.type === ModificationType.Add) {
       uow.snapshot(m.element!);
-      uow.removeElement(m.element!);
+      uow.removeElement(m.element!, this);
     } else if (m.type === ModificationType.Change || m.type === ModificationType.Remove) {
       const el = this.diagram.lookup(id)!;
       uow.snapshot(el);
