@@ -9,8 +9,8 @@ import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
+import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
 
 type ActionCallback = () => void;
 
@@ -146,11 +146,9 @@ declare global {
 export class UnitOfWork {
   uid = newid();
 
-  #elementsToUpdate = new Map<string, Trackable>();
-  #elementsToRemove = new Map<string, Trackable>();
-  #elementsToAdd = new Map<string, Trackable>();
-
+  #elements: Array<{ type: 'add' | 'remove' | 'update'; trackable: Trackable }> = [];
   #invalidatedElements = new Set<Trackable>();
+  #state: 'pending' | 'committed' | 'aborted' = 'pending';
 
   #shouldUpdateDiagram = false;
 
@@ -161,8 +159,6 @@ export class UnitOfWork {
   #undoableActions: UndoableAction[] = [];
 
   changeType: ChangeType = 'non-interactive';
-
-  isAborted = false;
 
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
@@ -183,22 +179,13 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, true);
   }
 
-  get undoableActions() {
-    return this.#undoableActions;
-  }
-
-  commitWithUndo(m: string) {
-    commitWithUndo(this, m);
-  }
-
   static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram);
-
-    const result = cb(uow);
-    if (uow.isAborted) return result;
-
-    uow.commit();
-    return result;
+    try {
+      return cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commit();
+    }
   }
 
   static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
@@ -206,28 +193,30 @@ export class UnitOfWork {
     try {
       return cb(uow);
     } finally {
-      if (!uow.isAborted) uow.abort();
+      if (uow.state === 'pending') uow.abort();
     }
   }
 
   static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T> {
     const uow = new UnitOfWork(diagram);
-
-    const result = await cb(uow);
-    if (uow.isAborted) return result;
-
-    uow.commit();
-    return result;
+    try {
+      return await cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commit();
+    }
   }
 
   static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram, true);
+    try {
+      return cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commitWithUndo(label);
+    }
+  }
 
-    const result = cb(uow);
-    if (uow.isAborted) return result;
-
-    commitWithUndo(uow, label);
-    return result;
+  get state() {
+    return this.#state;
   }
 
   add(action: UndoableAction) {
@@ -255,13 +244,9 @@ export class UnitOfWork {
   }
 
   contains(element: Trackable, type?: 'update' | 'remove') {
-    if (type === 'update') {
-      return this.#elementsToUpdate.has(element.id);
-    } else if (type === 'remove') {
-      return this.#elementsToRemove.has(element.id);
-    } else {
-      return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
-    }
+    return this.#elements.some(
+      e => (e.trackable === element && type === undefined) || e.type === type
+    );
   }
 
   updateElement(element: Trackable) {
@@ -269,7 +254,7 @@ export class UnitOfWork {
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before updating element'
     );
-    this.#elementsToUpdate.set(element.id, element);
+    this.#elements.push({ type: 'update', trackable: element });
   }
 
   removeElement(element: Trackable) {
@@ -277,14 +262,14 @@ export class UnitOfWork {
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before updating element'
     );
-    this.#elementsToRemove.set(element.id, element);
+    this.#elements.push({ type: 'remove', trackable: element });
   }
 
   addElement(element: Trackable) {
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }
-    this.#elementsToAdd.set(element.id, element);
+    this.#elements.push({ type: 'add', trackable: element });
   }
 
   /**
@@ -315,6 +300,7 @@ export class UnitOfWork {
   }
 
   commit() {
+    this.#state = 'committed';
     this.changeType = 'non-interactive';
 
     // Note, onCommitCallbacks must run before elements events are emitted
@@ -330,17 +316,40 @@ export class UnitOfWork {
     return new ElementsSnapshot(this.#snapshots);
   }
 
+  commitWithUndo(description: string) {
+    const snapshots = this.commit();
+
+    if (this.#undoableActions.length > 0) {
+      const compound = new CompoundUndoableAction(this.#undoableActions, description);
+      if (snapshots.snapshots.size > 0) {
+        compound.addAction(new SnapshotUndoableAction(description, this.diagram, snapshots));
+      }
+      if (compound.hasActions()) {
+        this.diagram.undoManager.add(compound);
+      }
+    } else {
+      if (snapshots.snapshots.size > 0) {
+        this.diagram.undoManager.add(
+          new SnapshotUndoableAction(description, this.diagram, snapshots)
+        );
+      }
+    }
+  }
+
   abort() {
     registry.unregister(this);
-    this.isAborted = true;
+    this.#state = 'aborted';
   }
 
   private processEvents() {
     // At this point, any elements have been added and or removed
     if (!this.isRemote) {
-      this.#elementsToRemove.forEach(e => e.invalidate(this));
-      this.#elementsToUpdate.forEach(e => e.invalidate(this));
-      this.#elementsToAdd.forEach(e => e.invalidate(this));
+      const handled = new Set<string>();
+      this.#elements.forEach(({ trackable }) => {
+        if (handled.has(trackable.id)) return;
+        trackable.invalidate(this);
+        handled.add(trackable.id);
+      });
     }
 
     const handle = (s: 'add' | 'remove' | 'update') => (e: Trackable) => {
@@ -394,27 +403,21 @@ export class UnitOfWork {
       }
     };
 
-    // TODO: Need to think about the order here a bit better to optimize the number of events
-    //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE
-    this.#elementsToRemove.forEach(handle('remove'));
-    this.#elementsToUpdate.forEach(handle('update'));
-    this.#elementsToAdd.forEach(handle('add'));
-
-    this.diagram.emit('elementBatchChange', {
-      removed: [...this.#elementsToRemove.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[],
-      updated: [...this.#elementsToUpdate.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[],
-      added: [...this.#elementsToAdd.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[]
+    const handled = new Set<string>();
+    this.#elements.forEach(({ trackable, type }) => {
+      const key = type + '/' + trackable.id;
+      if (handled.has(key)) return;
+      handle(type)(trackable);
+      handled.add(key);
     });
 
-    this.#elementsToUpdate.clear();
-    this.#elementsToRemove.clear();
-    this.#elementsToAdd.clear();
+    this.diagram.emit('elementBatchChange', {
+      removed: [...this.removed].filter(e => e.trackableType === 'element') as DiagramElement[],
+      updated: [...this.updated].filter(e => e.trackableType === 'element') as DiagramElement[],
+      added: [...this.added].filter(e => e.trackableType === 'element') as DiagramElement[]
+    });
+
+    this.#elements.length = 0;
   }
 
   private processOnCommitCallbacks() {
@@ -427,15 +430,15 @@ export class UnitOfWork {
   }
 
   get added() {
-    return this.#elementsToAdd.values();
+    return new Set([...this.#elements.filter(e => e.type === 'add').map(e => e.trackable)]);
   }
 
   get updated() {
-    return this.#elementsToUpdate.values();
+    return new Set([...this.#elements.filter(e => e.type === 'update').map(e => e.trackable)]);
   }
 
   get removed() {
-    return this.#elementsToRemove.values();
+    return new Set([...this.#elements.filter(e => e.type === 'remove').map(e => e.trackable)]);
   }
 
   stopTracking() {

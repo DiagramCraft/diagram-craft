@@ -1,41 +1,11 @@
 import { DiagramElement, isNode } from './diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementsSnapshot, UnitOfWork } from './unitOfWork';
-import { CompoundUndoableAction, UndoableAction } from './undoManager';
+import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
 import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { hasSameElements } from '@diagram-craft/utils/array';
-
-export const commitWithUndo = (uow: UnitOfWork, description: string, onlyUpdates = false) => {
-  const snapshots = uow.commit();
-
-  if (uow.undoableActions.length > 0) {
-    const compound = new CompoundUndoableAction(uow.undoableActions, description);
-    if (snapshots.snapshots.size > 0) {
-      compound.addAction(
-        new SnapshotUndoableAction(
-          description,
-          uow.diagram,
-          onlyUpdates ? snapshots.onlyUpdated() : snapshots
-        )
-      );
-    }
-    if (compound.hasActions()) {
-      uow.diagram.undoManager.add(compound);
-    }
-  } else {
-    if (snapshots.snapshots.size > 0) {
-      uow.diagram.undoManager.add(
-        new SnapshotUndoableAction(
-          description,
-          uow.diagram,
-          onlyUpdates ? snapshots.onlyUpdated() : snapshots
-        )
-      );
-    }
-  }
-};
 
 const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork) => {
   for (const [id, snapshot] of e.snapshots) {
