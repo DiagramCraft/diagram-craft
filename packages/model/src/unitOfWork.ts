@@ -254,7 +254,7 @@ export class UnitOfWork {
   removeElement(element: Trackable) {
     assert.true(
       !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before updating element'
+      'Must create snapshot before removing element'
     );
     this.#elements.push({ type: 'remove', trackable: element });
   }
