@@ -119,7 +119,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(diagram);
           if (e.type === ModificationType.Add) {
-            uow.removeElement(e.element!, this);
+            uow.removeElement(e.element!, this, this.#modifications.size - 1);
           } else if (e.type === ModificationType.Change || e.type === ModificationType.Remove) {
             if (e.element) uow.updateElement(e.element);
             if (e.type === ModificationType.Remove) uow.updateElement(diagram.lookup(e.id)!);
@@ -210,7 +210,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
     if (m.type === ModificationType.Add) {
       uow.snapshot(m.element!);
-      uow.removeElement(m.element!, this);
+      uow.removeElement(m.element!, this, this.#modifications.size - 1);
     } else if (m.type === ModificationType.Change || m.type === ModificationType.Remove) {
       const el = this.diagram.lookup(id)!;
       uow.snapshot(el);

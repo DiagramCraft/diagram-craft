@@ -1,16 +1,18 @@
 import type { DiagramElement } from './diagramElement';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import type { Stylesheet, StylesheetType } from './diagramStyles';
 import type { Layer, LayerType } from './diagramLayer';
 import type { Diagram } from './diagram';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
-import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import { SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
+import type { LayerManager } from '@diagram-craft/model/diagramLayerManager';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { hasSameElements } from '@diagram-craft/utils/array';
 
 type ActionCallback = () => void;
 
@@ -71,15 +73,38 @@ type Snapshot = { _snapshotType: string } & (
   | StylesheetSnapshot
 );
 
-export interface UOWTrackable<T extends Snapshot> {
+export interface UOWTrackableSpecification<S extends Snapshot, E> {
+  updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
+
+  onBeforeCommit: (elements: Array<E>, uow: UnitOfWork) => void;
+  onAfterCommit: (elements: Array<E>, uow: UnitOfWork) => void;
+
+  snapshot: (element: E) => S;
+  restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
+}
+
+export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
+  addElement: (
+    diagram: Diagram,
+    parentId: string,
+    childId: string,
+    childSnapshot: S,
+    idx: number,
+    uow: UnitOfWork
+  ) => void;
+  removeElement: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
+}
+
+export interface UOWTrackable {
   id: string;
+  trackableType: string;
   invalidate(uow: UnitOfWork): void;
-  snapshot(): T;
-  restore(snapshot: T, uow: UnitOfWork): void;
+  //  snapshot(): T;
+  //  restore(snapshot: T, uow: UnitOfWork): void;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
-type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable<Snapshot>;
+export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable;
 
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
@@ -137,10 +162,41 @@ declare global {
   }
 }
 
+type UOWOperation =
+  | {
+      type: 'add';
+      id: string;
+      trackable: Trackable;
+      trackableType: Trackable['trackableType'];
+
+      idx: number;
+      parentId: string;
+      afterSnapshot: Snapshot;
+    }
+  | {
+      type: 'remove';
+      id: string;
+      trackable: Trackable;
+      trackableType: Trackable['trackableType'];
+
+      idx: number;
+      parentId: string;
+      beforeSnapshot: Snapshot;
+    }
+  | {
+      type: 'update';
+      id: string;
+      trackable: Trackable;
+      trackableType: Trackable['trackableType'];
+
+      beforeSnapshot: Snapshot;
+      afterSnapshot: Snapshot;
+    };
+
 export class UnitOfWork {
   uid = newid();
 
-  #elements: Array<{ type: 'add' | 'remove' | 'update'; trackable: Trackable }> = [];
+  #elements: Array<UOWOperation> = [];
   #invalidatedElements = new Set<Trackable>();
   #state: 'pending' | 'committed' | 'aborted' = 'pending';
 
@@ -226,7 +282,8 @@ export class UnitOfWork {
     if (!this.trackChanges) return;
     if (this.#snapshots.has(element.id)) return;
 
-    this.#snapshots.set(element.id, element.snapshot());
+    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    this.#snapshots.set(element.id, spec.snapshot(element));
   }
 
   hasBeenInvalidated(element: Trackable) {
@@ -248,22 +305,54 @@ export class UnitOfWork {
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before updating element'
     );
-    this.#elements.push({ type: 'update', trackable: element });
+
+    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    this.#elements.push({
+      type: 'update',
+      id: element.id,
+      trackable: element,
+      trackableType: element.trackableType,
+      beforeSnapshot: this.#snapshots.get(element.id)!,
+      afterSnapshot: spec.snapshot(element)
+    });
   }
 
-  removeElement(element: Trackable, _parent: any) {
+  removeElement(element: Trackable, parent: Trackable, idx: number) {
+    /*if (_idx === -1) {
+      console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
+    }*/
     assert.true(
       !this.trackChanges || this.#snapshots.has(element.id),
       'Must create snapshot before removing element'
     );
-    this.#elements.push({ type: 'remove', trackable: element });
+    this.#elements.push({
+      type: 'remove',
+      id: element.id,
+      trackable: element,
+      trackableType: element.trackableType,
+      idx: idx,
+      parentId: parent.id,
+      beforeSnapshot: this.#snapshots.get(element.id)!
+    });
   }
 
-  addElement(element: Trackable, _parent: any, _idx: number) {
+  addElement(element: Trackable, parent: Trackable, idx: number) {
+    /*if (_idx === -1) {
+      console.warn('Adding element to invalid index', element);
+    }*/
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.set(element.id, undefined);
     }
-    this.#elements.push({ type: 'add', trackable: element });
+    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    this.#elements.push({
+      type: 'add',
+      id: element.id,
+      trackable: element,
+      trackableType: element.trackableType,
+      idx: idx,
+      parentId: parent.id,
+      afterSnapshot: spec.snapshot(element)
+    });
   }
 
   /**
@@ -441,5 +530,96 @@ export class UnitOfWork {
 
   updateDiagram() {
     this.#shouldUpdateDiagram = true;
+  }
+}
+
+class UnitOfWorkUndoableAction implements UndoableAction {
+  timestamp?: Date;
+
+  constructor(
+    public readonly description: string,
+    private readonly diagram: Diagram,
+    private operations: Array<UOWOperation>
+  ) {}
+
+  undo(uow: UnitOfWork) {
+    for (const op of this.operations.reverse()) {
+      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+      if (op.trackableType === 'layerManager') {
+        switch (op.type) {
+          case 'remove': {
+            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
+            pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, -1, uow);
+            break;
+          }
+          case 'add': {
+            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
+            pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+            break;
+          }
+          case 'update':
+            spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
+            break;
+        }
+      } else {
+        switch (op.type) {
+          case 'update':
+            spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }
+
+  redo(uow: UnitOfWork) {
+    for (const op of this.operations) {
+      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+      if (op.trackableType === 'layerManager') {
+        switch (op.type) {
+          case 'add': {
+            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
+            pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, -1, uow);
+            break;
+          }
+          case 'remove': {
+            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
+            pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+            break;
+          }
+          case 'update':
+            spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
+            break;
+        }
+      } else {
+        switch (op.type) {
+          case 'update':
+            spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
+            break;
+          default:
+            break;
+        }
+      }
+    }
+  }
+
+  merge(nextAction: UndoableAction): boolean {
+    if (!(nextAction instanceof UnitOfWorkUndoableAction)) return false;
+
+    if (
+      nextAction.description === this.description &&
+      hasSameElements(
+        nextAction.operations.map(o => o.id),
+        this.operations.map(o => o.id)
+      ) &&
+      Date.now() - this.timestamp!.getTime() < 2000
+    ) {
+      this.operations = [...this.operations, ...nextAction.operations];
+      this.timestamp = new Date();
+      return true;
+    }
+
+    return false;
   }
 }

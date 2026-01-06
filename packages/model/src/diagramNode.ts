@@ -182,10 +182,7 @@ export interface DiagramNode extends DiagramElement {
   _getNestedElements(): DiagramElement[];
 }
 
-export class SimpleDiagramNode
-  extends AbstractDiagramElement
-  implements DiagramNode, UOWTrackable<DiagramNodeSnapshot>
-{
+export class SimpleDiagramNode extends AbstractDiagramElement implements DiagramNode, UOWTrackable {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
   readonly #edges: MappedCRDTMap<string[], { edges: Array<string> }>;

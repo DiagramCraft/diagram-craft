@@ -28,6 +28,8 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { DiagramElementUOWSpecification } from '@diagram-craft/model/diagramElement.uow';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -179,7 +181,7 @@ export abstract class AbstractDiagramElement
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.removeElement(e, this);
+          uow.removeElement(e, this, this.children.indexOf(e));
           uow.updateElement(this);
         },
         onInit: e => this._diagram.register(e)
@@ -371,7 +373,7 @@ export abstract class AbstractDiagramElement
     oldChildren
       .filter(c => !children.includes(c))
       .forEach(c => {
-        uow.removeElement(c, this);
+        uow.removeElement(c, this, this.children.indexOf(c));
         c._setParent(undefined);
       });
 
@@ -435,7 +437,7 @@ export abstract class AbstractDiagramElement
     // TODO: We should clear nodeLookup and edgeLookup here
 
     uow.updateElement(this);
-    uow.removeElement(child, this);
+    uow.removeElement(child, this, this.children.indexOf(child));
   }
 
   get comments() {
@@ -581,3 +583,5 @@ declare global {
 
 assert.node = (e: DiagramElement): asserts e is DiagramNode => assert.true(isNode(e), 'not node');
 assert.edge = (e: DiagramElement): asserts e is DiagramEdge => assert.true(isEdge(e), 'not edge');
+
+UnitOfWorkManager.trackableSpecs['element'] = new DiagramElementUOWSpecification();

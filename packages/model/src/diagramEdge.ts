@@ -185,10 +185,7 @@ export interface DiagramEdge extends DiagramElement {
   _recalculateIntersections(uow: UnitOfWork, propagate: boolean): void;
 }
 
-export class SimpleDiagramEdge
-  extends AbstractDiagramElement
-  implements DiagramEdge, UOWTrackable<DiagramEdgeSnapshot>
-{
+export class SimpleDiagramEdge extends AbstractDiagramElement implements DiagramEdge, UOWTrackable {
   // Transient properties
   #intersections: Intersection[] = [];
 

@@ -14,6 +14,8 @@ import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { isRegularLayer } from './diagramLayerUtils';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { LayerUOWSpecification } from '@diagram-craft/model/diagramLayer.uow';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -23,12 +25,12 @@ export function isReferenceLayer(l: Layer): l is ReferenceLayer {
 }
 
 export abstract class Layer<
-    T extends RegularLayer | RuleLayer | ModificationLayer =
-      | RegularLayer
-      | RuleLayer
-      | ModificationLayer
-  >
-  implements UOWTrackable<LayerSnapshot>, AttachmentConsumer, Releasable
+  T extends RegularLayer | RuleLayer | ModificationLayer =
+    | RegularLayer
+    | RuleLayer
+    | ModificationLayer
+>
+  implements UOWTrackable, AttachmentConsumer, Releasable
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
@@ -183,3 +185,5 @@ declare global {
 
 assert.isRegularLayer = (e: Layer): asserts e is RegularLayer =>
   assert.true(isRegularLayer(e), 'not regular layer');
+
+UnitOfWorkManager.trackableSpecs['layer'] = new LayerUOWSpecification();

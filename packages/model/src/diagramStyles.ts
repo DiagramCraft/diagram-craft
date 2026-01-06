@@ -17,6 +17,8 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { DiagramStylesUOWSpecification } from '@diagram-craft/model/diagramStyles.uow';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -30,10 +32,7 @@ type TypeMap = {
   text: TextStyleProps;
 };
 
-export class Stylesheet<
-  T extends StylesheetType,
-  P = TypeMap[T]
-> implements UOWTrackable<StylesheetSnapshot> {
+export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOWTrackable {
   type: T;
 
   readonly trackableType = 'stylesheet';
@@ -573,3 +572,5 @@ export class AddStylesheetUndoableAction implements UndoableAction {
     this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
   }
 }
+
+UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesUOWSpecification();

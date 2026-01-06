@@ -18,6 +18,11 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import {
+  LayerManagerParentChildUOWSpecification,
+  LayerManagerUOWSpecification
+} from '@diagram-craft/model/diagramLayerManager.uow';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -71,7 +76,7 @@ export type LayerManagerEvents = {
 
 export class LayerManager
   extends EventEmitter<LayerManagerEvents>
-  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer, Releasable
+  implements UOWTrackable, AttachmentConsumer, Releasable
 {
   readonly id = 'layers';
   readonly trackableType = 'layerManager';
@@ -231,7 +236,7 @@ export class LayerManager
       this.diagram.selection.clear();
     }
     uow.updateElement(this);
-    uow.removeElement(layer, this);
+    uow.removeElement(layer, this, this.#layers.size - 1);
   }
 
   invalidate(_uow: UnitOfWork) {
@@ -266,3 +271,7 @@ export const LayerCapabilities = {
     return layer.type === 'modification' || layer.type === 'regular';
   }
 };
+
+UnitOfWorkManager.trackableSpecs['layerManager'] = new LayerManagerUOWSpecification();
+UnitOfWorkManager.parentChildSpecs['layerManager-layer'] =
+  new LayerManagerParentChildUOWSpecification();
