@@ -73,35 +73,37 @@ export class RegularLayer extends Layer<RegularLayer> {
 
   // TODO: Add some tests for the stack operations
   stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const byParent = groupBy(elements, e => e.parent);
-
     const snapshot = new Map<DiagramElement | undefined, StackPosition[]>();
-    const newPositions = new Map<DiagramElement | undefined, StackPosition[]>();
 
-    for (const [parent, elements] of byParent) {
-      const existing = parent?.children ?? this.elements;
+    uow.executeUpdate(this, () => {
+      const byParent = groupBy(elements, e => e.parent);
 
-      const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      snapshot.set(parent, oldStackPositions);
+      const newPositions = new Map<DiagramElement | undefined, StackPosition[]>();
 
-      const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
-      for (const p of newStackPositions) {
-        if (!elements.includes(p.element)) continue;
-        p.idx += positionDelta;
+      for (const [parent, elements] of byParent) {
+        const existing = parent?.children ?? this.elements;
+
+        const oldStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+        snapshot.set(parent, oldStackPositions);
+
+        const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
+        for (const p of newStackPositions) {
+          if (!elements.includes(p.element)) continue;
+          p.idx += positionDelta;
+        }
+        newPositions.set(parent, newStackPositions);
       }
-      newPositions.set(parent, newStackPositions);
-    }
 
-    this.stackSet(newPositions, uow);
+      this.stackSet(newPositions, uow);
+    });
 
     return snapshot;
   }
 
-  stackSet(newPositions: Map<DiagramElement | undefined, StackPosition[]>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
+  private stackSet(
+    newPositions: Map<DiagramElement | undefined, StackPosition[]>,
+    uow: UnitOfWork
+  ) {
     for (const [parent, positions] of newPositions) {
       positions.sort((a, b) => a.idx - b.idx);
       if (parent) {
@@ -115,53 +117,45 @@ export class RegularLayer extends Layer<RegularLayer> {
         }
       }
     }
-
-    uow.updateElement(this);
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    if (!element.parent && !this.#elements.has(element.id)) this.#elements.add(element.id, element);
-    this.processElementForAdd(element);
-    uow.addElement(element, this, this.#elements.size - 1);
-    uow.updateElement(this);
+    uow.executeAdd(element, this, this.#elements.size - 1, () => {
+      if (!element.parent && !this.#elements.has(element.id))
+        this.#elements.add(element.id, element);
+      this.processElementForAdd(element);
+    });
   }
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeRemove(element, this, this.elements.indexOf(element), () => {
+      element.detachCRDT(() => {
+        this.#elements.remove(element.id);
+      });
 
-    element.detachCRDT(() => {
-      this.#elements.remove(element.id);
+      element.detach(uow);
     });
-
-    element.detach(uow);
-    uow.removeElement(element, this, this.elements.indexOf(element));
-    uow.updateElement(this);
   }
 
   setElements(elements: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
-
+    const ids = elements.map(e => e.id);
     const added = elements.filter(e => !this.#elements.has(e.id));
-    const removed = this.#elements.values.filter(e => !elements.includes(e));
+    const removed = this.#elements.values.filter(e => ids.indexOf(e.id) < 0);
 
     for (const e of added) {
-      this.#elements.add(e.id, e);
-      this.processElementForAdd(e);
-      uow.addElement(e, this, this.#elements.size - 1);
+      uow.executeAdd(e, this, this.#elements.size - 1, () => {
+        this.#elements.add(e.id, e);
+        this.processElementForAdd(e);
+      });
     }
 
     for (const e of removed) {
-      e.detachCRDT(() => {
-        this.#elements.remove(e.id);
+      uow.executeRemove(e, this, this.elements.indexOf(e), () => {
+        e.detachCRDT(() => {
+          this.#elements.remove(e.id);
+        });
       });
-      uow.removeElement(e, this, this.elements.indexOf(e));
     }
-
-    this.#elements.setOrder(elements.map(e => e.id));
-
-    uow.updateElement(this);
   }
 
   private processElementForAdd(e: DiagramElement) {
@@ -180,7 +174,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     super.restore(snapshot, uow);
 
     this.setElements(
-      snapshot.elements.map(id => this.diagram.lookup(id)!),
+      (snapshot.elements ?? []).map(id => this.diagram.lookup(id)!),
       uow
     );
   }

@@ -40,7 +40,7 @@ export type LayerSnapshot = {
   _snapshotType: 'layer';
   name: string;
   locked: boolean;
-  elements: string[];
+  elements?: string[];
   type: LayerType;
   rules?: AdjustmentRule[];
   modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
@@ -172,6 +172,7 @@ type UOWOperation =
 
       idx: number;
       parentId: string;
+      parentType: string;
       afterSnapshot: Snapshot;
     }
   | {
@@ -182,6 +183,7 @@ type UOWOperation =
 
       idx: number;
       parentId: string;
+      parentType: string;
       beforeSnapshot: Snapshot;
     }
   | {
@@ -348,6 +350,7 @@ export class UnitOfWork {
       trackableType: element.trackableType,
       idx: idx,
       parentId: parent.id,
+      parentType: parent.trackableType,
       beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
@@ -391,6 +394,7 @@ export class UnitOfWork {
       trackableType: element.trackableType,
       idx: idx,
       parentId: parent.id,
+      parentType: parent.trackableType,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
@@ -583,30 +587,22 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   undo(uow: UnitOfWork) {
     for (const op of this.operations.reverse()) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
-      if (op.trackableType === 'layer') {
-        switch (op.type) {
-          case 'remove': {
-            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
-            pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, -1, uow);
-            break;
-          }
-          case 'add': {
-            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
-            pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
-            break;
-          }
-          case 'update':
-            spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
-            break;
+      switch (op.type) {
+        case 'remove': {
+          const type = op.parentType + '-' + op.trackableType;
+          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, -1, uow);
+          break;
         }
-      } else {
-        switch (op.type) {
-          case 'update':
-            spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
-            break;
-          default:
-            break;
+        case 'add': {
+          const type = op.parentType + '-' + op.trackableType;
+          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          break;
         }
+        case 'update':
+          spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
+          break;
       }
     }
   }
@@ -614,30 +610,22 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   redo(uow: UnitOfWork) {
     for (const op of this.operations) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
-      if (op.trackableType === 'layer') {
-        switch (op.type) {
-          case 'add': {
-            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
-            pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, -1, uow);
-            break;
-          }
-          case 'remove': {
-            const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs['layerManager-layer']);
-            pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
-            break;
-          }
-          case 'update':
-            spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
-            break;
+      switch (op.type) {
+        case 'add': {
+          const type = op.parentType + '-' + op.trackableType;
+          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, -1, uow);
+          break;
         }
-      } else {
-        switch (op.type) {
-          case 'update':
-            spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
-            break;
-          default:
-            break;
+        case 'remove': {
+          const type = op.parentType + '-' + op.trackableType;
+          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          break;
         }
+        case 'update':
+          spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
+          break;
       }
     }
   }
