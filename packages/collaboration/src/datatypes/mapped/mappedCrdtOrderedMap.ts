@@ -185,6 +185,13 @@ export class MappedCRDTOrderedMap<
         }
       }
     });
+    this.getSortedEntries();
+  }
+
+  private getSortedEntries() {
+    this.#entries = Array.from(this.#current.entries())
+      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
+      .map(([k, v]) => [k, this.mapper.fromCRDT(v.get('value')!)]);
   }
 
   private populateFromCRDT(e?: { key: string; value: CRDTMap<WrapperType<C>> }) {

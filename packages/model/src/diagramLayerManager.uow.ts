@@ -10,6 +10,9 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Layer } from '@diagram-craft/model/diagramLayer';
+import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
+import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
+import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 
 export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
   addElement(
@@ -26,6 +29,18 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     switch (childSnapshot.type) {
       case 'regular':
         child = new RegularLayer(childId, childSnapshot.name, [], diagram);
+        child.restore(childSnapshot, uow);
+        break;
+      case 'rule':
+        child = new RuleLayer(childId, childSnapshot.name, diagram, []);
+        child.restore(childSnapshot, uow);
+        break;
+      case 'reference':
+        child = new ReferenceLayer(childId, childSnapshot.name, diagram, undefined!);
+        child.restore(childSnapshot, uow);
+        break;
+      case 'modification':
+        child = new ModificationLayer(childId, childSnapshot.name, diagram, []);
         child.restore(childSnapshot, uow);
         break;
       default:
@@ -54,7 +69,7 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
     uow: UnitOfWork
   ): void {
     const layerManager = diagram.layers;
-    layerManager.restore(snapshot, uow);
+    layerManager._restore(snapshot, uow);
   }
 
   onAfterCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
@@ -62,10 +77,10 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
   onBeforeCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
 
   restore(snapshot: LayersSnapshot, element: LayerManager, uow: UnitOfWork): void {
-    element.restore(snapshot, uow);
+    element._restore(snapshot, uow);
   }
 
   snapshot(element: LayerManager): LayersSnapshot {
-    return element.snapshot();
+    return element._snapshot();
   }
 }

@@ -84,9 +84,7 @@ export abstract class Layer<
   }
 
   setName(name: string, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#name.set(name);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => this.#name.set(name));
   }
 
   isLocked() {

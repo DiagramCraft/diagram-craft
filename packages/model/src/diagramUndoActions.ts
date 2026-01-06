@@ -18,7 +18,7 @@ const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork
         layer.restore(snapshot, uow);
       }
     } else if (snapshot._snapshotType === 'layers') {
-      diagram.layers.restore(snapshot, uow);
+      diagram.layers._restore(snapshot, uow);
     } else if (snapshot._snapshotType === 'stylesheet') {
       const stylesheet = diagram.document.styles.get(id);
       if (stylesheet) {
@@ -62,7 +62,7 @@ export class SnapshotUndoableAction implements UndoableAction {
           layer.restore(snapshot, uow);
         }
       } else if (snapshot._snapshotType === 'layers') {
-        this.diagram.layers.restore(snapshot, uow);
+        this.diagram.layers._restore(snapshot, uow);
       } else if (snapshot._snapshotType === 'stylesheet') {
         const stylesheet = this.diagram.document.styles.get(id);
         if (stylesheet) {
