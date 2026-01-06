@@ -314,7 +314,7 @@ export class UnitOfWork {
       trackable: element,
       trackableType: element.trackableType,
       beforeSnapshot: this.#snapshots.get(element.id)!,
-      afterSnapshot: spec.snapshot(element)
+      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
@@ -348,7 +348,7 @@ export class UnitOfWork {
       trackableType: element.trackableType,
       idx: idx,
       parentId: parent.id,
-      beforeSnapshot: spec.snapshot(element)
+      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
@@ -391,7 +391,7 @@ export class UnitOfWork {
       trackableType: element.trackableType,
       idx: idx,
       parentId: parent.id,
-      afterSnapshot: spec.snapshot(element)
+      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
