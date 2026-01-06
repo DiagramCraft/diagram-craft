@@ -321,15 +321,7 @@ export class UnitOfWork {
 
     cb();
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
-      type: 'update',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
-      beforeSnapshot: this.#snapshots.get(element.id)!,
-      afterSnapshot: spec.snapshot(element)
-    });
+    this.updateElement(element);
   }
 
   removeElement(element: Trackable, parent: Trackable, idx: number) {
@@ -361,16 +353,7 @@ export class UnitOfWork {
       'Must create snapshot before removing element'
     );*/
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
-      type: 'remove',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
-      idx: idx,
-      parentId: parent.id,
-      beforeSnapshot: spec.snapshot(element)
-    });
+    this.removeElement(element, parent, idx);
 
     cb();
   }
@@ -382,16 +365,7 @@ export class UnitOfWork {
 
     cb();
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
-      type: 'add',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
-      idx: idx,
-      parentId: parent.id,
-      afterSnapshot: spec.snapshot(element)
-    });
+    this.addElement(element, parent, idx);
   }
 
   addElement(element: Trackable, parent: Trackable, idx: number) {
