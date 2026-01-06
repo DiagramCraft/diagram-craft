@@ -64,15 +64,15 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
   return (
     <span
       style={{ cursor: props.layer.type === 'reference' ? 'inherit' : 'pointer' }}
-      onClick={
-        props.layer.type === 'reference'
-          ? undefined
-          : e => {
-              props.layer.locked = !props.layer.isLocked();
-              e.preventDefault();
-              e.stopPropagation();
-            }
-      }
+      onClick={e => {
+        if (props.layer.type === 'reference') return;
+
+        UnitOfWork.executeWithUndo(props.diagram, 'Toggle lock', uow => {
+          props.layer.setLocked(!props.layer.isLocked(), uow);
+        });
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
       {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
     </span>

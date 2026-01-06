@@ -35,4 +35,8 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
   snapshot(element: Stylesheet<any>): StylesheetSnapshot {
     return element.snapshot();
   }
+
+  children(_element: Stylesheet<any>) {
+    return [];
+  }
 }

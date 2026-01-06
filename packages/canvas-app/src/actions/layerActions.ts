@@ -207,8 +207,10 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    layer.locked = !layer.isLocked();
-    diagram.undoManager.add(new ToggleActionUndoableAction('Toggle layer locked', this, { id }));
+    UnitOfWork.executeWithUndo(diagram, 'Toggle layer locked', uow => {
+      layer.setLocked(!layer.isLocked(), uow);
+      uow.add(new ToggleActionUndoableAction('Toggle layer locked', this, { id }));
+    });
   }
 }
 

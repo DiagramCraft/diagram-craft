@@ -237,7 +237,7 @@ describe('selection', () => {
   test('locked elements', () => {
     const selection = new Selection(diagram);
     const lockedLayer = diagram.newLayer();
-    lockedLayer.locked = true;
+    UnitOfWork.execute(diagram, uow => lockedLayer.setLocked(true, uow));
 
     const node = lockedLayer.addNode();
 

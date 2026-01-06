@@ -37,4 +37,8 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
   snapshot(element: Layer): LayerSnapshot {
     return element.snapshot();
   }
+
+  children(_element: Layer) {
+    return [];
+  }
 }

@@ -91,10 +91,11 @@ export abstract class Layer<
     return this.#locked;
   }
 
-  // TODO: Add uow here
-  set locked(value: boolean) {
-    this.#locked = value;
-    this.diagram.layers.emit('layerStructureChange');
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#locked = value;
+      this.diagram.layers.emit('layerStructureChange');
+    });
   }
 
   abstract resolve(): T | undefined;
@@ -136,7 +137,7 @@ export abstract class Layer<
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
     this.setName(snapshot.name, uow);
-    this.locked = snapshot.locked;
+    this.setLocked(snapshot.locked, uow);
     this._type = snapshot.type;
     uow.updateElement(this);
   }

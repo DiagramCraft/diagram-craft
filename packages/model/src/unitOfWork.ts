@@ -80,6 +80,8 @@ export interface UOWTrackableSpecification<S extends Snapshot, E> {
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
+
+  children: (element: E) => Array<{ value: E; idx: number }>;
 }
 
 export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
@@ -333,6 +335,12 @@ export class UnitOfWork {
       'Must create snapshot before removing element'
     );*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+
+    const children = spec.children(element);
+    for (const c of children) {
+      this.removeElement(c.value, element, c.idx);
+    }
+
     this.#elements.push({
       type: 'remove',
       id: element.id,

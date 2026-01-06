@@ -83,4 +83,8 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
   snapshot(element: LayerManager): LayersSnapshot {
     return element._snapshot();
   }
+
+  children(_element: LayerManager) {
+    return [];
+  }
 }

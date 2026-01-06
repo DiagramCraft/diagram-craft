@@ -50,4 +50,8 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
   snapshot(element: DiagramElement): DiagramNodeSnapshot | DiagramEdgeSnapshot {
     return element.snapshot() as DiagramNodeSnapshot | DiagramEdgeSnapshot;
   }
+
+  children(_element: DiagramElement) {
+    return [];
+  }
 }
