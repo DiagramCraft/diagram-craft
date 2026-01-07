@@ -319,7 +319,7 @@ const deserializeDiagrams = <T extends Diagram>(
     //  3. Load all modifications
 
     // Create layers
-    UnitOfWork.execute(newDiagram, uow => {
+    UnitOfWork.executeSilently(newDiagram, uow => {
       for (const l of $d.layers) {
         switch (l.layerType) {
           case 'regular':
