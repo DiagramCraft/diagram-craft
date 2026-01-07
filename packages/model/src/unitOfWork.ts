@@ -198,7 +198,7 @@ export class UnitOfWork {
 
   #onCommitCallbacks = new Map<string, ActionCallback>();
 
-  #undoableActions: Array<{ position: 'first' | 'last'; action: UndoableAction }> = [];
+  #undoableActions: Array<UndoableAction> = [];
 
   #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
 
@@ -269,13 +269,13 @@ export class UnitOfWork {
     return this.#state;
   }
 
-  add(action: UndoableAction, position: 'first' | 'last' = 'first') {
-    this.#undoableActions.push({ action, position });
+  add(action: UndoableAction) {
+    this.#undoableActions.push(action);
   }
 
-  addAndExecute(action: UndoableAction, position: 'first' | 'last' = 'first') {
+  addAndExecute(action: UndoableAction) {
     action.redo(this);
-    this.#undoableActions.push({ action, position });
+    this.#undoableActions.push(action);
   }
 
   snapshot(element: Trackable, force = false) {
@@ -467,18 +467,12 @@ export class UnitOfWork {
     this.commit();
 
     if (this.#undoableActions.length > 0) {
-      const compound = new CompoundUndoableAction(
-        this.#undoableActions.filter(e => e.position === 'first').map(e => e.action),
-        description
-      );
+      const compound = new CompoundUndoableAction(this.#undoableActions, description);
       if (this.#elements.length > 0) {
         compound.addAction(
           new UnitOfWorkUndoableAction(description, this.diagram, this.#elements, this.#callbacks)
         );
       }
-      this.#undoableActions
-        .filter(e => e.position === 'last')
-        .forEach(e => compound.addAction(e.action));
       if (compound.hasActions()) {
         this.diagram.undoManager.add(compound);
       }
