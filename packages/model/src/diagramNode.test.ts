@@ -268,22 +268,34 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => node1.addChild(child, uow));
+      UnitOfWork.executeWithUndo(model.diagram1, 'Add child', uow => node1.addChild(child, uow));
 
       // **** Verify
       expect(child.parent).toBe(node1);
 
-      // TODO: Why is this 2 and not 1
-      expect(model.elementChange[0]).toHaveBeenCalledTimes(2);
-
-      // TODO: Why is this 0 and not 1
-      expect(model.elementAdd[0]).toHaveBeenCalledTimes(0);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(0);
+      expect(model.elementAdd[0]).toHaveBeenCalledTimes(1);
       if (model.doc2) {
         expect(model.diagram2!.lookup(child.id)!.parent).toBe(node2);
+        // TODO: Why is this 1 and not 0
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
 
         // TODO: Why is this 2 and not 1
         expect(model.elementAdd[1]).toHaveBeenCalledTimes(2);
+      }
+
+      // Act & Verify
+      model.diagram1.undoManager.undo();
+      expect(node1.children).toHaveLength(0);
+      if (model.diagram2) {
+        expect(model.diagram2.lookup(node1.id)!.children).toHaveLength(0);
+      }
+
+      // Act & Verify
+      model.diagram1.undoManager.redo();
+      expect(node1.children).toHaveLength(1);
+      if (model.diagram2) {
+        expect(model.diagram2.lookup(node1.id)!.children).toHaveLength(1);
       }
     });
 
@@ -295,13 +307,13 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       if (model.doc2) expect(node2!.children[node2!.children.length - 1]!.id).toBe(child.id);
     });
 
-    it('should update both parent and child in UnitOfWork', () => {
+    it('should update only child in UnitOfWork', () => {
       const child = model.layer1.createNode();
       UnitOfWork.execute(model.diagram1, uow => {
         node1.addChild(child, uow);
 
-        expect(uow.contains(node1, 'update')).toBe(true);
-        expect(uow.contains(child, 'update')).toBe(true);
+        expect(uow.contains(node1, 'update')).toBe(false);
+        expect(uow.contains(child, 'add')).toBe(true);
       });
     });
 
@@ -339,17 +351,27 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => node1.removeChild(child, uow));
+      UnitOfWork.executeWithUndo(model.diagram1, 'Remove', uow => node1.removeChild(child, uow));
 
       // **** Verify
       expect(node1.children.length).toBe(0);
-      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(0);
       expect(elementRemove[0]).toHaveBeenCalledTimes(1);
       if (model.doc2) {
         expect(node2!.children.length).toBe(0);
-        expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
+        expect(model.elementChange[0]).toHaveBeenCalledTimes(0);
         expect(elementRemove[0]).toHaveBeenCalledTimes(1);
       }
+
+      // Act & Verify
+      model.diagram1.undoManager.undo();
+      expect(node1.children.length).toBe(1);
+      if (model.doc2) expect(node2!.children.length).toBe(1);
+
+      // Act & Verify
+      model.diagram1.undoManager.redo();
+      expect(node1.children.length).toBe(0);
+      if (model.doc2) expect(node2!.children.length).toBe(0);
     });
 
     it('should fail if the child is not present', () => {
@@ -365,7 +387,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
       UnitOfWork.execute(model.diagram1, uow => {
         node1.removeChild(child, uow);
-        expect(uow.contains(node1, 'update')).toBe(true);
+        expect(uow.contains(node1, 'update')).toBe(false);
         expect(uow.contains(child, 'remove')).toBe(true);
       });
     });
@@ -378,17 +400,29 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child2 = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.execute(model.diagram1, uow => node1.setChildren([child1, child2], uow));
+      UnitOfWork.executeWithUndo(model.diagram1, 'SetChildren', uow =>
+        node1.setChildren([child1, child2], uow)
+      );
 
       // **** Verify
       expect(node1.children).toEqual([child1, child2]);
-      expect(model.elementChange[0]).toHaveBeenCalledTimes(3);
+      expect(model.elementChange[0]).toHaveBeenCalledTimes(1);
       if (model.doc2) {
         expect(node2!.children.map(c => c.id)).toEqual([child1.id, child2.id]);
 
-        // TODO: Why 2 and not 3
+        // TODO: Why 2 and not 1
         expect(model.elementChange[1]).toHaveBeenCalledTimes(2);
       }
+
+      // Act & Verify
+      model.diagram1.undoManager.undo();
+      expect(node1.children).toHaveLength(0);
+      if (model.doc2) expect(node2!.children).toHaveLength(0);
+
+      // Act & Verify
+      model.diagram1.undoManager.redo();
+      expect(node1.children).toHaveLength(2);
+      if (model.doc2) expect(node2!.children).toHaveLength(2);
     });
 
     it('should remove all children from the previous set', () => {

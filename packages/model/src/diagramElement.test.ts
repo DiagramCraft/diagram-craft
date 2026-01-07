@@ -105,8 +105,18 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const element = ElementFactory.emptyNode('id1', layer1);
       UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      UnitOfWork.execute(d1, uow => element.updateMetadata(m => (m.style = 'lorem'), uow));
+      UnitOfWork.executeWithUndo(d1, 'Metadata', uow =>
+        element.updateMetadata(m => (m.style = 'lorem'), uow)
+      );
 
+      expect(element.metadata.style).toBe('lorem');
+      if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
+
+      d1.undoManager.undo();
+      expect(element.metadata.style).not.toBe('lorem');
+      if (doc2) expect(layer1_2!.elements[0]!.metadata.style).not.toStrictEqual('lorem');
+
+      d1.undoManager.redo();
       expect(element.metadata.style).toBe('lorem');
       if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
     });
@@ -180,35 +190,20 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const element = ElementFactory.emptyNode('id1', layer1);
       UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2'], uow));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1'], uow));
+
+      UnitOfWork.executeWithUndo(d1, 'Set tags', uow => element.setTags(['tag1', 'tag2'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
-    });
 
-    it('should replace existing tags', () => {
-      const [root1, root2] = backend.syncedDocs();
+      d1.undoManager.undo();
+      expect(element.tags).toEqual(['tag1']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1']);
 
-      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
-
-      const element = ElementFactory.emptyNode('id1', layer1);
-      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
-
-      UnitOfWork.execute(d1, uow => element.setTags(['old1', 'old2'], uow));
-      UnitOfWork.execute(d1, uow => element.setTags(['new1', 'new2'], uow));
-
-      expect(element.tags).toEqual(['new1', 'new2']);
-      expect(element.tags).not.toContain('old1');
-      expect(element.tags).not.toContain('old2');
-
-      if (doc2) {
-        expect(layer1_2!.elements[0]!.tags).toEqual(['new1', 'new2']);
-        expect(layer1_2!.elements[0]!.tags).not.toContain('old1');
-        expect(layer1_2!.elements[0]!.tags).not.toContain('old2');
-      }
+      d1.undoManager.redo();
+      expect(element.tags).toEqual(['tag1', 'tag2']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
     });
 
     it('should trim whitespace from tags', () => {

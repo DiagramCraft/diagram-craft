@@ -58,6 +58,11 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import {
+  DiagramElementParentChildUOWSpecification,
+  DiagramElementUOWSpecification
+} from '@diagram-craft/model/diagramElement.uow';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -840,7 +845,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         type: ln.type,
         offset: ln.offset,
         timeOffset: ln.timeOffset
-      }))
+      })),
+      tags: [...this.tags]
     };
   }
 
@@ -862,6 +868,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     );
 
     this.syncChildrenBasedOnLabelNodes(uow);
+
+    this.setTags(snapshot.tags ?? [], uow);
 
     uow.updateElement(this);
     this.clearCache();
@@ -1191,3 +1199,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     return [];
   }
 }
+
+UnitOfWorkManager.trackableSpecs['element'] = new DiagramElementUOWSpecification();
+UnitOfWorkManager.parentChildSpecs['element-element'] =
+  new DiagramElementParentChildUOWSpecification();

@@ -2,32 +2,24 @@ import {
   DiagramEdgeSnapshot,
   DiagramNodeSnapshot,
   UnitOfWork,
+  UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { mustExist } from '@diagram-craft/utils/assert';
+import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { EdgeProps } from '@diagram-craft/model/diagramProps';
+import { Point } from '@diagram-craft/geometry/point';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
   DiagramNodeSnapshot | DiagramEdgeSnapshot,
   DiagramElement
 > {
-  addElement(element: DiagramElement, child: DiagramElement, _idx: number, uow: UnitOfWork): void {
-    if (isNode(element)) {
-      // TODO: Support for idx
-      element.addChild(child, uow);
-    }
-  }
-
   onAfterCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
 
   onBeforeCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
-
-  removeElement(element: DiagramElement, child: DiagramElement, uow: UnitOfWork): void {
-    if (isNode(element)) {
-      element.removeChild(child, uow);
-    }
-  }
 
   updateElement(
     diagram: Diagram,
@@ -53,5 +45,57 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
 
   children(_element: DiagramElement) {
     return [];
+  }
+}
+
+export class DiagramElementParentChildUOWSpecification implements UOWTrackableParentChildSpecification<
+  DiagramNodeSnapshot | DiagramEdgeSnapshot
+> {
+  addElement(
+    diagram: Diagram,
+    parentId: string,
+    _childId: string,
+    childSnapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
+    _idx: number,
+    uow: UnitOfWork
+  ): void {
+    const parent = mustExist(diagram.lookup(parentId));
+
+    let child: DiagramElement;
+    if (childSnapshot.type === 'node') {
+      const node = ElementFactory.node(
+        childSnapshot.id,
+        childSnapshot.nodeType,
+        childSnapshot.bounds,
+        parent.layer,
+        childSnapshot.props,
+        childSnapshot.metadata,
+        childSnapshot.texts
+      );
+      node.restore(childSnapshot, uow);
+      child = node;
+    } else if (childSnapshot.type === 'edge') {
+      const edge = ElementFactory.edge(
+        childSnapshot.id,
+        new FreeEndpoint(Point.of(0, 0)),
+        new FreeEndpoint(Point.of(0, 0)),
+        childSnapshot.props as EdgeProps,
+        childSnapshot.metadata,
+        [],
+        parent.layer
+      );
+      edge.restore(childSnapshot, uow);
+      child = edge;
+    } else {
+      VERIFY_NOT_REACHED();
+    }
+
+    parent.addChild(child, uow);
+  }
+
+  removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
+    const parent = mustExist(diagram.lookup(parentId));
+    const child = mustExist(diagram.lookup(childId));
+    parent.removeChild(child, uow);
   }
 }

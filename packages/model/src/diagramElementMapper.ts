@@ -34,7 +34,9 @@ export const makeElementMapper = (
       return existing;
     }
 
-    if (!FACTORIES[type]) assert.fail(`Unknown element type: ${type}`);
+    if (!FACTORIES[type]) {
+      assert.fail(`Unknown element type: ${type}`);
+    }
     return FACTORIES[type](id, layer, delegate, e);
   },
 

@@ -100,8 +100,6 @@ export interface UOWTrackable {
   id: string;
   trackableType: string;
   invalidate(uow: UnitOfWork): void;
-  //  snapshot(): T;
-  //  restore(snapshot: T, uow: UnitOfWork): void;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -298,7 +296,7 @@ export class UnitOfWork {
     this.#invalidatedElements.add(element);
   }
 
-  contains(element: Trackable, type?: 'update' | 'remove') {
+  contains(element: Trackable, type?: 'update' | 'remove' | 'add') {
     return this.#elements.some(
       e => (e.trackable === element && type === undefined) || e.type === type
     );

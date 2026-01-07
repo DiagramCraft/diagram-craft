@@ -335,6 +335,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
+    if (nodeType === this.nodeType) return;
+
     uow.snapshot(this);
     this.#nodeType.set(nodeType);
     this._children.clear();
@@ -700,14 +702,15 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       edges: Object.fromEntries(
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
       ),
-      texts: this.#text.getClone()
+      texts: this.#text.getClone(),
+      tags: [...this.tags]
     };
   }
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
-    this.#nodeType.set(snapshot.nodeType);
+    this.changeNodeType(snapshot.nodeType, uow);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
 
@@ -719,6 +722,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     for (const [k, v] of Object.entries(edges)) {
       this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id)]));
     }
+
+    this.setTags(snapshot.tags ?? [], uow);
 
     uow.updateElement(this);
     this.clearCache();

@@ -195,9 +195,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           value: stylesheet.name
         },
         v => {
-          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow =>
-            stylesheet.setName(v, diagram.document.styles, uow)
-          );
+          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow => stylesheet.setName(v, uow));
         }
       )
     );
@@ -317,7 +315,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
             const stylesheet = diagram.document.styles.get(style.id);
             if (stylesheet) {
               UnitOfWork.executeWithUndo(diagram, 'Modify style', uow =>
-                stylesheet.setProps(e, diagram.document.styles, uow)
+                stylesheet.setProps(e, uow)
               );
             }
 
