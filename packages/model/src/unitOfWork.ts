@@ -319,12 +319,14 @@ export class UnitOfWork {
     });
   }
 
-  executeUpdate(element: Trackable, cb: () => void) {
+  executeUpdate<T>(element: Trackable, cb: () => T): T {
     this.snapshot(element);
 
-    cb();
+    const res = cb();
 
     this.updateElement(element);
+
+    return res;
   }
 
   removeElement(element: Trackable, parent: Trackable, idx: number) {
@@ -354,7 +356,7 @@ export class UnitOfWork {
     });
   }
 
-  executeRemove(element: Trackable, parent: Trackable, idx: number, cb: () => void) {
+  executeRemove<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
     /*if (_idx === -1) {
       console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
     }*/
@@ -365,17 +367,19 @@ export class UnitOfWork {
 
     this.removeElement(element, parent, idx);
 
-    cb();
+    return cb();
   }
 
-  executeAdd(element: Trackable, parent: Trackable, idx: number, cb: () => void) {
+  executeAdd<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
     /*if (_idx === -1) {
       console.warn('Adding element to invalid index', element);
     }*/
 
-    cb();
+    const res = cb();
 
     this.addElement(element, parent, idx);
+
+    return res;
   }
 
   addElement(element: Trackable, parent: Trackable, idx: number) {

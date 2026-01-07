@@ -249,12 +249,12 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate.convertToPath(uow);
   }
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void {
-    this.delegate._removeEdge(anchor, edge);
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._removeEdge(anchor, edge, uow);
   }
 
-  _addEdge(anchor: string | undefined, edge: DiagramEdge): void {
-    this.delegate._addEdge(anchor, edge);
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._addEdge(anchor, edge, uow);
   }
 
   _getAnchorPosition(anchor: string): Point {

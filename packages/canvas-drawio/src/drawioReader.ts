@@ -831,7 +831,7 @@ const parseGroup = async (
       style.styleName !== 'group' &&
       (style.has('fillColor') || style.has('strokeColor') || value || style.shape)
     ) {
-      const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
+      const grp = await parseShape(newid(), bounds, props, metadata, texts, style, layer, ctx);
 
       node.addChild(grp, uow);
       queue.add(() => grp.setBounds(node!.bounds, uow));

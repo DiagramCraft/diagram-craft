@@ -354,6 +354,8 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
+    assert.false(children.some(e => e.id === this.id));
+
     const ids = children.map(e => e.id);
     const added = children.filter(e => !this._children.has(e.id));
     const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
@@ -387,6 +389,7 @@ export abstract class AbstractDiagramElement
   ) {
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
+    assert.false(child.id === this.id);
 
     // TODO: Check so the same not can't be added multiple times
 

@@ -127,18 +127,18 @@ export const deserializeDiagramElements = (
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(start.anchor, edge);
+        startNode._addEdge(start.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(undefined, edge);
+        startNode._addEdge(undefined, edge, uow);
       }
 
       if (isSerializedEndpointAnchor(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(end.anchor, edge);
+        endNode._addEdge(end.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(undefined, edge);
+        endNode._addEdge(undefined, edge, uow);
       }
 
       edgeLookup.set(e.id, edge);

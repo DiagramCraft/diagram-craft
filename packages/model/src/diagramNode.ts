@@ -161,8 +161,8 @@ export interface DiagramNode extends DiagramElement {
   readonly name: string;
   convertToPath(uow: UnitOfWork): void;
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void;
-  _addEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
   _getAnchorPosition(anchor: string): Point;
   _getPositionInBounds(p: Point, respectRotation?: boolean): Point;
 
@@ -919,12 +919,16 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     applyNodeTransform(this, transforms, uow, isChild);
   }
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? []);
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork) {
+    uow.executeUpdate(this, () =>
+      this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? [])
+    );
   }
 
-  _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]));
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork) {
+    uow.executeUpdate(this, () =>
+      this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]))
+    );
   }
 
   _getAnchorPosition(anchor: string) {
