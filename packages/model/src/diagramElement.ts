@@ -28,8 +28,6 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
-import { DiagramElementUOWSpecification } from '@diagram-craft/model/diagramElement.uow';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -308,12 +306,12 @@ export abstract class AbstractDiagramElement
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
-    this.clearCache();
+    uow.executeUpdate(this, () => {
+      const metadata = this._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      this._metadata.set(metadata);
+      this.clearCache();
+    });
   }
 
   /* Tags ******************************************************************************************************** */
@@ -323,17 +321,17 @@ export abstract class AbstractDiagramElement
   }
 
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
-    this._crdt.get().set('tags', uniqueTags);
+    uow.executeUpdate(this, () => {
+      const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
+      this._crdt.get().set('tags', uniqueTags);
 
-    // Add all element tags to the document tags collection
-    uniqueTags.forEach(tag => {
-      this.diagram.document.tags.add(tag);
+      // Add all element tags to the document tags collection
+      uniqueTags.forEach(tag => {
+        this.diagram.document.tags.add(tag);
+      });
+
+      this.clearCache();
     });
-
-    uow.updateElement(this);
-    this.clearCache();
   }
 
   /* Cache *************************************************************************************************** */
@@ -356,32 +354,30 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const ids = children.map(e => e.id);
+    const added = children.filter(e => !this._children.has(e.id));
+    const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
 
-    const oldChildren = this._children.values;
-
-    children.forEach(c => c.detachCRDT(() => {}));
-    this._children.set(children.map(e => [e.id, e]));
-
-    this._children.values.forEach(c => {
-      uow.snapshot(c);
-      c._setParent(this);
-      this.diagram.register(c);
-    });
-
-    // TODO: We should update nodeLookup and edgeLookup here
-    oldChildren
-      .filter(c => !children.includes(c))
-      .forEach(c => {
-        uow.removeElement(c, this, this.children.indexOf(c));
-        c._setParent(undefined);
+    for (const e of added) {
+      uow.executeAdd(e, this, this._children.size - 1, () => {
+        this._children.add(e.id, e);
+        e._setParent(this);
+        this.diagram.register(e);
       });
+    }
 
-    this._children.values.forEach(c => {
-      uow.updateElement(c);
+    for (const e of removed) {
+      uow.executeRemove(e, this, this.children.indexOf(e), () => {
+        e.detachCRDT(() => {
+          this._children.remove(e.id);
+          e._setParent(undefined);
+        });
+      });
+    }
+
+    uow.executeUpdate(this, () => {
+      this._children.setOrder(ids);
     });
-
-    uow.updateElement(this);
   }
 
   addChild(
@@ -392,52 +388,48 @@ export abstract class AbstractDiagramElement
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
 
-    uow.snapshot(this);
-    uow.snapshot(child);
-
     // TODO: Check so the same not can't be added multiple times
 
-    if (relation) {
-      const children = this._children;
-      const index = children.getIndex(relation.ref.id);
-      if (relation.type === 'after') {
-        this._children.set(
-          [...children.values.slice(0, index + 1), child, ...children.values.slice(index + 1)].map(
-            e => [e.id, e]
-          )
-        );
+    uow.executeAdd(child, this, this.children.length, () => {
+      if (relation) {
+        const children = this._children;
+        const index = children.getIndex(relation.ref.id);
+        if (relation.type === 'after') {
+          this._children.set(
+            [
+              ...children.values.slice(0, index + 1),
+              child,
+              ...children.values.slice(index + 1)
+            ].map(e => [e.id, e])
+          );
+        } else {
+          this._children.set(
+            [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
+              e.id,
+              e
+            ])
+          );
+        }
       } else {
-        this._children.set(
-          [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
-            e.id,
-            e
-          ])
-        );
+        this._children.add(child.id, child);
       }
-    } else {
-      this._children.add(child.id, child);
-    }
-    child._setParent(this);
+      child._setParent(this);
 
-    this.diagram.register(child);
-
-    uow.updateElement(this);
-    uow.updateElement(child);
+      this.diagram.register(child);
+    });
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
-    uow.snapshot(this);
-    uow.snapshot(child);
+    uow.executeRemove(child, this, 0, () => {
+      child.detachCRDT(() => {
+        this._children.remove(child.id);
+        child._setParent(undefined);
+      });
 
-    this._children.remove(child.id);
-    child._setParent(undefined);
-
-    // TODO: We should clear nodeLookup and edgeLookup here
-
-    uow.updateElement(this);
-    uow.removeElement(child, this, this.children.indexOf(child));
+      // TODO: We should clear nodeLookup and edgeLookup here
+    });
   }
 
   get comments() {
@@ -583,5 +575,3 @@ declare global {
 
 assert.node = (e: DiagramElement): asserts e is DiagramNode => assert.true(isNode(e), 'not node');
 assert.edge = (e: DiagramElement): asserts e is DiagramEdge => assert.true(isEdge(e), 'not edge');
-
-UnitOfWorkManager.trackableSpecs['element'] = new DiagramElementUOWSpecification();
