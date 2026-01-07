@@ -585,7 +585,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
-    for (const op of this.operations.reverse()) {
+    for (const op of this.operations.toReversed()) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
       switch (op.type) {
         case 'remove': {

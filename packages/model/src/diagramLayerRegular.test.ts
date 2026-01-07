@@ -156,4 +156,81 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       }
     });
   });
+
+  describe('stackModify', () => {
+    it('should move elements forward', () => {
+      const { diagram1, layer1 } = standardTestModel(backend);
+
+      const n1 = ElementFactory.emptyNode('n1', layer1);
+      const n2 = ElementFactory.emptyNode('n2', layer1);
+      const n3 = ElementFactory.emptyNode('n3', layer1);
+      UnitOfWork.execute(diagram1, uow => {
+        layer1.addElement(n1, uow);
+        layer1.addElement(n2, uow);
+        layer1.addElement(n3, uow);
+      });
+
+      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+        layer1.stackModify([n1], 2, uow);
+      });
+
+      expect(layer1.elements.map(e => e.id)).toEqual(['n2', 'n1', 'n3']);
+
+      diagram1.undoManager.undo();
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3']);
+
+      diagram1.undoManager.redo();
+      expect(layer1.elements.map(e => e.id)).toEqual(['n2', 'n1', 'n3']);
+    });
+
+    it('should move elements backward', () => {
+      const { diagram1, layer1 } = standardTestModel(backend);
+
+      const n1 = ElementFactory.emptyNode('n1', layer1);
+      const n2 = ElementFactory.emptyNode('n2', layer1);
+      const n3 = ElementFactory.emptyNode('n3', layer1);
+      UnitOfWork.execute(diagram1, uow => {
+        layer1.addElement(n1, uow);
+        layer1.addElement(n2, uow);
+        layer1.addElement(n3, uow);
+      });
+
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3']);
+
+      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+        layer1.stackModify([n3], -2, uow);
+      });
+
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n3', 'n2']);
+
+      diagram1.undoManager.undo();
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3']);
+
+      diagram1.undoManager.redo();
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n3', 'n2']);
+    });
+
+    it('should move multiple elements together', () => {
+      const { diagram1, layer1 } = standardTestModel(backend);
+
+      const n1 = ElementFactory.emptyNode('n1', layer1);
+      const n2 = ElementFactory.emptyNode('n2', layer1);
+      const n3 = ElementFactory.emptyNode('n3', layer1);
+      const n4 = ElementFactory.emptyNode('n4', layer1);
+      UnitOfWork.execute(diagram1, uow => {
+        layer1.addElement(n1, uow);
+        layer1.addElement(n2, uow);
+        layer1.addElement(n3, uow);
+        layer1.addElement(n4, uow);
+      });
+
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3', 'n4']);
+
+      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+        layer1.stackModify([n1, n2], 2, uow);
+      });
+
+      expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n3', 'n2', 'n4']);
+    });
+  });
 });
