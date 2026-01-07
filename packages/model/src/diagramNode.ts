@@ -300,30 +300,29 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   ) {
     const node = new SimpleDiagramNode(id, layer, anchorCache);
 
-    SimpleDiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
+    node._initializeNode(nodeType, bounds, props, metadata, text);
 
     return node;
   }
 
-  protected static initializeNode(
-    node: SimpleDiagramNode,
+  protected _initializeNode(
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' }
   ) {
-    node.#bounds.set(bounds);
-    node.#nodeType.set(nodeType);
-    node.#text.set(text);
+    this.#bounds.set(bounds);
+    this.#nodeType.set(nodeType);
+    this.#text.set(text);
 
-    node.#props.set(props as NodeProps);
+    this.#props.set(props as NodeProps);
 
     metadata.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
     metadata.textStyle ??= DefaultStyles.text.default;
-    node._metadata.set(metadata);
+    this._metadata.set(metadata);
 
-    node.clearCache();
+    this.clearCache();
   }
 
   getDefinition() {
