@@ -1,6 +1,4 @@
 import {
-  AddStylesheetUndoableAction,
-  DeleteStylesheetUndoableAction,
   getCommonProps,
   isSelectionDirty,
   Stylesheet,
@@ -163,8 +161,6 @@ export const ElementStylesheetPanel = (props: Props) => {
                               uow,
                               true
                             );
-
-                            uow.add(new AddStylesheetUndoableAction(uow.diagram, s));
                           });
                         }
                       )
@@ -186,10 +182,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                         },
                         () => {
                           UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
-                            const s = $d.document.styles.get($s.val)!;
                             $d.document.styles.deleteStylesheet($s.val, uow);
-
-                            uow.add(new DeleteStylesheetUndoableAction(uow.diagram, s));
                           });
                         }
                       )

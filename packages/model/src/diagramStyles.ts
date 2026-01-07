@@ -1,5 +1,4 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import type { UndoableAction } from './undoManager';
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
@@ -547,40 +546,6 @@ export class DiagramStyles
         }
       });
     });
-  }
-}
-
-export class DeleteStylesheetUndoableAction implements UndoableAction {
-  description = 'Delete stylesheet';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet<StylesheetType>
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-  }
-}
-
-export class AddStylesheetUndoableAction implements UndoableAction {
-  description = 'Add stylesheet';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet<StylesheetType>
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
   }
 }
 

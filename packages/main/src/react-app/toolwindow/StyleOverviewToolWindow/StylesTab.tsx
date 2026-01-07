@@ -20,7 +20,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
 import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
-import { AddStylesheetUndoableAction, Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { newid } from '@diagram-craft/utils/id';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -157,8 +157,6 @@ export const StylesTab = () => {
               for (const element of combo.elements) {
                 diagram.document.styles.setStylesheet(element, id, uow, true);
               }
-
-              uow.add(new AddStylesheetUndoableAction(diagram, stylesheet));
             });
           }
         )
