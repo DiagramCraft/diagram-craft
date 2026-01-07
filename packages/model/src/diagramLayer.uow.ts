@@ -8,7 +8,7 @@ import {
 } from '@diagram-craft/model/unitOfWork';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { assertRegularLayer, isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -32,11 +32,6 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
 
   snapshot(element: Layer): LayerSnapshot {
     return element.snapshot();
-  }
-
-  children(element: Layer) {
-    if (isRegularLayer(element)) return element.elements.map((e, idx) => ({ value: e, idx }));
-    return [];
   }
 }
 

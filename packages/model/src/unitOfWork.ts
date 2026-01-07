@@ -81,8 +81,6 @@ export interface UOWTrackableSpecification<S extends Snapshot, E> {
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
-
-  children: (element: E) => Array<{ value: Trackable; idx: number }>;
 }
 
 export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
