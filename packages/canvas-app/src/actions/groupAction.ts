@@ -104,7 +104,6 @@ class UndoableGroupAction implements UndoableAction {
     this.#elements = this.#group.children;
 
     children.forEach(e => {
-      this.#group?.removeChild(e, uow);
       assertRegularLayer(this.diagram.activeLayer);
       this.diagram.activeLayer.addElement(e, uow);
     });
