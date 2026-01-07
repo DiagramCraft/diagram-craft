@@ -220,7 +220,9 @@ export class UnitOfWork {
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
-    registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+    if (!isThrowaway) {
+      registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+    }
   }
 
   static remote(diagram: Diagram) {
@@ -241,7 +243,7 @@ export class UnitOfWork {
   }
 
   static executeSilently<T>(diagram: Diagram | undefined, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram!);
+    const uow = new UnitOfWork(diagram!, false, true);
     try {
       return cb(uow);
     } finally {
