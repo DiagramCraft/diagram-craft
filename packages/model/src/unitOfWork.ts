@@ -202,6 +202,8 @@ export class UnitOfWork {
 
   #undoableActions: Array<{ position: 'first' | 'last'; action: UndoableAction }> = [];
 
+  #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
+
   changeType: ChangeType = 'non-interactive';
 
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
@@ -400,6 +402,16 @@ export class UnitOfWork {
     });
   }
 
+  on(
+    when: 'after' | 'before',
+    event: 'undo' | 'redo' | 'commit',
+    callback: (uow: UnitOfWork) => void
+  ) {
+    if (this.isThrowaway) return;
+
+    this.#callbacks.add(`${when}-${event}`, callback);
+  }
+
   /**
    * Register a callback to be executed after the commit phase. It's coalesced
    * so that only one callback is executed per element/operation per commit phase.
@@ -428,6 +440,8 @@ export class UnitOfWork {
   }
 
   commit() {
+    this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
+
     this.#state = 'committed';
     this.changeType = 'non-interactive';
 
@@ -441,6 +455,8 @@ export class UnitOfWork {
 
     registry.unregister(this);
 
+    this.#callbacks.get('after-commit')?.forEach(cb => cb(this));
+
     return new ElementsSnapshot(this.#snapshots);
   }
 
@@ -453,7 +469,9 @@ export class UnitOfWork {
         description
       );
       if (this.#elements.length > 0) {
-        compound.addAction(new UnitOfWorkUndoableAction(description, this.diagram, this.#elements));
+        compound.addAction(
+          new UnitOfWorkUndoableAction(description, this.diagram, this.#elements, this.#callbacks)
+        );
       }
       this.#undoableActions
         .filter(e => e.position === 'last')
@@ -464,7 +482,7 @@ export class UnitOfWork {
     } else {
       if (this.#elements.length > 0) {
         this.diagram.undoManager.add(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#elements)
+          new UnitOfWorkUndoableAction(description, this.diagram, this.#elements, this.#callbacks)
         );
       }
     }
@@ -588,10 +606,13 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   constructor(
     public readonly description: string,
     private readonly diagram: Diagram,
-    private operations: Array<UOWOperation>
+    private operations: Array<UOWOperation>,
+    private callbacks: MultiMap<string, (uow: UnitOfWork) => void>
   ) {}
 
   undo(uow: UnitOfWork) {
+    this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
+
     for (const op of this.operations.toReversed()) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
       switch (op.type) {
@@ -612,9 +633,13 @@ class UnitOfWorkUndoableAction implements UndoableAction {
           break;
       }
     }
+
+    this.callbacks.get('after-undo')?.forEach(cb => cb(uow));
   }
 
   redo(uow: UnitOfWork) {
+    this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
+
     for (const op of this.operations) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
       switch (op.type) {
@@ -635,6 +660,8 @@ class UnitOfWorkUndoableAction implements UndoableAction {
           break;
       }
     }
+
+    this.callbacks.get('after-redo')?.forEach(cb => cb(uow));
   }
 
   merge(nextAction: UndoableAction): boolean {

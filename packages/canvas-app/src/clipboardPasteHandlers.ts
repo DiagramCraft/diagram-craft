@@ -9,7 +9,6 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { BaseActionArgs } from '@diagram-craft/canvas/action';
 import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/utils';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
@@ -94,7 +93,7 @@ export class ImagePasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.add(new PasteUndoableAction(this));
+      uow.on('after', 'undo', () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);
@@ -128,7 +127,7 @@ export class TextPasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.add(new PasteUndoableAction(this));
+      uow.on('after', 'undo', () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);
@@ -220,7 +219,7 @@ export class ElementsPasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.add(new PasteUndoableAction(this));
+      uow.on('after', 'undo', () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);
@@ -234,16 +233,4 @@ export class ElementsPasteHandler extends PasteHandler {
       y: s.y + (pastePoint.y - bb.y)
     };
   }
-}
-
-class PasteUndoableAction implements UndoableAction {
-  description = 'Paste';
-
-  constructor(private readonly pasteHandler: PasteHandler) {}
-
-  undo(_uow: UnitOfWork) {
-    this.pasteHandler.clearPastePoint();
-  }
-
-  redo(_uow: UnitOfWork) {}
 }

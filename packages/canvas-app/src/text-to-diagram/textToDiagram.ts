@@ -6,10 +6,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import {
-  ElementAddUndoableAction,
-  ElementDeleteUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
+import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
@@ -359,11 +356,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       if (updatedSelection.length !== currentSelection.length) {
         diagram.selection.setElements(updatedSelection);
       }
-    }
-
-    // Add undoable action for removals
-    if (elementsToRemove.length > 0) {
-      uow.add(new ElementDeleteUndoableAction(diagram, layer, elementsToRemove, false));
     }
 
     // Add undoable actions for additions
