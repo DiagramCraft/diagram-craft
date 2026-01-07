@@ -375,32 +375,29 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   addRule(rule: AdjustmentRule, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#rules.push(rule);
+    uow.executeUpdate(this, () => {
+      this.#rules.push(rule);
+    });
     this.#cache.clear();
-    uow.updateElement(this);
     this.updateDependencies();
   }
 
   removeRule(rule: AdjustmentRule, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const idx = this.#rules.toArray().findIndex(r => r.id === rule.id);
-    this.#rules.delete(idx);
+    uow.executeUpdate(this, () => {
+      const idx = this.#rules.toArray().findIndex(r => r.id === rule.id);
+      this.#rules.delete(idx);
+    });
     this.#cache.clear();
-
-    uow.updateElement(this);
     this.updateDependencies();
   }
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
-    uow.snapshot(this);
-
-    const idx = this.#rules.toArray().findIndex(r => r.id === existing.id);
-    this.#rules.delete(idx);
-    this.#rules.insert(idx, [newRule]);
+    uow.executeUpdate(this, () => {
+      const idx = this.#rules.toArray().findIndex(r => r.id === existing.id);
+      this.#rules.delete(idx);
+      this.#rules.insert(idx, [newRule]);
+    });
     this.#cache.clear();
-
-    uow.updateElement(this);
     this.updateDependencies();
   }
 
