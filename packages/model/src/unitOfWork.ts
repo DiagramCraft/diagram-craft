@@ -336,12 +336,6 @@ export class UnitOfWork {
       'Must create snapshot before removing element'
     );*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-
-    /*const children = spec.children(element);
-    for (const c of children) {
-      this.removeElement(c.value, element, c.idx);
-    }*/
-
     this.#elements.push({
       type: 'remove',
       id: element.id,
@@ -398,11 +392,6 @@ export class UnitOfWork {
       parentType: parent.trackableType,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
-
-    /*const children = spec.children(element);
-    for (const c of children) {
-      this.addElement(c.value, element, c.idx);
-    }*/
   }
 
   on(
@@ -443,10 +432,10 @@ export class UnitOfWork {
   }
 
   commit() {
-    this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
-
     this.#state = 'committed';
     this.changeType = 'non-interactive';
+
+    this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
 
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
