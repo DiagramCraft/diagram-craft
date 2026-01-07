@@ -157,6 +157,73 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
     });
   });
 
+  describe('removeElement', () => {
+    it('should remove element', () => {
+      const { diagram1, layer1, layer2 } = standardTestModel(backend);
+
+      const e1 = ElementFactory.emptyNode('id1', layer1);
+      UnitOfWork.execute(diagram1, uow => layer1.addElement(e1, uow));
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram1, 'Remove element', uow => layer1.removeElement(e1, uow));
+
+      // Verify
+      expect(layer1.elements.length).toEqual(0);
+      if (layer2) expect(layer2.elements.length).toEqual(0);
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(layer1.elements.length).toEqual(1);
+      if (layer2) expect(layer2.elements.length).toEqual(1);
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(layer1.elements.length).toEqual(0);
+      if (layer2) expect(layer2.elements.length).toEqual(0);
+    });
+
+    it('should remove group', () => {
+      const { diagram1, diagram2, layer1, layer2 } = standardTestModel(backend);
+
+      const g = ElementFactory.emptyNode('group', layer1);
+      UnitOfWork.execute(diagram1, uow => {
+        g.changeNodeType('group', uow);
+        layer1.addElement(g, uow);
+      });
+
+      const m1 = ElementFactory.emptyNode('m1', layer1);
+      const m2 = ElementFactory.emptyNode('m2', layer1);
+      UnitOfWork.execute(diagram1, uow => {
+        g.addChild(m1, uow);
+        g.addChild(m2, uow);
+      });
+
+      const g2 = diagram2 ? diagram2.lookup(g.id) : undefined;
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram1, 'Remove group', uow => layer1.removeElement(g, uow));
+
+      // Verify
+      expect(layer1.elements.length).toEqual(0);
+      if (layer2) expect(layer2.elements.length).toEqual(0);
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+
+      expect(diagram1.lookup(g.id)!.children.length).toEqual(2);
+      expect(layer1.elements.length).toEqual(1);
+      if (layer2) {
+        expect(g2!.children.length).toEqual(2);
+        expect(layer2.elements.length).toEqual(1);
+      }
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(layer1.elements.length).toEqual(0);
+      if (layer2) expect(layer2.elements.length).toEqual(0);
+    });
+  });
+
   describe('stackModify', () => {
     it('should move elements forward', () => {
       const { diagram1, layer1 } = standardTestModel(backend);

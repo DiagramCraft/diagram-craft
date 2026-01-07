@@ -377,9 +377,7 @@ export abstract class AbstractDiagramElement
       });
     }
 
-    uow.executeUpdate(this, () => {
-      this._children.setOrder(ids);
-    });
+    uow.executeUpdate(this, () => this._children.setOrder(ids));
   }
 
   addChild(
@@ -430,7 +428,6 @@ export abstract class AbstractDiagramElement
         this._children.remove(child.id);
         child._setParent(undefined);
       });
-
       // TODO: We should clear nodeLookup and edgeLookup here
     });
   }

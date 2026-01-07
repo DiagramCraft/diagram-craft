@@ -82,7 +82,7 @@ export interface UOWTrackableSpecification<S extends Snapshot, E> {
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
 
-  children: (element: E) => Array<{ value: E; idx: number }>;
+  children: (element: E) => Array<{ value: Trackable; idx: number }>;
 }
 
 export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
@@ -339,10 +339,10 @@ export class UnitOfWork {
     );*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
 
-    const children = spec.children(element);
+    /*const children = spec.children(element);
     for (const c of children) {
       this.removeElement(c.value, element, c.idx);
-    }
+    }*/
 
     this.#elements.push({
       type: 'remove',
@@ -400,6 +400,11 @@ export class UnitOfWork {
       parentType: parent.trackableType,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
+
+    /*const children = spec.children(element);
+    for (const c of children) {
+      this.addElement(c.value, element, c.idx);
+    }*/
   }
 
   on(

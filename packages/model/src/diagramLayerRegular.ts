@@ -169,10 +169,9 @@ export class RegularLayer extends Layer<RegularLayer> {
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     assert.true(this.#elements.has(element.id));
 
-    /* if (!this.#elements.has(element.id)) {
-      element.detach(uow);
-      return;
-    }*/
+    for (const child of element.children) {
+      element.removeChild(child, uow);
+    }
 
     uow.executeRemove(element, this, this.elements.indexOf(element), () => {
       element.detachCRDT(() => {

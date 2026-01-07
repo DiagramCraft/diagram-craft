@@ -878,6 +878,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   detach(uow: UnitOfWork) {
     this.diagram.nodeLookup.delete(this.id);
 
+    for (const c of this.children) {
+      c.detach(uow);
+    }
+
     // "Detach" any edges that connects to this node
     for (const anchor of this.#edges.keys) {
       for (const id of this.#edges.get(anchor) ?? []) {
