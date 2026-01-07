@@ -156,8 +156,8 @@ describe('GroupAction', () => {
       diagram.undoManager.undo();
 
       // Nodes should be back in layer
-      expect(layer.elements).toContain(node1);
-      expect(layer.elements).toContain(node2);
+      expect(layer.elements.map(e => e.id)).toContain(node1.id);
+      expect(layer.elements.map(e => e.id)).toContain(node2.id);
 
       // Group should be removed
       expect(layer.elements).not.toContain(groupNode);
@@ -232,8 +232,8 @@ describe('GroupAction', () => {
       diagram.undoManager.redo();
 
       // Should have ungrouped nodes back
-      expect(layer.elements).toContain(node1);
-      expect(layer.elements).toContain(node2);
+      expect(layer.elements.map(e => e.id)).toContain(node1.id);
+      expect(layer.elements.map(e => e.id)).toContain(node2.id);
 
       // No group nodes should exist
       const groupNodes = layer.elements.filter(isNode).filter(n => n.nodeType === 'group');

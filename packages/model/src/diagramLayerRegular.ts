@@ -10,6 +10,7 @@ import { ElementFactory } from './elementFactory';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { SpatialIndex } from './spatialIndex';
+import { assert } from '@diagram-craft/utils/assert';
 
 registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
 registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));
@@ -166,6 +167,13 @@ export class RegularLayer extends Layer<RegularLayer> {
   }
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
+    assert.true(this.#elements.has(element.id));
+
+    /* if (!this.#elements.has(element.id)) {
+      element.detach(uow);
+      return;
+    }*/
+
     uow.executeRemove(element, this, this.elements.indexOf(element), () => {
       element.detachCRDT(() => {
         this.#elements.remove(element.id);

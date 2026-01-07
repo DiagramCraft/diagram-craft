@@ -12,6 +12,7 @@ import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/und
 import type { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { hasSameElements } from '@diagram-craft/utils/array';
+import { MultiMap } from '@diagram-craft/utils/multimap';
 
 type ActionCallback = () => void;
 
@@ -107,12 +108,21 @@ export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>
   UOWTrackable;
 
 export class ElementsSnapshot {
-  constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
+  snapshots: Map<string, Snapshot | undefined>;
+
+  constructor(readonly _snapshots: MultiMap<string, undefined | Snapshot>) {
+    this.snapshots = new Map<string, undefined | Snapshot>();
+    for (const k of _snapshots.keys()) {
+      this.snapshots.set(k, _snapshots.get(k).at(-1));
+    }
+  }
 
   onlyAdded() {
-    return new ElementsSnapshot(
-      new Map([...this.snapshots.entries()].filter(([, v]) => v === undefined))
-    );
+    const m = new MultiMap<string, undefined | Snapshot>();
+    for (const [k, v] of this.snapshots.entries()) {
+      if (v === undefined) m.add(k, v);
+    }
+    return new ElementsSnapshot(m);
   }
 
   get keys() {
@@ -121,24 +131,6 @@ export class ElementsSnapshot {
 
   get(key: string) {
     return this.snapshots.get(key);
-  }
-
-  retakeSnapshot(diagram: Diagram) {
-    const dest = new Map<string, undefined | Snapshot>();
-    for (const k of this.snapshots.keys()) {
-      if (this.snapshots.get(k)?._snapshotType === 'layer') {
-        const layer = diagram.layers.byId(k);
-        if (!layer) continue;
-        dest.set(k, layer.snapshot());
-      } else if (this.snapshots.get(k)?._snapshotType === 'stylesheet') {
-        dest.set(k, diagram.document.styles.get(k)!.snapshot());
-      } else {
-        const element = diagram.lookup(k);
-        if (!element) continue;
-        dest.set(k, element.snapshot());
-      }
-    }
-    return new ElementsSnapshot(dest);
   }
 }
 
@@ -204,11 +196,11 @@ export class UnitOfWork {
 
   #shouldUpdateDiagram = false;
 
-  #snapshots = new Map<string, undefined | Snapshot>();
+  #snapshots = new MultiMap<string, undefined | Snapshot>();
 
   #onCommitCallbacks = new Map<string, ActionCallback>();
 
-  #undoableActions: UndoableAction[] = [];
+  #undoableActions: Array<{ position: 'first' | 'last'; action: UndoableAction }> = [];
 
   changeType: ChangeType = 'non-interactive';
 
@@ -269,25 +261,29 @@ export class UnitOfWork {
     }
   }
 
+  get operations() {
+    return this.#elements;
+  }
+
   get state() {
     return this.#state;
   }
 
-  add(action: UndoableAction) {
-    this.#undoableActions.push(action);
+  add(action: UndoableAction, position: 'first' | 'last' = 'first') {
+    this.#undoableActions.push({ action, position });
   }
 
-  addAndExecute(action: UndoableAction) {
+  addAndExecute(action: UndoableAction, position: 'first' | 'last' = 'first') {
     action.redo(this);
-    this.#undoableActions.push(action);
+    this.#undoableActions.push({ action, position });
   }
 
-  snapshot(element: Trackable) {
+  snapshot(element: Trackable, force = false) {
     if (!this.trackChanges) return;
-    if (this.#snapshots.has(element.id)) return;
+    if (!force && this.#snapshots.has(element.id)) return;
 
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#snapshots.set(element.id, spec.snapshot(element));
+    this.#snapshots.add(element.id, spec.snapshot(element));
   }
 
   hasBeenInvalidated(element: Trackable) {
@@ -316,13 +312,13 @@ export class UnitOfWork {
       id: element.id,
       trackable: element,
       trackableType: element.trackableType,
-      beforeSnapshot: this.#snapshots.get(element.id)!,
+      beforeSnapshot: this.#snapshots.get(element.id)!.at(-1)!,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
   executeUpdate<T>(element: Trackable, cb: () => T): T {
-    this.snapshot(element);
+    this.snapshot(element, true);
 
     const res = cb();
 
@@ -389,7 +385,7 @@ export class UnitOfWork {
       console.warn('Adding element to invalid index', element);
     }*/
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
-      this.#snapshots.set(element.id, undefined);
+      this.#snapshots.add(element.id, undefined);
     }
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#elements.push({
@@ -452,10 +448,16 @@ export class UnitOfWork {
     this.commit();
 
     if (this.#undoableActions.length > 0) {
-      const compound = new CompoundUndoableAction(this.#undoableActions, description);
+      const compound = new CompoundUndoableAction(
+        this.#undoableActions.filter(e => e.position === 'first').map(e => e.action),
+        description
+      );
       if (this.#elements.length > 0) {
         compound.addAction(new UnitOfWorkUndoableAction(description, this.diagram, this.#elements));
       }
+      this.#undoableActions
+        .filter(e => e.position === 'last')
+        .forEach(e => compound.addAction(e.action));
       if (compound.hasActions()) {
         this.diagram.undoManager.add(compound);
       }

@@ -41,11 +41,17 @@ const updateOrCreateLabelNode = (
   // Need to create a new label node or handle multiple label nodes
   // If there are multiple label nodes, we'll remove them all and create a single one
   if (edge.labelNodes.length > 1) {
+    // TODO: This logic is not correct at all. It adds label nodes as children
+    //       of the layer - where it should not be
     // Remove all existing label nodes
     for (const ln of edge.labelNodes) {
       const node = ln.node();
       uow.snapshot(node);
-      layer.removeElement(node, uow);
+      if (layer.elements.includes(node)) {
+        layer.removeElement(node, uow);
+      } else {
+        node.detach(uow);
+      }
     }
     edge.setLabelNodes([], uow);
   }

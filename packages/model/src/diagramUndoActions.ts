@@ -5,7 +5,6 @@ import { UndoableAction } from './undoManager';
 import { Diagram } from './diagram';
 import { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer } from './diagramLayerUtils';
-import { hasSameElements } from '@diagram-craft/utils/array';
 
 const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork) => {
   for (const [id, snapshot] of e.snapshots) {
@@ -30,73 +29,6 @@ const restoreSnapshots = (e: ElementsSnapshot, diagram: Diagram, uow: UnitOfWork
     }
   }
 };
-
-export class SnapshotUndoableAction implements UndoableAction {
-  private afterSnapshot: ElementsSnapshot;
-
-  timestamp?: Date;
-
-  constructor(
-    public readonly description: string,
-    private readonly diagram: Diagram,
-    private beforeSnapshot: ElementsSnapshot,
-    afterSnapshot?: ElementsSnapshot
-  ) {
-    this.afterSnapshot = afterSnapshot ?? beforeSnapshot.retakeSnapshot(diagram);
-  }
-
-  undo(uow: UnitOfWork) {
-    /*DEBUG: {
-      console.log('before', this.beforeSnapshot);
-      console.log('after', this.afterSnapshot);
-    }*/
-
-    for (const [id, snapshot] of this.beforeSnapshot.snapshots) {
-      // Addition must be handled differently ... and explicitly before this
-      // TODO: We must implement this properly
-      if (!snapshot) continue;
-
-      if (snapshot._snapshotType === 'layer') {
-        const layer = this.diagram.layers.byId(id);
-        if (layer) {
-          layer.restore(snapshot, uow);
-        }
-      } else if (snapshot._snapshotType === 'layers') {
-        this.diagram.layers._restore(snapshot, uow);
-      } else if (snapshot._snapshotType === 'stylesheet') {
-        const stylesheet = this.diagram.document.styles.get(id);
-        if (stylesheet) {
-          stylesheet.restore(snapshot, uow);
-        }
-      } else {
-        const node = this.diagram.lookup(id);
-        if (node) {
-          node.restore(snapshot, uow);
-        }
-      }
-    }
-  }
-
-  redo(uow: UnitOfWork) {
-    restoreSnapshots(this.afterSnapshot, this.diagram, uow);
-  }
-
-  merge(nextAction: UndoableAction): boolean {
-    if (!(nextAction instanceof SnapshotUndoableAction)) return false;
-
-    if (
-      nextAction.description === this.description &&
-      hasSameElements(nextAction.afterSnapshot.keys, this.afterSnapshot.keys) &&
-      Date.now() - this.timestamp!.getTime() < 2000
-    ) {
-      this.afterSnapshot = nextAction.afterSnapshot;
-      this.timestamp = new Date();
-      return true;
-    }
-
-    return false;
-  }
-}
 
 export class ElementAddUndoableAction implements UndoableAction {
   private snapshot: ElementsSnapshot | undefined;
