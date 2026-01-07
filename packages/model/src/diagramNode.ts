@@ -337,10 +337,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   changeNodeType(nodeType: string, uow: UnitOfWork) {
     if (nodeType === this.nodeType) return;
 
-    uow.snapshot(this);
-    this.#nodeType.set(nodeType);
-    this._children.clear();
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#nodeType.set(nodeType);
+      this.setChildren([], uow);
+    });
 
     this.clearCache();
     this.invalidateAnchors(uow);
@@ -354,12 +354,12 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
-    uow.snapshot(this);
-    this.#text.set({
-      ...this.#text.get(),
-      [id === '1' ? 'text' : id]: text
+    uow.executeUpdate(this, () => {
+      this.#text.set({
+        ...this.#text.get(),
+        [id === '1' ? 'text' : id]: text
+      });
     });
-    uow.updateElement(this);
     this.clearCache();
   }
 
@@ -552,9 +552,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     this.crdt.get().transact(() => {
-      uow.snapshot(this);
-      this.#props.update(callback);
-      uow.updateElement(this);
+      uow.executeUpdate(this, () => this.#props.update(callback));
 
       this.clearCache();
       this.invalidateAnchors(uow);
@@ -663,10 +661,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const oldBounds = this.bounds;
-    this.#bounds.set(bounds);
-    if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
+    if (Box.isEqual(this.bounds, bounds)) return;
+    uow.executeUpdate(this, () => this.#bounds.set(bounds));
   }
 
   /* Anchors ************************************************************************************************ */
@@ -674,9 +670,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
     if (this.#anchors.get() === undefined) {
-      UnitOfWork.execute(this.diagram, uow => {
-        this.invalidateAnchors(uow);
-      });
+      UnitOfWork.execute(this.diagram, uow => this.invalidateAnchors(uow));
     }
 
     return this.#anchors.get() ?? [];
@@ -730,13 +724,11 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   convertToPath(uow: UnitOfWork) {
-    uow.snapshot(this);
-
     const paths = this.getDefinition().getBoundingPath(this);
 
     const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
-    this.#nodeType.set('generic-path');
+    this.changeNodeType('generic-path', uow);
     this.updateProps(p => {
       p.custom ??= {};
       p.custom.genericPath = {};
@@ -990,22 +982,20 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
     if (!this.isLabelNode()) return;
 
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      const replacement: ResolvedLabelNode = {
+        ...this.labelNode()!,
+        ...labelNode,
+        node: () => this
+      };
 
-    const replacement: ResolvedLabelNode = {
-      ...this.labelNode()!,
-      ...labelNode,
-      node: () => this
-    };
-
-    const edge = this.labelEdge();
-    assert.present(edge);
-    edge.setLabelNodes(
-      edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
-      uow
-    );
-
-    uow.updateElement(this);
+      const edge = this.labelEdge();
+      assert.present(edge);
+      edge.setLabelNodes(
+        edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
+        uow
+      );
+    });
   }
 
   invalidateAnchors(uow: UnitOfWork) {
