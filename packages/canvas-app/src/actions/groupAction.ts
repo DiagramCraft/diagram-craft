@@ -4,10 +4,7 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Box } from '@diagram-craft/geometry/box';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
@@ -24,34 +21,6 @@ export const groupActions = (context: ActionContext) => ({
 declare global {
   namespace DiagramCraft {
     interface ActionMapExtensions extends ReturnType<typeof groupActions> {}
-  }
-}
-
-// TODO: Would be nice if we can do all of this with UOW instead
-class SelectionStateUndoableAction implements UndoableAction {
-  private oldSelection: string[];
-  private newSelection: string[];
-
-  description = 'Selection change';
-
-  constructor(
-    readonly diagram: Diagram,
-    selection: ReadonlyArray<DiagramElement>
-  ) {
-    this.oldSelection = diagram.selection.elements.map(e => e.id);
-    this.newSelection = selection.map(e => e.id);
-  }
-
-  undo() {
-    this.diagram.selection.setElements(
-      this.oldSelection.map(id => this.diagram.lookup(id)).filter(e => !!e)
-    );
-  }
-
-  redo() {
-    this.diagram.selection.setElements(
-      this.newSelection.map(id => this.diagram.lookup(id)).filter(e => !!e)
-    );
   }
 }
 
@@ -114,7 +83,6 @@ export class GroupAction extends AbstractSelectionAction {
         assertRegularLayer(group.layer);
 
         const children = group.children;
-        uow.addAndExecute(new SelectionStateUndoableAction(diagram, children), 'first');
 
         children.forEach(e => {
           e.parent?.removeChild(e, uow);
@@ -122,6 +90,10 @@ export class GroupAction extends AbstractSelectionAction {
         });
 
         group.layer.removeElement(group, uow);
+
+        diagram.selection.setElements(children);
+        uow.on('after', 'undo', () => diagram.selection.setElements([group]));
+        uow.on('after', 'redo', () => diagram.selection.setElements(children));
       });
     } else {
       UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
@@ -146,7 +118,9 @@ export class GroupAction extends AbstractSelectionAction {
 
         group.setChildren([...elements], uow);
 
-        uow.addAndExecute(new SelectionStateUndoableAction(diagram, [group]), 'last');
+        diagram.selection.setElements([group]);
+        uow.on('after', 'undo', () => diagram.selection.setElements(elements));
+        uow.on('after', 'redo', () => diagram.selection.setElements([group]));
       });
     }
   }
