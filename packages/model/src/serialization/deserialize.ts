@@ -193,10 +193,14 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.customPalette.setColors(document.customPalette);
 
     for (const edgeStyle of document.styles.edgeStyles) {
-      doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles), uow)
+      );
     }
     for (const nodeStyle of document.styles.nodeStyles) {
-      doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles), uow)
+      );
     }
 
     for (const schema of document.schemas) {

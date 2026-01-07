@@ -1,7 +1,7 @@
 import type { DiagramElement } from './diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
-import type { Stylesheet, StylesheetType } from './diagramStyles';
+import type { DiagramStyles, Stylesheet, StylesheetType } from './diagramStyles';
 import type { Layer, LayerType } from './diagramLayer';
 import type { Diagram } from './diagram';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
@@ -105,7 +105,8 @@ export interface UOWTrackable {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
-export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable;
+export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any> | DiagramStyles) &
+  UOWTrackable;
 
 export class ElementsSnapshot {
   constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
@@ -241,8 +242,8 @@ export class UnitOfWork {
     }
   }
 
-  static executeSilently<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram);
+  static executeSilently<T>(diagram: Diagram | undefined, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram!);
     try {
       return cb(uow);
     } finally {
@@ -479,10 +480,10 @@ export class UnitOfWork {
       });
     }
 
-    const handle = (s: 'add' | 'remove' | 'update') => (e: Trackable) => {
-      if (e.trackableType === 'layerManager') {
+    const handle = (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: Trackable) => {
+      if (type === 'layerManager') {
         this.diagram.layers.emit('layerStructureChange', {});
-      } else if (e.trackableType === 'layer') {
+      } else if (type === 'layer') {
         switch (s) {
           case 'add':
             this.diagram.layers.emit('layerAdded', { layer: e as Layer });
@@ -494,7 +495,7 @@ export class UnitOfWork {
             this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
             break;
         }
-      } else if (e.trackableType === 'stylesheet') {
+      } else if (type === 'stylesheet') {
         switch (s) {
           case 'add':
             this.diagram.document.styles.emit('stylesheetAdded', {
@@ -508,7 +509,7 @@ export class UnitOfWork {
             break;
           case 'remove':
             this.diagram.document.styles.emit('stylesheetRemoved', {
-              stylesheet: e.id
+              stylesheet: id
             });
             break;
         }
@@ -531,10 +532,10 @@ export class UnitOfWork {
     };
 
     const handled = new Set<string>();
-    this.#elements.forEach(({ trackable, type }) => {
+    this.#elements.forEach(({ trackable, trackableType, type, id }) => {
       const key = type + '/' + trackable.id;
       if (handled.has(key)) return;
-      handle(type)(trackable);
+      handle(type)(trackableType, id, trackable);
       handled.add(key);
     });
 
