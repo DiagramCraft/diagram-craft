@@ -1006,8 +1006,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
    * impact the state and/or bounds of the parent group/container
    */
   invalidate(uow: UnitOfWork) {
-    uow.snapshot(this);
-
     // Ensure we don't get into an infinite loop
     if (uow.hasBeenInvalidated(this)) return;
     uow.beginInvalidation(this);
@@ -1059,8 +1057,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     const intersections: Intersection[] = [];
     for (const edge of this.diagram.visibleElements()) {
       if (!isEdge(edge)) continue;
-
-      uow.snapshot(edge);
 
       if (edge === this) {
         currentEdgeHasBeenSeen = true;

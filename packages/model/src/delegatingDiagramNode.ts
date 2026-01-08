@@ -143,11 +143,11 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const props = this.#localProps.getClone() as NodeProps;
-    callback(props);
-    this.#localProps.set(props);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const props = this.#localProps.getClone() as NodeProps;
+      callback(props);
+      this.#localProps.set(props);
+    });
     this.clearCache();
   }
 
@@ -182,10 +182,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   setBounds(bounds: Box, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localBounds.set(bounds);
-    this.#hasLocalBounds.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localBounds.set(bounds);
+      this.#hasLocalBounds.set(true);
+    });
   }
 
   /* Text with override *************************************************************************************** */
@@ -204,12 +204,12 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   setText(text: string, uow: UnitOfWork, id?: string): void {
-    uow.snapshot(this);
-    const texts = this.#localTexts.getClone() as NodeTexts;
-    const key = id ?? 'text';
-    texts[key] = text;
-    this.#localTexts.set(texts);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const texts = this.#localTexts.getClone() as NodeTexts;
+      const key = id ?? 'text';
+      texts[key] = text;
+      this.#localTexts.set(texts);
+    });
     this.clearCache();
   }
 

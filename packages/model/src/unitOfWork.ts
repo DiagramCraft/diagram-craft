@@ -323,10 +323,6 @@ export class UnitOfWork {
     /*if (_idx === -1) {
       console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
     }*/
-    /*assert.true(
-      !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before removing element'
-    );*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'remove',
@@ -344,10 +340,6 @@ export class UnitOfWork {
     /*if (_idx === -1) {
       console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
     }*/
-    /*assert.true(
-      !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before removing element'
-    );*/
 
     this.removeElement(element, parent, idx);
 
