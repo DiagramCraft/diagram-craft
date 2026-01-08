@@ -276,11 +276,6 @@ export class UnitOfWork {
     this.#undoableActions.push(action);
   }
 
-  addAndExecute(action: UndoableAction) {
-    action.redo(this);
-    this.#undoableActions.push(action);
-  }
-
   snapshot(element: Trackable, force = false) {
     if (!this.trackChanges) return;
     if (!force && this.#snapshots.has(element.id)) return;
@@ -604,10 +599,6 @@ export class UnitOfWork {
 
   private get removed() {
     return new Set([...this.#operations.filter(e => e.type === 'remove').map(e => e.trackable)]);
-  }
-
-  stopTracking() {
-    this.trackChanges = false;
   }
 
   updateDiagram() {
