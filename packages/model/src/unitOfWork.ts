@@ -382,6 +382,15 @@ export class UnitOfWork {
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.add(element.id, undefined);
     }
+
+    const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
+
+    // Need to make sure all updates happen *after* the add
+    const existingUpdates = this.#elements.filter(isUpdate);
+    if (existingUpdates.length > 0) {
+      this.#elements = this.#elements.filter(e => !isUpdate(e));
+    }
+
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#elements.push({
       type: 'add',
@@ -393,6 +402,10 @@ export class UnitOfWork {
       parentType: parent.trackableType,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
+
+    if (existingUpdates.length > 0) {
+      this.#elements.push(...existingUpdates);
+    }
   }
 
   select(diagram: Diagram, after: string[]) {
