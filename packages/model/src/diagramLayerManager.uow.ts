@@ -21,12 +21,10 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     _parentId: string,
     childId: string,
     childSnapshot: LayerSnapshot,
-    _idx: number,
+    idx: number,
     uow: UnitOfWork
   ): void {
     if (isDebug()) console.log(`Adding layer ${childId}`);
-
-    // TODO: Add support for idx
 
     let child: Layer;
     switch (childSnapshot.type) {
@@ -51,7 +49,11 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     }
 
     const layerManager = diagram.layers;
-    layerManager.add(child, uow);
+    if (idx === -1) {
+      layerManager.add(child, uow);
+    } else {
+      layerManager.insert(child, idx, uow);
+    }
   }
 
   removeElement(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {

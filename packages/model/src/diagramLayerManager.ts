@@ -234,8 +234,12 @@ export class LayerManager
   }
 
   add(layer: Layer, uow: UnitOfWork) {
-    uow.executeAdd(layer, this, this.#layers.size, () => {
-      this.#layers.add(layer.id, layer);
+    this.insert(layer, this.#layers.size, uow);
+  }
+
+  insert(layer: Layer, idx: number, uow: UnitOfWork) {
+    uow.executeAdd(layer, this, idx, () => {
+      this.#layers.insert(layer.id, layer, idx);
       this.#visibleLayers.set(layer.id, true);
       this.#activeLayer = layer;
     });
@@ -246,7 +250,7 @@ export class LayerManager
       layer.elements.forEach(e => layer.removeElement(e, uow));
     }
 
-    uow.executeRemove(layer, this, this.#layers.size, () => {
+    uow.executeRemove(layer, this, this.#layers.get0Index(layer.id), () => {
       this.#layers.remove(layer.id);
       this.#visibleLayers.delete(layer.id);
       if (this.diagram.selection.nodes.some(e => e.layer === layer)) {

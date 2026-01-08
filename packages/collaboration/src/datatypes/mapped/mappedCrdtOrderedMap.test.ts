@@ -160,4 +160,104 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
       b: 5
     });
   });
+
+  it('should insert items at the correct position', () => {
+    const [doc1, doc2] = backend.syncedDocs();
+
+    const list1 = watch(doc1.getMap<any>('list'));
+    const list2 = doc2 ? watch(doc2.getMap<any>('list')) : undefined;
+
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
+    const mapped2 = list2
+      ? new MappedCRDTOrderedMap<number, CRDTType>(list2, makeMapper(doc1.factory))
+      : undefined;
+
+    mapped1.add('a', 2);
+    mapped1.add('b', 4);
+    mapped1.add('c', 6);
+
+    // Insert at beginning (position 0)
+    mapped1.insert('d', 0, 0);
+    expect(mapped1.entries).toEqual([
+      ['d', 0],
+      ['a', 2],
+      ['b', 4],
+      ['c', 6]
+    ]);
+    if (mapped2)
+      expect(mapped2.entries).toEqual([
+        ['d', 0],
+        ['a', 2],
+        ['b', 4],
+        ['c', 6]
+      ]);
+
+    // Insert in middle (position 2)
+    mapped1.insert('e', 5, 2);
+    expect(mapped1.entries).toEqual([
+      ['d', 0],
+      ['a', 2],
+      ['e', 5],
+      ['b', 4],
+      ['c', 6]
+    ]);
+    if (mapped2)
+      expect(mapped2.entries).toEqual([
+        ['d', 0],
+        ['a', 2],
+        ['e', 5],
+        ['b', 4],
+        ['c', 6]
+      ]);
+
+    // Insert at end (position 5, after 5 elements)
+    mapped1.insert('f', 8, 5);
+    expect(mapped1.entries).toEqual([
+      ['d', 0],
+      ['a', 2],
+      ['e', 5],
+      ['b', 4],
+      ['c', 6],
+      ['f', 8]
+    ]);
+    if (mapped2)
+      expect(mapped2.entries).toEqual([
+        ['d', 0],
+        ['a', 2],
+        ['e', 5],
+        ['b', 4],
+        ['c', 6],
+        ['f', 8]
+      ]);
+  });
+
+  it('should behave identically to add when inserting at the end', () => {
+    const [doc1, doc2] = backend.syncedDocs();
+
+    const list1 = watch(doc1.getMap<any>('list1'));
+    const list2 = doc2 ? watch(doc2.getMap<any>('list2')) : undefined;
+
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
+    const mapped2 = list2
+      ? new MappedCRDTOrderedMap<number, CRDTType>(list2, makeMapper(doc1.factory))
+      : undefined;
+
+    // Build one list using add
+    mapped1.add('a', 2);
+    mapped1.add('b', 4);
+    mapped1.add('c', 6);
+
+    // Build another list using insert at end position (0-based indices)
+    if (mapped2) {
+      mapped2.insert('a', 2, 0); // Insert at position 0 (first position)
+      mapped2.insert('b', 4, 1); // Insert at position 1 (second position)
+      mapped2.insert('c', 6, 2); // Insert at position 2 (third position)
+
+      // Both should have identical structure
+      expect(mapped2.entries).toEqual(mapped1.entries);
+      expect(mapped2.getIndex('a')).toEqual(mapped1.getIndex('a'));
+      expect(mapped2.getIndex('b')).toEqual(mapped1.getIndex('b'));
+      expect(mapped2.getIndex('c')).toEqual(mapped1.getIndex('c'));
+    }
+  });
 });

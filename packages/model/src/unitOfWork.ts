@@ -585,7 +585,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, -1, uow);
+          pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
@@ -616,7 +616,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, -1, uow);
+          pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {

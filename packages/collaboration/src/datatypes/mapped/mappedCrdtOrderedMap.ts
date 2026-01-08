@@ -127,8 +127,13 @@ export class MappedCRDTOrderedMap<
     }
   }
 
+  /** @deprecated */
   getIndex(key: string) {
     return this.#current.get(key)?.get('index') ?? -1;
+  }
+
+  get0Index(key: string) {
+    return (this.#current.get(key)?.get('index') ?? 0) - 1;
   }
 
   add(key: string, t: T) {
@@ -140,6 +145,39 @@ export class MappedCRDTOrderedMap<
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
     this.#current.set(key, entry);
+  }
+
+  insert(key: string, t: T, position: number) {
+    assert.false(this.#current.has(key));
+    assert.true(position >= 0 && position <= this.#entries.length);
+
+    // CRDT indices are 1-based (based on length after push in add method)
+    // Convert 0-based position to 1-based CRDT index
+    const targetIndex = position + 1;
+
+    this.#current.transact(() => {
+      // Update indices of existing elements at or after the insertion position
+      for (const [, v] of this.#current.entries()) {
+        const currentIndex = v.get('index')!;
+        if (currentIndex >= targetIndex) {
+          v.set('index', currentIndex + 1);
+        }
+      }
+
+      // Create and insert the new entry
+      const entry = this.#current.factory.makeMap<WrapperType>();
+      entry.set('index', targetIndex);
+      entry.set('value', this.mapper.toCRDT(t));
+      this.#current.set(key, entry);
+    });
+
+    // Add to local entries and sort by CRDT index
+    this.#entries.push([key, t]);
+    this.#entries.sort((a, b) => {
+      const indexA = this.#current.get(a[0])?.get('index') ?? 0;
+      const indexB = this.#current.get(b[0])?.get('index') ?? 0;
+      return indexA - indexB;
+    });
   }
 
   update(key: string, t: T) {
