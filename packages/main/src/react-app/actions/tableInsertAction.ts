@@ -1,8 +1,6 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -46,9 +44,6 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         const rowHeight = 40;
 
         UnitOfWork.executeWithUndo($d, 'Add table', uow => {
-          // TODO: Why is this needed?
-          uow.stopTracking();
-
           const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
           // Center the table in the current viewport
@@ -56,10 +51,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
           bounds.x = vb.offset.x + (vb.dimensions.w - bounds.w) / 2;
           bounds.y = vb.offset.y + (vb.dimensions.h - bounds.h) / 2;
 
-          const elements: DiagramElement[] = [];
-
           const table = ElementFactory.node(newid(), 'table', bounds, layer, {}, {});
-          elements.push(table);
+          layer.addElement(table, uow);
 
           for (let r = 0; r < height; r++) {
             const row = ElementFactory.node(
@@ -71,7 +64,6 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
               {}
             );
             table.addChild(row, uow);
-            elements.push(row);
 
             for (let c = 0; c < width; c++) {
               const cell = ElementFactory.node(
@@ -90,14 +82,8 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
                 {}
               );
               row.addChild(cell, uow);
-              elements.push(cell);
             }
           }
-
-          assertRegularLayer($d.activeLayer);
-          uow.addAndExecute(
-            new ElementAddUndoableAction(elements, $d, $d.activeLayer, 'Add table')
-          );
         });
       })
     );
