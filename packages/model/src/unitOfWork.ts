@@ -389,7 +389,7 @@ export class UnitOfWork {
 
     let existingUpdates: Array<UOWOperation> = [];
 
-    if (this.#updates.has(element.id)) {
+    if (this.#updates.has(element.id) && this.trackChanges) {
       const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
 
       // Need to make sure all updates happen *after* the add
