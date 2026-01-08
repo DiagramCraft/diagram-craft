@@ -23,6 +23,7 @@ import {
   LayerManagerParentChildUOWSpecification,
   LayerManagerUOWSpecification
 } from '@diagram-craft/model/diagramLayerManager.uow';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -241,6 +242,10 @@ export class LayerManager
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
+    if (isRegularLayer(layer)) {
+      layer.elements.forEach(e => layer.removeElement(e, uow));
+    }
+
     uow.executeRemove(layer, this, this.#layers.size, () => {
       this.#layers.remove(layer.id);
       this.#visibleLayers.delete(layer.id);

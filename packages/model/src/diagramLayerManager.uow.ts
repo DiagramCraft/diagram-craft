@@ -13,6 +13,7 @@ import { Layer } from '@diagram-craft/model/diagramLayer';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
+import { isDebug } from '@diagram-craft/utils/debug';
 
 export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
   addElement(
@@ -23,6 +24,8 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     _idx: number,
     uow: UnitOfWork
   ): void {
+    if (isDebug()) console.log(`Adding layer ${childId}`);
+
     // TODO: Add support for idx
 
     let child: Layer;
@@ -52,6 +55,8 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
   }
 
   removeElement(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
+    if (isDebug()) console.log(`Removing layer ${child}`);
+
     const layerManager = diagram.layers;
     const layer = mustExist(layerManager.byId(child));
     layerManager.remove(layer, uow);

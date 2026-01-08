@@ -13,6 +13,7 @@ import type { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
+import { isDebug } from '@diagram-craft/utils/debug';
 
 type ActionCallback = () => void;
 
@@ -597,19 +598,20 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
+    if (isDebug()) console.log('Undoing', this.description);
     this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations.toReversed()) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
       switch (op.type) {
         case 'remove': {
-          const type = op.parentType + '-' + op.trackableType;
+          const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
           pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, -1, uow);
           break;
         }
         case 'add': {
-          const type = op.parentType + '-' + op.trackableType;
+          const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
           pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
           break;
@@ -624,19 +626,20 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   }
 
   redo(uow: UnitOfWork) {
+    if (isDebug()) console.log('Redoing', this.description);
     this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations) {
       const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
       switch (op.type) {
         case 'add': {
-          const type = op.parentType + '-' + op.trackableType;
+          const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
           pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, -1, uow);
           break;
         }
         case 'remove': {
-          const type = op.parentType + '-' + op.trackableType;
+          const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
           pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
           break;

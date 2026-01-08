@@ -15,6 +15,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { EdgeProps } from '@diagram-craft/model/diagramProps';
+import { isDebug } from '@diagram-craft/utils/debug';
 
 export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSnapshot, Layer> {
   onAfterCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
@@ -46,6 +47,8 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     _idx: number,
     uow: UnitOfWork
   ): void {
+    if (isDebug()) console.log(`Adding element ${childSnapshot.id} to layer ${parentId}`);
+
     const layer = mustExist(diagram.layers.byId(parentId));
     assertRegularLayer(layer);
 
@@ -78,6 +81,8 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     layer.addElement(child, uow);
   }
   removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
+    if (isDebug()) console.log(`Removing element ${childId} from layer ${parentId}`);
+
     const layer = mustExist(diagram.layers.byId(parentId));
     assertRegularLayer(layer);
 
