@@ -189,7 +189,9 @@ type UOWOperation =
 export class UnitOfWork {
   uid = newid();
 
-  #elements: Array<UOWOperation> = [];
+  #operations: Array<UOWOperation> = [];
+  #adds = new Set<string>();
+
   #invalidatedElements = new Set<Trackable>();
   #state: 'pending' | 'committed' | 'aborted' = 'pending';
 
@@ -263,7 +265,7 @@ export class UnitOfWork {
   }
 
   get operations() {
-    return this.#elements;
+    return this.#operations;
   }
 
   get state() {
@@ -296,7 +298,7 @@ export class UnitOfWork {
   }
 
   contains(element: Trackable, type?: 'update' | 'remove' | 'add') {
-    return this.#elements.some(
+    return this.#operations.some(
       e => (e.trackable === element && type === undefined) || e.type === type
     );
   }
@@ -308,7 +310,7 @@ export class UnitOfWork {
     );
 
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
+    this.#operations.push({
       type: 'update',
       id: element.id,
       trackable: element,
@@ -337,7 +339,7 @@ export class UnitOfWork {
       'Must create snapshot before removing element'
     );*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
+    this.#operations.push({
       type: 'remove',
       id: element.id,
       trackable: element,
@@ -383,16 +385,22 @@ export class UnitOfWork {
       this.#snapshots.add(element.id, undefined);
     }
 
-    const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
+    let existingUpdates: Array<UOWOperation> = [];
 
-    // Need to make sure all updates happen *after* the add
-    const existingUpdates = this.#elements.filter(isUpdate);
-    if (existingUpdates.length > 0) {
-      this.#elements = this.#elements.filter(e => !isUpdate(e));
+    if (this.#adds.has(element.id)) {
+      const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
+
+      // Need to make sure all updates happen *after* the add
+      existingUpdates = this.#operations.filter(isUpdate);
+      if (existingUpdates.length > 0) {
+        this.#operations = this.#operations.filter(e => !isUpdate(e));
+      }
     }
 
+    this.#adds.add(element.id);
+
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#elements.push({
+    this.#operations.push({
       type: 'add',
       id: element.id,
       trackable: element,
@@ -404,7 +412,7 @@ export class UnitOfWork {
     });
 
     if (existingUpdates.length > 0) {
-      this.#elements.push(...existingUpdates);
+      this.#operations.push(...existingUpdates);
     }
   }
 
@@ -478,18 +486,18 @@ export class UnitOfWork {
 
     if (this.#undoableActions.length > 0) {
       const compound = new CompoundUndoableAction(this.#undoableActions, description);
-      if (this.#elements.length > 0) {
+      if (this.#operations.length > 0) {
         compound.addAction(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#elements, this.#callbacks)
+          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
         );
       }
       if (compound.hasActions()) {
         this.diagram.undoManager.add(compound);
       }
     } else {
-      if (this.#elements.length > 0) {
+      if (this.#operations.length > 0) {
         this.diagram.undoManager.add(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#elements, this.#callbacks)
+          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
         );
       }
     }
@@ -504,7 +512,7 @@ export class UnitOfWork {
     // At this point, any elements have been added and or removed
     if (!this.isRemote) {
       const handled = new Set<string>();
-      this.#elements.forEach(({ trackable }) => {
+      this.#operations.forEach(({ trackable }) => {
         if (handled.has(trackable.id)) return;
         trackable.invalidate(this);
         handled.add(trackable.id);
@@ -563,7 +571,7 @@ export class UnitOfWork {
     };
 
     const handled = new Set<string>();
-    this.#elements.forEach(({ trackable, trackableType, type, id }) => {
+    this.#operations.forEach(({ trackable, trackableType, type, id }) => {
       const key = type + '/' + trackable.id;
       if (handled.has(key)) return;
       handle(type)(trackableType, id, trackable);
@@ -587,15 +595,15 @@ export class UnitOfWork {
   }
 
   get added() {
-    return new Set([...this.#elements.filter(e => e.type === 'add').map(e => e.trackable)]);
+    return new Set([...this.#operations.filter(e => e.type === 'add').map(e => e.trackable)]);
   }
 
   private get updated() {
-    return new Set([...this.#elements.filter(e => e.type === 'update').map(e => e.trackable)]);
+    return new Set([...this.#operations.filter(e => e.type === 'update').map(e => e.trackable)]);
   }
 
   private get removed() {
-    return new Set([...this.#elements.filter(e => e.type === 'remove').map(e => e.trackable)]);
+    return new Set([...this.#operations.filter(e => e.type === 'remove').map(e => e.trackable)]);
   }
 
   stopTracking() {
