@@ -4,6 +4,9 @@ import { TestLayerBuilder } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { newid } from '@diagram-craft/utils/id';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
   describe('all', () => {
@@ -169,6 +172,44 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).not.toContain(layer1);
+    });
+
+    it('should remove, including undo/redo, of layer with elements', () => {
+      // Setup
+      const { diagram1, diagram2, layer1, layer2 } = standardTestModel(backend);
+      const e = ElementFactory.emptyNode(newid(), layer1);
+      UnitOfWork.execute(diagram1, uow => layer1.addElement(e, uow));
+      const layerId = layer1.id;
+      const layer = (diagram: Diagram) => diagram.layers.byId(layerId)! as RegularLayer;
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram1, 'Remove', uow => diagram1.layers.remove(layer1, uow));
+
+      // Verify
+      expect(diagram1.layers.all).toHaveLength(0);
+      expect(layer1.elements.map(e => e.id)).toHaveLength(0);
+      if (diagram2) {
+        expect(diagram2.layers.all).toHaveLength(0);
+        expect(layer2!.elements.map(e => e.id)).toHaveLength(0);
+      }
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(diagram1.layers.all.map(l => l.id)).toContain(layerId);
+      expect(layer(diagram1).elements.map(e => e.id)).toEqual([e.id]);
+      if (diagram2) {
+        expect(diagram2.layers.all.map(l => l.id)).toContain(layerId);
+        expect(layer(diagram2).elements.map(e => e.id)).toEqual([e.id]);
+      }
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(diagram1.layers.all).toHaveLength(0);
+      expect(layer1.elements).toHaveLength(0);
+      if (diagram2) {
+        expect(diagram2.layers.all).toHaveLength(0);
+        expect(layer2!.elements).toHaveLength(0);
+      }
     });
   });
 
