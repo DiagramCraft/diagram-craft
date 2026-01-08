@@ -107,25 +107,6 @@ export interface UOWTrackable {
 export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any> | DiagramStyles) &
   UOWTrackable;
 
-export class ElementsSnapshot {
-  snapshots: Map<string, Snapshot | undefined>;
-
-  constructor(readonly _snapshots: MultiMap<string, undefined | Snapshot>) {
-    this.snapshots = new Map<string, undefined | Snapshot>();
-    for (const k of _snapshots.keys()) {
-      this.snapshots.set(k, _snapshots.get(k).at(-1));
-    }
-  }
-
-  get keys() {
-    return [...this.snapshots.keys()];
-  }
-
-  get(key: string) {
-    return this.snapshots.get(key);
-  }
-}
-
 const registry =
   process.env.NODE_ENV === 'development'
     ? new FinalizationRegistry((v: string) => {
@@ -453,8 +434,6 @@ export class UnitOfWork {
     registry.unregister(this);
 
     this.#callbacks.get('after-commit')?.forEach(cb => cb(this));
-
-    return new ElementsSnapshot(this.#snapshots);
   }
 
   commitWithUndo(description: string) {
@@ -467,9 +446,7 @@ export class UnitOfWork {
           new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
         );
       }
-      if (compound.hasActions()) {
-        this.diagram.undoManager.add(compound);
-      }
+      this.diagram.undoManager.add(compound);
     } else {
       if (this.#operations.length > 0) {
         this.diagram.undoManager.add(
