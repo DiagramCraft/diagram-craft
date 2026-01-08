@@ -42,7 +42,6 @@ const updateOrCreateLabelNode = (
     // Remove all existing label nodes
     for (const ln of edge.labelNodes) {
       const node = ln.node();
-      uow.snapshot(node);
       if (layer.elements.includes(node)) {
         layer.removeElement(node, uow);
       } else {
@@ -104,7 +103,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
     for (const id of existingIds) {
       if (!parsedIds.has(id)) {
         const element = existingElements.get(id)!;
-        uow.snapshot(element);
         element.layer.removeElement(element, uow);
         elementsToRemove.push(element);
       }
@@ -116,104 +114,101 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 
       if (existingElement) {
         // Update existing element
-        uow.snapshot(existingElement);
-
-        if (parsedElement.type === 'node' && isNode(existingElement)) {
-          // Update text
-          if (parsedElement.name !== undefined) {
-            existingElement.setText(parsedElement.name, uow);
-          }
-
-          // Update props
-          if (parsedElement.props) {
-            existingElement.updateProps(props => {
-              deepMerge(props, parsedElement.props as Partial<NodeProps>);
-            }, uow);
-          }
-
-          // Update metadata
-          if (parsedElement.metadata) {
-            existingElement.updateMetadata(metadata => {
-              Object.assign(metadata, parsedElement.metadata);
-            }, uow);
-          }
-
-          // Update stylesheets
-          if (parsedElement.stylesheet) {
-            existingElement.updateMetadata(metadata => {
-              metadata.style = parsedElement.stylesheet!;
-            }, uow);
-          }
-          if (parsedElement.textStylesheet) {
-            existingElement.updateMetadata(metadata => {
-              metadata.textStyle = parsedElement.textStylesheet!;
-            }, uow);
-          }
-
-          // Update reference for next node placement
-          if (existingElement.parent === undefined) {
-            lastReferenceNode = existingElement;
-          }
-
-          // Process children
-          if (parsedElement.children) {
-            for (const child of parsedElement.children) {
-              processElement(child);
+        uow.executeUpdate(existingElement, () => {
+          if (parsedElement.type === 'node' && isNode(existingElement)) {
+            // Update text
+            if (parsedElement.name !== undefined) {
+              existingElement.setText(parsedElement.name, uow);
             }
-          }
-        } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
-          // Update edge props
-          if (parsedElement.props) {
-            existingElement.updateProps(props => {
-              deepMerge(props, parsedElement.props as Partial<EdgeProps>);
-            }, uow);
-          }
 
-          // Update metadata
-          if (parsedElement.metadata) {
-            existingElement.updateMetadata(metadata => {
-              Object.assign(metadata, parsedElement.metadata);
-            }, uow);
-          }
+            // Update props
+            if (parsedElement.props) {
+              existingElement.updateProps(props => {
+                deepMerge(props, parsedElement.props as Partial<NodeProps>);
+              }, uow);
+            }
 
-          // Update stylesheet
-          if (parsedElement.stylesheet) {
-            existingElement.updateMetadata(metadata => {
-              metadata.style = parsedElement.stylesheet!;
-            }, uow);
-          }
+            // Update metadata
+            if (parsedElement.metadata) {
+              existingElement.updateMetadata(metadata => {
+                Object.assign(metadata, parsedElement.metadata);
+              }, uow);
+            }
 
-          // Update connections (from/to)
-          if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
-            if (parsedElement.from) {
-              const fromNode = diagram.lookup(parsedElement.from);
-              if (fromNode && isNode(fromNode)) {
-                existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
+            // Update stylesheets
+            if (parsedElement.stylesheet) {
+              existingElement.updateMetadata(metadata => {
+                metadata.style = parsedElement.stylesheet!;
+              }, uow);
+            }
+            if (parsedElement.textStylesheet) {
+              existingElement.updateMetadata(metadata => {
+                metadata.textStyle = parsedElement.textStylesheet!;
+              }, uow);
+            }
+
+            // Update reference for next node placement
+            if (existingElement.parent === undefined) {
+              lastReferenceNode = existingElement;
+            }
+
+            // Process children
+            if (parsedElement.children) {
+              for (const child of parsedElement.children) {
+                processElement(child);
               }
             }
-            if (parsedElement.to) {
-              const toNode = diagram.lookup(parsedElement.to);
-              if (toNode && isNode(toNode)) {
-                existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
+          } else if (parsedElement.type === 'edge' && isEdge(existingElement)) {
+            // Update edge props
+            if (parsedElement.props) {
+              existingElement.updateProps(props => {
+                deepMerge(props, parsedElement.props as Partial<EdgeProps>);
+              }, uow);
+            }
+
+            // Update metadata
+            if (parsedElement.metadata) {
+              existingElement.updateMetadata(metadata => {
+                Object.assign(metadata, parsedElement.metadata);
+              }, uow);
+            }
+
+            // Update stylesheet
+            if (parsedElement.stylesheet) {
+              existingElement.updateMetadata(metadata => {
+                metadata.style = parsedElement.stylesheet!;
+              }, uow);
+            }
+
+            // Update connections (from/to)
+            if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
+              if (parsedElement.from) {
+                const fromNode = diagram.lookup(parsedElement.from);
+                if (fromNode && isNode(fromNode)) {
+                  existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
+                }
+              }
+              if (parsedElement.to) {
+                const toNode = diagram.lookup(parsedElement.to);
+                if (toNode && isNode(toNode)) {
+                  existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
+                }
               }
             }
-          }
 
-          // Update label node if present
-          if (parsedElement.label !== undefined) {
-            updateOrCreateLabelNode(existingElement, parsedElement.label, uow, layer);
-          } else if (existingElement.labelNodes.length > 0) {
-            // If no label is specified but edge has label nodes, remove them
-            for (const ln of existingElement.labelNodes) {
-              const node = ln.node();
-              uow.snapshot(node);
-              layer.removeElement(node, uow);
+            // Update label node if present
+            if (parsedElement.label !== undefined) {
+              updateOrCreateLabelNode(existingElement, parsedElement.label, uow, layer);
+            } else if (existingElement.labelNodes.length > 0) {
+              // If no label is specified but edge has label nodes, remove them
+              for (const ln of existingElement.labelNodes) {
+                const node = ln.node();
+                layer.removeElement(node, uow);
+              }
+              existingElement.setLabelNodes([], uow);
             }
-            existingElement.setLabelNodes([], uow);
           }
-        }
-
-        uow.updateElement(existingElement);
+        });
         return existingElement;
       } else {
         // Add new element
