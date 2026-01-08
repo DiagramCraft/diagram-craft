@@ -5,13 +5,8 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  ElementAddUndoableAction,
-  ElementDeleteUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
@@ -19,6 +14,7 @@ import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -150,12 +146,22 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
       );
     });
 
-    diagram.undoManager.addAndExecute(
-      new CompoundUndoableAction([
-        new ElementDeleteUndoableAction(diagram, diagram.activeLayer as RegularLayer, nodes, true),
-        new ElementAddUndoableAction(newNodes, diagram, diagram.activeLayer as RegularLayer)
-      ])
-    );
+    UnitOfWork.executeWithUndo(diagram, 'Boolean operation', uow => {
+      nodes.forEach(n => {
+        const layer = n.layer;
+        assertRegularLayer(layer);
+        layer.removeElement(n, uow);
+      });
+
+      newNodes.forEach(n => {
+        (diagram.activeLayer as RegularLayer).addElement(n, uow);
+      });
+
+      diagram.selection.setElements(newNodes);
+      uow.on('after', 'undo', () => diagram.selection.setElements(nodes));
+      uow.on('after', 'redo', () => diagram.selection.setElements(newNodes));
+    });
+
     diagram.selection.setElements(newNodes);
   }
 }
