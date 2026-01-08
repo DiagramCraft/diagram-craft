@@ -185,12 +185,12 @@ export class UnitOfWork {
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
   #invalidatedElements = new Set<Trackable>();
-  #state: 'pending' | 'committed' | 'aborted' = 'pending';
   #snapshots = new MultiMap<string, undefined | Snapshot>();
   #onCommitCallbacks = new Map<string, ActionCallback>();
   #undoableActions: Array<UndoableAction> = [];
   #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
 
+  state: 'pending' | 'committed' | 'aborted' = 'pending';
   changeType: ChangeType = 'non-interactive';
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
@@ -251,10 +251,6 @@ export class UnitOfWork {
 
   get operations() {
     return this.#operations;
-  }
-
-  get state() {
-    return this.#state;
   }
 
   add(action: UndoableAction) {
@@ -445,7 +441,7 @@ export class UnitOfWork {
   }
 
   commit() {
-    this.#state = 'committed';
+    this.state = 'committed';
     this.changeType = 'non-interactive';
 
     this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
@@ -485,7 +481,7 @@ export class UnitOfWork {
 
   abort() {
     registry.unregister(this);
-    this.#state = 'aborted';
+    this.state = 'aborted';
   }
 
   private processEvents() {
