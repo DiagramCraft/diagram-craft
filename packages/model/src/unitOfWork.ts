@@ -598,7 +598,10 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   ) {}
 
   undo(uow: UnitOfWork) {
-    if (isDebug()) console.log('Undoing', this.description);
+    if (isDebug()) {
+      console.log('------------------------------------');
+      console.log('Undoing', this.description);
+    }
     this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations.toReversed()) {
@@ -626,7 +629,10 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   }
 
   redo(uow: UnitOfWork) {
-    if (isDebug()) console.log('Redoing', this.description);
+    if (isDebug()) {
+      console.log('------------------------------------');
+      console.log('Redoing', this.description);
+    }
     this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations) {

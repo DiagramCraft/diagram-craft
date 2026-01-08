@@ -190,6 +190,10 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     );
   }
 
+  setElementIds(elements: string[]) {
+    this.setElements(elements.map(e => this.diagram.lookup(e)!));
+  }
+
   setElements(elements: ReadonlyArray<DiagramElement>, rebaseline = true) {
     if (elements.some(e => e.isLocked())) return;
     this.#forcedRotation = false;

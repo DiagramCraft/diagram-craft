@@ -12,6 +12,7 @@ import { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { Point } from '@diagram-craft/geometry/point';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { isDebug } from '@diagram-craft/utils/debug';
 
 export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
   DiagramNodeSnapshot | DiagramEdgeSnapshot,
@@ -27,6 +28,7 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
     snapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
     uow: UnitOfWork
   ): void {
+    if (isDebug()) console.log(`Updating element ${elementId}`);
     const element = mustExist(diagram.lookup(elementId));
     element.restore(snapshot, uow);
   }

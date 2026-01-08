@@ -1,6 +1,5 @@
 import { clipboardActions } from './actions/clipboardAction';
 import { undoActions } from './actions/undoAction';
-import { redoActions } from './actions/redoAction';
 import { selectAllActions } from './actions/selectAllAction';
 import { selectionDeleteActions } from './actions/selectionDeleteAction';
 import { selectionRestackActions } from './actions/selectionRestackAction';
@@ -34,7 +33,6 @@ export const canvasAppActions: ActionMapFactory<Application> = application => ({
   ...clipboardActions(application),
   ...styleCopyActions(application),
   ...undoActions(application),
-  ...redoActions(application),
   ...selectAllActions(application),
   ...selectionDeleteActions(application),
   ...selectionMoveActions(application),
