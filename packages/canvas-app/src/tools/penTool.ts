@@ -5,7 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
@@ -122,10 +121,10 @@ export class PenTool extends AbstractTool {
 
     this.updateNode();
 
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.add(
-      new ElementAddUndoableAction([this.node!], this.diagram, this.diagram.activeLayer, 'Add path')
-    );
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
+    UnitOfWork.executeWithUndo(this.diagram, 'Add path', uow => layer.addElement(this.node!, uow));
   }
 
   onMouseOver(id: string, point: Point, target: EventTarget) {

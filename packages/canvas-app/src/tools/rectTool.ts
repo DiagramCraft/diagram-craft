@@ -8,7 +8,6 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -58,17 +57,10 @@ export class RectTool extends AbstractTool {
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();
 
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction(
-        [this.node],
-        this.diagram,
-        this.diagram.activeLayer,
-        'Add rectangle'
-      )
-    );
-
-    this.diagram.selection.setElements([this.node]);
+    UnitOfWork.executeWithUndo(this.diagram, 'Add rectangle', uow => {
+      layer.addElement(this.node!, uow);
+      uow.select(this.diagram, [this.node!.id]);
+    });
 
     this.resetTool();
 
@@ -78,7 +70,7 @@ export class RectTool extends AbstractTool {
       Point.subtract(this.startPoint, { x: 5, y: 5 })
     );
     drag.on('dragEnd', () => {
-      UnitOfWork.execute(this.diagram, uow => {
+      UnitOfWork.executeWithUndo(this.diagram, 'Set bounds', uow => {
         this.node?.setBounds(
           {
             ...this.node.bounds,
@@ -90,7 +82,10 @@ export class RectTool extends AbstractTool {
       });
 
       // Coalesce the element add and edge endpoint move into one undoable action
-      undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
+      // We know that the first action is the element add and the last is the
+      // last bounds
+      const actions = undoManager.getToMark();
+      undoManager.add(new CompoundUndoableAction([actions[0]!, actions.at(-1)!]));
     });
 
     DRAG_DROP_MANAGER.initiate(drag);

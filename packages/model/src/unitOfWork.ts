@@ -395,6 +395,13 @@ export class UnitOfWork {
     });
   }
 
+  select(diagram: Diagram, after: string[]) {
+    const before = diagram.selection.elements.map(e => e.id);
+    diagram.selection.setElementIds(after);
+    this.on('after', 'redo', () => diagram.selection.setElementIds(after));
+    this.on('after', 'undo', () => diagram.selection.setElementIds(before));
+  }
+
   on(
     when: 'after' | 'before',
     event: 'undo' | 'redo' | 'commit',
@@ -595,7 +602,9 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     private readonly diagram: Diagram,
     private operations: Array<UOWOperation>,
     private callbacks: MultiMap<string, (uow: UnitOfWork) => void>
-  ) {}
+  ) {
+    this.operations = this.consolidateOperations(this.operations);
+  }
 
   undo(uow: UnitOfWork) {
     if (isDebug()) {
@@ -670,11 +679,39 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       ) &&
       Date.now() - this.timestamp!.getTime() < 2000
     ) {
-      this.operations = [...this.operations, ...nextAction.operations];
+      this.operations = this.consolidateOperations([...this.operations, ...nextAction.operations]);
       this.timestamp = new Date();
       return true;
     }
 
     return false;
+  }
+
+  private consolidateOperations(allOperations: UOWOperation[]) {
+    // Collect all update operations by ID
+    const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
+    allOperations.filter(op => op.type === 'update').forEach(op => updatesByIdMap.add(op.id, op));
+
+    const dest: Array<UOWOperation> = [];
+    const processedIds = new Set<string>();
+    allOperations.forEach(op => {
+      if (op.type === 'update') {
+        if (processedIds.has(op.id)) return;
+        processedIds.add(op.id);
+
+        const updates = updatesByIdMap.get(op.id) ?? [op];
+
+        const first = updates[0]!;
+        const last = updates.at(-1)!;
+        dest.push({
+          ...op,
+          beforeSnapshot: first.beforeSnapshot,
+          afterSnapshot: last.afterSnapshot
+        });
+      } else {
+        dest.push(op);
+      }
+    });
+    return dest;
   }
 }
