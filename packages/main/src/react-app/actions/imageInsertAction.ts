@@ -1,12 +1,12 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Attachment } from '@diagram-craft/model/attachment';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)
@@ -47,16 +47,17 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const { width, height } = img;
         img.close();
 
-        const layer = this.context.model.activeDiagram.activeLayer;
+        const diagram = this.context.model.activeDiagram;
+        const layer = diagram.activeLayer;
         assertRegularLayer(layer);
 
+        // TODO: Improve placement to ensure it's at least partially placed within the current viewport
         const e = ElementFactory.node(
           newid(),
           'rect',
           {
-            // TODO: Improve placement to ensure it's at least partially placed within the current viewport
-            x: (this.context.model.activeDiagram.bounds.w - width) / 2,
-            y: (this.context.model.activeDiagram.bounds.h - height) / 2,
+            x: (diagram.bounds.w - width) / 2,
+            y: (diagram.bounds.h - height) / 2,
             w: width,
             h: height,
             r: 0
@@ -74,15 +75,10 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
           {}
         );
 
-        assertRegularLayer(this.context.model.activeDiagram.activeLayer);
-        this.context.model.activeDiagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction(
-            [e],
-            this.context.model.activeDiagram,
-            this.context.model.activeDiagram.activeLayer,
-            'Insert image'
-          )
-        );
+        UnitOfWork.executeWithUndo(diagram, 'Insert image', uow => {
+          layer.addElement(e, uow);
+          uow.select(diagram, [e.id]);
+        });
       })
     );
   }
