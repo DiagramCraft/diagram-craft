@@ -344,11 +344,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   // TODO: Check layer level events are emitted
   moveElement(
-    elements: ReadonlyArray<DiagramElement>,
+    elementsToMove: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
+    const elements = [...elementsToMove];
+
     assertRegularLayer(layer);
     const elementLayers = elements.map(e => {
       assertRegularLayer(e.layer);
@@ -392,14 +394,15 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
       switch (ref.relation) {
         case 'above':
-        case 'below': {
-          parent.setChildren(elementOrder(parent.children, idx), uow);
-          elements.map(e => uow.addElement(e, parent, 0));
+        case 'below':
+          uow.executeAdd(elements, parent, 0, () => {
+            parent.setChildren(elementOrder(parent.children, idx), uow);
+          });
           break;
-        }
         case 'on':
-          ref.element.setChildren([...ref.element.children, ...elements], uow);
-          elements.map(e => uow.addElement(e, ref.element, 0));
+          uow.executeAdd(elements, ref.element, 0, () =>
+            ref.element.setChildren([...ref.element.children, ...elements], uow)
+          );
           break;
       }
     } else if (moveIntoLayerPosition) {
@@ -408,24 +411,22 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       const idx = layer.elements.indexOf(ref.element);
       switch (ref.relation) {
         case 'above':
-        case 'below': {
-          layer.setElements(elementOrder(layer.elements, idx), uow);
-          elements.map(e => uow.addElement(e, layer, 0));
+        case 'below':
+          uow.executeAdd(elements, layer, 0, () =>
+            layer.setElements(elementOrder(layer.elements, idx), uow)
+          );
           break;
-        }
         case 'on':
           if (isNode(ref.element)) {
-            ref.element.setChildren([...ref.element.children, ...elements], uow);
-            elements.map(e => uow.addElement(e, ref.element, 0));
+            uow.executeAdd(elements, ref.element, 0, () => {
+              ref.element.setChildren([...ref.element.children, ...elements], uow);
+            });
           }
           break;
       }
     } else {
       VERIFY_NOT_REACHED();
     }
-
-    // TODO: Not clear if this is needed or not
-    uow.updateDiagram();
   }
 
   getAttachmentsInUse() {

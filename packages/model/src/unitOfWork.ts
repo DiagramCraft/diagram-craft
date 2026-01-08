@@ -14,6 +14,7 @@ import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { ArrayOrSingle } from '@diagram-craft/utils/types';
 
 type ActionCallback = () => void;
 
@@ -187,8 +188,6 @@ export class UnitOfWork {
   #invalidatedElements = new Set<Trackable>();
   #state: 'pending' | 'committed' | 'aborted' = 'pending';
 
-  #shouldUpdateDiagram = false;
-
   #snapshots = new MultiMap<string, undefined | Snapshot>();
 
   #onCommitCallbacks = new Map<string, ActionCallback>();
@@ -268,7 +267,7 @@ export class UnitOfWork {
     this.#undoableActions.push(action);
   }
 
-  snapshot(element: Trackable, force = false) {
+  private snapshot(element: Trackable, force = false) {
     if (!this.trackChanges) return;
     if (!force && this.#snapshots.has(element.id)) return;
 
@@ -319,7 +318,12 @@ export class UnitOfWork {
     return res;
   }
 
-  removeElement(element: Trackable, parent: Trackable, idx: number) {
+  removeElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+    if (Array.isArray(element)) {
+      element.forEach(e => this.removeElement(e, parent, idx));
+      return;
+    }
+
     /*if (_idx === -1) {
       console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
     }*/
@@ -336,7 +340,7 @@ export class UnitOfWork {
     });
   }
 
-  executeRemove<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
+  executeRemove<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
     /*if (_idx === -1) {
       console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
     }*/
@@ -346,7 +350,7 @@ export class UnitOfWork {
     return cb();
   }
 
-  executeAdd<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
+  executeAdd<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
     /*if (_idx === -1) {
       console.warn('Adding element to invalid index', element);
     }*/
@@ -358,7 +362,12 @@ export class UnitOfWork {
     return res;
   }
 
-  addElement(element: Trackable, parent: Trackable, idx: number) {
+  addElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+    if (Array.isArray(element)) {
+      element.forEach(e => this.addElement(e, parent, idx));
+      return;
+    }
+
     /*if (_idx === -1) {
       console.warn('Adding element to invalid index', element);
     }*/
@@ -448,10 +457,6 @@ export class UnitOfWork {
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
     this.processEvents();
-
-    if (this.#shouldUpdateDiagram) {
-      this.diagram.emit('diagramChange', { diagram: this.diagram });
-    }
 
     registry.unregister(this);
 
@@ -583,10 +588,6 @@ export class UnitOfWork {
 
   private get removed() {
     return new Set([...this.#operations.filter(e => e.type === 'remove').map(e => e.trackable)]);
-  }
-
-  updateDiagram() {
-    this.#shouldUpdateDiagram = true;
   }
 }
 
