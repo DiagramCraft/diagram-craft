@@ -116,14 +116,6 @@ export class ElementsSnapshot {
     }
   }
 
-  onlyAdded() {
-    const m = new MultiMap<string, undefined | Snapshot>();
-    for (const [k, v] of this.snapshots.entries()) {
-      if (v === undefined) m.add(k, v);
-    }
-    return new ElementsSnapshot(m);
-  }
-
   get keys() {
     return [...this.snapshots.keys()];
   }
