@@ -184,20 +184,14 @@ export class UnitOfWork {
 
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
-
   #invalidatedElements = new Set<Trackable>();
   #state: 'pending' | 'committed' | 'aborted' = 'pending';
-
   #snapshots = new MultiMap<string, undefined | Snapshot>();
-
   #onCommitCallbacks = new Map<string, ActionCallback>();
-
   #undoableActions: Array<UndoableAction> = [];
-
   #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
 
   changeType: ChangeType = 'non-interactive';
-
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
   private constructor(
@@ -267,12 +261,13 @@ export class UnitOfWork {
     this.#undoableActions.push(action);
   }
 
-  private snapshot(element: Trackable, force = false) {
+  private snapshot(element: Trackable) {
     if (!this.trackChanges) return;
-    if (!force && this.#snapshots.has(element.id)) return;
 
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#snapshots.add(element.id, spec.snapshot(element));
+    const s = spec.snapshot(element);
+    this.#snapshots.add(element.id, s);
+    return s;
   }
 
   hasBeenInvalidated(element: Trackable) {
@@ -289,55 +284,14 @@ export class UnitOfWork {
     );
   }
 
-  updateElement(element: Trackable) {
-    assert.true(
-      !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before updating element'
-    );
-
-    this.#updates.add(element.id);
-
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#operations.push({
-      type: 'update',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
-      beforeSnapshot: this.#snapshots.get(element.id)!.at(-1)!,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
-    });
-  }
-
   executeUpdate<T>(element: Trackable, cb: () => T): T {
-    this.snapshot(element, true);
+    const snapshot = this.snapshot(element);
 
     const res = cb();
 
-    this.updateElement(element);
+    this.updateElement(element, snapshot);
 
     return res;
-  }
-
-  removeElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
-    if (Array.isArray(element)) {
-      element.forEach(e => this.removeElement(e, parent, idx));
-      return;
-    }
-
-    /*if (_idx === -1) {
-      console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
-    }*/
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    this.#operations.push({
-      type: 'remove',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
-      idx: idx,
-      parentId: parent.id,
-      parentType: parent.trackableType,
-      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
-    });
   }
 
   executeRemove<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
@@ -360,6 +314,48 @@ export class UnitOfWork {
     this.addElement(element, parent, idx);
 
     return res;
+  }
+
+  updateElement(element: Trackable, snapshot?: Snapshot) {
+    const effectiveSnapshot = snapshot ?? this.#snapshots.get(element.id)!.at(-1)!;
+    assert.true(
+      !this.trackChanges || effectiveSnapshot !== undefined,
+      'Must create snapshot before updating element'
+    );
+
+    this.#updates.add(element.id);
+
+    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    this.#operations.push({
+      type: 'update',
+      id: element.id,
+      trackable: element,
+      trackableType: element.trackableType,
+      beforeSnapshot: effectiveSnapshot,
+      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+    });
+  }
+
+  removeElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+    if (Array.isArray(element)) {
+      element.forEach(e => this.removeElement(e, parent, idx));
+      return;
+    }
+
+    /*if (_idx === -1) {
+      console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
+    }*/
+    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    this.#operations.push({
+      type: 'remove',
+      id: element.id,
+      trackable: element,
+      trackableType: element.trackableType,
+      idx: idx,
+      parentId: parent.id,
+      parentType: parent.trackableType,
+      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+    });
   }
 
   addElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
