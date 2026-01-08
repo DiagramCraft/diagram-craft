@@ -8,7 +8,6 @@ import { Translation } from '@diagram-craft/geometry/transform';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
 import {
-  AbstractDiagramElement,
   DiagramElement,
   isEdge,
   isNode,
@@ -17,7 +16,6 @@ import {
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
@@ -194,15 +192,6 @@ export abstract class AbstractMoveDrag extends Drag {
       if (resizeCanvasAction) {
         resizeCanvasAction.redo();
         this.uow.add(resizeCanvasAction);
-      }
-
-      // TODO: This is actually ok at the moment, but better to perhaps have a isDiagramElement
-      const addedElements = [...this.uow.added].filter(e => e instanceof AbstractDiagramElement);
-      if (addedElements.length > 0) {
-        assertRegularLayer(this.diagram.activeLayer);
-        this.uow.add(
-          new ElementAddUndoableAction(addedElements, this.diagram, this.diagram.activeLayer)
-        );
       }
 
       // This means we are dropping onto an element
