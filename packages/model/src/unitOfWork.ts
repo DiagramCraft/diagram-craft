@@ -190,7 +190,7 @@ export class UnitOfWork {
   uid = newid();
 
   #operations: Array<UOWOperation> = [];
-  #adds = new Set<string>();
+  #updates = new Set<string>();
 
   #invalidatedElements = new Set<Trackable>();
   #state: 'pending' | 'committed' | 'aborted' = 'pending';
@@ -309,6 +309,8 @@ export class UnitOfWork {
       'Must create snapshot before updating element'
     );
 
+    this.#updates.add(element.id);
+
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'update',
@@ -387,7 +389,7 @@ export class UnitOfWork {
 
     let existingUpdates: Array<UOWOperation> = [];
 
-    if (this.#adds.has(element.id)) {
+    if (this.#updates.has(element.id)) {
       const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
 
       // Need to make sure all updates happen *after* the add
@@ -396,8 +398,6 @@ export class UnitOfWork {
         this.#operations = this.#operations.filter(e => !isUpdate(e));
       }
     }
-
-    this.#adds.add(element.id);
 
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
