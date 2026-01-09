@@ -7,6 +7,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const diagramActions = (application: Application) => ({
   DIAGRAM_ADD: new DiagramAddAction(application),
@@ -116,8 +117,6 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
     const diagram = document.byId(diagramId);
     assert.present(diagram);
 
-    const undoManager = this.context.model.activeDiagram.undoManager;
-
     this.context.ui.showDialog(
       new StringInputDialogCommand(
         {
@@ -128,20 +127,9 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
           selectOnOpen: true
         },
         async name => {
-          const oldName = diagram.name;
-
-          undoManager.addAndExecute(
-            makeUndoableAction('Rename diagram', {
-              redo: () => {
-                diagram.name = name;
-                document.changeDiagram(diagram);
-              },
-              undo: () => {
-                diagram.name = oldName;
-                document.changeDiagram(diagram);
-              }
-            })
-          );
+          UnitOfWork.executeWithUndo(diagram, 'Rename diagram', uow => {
+            diagram.setName(name, uow);
+          });
         }
       )
     );

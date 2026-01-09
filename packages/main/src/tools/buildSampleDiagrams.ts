@@ -149,12 +149,17 @@ const arrowsTestFile = async () => {
     //if (y > 2000) break;
   }
 
-  diagram.bounds = {
-    x: 0,
-    y: 0,
-    w: 1000,
-    h: y + 200
-  };
+  UnitOfWork.executeSilently(diagram, uow =>
+    diagram.setBounds(
+      {
+        x: 0,
+        y: 0,
+        w: 1000,
+        h: y + 200
+      },
+      uow
+    )
+  );
 
   fs.writeFileSync(
     path.join(__dirname, '..', '..', 'public', 'sample', 'arrows.json'),
@@ -465,12 +470,17 @@ const shapesTestFile = async (
       y += opts.yDiff;
     }
 
-    diagram.bounds = {
-      x: 0,
-      y: 0,
-      w: 2100,
-      h: y + opts.yDiff
-    };
+    UnitOfWork.executeSilently(diagram, uow =>
+      diagram.setBounds(
+        {
+          x: 0,
+          y: 0,
+          w: 2100,
+          h: y + opts.yDiff
+        },
+        uow
+      )
+    );
   } else {
     const [, p, shape] = safeSplit(pkg, ':', 3);
 
@@ -485,12 +495,17 @@ const shapesTestFile = async (
       }
     }
 
-    diagram.bounds = {
-      x: 0,
-      y: 0,
-      w: x + 20,
-      h: y + opts.yDiff
-    };
+    UnitOfWork.executeSilently(diagram, uow =>
+      diagram.setBounds(
+        {
+          x: 0,
+          y: 0,
+          w: x + 20,
+          h: y + opts.yDiff
+        },
+        uow
+      )
+    );
   }
 
   fs.writeFileSync(

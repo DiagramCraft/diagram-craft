@@ -310,7 +310,7 @@ const deserializeDiagrams = <T extends Diagram>(
     const edgeLookup = new ElementLookup<DiagramEdge>();
 
     const newDiagram = diagramFactory($d, doc);
-    newDiagram.bounds = $d.canvas;
+    UnitOfWork.executeSilently(newDiagram, uow => newDiagram.setBounds($d.canvas, uow));
 
     // This needs to be done in multiple steps as later steps depend on earlier ones:
     //

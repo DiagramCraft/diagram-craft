@@ -3,6 +3,7 @@ import { UndoableAction } from './undoManager';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import { Extent } from '@diagram-craft/geometry/extent';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const AMOUNT_TO_GROW = 100;
 
@@ -69,6 +70,7 @@ const resizeDiagramBounds = (orig: DiagramBounds, bbox: Box) => {
   return newBounds;
 };
 
+// TODO: Remove this
 class ResizeDiagramBoundsUndoableAction implements UndoableAction {
   description = 'Resize bounds';
 
@@ -78,12 +80,12 @@ class ResizeDiagramBoundsUndoableAction implements UndoableAction {
     private readonly after: DiagramBounds
   ) {}
 
-  undo() {
-    this.diagram.bounds = this.before;
+  undo(uow: UnitOfWork) {
+    this.diagram.setBounds(this.before, uow);
   }
 
-  redo() {
-    this.diagram.bounds = this.after;
+  redo(uow: UnitOfWork) {
+    this.diagram.setBounds(this.after, uow);
   }
 }
 

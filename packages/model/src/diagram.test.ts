@@ -34,7 +34,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       doc2?.on?.('diagramChanged', documentDiagramChange[1]!);
 
       // Act
-      doc1.diagrams[0]!.name = 'new';
+      UnitOfWork.executeSilently(doc1.diagrams[0]!, uow => doc1.diagrams[0]!.setName('new', uow));
 
       // Verify
       expect(doc1.diagrams[0]!.name).toBe('new');
@@ -73,10 +73,12 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = doc1.diagrams[0]!;
 
       // Act
-      diagram.updateProps(props => {
-        props.grid ??= {};
-        props.grid.enabled = false;
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(props => {
+          props.grid ??= {};
+          props.grid.enabled = false;
+        }, uow)
+      );
 
       // Verify
       expect(diagram.props).toEqual({ grid: { enabled: false } });
@@ -89,10 +91,12 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       }
 
       // Act
-      diagram.updateProps(props => {
-        props.grid ??= {};
-        props.grid.enabled = true;
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(props => {
+          props.grid ??= {};
+          props.grid.enabled = true;
+        }, uow)
+      );
 
       // Verify
       expect(diagram.props).toEqual({
@@ -128,7 +132,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
 
       // Act
       const diagram = doc1.diagrams[0]!;
-      diagram.bounds = { x: 100, y: 100, w: 110, h: 100 };
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.setBounds({ x: 100, y: 100, w: 110, h: 100 }, uow)
+      );
 
       // Verify
       expect(diagram.bounds).toEqual({ x: 100, y: 100, w: 110, h: 100 });

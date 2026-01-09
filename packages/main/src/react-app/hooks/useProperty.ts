@@ -31,7 +31,8 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
   DiagramProps
 >(
   diagram => diagram.props,
-  (diagram, callback) => diagram.updateProps(callback),
+  (diagram, callback) =>
+    UnitOfWork.executeSilently(diagram, uow => diagram.updateProps(callback, uow)),
   (diagram, handler) => {
     useEventListener(diagram, 'diagramChange', handler);
   },

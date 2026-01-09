@@ -1073,7 +1073,7 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
       while (bounds.x + bounds.w > canvasBounds.x + canvasBounds.w) canvasBounds.w += w;
       while (bounds.y + bounds.h > canvasBounds.y + canvasBounds.h) canvasBounds.h += h;
 
-      diagram.bounds = canvasBounds;
+      UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(canvasBounds, uow));
 
       diagram.viewBox.offset = { x: 0, y: 0 };
       diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);

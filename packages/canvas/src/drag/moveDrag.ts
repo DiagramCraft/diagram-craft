@@ -190,7 +190,7 @@ export abstract class AbstractMoveDrag extends Drag {
         )
       );
       if (resizeCanvasAction) {
-        resizeCanvasAction.redo();
+        resizeCanvasAction.redo(this.uow);
         this.uow.add(resizeCanvasAction);
       }
 

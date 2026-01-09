@@ -3,7 +3,7 @@ import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { Selection } from './selection';
 import { UndoManager } from './undoManager';
-import { UnitOfWork } from './unitOfWork';
+import { UnitOfWork, UOWRegistry } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
@@ -28,6 +28,7 @@ import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
 import type { DiagramProps } from './diagramProps';
 import { Releasables, type Releasable } from '@diagram-craft/utils/releasable';
+import { DiagramUOWAdapter } from '@diagram-craft/model/diagram.uow';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -100,6 +101,8 @@ export type DiagramCRDT = {
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, Releasable {
+  _trackableType = 'diagram';
+
   // Transient properties
   #document: DiagramDocument | undefined;
   #spatialIndex: SpatialIndex | undefined;
@@ -113,7 +116,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
-  readonly _: CRDTProp<DiagramCRDT, 'canvas'>;
+  readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
 
@@ -162,7 +165,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       y: 0
     };
 
-    this._ = new CRDTProp(this._crdt, 'canvas', {
+    this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
       initialValue: initialCanvas
     });
@@ -247,18 +250,22 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#name.getNonNull();
   }
 
-  set name(n: string) {
-    this.#name.set(n);
-    this.emitDiagramChange('metadata');
+  setName(n: string, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#name.set(n);
+      this.emitDiagramChange('metadata');
+    });
   }
 
   get props() {
     return this.#props.get();
   }
 
-  updateProps(callback: (props: DiagramProps) => void) {
-    this.#props.update(callback);
-    this.emitDiagramChange('content');
+  updateProps(callback: (props: DiagramProps) => void, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#props.update(callback);
+      this.emitDiagramChange('content');
+    });
   }
 
   get parent() {
@@ -334,12 +341,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get bounds() {
-    return this._.getNonNull();
+    return this.#canvas.getNonNull();
   }
 
-  set bounds(b: DiagramBounds) {
-    this._.set(b);
-    this.emitDiagramChange('content');
+  setBounds(b: DiagramBounds, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#canvas.set(b);
+      this.emitDiagramChange('content');
+    });
   }
 
   // TODO: Check layer level events are emitted
@@ -468,3 +477,5 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 }
+
+UOWRegistry.adapters['diagram'] = new DiagramUOWAdapter();
