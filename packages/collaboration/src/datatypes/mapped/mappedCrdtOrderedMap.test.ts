@@ -260,4 +260,24 @@ describe.each(Backends.all())('MappedCRDTOrderedMap [%s]', (_name, backend) => {
       expect(mapped2.getIndex('c')).toEqual(mapped1.getIndex('c'));
     }
   });
+
+  it('should insert correctly when using array size', () => {
+    const [doc1] = backend.syncedDocs();
+    const list1 = watch(doc1.getMap<any>('list1'));
+    const mapped1 = new MappedCRDTOrderedMap<number, CRDTType>(list1, makeMapper(doc1.factory));
+
+    mapped1.insert('a1', 1, mapped1.size);
+    mapped1.insert('a2', 1, mapped1.size);
+    mapped1.insert('a', 1, mapped1.size);
+    mapped1.remove('a1');
+    mapped1.remove('a2');
+    mapped1.insert('b', 2, mapped1.size);
+    mapped1.insert('c', 3, mapped1.size);
+
+    expect(mapped1.entries).toEqual([
+      ['a', 1],
+      ['b', 2],
+      ['c', 3]
+    ]);
+  });
 });

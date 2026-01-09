@@ -149,24 +149,31 @@ export class MappedCRDTOrderedMap<
 
   insert(key: string, t: T, position: number) {
     assert.false(this.#current.has(key));
-    assert.true(
-      position >= 0 && position <= this.#entries.length,
-      `Invalid position ${position} for insert, length ${this.#entries.length}`
-    );
+    assert.true(position >= 0 && position <= this.#entries.length);
 
-    // TODO: Why is this required
-    if (position === this.size) return this.add(key, t);
+    // Determine the target CRDT index based on position
+    // CRDT indices can have gaps after removals, so we can't just use position + 1
+    let targetIndex: number;
 
-    // CRDT indices are 1-based (based on length after push in add method)
-    // Convert 0-based position to 1-based CRDT index
-    const targetIndex = position + 1;
+    if (position === 0) {
+      targetIndex = 1;
+    } else if (position === this.#entries.length) {
+      const lastElement = this.#entries.at(-1)!;
+      targetIndex = this.#current.get(lastElement[0])!.get('index')! + 1;
+    } else {
+      const elementAtPosition = this.#entries[position]!;
+      targetIndex = this.#current.get(elementAtPosition[0])!.get('index')!;
+    }
 
     this.#current.transact(() => {
       // Update indices of existing elements at or after the insertion position
-      for (const [, v] of this.#current.entries()) {
-        const currentIndex = v.get('index')!;
-        if (currentIndex >= targetIndex) {
-          v.set('index', currentIndex + 1);
+      // Only needed if not inserting at the end
+      if (position < this.#entries.length) {
+        for (const [, v] of this.#current.entries()) {
+          const currentIndex = v.get('index')!;
+          if (currentIndex >= targetIndex) {
+            v.set('index', currentIndex + 1);
+          }
         }
       }
 
