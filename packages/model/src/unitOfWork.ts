@@ -91,33 +91,32 @@ export type UOWOperation =
 type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
 
 const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
-  const eventsById = map.get(key);
-  if (eventsById === undefined) return;
+  const eventCallbacks = map.get(key);
+  if (eventCallbacks === undefined) return;
 
-  let emitted: boolean;
+  let emitCount: number;
   do {
-    emitted = false;
-    for (const [key, cb] of eventsById.entries()) {
-      cb(uow);
-      eventsById.delete(key);
-      emitted = true;
+    emitCount = 0;
+    for (const [key, callback] of eventCallbacks.entries()) {
+      callback(uow);
+      eventCallbacks.delete(key);
+      emitCount++;
     }
-  } while (emitted);
+  } while (emitCount > 0);
 };
 
 export class UnitOfWork {
   uid = newid();
 
+  state: 'pending' | 'committed' | 'aborted' = 'pending';
+  changeType: ChangeType = 'non-interactive';
+  metadata: DiagramCraft.UnitOfWorkMetadata = {};
+
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
   #snapshots = new MultiMap<string, undefined | Snapshot>();
   #undoableActions: Array<UndoableAction> = [];
-
   #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
-
-  state: 'pending' | 'committed' | 'aborted' = 'pending';
-  changeType: ChangeType = 'non-interactive';
-  metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
   private constructor(
     readonly diagram: Diagram,
@@ -477,12 +476,10 @@ class UOWUndoableAction implements UndoableAction {
 
         const updates = updatesByIdMap.get(op.target.id) ?? [op];
 
-        const first = updates[0]!;
-        const last = updates.at(-1)!;
         dest.push({
           ...op,
-          beforeSnapshot: first.beforeSnapshot,
-          afterSnapshot: last.afterSnapshot
+          beforeSnapshot: updates[0]!.beforeSnapshot,
+          afterSnapshot: updates.at(-1)!.afterSnapshot
         });
       } else {
         dest.push(op);
