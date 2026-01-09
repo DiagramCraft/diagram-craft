@@ -176,7 +176,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <ActionMenuItem action={'DISTRIBUTE_VERTICAL'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Arrange'} disabled={diagram.selection.elements.length === 1}>
+      <Menu.SubMenu label={'Arrange'}>
         <ActionMenuItem action={'SELECTION_RESTACK_TOP'} />
         <ActionMenuItem action={'SELECTION_RESTACK_UP'} />
         <ActionMenuItem action={'SELECTION_RESTACK_BOTTOM'} />
