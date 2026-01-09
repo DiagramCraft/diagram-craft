@@ -46,10 +46,7 @@ const adjustColumnWidth = (colIdx: number, table: TableHelper, w: number, uow: U
 };
 
 const removeElement = (element: DiagramElement, uow: UnitOfWork) => {
-  uow.snapshot(element);
   element.parent!.removeChild(element, uow);
-  assertRegularLayer(element.layer);
-  element.layer.removeElement(element, uow);
 };
 
 const addElement = (
@@ -60,9 +57,7 @@ const addElement = (
 ) => {
   assertRegularLayer(parent.layer);
 
-  uow.snapshot(element);
   parent.addChild(element, uow, options);
-  parent.layer.addElement(element, uow);
 };
 
 const isTableCriteria = (context: ActionContext) => {

@@ -169,11 +169,11 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const props = this.#localProps.getClone() as EdgeProps;
-    callback(props);
-    this.#localProps.set(props);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const props = this.#localProps.getClone() as EdgeProps;
+      callback(props);
+      this.#localProps.set(props);
+    });
     this.clearCache();
   }
 
@@ -232,10 +232,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   setStart(start: Endpoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localStart.set(start);
-    this.#hasLocalStart.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localStart.set(start);
+      this.#hasLocalStart.set(true);
+    });
     this.clearCache();
   }
 
@@ -248,10 +248,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localEnd.set(end);
-    this.#hasLocalEnd.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localEnd.set(end);
+      this.#hasLocalEnd.set(true);
+    });
     this.clearCache();
   }
 
@@ -289,45 +289,46 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   replaceWaypoint(i: number, wp: Waypoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = [...this.waypoints];
-    currentWaypoints[i] = wp;
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = [...this.waypoints];
+      currentWaypoints[i] = wp;
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 
   addWaypoint(wp: Waypoint, uow: UnitOfWork): number {
-    uow.snapshot(this);
     const currentWaypoints = [...this.waypoints];
-    currentWaypoints.push(wp);
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
 
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      currentWaypoints.push(wp);
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
+
     this.clearCache();
     return currentWaypoints.length - 1;
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 

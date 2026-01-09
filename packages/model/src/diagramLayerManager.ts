@@ -18,6 +18,12 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import {
+  LayerManagerParentChildUOWSpecification,
+  LayerManagerUOWSpecification
+} from '@diagram-craft/model/diagramLayerManager.uow';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -71,7 +77,7 @@ export type LayerManagerEvents = {
 
 export class LayerManager
   extends EventEmitter<LayerManagerEvents>
-  implements UOWTrackable<LayersSnapshot>, AttachmentConsumer, Releasable
+  implements UOWTrackable, AttachmentConsumer, Releasable
 {
   readonly id = 'layers';
   readonly trackableType = 'layerManager';
@@ -170,17 +176,30 @@ export class LayerManager
     uow: UnitOfWork,
     ref: { layer: Layer; relation: 'above' | 'below' }
   ) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      // Build new order
+      const currentOrder = this.#layers.keys;
+      const layerIds = new Set(layers.map(l => l.id));
 
-    const toIndex = this.#layers.getIndex(ref.layer.id);
-    let newIdx = ref.relation === 'below' ? toIndex : toIndex + 1;
+      // Remove the layers being moved from their current positions
+      const remainingLayers = currentOrder.filter(id => !layerIds.has(id));
 
-    for (const layer of layers) {
-      this.#layers.setIndex(layer.id, newIdx);
-      newIdx += ref.relation === 'below' ? 1 : -1;
-    }
+      // Find the reference layer's position in the remaining layers
+      const refIndexInRemaining = remainingLayers.indexOf(ref.layer.id);
 
-    uow.updateElement(this);
+      // Insert the moved layers at the correct position
+      // 'below' means earlier in render order (lower index)
+      // 'above' means later in render order (higher index)
+      const insertIndex = ref.relation === 'below' ? refIndexInRemaining : refIndexInRemaining + 1;
+      const newOrder = [
+        ...remainingLayers.slice(0, insertIndex),
+        ...layers.map(l => l.id),
+        ...remainingLayers.slice(insertIndex)
+      ];
+
+      // Apply the new order
+      this.#layers.setOrder(newOrder);
+    });
   }
 
   toggleVisibility(layer: Layer) {
@@ -215,42 +234,50 @@ export class LayerManager
   }
 
   add(layer: Layer, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#layers.add(layer.id, layer);
-    this.#visibleLayers.set(layer.id, true);
-    this.#activeLayer = layer;
-    uow.updateElement(this);
-    uow.addElement(layer);
+    this.insert(layer, this.#layers.size, uow);
+  }
+
+  insert(layer: Layer, idx: number, uow: UnitOfWork) {
+    uow.executeAdd(layer, this, idx, () => {
+      this.#layers.insert(layer.id, layer, idx);
+      this.#visibleLayers.set(layer.id, true);
+      this.#activeLayer = layer;
+    });
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#layers.remove(layer.id);
-    this.#visibleLayers.delete(layer.id);
-    if (this.diagram.selection.nodes.some(e => e.layer === layer)) {
-      this.diagram.selection.clear();
+    if (isRegularLayer(layer)) {
+      layer.elements.forEach(e => layer.removeElement(e, uow));
     }
-    uow.updateElement(this);
-    uow.removeElement(layer);
+
+    uow.executeRemove(layer, this, this.#layers.getIndex(layer.id), () => {
+      this.#layers.remove(layer.id);
+      this.#visibleLayers.delete(layer.id);
+      if (this.diagram.selection.nodes.some(e => e.layer === layer)) {
+        this.diagram.selection.clear();
+      }
+    });
   }
 
   invalidate(_uow: UnitOfWork) {
     // Nothing for now...
   }
 
-  snapshot(): LayersSnapshot {
+  _snapshot(): LayersSnapshot {
     return {
       _snapshotType: 'layers',
       layers: this.all.map(l => l.id)
     };
   }
 
-  restore(snapshot: LayersSnapshot, uow: UnitOfWork) {
+  _restore(snapshot: LayersSnapshot, uow: UnitOfWork) {
+    // TODO: This implementation is a bit weird
     for (const [id] of this.#layers.entries) {
       if (!snapshot.layers.includes(id)) {
         this.remove(this.#layers.get(id)!, uow);
       }
     }
+    this.#layers.setOrder(snapshot.layers);
     uow.updateElement(this);
   }
 
@@ -266,3 +293,7 @@ export const LayerCapabilities = {
     return layer.type === 'modification' || layer.type === 'regular';
   }
 };
+
+UnitOfWorkManager.trackableSpecs['layerManager'] = new LayerManagerUOWSpecification();
+UnitOfWorkManager.parentChildSpecs['layerManager-layer'] =
+  new LayerManagerParentChildUOWSpecification();

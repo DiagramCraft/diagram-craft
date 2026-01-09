@@ -9,7 +9,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Box } from '@diagram-craft/geometry/box';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
@@ -24,10 +23,14 @@ export const createLinkedNode = (
   const diagram = node.diagram;
 
   return UnitOfWork.executeWithUndo(diagram, 'Link to new node', uow => {
-    assertRegularLayer(diagram.activeLayer);
-    assertRegularLayer(node.diagram.activeLayer);
+    const activeLayer = diagram.activeLayer;
+    const nodeLayer = node.diagram.activeLayer;
+
+    assertRegularLayer(activeLayer);
+    assertRegularLayer(nodeLayer);
 
     const newNode = node.duplicate();
+    nodeLayer.addElement(newNode, uow);
 
     if (direction === 'w') {
       newNode.transform([new Translation({ x: -(OFFSET + node.bounds.w), y: 0 })], uow);
@@ -63,8 +66,8 @@ export const createLinkedNode = (
     // Move "right"
     let secondaryOffset = 0;
     do {
-      const intersectingNode = diagram.activeLayer.elements.find(e =>
-        Box.intersects(e.bounds, newNode.bounds)
+      const intersectingNode = activeLayer.elements.find(
+        e => e !== newNode && Box.intersects(e.bounds, newNode.bounds)
       );
       if (!intersectingNode) break;
 
@@ -86,8 +89,8 @@ export const createLinkedNode = (
     newNode.setBounds(origBounds, uow);
     secondaryOffset = 0;
     do {
-      const intersectingNode = diagram.activeLayer.elements.find(e =>
-        Box.intersects(e.bounds, newNode.bounds)
+      const intersectingNode = activeLayer.elements.find(
+        e => e !== newNode && Box.intersects(e.bounds, newNode.bounds)
       );
       if (!intersectingNode) break;
 
@@ -127,14 +130,10 @@ export const createLinkedNode = (
       node.layer
     );
 
-    uow.addAndExecute(
-      new ElementAddUndoableAction(
-        [newNode, edge],
-        node.diagram,
-        node.diagram.activeLayer,
-        'Link to new node'
-      )
-    );
+    nodeLayer.addElement(edge, uow);
+
+    uow.select(diagram, [newNode.id]);
+
     return newNode;
   });
 };

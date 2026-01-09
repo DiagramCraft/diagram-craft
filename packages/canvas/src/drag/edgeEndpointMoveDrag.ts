@@ -22,7 +22,7 @@ import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 
 export class EdgeEndpointMoveDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  readonly uow: UnitOfWork;
   protected hoverElement: string | undefined;
   protected modifiers: Modifiers | undefined;
 

@@ -1,6 +1,4 @@
 import {
-  AddStylesheetUndoableAction,
-  DeleteStylesheetUndoableAction,
   getCommonProps,
   isSelectionDirty,
   Stylesheet,
@@ -120,11 +118,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                         const commonProps = getCommonProps(
                           $d.selection.elements.map(e => e.editProps)
                         ) as NodeProps & EdgeProps;
-                        stylesheet.setProps(
-                          isText ? { text: commonProps.text } : commonProps,
-                          $d.document.styles,
-                          uow
-                        );
+                        stylesheet.setProps(isText ? { text: commonProps.text } : commonProps, uow);
                         $d.document.styles.reapplyStylesheet(stylesheet, uow);
                       }
                     });
@@ -167,8 +161,6 @@ export const ElementStylesheetPanel = (props: Props) => {
                               uow,
                               true
                             );
-
-                            uow.add(new AddStylesheetUndoableAction(uow.diagram, s));
                           });
                         }
                       )
@@ -190,10 +182,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                         },
                         () => {
                           UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
-                            const s = $d.document.styles.get($s.val)!;
                             $d.document.styles.deleteStylesheet($s.val, uow);
-
-                            uow.add(new DeleteStylesheetUndoableAction(uow.diagram, s));
                           });
                         }
                       )
@@ -227,7 +216,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                         v => {
                           UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
                             const stylesheet = $d.document.styles.get($s.val)!;
-                            stylesheet.setName(v, $d.document.styles, uow);
+                            stylesheet.setName(v, uow);
                           });
                         }
                       )
@@ -253,7 +242,7 @@ export const ElementStylesheetPanel = (props: Props) => {
             const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
               UnitOfWork.executeWithUndo($d, 'Modify style', uow => {
-                stylesheet.setProps(e, $d.document.styles, uow);
+                stylesheet.setProps(e, uow);
               });
             }
 

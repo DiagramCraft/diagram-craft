@@ -1,5 +1,5 @@
 import { PickerCanvas } from './PickerCanvas';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -27,12 +27,11 @@ export const NodeTypePopup = (props: Props) => {
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
-        assertRegularLayer(diagram.activeLayer);
-        const node = cloneElements(
-          [registration.node(diagram)],
-          diagram.activeLayer,
-          uow
-        )[0] as DiagramNode;
+        const layer = diagram.activeLayer;
+        assertRegularLayer(layer);
+
+        const node = cloneElements([registration.node(diagram)], layer, uow)[0] as DiagramNode;
+        layer.addElement(node, uow);
 
         assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
         node.updateMetadata(meta => {
@@ -40,12 +39,7 @@ export const NodeTypePopup = (props: Props) => {
           meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
         }, uow);
 
-        assertRegularLayer(diagram.activeLayer);
-        diagram.activeLayer.addElement(node, uow);
-
-        const edge = diagram.edgeLookup.get(props.edgeId);
-        assert.present(edge);
-
+        const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
         edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
 
         uow.diagram.undoManager.getToMark().forEach(a => uow.add(a));

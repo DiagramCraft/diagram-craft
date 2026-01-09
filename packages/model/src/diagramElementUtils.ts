@@ -1,4 +1,4 @@
-import { DiagramElement, isNode } from './diagramElement';
+import { DiagramElement, isEdge, isNode } from './diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { Point, Scale } from '@diagram-craft/geometry/point';
@@ -11,6 +11,7 @@ import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import type { DiagramEdge } from './diagramEdge';
 import { ElementLookup } from './elementLookup';
+import { groupBy } from '@diagram-craft/utils/array';
 
 // TODO: Ensure linking between edges and nodes works
 //       See ElementsPasteHandler
@@ -20,6 +21,39 @@ const assignNewIdsToSerializedElements = (e: SerializedNode | SerializedEdge) =>
     for (const c of e.children ?? []) {
       assignNewIdsToSerializedElements(c);
     }
+  }
+};
+
+export const deleteElements = (elements: readonly DiagramElement[], uow: UnitOfWork) => {
+  if (elements.length === 0) return;
+
+  const byParent = groupBy(elements, e => e.parent);
+
+  for (const [parent, children] of byParent) {
+    if (parent === undefined) continue;
+    for (const edge of children.filter(isEdge)) {
+      uow.executeRemove(edge, parent, parent.children.indexOf(edge), () =>
+        parent.removeChild(edge, uow)
+      );
+    }
+    for (const node of children.filter(isNode)) {
+      uow.executeRemove(node, parent, parent.children.indexOf(node), () =>
+        parent.removeChild(node, uow)
+      );
+    }
+  }
+
+  const layer = elements[0]!.layer;
+  const rootChildren = byParent.get(undefined) ?? [];
+  for (const edge of rootChildren.filter(isEdge)) {
+    uow.executeRemove(edge, layer, layer.elements.indexOf(edge), () =>
+      layer.removeElement(edge, uow)
+    );
+  }
+  for (const node of rootChildren.filter(isNode)) {
+    uow.executeRemove(node, layer, layer.elements.indexOf(node), () =>
+      layer.removeElement(node, uow)
+    );
   }
 };
 

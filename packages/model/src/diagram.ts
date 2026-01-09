@@ -9,7 +9,7 @@ import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
@@ -344,13 +344,14 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   // TODO: Check layer level events are emitted
   moveElement(
-    elements: ReadonlyArray<DiagramElement>,
+    elementsToMove: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
-    elements.forEach(e => uow.snapshot(e));
+    const elements = [...elementsToMove];
 
+    assertRegularLayer(layer);
     const elementLayers = elements.map(e => {
       assertRegularLayer(e.layer);
       return e.layer;
@@ -363,81 +364,73 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
 
-    // Remove from existing layers
-    const sourceLayers = new Set(elementLayers);
-    for (const l of sourceLayers) {
-      uow.snapshot(l);
-      l.setElements(
-        l.elements.filter(e => !elements.includes(e)),
-        uow
-      );
-    }
-
-    // Remove from groups
-    // TODO: Can optimize by grouping by parent - probably not worth it
+    // Remove elements from their current position
     for (const el of elements) {
       if (el.parent) {
-        uow.snapshot(el.parent);
-        el.parent.removeChild(el, uow);
+        uow.executeRemove(el, el.parent, el.parent.children.indexOf(el), () =>
+          el.parent?.removeChild(el, uow)
+        );
+      } else {
+        uow.executeRemove(el, el.layer, el.layer.elements.indexOf(el), () =>
+          el.layer.removeElement(el, uow)
+        );
       }
     }
 
-    uow.snapshot(layer);
+    const moveIntoLayer = ref === undefined;
+    const moveIntoGroup = isNode(ref?.element) && ref?.element.parent;
+    const moveIntoLayerPosition = !moveIntoLayer && !moveIntoGroup;
 
-    // Move into the new layer
-    if (ref === undefined) {
-      assert.true(layer instanceof RegularLayer);
-      if (layer.isAbove(topMostLayer)) {
-        (layer as RegularLayer).setElements(
-          [...(layer as RegularLayer).elements, ...elements],
-          uow
-        );
-      } else {
-        (layer as RegularLayer).setElements(
-          [...elements, ...(layer as RegularLayer).elements],
-          uow
-        );
-      }
-    } else if (isNode(ref.element) && ref.element.parent) {
-      const parent = ref.element.parent;
-      uow.snapshot(parent);
-      uow.snapshot(ref.element);
+    const elementOrder = (els: readonly DiagramElement[], idx: number) =>
+      ref?.relation === 'above'
+        ? els.toSpliced(idx + 1, 0, ...elements)
+        : els.toSpliced(idx, 0, ...elements);
 
+    if (moveIntoLayer) {
+      const newElementOrder = layer.isAbove(topMostLayer)
+        ? [...layer.elements, ...elements]
+        : [...elements, ...layer.elements];
+      layer.setElements(newElementOrder, uow);
+      elements.map(e => uow.addElement(e, layer, 0));
+    } else if (moveIntoGroup) {
+      const parent = mustExist(ref.element.parent);
       const idx = parent.children.indexOf(ref.element);
-      if (ref.relation === 'above') {
-        parent.setChildren(parent.children.toSpliced(idx + 1, 0, ...elements), uow);
-      } else if (ref.relation === 'below') {
-        parent.setChildren(parent.children.toSpliced(idx, 0, ...elements), uow);
-      } else {
-        ref.element.setChildren([...ref.element.children, ...elements], uow);
+
+      switch (ref.relation) {
+        case 'above':
+        case 'below':
+          uow.executeAdd(elements, parent, ref.relation === 'above' ? idx + 1 : idx, () => {
+            parent.setChildren(elementOrder(parent.children, idx), uow);
+          });
+          break;
+        case 'on':
+          uow.executeAdd(elements, ref.element, idx, () =>
+            ref.element.setChildren([...ref.element.children, ...elements], uow)
+          );
+          break;
+      }
+    } else if (moveIntoLayerPosition) {
+      assert.true(ref.element.layer === layer);
+
+      const idx = layer.elements.indexOf(ref.element);
+      switch (ref.relation) {
+        case 'above':
+        case 'below':
+          uow.executeAdd(elements, layer, ref.relation === 'above' ? idx + 1 : idx, () =>
+            layer.setElements(elementOrder(layer.elements, idx), uow)
+          );
+          break;
+        case 'on':
+          if (isNode(ref.element)) {
+            uow.executeAdd(elements, ref.element, idx, () => {
+              ref.element.setChildren([...ref.element.children, ...elements], uow);
+            });
+          }
+          break;
       }
     } else {
-      assert.true(ref.element.layer === layer);
-      uow.snapshot(ref.element);
-
-      assert.true(layer instanceof RegularLayer);
-      const idx = (layer as RegularLayer).elements.indexOf(ref.element);
-      if (ref.relation === 'above') {
-        (layer as RegularLayer).setElements(
-          (layer as RegularLayer).elements.toSpliced(idx + 1, 0, ...elements),
-          uow
-        );
-      } else if (ref.relation === 'below') {
-        (layer as RegularLayer).setElements(
-          (layer as RegularLayer).elements.toSpliced(idx, 0, ...elements),
-          uow
-        );
-      } else if (isNode(ref.element)) {
-        ref.element.setChildren([...ref.element.children, ...elements], uow);
-      }
+      VERIFY_NOT_REACHED();
     }
-
-    // Assign new layer
-    assert.true(layer instanceof RegularLayer);
-    elements.forEach(e => (layer as RegularLayer).addElement(e, uow));
-
-    // TODO: Not clear if this is needed or not
-    uow.updateDiagram();
   }
 
   getAttachmentsInUse() {

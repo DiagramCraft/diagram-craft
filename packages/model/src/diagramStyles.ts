@@ -1,5 +1,4 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import type { UndoableAction } from './undoManager';
 import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
@@ -17,6 +16,11 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import {
+  DiagramStylesParentChildUOWSpecification,
+  DiagramStylesUOWSpecification
+} from '@diagram-craft/model/diagramStyles.uow';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -30,10 +34,7 @@ type TypeMap = {
   text: TextStyleProps;
 };
 
-export class Stylesheet<
-  T extends StylesheetType,
-  P = TypeMap[T]
-> implements UOWTrackable<StylesheetSnapshot> {
+export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOWTrackable {
   type: T;
 
   readonly trackableType = 'stylesheet';
@@ -64,22 +65,20 @@ export class Stylesheet<
     return this.crdt.get('props') as P;
   }
 
-  setProps(props: Partial<P>, manager: DiagramStyles, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
-    uow.updateElement(this);
-    manager.emit('stylesheetUpdated', { stylesheet: this });
+  setProps(props: Partial<P>, uow: UnitOfWork): void {
+    uow.executeUpdate(this, () => {
+      this.crdt.set('props', this.cleanProps(props) as NodeProps | EdgeProps);
+    });
   }
 
   get name() {
     return this.crdt.get('name')!;
   }
 
-  setName(name: string, manager: DiagramStyles, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.crdt.set('name', name);
-    uow.updateElement(this);
-    manager.emit('stylesheetUpdated', { stylesheet: this });
+  setName(name: string, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.crdt.set('name', name);
+    });
   }
 
   invalidate(_uow: UnitOfWork): void {
@@ -252,7 +251,10 @@ export type DiagramStylesEvents = {
   stylesheetRemoved: { stylesheet: string };
 };
 
-export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements Releasable {
+export class DiagramStyles
+  extends EventEmitter<DiagramStylesEvents>
+  implements Releasable, UOWTrackable
+{
   #textStyles: MappedCRDTMap<Stylesheet<'text'>, StylesheetSnapshot>;
   #nodeStyles: MappedCRDTMap<Stylesheet<'node'>, StylesheetSnapshot>;
   #edgeStyles: MappedCRDTMap<Stylesheet<'edge'>, StylesheetSnapshot>;
@@ -260,6 +262,9 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements 
   #activeNodeStylesheet = DefaultStyles.node.default;
   #activeEdgeStylesheet = DefaultStyles.edge.default;
   #activeTextStylesheet = DefaultStyles.text.default;
+
+  readonly id = 'diagramStyles';
+  readonly trackableType = 'diagramStyles';
 
   constructor(
     readonly crdt: CRDTRoot,
@@ -308,6 +313,8 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements 
       });
     }
   }
+
+  invalidate(_uow: UnitOfWork) {}
 
   release() {}
 
@@ -432,15 +439,17 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements 
     this.crdt.transact(() => {
       this.clearStylesheet(id, uow);
 
-      if (stylesheet.type === 'node') {
-        this.#nodeStyles.remove(id);
-      } else if (stylesheet.type === 'text') {
-        this.#textStyles.remove(id);
-      } else {
-        this.#edgeStyles.remove(id);
-      }
+      uow.executeRemove(stylesheet, this, 0, () => {
+        if (stylesheet.type === 'node') {
+          this.#nodeStyles.remove(id);
+        } else if (stylesheet.type === 'text') {
+          this.#textStyles.remove(id);
+        } else {
+          this.#edgeStyles.remove(id);
+        }
+      });
 
-      this.emit('stylesheetRemoved', { stylesheet: stylesheet.id });
+      //this.emit('stylesheetRemoved', { stylesheet: stylesheet.id });
 
       // TODO: This can fail in case we delete the last stylesheet
       if (stylesheet.type === 'node') {
@@ -522,54 +531,25 @@ export class DiagramStyles extends EventEmitter<DiagramStylesEvents> implements 
     }, uow);
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  addStylesheet(id: string, stylesheet: Stylesheet<any>, _uow?: UnitOfWork) {
+  // biome-ignore lint/suspicious/noExplicitAny: need any here and not unknown
+  addStylesheet(id: string, stylesheet: Stylesheet<any>, uow: UnitOfWork) {
     this.crdt.transact(() => {
-      if (stylesheet.type === 'node') {
-        this.#nodeStyles.set(id, stylesheet);
-        this.activeNodeStylesheet = stylesheet;
-      } else if (stylesheet.type === 'text') {
-        this.#textStyles.set(id, stylesheet);
-        this.activeTextStylesheet = stylesheet;
-      } else {
-        this.#edgeStyles.set(id, stylesheet);
-        this.activeEdgeStylesheet = stylesheet;
-      }
-      this.emit('stylesheetAdded', { stylesheet });
+      uow.executeAdd(stylesheet, this, 0, () => {
+        if (stylesheet.type === 'node') {
+          this.#nodeStyles.set(id, stylesheet);
+          this.activeNodeStylesheet = stylesheet;
+        } else if (stylesheet.type === 'text') {
+          this.#textStyles.set(id, stylesheet);
+          this.activeTextStylesheet = stylesheet;
+        } else {
+          this.#edgeStyles.set(id, stylesheet);
+          this.activeEdgeStylesheet = stylesheet;
+        }
+      });
     });
   }
 }
 
-export class DeleteStylesheetUndoableAction implements UndoableAction {
-  description = 'Delete stylesheet';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet<StylesheetType>
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-  }
-}
-
-export class AddStylesheetUndoableAction implements UndoableAction {
-  description = 'Add stylesheet';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly stylesheet: Stylesheet<StylesheetType>
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.document.styles.deleteStylesheet(this.stylesheet.id, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.document.styles.addStylesheet(this.stylesheet.id, this.stylesheet, uow);
-  }
-}
+UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesUOWSpecification();
+UnitOfWorkManager.parentChildSpecs['diagramStyles-stylesheet'] =
+  new DiagramStylesParentChildUOWSpecification();

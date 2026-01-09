@@ -6,7 +6,6 @@ import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useDiagram } from '../../../application';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 export const NodeTableDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -26,20 +25,14 @@ export const NodeTableDimensionsPanel = (props: Props) => {
       UnitOfWork.executeWithUndo(diagram, 'Adding row', uow => {
         for (let n = 0; n < r - rows; n++) {
           const row = (table.children.at(-1) as DiagramNode).duplicate();
-          uow.snapshot(row);
           table.addChild(row, uow);
-          assertRegularLayer(table.layer);
-          table.layer.addElement(row, uow);
         }
       });
     } else if (r < rows) {
       UnitOfWork.executeWithUndo(diagram, 'Delete row', uow => {
         for (let n = 0; n < rows - r; n++) {
           const row = table.children.at(-1) as DiagramNode;
-          uow.snapshot(row);
           table.removeChild(row, uow);
-          assertRegularLayer(row.layer);
-          row.layer.removeElement(row, uow);
         }
       });
     }
@@ -53,10 +46,7 @@ export const NodeTableDimensionsPanel = (props: Props) => {
             const row = table.children[i] as DiagramNode;
             for (let j = columns; j < c; j++) {
               const child = (row.children.at(-1) as DiagramNode).duplicate();
-              uow.snapshot(child);
               row.addChild(child, uow);
-              assertRegularLayer(table.layer);
-              table.layer.addElement(child, uow);
             }
           }
         }
@@ -67,10 +57,7 @@ export const NodeTableDimensionsPanel = (props: Props) => {
           for (let i = 0; i < rows; i++) {
             const row = table.children[i] as DiagramNode;
             const child = row.children.at(-1) as DiagramNode;
-            uow.snapshot(child);
             row.removeChild(child, uow);
-            assertRegularLayer(table.layer);
-            table.layer.removeElement(child, uow);
           }
         }
       });

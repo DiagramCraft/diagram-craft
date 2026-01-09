@@ -93,47 +93,45 @@ export const applyNodeTransform = (
   uow: UnitOfWork,
   isChild = false
 ): void => {
-  uow.snapshot(node);
+  uow.executeUpdate(node, () => {
+    const previousBounds = node.bounds;
+    node.setBounds(Transform.box(node.bounds, ...transforms), uow);
 
-  const previousBounds = node.bounds;
-  node.setBounds(Transform.box(node.bounds, ...transforms), uow);
+    node.getDefinition().onTransform(transforms, node, node.bounds, previousBounds, uow);
 
-  node.getDefinition().onTransform(transforms, node, node.bounds, previousBounds, uow);
+    if (node.parent && !isChild) {
+      const parent = node.parent;
+      if (isNode(parent)) {
+        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+          parent.getDefinition().onChildChanged(parent, uow);
+        });
+      } else {
+        assert.true(node.isLabelNode());
 
-  if (node.parent && !isChild) {
-    const parent = node.parent;
-    if (isNode(parent)) {
-      uow.registerOnCommitCallback('onChildChanged', parent, () => {
-        parent.getDefinition().onChildChanged(parent, uow);
-      });
-    } else {
-      assert.true(node.isLabelNode());
+        // TODO: This should be possible to put in the invalidation() method
 
-      // TODO: This should be possible to put in the invalidation() method
+        if (uow.contains(node.labelEdge()!)) return;
 
-      if (uow.contains(node.labelEdge()!)) return;
+        const labelNode = node.labelNode();
+        assert.present(labelNode);
 
-      const labelNode = node.labelNode();
-      assert.present(labelNode);
+        const dx = node.bounds.x - previousBounds.x;
+        const dy = node.bounds.y - previousBounds.y;
 
-      const dx = node.bounds.x - previousBounds.x;
-      const dy = node.bounds.y - previousBounds.y;
+        const clampAmount = 100;
 
-      const clampAmount = 100;
-
-      node.updateLabelNode(
-        {
-          offset: {
-            x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
-            y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
-          }
-        },
-        uow
-      );
+        node.updateLabelNode(
+          {
+            offset: {
+              x: clamp(labelNode.offset.x + dx, -clampAmount, clampAmount),
+              y: clamp(labelNode.offset.y + dy, -clampAmount, clampAmount)
+            }
+          },
+          uow
+        );
+      }
     }
-  }
-
-  uow.updateElement(node);
+  });
 };
 
 export interface DiagramNode extends DiagramElement {
@@ -161,8 +159,8 @@ export interface DiagramNode extends DiagramElement {
   readonly name: string;
   convertToPath(uow: UnitOfWork): void;
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void;
-  _addEdge(anchor: string | undefined, edge: DiagramEdge): void;
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
   _getAnchorPosition(anchor: string): Point;
   _getPositionInBounds(p: Point, respectRotation?: boolean): Point;
 
@@ -182,10 +180,7 @@ export interface DiagramNode extends DiagramElement {
   _getNestedElements(): DiagramElement[];
 }
 
-export class SimpleDiagramNode
-  extends AbstractDiagramElement
-  implements DiagramNode, UOWTrackable<DiagramNodeSnapshot>
-{
+export class SimpleDiagramNode extends AbstractDiagramElement implements DiagramNode, UOWTrackable {
   // Shared properties
   readonly #nodeType: CRDTProp<DiagramNodeCRDT, 'nodeType'>;
   readonly #edges: MappedCRDTMap<string[], { edges: Array<string> }>;
@@ -303,30 +298,29 @@ export class SimpleDiagramNode
   ) {
     const node = new SimpleDiagramNode(id, layer, anchorCache);
 
-    SimpleDiagramNode.initializeNode(node, nodeType, bounds, props, metadata, text);
+    node._initializeNode(nodeType, bounds, props, metadata, text);
 
     return node;
   }
 
-  protected static initializeNode(
-    node: SimpleDiagramNode,
+  protected _initializeNode(
     nodeType: 'group' | string,
     bounds: Box,
     props: NodePropsForEditing,
     metadata: ElementMetadata,
     text: NodeTexts = { text: '' }
   ) {
-    node.#bounds.set(bounds);
-    node.#nodeType.set(nodeType);
-    node.#text.set(text);
+    this.#bounds.set(bounds);
+    this.#nodeType.set(nodeType);
+    this.#text.set(text);
 
-    node.#props.set(props as NodeProps);
+    this.#props.set(props as NodeProps);
 
     metadata.style ??= nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default;
     metadata.textStyle ??= DefaultStyles.text.default;
-    node._metadata.set(metadata);
+    this._metadata.set(metadata);
 
-    node.clearCache();
+    this.clearCache();
   }
 
   getDefinition() {
@@ -338,10 +332,12 @@ export class SimpleDiagramNode
   }
 
   changeNodeType(nodeType: string, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#nodeType.set(nodeType);
-    this._children.clear();
-    uow.updateElement(this);
+    if (nodeType === this.nodeType) return;
+
+    uow.executeUpdate(this, () => {
+      this.#nodeType.set(nodeType);
+      this.setChildren([], uow);
+    });
 
     this.clearCache();
     this.invalidateAnchors(uow);
@@ -355,12 +351,12 @@ export class SimpleDiagramNode
   }
 
   setText(text: string, uow: UnitOfWork, id = 'text') {
-    uow.snapshot(this);
-    this.#text.set({
-      ...this.#text.get(),
-      [id === '1' ? 'text' : id]: text
+    uow.executeUpdate(this, () => {
+      this.#text.set({
+        ...this.#text.get(),
+        [id === '1' ? 'text' : id]: text
+      });
     });
-    uow.updateElement(this);
     this.clearCache();
   }
 
@@ -553,9 +549,7 @@ export class SimpleDiagramNode
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork) {
     this.crdt.get().transact(() => {
-      uow.snapshot(this);
-      this.#props.update(callback);
-      uow.updateElement(this);
+      uow.executeUpdate(this, () => this.#props.update(callback));
 
       this.clearCache();
       this.invalidateAnchors(uow);
@@ -640,7 +634,7 @@ export class SimpleDiagramNode
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    relation?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     super.addChild(child, uow, relation);
 
@@ -664,10 +658,8 @@ export class SimpleDiagramNode
   }
 
   setBounds(bounds: Box, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const oldBounds = this.bounds;
-    this.#bounds.set(bounds);
-    if (!Box.isEqual(oldBounds, this.bounds)) uow.updateElement(this);
+    if (Box.isEqual(this.bounds, bounds)) return;
+    uow.executeUpdate(this, () => this.#bounds.set(bounds));
   }
 
   /* Anchors ************************************************************************************************ */
@@ -675,9 +667,7 @@ export class SimpleDiagramNode
   get anchors(): ReadonlyArray<Anchor> {
     // TODO: Can this be handled using cache
     if (this.#anchors.get() === undefined) {
-      UnitOfWork.execute(this.diagram, uow => {
-        this.invalidateAnchors(uow);
-      });
+      UnitOfWork.execute(this.diagram, uow => this.invalidateAnchors(uow));
     }
 
     return this.#anchors.get() ?? [];
@@ -703,14 +693,15 @@ export class SimpleDiagramNode
       edges: Object.fromEntries(
         Array.from(this.#edges.entries).map(([k, v]) => [k, v.map(e => ({ id: e }))])
       ),
-      texts: this.#text.getClone()
+      texts: this.#text.getClone(),
+      tags: [...this.tags]
     };
   }
 
   restore(snapshot: DiagramNodeSnapshot, uow: UnitOfWork) {
     this.setBounds(snapshot.bounds, uow);
     this.#props.set(snapshot.props as NodeProps);
-    this.#nodeType.set(snapshot.nodeType);
+    this.changeNodeType(snapshot.nodeType, uow);
     this.#text.set(snapshot.texts);
     this.forceUpdateMetadata(snapshot.metadata);
 
@@ -723,18 +714,18 @@ export class SimpleDiagramNode
       this.#edges.set(k, unique([...(this.#edges.get(k) ?? []), ...v.map(e => e.id)]));
     }
 
+    this.setTags(snapshot.tags ?? [], uow);
+
     uow.updateElement(this);
     this.clearCache();
   }
 
   convertToPath(uow: UnitOfWork) {
-    uow.snapshot(this);
-
     const paths = this.getDefinition().getBoundingPath(this);
 
     const scaledPath = transformPathList(paths, toUnitLCS(this.bounds));
 
-    this.#nodeType.set('generic-path');
+    this.changeNodeType('generic-path', uow);
     this.updateProps(p => {
       p.custom ??= {};
       p.custom.genericPath = {};
@@ -858,8 +849,6 @@ export class SimpleDiagramNode
    *
    */
   invalidate(uow: UnitOfWork) {
-    uow.snapshot(this);
-
     // Prevent infinite recursion
     if (uow.hasBeenInvalidated(this)) return;
     uow.beginInvalidation(this);
@@ -884,6 +873,10 @@ export class SimpleDiagramNode
 
   detach(uow: UnitOfWork) {
     this.diagram.nodeLookup.delete(this.id);
+
+    for (const c of this.children) {
+      c.detach(uow);
+    }
 
     // "Detach" any edges that connects to this node
     for (const anchor of this.#edges.keys) {
@@ -917,12 +910,16 @@ export class SimpleDiagramNode
     applyNodeTransform(this, transforms, uow, isChild);
   }
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? []);
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork) {
+    uow.executeUpdate(this, () =>
+      this.#edges.set(anchor ?? '', this.#edges.get(anchor ?? '')?.filter(e => e !== edge.id) ?? [])
+    );
   }
 
-  _addEdge(anchor: string | undefined, edge: DiagramEdge) {
-    this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]));
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork) {
+    uow.executeUpdate(this, () =>
+      this.#edges.set(anchor ?? '', unique([...(this.#edges.get(anchor ?? '') ?? []), edge.id]))
+    );
   }
 
   _getAnchorPosition(anchor: string) {
@@ -984,22 +981,20 @@ export class SimpleDiagramNode
   updateLabelNode(labelNode: Partial<LabelNode>, uow: UnitOfWork) {
     if (!this.isLabelNode()) return;
 
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      const replacement: ResolvedLabelNode = {
+        ...this.labelNode()!,
+        ...labelNode,
+        node: () => this
+      };
 
-    const replacement: ResolvedLabelNode = {
-      ...this.labelNode()!,
-      ...labelNode,
-      node: () => this
-    };
-
-    const edge = this.labelEdge();
-    assert.present(edge);
-    edge.setLabelNodes(
-      edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
-      uow
-    );
-
-    uow.updateElement(this);
+      const edge = this.labelEdge();
+      assert.present(edge);
+      edge.setLabelNodes(
+        edge.labelNodes.map((n: ResolvedLabelNode) => (n.node() === this ? replacement : n)),
+        uow
+      );
+    });
   }
 
   invalidateAnchors(uow: UnitOfWork) {

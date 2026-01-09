@@ -106,11 +106,11 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const metadata = this._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      this._metadata.set(metadata);
+    });
     this.clearCache();
   }
 

@@ -14,6 +14,11 @@ import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { isRegularLayer } from './diagramLayerUtils';
+import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import {
+  LayerParentChildUOWSpecification,
+  LayerUOWSpecification
+} from '@diagram-craft/model/diagramLayer.uow';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 export type StackPosition = { element: DiagramElement; idx: number };
@@ -23,12 +28,12 @@ export function isReferenceLayer(l: Layer): l is ReferenceLayer {
 }
 
 export abstract class Layer<
-    T extends RegularLayer | RuleLayer | ModificationLayer =
-      | RegularLayer
-      | RuleLayer
-      | ModificationLayer
-  >
-  implements UOWTrackable<LayerSnapshot>, AttachmentConsumer, Releasable
+  T extends RegularLayer | RuleLayer | ModificationLayer =
+    | RegularLayer
+    | RuleLayer
+    | ModificationLayer
+>
+  implements UOWTrackable, AttachmentConsumer, Releasable
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
@@ -82,19 +87,18 @@ export abstract class Layer<
   }
 
   setName(name: string, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#name.set(name);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => this.#name.set(name));
   }
 
   isLocked() {
     return this.#locked;
   }
 
-  // TODO: Add uow here
-  set locked(value: boolean) {
-    this.#locked = value;
-    this.diagram.layers.emit('layerStructureChange');
+  setLocked(value: boolean, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#locked = value;
+      this.diagram.layers.emit('layerStructureChange');
+    });
   }
 
   abstract resolve(): T | undefined;
@@ -128,15 +132,13 @@ export abstract class Layer<
       _snapshotType: 'layer',
       name: this.name,
       locked: this.isLocked(),
-      // TODO: Remove elements from here
-      elements: [],
       type: this.type
     };
   }
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
     this.setName(snapshot.name, uow);
-    this.locked = snapshot.locked;
+    this.setLocked(snapshot.locked, uow);
     this._type = snapshot.type;
     uow.updateElement(this);
   }
@@ -183,3 +185,6 @@ declare global {
 
 assert.isRegularLayer = (e: Layer): asserts e is RegularLayer =>
   assert.true(isRegularLayer(e), 'not regular layer');
+
+UnitOfWorkManager.trackableSpecs['layer'] = new LayerUOWSpecification();
+UnitOfWorkManager.parentChildSpecs['layer-element'] = new LayerParentChildUOWSpecification();

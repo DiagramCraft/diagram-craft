@@ -108,7 +108,7 @@ export interface DiagramElement {
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ): void;
   removeChild(child: DiagramElement, uow: UnitOfWork): void;
 
@@ -169,7 +169,7 @@ export abstract class AbstractDiagramElement
           this._diagram.register(e);
 
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.addElement(e);
+          uow.addElement(e, this, this.children.length - 1);
           uow.updateElement(this);
         },
         onRemoteChange: e => {
@@ -179,7 +179,7 @@ export abstract class AbstractDiagramElement
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.removeElement(e);
+          uow.removeElement(e, this, this.children.indexOf(e));
           uow.updateElement(this);
         },
         onInit: e => this._diagram.register(e)
@@ -306,12 +306,12 @@ export abstract class AbstractDiagramElement
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
-    this.clearCache();
+    uow.executeUpdate(this, () => {
+      const metadata = this._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      this._metadata.set(metadata);
+      this.clearCache();
+    });
   }
 
   /* Tags ******************************************************************************************************** */
@@ -321,17 +321,17 @@ export abstract class AbstractDiagramElement
   }
 
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
-    this._crdt.get().set('tags', uniqueTags);
+    uow.executeUpdate(this, () => {
+      const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
+      this._crdt.get().set('tags', uniqueTags);
 
-    // Add all element tags to the document tags collection
-    uniqueTags.forEach(tag => {
-      this.diagram.document.tags.add(tag);
+      // Add all element tags to the document tags collection
+      uniqueTags.forEach(tag => {
+        this.diagram.document.tags.add(tag);
+      });
+
+      this.clearCache();
     });
-
-    uow.updateElement(this);
-    this.clearCache();
   }
 
   /* Cache *************************************************************************************************** */
@@ -354,88 +354,74 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
+    assert.false(children.some(e => e.id === this.id));
 
-    const oldChildren = this._children.values;
+    const ids = children.map(e => e.id);
+    const added = children.filter(e => !this._children.has(e.id));
+    const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
 
-    children.forEach(c => c.detachCRDT(() => {}));
-    this._children.set(children.map(e => [e.id, e]));
-
-    this._children.values.forEach(c => {
-      uow.snapshot(c);
-      c._setParent(this);
-      this.diagram.register(c);
-    });
-
-    // TODO: We should update nodeLookup and edgeLookup here
-    oldChildren
-      .filter(c => !children.includes(c))
-      .forEach(c => {
-        uow.removeElement(c);
-        c._setParent(undefined);
+    for (const e of added) {
+      uow.executeAdd(e, this, this._children.size, () => {
+        this._children.add(e.id, e);
+        e._setParent(this);
+        this.diagram.register(e);
       });
+    }
 
-    this._children.values.forEach(c => {
-      uow.updateElement(c);
-    });
+    for (const e of removed) {
+      uow.executeRemove(e, this, this._children.getIndex(e.id), () => {
+        e.detachCRDT(() => {
+          this._children.remove(e.id);
+          e._setParent(undefined);
+        });
+      });
+    }
 
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => this._children.setOrder(ids));
   }
 
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
+    assert.false(child.id === this.id);
 
-    uow.snapshot(this);
-    uow.snapshot(child);
-
-    // TODO: Check so the same not can't be added multiple times
-
-    if (relation) {
-      const children = this._children;
-      const index = children.getIndex(relation.ref.id);
-      if (relation.type === 'after') {
-        this._children.set(
-          [...children.values.slice(0, index + 1), child, ...children.values.slice(index + 1)].map(
-            e => [e.id, e]
-          )
-        );
+    if (position) {
+      if (typeof position === 'number') {
+        uow.executeAdd(child, this, position, () => {
+          this._children.insert(child.id, child, position);
+        });
       } else {
-        this._children.set(
-          [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
-            e.id,
-            e
-          ])
-        );
+        const index = this._children.getIndex(position.ref.id);
+        const effectiveIndex = position.type === 'after' ? index + 1 : index;
+        uow.executeAdd(child, this, effectiveIndex, () => {
+          this._children.insert(child.id, child, effectiveIndex);
+        });
       }
     } else {
-      this._children.add(child.id, child);
+      uow.executeAdd(child, this, this.children.length, () => {
+        this._children.add(child.id, child);
+      });
     }
+
     child._setParent(this);
 
     this.diagram.register(child);
-
-    uow.updateElement(this);
-    uow.updateElement(child);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
-    uow.snapshot(this);
-    uow.snapshot(child);
-
-    this._children.remove(child.id);
-    child._setParent(undefined);
-
-    // TODO: We should clear nodeLookup and edgeLookup here
-
-    uow.updateElement(this);
-    uow.removeElement(child);
+    uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
+      child.detachCRDT(() => {
+        this._children.remove(child.id);
+        child._setParent(undefined);
+      });
+      // TODO: We should clear nodeLookup and edgeLookup here
+    });
   }
 
   get comments() {

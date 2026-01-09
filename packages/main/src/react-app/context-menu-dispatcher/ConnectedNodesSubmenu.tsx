@@ -6,7 +6,6 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
@@ -188,8 +187,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     activeLayer
   );
 
-  // Add both node and edge to the diagram
-  UnitOfWork.execute(diagram, uow => {
+  UnitOfWork.executeWithUndo(diagram, 'Create node for data entry', uow => {
     activeLayer.addElement(newNode, uow);
     activeLayer.addElement(newEdge, uow);
 
@@ -202,13 +200,9 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     newEdge.updateMetadata(meta => {
       meta.style = diagram.document.styles.activeEdgeStylesheet.id;
     }, uow);
+
+    uow.select(diagram, [newNode.id, newEdge.id]);
   });
-
-  diagram.undoManager.addAndExecute(
-    new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)
-  );
-
-  diagram.selection.setElements([newNode]);
 };
 
 // Helper function to get the appropriate icon for each connection type

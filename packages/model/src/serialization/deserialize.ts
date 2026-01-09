@@ -127,18 +127,18 @@ export const deserializeDiagramElements = (
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(start.anchor, edge);
+        startNode._addEdge(start.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(undefined, edge);
+        startNode._addEdge(undefined, edge, uow);
       }
 
       if (isSerializedEndpointAnchor(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(end.anchor, edge);
+        endNode._addEdge(end.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(undefined, edge);
+        endNode._addEdge(undefined, edge, uow);
       }
 
       edgeLookup.set(e.id, edge);
@@ -193,10 +193,14 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.customPalette.setColors(document.customPalette);
 
     for (const edgeStyle of document.styles.edgeStyles) {
-      doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles), uow)
+      );
     }
     for (const nodeStyle of document.styles.nodeStyles) {
-      doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles), uow)
+      );
     }
 
     for (const schema of document.schemas) {
@@ -315,14 +319,14 @@ const deserializeDiagrams = <T extends Diagram>(
     //  3. Load all modifications
 
     // Create layers
-    UnitOfWork.execute(newDiagram, uow => {
+    UnitOfWork.executeSilently(newDiagram, uow => {
       for (const l of $d.layers) {
         switch (l.layerType) {
           case 'regular':
           case 'basic': {
             const layer = new RegularLayer(l.id, l.name, [], newDiagram);
-            if (l.isLocked) layer.locked = true;
             newDiagram.layers.add(layer, uow);
+            if (l.isLocked) layer.setLocked(true, uow);
             break;
           }
           case 'reference': {
@@ -340,8 +344,8 @@ const deserializeDiagrams = <T extends Diagram>(
           }
           case 'modification': {
             const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
-            if (l.isLocked) layer.locked = true;
             newDiagram.layers.add(layer, uow);
+            if (l.isLocked) layer.setLocked(true, uow);
             break;
           }
           default:

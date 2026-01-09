@@ -247,6 +247,34 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   });
 
   describe('bounds', () => {
+    it('should set bounds correctly', () => {
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow)
+      );
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setEnd(new FreeEndpoint({ x: 10, y: 10 }), uow)
+      );
+
+      // Act
+      UnitOfWork.executeWithUndo(model.diagram1, 'set bounds', uow => {
+        edge1.setBounds({ x: 10, y: 10, w: 10, h: 10, r: 0 }, uow);
+      });
+
+      // Verify
+      expect(edge1.start.serialize()).toStrictEqual({ position: { x: 10, y: 10 } });
+      expect(edge1.end.serialize()).toStrictEqual({ position: { x: 20, y: 20 } });
+
+      // Act & Verify
+      model.diagram1.undoManager.undo();
+      expect(edge1.start.serialize()).toStrictEqual({ position: { x: 0, y: 0 } });
+      expect(edge1.end.serialize()).toStrictEqual({ position: { x: 10, y: 10 } });
+
+      // Act & Verify
+      model.diagram1.undoManager.redo();
+      expect(edge1.start.serialize()).toStrictEqual({ position: { x: 10, y: 10 } });
+      expect(edge1.end.serialize()).toStrictEqual({ position: { x: 20, y: 20 } });
+    });
+
     it('should return a box defined by the start and end positions', () => {
       // **** Setup
       const startNode = model.layer1.addNode();
@@ -788,7 +816,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('updateProps', () => {
     it('should update simple props', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.executeWithUndo(model.diagram1, 'Set props', uow =>
         edge1.updateProps(p => {
           p.stroke ??= {};
           p.stroke.color = 'red';
@@ -802,13 +830,21 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
         expect(edge2.storedProps.stroke!.color).toBe('red');
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
+
+      model.diagram1.undoManager.undo();
+      expect(edge1.storedProps.stroke?.color).toBeUndefined();
+      if (edge2) expect(edge2.storedProps.stroke?.color).toBeUndefined();
+
+      model.diagram1.undoManager.redo();
+      expect(edge1.storedProps.stroke!.color).toBe('red');
+      if (edge2) expect(edge2.storedProps.stroke!.color).toBe('red');
     });
   });
 
   describe('updateCustomProps', () => {
     it('should update custom props', () => {
       // Act
-      UnitOfWork.execute(model.diagram1, uow =>
+      UnitOfWork.executeWithUndo(model.diagram1, 'custom props', uow =>
         edge1.updateCustomProps(
           'blockArrow',
           p => {
@@ -825,6 +861,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
         expect(edge2.storedProps.custom!.blockArrow!.width).toBe(20);
         expect(model.elementChange[1]).toHaveBeenCalledTimes(1);
       }
+
+      model.diagram1.undoManager.undo();
+      expect(edge1.storedProps.custom?.blockArrow?.width).toBeUndefined();
+      if (edge2) expect(edge2.storedProps.custom?.blockArrow?.width).toBeUndefined();
+
+      model.diagram1.undoManager.redo();
+      expect(edge1.storedProps.custom?.blockArrow?.width).toBe(20);
+      if (edge2) expect(edge2.storedProps.custom?.blockArrow?.width).toBe(20);
     });
   });
 });

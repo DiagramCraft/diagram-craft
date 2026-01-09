@@ -128,7 +128,7 @@ export class MappedCRDTOrderedMap<
   }
 
   getIndex(key: string) {
-    return this.#current.get(key)?.get('index') ?? -1;
+    return this.#entries.findIndex(e => e[0] === key);
   }
 
   add(key: string, t: T) {
@@ -140,6 +140,55 @@ export class MappedCRDTOrderedMap<
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
     this.#current.set(key, entry);
+  }
+
+  insert(key: string, t: T, position: number) {
+    assert.false(this.#current.has(key));
+    assert.true(
+      position >= 0 && position <= this.#entries.length,
+      `Invalid position ${position} for insert, length ${this.#entries.length}`
+    );
+
+    // Determine the target CRDT index based on position
+    // CRDT indices can have gaps after removals, so we can't just use position + 1
+    let targetIndex: number;
+
+    if (position === 0) {
+      targetIndex = 1;
+    } else if (position === this.#entries.length) {
+      const lastElement = this.#entries.at(-1)!;
+      targetIndex = this.#current.get(lastElement[0])!.get('index')! + 1;
+    } else {
+      const elementAtPosition = this.#entries[position]!;
+      targetIndex = this.#current.get(elementAtPosition[0])!.get('index')!;
+    }
+
+    this.#current.transact(() => {
+      // Update indices of existing elements at or after the insertion position
+      // Only needed if not inserting at the end
+      if (position < this.#entries.length) {
+        for (const [, v] of this.#current.entries()) {
+          const currentIndex = v.get('index')!;
+          if (currentIndex >= targetIndex) {
+            v.set('index', currentIndex + 1);
+          }
+        }
+      }
+
+      // Create and insert the new entry
+      const entry = this.#current.factory.makeMap<WrapperType>();
+      entry.set('index', targetIndex);
+      entry.set('value', this.mapper.toCRDT(t));
+      this.#current.set(key, entry);
+    });
+
+    // Add to local entries and sort by CRDT index
+    this.#entries.push([key, t]);
+    this.#entries.sort((a, b) => {
+      const indexA = this.#current.get(a[0])?.get('index') ?? 0;
+      const indexB = this.#current.get(b[0])?.get('index') ?? 0;
+      return indexA - indexB;
+    });
   }
 
   update(key: string, t: T) {
@@ -185,6 +234,13 @@ export class MappedCRDTOrderedMap<
         }
       }
     });
+
+    this.#entries = Array.from(this.#current.entries())
+      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
+      .map(([k, v]) => {
+        const existing = this.#entries.find(e => e[0] === k);
+        return [k, existing?.[1] ?? this.mapper.fromCRDT(v.get('value')!)];
+      });
   }
 
   private populateFromCRDT(e?: { key: string; value: CRDTMap<WrapperType<C>> }) {

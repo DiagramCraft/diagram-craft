@@ -115,7 +115,7 @@ export class TestDiagramNodeBuilder extends SimpleDiagramNode {
   constructor(id: string, type: string, bounds: Box, diagram: Diagram, props?: NodeProps) {
     super(id, diagram.activeLayer as RegularLayer);
     assertRegularLayer(this.layer);
-    SimpleDiagramNode.initializeNode(this, type, bounds, props ?? {}, {});
+    this._initializeNode(type, bounds, props ?? {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {

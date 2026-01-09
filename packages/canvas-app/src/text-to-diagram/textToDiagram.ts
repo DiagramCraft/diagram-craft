@@ -6,10 +6,6 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import {
-  ElementAddUndoableAction,
-  ElementDeleteUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
@@ -41,11 +37,16 @@ const updateOrCreateLabelNode = (
   // Need to create a new label node or handle multiple label nodes
   // If there are multiple label nodes, we'll remove them all and create a single one
   if (edge.labelNodes.length > 1) {
+    // TODO: This logic is not correct at all. It adds label nodes as children
+    //       of the layer - where it should not be
     // Remove all existing label nodes
     for (const ln of edge.labelNodes) {
       const node = ln.node();
-      uow.snapshot(node);
-      layer.removeElement(node, uow);
+      if (layer.elements.includes(node)) {
+        layer.removeElement(node, uow);
+      } else {
+        node.detach(uow);
+      }
     }
     edge.setLabelNodes([], uow);
   }
@@ -102,7 +103,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
     for (const id of existingIds) {
       if (!parsedIds.has(id)) {
         const element = existingElements.get(id)!;
-        uow.snapshot(element);
         element.layer.removeElement(element, uow);
         elementsToRemove.push(element);
       }
@@ -114,8 +114,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
 
       if (existingElement) {
         // Update existing element
-        uow.snapshot(existingElement);
-
         if (parsedElement.type === 'node' && isNode(existingElement)) {
           // Update text
           if (parsedElement.name !== undefined) {
@@ -204,14 +202,11 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
             // If no label is specified but edge has label nodes, remove them
             for (const ln of existingElement.labelNodes) {
               const node = ln.node();
-              uow.snapshot(node);
               layer.removeElement(node, uow);
             }
             existingElement.setLabelNodes([], uow);
           }
         }
-
-        uow.updateElement(existingElement);
         return existingElement;
       } else {
         // Add new element
@@ -332,10 +327,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           }
         }
 
-        if (newElement) {
-          uow.addElement(newElement);
-        }
-
         return newElement;
       }
     };
@@ -344,9 +335,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
     for (const element of elements) {
       processElement(element);
     }
-
-    // Commit the UnitOfWork
-    const snapshots = uow.commit();
 
     // Update selection to remove any elements that were removed
     if (elementsToRemove.length > 0) {
@@ -357,23 +345,6 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
       if (updatedSelection.length !== currentSelection.length) {
         diagram.selection.setElements(updatedSelection);
       }
-    }
-
-    // Add undoable action for removals
-    if (elementsToRemove.length > 0) {
-      uow.add(new ElementDeleteUndoableAction(diagram, layer, elementsToRemove, false));
-    }
-
-    // Add undoable actions for additions
-    const addedElements = snapshots.onlyAdded().keys;
-    if (addedElements.length > 0) {
-      uow.add(
-        new ElementAddUndoableAction(
-          addedElements.map(id => diagram.lookup(id)!),
-          diagram,
-          layer
-        )
-      );
     }
   });
 };

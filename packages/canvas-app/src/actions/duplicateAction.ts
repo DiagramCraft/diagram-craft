@@ -2,7 +2,6 @@ import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractS
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
@@ -17,6 +16,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { deepClone } from '@diagram-craft/utils/object';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 declare global {
   namespace DiagramCraft {
@@ -81,21 +81,25 @@ export class DuplicateAction extends AbstractSelectionAction {
 
     UnitOfWork.executeWithUndo(diagram, 'Duplicate selection', uow => {
       // Check if all selected elements have the same parent
-      const selectedElements = diagram.selection.elements;
+      const selection = [...diagram.selection.elements];
       const commonParent =
-        selectedElements.length > 0 &&
-        selectedElements.every(e => e.parent === selectedElements[0]?.parent)
-          ? selectedElements[0]?.parent
+        selection.length > 0 && selection.every(e => e.parent === selection[0]?.parent)
+          ? selection[0]?.parent
           : undefined;
 
       // Create mapping of original nodes to duplicated nodes
       const nodeMapping = new Map<string, DiagramNode>();
       const newElements: DiagramElement[] = [];
 
+      const activeLayer = diagram.activeLayer;
+      assertRegularLayer(activeLayer);
+
       // Duplicate selected nodes
       for (const node of diagram.selection.nodes) {
         const newNode = node.duplicate();
+        this.add(newNode, activeLayer, commonParent, uow);
         newNode.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
+
         nodeMapping.set(node.id, newNode);
         newElements.push(newNode);
       }
@@ -114,25 +118,23 @@ export class DuplicateAction extends AbstractSelectionAction {
           [...originalEdge.waypoints],
           originalEdge.layer
         );
+        this.add(newEdge, activeLayer, commonParent, uow);
 
         newEdge.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
         newElements.push(newEdge);
       }
 
-      assertRegularLayer(diagram.activeLayer);
-      uow.addAndExecute(
-        new ElementAddUndoableAction(
-          newElements,
-          diagram,
-          diagram.activeLayer,
-          'Duplicate selection',
-          commonParent
-        )
+      uow.select(
+        diagram,
+        newElements.map(e => e.id)
       );
-      diagram.selection.clear();
-      diagram.selection.setElements(newElements);
     });
 
     this.emit('actionTriggered', {});
+  }
+
+  add(e: DiagramElement, layer: RegularLayer, parent: DiagramElement | undefined, uow: UnitOfWork) {
+    if (parent) parent.addChild(e, uow);
+    else layer.addElement(e, uow);
   }
 }

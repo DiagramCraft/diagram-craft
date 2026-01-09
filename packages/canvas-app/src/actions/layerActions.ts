@@ -3,10 +3,7 @@ import {
   AbstractToggleAction,
   ToggleActionUndoableAction
 } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -73,18 +70,6 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
         }
 
         this.context.model.activeDiagram.layers.remove(layer, uow);
-
-        if (layer instanceof RegularLayer) {
-          uow.add(
-            new ElementDeleteUndoableAction(
-              this.context.model.activeDiagram,
-              layer,
-              layer.elements,
-              false
-            )
-          );
-        }
-        uow.add(new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer));
       });
     };
 
@@ -129,23 +114,6 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
         }
       )
     );
-  }
-}
-
-class LayerDeleteUndoableAction implements UndoableAction {
-  description = 'Delete layer';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly layer: Layer
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.layers.add(this.layer, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.layers.remove(this.layer, uow);
   }
 }
 
@@ -207,8 +175,9 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    layer.locked = !layer.isLocked();
-    diagram.undoManager.add(new ToggleActionUndoableAction('Toggle layer locked', this, { id }));
+    UnitOfWork.executeWithUndo(diagram, 'Toggle layer locked', uow => {
+      layer.setLocked(!layer.isLocked(), uow);
+    });
   }
 }
 
@@ -266,8 +235,6 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
               { diagramId, layerId }
             );
             diagram.layers.add(layer, uow);
-
-            uow.add(new LayerAddUndoableAction(diagram, layer));
           });
         })
       );
@@ -311,30 +278,11 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
                         diagram
                       );
               diagram.layers.add(layer, uow);
-
-              uow.add(new LayerAddUndoableAction(diagram, layer));
             });
           }
         )
       );
     }
-  }
-}
-
-class LayerAddUndoableAction implements UndoableAction {
-  description = 'Add layer';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly layer: Layer
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.layers.remove(this.layer, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.layers.add(this.layer, uow);
   }
 }
 
@@ -365,8 +313,6 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
       diagram.layers.add(layer, uow);
 
       diagram.moveElement(diagram.selection.elements, uow, layer);
-
-      uow.add(new LayerAddUndoableAction(uow.diagram, layer));
     });
   }
 }

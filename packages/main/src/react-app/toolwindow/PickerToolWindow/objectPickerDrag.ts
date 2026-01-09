@@ -6,7 +6,6 @@ import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
@@ -70,15 +69,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.diagram.undoManager.combine(() => {
-      if (this.#state === State.INSIDE) {
-        this.diagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer)
-        );
-      }
-
-      super.onDragEnd();
-    });
+    super.onDragEnd();
 
     if (this.stencilId) {
       this.diagram.document.props.recentStencils.register(this.stencilId);
@@ -210,11 +201,12 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const scaleX = this.source.bounds.w / bounds.w;
     const scaleY = this.source.bounds.h / bounds.h;
 
+    this.#elements.forEach(e => activeLayer.addElement(e, this.uow));
+
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this.#elements, point, Point.of(scaleX, scaleY), uow);
 
       this.#elements.forEach(e => {
-        activeLayer.addElement(e, uow);
         if (isNode(e)) {
           e.updateMetadata(meta => {
             if (meta.style === DefaultStyles.node.default) {
@@ -232,8 +224,6 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
         }
       });
     });
-
-    new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();
 
     this.diagram.selection.clear();
     this.diagram.selection.setElements(this.#elements);

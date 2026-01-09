@@ -1,7 +1,6 @@
 import styles from './StyleOverviewToolWindow.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type { Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
-import { DeleteStylesheetUndoableAction } from '@diagram-craft/model/diagramStyles';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
@@ -176,8 +175,6 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
         () => {
           UnitOfWork.executeWithUndo(diagram, 'Delete style', uow => {
             diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
-
-            uow.add(new DeleteStylesheetUndoableAction(diagram, stylesheet));
           });
         }
       )
@@ -195,9 +192,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           value: stylesheet.name
         },
         v => {
-          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow =>
-            stylesheet.setName(v, diagram.document.styles, uow)
-          );
+          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow => stylesheet.setName(v, uow));
         }
       )
     );
@@ -317,7 +312,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
             const stylesheet = diagram.document.styles.get(style.id);
             if (stylesheet) {
               UnitOfWork.executeWithUndo(diagram, 'Modify style', uow =>
-                stylesheet.setProps(e, diagram.document.styles, uow)
+                stylesheet.setProps(e, uow)
               );
             }
 
