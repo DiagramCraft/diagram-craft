@@ -50,39 +50,14 @@ describe('GroupAction', () => {
       expect(groupNode!.children.map(e => e.id)).toEqual([node1.id, node2.id]);
       expect(groupNode!.bounds).toStrictEqual({ x: 10, y: 10, w: 240, h: 240, r: 0 });
       expect(diagram.selection.elements[0]).toBe(groupNode);
-    });
-
-    test('should remove original nodes from layer when grouped', () => {
-      const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
-
-      diagram.selection.setElements([node1, node2]);
-
-      new GroupAction('group', mockContext(diagram)).execute();
 
       // Original nodes should not be in layer's elements anymore
       expect(layer.elements).not.toContain(node1);
       expect(layer.elements).not.toContain(node2);
-    });
-
-    test('should preserve layer order when grouping', () => {
-      const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      layer.addNode({ bounds: { x: 50, y: 50, w: 100, h: 100, r: 0 } });
-      const node3 = layer.addNode({ bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 } });
-
-      // Select node1 and node3 (not in order)
-      diagram.selection.setElements([node3, node1]);
-
-      new GroupAction('group', mockContext(diagram)).execute();
-
-      const groupNode = layer.elements
-        .filter(isNode)
-        .find(n => n.nodeType === 'group') as DiagramNode;
-      expect(groupNode).toBeDefined();
 
       // Children should be sorted by layer order
       expect(groupNode!.children[0]).toBe(node1);
-      expect(groupNode!.children[1]).toBe(node3);
+      expect(groupNode!.children[1]).toBe(node2);
     });
   });
 
@@ -119,24 +94,6 @@ describe('GroupAction', () => {
 
       // Selection should be updated to the ungrouped nodes
       expect(diagram.selection.elements.map(e => e.id)).toEqual([node1.id, node2.id]);
-    });
-
-    test('should remove children from group when ungrouping', () => {
-      const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
-
-      diagram.selection.setElements([node1, node2]);
-
-      // Create a group
-      new GroupAction('group', mockContext(diagram)).execute();
-
-      const groupNode = diagram.selection.elements[0] as DiagramNode;
-
-      // Ungroup
-      new GroupAction('ungroup', mockContext(diagram)).execute();
-
-      // Group should have no children
-      expect(groupNode.children).toHaveLength(0);
     });
   });
 

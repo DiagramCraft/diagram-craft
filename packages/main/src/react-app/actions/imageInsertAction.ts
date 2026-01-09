@@ -47,8 +47,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         const { width, height } = img;
         img.close();
 
-        const diagram = this.context.model.activeDiagram;
-        const layer = diagram.activeLayer;
+        const layer = this.context.model.activeDiagram.activeLayer;
         assertRegularLayer(layer);
 
         // TODO: Improve placement to ensure it's at least partially placed within the current viewport
@@ -56,8 +55,8 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
           newid(),
           'rect',
           {
-            x: (diagram.bounds.w - width) / 2,
-            y: (diagram.bounds.h - height) / 2,
+            x: (this.context.model.activeDiagram.bounds.w - width) / 2,
+            y: (this.context.model.activeDiagram.bounds.h - height) / 2,
             w: width,
             h: height,
             r: 0
@@ -75,9 +74,9 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
           {}
         );
 
-        UnitOfWork.executeWithUndo(diagram, 'Insert image', uow => {
+        UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert image', uow => {
           layer.addElement(e, uow);
-          uow.select(diagram, [e.id]);
+          uow.select(this.context.model.activeDiagram, [e.id]);
         });
       })
     );

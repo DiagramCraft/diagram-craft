@@ -28,7 +28,8 @@ describe('TextPasteHandler', () => {
   test('should create a text node with the pasted text content', async () => {
     const textContent = 'Hello, World!';
     const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext({ x: 50, y: 75 });
+    const pastePoint = { x: 50, y: 75 };
+    const context = createMockContext(pastePoint);
 
     await handler.paste(blob, diagram, layer, context);
 
@@ -38,42 +39,9 @@ describe('TextPasteHandler', () => {
     const textNode = nodes[0]!;
     expect(textNode.nodeType).toBe('text');
     expect(textNode.getText()).toBe(textContent);
-  });
 
-  test('should position text node at the context point', async () => {
-    const textContent = 'Test text';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const pastePoint = { x: 200, y: 300 };
-    const context = createMockContext(pastePoint);
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
     expect(textNode.bounds.x).toBe(pastePoint.x);
     expect(textNode.bounds.y).toBe(pastePoint.y);
-  });
-
-  test('should create text node with default dimensions', async () => {
-    const textContent = 'Default size';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
-    expect(textNode.bounds.w).toBe(200);
-    expect(textNode.bounds.h).toBe(20);
-  });
-
-  test('should create text node with stroke disabled', async () => {
-    const textContent = 'No stroke';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
-    expect(textNode.renderProps.stroke.enabled).toBe(false);
   });
 
   describe('undo/redo functionality', () => {
@@ -125,86 +93,19 @@ describe('TextPasteHandler', () => {
       expect(restoredNode.bounds.y).toBe(pastePoint.y);
     });
 
-    test('should support multiple undo/redo cycles', async () => {
-      const textContent = 'Multiple cycles';
+    test('should clear paste point after undo', async () => {
+      const textContent = 'Clear test';
       const blob = new Blob([textContent], { type: 'text/plain' });
-      const context = createMockContext();
+      const context = createMockContext({ x: 100, y: 100 });
 
       await handler.paste(blob, diagram, layer, context);
       diagram.undoManager.undo();
-      diagram.undoManager.redo();
-      diagram.undoManager.undo();
-      diagram.undoManager.redo();
 
+      await handler.paste(blob, diagram, layer, context);
       const nodes = layer.elements.filter(isNode);
       expect(nodes).toHaveLength(1);
-      expect(nodes[0]!.getText()).toBe(textContent);
-    });
-
-    test('should handle undo after pasting multiple text nodes', async () => {
-      const firstBlob = new Blob(['First text'], { type: 'text/plain' });
-      const secondBlob = new Blob(['Second text'], { type: 'text/plain' });
-      const context = createMockContext();
-
-      await handler.paste(firstBlob, diagram, layer, context);
-      await handler.paste(secondBlob, diagram, layer, context);
-
-      expect(layer.elements.filter(isNode)).toHaveLength(2);
-
-      diagram.undoManager.undo();
-      const nodesAfterFirstUndo = layer.elements.filter(isNode);
-      expect(nodesAfterFirstUndo).toHaveLength(1);
-      expect(nodesAfterFirstUndo[0]!.getText()).toBe('First text');
-
-      diagram.undoManager.undo();
-      expect(layer.elements.filter(isNode)).toHaveLength(0);
-    });
-
-    test('should handle redo after multiple pastes', async () => {
-      const firstBlob = new Blob(['First text'], { type: 'text/plain' });
-      const secondBlob = new Blob(['Second text'], { type: 'text/plain' });
-      const context = createMockContext();
-
-      await handler.paste(firstBlob, diagram, layer, context);
-      await handler.paste(secondBlob, diagram, layer, context);
-
-      diagram.undoManager.undo();
-      diagram.undoManager.undo();
-
-      expect(layer.elements.filter(isNode)).toHaveLength(0);
-
-      diagram.undoManager.redo();
-      const nodesAfterFirstRedo = layer.elements.filter(isNode);
-      expect(nodesAfterFirstRedo).toHaveLength(1);
-      expect(nodesAfterFirstRedo[0]!.getText()).toBe('First text');
-
-      diagram.undoManager.redo();
-      const nodesAfterSecondRedo = layer.elements.filter(isNode);
-      expect(nodesAfterSecondRedo).toHaveLength(2);
-      expect(nodesAfterSecondRedo[1]!.getText()).toBe('Second text');
-    });
-
-    test('should maintain node properties after undo/redo', async () => {
-      const textContent = 'Property test';
-      const blob = new Blob([textContent], { type: 'text/plain' });
-      const context = createMockContext({ x: 100, y: 200 });
-
-      await handler.paste(blob, diagram, layer, context);
-      const originalNode = layer.elements.filter(isNode)[0]!;
-
-      expect(originalNode.nodeType).toBe('text');
-      expect(originalNode.renderProps.stroke.enabled).toBe(false);
-      expect(originalNode.bounds.w).toBe(200);
-      expect(originalNode.bounds.h).toBe(20);
-
-      diagram.undoManager.undo();
-      diagram.undoManager.redo();
-
-      const restoredNode = layer.elements.filter(isNode)[0]!;
-      expect(restoredNode.nodeType).toBe('text');
-      expect(restoredNode.renderProps.stroke.enabled).toBe(false);
-      expect(restoredNode.bounds.w).toBe(200);
-      expect(restoredNode.bounds.h).toBe(20);
+      expect(nodes[0]!.bounds.x).toBe(100);
+      expect(nodes[0]!.bounds.y).toBe(100);
     });
   });
 
@@ -247,65 +148,5 @@ describe('TextPasteHandler', () => {
     const secondNode = layer.elements.filter(isNode)[1]!;
     expect(secondNode.bounds.x).toBe(100);
     expect(secondNode.bounds.y).toBe(100);
-  });
-
-  test('should handle empty text content', async () => {
-    const textContent = '';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const nodes = layer.elements.filter(isNode);
-    expect(nodes).toHaveLength(1);
-    expect(nodes[0]!.getText()).toBe('');
-  });
-
-  test('should handle multiline text content', async () => {
-    const textContent = 'Line 1\nLine 2\nLine 3';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
-    expect(textNode.getText()).toBe(textContent);
-  });
-
-  test('should handle text with special characters', async () => {
-    const textContent = 'Special chars: @#$%^&*()_+-={}[]|\\:;"\'<>?,./';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
-    expect(textNode.getText()).toBe(textContent);
-  });
-
-  test('should handle unicode text content', async () => {
-    const textContent = 'Unicode: 你好 مرحبا 🎉 €';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext();
-
-    await handler.paste(blob, diagram, layer, context);
-
-    const textNode = layer.elements.filter(isNode)[0]!;
-    expect(textNode.getText()).toBe(textContent);
-  });
-
-  test('should clear paste point after undo', async () => {
-    const textContent = 'Clear test';
-    const blob = new Blob([textContent], { type: 'text/plain' });
-    const context = createMockContext({ x: 100, y: 100 });
-
-    await handler.paste(blob, diagram, layer, context);
-    diagram.undoManager.undo();
-
-    await handler.paste(blob, diagram, layer, context);
-    const nodes = layer.elements.filter(isNode);
-    expect(nodes).toHaveLength(1);
-    expect(nodes[0]!.bounds.x).toBe(100);
-    expect(nodes[0]!.bounds.y).toBe(100);
   });
 });

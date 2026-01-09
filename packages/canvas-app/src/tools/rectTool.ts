@@ -82,8 +82,7 @@ export class RectTool extends AbstractTool {
       });
 
       // Coalesce the element add and edge endpoint move into one undoable action
-      // We know that the first action is the element add and the last is the
-      // last bounds
+      // We know that the first action is the element added and the last is the last bounds
       const actions = undoManager.getToMark();
       undoManager.add(new CompoundUndoableAction([actions[0]!, actions.at(-1)!]));
     });

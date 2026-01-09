@@ -147,15 +147,16 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
     });
 
     UnitOfWork.executeWithUndo(diagram, 'Boolean operation', uow => {
+      const activeLayer = diagram.activeLayer;
+      assertRegularLayer(activeLayer);
+
       nodes.forEach(n => {
         const layer = n.layer;
         assertRegularLayer(layer);
         layer.removeElement(n, uow);
       });
 
-      newNodes.forEach(n => {
-        (diagram.activeLayer as RegularLayer).addElement(n, uow);
-      });
+      newNodes.forEach(n => activeLayer.addElement(n, uow));
 
       uow.select(
         diagram,
