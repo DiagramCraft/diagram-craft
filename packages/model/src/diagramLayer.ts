@@ -1,5 +1,5 @@
 import { type DiagramElement, type DiagramElementCRDT } from './diagramElement';
-import type { LayerSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import type { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import type { RuleLayer } from './diagramLayerRule';
@@ -17,6 +17,7 @@ import { isRegularLayer } from './diagramLayerUtils';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
   LayerParentChildUOWSpecification,
+  LayerSnapshot,
   LayerUOWSpecification
 } from '@diagram-craft/model/diagramLayer.uow';
 

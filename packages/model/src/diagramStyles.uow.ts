@@ -1,6 +1,5 @@
 import {
   Snapshot,
-  StylesheetSnapshot,
   UnitOfWork,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
@@ -8,6 +7,7 @@ import {
 import { DiagramStyles, Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecification<
   StylesheetSnapshot,
@@ -24,9 +24,7 @@ export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecificat
     stylesheet.restore(snapshot, uow);
   }
 
-  onAfterCommit(_stylesheets: Array<Stylesheet<StylesheetType>>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_stylesheets: Array<Stylesheet<StylesheetType>>, _uow: UnitOfWork): void {}
+  onCommit(_stylesheets: Array<Stylesheet<StylesheetType>>, _uow: UnitOfWork): void {}
 
   restore(snapshot: StylesheetSnapshot, e: Stylesheet<StylesheetType>, uow: UnitOfWork): void {
     e.restore(snapshot, uow);
@@ -49,9 +47,7 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
 
   updateElement(_diagram: Diagram, _id: string, _snapshot: Snapshot, _uow: UnitOfWork): void {}
 
-  onAfterCommit(_stylesheets: Array<DiagramStyles>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_stylesheets: Array<DiagramStyles>, _uow: UnitOfWork): void {}
+  onCommit(_stylesheets: Array<DiagramStyles>, _uow: UnitOfWork): void {}
 
   restore(_snapshot: Snapshot, _e: DiagramStyles, _uow: UnitOfWork): void {}
 
@@ -79,3 +75,11 @@ export class DiagramStylesParentChildUOWSpecification implements UOWTrackablePar
     diagram.document.styles.deleteStylesheet(child, uow);
   }
 }
+
+export type StylesheetSnapshot = {
+  id: string;
+  name: string;
+  props: NodeProps | EdgeProps;
+  type: StylesheetType;
+  _snapshotType: 'stylesheet';
+};

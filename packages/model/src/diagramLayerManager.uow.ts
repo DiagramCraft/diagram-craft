@@ -1,6 +1,5 @@
 import {
-  LayerSnapshot,
-  LayersSnapshot,
+  Snapshot,
   UnitOfWork,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
@@ -14,6 +13,7 @@ import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
   addElement(
@@ -85,9 +85,7 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
     layerManager._restore(snapshot, uow);
   }
 
-  onAfterCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
+  onCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
 
   restore(snapshot: LayersSnapshot, element: LayerManager, uow: UnitOfWork): void {
     element._restore(snapshot, uow);
@@ -96,4 +94,9 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
   snapshot(element: LayerManager): LayersSnapshot {
     return element._snapshot();
   }
+}
+
+export interface LayersSnapshot extends Snapshot {
+  _snapshotType: 'layers';
+  layers: string[];
 }

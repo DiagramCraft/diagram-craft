@@ -12,7 +12,7 @@ import {
   isEdge,
   isNode
 } from './diagramElement';
-import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -60,6 +60,7 @@ import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
+  DiagramEdgeSnapshot,
   DiagramElementParentChildUOWSpecification,
   DiagramElementUOWSpecification
 } from '@diagram-craft/model/diagramElement.uow';

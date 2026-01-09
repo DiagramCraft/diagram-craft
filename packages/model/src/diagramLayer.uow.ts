@@ -1,12 +1,10 @@
 import {
-  DiagramEdgeSnapshot,
-  DiagramNodeSnapshot,
-  LayerSnapshot,
+  Snapshot,
   UnitOfWork,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -16,6 +14,9 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { ModificationCRDT } from '@diagram-craft/model/diagramLayerModification';
+import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSnapshot, Layer> {
   id(layer: Layer): string {
@@ -26,9 +27,7 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
     // Nothing for now...
   }
 
-  onAfterCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
+  onCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
 
   updateElement(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
     const layer = mustExist(diagram.layers.byId(layerId));
@@ -101,4 +100,14 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     const child = mustExist(diagram.lookup(childId));
     layer.removeElement(child, uow);
   }
+}
+
+export interface LayerSnapshot extends Snapshot {
+  _snapshotType: 'layer';
+  name: string;
+  locked: boolean;
+  elements?: string[];
+  type: LayerType;
+  rules?: AdjustmentRule[];
+  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
 }

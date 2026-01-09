@@ -1,6 +1,5 @@
 import {
-  DiagramEdgeSnapshot,
-  DiagramNodeSnapshot,
+  Snapshot,
   UnitOfWork,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
@@ -13,6 +12,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { SerializedEdge, SerializedNode } from '@diagram-craft/model/serialization/serializedTypes';
 
 export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
   DiagramNodeSnapshot | DiagramEdgeSnapshot,
@@ -26,9 +26,7 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
     element.invalidate(uow);
   }
 
-  onAfterCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
+  onCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
 
   updateElement(
     diagram: Diagram,
@@ -109,3 +107,15 @@ export class DiagramElementParentChildUOWSpecification implements UOWTrackablePa
     parent.removeChild(child, uow);
   }
 }
+
+export type DiagramNodeSnapshot = Snapshot &
+  Omit<SerializedNode, 'children'> & {
+    _snapshotType: 'node';
+    parentId?: string;
+    children: string[];
+  };
+
+export type DiagramEdgeSnapshot = Snapshot &
+  SerializedEdge & {
+    _snapshotType: 'edge';
+  };

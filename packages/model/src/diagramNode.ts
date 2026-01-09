@@ -7,7 +7,7 @@ import {
   isEdge,
   isNode
 } from './diagramElement';
-import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
@@ -49,6 +49,7 @@ import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
 import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;

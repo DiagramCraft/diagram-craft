@@ -1,6 +1,6 @@
 import { DiagramElement } from './diagramElement';
 import type { Diagram } from './diagram';
-import { LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Layer, LayerCRDT } from './diagramLayer';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
@@ -21,7 +21,8 @@ import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
   LayerManagerParentChildUOWSpecification,
-  LayerManagerUOWSpecification
+  LayerManagerUOWSpecification,
+  LayersSnapshot
 } from '@diagram-craft/model/diagramLayerManager.uow';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 

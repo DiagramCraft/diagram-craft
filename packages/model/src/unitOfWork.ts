@@ -1,13 +1,9 @@
 import type { DiagramElement } from './diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import type { Stylesheet, StylesheetType } from './diagramStyles';
-import type { Layer, LayerType } from './diagramLayer';
+import type { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
-import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import { newid } from '@diagram-craft/utils/id';
-import type { ModificationCRDT } from './diagramLayerModification';
-import type { EdgeProps, NodeProps } from './diagramProps';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { hasSameElements } from '@diagram-craft/utils/array';
@@ -33,46 +29,13 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
   return uow;
 };
 
-export type LayersSnapshot = {
-  _snapshotType: 'layers';
-  layers: string[];
-};
+export interface Snapshot {
+  _snapshotType: string;
+}
 
-export type LayerSnapshot = {
-  _snapshotType: 'layer';
-  name: string;
-  locked: boolean;
-  elements?: string[];
-  type: LayerType;
-  rules?: AdjustmentRule[];
-  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
-};
-
-export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
-  _snapshotType: 'node';
-  parentId?: string;
-  children: string[];
-};
-
-export type DiagramEdgeSnapshot = SerializedEdge & {
-  _snapshotType: 'edge';
-};
-
-export type StylesheetSnapshot = {
-  id: string;
-  name: string;
-  props: NodeProps | EdgeProps;
-  type: StylesheetType;
-  _snapshotType: 'stylesheet';
-};
-
-export type Snapshot = { _snapshotType: string } & (
-  | LayersSnapshot
-  | LayerSnapshot
-  | DiagramNodeSnapshot
-  | DiagramEdgeSnapshot
-  | StylesheetSnapshot
-);
+export interface UOWTrackable {
+  _trackableType: string;
+}
 
 export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrackable> {
   id(element: E): string;
@@ -80,8 +43,7 @@ export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrac
 
   updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
-  onBeforeCommit: (elements: Array<E>, uow: UnitOfWork) => void;
-  onAfterCommit: (elements: Array<E>, uow: UnitOfWork) => void;
+  onCommit: (elements: Array<E>, uow: UnitOfWork) => void;
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
@@ -97,10 +59,6 @@ export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
     uow: UnitOfWork
   ) => void;
   removeElement: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
-}
-
-export interface UOWTrackable {
-  _trackableType: string;
 }
 
 const registry =

@@ -3,7 +3,7 @@ import type { Diagram } from './diagram';
 import { type DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
-import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DiagramEdge, type DiagramEdgeCRDT } from './diagramEdge';
 import type { Adjustment } from './diagramLayerRuleTypes';
@@ -13,6 +13,7 @@ import { DelegatingDiagramNode } from './delegatingDiagramNode';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 registerElementFactory(
   'delegating-node',

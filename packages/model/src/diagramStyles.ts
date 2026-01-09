@@ -1,5 +1,5 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
@@ -20,7 +20,8 @@ import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
   DiagramStylesheetUOWSpecification,
   DiagramStylesParentChildUOWSpecification,
-  DiagramStylesUOWSpecification
+  DiagramStylesUOWSpecification,
+  StylesheetSnapshot
 } from '@diagram-craft/model/diagramStyles.uow';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
