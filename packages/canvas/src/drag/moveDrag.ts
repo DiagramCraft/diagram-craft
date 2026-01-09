@@ -15,7 +15,6 @@ import {
 } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
@@ -182,17 +181,13 @@ export abstract class AbstractMoveDrag extends Drag {
     enablePointerEvents(selection.elements);
 
     if (selection.isChanged()) {
-      const resizeCanvasAction = createResizeToFitAction(
-        this.diagram,
+      this.diagram.setBounds(
         Box.boundingBox(
           selection.nodes.map(e => e.bounds),
           true
-        )
+        ),
+        this.uow
       );
-      if (resizeCanvasAction) {
-        resizeCanvasAction.redo(this.uow);
-        this.uow.add(resizeCanvasAction);
-      }
 
       // This means we are dropping onto an element
       if (this.#currentElement) {
