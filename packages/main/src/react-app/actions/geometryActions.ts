@@ -157,9 +157,10 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
         (diagram.activeLayer as RegularLayer).addElement(n, uow);
       });
 
-      diagram.selection.setElements(newNodes);
-      uow.on('after', 'undo', () => diagram.selection.setElements(nodes));
-      uow.on('after', 'redo', () => diagram.selection.setElements(newNodes));
+      uow.select(
+        diagram,
+        newNodes.map(e => e.id)
+      );
     });
 
     diagram.selection.setElements(newNodes);

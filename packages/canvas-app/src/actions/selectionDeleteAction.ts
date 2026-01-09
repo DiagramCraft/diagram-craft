@@ -49,8 +49,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
       deletableElements.forEach(e => e.layer.removeElement(e, uow));
       diagram.selection.clear();
 
-      uow.on('after', 'redo', () => diagram.selection.clear());
-      uow.on('after', 'undo', () => diagram.selection.setElements(deletableElements));
+      uow.select(diagram, []);
     });
 
     this.emit('actionTriggered', {});

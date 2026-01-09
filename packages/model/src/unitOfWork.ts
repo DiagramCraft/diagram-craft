@@ -75,7 +75,7 @@ export type Snapshot = { _snapshotType: string } & (
   | StylesheetSnapshot
 );
 
-export interface UOWTrackableSpecification<S extends Snapshot, E> {
+export interface UOWTrackableSpecification<S extends Snapshot, E extends Trackable> {
   updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
   onBeforeCommit: (elements: Array<E>, uow: UnitOfWork) => void;
@@ -310,9 +310,6 @@ export class UnitOfWork {
       return;
     }
 
-    /*if (_idx === -1) {
-      console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
-    }*/
     const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'remove',
@@ -332,9 +329,6 @@ export class UnitOfWork {
       return;
     }
 
-    /*if (_idx === -1) {
-      console.warn('Adding element to invalid index', element);
-    }*/
     if (this.trackChanges && !this.#snapshots.has(element.id)) {
       this.#snapshots.add(element.id, undefined);
     }
