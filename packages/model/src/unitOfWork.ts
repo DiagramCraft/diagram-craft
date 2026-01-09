@@ -25,6 +25,7 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
 export interface Snapshot {
   _snapshotType: string;
 }
+
 const NULL_SNAPSHOT: Snapshot = { _snapshotType: 'dummy' };
 
 export interface UOWTrackable {
@@ -45,28 +46,15 @@ export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
 }
 
 export interface UOWChildAdapter<S extends Snapshot> {
-  add: (
-    diagram: Diagram,
-    parentId: string,
-    childId: string,
-    childSnapshot: S,
-    idx: number,
-    uow: UnitOfWork
-  ) => void;
-  remove: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
+  add: (d: Diagram, pId: string, cId: string, cS: S, idx: number, uow: UnitOfWork) => void;
+  remove: (d: Diagram, pId: string, cId: string, uow: UnitOfWork) => void;
 }
 
-const registry =
-  process.env.NODE_ENV === 'development'
-    ? new FinalizationRegistry((v: string) => {
-        // No warnings for throwaways
-        if (v.startsWith('true;')) return;
-        console.error('Failed uow cleanup', v.substring(5));
-      })
-    : {
-        register: () => {},
-        unregister: () => {}
-      };
+const registry = new FinalizationRegistry((v: string) => {
+  // No warnings for throwaways
+  if (v.startsWith('true;')) return;
+  if (process.env.NODE_ENV === 'development') console.error('Failed uow cleanup', v.substring(5));
+});
 
 declare global {
   namespace DiagramCraft {
@@ -79,31 +67,22 @@ declare global {
 export type UOWOperation =
   | {
       type: 'add';
-      id: string;
-      trackable: UOWTrackable;
-      trackableType: UOWTrackable['_trackableType'];
-
+      target: { object: UOWTrackable; id: string; type: string };
+      parent: { id: string; type: string };
       idx: number;
-      parentId: string;
-      parentType: string;
       afterSnapshot: Snapshot;
     }
   | {
       type: 'remove';
-      id: string;
-      trackable: UOWTrackable;
-      trackableType: UOWTrackable['_trackableType'];
+      target: { object: UOWTrackable; id: string; type: string };
 
       idx: number;
-      parentId: string;
-      parentType: string;
+      parent: { id: string; type: string };
       beforeSnapshot: Snapshot;
     }
   | {
       type: 'update';
-      id: string;
-      trackable: UOWTrackable;
-      trackableType: UOWTrackable['_trackableType'];
+      target: { object: UOWTrackable; id: string; type: string };
 
       beforeSnapshot: Snapshot;
       afterSnapshot: Snapshot;
@@ -195,10 +174,6 @@ export class UnitOfWork {
     }
   }
 
-  get operations() {
-    return this.#operations;
-  }
-
   add(action: UndoableAction) {
     this.#undoableActions.push(action);
   }
@@ -214,7 +189,7 @@ export class UnitOfWork {
 
   contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
     return this.#operations.some(
-      e => (e.trackable === element && type === undefined) || e.type === type
+      e => (e.target.object === element && type === undefined) || e.type === type
     );
   }
 
@@ -260,9 +235,7 @@ export class UnitOfWork {
 
     this.#operations.push({
       type: 'update',
-      id: id,
-      trackable: element,
-      trackableType: element._trackableType,
+      target: { object: element, id, type: element._trackableType },
       beforeSnapshot: effectiveSnapshot,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
@@ -278,12 +251,9 @@ export class UnitOfWork {
     const parentSpec = UnitOfWorkManager.getAdapter(parent._trackableType);
     this.#operations.push({
       type: 'remove',
-      id: spec.id(element),
-      trackable: element,
-      trackableType: element._trackableType,
+      target: { id: spec.id(element), object: element, type: element._trackableType },
       idx: idx,
-      parentId: parentSpec.id(parent),
-      parentType: parent._trackableType,
+      parent: { id: parentSpec.id(parent), type: parent._trackableType },
       beforeSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
   }
@@ -305,7 +275,7 @@ export class UnitOfWork {
     let existingUpdates: Array<UOWOperation> = [];
 
     if (this.#updates.has(id) && this.trackChanges) {
-      const isUpdate = (e: UOWOperation) => e.id === id && e.type === 'update';
+      const isUpdate = (e: UOWOperation) => e.target.id === id && e.type === 'update';
 
       // Need to make sure all updates happen *after* the add
       existingUpdates = this.#operations.filter(isUpdate);
@@ -316,12 +286,9 @@ export class UnitOfWork {
 
     this.#operations.push({
       type: 'add',
-      id: id,
-      trackable: element,
-      trackableType: element._trackableType,
+      target: { id, object: element, type: element._trackableType },
       idx: idx,
-      parentId: parentSpec.id(parent),
-      parentType: parent._trackableType,
+      parent: { id: parentSpec.id(parent), type: parent._trackableType },
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
 
@@ -356,7 +323,7 @@ export class UnitOfWork {
   notify() {
     this.changeType = 'interactive';
 
-    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
     }
 
@@ -369,11 +336,11 @@ export class UnitOfWork {
 
     emitEvent(this.#callbacks, 'before-commit', this);
 
-    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UnitOfWorkManager.getAdapter(k).onBeforeCommit?.(ops, this);
     }
 
-    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
       UnitOfWorkManager.getAdapter(k).onAfterCommit?.(ops, this);
     }
@@ -383,23 +350,19 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  commitWithUndo(description: string) {
+  commitWithUndo(msg: string) {
     this.commit();
 
     if (this.#undoableActions.length > 0) {
-      const compound = new CompoundUndoableAction(this.#undoableActions, description);
-      if (this.#operations.length > 0) {
-        compound.addAction(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
-        );
-      }
-      this.diagram.undoManager.add(compound);
+      const action = new CompoundUndoableAction(this.#undoableActions, msg);
+      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
+      this.diagram.undoManager.add(action);
+    } else if (this.#operations.length === 0) {
+      return;
     } else {
-      if (this.#operations.length > 0) {
-        this.diagram.undoManager.add(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
-        );
-      }
+      this.diagram.undoManager.add(
+        new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks)
+      );
     }
   }
 
@@ -407,22 +370,18 @@ export class UnitOfWork {
     registry.unregister(this);
     this.state = 'aborted';
   }
-
-  get added() {
-    return new Set([...this.#operations.filter(e => e.type === 'add').map(e => e.trackable)]);
-  }
 }
 
-class UnitOfWorkUndoableAction implements UndoableAction {
+class UOWUndoableAction implements UndoableAction {
   timestamp?: Date;
 
   constructor(
     public readonly description: string,
     private readonly diagram: Diagram,
-    private operations: Array<UOWOperation>,
+    private ops: Array<UOWOperation>,
     private eventMap: UOWEventMap
   ) {
-    this.operations = this.consolidateOperations(this.operations);
+    this.ops = this.consolidateOperations(this.ops);
   }
 
   undo(uow: UnitOfWork) {
@@ -432,23 +391,21 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     }
     emitEvent(this.eventMap, 'before-undo', uow);
 
-    for (const op of this.operations.toReversed()) {
-      const spec = UnitOfWorkManager.getAdapter(op.trackableType);
+    for (const op of this.ops.toReversed()) {
+      const spec = UnitOfWorkManager.getAdapter(op.target.type);
       switch (op.type) {
         case 'remove': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
-          pcSpec.add(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
+          pcSpec.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
-          pcSpec.remove(this.diagram, op.parentId, op.id, uow);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
+          pcSpec.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.update(this.diagram, op.id, op.beforeSnapshot, uow);
+          spec.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
           break;
       }
     }
@@ -463,23 +420,21 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     }
     emitEvent(this.eventMap, 'before-redo', uow);
 
-    for (const op of this.operations) {
-      const spec = UnitOfWorkManager.getAdapter(op.trackableType);
+    for (const op of this.ops) {
+      const spec = UnitOfWorkManager.getAdapter(op.target.type);
       switch (op.type) {
         case 'add': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
-          pcSpec.add(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
+          pcSpec.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
-          pcSpec.remove(this.diagram, op.parentId, op.id, uow);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
+          pcSpec.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.update(this.diagram, op.id, op.afterSnapshot, uow);
+          spec.update(this.diagram, op.target.id, op.afterSnapshot, uow);
           break;
       }
     }
@@ -487,18 +442,18 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     emitEvent(this.eventMap, 'after-redo', uow);
   }
 
-  merge(nextAction: UndoableAction): boolean {
-    if (!(nextAction instanceof UnitOfWorkUndoableAction)) return false;
+  merge(next: UndoableAction): boolean {
+    if (!(next instanceof UOWUndoableAction)) return false;
 
     if (
-      nextAction.description === this.description &&
+      next.description === this.description &&
       hasSameElements(
-        nextAction.operations.map(o => o.id),
-        this.operations.map(o => o.id)
+        next.ops.map(o => o.target.id),
+        this.ops.map(o => o.target.id)
       ) &&
       Date.now() - this.timestamp!.getTime() < 2000
     ) {
-      this.operations = this.consolidateOperations([...this.operations, ...nextAction.operations]);
+      this.ops = this.consolidateOperations([...this.ops, ...next.ops]);
       this.timestamp = new Date();
       return true;
     }
@@ -509,16 +464,18 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   private consolidateOperations(allOperations: UOWOperation[]) {
     // Collect all update operations by ID
     const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
-    allOperations.filter(op => op.type === 'update').forEach(op => updatesByIdMap.add(op.id, op));
+    allOperations
+      .filter(op => op.type === 'update')
+      .forEach(op => updatesByIdMap.add(op.target.id, op));
 
     const dest: Array<UOWOperation> = [];
     const processedIds = new Set<string>();
     allOperations.forEach(op => {
       if (op.type === 'update') {
-        if (processedIds.has(op.id)) return;
-        processedIds.add(op.id);
+        if (processedIds.has(op.target.id)) return;
+        processedIds.add(op.target.id);
 
-        const updates = updatesByIdMap.get(op.id) ?? [op];
+        const updates = updatesByIdMap.get(op.target.id) ?? [op];
 
         const first = updates[0]!;
         const last = updates.at(-1)!;

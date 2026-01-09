@@ -18,7 +18,7 @@ export class UnitOfWorkManager {
     return mustExist(UnitOfWorkManager.adapters[trackableType]);
   }
 
-  static getChildAdapter(trackableType: string): UOWChildAdapter<Snapshot> {
-    return mustExist(UnitOfWorkManager.childAdapters[trackableType]);
+  static getChildAdapter(parent: string, child: string): UOWChildAdapter<Snapshot> {
+    return mustExist(UnitOfWorkManager.childAdapters[`${parent}-${child}`]);
   }
 }

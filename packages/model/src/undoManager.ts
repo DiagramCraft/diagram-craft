@@ -36,7 +36,7 @@ export class CompoundUndoableAction implements UndoableAction {
     this.#description = description;
   }
 
-  addAction(action: UndoableAction | undefined) {
+  add(action: UndoableAction | undefined) {
     if (!action) {
       console.warn('No undoable action provided');
       return;

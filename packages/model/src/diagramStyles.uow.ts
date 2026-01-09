@@ -21,24 +21,24 @@ export class StylesheetUOWAdapter implements UOWAdapter<
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
-      const key = `${op.type}/${op.id}`;
+      const key = `${op.type}/${op.target.id}`;
       if (handled.has(key)) continue;
       handled.add(key);
 
       switch (op.type) {
         case 'add':
           uow.diagram.document.styles.emit('stylesheetAdded', {
-            stylesheet: op.trackable as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet<StylesheetType>
           });
           break;
         case 'update':
           uow.diagram.document.styles.emit('stylesheetUpdated', {
-            stylesheet: op.trackable as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet<StylesheetType>
           });
           break;
         case 'remove':
           uow.diagram.document.styles.emit('stylesheetRemoved', {
-            stylesheet: op.id
+            stylesheet: op.target.id
           });
           break;
       }

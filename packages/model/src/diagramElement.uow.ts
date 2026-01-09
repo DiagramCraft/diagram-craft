@@ -31,49 +31,51 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
   }
 
   onBeforeCommit(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    if (uow.isRemote) return;
+
     // At this point, any elements have been added and or removed
-    if (!uow.isRemote) {
-      const handled = new Set<string>();
-      operations.forEach(({ trackable }) => {
-        const el = trackable as DiagramElement;
-        if (handled.has(el.id)) return;
-        el.invalidate(uow);
-        handled.add(el.id);
-      });
-    }
+    const handled = new Set<string>();
+    operations.forEach(({ target }) => {
+      const el = target.object as DiagramElement;
+      if (handled.has(el.id)) return;
+      el.invalidate(uow);
+      handled.add(el.id);
+    });
   }
 
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
-      const key = `${op.type}/${op.id}`;
+      const key = `${op.type}/${op.target.id}`;
       if (handled.has(key)) continue;
       handled.add(key);
 
       switch (op.type) {
         case 'add':
-          uow.diagram.emit('elementAdd', { element: op.trackable as DiagramElement });
+          uow.diagram.emit('elementAdd', { element: op.target.object as DiagramElement });
           break;
         case 'update':
           uow.diagram.emit('elementChange', {
-            element: op.trackable as DiagramElement,
+            element: op.target.object as DiagramElement,
             silent: uow.metadata.nonDirty
           });
           break;
         case 'remove':
-          uow.diagram.emit('elementRemove', { element: op.trackable as DiagramElement });
+          uow.diagram.emit('elementRemove', { element: op.target.object as DiagramElement });
           break;
       }
     }
 
     // Batch
-    const added = operations.filter(e => e.type === 'add').map(e => e.trackable as DiagramElement);
+    const added = operations
+      .filter(e => e.type === 'add')
+      .map(e => e.target.object as DiagramElement);
     const updated = operations
       .filter(e => e.type === 'update')
-      .map(e => e.trackable as DiagramElement);
+      .map(e => e.target.object as DiagramElement);
     const removed = operations
       .filter(e => e.type === 'remove')
-      .map(e => e.trackable as DiagramElement);
+      .map(e => e.target.object as DiagramElement);
     uow.diagram.emit('elementBatchChange', { removed, updated, added });
   }
 

@@ -27,19 +27,19 @@ export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
-      const key = `${op.type}/${op.id}`;
+      const key = `${op.type}/${op.target.id}`;
       if (handled.has(key)) continue;
       handled.add(key);
 
       switch (op.type) {
         case 'add':
-          uow.diagram.layers.emit('layerAdded', { layer: op.trackable as Layer });
+          uow.diagram.layers.emit('layerAdded', { layer: op.target.object as Layer });
           break;
         case 'update':
-          uow.diagram.layers.emit('layerUpdated', { layer: op.trackable as Layer });
+          uow.diagram.layers.emit('layerUpdated', { layer: op.target.object as Layer });
           break;
         case 'remove':
-          uow.diagram.layers.emit('layerRemoved', { layer: op.trackable as Layer });
+          uow.diagram.layers.emit('layerRemoved', { layer: op.target.object as Layer });
           break;
       }
     }
