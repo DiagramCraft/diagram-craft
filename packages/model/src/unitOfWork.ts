@@ -1,22 +1,11 @@
-import type { DiagramElement } from './diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
-import type { DiagramStyles, Stylesheet, StylesheetType } from './diagramStyles';
-import type { Layer, LayerType } from './diagramLayer';
 import type { Diagram } from './diagram';
-import type { AdjustmentRule } from './diagramLayerRuleTypes';
 import { newid } from '@diagram-craft/utils/id';
-import type { ModificationCRDT } from './diagramLayerModification';
-import type { EdgeProps, NodeProps } from './diagramProps';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
-import type { LayerManager } from '@diagram-craft/model/diagramLayerManager';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
-import { hasSameElements } from '@diagram-craft/utils/array';
+import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrSingle } from '@diagram-craft/utils/types';
-
-type ActionCallback = () => void;
 
 type ChangeType = 'interactive' | 'non-interactive';
 
@@ -27,97 +16,44 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
   if (!uow) {
     uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
-    uow.registerOnCommitCallback('remoteCleanup', undefined, () =>
-      remoteUnitOfWorkRegistry.delete(diagram.id)
-    );
+    uow.on('before', 'commit', 'remoteCleanup', () => remoteUnitOfWorkRegistry.delete(diagram.id));
   }
   return uow;
 };
 
-export type LayersSnapshot = {
-  _snapshotType: 'layers';
-  layers: string[];
-};
+export interface Snapshot {
+  _snapshotType: string;
+}
 
-export type LayerSnapshot = {
-  _snapshotType: 'layer';
-  name: string;
-  locked: boolean;
-  elements?: string[];
-  type: LayerType;
-  rules?: AdjustmentRule[];
-  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
-};
+const NULL_SNAPSHOT: Snapshot = { _snapshotType: 'dummy' };
 
-export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
-  _snapshotType: 'node';
-  parentId?: string;
-  children: string[];
-};
+export interface UOWTrackable {
+  _trackableType: string;
+}
 
-export type DiagramEdgeSnapshot = SerializedEdge & {
-  _snapshotType: 'edge';
-};
+export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
+  id(element: E): string;
 
-export type StylesheetSnapshot = {
-  id: string;
-  name: string;
-  props: NodeProps | EdgeProps;
-  type: StylesheetType;
-  _snapshotType: 'stylesheet';
-};
+  update: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
-export type Snapshot = { _snapshotType: string } & (
-  | LayersSnapshot
-  | LayerSnapshot
-  | DiagramNodeSnapshot
-  | DiagramEdgeSnapshot
-  | StylesheetSnapshot
-);
-
-export interface UOWTrackableSpecification<S extends Snapshot, E extends Trackable> {
-  updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
-
-  onBeforeCommit: (elements: Array<E>, uow: UnitOfWork) => void;
-  onAfterCommit: (elements: Array<E>, uow: UnitOfWork) => void;
+  onNotify?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onBeforeCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onAfterCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
 }
 
-export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
-  addElement: (
-    diagram: Diagram,
-    parentId: string,
-    childId: string,
-    childSnapshot: S,
-    idx: number,
-    uow: UnitOfWork
-  ) => void;
-  removeElement: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
+export interface UOWChildAdapter<S extends Snapshot> {
+  add: (d: Diagram, pId: string, cId: string, cS: S, idx: number, uow: UnitOfWork) => void;
+  remove: (d: Diagram, pId: string, cId: string, uow: UnitOfWork) => void;
 }
 
-export interface UOWTrackable {
-  id: string;
-  trackableType: string;
-  invalidate(uow: UnitOfWork): void;
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any> | DiagramStyles) &
-  UOWTrackable;
-
-const registry =
-  process.env.NODE_ENV === 'development'
-    ? new FinalizationRegistry((v: string) => {
-        // No warnings for throwaways
-        if (v.startsWith('true;')) return;
-        console.error('Failed uow cleanup', v.substring(5));
-      })
-    : {
-        register: () => {},
-        unregister: () => {}
-      };
+const registry = new FinalizationRegistry((v: string) => {
+  // No warnings for throwaways
+  if (v.startsWith('true;')) return;
+  if (process.env.NODE_ENV === 'development') console.error('Failed uow cleanup', v.substring(5));
+});
 
 declare global {
   namespace DiagramCraft {
@@ -127,53 +63,59 @@ declare global {
   }
 }
 
-type UOWOperation =
+export type UOWOperation =
   | {
       type: 'add';
-      id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
-
+      target: { object: UOWTrackable; id: string; type: string };
+      parent: { id: string; type: string };
       idx: number;
-      parentId: string;
-      parentType: string;
       afterSnapshot: Snapshot;
     }
   | {
       type: 'remove';
-      id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
+      target: { object: UOWTrackable; id: string; type: string };
 
       idx: number;
-      parentId: string;
-      parentType: string;
+      parent: { id: string; type: string };
       beforeSnapshot: Snapshot;
     }
   | {
       type: 'update';
-      id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
+      target: { object: UOWTrackable; id: string; type: string };
 
       beforeSnapshot: Snapshot;
       afterSnapshot: Snapshot;
     };
 
+type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
+
+const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
+  const eventCallbacks = map.get(key);
+  if (eventCallbacks === undefined) return;
+
+  let emitCount: number;
+  do {
+    emitCount = 0;
+    for (const [key, callback] of eventCallbacks.entries()) {
+      callback(uow);
+      eventCallbacks.delete(key);
+      emitCount++;
+    }
+  } while (emitCount > 0);
+};
+
 export class UnitOfWork {
   uid = newid();
-
-  #operations: Array<UOWOperation> = [];
-  #updates = new Set<string>();
-  #invalidatedElements = new Set<Trackable>();
-  #snapshots = new MultiMap<string, undefined | Snapshot>();
-  #onCommitCallbacks = new Map<string, ActionCallback>();
-  #undoableActions: Array<UndoableAction> = [];
-  #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
 
   state: 'pending' | 'committed' | 'aborted' = 'pending';
   changeType: ChangeType = 'non-interactive';
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
+
+  #operations: Array<UOWOperation> = [];
+  #updates = new Set<string>();
+  #snapshots = new MultiMap<string, undefined | Snapshot>();
+  #undoableActions: Array<UndoableAction> = [];
+  #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
 
   private constructor(
     readonly diagram: Diagram,
@@ -230,38 +172,26 @@ export class UnitOfWork {
     }
   }
 
-  get operations() {
-    return this.#operations;
-  }
-
   add(action: UndoableAction) {
     this.#undoableActions.push(action);
   }
 
-  private snapshot(element: Trackable) {
+  private snapshot(element: UOWTrackable) {
     if (!this.trackChanges) return;
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
-    const s = spec.snapshot(element);
-    this.#snapshots.add(element.id, s);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const s = adapter.snapshot(element);
+    this.#snapshots.add(adapter.id(element), s);
     return s;
   }
 
-  hasBeenInvalidated(element: Trackable) {
-    return this.#invalidatedElements.has(element);
-  }
-
-  beginInvalidation(element: Trackable) {
-    this.#invalidatedElements.add(element);
-  }
-
-  contains(element: Trackable, type?: 'update' | 'remove' | 'add') {
+  contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
     return this.#operations.some(
-      e => (e.trackable === element && type === undefined) || e.type === type
+      e => (e.target.object === element && type === undefined) || e.type === type
     );
   }
 
-  executeUpdate<T>(element: Trackable, cb: () => T): T {
+  executeUpdate<T>(element: UOWTrackable, cb: () => T): T {
     const snapshot = this.snapshot(element);
 
     const res = cb();
@@ -269,14 +199,19 @@ export class UnitOfWork {
     return res;
   }
 
-  executeRemove<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
+  executeRemove<T>(element: UOWTrackable, parent: UOWTrackable, idx: number, cb: () => T) {
     assert.true(idx >= 0);
 
     this.removeElement(element, parent, idx);
     return cb();
   }
 
-  executeAdd<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
+  executeAdd<T>(
+    element: ArrayOrSingle<UOWTrackable>,
+    parent: UOWTrackable,
+    idx: number,
+    cb: () => T
+  ) {
     assert.true(idx >= 0);
 
     const res = cb();
@@ -284,59 +219,61 @@ export class UnitOfWork {
     return res;
   }
 
-  updateElement(element: Trackable, snapshot?: Snapshot) {
-    const effectiveSnapshot = snapshot ?? this.#snapshots.get(element.id)!.at(-1)!;
+  updateElement(element: UOWTrackable, snapshot?: Snapshot) {
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const id = adapter.id(element);
+
+    const effectiveSnapshot = snapshot ?? this.#snapshots.get(id)!.at(-1)!;
     assert.true(
       !this.trackChanges || effectiveSnapshot !== undefined,
       'Must create snapshot before updating element'
     );
 
-    this.#updates.add(element.id);
+    this.#updates.add(id);
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'update',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
+      target: { object: element, id, type: element._trackableType },
       beforeSnapshot: effectiveSnapshot,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
-  removeElement(element: Trackable, parent: Trackable, idx: number) {
+  removeElement(element: UOWTrackable, parent: UOWTrackable, idx: number) {
     if (Array.isArray(element)) {
       element.forEach(e => this.removeElement(e, parent, idx));
       return;
     }
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
     this.#operations.push({
       type: 'remove',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
+      target: { id: adapter.id(element), object: element, type: element._trackableType },
       idx: idx,
-      parentId: parent.id,
-      parentType: parent.trackableType,
-      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      beforeSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
-  addElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+  addElement(element: ArrayOrSingle<UOWTrackable>, parent: UOWTrackable, idx: number) {
     if (Array.isArray(element)) {
       element.forEach((e, i) => this.addElement(e, parent, idx + i));
       return;
     }
 
-    if (this.trackChanges && !this.#snapshots.has(element.id)) {
-      this.#snapshots.add(element.id, undefined);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+    const id = adapter.id(element);
+
+    if (this.trackChanges && !this.#snapshots.has(id)) {
+      this.#snapshots.add(id, undefined);
     }
 
     let existingUpdates: Array<UOWOperation> = [];
 
-    if (this.#updates.has(element.id) && this.trackChanges) {
-      const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
+    if (this.#updates.has(id) && this.trackChanges) {
+      const isUpdate = (e: UOWOperation) => e.target.id === id && e.type === 'update';
 
       // Need to make sure all updates happen *after* the add
       existingUpdates = this.#operations.filter(isUpdate);
@@ -345,16 +282,12 @@ export class UnitOfWork {
       }
     }
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'add',
-      id: element.id,
-      trackable: element,
-      trackableType: element.trackableType,
+      target: { id, object: element, type: element._trackableType },
       idx: idx,
-      parentId: parent.id,
-      parentType: parent.trackableType,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
 
     if (existingUpdates.length > 0) {
@@ -365,43 +298,32 @@ export class UnitOfWork {
   select(diagram: Diagram, after: string[]) {
     const before = diagram.selection.elements.map(e => e.id);
     diagram.selection.setElementIds(after);
-    this.on('after', 'redo', () => diagram.selection.setElementIds(after));
-    this.on('after', 'undo', () => diagram.selection.setElementIds(before));
+    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(after));
+    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(before));
   }
 
   on(
     when: 'after' | 'before',
     event: 'undo' | 'redo' | 'commit',
+    id: string,
     callback: (uow: UnitOfWork) => void
   ) {
-    if (this.isThrowaway) return;
-
-    this.#callbacks.add(`${when}-${event}`, callback);
-  }
-
-  /**
-   * Register a callback to be executed after the commit phase. It's coalesced
-   * so that only one callback is executed per element/operation per commit phase.
-   */
-  registerOnCommitCallback(name: string, element: Trackable | undefined, cb: ActionCallback) {
     if (this.isThrowaway) {
-      return cb();
+      if (event === 'commit') callback(this);
+      return;
     }
 
-    const id = name + (element?.id ?? '');
-    if (this.#onCommitCallbacks.has(id)) return;
-
-    // Note, a Map retains insertion order, so this ensure actions are
-    // executed in the order they are added
-    this.#onCommitCallbacks.set(id, cb);
+    const eventKey = `${when}-${event}`;
+    if (!this.#callbacks.has(eventKey)) this.#callbacks.set(eventKey, new Map());
+    this.#callbacks.get(eventKey)!.set(id, callback);
   }
 
   notify() {
     this.changeType = 'interactive';
 
-    this.processEvents();
-
-    this.#invalidatedElements.clear();
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+    }
 
     return this.#snapshots;
   }
@@ -410,34 +332,35 @@ export class UnitOfWork {
     this.state = 'committed';
     this.changeType = 'non-interactive';
 
-    this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
+    emitEvent(this.#callbacks, 'before-commit', this);
 
-    // Note, onCommitCallbacks must run before elements events are emitted
-    this.processOnCommitCallbacks();
-    this.processEvents();
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+      UOWRegistry.getAdapter(k).onBeforeCommit?.(ops, this);
+    }
+
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+      UOWRegistry.getAdapter(k).onAfterCommit?.(ops, this);
+    }
+
+    emitEvent(this.#callbacks, 'after-commit', this);
 
     registry.unregister(this);
-
-    this.#callbacks.get('after-commit')?.forEach(cb => cb(this));
   }
 
-  commitWithUndo(description: string) {
+  commitWithUndo(msg: string) {
     this.commit();
 
     if (this.#undoableActions.length > 0) {
-      const compound = new CompoundUndoableAction(this.#undoableActions, description);
-      if (this.#operations.length > 0) {
-        compound.addAction(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
-        );
-      }
-      this.diagram.undoManager.add(compound);
+      const action = new CompoundUndoableAction(this.#undoableActions, msg);
+      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
+      this.diagram.undoManager.add(action);
+    } else if (this.#operations.length === 0) {
+      return;
     } else {
-      if (this.#operations.length > 0) {
-        this.diagram.undoManager.add(
-          new UnitOfWorkUndoableAction(description, this.diagram, this.#operations, this.#callbacks)
-        );
-      }
+      this.diagram.undoManager.add(
+        new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks)
+      );
     }
   }
 
@@ -445,116 +368,33 @@ export class UnitOfWork {
     registry.unregister(this);
     this.state = 'aborted';
   }
+}
 
-  private processEvents() {
-    // At this point, any elements have been added and or removed
-    if (!this.isRemote) {
-      const handled = new Set<string>();
-      this.#operations.forEach(({ trackable }) => {
-        if (handled.has(trackable.id)) return;
-        trackable.invalidate(this);
-        handled.add(trackable.id);
-      });
-    }
+export class UOWRegistry {
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static adapters: Record<string, UOWAdapter<any, any>> = {};
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static childAdapters: Record<string, UOWChildAdapter<any>> = {};
 
-    const handle = (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: Trackable) => {
-      if (type === 'layerManager') {
-        this.diagram.layers.emit('layerStructureChange', {});
-      } else if (type === 'layer') {
-        switch (s) {
-          case 'add':
-            this.diagram.layers.emit('layerAdded', { layer: e as Layer });
-            break;
-          case 'update':
-            this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
-            break;
-          case 'remove':
-            this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
-            break;
-        }
-      } else if (type === 'stylesheet') {
-        switch (s) {
-          case 'add':
-            this.diagram.document.styles.emit('stylesheetAdded', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'update':
-            this.diagram.document.styles.emit('stylesheetUpdated', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'remove':
-            this.diagram.document.styles.emit('stylesheetRemoved', {
-              stylesheet: id
-            });
-            break;
-        }
-      } else {
-        switch (s) {
-          case 'add':
-            this.diagram.emit('elementAdd', { element: e as DiagramElement });
-            break;
-          case 'update':
-            this.diagram.emit('elementChange', {
-              element: e as DiagramElement,
-              silent: this.metadata.nonDirty
-            });
-            break;
-          case 'remove':
-            this.diagram.emit('elementRemove', { element: e as DiagramElement });
-            break;
-        }
-      }
-    };
-
-    const handled = new Set<string>();
-    this.#operations.forEach(({ trackable, trackableType, type, id }) => {
-      const key = type + '/' + trackable.id;
-      if (handled.has(key)) return;
-      handle(type)(trackableType, id, trackable);
-      handled.add(key);
-    });
-
-    this.diagram.emit('elementBatchChange', {
-      removed: [...this.removed].filter(e => e.trackableType === 'element') as DiagramElement[],
-      updated: [...this.updated].filter(e => e.trackableType === 'element') as DiagramElement[],
-      added: [...this.added].filter(e => e.trackableType === 'element') as DiagramElement[]
-    });
+  static getAdapter(trackableType: string): UOWAdapter<Snapshot, UOWTrackable> {
+    return mustExist(UOWRegistry.adapters[trackableType]);
   }
 
-  private processOnCommitCallbacks() {
-    while (this.#onCommitCallbacks.size > 0) {
-      this.#onCommitCallbacks.forEach((callback, key) => {
-        this.#onCommitCallbacks.delete(key);
-        callback();
-      });
-    }
-  }
-
-  get added() {
-    return new Set([...this.#operations.filter(e => e.type === 'add').map(e => e.trackable)]);
-  }
-
-  private get updated() {
-    return new Set([...this.#operations.filter(e => e.type === 'update').map(e => e.trackable)]);
-  }
-
-  private get removed() {
-    return new Set([...this.#operations.filter(e => e.type === 'remove').map(e => e.trackable)]);
+  static getChildAdapter(parent: string, child: string): UOWChildAdapter<Snapshot> {
+    return mustExist(UOWRegistry.childAdapters[`${parent}-${child}`]);
   }
 }
 
-class UnitOfWorkUndoableAction implements UndoableAction {
+class UOWUndoableAction implements UndoableAction {
   timestamp?: Date;
 
   constructor(
     public readonly description: string,
     private readonly diagram: Diagram,
-    private operations: Array<UOWOperation>,
-    private callbacks: MultiMap<string, (uow: UnitOfWork) => void>
+    private ops: Array<UOWOperation>,
+    private eventMap: UOWEventMap
   ) {
-    this.operations = this.consolidateOperations(this.operations);
+    this.ops = this.consolidateOperations(this.ops);
   }
 
   undo(uow: UnitOfWork) {
@@ -562,30 +402,28 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Undoing', this.description);
     }
-    this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'before-undo', uow);
 
-    for (const op of this.operations.toReversed()) {
-      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+    for (const op of this.ops.toReversed()) {
+      const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'remove': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          adapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
+          adapter.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
           break;
       }
     }
 
-    this.callbacks.get('after-undo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'after-undo', uow);
   }
 
   redo(uow: UnitOfWork) {
@@ -593,44 +431,42 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Redoing', this.description);
     }
-    this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'before-redo', uow);
 
-    for (const op of this.operations) {
-      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+    for (const op of this.ops) {
+      const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'add': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
-          const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
+          adapter.update(this.diagram, op.target.id, op.afterSnapshot, uow);
           break;
       }
     }
 
-    this.callbacks.get('after-redo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'after-redo', uow);
   }
 
-  merge(nextAction: UndoableAction): boolean {
-    if (!(nextAction instanceof UnitOfWorkUndoableAction)) return false;
+  merge(next: UndoableAction): boolean {
+    if (!(next instanceof UOWUndoableAction)) return false;
 
     if (
-      nextAction.description === this.description &&
+      next.description === this.description &&
       hasSameElements(
-        nextAction.operations.map(o => o.id),
-        this.operations.map(o => o.id)
+        next.ops.map(o => o.target.id),
+        this.ops.map(o => o.target.id)
       ) &&
       Date.now() - this.timestamp!.getTime() < 2000
     ) {
-      this.operations = this.consolidateOperations([...this.operations, ...nextAction.operations]);
+      this.ops = this.consolidateOperations([...this.ops, ...next.ops]);
       this.timestamp = new Date();
       return true;
     }
@@ -641,23 +477,23 @@ class UnitOfWorkUndoableAction implements UndoableAction {
   private consolidateOperations(allOperations: UOWOperation[]) {
     // Collect all update operations by ID
     const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
-    allOperations.filter(op => op.type === 'update').forEach(op => updatesByIdMap.add(op.id, op));
+    allOperations
+      .filter(op => op.type === 'update')
+      .forEach(op => updatesByIdMap.add(op.target.id, op));
 
     const dest: Array<UOWOperation> = [];
     const processedIds = new Set<string>();
     allOperations.forEach(op => {
       if (op.type === 'update') {
-        if (processedIds.has(op.id)) return;
-        processedIds.add(op.id);
+        if (processedIds.has(op.target.id)) return;
+        processedIds.add(op.target.id);
 
-        const updates = updatesByIdMap.get(op.id) ?? [op];
+        const updates = updatesByIdMap.get(op.target.id) ?? [op];
 
-        const first = updates[0]!;
-        const last = updates.at(-1)!;
         dest.push({
           ...op,
-          beforeSnapshot: first.beforeSnapshot,
-          afterSnapshot: last.afterSnapshot
+          beforeSnapshot: updates[0]!.beforeSnapshot,
+          afterSnapshot: updates.at(-1)!.afterSnapshot
         });
       } else {
         dest.push(op);

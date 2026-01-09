@@ -7,7 +7,7 @@ import {
   isEdge,
   isNode
 } from './diagramElement';
-import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
@@ -49,6 +49,7 @@ import type { LabelNode } from './labelNode';
 import { EffectsRegistry } from './effect';
 import type { CustomNodeProps, EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export type DuplicationContext = {
   targetElementsInGroup: Map<string, DiagramElement>;
@@ -102,7 +103,7 @@ export const applyNodeTransform = (
     if (node.parent && !isChild) {
       const parent = node.parent;
       if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+        uow.on('before', 'commit', `onChildChanged/${parent.id}`, () => {
           parent.getDefinition().onChildChanged(parent, uow);
         });
       } else {
@@ -557,7 +558,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
 
       const parent = this.parent;
       if (isNode(parent)) {
-        uow.registerOnCommitCallback('onChildChanged', parent, () => {
+        uow.on('before', 'commit', `onChildChanged/${parent.id}`, () => {
           parent.getDefinition().onChildChanged(parent, uow);
         });
       }
@@ -626,7 +627,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
     super.setChildren(children, uow);
 
-    uow.registerOnCommitCallback('onChildChanged', this, () => {
+    uow.on('before', 'commit', `onChildChanged/${this.id}`, () => {
       this.getDefinition().onChildChanged(this, uow);
     });
   }
@@ -638,7 +639,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   ) {
     super.addChild(child, uow, relation);
 
-    uow.registerOnCommitCallback('onChildChanged', this, () => {
+    uow.on('before', 'commit', `onChildChanged/${this.id}`, () => {
       this.getDefinition().onChildChanged(this, uow);
     });
   }
@@ -646,7 +647,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     super.removeChild(child, uow);
 
-    uow.registerOnCommitCallback('onChildChanged', this, () => {
+    uow.on('before', 'commit', `onChildChanged/${this.id}`, () => {
       this.getDefinition().onChildChanged(this, uow);
     });
   }
@@ -850,8 +851,9 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
    */
   invalidate(uow: UnitOfWork) {
     // Prevent infinite recursion
-    if (uow.hasBeenInvalidated(this)) return;
-    uow.beginInvalidation(this);
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     if (this.parent) {
       this.parent.invalidate(uow);

@@ -1,9 +1,9 @@
 import {
-  LayerSnapshot,
-  LayersSnapshot,
+  Snapshot,
   UnitOfWork,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWOperation,
+  UOWChildAdapter,
+  UOWAdapter
 } from '@diagram-craft/model/unitOfWork';
 import { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -14,9 +14,10 @@ import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
-export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
-  addElement(
+export class LayerManagerChildUOWAdapter implements UOWChildAdapter<LayerSnapshot> {
+  add(
     diagram: Diagram,
     _parentId: string,
     childId: string,
@@ -56,7 +57,7 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     }
   }
 
-  removeElement(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Removing layer ${child}`);
 
     const layerManager = diagram.layers;
@@ -65,23 +66,17 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
   }
 }
 
-export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
-  LayersSnapshot,
-  LayerManager
-> {
-  updateElement(
-    diagram: Diagram,
-    _elementId: string,
-    snapshot: LayersSnapshot,
-    uow: UnitOfWork
-  ): void {
+export class LayerManagerUOWAdapter implements UOWAdapter<LayersSnapshot, LayerManager> {
+  id = () => 'layerManager';
+
+  onNotify(_operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    uow.diagram.layers.emit('layerStructureChange', {});
+  }
+
+  update(diagram: Diagram, _elementId: string, snapshot: LayersSnapshot, uow: UnitOfWork): void {
     const layerManager = diagram.layers;
     layerManager._restore(snapshot, uow);
   }
-
-  onAfterCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
-
-  onBeforeCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
 
   restore(snapshot: LayersSnapshot, element: LayerManager, uow: UnitOfWork): void {
     element._restore(snapshot, uow);
@@ -90,4 +85,9 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
   snapshot(element: LayerManager): LayersSnapshot {
     return element._snapshot();
   }
+}
+
+export interface LayersSnapshot extends Snapshot {
+  _snapshotType: 'layers';
+  layers: string[];
 }

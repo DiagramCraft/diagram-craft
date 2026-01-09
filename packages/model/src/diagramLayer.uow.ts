@@ -1,28 +1,46 @@
 import {
-  DiagramEdgeSnapshot,
-  DiagramNodeSnapshot,
-  LayerSnapshot,
+  Snapshot,
   UnitOfWork,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWAdapter,
+  UOWChildAdapter,
+  UOWOperation
 } from '@diagram-craft/model/unitOfWork';
-import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { mustExist } from '@diagram-craft/utils/assert';
+import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { Point } from '@diagram-craft/geometry/point';
-import { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { isDebug } from '@diagram-craft/utils/debug';
+import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
+import { ModificationCRDT } from '@diagram-craft/model/diagramLayerModification';
+import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
-export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSnapshot, Layer> {
-  onAfterCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
+export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
+  id = (layer: Layer) => layer.id;
 
-  onBeforeCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
+  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    const handled = new Set<string>();
+    for (const op of operations) {
+      const key = `${op.type}/${op.target.id}`;
+      if (handled.has(key)) continue;
+      handled.add(key);
 
-  updateElement(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
+      switch (op.type) {
+        case 'add':
+          uow.diagram.layers.emit('layerAdded', { layer: op.target.object as Layer });
+          break;
+        case 'update':
+          uow.diagram.layers.emit('layerUpdated', { layer: op.target.object as Layer });
+          break;
+        case 'remove':
+          uow.diagram.layers.emit('layerRemoved', { layer: op.target.object as Layer });
+          break;
+      }
+    }
+  }
+
+  update(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
     const layer = mustExist(diagram.layers.byId(layerId));
     layer.restore(snapshot, uow);
   }
@@ -36,10 +54,10 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
   }
 }
 
-export class LayerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<
+export class LayerChildUOWAdapter implements UOWChildAdapter<
   DiagramNodeSnapshot | DiagramEdgeSnapshot
 > {
-  addElement(
+  add(
     diagram: Diagram,
     parentId: string,
     _childId: string,
@@ -54,27 +72,13 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
 
     let child: DiagramElement;
     if (childSnapshot.type === 'node') {
-      child = ElementFactory.node(
-        childSnapshot.id,
-        childSnapshot.nodeType,
-        childSnapshot.bounds,
-        layer,
-        childSnapshot.props,
-        childSnapshot.metadata,
-        childSnapshot.texts
-      );
+      child = ElementFactory.nodeFromSnapshot(childSnapshot, layer);
+      child.restore(childSnapshot, uow);
+    } else if (childSnapshot.type === 'edge') {
+      child = ElementFactory.edgeFromSnapshot(childSnapshot, layer);
       child.restore(childSnapshot, uow);
     } else {
-      child = ElementFactory.edge(
-        childSnapshot.id,
-        new FreeEndpoint(Point.of(0, 0)),
-        new FreeEndpoint(Point.of(0, 0)),
-        childSnapshot.props as EdgeProps,
-        childSnapshot.metadata,
-        [],
-        layer
-      );
-      child.restore(childSnapshot, uow);
+      VERIFY_NOT_REACHED();
     }
 
     if (idx === -1) {
@@ -84,7 +88,7 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     }
   }
 
-  removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Removing element ${childId} from layer ${parentId}`);
 
     const layer = mustExist(diagram.layers.byId(parentId));
@@ -93,4 +97,14 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     const child = mustExist(diagram.lookup(childId));
     layer.removeElement(child, uow);
   }
+}
+
+export interface LayerSnapshot extends Snapshot {
+  _snapshotType: 'layer';
+  name: string;
+  locked: boolean;
+  elements?: string[];
+  type: LayerType;
+  rules?: AdjustmentRule[];
+  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
 }

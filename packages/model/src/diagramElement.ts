@@ -49,7 +49,7 @@ type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge';
 
 export interface DiagramElement {
-  trackableType: 'element';
+  _trackableType: 'element';
 
   readonly id: string;
   readonly type: ElementType;
@@ -118,7 +118,7 @@ export interface DiagramElement {
 export abstract class AbstractDiagramElement
   implements DiagramElement, AttachmentConsumer, Releasable
 {
-  readonly trackableType = 'element';
+  readonly _trackableType = 'element';
 
   // Transient properties
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;

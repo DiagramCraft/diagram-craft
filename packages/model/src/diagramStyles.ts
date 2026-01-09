@@ -1,5 +1,5 @@
 import { DiagramElement, isEdge, isNode } from './diagramElement';
-import { StylesheetSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import { common, deepClear, deepClone, deepMerge, isObj } from '@diagram-craft/utils/object';
@@ -16,10 +16,12 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
-  DiagramStylesParentChildUOWSpecification,
-  DiagramStylesUOWSpecification
+  StylesheetUOWAdapter,
+  DiagramStylesChildUOWAdapter,
+  DiagramStylesUOWAdapter,
+  StylesheetSnapshot
 } from '@diagram-craft/model/diagramStyles.uow';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
@@ -37,7 +39,7 @@ type TypeMap = {
 export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOWTrackable {
   type: T;
 
-  readonly trackableType = 'stylesheet';
+  readonly _trackableType = 'stylesheet';
 
   constructor(readonly crdt: CRDTMap<StylesheetSnapshot>) {
     this.type = crdt.get('type') as T;
@@ -79,10 +81,6 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
     uow.executeUpdate(this, () => {
       this.crdt.set('name', name);
     });
-  }
-
-  invalidate(_uow: UnitOfWork): void {
-    // Do nothing
   }
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
@@ -264,7 +262,7 @@ export class DiagramStyles
   #activeTextStylesheet = DefaultStyles.text.default;
 
   readonly id = 'diagramStyles';
-  readonly trackableType = 'diagramStyles';
+  readonly _trackableType = 'diagramStyles';
 
   constructor(
     readonly crdt: CRDTRoot,
@@ -550,6 +548,6 @@ export class DiagramStyles
   }
 }
 
-UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['diagramStyles-stylesheet'] =
-  new DiagramStylesParentChildUOWSpecification();
+UOWRegistry.adapters['stylesheet'] = new StylesheetUOWAdapter();
+UOWRegistry.adapters['diagramStyles'] = new DiagramStylesUOWAdapter();
+UOWRegistry.childAdapters['diagramStyles-stylesheet'] = new DiagramStylesChildUOWAdapter();

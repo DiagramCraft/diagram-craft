@@ -3,7 +3,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { EdgePropsForEditing } from '../diagramEdge';
 import type { NodePropsForEditing, NodeTexts } from '../diagramNode';
 import type { OffsetType } from '../endpoint';
-import type { StylesheetSnapshot } from '../unitOfWork';
 import type { DataSchema, SchemaMetadata } from '../diagramDocumentDataSchemas';
 import type { AdjustmentRule } from '../diagramLayerRuleTypes';
 import type { DataTemplate } from '../diagramDocument';
@@ -17,6 +16,7 @@ import type { DiagramBounds } from '../diagramBounds';
 import type { LabelNode } from '../labelNode';
 import type { Guide } from '../guides';
 import type { ElementMetadata } from '../diagramProps';
+import { StylesheetSnapshot } from '@diagram-craft/model/diagramStyles.uow';
 
 export interface Reference {
   id: string;

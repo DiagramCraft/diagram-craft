@@ -1,4 +1,4 @@
-import type { LayerSnapshot, UnitOfWork } from './unitOfWork';
+import type { UnitOfWork } from './unitOfWork';
 import type { LayerCRDT } from './diagramLayer';
 import { Layer } from './diagramLayer';
 import type { Diagram } from './diagram';
@@ -22,6 +22,7 @@ import { parseAndQuery } from 'embeddable-jq';
 import { type DiagramElement, isEdge, isNode } from './diagramElement';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { type Releasable, TimerReleasable } from '@diagram-craft/utils/releasable';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 type Result = Map<string, Adjustment>;
 

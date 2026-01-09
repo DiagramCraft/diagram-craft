@@ -1,6 +1,6 @@
 import { DiagramElement } from './diagramElement';
 import type { Diagram } from './diagram';
-import { LayersSnapshot, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Layer, LayerCRDT } from './diagramLayer';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
@@ -18,10 +18,11 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
-  LayerManagerParentChildUOWSpecification,
-  LayerManagerUOWSpecification
+  LayerManagerChildUOWAdapter,
+  LayerManagerUOWAdapter,
+  LayersSnapshot
 } from '@diagram-craft/model/diagramLayerManager.uow';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
@@ -79,8 +80,7 @@ export class LayerManager
   extends EventEmitter<LayerManagerEvents>
   implements UOWTrackable, AttachmentConsumer, Releasable
 {
-  readonly id = 'layers';
-  readonly trackableType = 'layerManager';
+  readonly _trackableType = 'layerManager';
 
   // Shared properties
   readonly #layers: MappedCRDTOrderedMap<Layer, LayerCRDT>;
@@ -259,10 +259,6 @@ export class LayerManager
     });
   }
 
-  invalidate(_uow: UnitOfWork) {
-    // Nothing for now...
-  }
-
   _snapshot(): LayersSnapshot {
     return {
       _snapshotType: 'layers',
@@ -294,6 +290,5 @@ export const LayerCapabilities = {
   }
 };
 
-UnitOfWorkManager.trackableSpecs['layerManager'] = new LayerManagerUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['layerManager-layer'] =
-  new LayerManagerParentChildUOWSpecification();
+UOWRegistry.adapters['layerManager'] = new LayerManagerUOWAdapter();
+UOWRegistry.childAdapters['layerManager-layer'] = new LayerManagerChildUOWAdapter();

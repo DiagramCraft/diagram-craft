@@ -93,7 +93,7 @@ export class ImagePasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.on('after', 'undo', () => this.clearPastePoint());
+      uow.on('after', 'undo', newid(), () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);
@@ -127,7 +127,7 @@ export class TextPasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.on('after', 'undo', () => this.clearPastePoint());
+      uow.on('after', 'undo', newid(), () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);
@@ -219,7 +219,7 @@ export class ElementsPasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
-      uow.on('after', 'undo', () => this.clearPastePoint());
+      uow.on('after', 'undo', newid(), () => this.clearPastePoint());
     });
 
     diagram.selection.setElements(newElements);

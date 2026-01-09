@@ -187,7 +187,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     // Only trigger parent.onChildChanged in case this node has indeed changed
     if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
       assert.true(isNode(node.parent));
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${node.parent.id}`, () => {
         const parentDef = (node.parent! as DiagramNode).getDefinition();
         parentDef.onChildChanged(node.parent! as DiagramNode, uow);
       });

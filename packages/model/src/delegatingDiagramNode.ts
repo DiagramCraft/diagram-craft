@@ -9,7 +9,7 @@ import {
 } from './diagramNode';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
-import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
@@ -27,6 +27,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
 import type { CustomNodeProps, ElementMetadata, NodeProps } from './diagramProps';
+import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;

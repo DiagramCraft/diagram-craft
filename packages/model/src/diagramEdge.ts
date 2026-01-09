@@ -12,7 +12,7 @@ import {
   isEdge,
   isNode
 } from './diagramElement';
-import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -58,10 +58,11 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
-  DiagramElementParentChildUOWSpecification,
-  DiagramElementUOWSpecification
+  DiagramEdgeSnapshot,
+  DiagramElementChildUOWAdapter,
+  DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
@@ -1007,8 +1008,9 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
    */
   invalidate(uow: UnitOfWork) {
     // Ensure we don't get into an infinite loop
-    if (uow.hasBeenInvalidated(this)) return;
-    uow.beginInvalidation(this);
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     this.adjustLabelNodePosition(uow);
     this._recalculateIntersections(uow, true);
@@ -1164,6 +1166,5 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 }
 
-UnitOfWorkManager.trackableSpecs['element'] = new DiagramElementUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['element-element'] =
-  new DiagramElementParentChildUOWSpecification();
+UOWRegistry.adapters['element'] = new DiagramElementUOWAdapter();
+UOWRegistry.childAdapters['element-element'] = new DiagramElementChildUOWAdapter();
