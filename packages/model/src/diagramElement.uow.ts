@@ -1,6 +1,7 @@
 import {
   Snapshot,
   UnitOfWork,
+  UOWTrackable,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -13,6 +14,14 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { SerializedEdge, SerializedNode } from '@diagram-craft/model/serialization/serializedTypes';
+
+declare global {
+  namespace DiagramCraft {
+    interface UnitOfWorkMetadata {
+      invalidated?: Set<UOWTrackable>;
+    }
+  }
+}
 
 export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
   DiagramNodeSnapshot | DiagramEdgeSnapshot,

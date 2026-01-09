@@ -132,7 +132,6 @@ export class UnitOfWork {
 
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
-  #invalidatedElements = new Set<UOWTrackable>();
   #snapshots = new MultiMap<string, undefined | Snapshot>();
   #undoableActions: Array<UndoableAction> = [];
 
@@ -212,14 +211,6 @@ export class UnitOfWork {
     const s = spec.snapshot(element);
     this.#snapshots.add(spec.id(element), s);
     return s;
-  }
-
-  hasBeenInvalidated(element: UOWTrackable) {
-    return this.#invalidatedElements.has(element);
-  }
-
-  beginInvalidation(element: UOWTrackable) {
-    this.#invalidatedElements.add(element);
   }
 
   contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
@@ -367,8 +358,6 @@ export class UnitOfWork {
     this.changeType = 'interactive';
 
     this.processEvents();
-
-    this.#invalidatedElements.clear();
 
     return this.#snapshots;
   }

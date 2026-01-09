@@ -851,8 +851,9 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
    */
   invalidate(uow: UnitOfWork) {
     // Prevent infinite recursion
-    if (uow.hasBeenInvalidated(this)) return;
-    uow.beginInvalidation(this);
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     if (this.parent) {
       this.parent.invalidate(uow);
