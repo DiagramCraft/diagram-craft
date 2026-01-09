@@ -18,9 +18,7 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
   restore(snapshot: DiagramSnapshot, element: Diagram, uow: UnitOfWork): void {
     element.setBounds(snapshot.bounds, uow);
     element.setName(snapshot.name, uow);
-    element.updateProps(p => {
-      Object.assign(p, snapshot.props);
-    }, uow);
+    element._setProps(snapshot.props, uow);
   }
 
   snapshot(element: Diagram): DiagramSnapshot {

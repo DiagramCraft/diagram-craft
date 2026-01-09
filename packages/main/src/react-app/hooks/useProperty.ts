@@ -30,26 +30,12 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
   DiagramProps
 >(
   diagram => diagram.props,
-  (diagram, callback) =>
-    UnitOfWork.executeWithUndo(diagram, 'Change diagram prop', uow =>
+  (diagram, path, callback) =>
+    UnitOfWork.executeWithUndo(diagram, `Change diagram ${path}`, uow =>
       diagram.updateProps(callback, uow)
     ),
   (diagram, handler) => {
     useEventListener(diagram, 'diagramChange', handler);
-  },
-  {
-    onAfterSet: (_diagram, _path, _oldValue, _newValue) => {
-      /*diagram.undoManager.add(
-        new PropertyUndoableAction<Diagram>(
-          diagram.props,
-          path,
-          oldValue,
-          newValue,
-          `Change diagram ${path}`,
-          () => diagram.emitDiagramChange('content')
-        )
-      );*/
-    }
   }
 );
 

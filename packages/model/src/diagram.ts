@@ -268,6 +268,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     });
   }
 
+  _setProps(props: DiagramProps, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#props.set(props);
+      this.emitDiagramChange('content');
+    });
+  }
+
   get parent() {
     return this.#parent.get();
   }
