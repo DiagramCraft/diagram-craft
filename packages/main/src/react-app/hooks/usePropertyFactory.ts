@@ -37,7 +37,7 @@ export const makePropertyHook = <
   TValue extends PropPathValue<TObj, TPath> = PropPathValue<TObj, TPath>
 >(
   getObj: (obj: TBase) => TObj,
-  updateObj: (obj: TBase, cb: (obj: TObj) => void) => void,
+  updateObj: (obj: TBase, path: TPath, cb: (obj: TObj) => void) => void,
   subscribe: (obj: TBase, handler: () => void) => void,
   callbacks?: {
     onAfterSet?: (
@@ -69,7 +69,7 @@ export const makePropertyHook = <
     return {
       val: value,
       set: (v: TValue, message?: string) => {
-        updateObj(obj, p => {
+        updateObj(obj, path, p => {
           new DynamicAccessor<TObj>().set(p, path, v);
         });
         callbacks?.onAfterSet?.(obj, path, value, v, message);
@@ -219,34 +219,5 @@ export class PropertyArrayUndoableAction<
         });
       });
     });
-  }
-}
-
-// TODO: Potentially add merge support
-// TODO: Add better typing
-export class PropertyUndoableAction<T> implements UndoableAction {
-  #accessor = new DynamicAccessor<T>();
-
-  constructor(
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    private readonly obj: any,
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    private readonly path: any,
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    private readonly before: any,
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    private readonly after: any,
-    public readonly description: string,
-    private readonly commit: (obj: T) => void
-  ) {}
-
-  undo(): void {
-    this.#accessor.set(this.obj, this.path, this.before);
-    this.commit(this.obj);
-  }
-
-  redo(): void {
-    this.#accessor.set(this.obj, this.path, this.after);
-    this.commit(this.obj);
   }
 }

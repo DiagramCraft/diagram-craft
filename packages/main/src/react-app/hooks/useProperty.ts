@@ -4,8 +4,7 @@ import {
   makePropertyHook,
   PropertyArrayHook,
   PropertyArrayUndoableAction,
-  PropertyHook,
-  PropertyUndoableAction
+  PropertyHook
 } from './usePropertyFactory';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -31,24 +30,12 @@ export const useDiagramProperty: PropertyHook<Diagram, DiagramProps> = makePrope
   DiagramProps
 >(
   diagram => diagram.props,
-  (diagram, callback) =>
-    UnitOfWork.executeSilently(diagram, uow => diagram.updateProps(callback, uow)),
+  (diagram, path, callback) =>
+    UnitOfWork.executeWithUndo(diagram, `Change diagram ${path}`, uow =>
+      diagram.updateProps(callback, uow)
+    ),
   (diagram, handler) => {
     useEventListener(diagram, 'diagramChange', handler);
-  },
-  {
-    onAfterSet: (diagram, path, oldValue, newValue) => {
-      diagram.undoManager.add(
-        new PropertyUndoableAction<Diagram>(
-          diagram.props,
-          path,
-          oldValue,
-          newValue,
-          `Change diagram ${path}`,
-          () => diagram.emitDiagramChange('content')
-        )
-      );
-    }
   }
 );
 
