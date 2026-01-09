@@ -265,31 +265,22 @@ export class UnitOfWork {
     const snapshot = this.snapshot(element);
 
     const res = cb();
-
     this.updateElement(element, snapshot);
-
     return res;
   }
 
   executeRemove<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
-    /*if (_idx === -1) {
-      console.warn('Removing element from invalid index', element.trackableType, element.id, _idx);
-    }*/
+    assert.true(idx >= 0);
 
     this.removeElement(element, parent, idx);
-
     return cb();
   }
 
   executeAdd<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
-    /*if (_idx === -1) {
-      console.warn('Adding element to invalid index', element);
-    }*/
+    assert.true(idx >= 0);
 
     const res = cb();
-
     this.addElement(element, parent, idx);
-
     return res;
   }
 

@@ -127,12 +127,7 @@ export class MappedCRDTOrderedMap<
     }
   }
 
-  /** @deprecated */
   getIndex(key: string) {
-    return this.#current.get(key)?.get('index') ?? -1;
-  }
-
-  get0Index(key: string) {
     return this.#entries.findIndex(e => e[0] === key);
   }
 

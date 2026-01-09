@@ -361,7 +361,7 @@ export abstract class AbstractDiagramElement
     const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
 
     for (const e of added) {
-      uow.executeAdd(e, this, this._children.size - 1, () => {
+      uow.executeAdd(e, this, this._children.size, () => {
         this._children.add(e.id, e);
         e._setParent(this);
         this.diagram.register(e);
@@ -369,7 +369,7 @@ export abstract class AbstractDiagramElement
     }
 
     for (const e of removed) {
-      uow.executeRemove(e, this, this.children.indexOf(e), () => {
+      uow.executeRemove(e, this, this._children.getIndex(e.id), () => {
         e.detachCRDT(() => {
           this._children.remove(e.id);
           e._setParent(undefined);
@@ -395,7 +395,7 @@ export abstract class AbstractDiagramElement
           this._children.insert(child.id, child, position);
         });
       } else {
-        const index = this._children.get0Index(position.ref.id);
+        const index = this._children.getIndex(position.ref.id);
         const effectiveIndex = position.type === 'after' ? index + 1 : index;
         uow.executeAdd(child, this, effectiveIndex, () => {
           this._children.insert(child.id, child, effectiveIndex);
@@ -415,7 +415,7 @@ export abstract class AbstractDiagramElement
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
-    uow.executeRemove(child, this, 0, () => {
+    uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
       child.detachCRDT(() => {
         this._children.remove(child.id);
         child._setParent(undefined);

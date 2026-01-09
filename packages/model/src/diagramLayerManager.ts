@@ -250,7 +250,7 @@ export class LayerManager
       layer.elements.forEach(e => layer.removeElement(e, uow));
     }
 
-    uow.executeRemove(layer, this, this.#layers.get0Index(layer.id), () => {
+    uow.executeRemove(layer, this, this.#layers.getIndex(layer.id), () => {
       this.#layers.remove(layer.id);
       this.#visibleLayers.delete(layer.id);
       if (this.diagram.selection.nodes.some(e => e.layer === layer)) {

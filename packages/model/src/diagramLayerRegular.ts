@@ -177,7 +177,7 @@ export class RegularLayer extends Layer<RegularLayer> {
       element.removeChild(child, uow);
     }
 
-    uow.executeRemove(element, this, this.#elements.get0Index(element.id), () => {
+    uow.executeRemove(element, this, this.#elements.getIndex(element.id), () => {
       element.detachCRDT(() => {
         this.#elements.remove(element.id);
       });
@@ -192,14 +192,14 @@ export class RegularLayer extends Layer<RegularLayer> {
     const removed = this.#elements.values.filter(e => ids.indexOf(e.id) < 0);
 
     for (const e of added) {
-      uow.executeAdd(e, this, this.#elements.size - 1, () => {
+      uow.executeAdd(e, this, this.#elements.size, () => {
         this.#elements.add(e.id, e);
         this.processElementForAdd(e);
       });
     }
 
     for (const e of removed) {
-      uow.executeRemove(e, this, this.elements.indexOf(e), () => {
+      uow.executeRemove(e, this, this.#elements.getIndex(e.id), () => {
         e.detachCRDT(() => {
           this.#elements.remove(e.id);
         });
