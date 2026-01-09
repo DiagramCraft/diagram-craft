@@ -36,16 +36,18 @@ export interface UOWTrackable {
 export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrackable> {
   id(element: E): string;
 
-  updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
+  update: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
-  onCommit: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onNotify?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onBeforeCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onAfterCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
 }
 
 export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
-  addElement: (
+  add: (
     diagram: Diagram,
     parentId: string,
     childId: string,
@@ -53,7 +55,7 @@ export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
     idx: number,
     uow: UnitOfWork
   ) => void;
-  removeElement: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
+  remove: (diagram: Diagram, parentId: string, child: string, uow: UnitOfWork) => void;
 }
 
 const registry =
@@ -356,6 +358,10 @@ export class UnitOfWork {
   notify() {
     this.changeType = 'interactive';
 
+    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+      UnitOfWorkManager.getSpec(k).onNotify?.(ops, this);
+    }
+
     this.processEvents();
 
     return this.#snapshots;
@@ -368,11 +374,15 @@ export class UnitOfWork {
     emitEvent(this.#callbacks, 'before-commit', this);
 
     for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
-      const spec = UnitOfWorkManager.getSpec(k);
-      spec.onCommit(ops, this);
+      UnitOfWorkManager.getSpec(k).onBeforeCommit?.(ops, this);
     }
 
     this.processEvents();
+
+    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+      UnitOfWorkManager.getSpec(k).onNotify?.(ops, this);
+      UnitOfWorkManager.getSpec(k).onAfterCommit?.(ops, this);
+    }
 
     emitEvent(this.#callbacks, 'after-commit', this);
 
@@ -460,29 +470,15 @@ export class UnitOfWork {
     const handled = new Set<string>();
     this.#operations.forEach(({ trackable, trackableType, type, id }) => {
       const spec = UnitOfWorkManager.getSpec(trackable._trackableType);
-      const key = type + '/' + spec.id(trackable);
+      const key = `${type}/${spec.id(trackable)}`;
       if (handled.has(key)) return;
       handle(type)(trackableType, id, trackable);
       handled.add(key);
-    });
-
-    this.diagram.emit('elementBatchChange', {
-      removed: [...this.removed].filter(e => e._trackableType === 'element') as DiagramElement[],
-      updated: [...this.updated].filter(e => e._trackableType === 'element') as DiagramElement[],
-      added: [...this.added].filter(e => e._trackableType === 'element') as DiagramElement[]
     });
   }
 
   get added() {
     return new Set([...this.#operations.filter(e => e.type === 'add').map(e => e.trackable)]);
-  }
-
-  private get updated() {
-    return new Set([...this.#operations.filter(e => e.type === 'update').map(e => e.trackable)]);
-  }
-
-  private get removed() {
-    return new Set([...this.#operations.filter(e => e.type === 'remove').map(e => e.trackable)]);
   }
 }
 
@@ -511,17 +507,17 @@ class UnitOfWorkUndoableAction implements UndoableAction {
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
+          pcSpec.add(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          pcSpec.remove(this.diagram, op.parentId, op.id, uow);
           break;
         }
         case 'update':
-          spec.updateElement(this.diagram, op.id, op.beforeSnapshot, uow);
+          spec.update(this.diagram, op.id, op.beforeSnapshot, uow);
           break;
       }
     }
@@ -542,17 +538,17 @@ class UnitOfWorkUndoableAction implements UndoableAction {
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.addElement(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
+          pcSpec.add(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
           const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
-          pcSpec.removeElement(this.diagram, op.parentId, op.id, uow);
+          pcSpec.remove(this.diagram, op.parentId, op.id, uow);
           break;
         }
         case 'update':
-          spec.updateElement(this.diagram, op.id, op.afterSnapshot, uow);
+          spec.update(this.diagram, op.id, op.afterSnapshot, uow);
           break;
       }
     }

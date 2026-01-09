@@ -1,7 +1,6 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWOperation,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -24,9 +23,7 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
     return layer.id;
   }
 
-  onCommit(_layers: Array<UOWOperation>, _uow: UnitOfWork): void {}
-
-  updateElement(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
+  update(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
     const layer = mustExist(diagram.layers.byId(layerId));
     layer.restore(snapshot, uow);
   }
@@ -43,7 +40,7 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
 export class LayerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<
   DiagramNodeSnapshot | DiagramEdgeSnapshot
 > {
-  addElement(
+  add(
     diagram: Diagram,
     parentId: string,
     _childId: string,
@@ -88,7 +85,7 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     }
   }
 
-  removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Removing element ${childId} from layer ${parentId}`);
 
     const layer = mustExist(diagram.layers.byId(parentId));

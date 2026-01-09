@@ -24,15 +24,16 @@ declare global {
   }
 }
 
+type ElementSnapshot = DiagramNodeSnapshot | DiagramEdgeSnapshot;
 export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
-  DiagramNodeSnapshot | DiagramEdgeSnapshot,
+  ElementSnapshot,
   DiagramElement
 > {
   id(e: DiagramElement): string {
     return e.id;
   }
 
-  onCommit(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+  onBeforeCommit(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     // At this point, any elements have been added and or removed
     if (!uow.isRemote) {
       const handled = new Set<string>();
@@ -45,38 +46,38 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
     }
   }
 
-  updateElement(
-    diagram: Diagram,
-    elementId: string,
-    snapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
-    uow: UnitOfWork
-  ): void {
+  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    const added = operations.filter(e => e.type === 'add').map(e => e.trackable as DiagramElement);
+    const updated = operations
+      .filter(e => e.type === 'update')
+      .map(e => e.trackable as DiagramElement);
+    const removed = operations
+      .filter(e => e.type === 'remove')
+      .map(e => e.trackable as DiagramElement);
+    uow.diagram.emit('elementBatchChange', { removed, updated, added });
+  }
+
+  update(diagram: Diagram, elementId: string, snapshot: ElementSnapshot, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Updating element ${elementId}`);
     const element = mustExist(diagram.lookup(elementId));
     element.restore(snapshot, uow);
   }
 
-  restore(
-    snapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
-    element: DiagramElement,
-    uow: UnitOfWork
-  ): void {
+  restore(snapshot: ElementSnapshot, element: DiagramElement, uow: UnitOfWork): void {
     element.restore(snapshot, uow);
   }
 
-  snapshot(element: DiagramElement): DiagramNodeSnapshot | DiagramEdgeSnapshot {
-    return element.snapshot() as DiagramNodeSnapshot | DiagramEdgeSnapshot;
+  snapshot(element: DiagramElement): ElementSnapshot {
+    return element.snapshot() as ElementSnapshot;
   }
 }
 
-export class DiagramElementParentChildUOWSpecification implements UOWTrackableParentChildSpecification<
-  DiagramNodeSnapshot | DiagramEdgeSnapshot
-> {
-  addElement(
+export class DiagramElementParentChildUOWSpecification implements UOWTrackableParentChildSpecification<ElementSnapshot> {
+  add(
     diagram: Diagram,
     parentId: string,
     _childId: string,
-    childSnapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
+    childSnapshot: ElementSnapshot,
     idx: number,
     uow: UnitOfWork
   ): void {
@@ -118,7 +119,7 @@ export class DiagramElementParentChildUOWSpecification implements UOWTrackablePa
     }
   }
 
-  removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
     const parent = mustExist(diagram.lookup(parentId));
     const child = mustExist(diagram.lookup(childId));
     parent.removeChild(child, uow);

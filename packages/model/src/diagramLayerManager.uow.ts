@@ -1,7 +1,6 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWOperation,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -17,7 +16,7 @@ import { isDebug } from '@diagram-craft/utils/debug';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
-  addElement(
+  add(
     diagram: Diagram,
     _parentId: string,
     childId: string,
@@ -57,7 +56,7 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
     }
   }
 
-  removeElement(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Removing layer ${child}`);
 
     const layerManager = diagram.layers;
@@ -74,17 +73,10 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
     return 'layerManager';
   }
 
-  updateElement(
-    diagram: Diagram,
-    _elementId: string,
-    snapshot: LayersSnapshot,
-    uow: UnitOfWork
-  ): void {
+  update(diagram: Diagram, _elementId: string, snapshot: LayersSnapshot, uow: UnitOfWork): void {
     const layerManager = diagram.layers;
     layerManager._restore(snapshot, uow);
   }
-
-  onCommit(_layerManagers: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   restore(snapshot: LayersSnapshot, element: LayerManager, uow: UnitOfWork): void {
     element._restore(snapshot, uow);

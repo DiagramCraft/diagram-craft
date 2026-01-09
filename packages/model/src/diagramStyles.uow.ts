@@ -18,12 +18,12 @@ export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecificat
     return e.id;
   }
 
-  updateElement(diagram: Diagram, id: string, snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
+  update(diagram: Diagram, id: string, snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     const stylesheet = mustExist(diagram.document.styles.getStyle(id));
     stylesheet.restore(snapshot, uow);
   }
 
-  onCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
+  onBeforeCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   restore(snapshot: StylesheetSnapshot, e: Stylesheet<StylesheetType>, uow: UnitOfWork): void {
     e.restore(snapshot, uow);
@@ -42,11 +42,7 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
     return 'diagramStyles';
   }
 
-  invalidate(_e: DiagramStyles, _uow: UnitOfWork): void {}
-
-  updateElement(_diagram: Diagram, _id: string, _snapshot: Snapshot, _uow: UnitOfWork): void {}
-
-  onCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
+  update(_diagram: Diagram, _id: string, _snapshot: Snapshot, _uow: UnitOfWork): void {}
 
   restore(_snapshot: Snapshot, _e: DiagramStyles, _uow: UnitOfWork): void {}
 
@@ -56,7 +52,7 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
 }
 
 export class DiagramStylesParentChildUOWSpecification implements UOWTrackableParentChildSpecification<StylesheetSnapshot> {
-  addElement(
+  add(
     diagram: Diagram,
     _parentId: string,
     childId: string,
@@ -70,7 +66,7 @@ export class DiagramStylesParentChildUOWSpecification implements UOWTrackablePar
     styles.addStylesheet(childId, stylesheet, uow);
   }
 
-  removeElement(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
+  remove(diagram: Diagram, _parentId: string, child: string, uow: UnitOfWork): void {
     diagram.document.styles.deleteStylesheet(child, uow);
   }
 }
