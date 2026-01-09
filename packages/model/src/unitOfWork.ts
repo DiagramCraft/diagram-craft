@@ -118,11 +118,17 @@ type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
 
 const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
   const eventsById = map.get(key);
-  if (!eventsById) return;
+  if (eventsById === undefined) return;
 
-  for (const cb of eventsById!.values()) {
-    cb(uow);
-  }
+  let emitted: boolean;
+  do {
+    emitted = false;
+    for (const [key, cb] of eventsById.entries()) {
+      cb(uow);
+      eventsById.delete(key);
+      emitted = true;
+    }
+  } while (emitted);
 };
 
 export class UnitOfWork {
@@ -372,9 +378,8 @@ export class UnitOfWork {
       name + (element ? UnitOfWorkManager.getSpec(element._trackableType).id(element) : '');
     if (this.#onCommitCallbacks.has(id)) return;
 
-    // Note, a Map retains insertion order, so this ensure actions are
-    // executed in the order they are added
-    this.#onCommitCallbacks.set(id, cb);
+    //this.#onCommitCallbacks.set(id, cb);
+    this.on('before', 'commit', id, cb);
   }
 
   notify() {
@@ -508,12 +513,13 @@ export class UnitOfWork {
   }
 
   private processOnCommitCallbacks() {
-    while (this.#onCommitCallbacks.size > 0) {
+    emitEvent(this.#callbacks, 'before-commit', this);
+    /*while (this.#onCommitCallbacks.size > 0) {
       this.#onCommitCallbacks.forEach((callback, key) => {
         this.#onCommitCallbacks.delete(key);
         callback();
       });
-    }
+    }*/
   }
 
   get added() {
