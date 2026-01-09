@@ -58,7 +58,7 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
   DiagramEdgeSnapshot,
   DiagramElementChildUOWAdapter,
@@ -1166,5 +1166,5 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 }
 
-UnitOfWorkManager.adapters['element'] = new DiagramElementUOWAdapter();
-UnitOfWorkManager.childAdapters['element-element'] = new DiagramElementChildUOWAdapter();
+UOWRegistry.adapters['element'] = new DiagramElementUOWAdapter();
+UOWRegistry.childAdapters['element-element'] = new DiagramElementChildUOWAdapter();

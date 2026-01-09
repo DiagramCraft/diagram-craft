@@ -14,7 +14,7 @@ import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { isRegularLayer } from './diagramLayerUtils';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
   LayerChildUOWAdapter,
   LayerSnapshot,
@@ -183,5 +183,5 @@ declare global {
 assert.isRegularLayer = (e: Layer): asserts e is RegularLayer =>
   assert.true(isRegularLayer(e), 'not regular layer');
 
-UnitOfWorkManager.adapters['layer'] = new LayerUOWAdapter();
-UnitOfWorkManager.childAdapters['layer-element'] = new LayerChildUOWAdapter();
+UOWRegistry.adapters['layer'] = new LayerUOWAdapter();
+UOWRegistry.childAdapters['layer-element'] = new LayerChildUOWAdapter();

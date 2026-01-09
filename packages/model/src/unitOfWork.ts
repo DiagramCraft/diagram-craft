@@ -1,8 +1,7 @@
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
@@ -180,9 +179,9 @@ export class UnitOfWork {
   private snapshot(element: UOWTrackable) {
     if (!this.trackChanges) return;
 
-    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
-    const s = spec.snapshot(element);
-    this.#snapshots.add(spec.id(element), s);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const s = adapter.snapshot(element);
+    this.#snapshots.add(adapter.id(element), s);
     return s;
   }
 
@@ -221,8 +220,8 @@ export class UnitOfWork {
   }
 
   updateElement(element: UOWTrackable, snapshot?: Snapshot) {
-    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
-    const id = spec.id(element);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const id = adapter.id(element);
 
     const effectiveSnapshot = snapshot ?? this.#snapshots.get(id)!.at(-1)!;
     assert.true(
@@ -236,7 +235,7 @@ export class UnitOfWork {
       type: 'update',
       target: { object: element, id, type: element._trackableType },
       beforeSnapshot: effectiveSnapshot,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
@@ -246,14 +245,14 @@ export class UnitOfWork {
       return;
     }
 
-    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
-    const parentSpec = UnitOfWorkManager.getAdapter(parent._trackableType);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
     this.#operations.push({
       type: 'remove',
-      target: { id: spec.id(element), object: element, type: element._trackableType },
+      target: { id: adapter.id(element), object: element, type: element._trackableType },
       idx: idx,
-      parent: { id: parentSpec.id(parent), type: parent._trackableType },
-      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      beforeSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
@@ -263,9 +262,9 @@ export class UnitOfWork {
       return;
     }
 
-    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
-    const parentSpec = UnitOfWorkManager.getAdapter(parent._trackableType);
-    const id = spec.id(element);
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+    const id = adapter.id(element);
 
     if (this.trackChanges && !this.#snapshots.has(id)) {
       this.#snapshots.add(id, undefined);
@@ -287,8 +286,8 @@ export class UnitOfWork {
       type: 'add',
       target: { id, object: element, type: element._trackableType },
       idx: idx,
-      parent: { id: parentSpec.id(parent), type: parent._trackableType },
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
 
     if (existingUpdates.length > 0) {
@@ -323,7 +322,7 @@ export class UnitOfWork {
     this.changeType = 'interactive';
 
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
-      UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
+      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
     }
 
     return this.#snapshots;
@@ -336,12 +335,12 @@ export class UnitOfWork {
     emitEvent(this.#callbacks, 'before-commit', this);
 
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
-      UnitOfWorkManager.getAdapter(k).onBeforeCommit?.(ops, this);
+      UOWRegistry.getAdapter(k).onBeforeCommit?.(ops, this);
     }
 
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
-      UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
-      UnitOfWorkManager.getAdapter(k).onAfterCommit?.(ops, this);
+      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+      UOWRegistry.getAdapter(k).onAfterCommit?.(ops, this);
     }
 
     emitEvent(this.#callbacks, 'after-commit', this);
@@ -371,6 +370,21 @@ export class UnitOfWork {
   }
 }
 
+export class UOWRegistry {
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static adapters: Record<string, UOWAdapter<any, any>> = {};
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static childAdapters: Record<string, UOWChildAdapter<any>> = {};
+
+  static getAdapter(trackableType: string): UOWAdapter<Snapshot, UOWTrackable> {
+    return mustExist(UOWRegistry.adapters[trackableType]);
+  }
+
+  static getChildAdapter(parent: string, child: string): UOWChildAdapter<Snapshot> {
+    return mustExist(UOWRegistry.childAdapters[`${parent}-${child}`]);
+  }
+}
+
 class UOWUndoableAction implements UndoableAction {
   timestamp?: Date;
 
@@ -391,20 +405,20 @@ class UOWUndoableAction implements UndoableAction {
     emitEvent(this.eventMap, 'before-undo', uow);
 
     for (const op of this.ops.toReversed()) {
-      const spec = UnitOfWorkManager.getAdapter(op.target.type);
+      const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'remove': {
-          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
-          pcSpec.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
-          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
-          pcSpec.remove(this.diagram, op.parent.id, op.target.id, uow);
+          const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          adapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
+          adapter.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
           break;
       }
     }
@@ -420,20 +434,20 @@ class UOWUndoableAction implements UndoableAction {
     emitEvent(this.eventMap, 'before-redo', uow);
 
     for (const op of this.ops) {
-      const spec = UnitOfWorkManager.getAdapter(op.target.type);
+      const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'add': {
-          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
-          pcSpec.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
-          const pcSpec = UnitOfWorkManager.getChildAdapter(op.parent.type, op.target.type);
-          pcSpec.remove(this.diagram, op.parent.id, op.target.id, uow);
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
-          spec.update(this.diagram, op.target.id, op.afterSnapshot, uow);
+          adapter.update(this.diagram, op.target.id, op.afterSnapshot, uow);
           break;
       }
     }

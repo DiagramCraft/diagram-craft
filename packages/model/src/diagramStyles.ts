@@ -16,7 +16,7 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { MappedCRDTMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtMap';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
   StylesheetUOWAdapter,
   DiagramStylesChildUOWAdapter,
@@ -548,6 +548,6 @@ export class DiagramStyles
   }
 }
 
-UnitOfWorkManager.adapters['stylesheet'] = new StylesheetUOWAdapter();
-UnitOfWorkManager.adapters['diagramStyles'] = new DiagramStylesUOWAdapter();
-UnitOfWorkManager.childAdapters['diagramStyles-stylesheet'] = new DiagramStylesChildUOWAdapter();
+UOWRegistry.adapters['stylesheet'] = new StylesheetUOWAdapter();
+UOWRegistry.adapters['diagramStyles'] = new DiagramStylesUOWAdapter();
+UOWRegistry.childAdapters['diagramStyles-stylesheet'] = new DiagramStylesChildUOWAdapter();

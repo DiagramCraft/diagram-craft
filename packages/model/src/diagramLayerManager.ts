@@ -18,7 +18,7 @@ import {
 } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/types';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
-import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
   LayerManagerChildUOWAdapter,
   LayerManagerUOWAdapter,
@@ -290,5 +290,5 @@ export const LayerCapabilities = {
   }
 };
 
-UnitOfWorkManager.adapters['layerManager'] = new LayerManagerUOWAdapter();
-UnitOfWorkManager.childAdapters['layerManager-layer'] = new LayerManagerChildUOWAdapter();
+UOWRegistry.adapters['layerManager'] = new LayerManagerUOWAdapter();
+UOWRegistry.childAdapters['layerManager-layer'] = new LayerManagerChildUOWAdapter();
