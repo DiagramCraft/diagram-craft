@@ -2,12 +2,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { useEffect, useState } from 'react';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  makePropertyArrayHook,
-  PropertyArrayHook,
-  PropertyArrayUndoableAction
-} from './usePropertyFactory';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { makePropertyArrayHook } from './usePropertyFactory';
 import { useEventListener } from './useEventListener';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { assert } from '@diagram-craft/utils/assert';
@@ -47,11 +42,8 @@ export const useTable = (diagram: Diagram) => {
   return element;
 };
 
-export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePropertyArrayHook<
-  Diagram,
-  DiagramNode,
-  NodeProps
->(
+export const useTableProperty = makePropertyArrayHook<DiagramNode, NodeProps>(
+  path => `Change node ${path}`,
   (diagram => {
     const nodes = diagram.selection.nodes;
     if (nodes.length !== 1) return [];
@@ -65,24 +57,7 @@ export const useTableProperty: PropertyArrayHook<Diagram, NodeProps> = makePrope
   node => node.editProps,
   node => node.storedProps,
   (node, path) => node.getPropsInfo(path),
-  (diagram, element, cb) => UnitOfWork.execute(diagram, uow => element.updateProps(cb, uow)),
-  (diagram, handler) => {
-    useEventListener(diagram.selection, 'change', handler);
-  },
-  nodeDefaults,
-  {
-    onAfterSet: (diagram, nodes, path, oldValue, newValue) => {
-      diagram.undoManager.add(
-        new PropertyArrayUndoableAction<DiagramNode, NodeProps>(
-          `Change node ${path}`,
-          diagram,
-          nodes,
-          path,
-          oldValue,
-          newValue,
-          (node: DiagramNode, uow: UnitOfWork, cb) => node.updateProps(cb, uow)
-        )
-      );
-    }
-  }
+  (element, uow, cb) => element.updateProps(cb, uow),
+  (diagram, handler) => useEventListener(diagram.selection, 'change', handler),
+  nodeDefaults
 );
