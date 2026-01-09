@@ -207,7 +207,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     this.layoutChildren(node, uow);
 
     if (node.parent && isNode(node.parent) && !Box.isEqual(node.bounds, boundsBefore)) {
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${node.parent.id}`, () => {
         assert.node(node.parent!);
 
         const parentDef = node.parent.getDefinition();

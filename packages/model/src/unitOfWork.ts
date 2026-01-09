@@ -11,8 +11,6 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrSingle } from '@diagram-craft/utils/types';
 
-type ActionCallback = () => void;
-
 type ChangeType = 'interactive' | 'non-interactive';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
@@ -22,9 +20,7 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
   if (!uow) {
     uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
-    uow.registerOnCommitCallback('remoteCleanup', undefined, () =>
-      remoteUnitOfWorkRegistry.delete(diagram.id)
-    );
+    uow.on('before', 'commit', 'remoteCleanup', () => remoteUnitOfWorkRegistry.delete(diagram.id));
   }
   return uow;
 };
@@ -138,7 +134,6 @@ export class UnitOfWork {
   #updates = new Set<string>();
   #invalidatedElements = new Set<UOWTrackable>();
   #snapshots = new MultiMap<string, undefined | Snapshot>();
-  #onCommitCallbacks = new Map<string, ActionCallback>();
   #undoableActions: Array<UndoableAction> = [];
 
   #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
@@ -358,28 +353,14 @@ export class UnitOfWork {
     id: string,
     callback: (uow: UnitOfWork) => void
   ) {
-    if (this.isThrowaway) return;
+    if (this.isThrowaway) {
+      if (event === 'commit') callback(this);
+      return;
+    }
 
     const eventKey = `${when}-${event}`;
     if (!this.#callbacks.has(eventKey)) this.#callbacks.set(eventKey, new Map());
     this.#callbacks.get(eventKey)!.set(id, callback);
-  }
-
-  /**
-   * Register a callback to be executed after the commit phase. It's coalesced
-   * so that only one callback is executed per element/operation per commit phase.
-   */
-  registerOnCommitCallback(name: string, element: UOWTrackable | undefined, cb: ActionCallback) {
-    if (this.isThrowaway) {
-      return cb();
-    }
-
-    const id =
-      name + (element ? UnitOfWorkManager.getSpec(element._trackableType).id(element) : '');
-    if (this.#onCommitCallbacks.has(id)) return;
-
-    //this.#onCommitCallbacks.set(id, cb);
-    this.on('before', 'commit', id, cb);
   }
 
   notify() {
@@ -396,13 +377,11 @@ export class UnitOfWork {
     this.state = 'committed';
     this.changeType = 'non-interactive';
 
-    emitEvent(this.#callbacks, 'after-commit', this);
+    emitEvent(this.#callbacks, 'before-commit', this);
 
-    // Note, onCommitCallbacks must run before elements events are emitted
-    this.processOnCommitCallbacks();
     this.processEvents();
 
-    emitEvent(this.#callbacks, 'after-elements', this);
+    emitEvent(this.#callbacks, 'after-commit', this);
 
     registry.unregister(this);
   }
@@ -510,16 +489,6 @@ export class UnitOfWork {
       updated: [...this.updated].filter(e => e._trackableType === 'element') as DiagramElement[],
       added: [...this.added].filter(e => e._trackableType === 'element') as DiagramElement[]
     });
-  }
-
-  private processOnCommitCallbacks() {
-    emitEvent(this.#callbacks, 'before-commit', this);
-    /*while (this.#onCommitCallbacks.size > 0) {
-      this.#onCommitCallbacks.forEach((callback, key) => {
-        this.#onCommitCallbacks.delete(key);
-        callback();
-      });
-    }*/
   }
 
   get added() {

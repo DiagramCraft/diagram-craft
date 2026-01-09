@@ -26,7 +26,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     // as the row itself does not have any layout or rendering logic
     const parent = node.parent;
     if (parent && isNode(parent)) {
-      uow.registerOnCommitCallback('onChildChanged', parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${parent.id}`, () => {
         const parentDef = parent.getDefinition();
         parentDef.onChildChanged(parent, uow);
       });

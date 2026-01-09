@@ -16,14 +16,14 @@ import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/l
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
-import { registerCustomNodeDefaults } from "@diagram-craft/model/diagramDefaults";
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      _collapsible?: CollapsibleProps
+      _collapsible?: CollapsibleProps;
     }
   }
 }
@@ -34,7 +34,6 @@ registerCustomNodeDefaults('_collapsible', {
   mode: 'expanded'
 });
 
-
 export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinition {
   getContainerPadding(node: DiagramNode): {
     left: number;
@@ -43,7 +42,6 @@ export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinitio
     bottom: number;
   };
 }
-
 
 export abstract class LayoutCapableShapeNodeDefinition
   extends ShapeNodeDefinition
@@ -107,7 +105,7 @@ export abstract class LayoutCapableShapeNodeDefinition
       layoutRoot = layoutRoot.parent;
     }
 
-    uow.registerOnCommitCallback('layout', layoutRoot, () => {
+    uow.on('before', 'commit', `layout/${layoutRoot.id}`, () => {
       const layoutTree = buildLayoutTree(layoutRoot);
       layoutChildren(layoutTree);
       applyLayoutTree(layoutRoot, layoutTree, uow);
