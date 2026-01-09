@@ -1,6 +1,6 @@
-import type { Endpoint } from './endpoint';
-import { type DiagramEdge, type EdgePropsForEditing, SimpleDiagramEdge } from './diagramEdge';
+import { Endpoint, FreeEndpoint } from './endpoint';
 import type { Waypoint } from './diagramEdge';
+import { type DiagramEdge, type EdgePropsForEditing, SimpleDiagramEdge } from './diagramEdge';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
 import { Box } from '@diagram-craft/geometry/box';
@@ -13,7 +13,9 @@ import {
 } from './diagramNode';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { DiagramElementCRDT } from './diagramElement';
-import type { ElementMetadata } from './diagramProps';
+import { EdgeProps, ElementMetadata } from './diagramProps';
+import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
+import { Point } from '@diagram-craft/geometry/point';
 
 export const ElementFactory = {
   edge(
@@ -64,5 +66,21 @@ export const ElementFactory = {
       text,
       anchorCache
     )!;
+  },
+
+  nodeFromSnapshot(s: DiagramNodeSnapshot, layer: RegularLayer | ModificationLayer) {
+    return ElementFactory.node(s.id, s.nodeType, s.bounds, layer, s.props, s.metadata, s.texts);
+  },
+
+  edgeFromSnapshot(s: DiagramEdgeSnapshot, layer: RegularLayer | ModificationLayer) {
+    return ElementFactory.edge(
+      s.id,
+      new FreeEndpoint(Point.of(0, 0)),
+      new FreeEndpoint(Point.of(0, 0)),
+      s.props as EdgeProps,
+      s.metadata,
+      [],
+      layer
+    );
   }
 };

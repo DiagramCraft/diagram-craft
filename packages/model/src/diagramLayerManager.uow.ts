@@ -67,9 +67,7 @@ export class LayerManagerChildUOWAdapter implements UOWChildAdapter<LayerSnapsho
 }
 
 export class LayerManagerUOWAdapter implements UOWAdapter<LayersSnapshot, LayerManager> {
-  id(_layerManager: LayerManager): string {
-    return 'layerManager';
-  }
+  id = () => 'layerManager';
 
   onNotify(_operations: Array<UOWOperation>, uow: UnitOfWork): void {
     uow.diagram.layers.emit('layerStructureChange', {});

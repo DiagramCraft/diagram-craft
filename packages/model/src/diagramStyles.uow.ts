@@ -14,9 +14,7 @@ export class StylesheetUOWAdapter implements UOWAdapter<
   StylesheetSnapshot,
   Stylesheet<StylesheetType>
 > {
-  id(e: Stylesheet<StylesheetType>): string {
-    return e.id;
-  }
+  id = (e: Stylesheet<StylesheetType>) => e.id;
 
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     const handled = new Set<string>();
@@ -50,8 +48,6 @@ export class StylesheetUOWAdapter implements UOWAdapter<
     stylesheet.restore(snapshot, uow);
   }
 
-  onBeforeCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
-
   restore(snapshot: StylesheetSnapshot, e: Stylesheet<StylesheetType>, uow: UnitOfWork): void {
     e.restore(snapshot, uow);
   }
@@ -62,9 +58,7 @@ export class StylesheetUOWAdapter implements UOWAdapter<
 }
 
 export class DiagramStylesUOWAdapter implements UOWAdapter<Snapshot, DiagramStyles> {
-  id(_e: DiagramStyles): string {
-    return 'diagramStyles';
-  }
+  id = () => 'diagramStyles';
 
   update(_diagram: Diagram, _id: string, _snapshot: Snapshot, _uow: UnitOfWork): void {}
 

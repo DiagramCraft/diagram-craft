@@ -1,28 +1,23 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWOperation,
+  UOWAdapter,
   UOWChildAdapter,
-  UOWAdapter
+  UOWOperation
 } from '@diagram-craft/model/unitOfWork';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { mustExist } from '@diagram-craft/utils/assert';
+import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { Point } from '@diagram-craft/geometry/point';
-import { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { ModificationCRDT } from '@diagram-craft/model/diagramLayerModification';
 import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
-  id(layer: Layer): string {
-    return layer.id;
-  }
+  id = (layer: Layer) => layer.id;
 
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     const handled = new Set<string>();
@@ -77,27 +72,13 @@ export class LayerChildUOWAdapter implements UOWChildAdapter<
 
     let child: DiagramElement;
     if (childSnapshot.type === 'node') {
-      child = ElementFactory.node(
-        childSnapshot.id,
-        childSnapshot.nodeType,
-        childSnapshot.bounds,
-        layer,
-        childSnapshot.props,
-        childSnapshot.metadata,
-        childSnapshot.texts
-      );
+      child = ElementFactory.nodeFromSnapshot(childSnapshot, layer);
+      child.restore(childSnapshot, uow);
+    } else if (childSnapshot.type === 'edge') {
+      child = ElementFactory.edgeFromSnapshot(childSnapshot, layer);
       child.restore(childSnapshot, uow);
     } else {
-      child = ElementFactory.edge(
-        childSnapshot.id,
-        new FreeEndpoint(Point.of(0, 0)),
-        new FreeEndpoint(Point.of(0, 0)),
-        childSnapshot.props as EdgeProps,
-        childSnapshot.metadata,
-        [],
-        layer
-      );
-      child.restore(childSnapshot, uow);
+      VERIFY_NOT_REACHED();
     }
 
     if (idx === -1) {

@@ -1,17 +1,14 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWOperation,
-  UOWTrackable,
+  UOWAdapter,
   UOWChildAdapter,
-  UOWAdapter
+  UOWOperation,
+  UOWTrackable
 } from '@diagram-craft/model/unitOfWork';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { EdgeProps } from '@diagram-craft/model/diagramProps';
-import { Point } from '@diagram-craft/geometry/point';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { SerializedEdge, SerializedNode } from '@diagram-craft/model/serialization/serializedTypes';
@@ -26,9 +23,7 @@ declare global {
 
 type ElementSnapshot = DiagramNodeSnapshot | DiagramEdgeSnapshot;
 export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, DiagramElement> {
-  id(e: DiagramElement): string {
-    return e.id;
-  }
+  id = (e: DiagramElement) => e.id;
 
   onBeforeCommit(operations: Array<UOWOperation>, uow: UnitOfWork): void {
     if (uow.isRemote) return;
@@ -102,34 +97,16 @@ export class DiagramElementChildUOWAdapter implements UOWChildAdapter<ElementSna
     childSnapshot: ElementSnapshot,
     idx: number,
     uow: UnitOfWork
-  ): void {
+  ) {
     const parent = mustExist(diagram.lookup(parentId));
 
     let child: DiagramElement;
     if (childSnapshot.type === 'node') {
-      const node = ElementFactory.node(
-        childSnapshot.id,
-        childSnapshot.nodeType,
-        childSnapshot.bounds,
-        parent.layer,
-        childSnapshot.props,
-        childSnapshot.metadata,
-        childSnapshot.texts
-      );
-      node.restore(childSnapshot, uow);
-      child = node;
+      child = ElementFactory.nodeFromSnapshot(childSnapshot, parent.layer);
+      child.restore(childSnapshot, uow);
     } else if (childSnapshot.type === 'edge') {
-      const edge = ElementFactory.edge(
-        childSnapshot.id,
-        new FreeEndpoint(Point.of(0, 0)),
-        new FreeEndpoint(Point.of(0, 0)),
-        childSnapshot.props as EdgeProps,
-        childSnapshot.metadata,
-        [],
-        parent.layer
-      );
-      edge.restore(childSnapshot, uow);
-      child = edge;
+      child = ElementFactory.edgeFromSnapshot(childSnapshot, parent.layer);
+      child.restore(childSnapshot, uow);
     } else {
       VERIFY_NOT_REACHED();
     }
