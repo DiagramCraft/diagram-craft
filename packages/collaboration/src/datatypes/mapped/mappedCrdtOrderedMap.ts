@@ -133,7 +133,7 @@ export class MappedCRDTOrderedMap<
   }
 
   get0Index(key: string) {
-    return (this.#current.get(key)?.get('index') ?? 0) - 1;
+    return this.#entries.findIndex(e => e[0] === key);
   }
 
   add(key: string, t: T) {
@@ -149,7 +149,10 @@ export class MappedCRDTOrderedMap<
 
   insert(key: string, t: T, position: number) {
     assert.false(this.#current.has(key));
-    assert.true(position >= 0 && position <= this.#entries.length);
+    assert.true(
+      position >= 0 && position <= this.#entries.length,
+      `Invalid position ${position} for insert, length ${this.#entries.length}`
+    );
 
     // Determine the target CRDT index based on position
     // CRDT indices can have gaps after removals, so we can't just use position + 1

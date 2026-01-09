@@ -54,7 +54,7 @@ export class DiagramElementParentChildUOWSpecification implements UOWTrackablePa
     parentId: string,
     _childId: string,
     childSnapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
-    _idx: number,
+    idx: number,
     uow: UnitOfWork
   ): void {
     const parent = mustExist(diagram.lookup(parentId));
@@ -88,7 +88,11 @@ export class DiagramElementParentChildUOWSpecification implements UOWTrackablePa
       VERIFY_NOT_REACHED();
     }
 
-    parent.addChild(child, uow);
+    if (idx === -1) {
+      parent.addChild(child, uow);
+    } else {
+      parent.addChild(child, uow, idx);
+    }
   }
 
   removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {

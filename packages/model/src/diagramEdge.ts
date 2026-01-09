@@ -586,11 +586,11 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     this.syncLabelNodesBasedOnChildren(uow);
   }
 
-  addChild(child: DiagramElement, uow: UnitOfWork) {
+  addChild(child: DiagramElement, uow: UnitOfWork, position?: number) {
     // Note: we don't support edges to be children of edges
     assert.true(isNode(child));
 
-    super.addChild(child, uow);
+    super.addChild(child, uow, position);
     this.syncLabelNodesBasedOnChildren(uow);
   }
 

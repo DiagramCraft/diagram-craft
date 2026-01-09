@@ -108,7 +108,7 @@ export interface DiagramElement {
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ): void;
   removeChild(child: DiagramElement, uow: UnitOfWork): void;
 
@@ -383,41 +383,33 @@ export abstract class AbstractDiagramElement
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     assert.true(child.diagram === this.diagram);
     assert.false(this._children.has(child.id));
     assert.false(child.id === this.id);
 
-    // TODO: Check so the same not can't be added multiple times
-
-    uow.executeAdd(child, this, this.children.length, () => {
-      if (relation) {
-        const children = this._children;
-        const index = children.getIndex(relation.ref.id);
-        if (relation.type === 'after') {
-          this._children.set(
-            [
-              ...children.values.slice(0, index + 1),
-              child,
-              ...children.values.slice(index + 1)
-            ].map(e => [e.id, e])
-          );
-        } else {
-          this._children.set(
-            [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
-              e.id,
-              e
-            ])
-          );
-        }
+    if (position) {
+      if (typeof position === 'number') {
+        uow.executeAdd(child, this, position, () => {
+          this._children.insert(child.id, child, position);
+        });
       } else {
-        this._children.add(child.id, child);
+        const index = this._children.get0Index(position.ref.id);
+        const effectiveIndex = position.type === 'after' ? index + 1 : index;
+        uow.executeAdd(child, this, effectiveIndex, () => {
+          this._children.insert(child.id, child, effectiveIndex);
+        });
       }
-      child._setParent(this);
+    } else {
+      uow.executeAdd(child, this, this.children.length, () => {
+        this._children.add(child.id, child);
+      });
+    }
 
-      this.diagram.register(child);
-    });
+    child._setParent(this);
+
+    this.diagram.register(child);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {

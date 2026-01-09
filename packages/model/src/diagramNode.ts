@@ -634,7 +634,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    relation?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     super.addChild(child, uow, relation);
 
