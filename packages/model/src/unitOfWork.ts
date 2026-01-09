@@ -269,7 +269,7 @@ export class UnitOfWork {
     return res;
   }
 
-  executeRemove<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
+  executeRemove<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
     assert.true(idx >= 0);
 
     this.removeElement(element, parent, idx);
@@ -304,7 +304,7 @@ export class UnitOfWork {
     });
   }
 
-  removeElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+  removeElement(element: Trackable, parent: Trackable, idx: number) {
     if (Array.isArray(element)) {
       element.forEach(e => this.removeElement(e, parent, idx));
       return;
@@ -325,7 +325,7 @@ export class UnitOfWork {
 
   addElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
     if (Array.isArray(element)) {
-      element.forEach(e => this.addElement(e, parent, idx));
+      element.forEach((e, i) => this.addElement(e, parent, idx + i));
       return;
     }
 

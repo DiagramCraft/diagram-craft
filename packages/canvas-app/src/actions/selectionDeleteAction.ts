@@ -4,6 +4,7 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -46,9 +47,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
     assertRegularLayer(diagram.activeLayer);
 
     UnitOfWork.executeWithUndo(diagram, 'Delete selection', uow => {
-      deletableElements.forEach(e => e.layer.removeElement(e, uow));
-      diagram.selection.clear();
-
+      deleteElements(deletableElements, uow);
       uow.select(diagram, []);
     });
 
