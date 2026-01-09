@@ -1,6 +1,7 @@
 import {
   Snapshot,
   UnitOfWork,
+  UOWOperation,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -73,8 +74,6 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
     return 'layerManager';
   }
 
-  invalidate(_l: LayerManager, _uow: UnitOfWork) {}
-
   updateElement(
     diagram: Diagram,
     _elementId: string,
@@ -85,7 +84,7 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
     layerManager._restore(snapshot, uow);
   }
 
-  onCommit(_layerManagers: Array<LayerManager>, _uow: UnitOfWork): void {}
+  onCommit(_layerManagers: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   restore(snapshot: LayersSnapshot, element: LayerManager, uow: UnitOfWork): void {
     element._restore(snapshot, uow);

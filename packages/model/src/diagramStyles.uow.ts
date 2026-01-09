@@ -1,6 +1,7 @@
 import {
   Snapshot,
   UnitOfWork,
+  UOWOperation,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -17,14 +18,12 @@ export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecificat
     return e.id;
   }
 
-  invalidate(_e: Stylesheet<StylesheetType>, _uow: UnitOfWork): void {}
-
   updateElement(diagram: Diagram, id: string, snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     const stylesheet = mustExist(diagram.document.styles.getStyle(id));
     stylesheet.restore(snapshot, uow);
   }
 
-  onCommit(_stylesheets: Array<Stylesheet<StylesheetType>>, _uow: UnitOfWork): void {}
+  onCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   restore(snapshot: StylesheetSnapshot, e: Stylesheet<StylesheetType>, uow: UnitOfWork): void {
     e.restore(snapshot, uow);
@@ -47,7 +46,7 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
 
   updateElement(_diagram: Diagram, _id: string, _snapshot: Snapshot, _uow: UnitOfWork): void {}
 
-  onCommit(_stylesheets: Array<DiagramStyles>, _uow: UnitOfWork): void {}
+  onCommit(_stylesheets: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   restore(_snapshot: Snapshot, _e: DiagramStyles, _uow: UnitOfWork): void {}
 

@@ -1,6 +1,7 @@
 import {
   Snapshot,
   UnitOfWork,
+  UOWOperation,
   UOWTrackable,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
@@ -31,11 +32,18 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
     return e.id;
   }
 
-  invalidate(element: DiagramElement, uow: UnitOfWork): void {
-    element.invalidate(uow);
+  onCommit(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    // At this point, any elements have been added and or removed
+    if (!uow.isRemote) {
+      const handled = new Set<string>();
+      operations.forEach(({ trackable }) => {
+        const el = trackable as DiagramElement;
+        if (handled.has(el.id)) return;
+        el.invalidate(uow);
+        handled.add(el.id);
+      });
+    }
   }
-
-  onCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
 
   updateElement(
     diagram: Diagram,

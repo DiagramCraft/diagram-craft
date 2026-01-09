@@ -6,7 +6,7 @@ import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
-import { hasSameElements } from '@diagram-craft/utils/array';
+import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrSingle } from '@diagram-craft/utils/types';
@@ -35,11 +35,10 @@ export interface UOWTrackable {
 
 export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrackable> {
   id(element: E): string;
-  invalidate: (element: E, uow: UnitOfWork) => void;
 
   updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
-  onCommit: (elements: Array<E>, uow: UnitOfWork) => void;
+  onCommit: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
@@ -77,7 +76,7 @@ declare global {
   }
 }
 
-type UOWOperation =
+export type UOWOperation =
   | {
       type: 'add';
       id: string;
@@ -368,6 +367,11 @@ export class UnitOfWork {
 
     emitEvent(this.#callbacks, 'before-commit', this);
 
+    for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
+      const spec = UnitOfWorkManager.getSpec(k);
+      spec.onCommit(ops, this);
+    }
+
     this.processEvents();
 
     emitEvent(this.#callbacks, 'after-commit', this);
@@ -401,17 +405,6 @@ export class UnitOfWork {
   }
 
   private processEvents() {
-    // At this point, any elements have been added and or removed
-    if (!this.isRemote) {
-      const handled = new Set<string>();
-      this.#operations.forEach(({ trackable }) => {
-        const spec = UnitOfWorkManager.getSpec(trackable._trackableType);
-        if (handled.has(spec.id(trackable))) return;
-        spec.invalidate(trackable, this);
-        handled.add(spec.id(trackable));
-      });
-    }
-
     const handle =
       (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: UOWTrackable) => {
         if (type === 'layerManager') {

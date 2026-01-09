@@ -1,6 +1,7 @@
 import {
   Snapshot,
   UnitOfWork,
+  UOWOperation,
   UOWTrackableParentChildSpecification,
   UOWTrackableSpecification
 } from '@diagram-craft/model/unitOfWork';
@@ -23,11 +24,7 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
     return layer.id;
   }
 
-  invalidate(_layer: Layer, _uow: UnitOfWork): void {
-    // Nothing for now...
-  }
-
-  onCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
+  onCommit(_layers: Array<UOWOperation>, _uow: UnitOfWork): void {}
 
   updateElement(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
     const layer = mustExist(diagram.layers.byId(layerId));
