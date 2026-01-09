@@ -114,6 +114,17 @@ type UOWOperation =
       afterSnapshot: Snapshot;
     };
 
+type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
+
+const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
+  const eventsById = map.get(key);
+  if (!eventsById) return;
+
+  for (const cb of eventsById!.values()) {
+    cb(uow);
+  }
+};
+
 export class UnitOfWork {
   uid = newid();
 
@@ -123,7 +134,8 @@ export class UnitOfWork {
   #snapshots = new MultiMap<string, undefined | Snapshot>();
   #onCommitCallbacks = new Map<string, ActionCallback>();
   #undoableActions: Array<UndoableAction> = [];
-  #callbacks = new MultiMap<string, (uow: UnitOfWork) => void>();
+
+  #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
 
   state: 'pending' | 'committed' | 'aborted' = 'pending';
   changeType: ChangeType = 'non-interactive';
@@ -330,18 +342,21 @@ export class UnitOfWork {
   select(diagram: Diagram, after: string[]) {
     const before = diagram.selection.elements.map(e => e.id);
     diagram.selection.setElementIds(after);
-    this.on('after', 'redo', () => diagram.selection.setElementIds(after));
-    this.on('after', 'undo', () => diagram.selection.setElementIds(before));
+    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(after));
+    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(before));
   }
 
   on(
     when: 'after' | 'before',
     event: 'undo' | 'redo' | 'commit',
+    id: string,
     callback: (uow: UnitOfWork) => void
   ) {
     if (this.isThrowaway) return;
 
-    this.#callbacks.add(`${when}-${event}`, callback);
+    const eventKey = `${when}-${event}`;
+    if (!this.#callbacks.has(eventKey)) this.#callbacks.set(eventKey, new Map());
+    this.#callbacks.get(eventKey)!.set(id, callback);
   }
 
   /**
@@ -376,15 +391,15 @@ export class UnitOfWork {
     this.state = 'committed';
     this.changeType = 'non-interactive';
 
-    this.#callbacks.get('before-commit')?.forEach(cb => cb(this));
+    emitEvent(this.#callbacks, 'after-commit', this);
 
     // Note, onCommitCallbacks must run before elements events are emitted
     this.processOnCommitCallbacks();
     this.processEvents();
 
-    registry.unregister(this);
+    emitEvent(this.#callbacks, 'after-elements', this);
 
-    this.#callbacks.get('after-commit')?.forEach(cb => cb(this));
+    registry.unregister(this);
   }
 
   commitWithUndo(description: string) {
@@ -521,7 +536,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     public readonly description: string,
     private readonly diagram: Diagram,
     private operations: Array<UOWOperation>,
-    private callbacks: MultiMap<string, (uow: UnitOfWork) => void>
+    private eventMap: UOWEventMap
   ) {
     this.operations = this.consolidateOperations(this.operations);
   }
@@ -531,7 +546,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Undoing', this.description);
     }
-    this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'before-undo', uow);
 
     for (const op of this.operations.toReversed()) {
       const spec = UnitOfWorkManager.getSpec(op.trackableType);
@@ -554,7 +569,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       }
     }
 
-    this.callbacks.get('after-undo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'after-undo', uow);
   }
 
   redo(uow: UnitOfWork) {
@@ -562,7 +577,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Redoing', this.description);
     }
-    this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'before-redo', uow);
 
     for (const op of this.operations) {
       const spec = UnitOfWorkManager.getSpec(op.trackableType);
@@ -585,7 +600,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
       }
     }
 
-    this.callbacks.get('after-redo')?.forEach(cb => cb(uow));
+    emitEvent(this.eventMap, 'after-redo', uow);
   }
 
   merge(nextAction: UndoableAction): boolean {
