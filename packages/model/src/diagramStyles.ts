@@ -531,6 +531,7 @@ export class DiagramStyles
     }, uow);
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: need any here and not unknown
   addStylesheet(id: string, stylesheet: Stylesheet<any>, uow: UnitOfWork) {
     this.crdt.transact(() => {
       uow.executeAdd(stylesheet, this, 0, () => {

@@ -67,7 +67,7 @@ export type StylesheetSnapshot = {
   _snapshotType: 'stylesheet';
 };
 
-type Snapshot = { _snapshotType: string } & (
+export type Snapshot = { _snapshotType: string } & (
   | LayersSnapshot
   | LayerSnapshot
   | DiagramNodeSnapshot

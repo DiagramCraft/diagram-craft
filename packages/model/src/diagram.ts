@@ -399,12 +399,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       switch (ref.relation) {
         case 'above':
         case 'below':
-          uow.executeAdd(elements, parent, 0, () => {
+          uow.executeAdd(elements, parent, ref.relation === 'above' ? idx + 1 : idx, () => {
             parent.setChildren(elementOrder(parent.children, idx), uow);
           });
           break;
         case 'on':
-          uow.executeAdd(elements, ref.element, 0, () =>
+          uow.executeAdd(elements, ref.element, idx, () =>
             ref.element.setChildren([...ref.element.children, ...elements], uow)
           );
           break;
@@ -416,13 +416,13 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       switch (ref.relation) {
         case 'above':
         case 'below':
-          uow.executeAdd(elements, layer, 0, () =>
+          uow.executeAdd(elements, layer, ref.relation === 'above' ? idx + 1 : idx, () =>
             layer.setElements(elementOrder(layer.elements, idx), uow)
           );
           break;
         case 'on':
           if (isNode(ref.element)) {
-            uow.executeAdd(elements, ref.element, 0, () => {
+            uow.executeAdd(elements, ref.element, idx, () => {
               ref.element.setChildren([...ref.element.children, ...elements], uow);
             });
           }
