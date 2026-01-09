@@ -25,7 +25,7 @@ import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diag
 type Snapshot = any;
 
 export abstract class DelegatingDiagramElement implements DiagramElement {
-  readonly trackableType = 'element';
+  readonly _trackableType = 'element';
 
   protected readonly delegate: DiagramElement;
 

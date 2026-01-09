@@ -44,7 +44,7 @@ export abstract class Layer<
   protected readonly _releasables = new Releasables();
 
   readonly crdt: CRDTMap<LayerCRDT>;
-  readonly trackableType = 'layer';
+  readonly _trackableType = 'layer';
 
   protected constructor(
     id: string,
@@ -145,10 +145,6 @@ export abstract class Layer<
 
   isAbove(layer: Layer) {
     return this.diagram.layers.all.indexOf(this) < this.diagram.layers.all.indexOf(layer);
-  }
-
-  invalidate(_uow: UnitOfWork) {
-    // Nothing for now...
   }
 
   getAttachmentsInUse(): string[] {

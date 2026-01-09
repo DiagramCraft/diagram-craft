@@ -18,6 +18,14 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
   DiagramNodeSnapshot | DiagramEdgeSnapshot,
   DiagramElement
 > {
+  id(e: DiagramElement): string {
+    return e.id;
+  }
+
+  invalidate(element: DiagramElement, uow: UnitOfWork): void {
+    element.invalidate(uow);
+  }
+
   onAfterCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}
 
   onBeforeCommit(_elements: Array<DiagramElement>, _uow: UnitOfWork): void {}

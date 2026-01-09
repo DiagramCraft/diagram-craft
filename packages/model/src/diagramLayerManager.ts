@@ -79,8 +79,7 @@ export class LayerManager
   extends EventEmitter<LayerManagerEvents>
   implements UOWTrackable, AttachmentConsumer, Releasable
 {
-  readonly id = 'layers';
-  readonly trackableType = 'layerManager';
+  readonly _trackableType = 'layerManager';
 
   // Shared properties
   readonly #layers: MappedCRDTOrderedMap<Layer, LayerCRDT>;
@@ -257,10 +256,6 @@ export class LayerManager
         this.diagram.selection.clear();
       }
     });
-  }
-
-  invalidate(_uow: UnitOfWork) {
-    // Nothing for now...
   }
 
   _snapshot(): LayersSnapshot {

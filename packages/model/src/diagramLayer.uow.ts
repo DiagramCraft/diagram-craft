@@ -18,6 +18,14 @@ import { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { isDebug } from '@diagram-craft/utils/debug';
 
 export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSnapshot, Layer> {
+  id(layer: Layer): string {
+    return layer.id;
+  }
+
+  invalidate(_layer: Layer, _uow: UnitOfWork): void {
+    // Nothing for now...
+  }
+
   onAfterCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}
 
   onBeforeCommit(_layers: Array<Layer>, _uow: UnitOfWork): void {}

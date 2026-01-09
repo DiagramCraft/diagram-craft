@@ -1,7 +1,7 @@
 import type { DiagramElement } from './diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
-import type { DiagramStyles, Stylesheet, StylesheetType } from './diagramStyles';
+import type { Stylesheet, StylesheetType } from './diagramStyles';
 import type { Layer, LayerType } from './diagramLayer';
 import type { Diagram } from './diagram';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
@@ -9,7 +9,6 @@ import { newid } from '@diagram-craft/utils/id';
 import type { ModificationCRDT } from './diagramLayerModification';
 import type { EdgeProps, NodeProps } from './diagramProps';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
-import type { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import { hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
@@ -75,7 +74,10 @@ export type Snapshot = { _snapshotType: string } & (
   | StylesheetSnapshot
 );
 
-export interface UOWTrackableSpecification<S extends Snapshot, E extends Trackable> {
+export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrackable> {
+  id(element: E): string;
+  invalidate: (element: E, uow: UnitOfWork) => void;
+
   updateElement: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
   onBeforeCommit: (elements: Array<E>, uow: UnitOfWork) => void;
@@ -98,14 +100,8 @@ export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
 }
 
 export interface UOWTrackable {
-  id: string;
-  trackableType: string;
-  invalidate(uow: UnitOfWork): void;
+  _trackableType: string;
 }
-
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-export type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any> | DiagramStyles) &
-  UOWTrackable;
 
 const registry =
   process.env.NODE_ENV === 'development'
@@ -131,8 +127,8 @@ type UOWOperation =
   | {
       type: 'add';
       id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
+      trackable: UOWTrackable;
+      trackableType: UOWTrackable['_trackableType'];
 
       idx: number;
       parentId: string;
@@ -142,8 +138,8 @@ type UOWOperation =
   | {
       type: 'remove';
       id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
+      trackable: UOWTrackable;
+      trackableType: UOWTrackable['_trackableType'];
 
       idx: number;
       parentId: string;
@@ -153,8 +149,8 @@ type UOWOperation =
   | {
       type: 'update';
       id: string;
-      trackable: Trackable;
-      trackableType: Trackable['trackableType'];
+      trackable: UOWTrackable;
+      trackableType: UOWTrackable['_trackableType'];
 
       beforeSnapshot: Snapshot;
       afterSnapshot: Snapshot;
@@ -165,7 +161,7 @@ export class UnitOfWork {
 
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
-  #invalidatedElements = new Set<Trackable>();
+  #invalidatedElements = new Set<UOWTrackable>();
   #snapshots = new MultiMap<string, undefined | Snapshot>();
   #onCommitCallbacks = new Map<string, ActionCallback>();
   #undoableActions: Array<UndoableAction> = [];
@@ -238,30 +234,30 @@ export class UnitOfWork {
     this.#undoableActions.push(action);
   }
 
-  private snapshot(element: Trackable) {
+  private snapshot(element: UOWTrackable) {
     if (!this.trackChanges) return;
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    const spec = UnitOfWorkManager.getSpec(element._trackableType);
     const s = spec.snapshot(element);
-    this.#snapshots.add(element.id, s);
+    this.#snapshots.add(spec.id(element), s);
     return s;
   }
 
-  hasBeenInvalidated(element: Trackable) {
+  hasBeenInvalidated(element: UOWTrackable) {
     return this.#invalidatedElements.has(element);
   }
 
-  beginInvalidation(element: Trackable) {
+  beginInvalidation(element: UOWTrackable) {
     this.#invalidatedElements.add(element);
   }
 
-  contains(element: Trackable, type?: 'update' | 'remove' | 'add') {
+  contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
     return this.#operations.some(
       e => (e.trackable === element && type === undefined) || e.type === type
     );
   }
 
-  executeUpdate<T>(element: Trackable, cb: () => T): T {
+  executeUpdate<T>(element: UOWTrackable, cb: () => T): T {
     const snapshot = this.snapshot(element);
 
     const res = cb();
@@ -269,14 +265,19 @@ export class UnitOfWork {
     return res;
   }
 
-  executeRemove<T>(element: Trackable, parent: Trackable, idx: number, cb: () => T) {
+  executeRemove<T>(element: UOWTrackable, parent: UOWTrackable, idx: number, cb: () => T) {
     assert.true(idx >= 0);
 
     this.removeElement(element, parent, idx);
     return cb();
   }
 
-  executeAdd<T>(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number, cb: () => T) {
+  executeAdd<T>(
+    element: ArrayOrSingle<UOWTrackable>,
+    parent: UOWTrackable,
+    idx: number,
+    cb: () => T
+  ) {
     assert.true(idx >= 0);
 
     const res = cb();
@@ -284,59 +285,66 @@ export class UnitOfWork {
     return res;
   }
 
-  updateElement(element: Trackable, snapshot?: Snapshot) {
-    const effectiveSnapshot = snapshot ?? this.#snapshots.get(element.id)!.at(-1)!;
+  updateElement(element: UOWTrackable, snapshot?: Snapshot) {
+    const spec = UnitOfWorkManager.getSpec(element._trackableType);
+    const id = spec.id(element);
+
+    const effectiveSnapshot = snapshot ?? this.#snapshots.get(id)!.at(-1)!;
     assert.true(
       !this.trackChanges || effectiveSnapshot !== undefined,
       'Must create snapshot before updating element'
     );
 
-    this.#updates.add(element.id);
+    this.#updates.add(id);
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'update',
-      id: element.id,
+      id: id,
       trackable: element,
-      trackableType: element.trackableType,
+      trackableType: element._trackableType,
       beforeSnapshot: effectiveSnapshot,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
-  removeElement(element: Trackable, parent: Trackable, idx: number) {
+  removeElement(element: UOWTrackable, parent: UOWTrackable, idx: number) {
     if (Array.isArray(element)) {
       element.forEach(e => this.removeElement(e, parent, idx));
       return;
     }
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
+    const spec = UnitOfWorkManager.getSpec(element._trackableType);
+    const parentSpec = UnitOfWorkManager.getSpec(parent._trackableType);
     this.#operations.push({
       type: 'remove',
-      id: element.id,
+      id: spec.id(element),
       trackable: element,
-      trackableType: element.trackableType,
+      trackableType: element._trackableType,
       idx: idx,
-      parentId: parent.id,
-      parentType: parent.trackableType,
+      parentId: parentSpec.id(parent),
+      parentType: parent._trackableType,
       beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
   }
 
-  addElement(element: ArrayOrSingle<Trackable>, parent: Trackable, idx: number) {
+  addElement(element: ArrayOrSingle<UOWTrackable>, parent: UOWTrackable, idx: number) {
     if (Array.isArray(element)) {
       element.forEach((e, i) => this.addElement(e, parent, idx + i));
       return;
     }
 
-    if (this.trackChanges && !this.#snapshots.has(element.id)) {
-      this.#snapshots.add(element.id, undefined);
+    const spec = UnitOfWorkManager.getSpec(element._trackableType);
+    const parentSpec = UnitOfWorkManager.getSpec(parent._trackableType);
+    const id = spec.id(element);
+
+    if (this.trackChanges && !this.#snapshots.has(id)) {
+      this.#snapshots.add(id, undefined);
     }
 
     let existingUpdates: Array<UOWOperation> = [];
 
-    if (this.#updates.has(element.id) && this.trackChanges) {
-      const isUpdate = (e: UOWOperation) => e.id === element.id && e.type === 'update';
+    if (this.#updates.has(id) && this.trackChanges) {
+      const isUpdate = (e: UOWOperation) => e.id === id && e.type === 'update';
 
       // Need to make sure all updates happen *after* the add
       existingUpdates = this.#operations.filter(isUpdate);
@@ -345,15 +353,14 @@ export class UnitOfWork {
       }
     }
 
-    const spec = UnitOfWorkManager.trackableSpecs[element.trackableType];
     this.#operations.push({
       type: 'add',
-      id: element.id,
+      id: id,
       trackable: element,
-      trackableType: element.trackableType,
+      trackableType: element._trackableType,
       idx: idx,
-      parentId: parent.id,
-      parentType: parent.trackableType,
+      parentId: parentSpec.id(parent),
+      parentType: parent._trackableType,
       afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
     });
 
@@ -383,12 +390,13 @@ export class UnitOfWork {
    * Register a callback to be executed after the commit phase. It's coalesced
    * so that only one callback is executed per element/operation per commit phase.
    */
-  registerOnCommitCallback(name: string, element: Trackable | undefined, cb: ActionCallback) {
+  registerOnCommitCallback(name: string, element: UOWTrackable | undefined, cb: ActionCallback) {
     if (this.isThrowaway) {
       return cb();
     }
 
-    const id = name + (element?.id ?? '');
+    const id =
+      name + (element ? UnitOfWorkManager.getSpec(element._trackableType).id(element) : '');
     if (this.#onCommitCallbacks.has(id)) return;
 
     // Note, a Map retains insertion order, so this ensure actions are
@@ -451,75 +459,78 @@ export class UnitOfWork {
     if (!this.isRemote) {
       const handled = new Set<string>();
       this.#operations.forEach(({ trackable }) => {
-        if (handled.has(trackable.id)) return;
-        trackable.invalidate(this);
-        handled.add(trackable.id);
+        const spec = UnitOfWorkManager.getSpec(trackable._trackableType);
+        if (handled.has(spec.id(trackable))) return;
+        spec.invalidate(trackable, this);
+        handled.add(spec.id(trackable));
       });
     }
 
-    const handle = (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: Trackable) => {
-      if (type === 'layerManager') {
-        this.diagram.layers.emit('layerStructureChange', {});
-      } else if (type === 'layer') {
-        switch (s) {
-          case 'add':
-            this.diagram.layers.emit('layerAdded', { layer: e as Layer });
-            break;
-          case 'update':
-            this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
-            break;
-          case 'remove':
-            this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
-            break;
+    const handle =
+      (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: UOWTrackable) => {
+        if (type === 'layerManager') {
+          this.diagram.layers.emit('layerStructureChange', {});
+        } else if (type === 'layer') {
+          switch (s) {
+            case 'add':
+              this.diagram.layers.emit('layerAdded', { layer: e as Layer });
+              break;
+            case 'update':
+              this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
+              break;
+            case 'remove':
+              this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
+              break;
+          }
+        } else if (type === 'stylesheet') {
+          switch (s) {
+            case 'add':
+              this.diagram.document.styles.emit('stylesheetAdded', {
+                stylesheet: e as Stylesheet<StylesheetType>
+              });
+              break;
+            case 'update':
+              this.diagram.document.styles.emit('stylesheetUpdated', {
+                stylesheet: e as Stylesheet<StylesheetType>
+              });
+              break;
+            case 'remove':
+              this.diagram.document.styles.emit('stylesheetRemoved', {
+                stylesheet: id
+              });
+              break;
+          }
+        } else {
+          switch (s) {
+            case 'add':
+              this.diagram.emit('elementAdd', { element: e as DiagramElement });
+              break;
+            case 'update':
+              this.diagram.emit('elementChange', {
+                element: e as DiagramElement,
+                silent: this.metadata.nonDirty
+              });
+              break;
+            case 'remove':
+              this.diagram.emit('elementRemove', { element: e as DiagramElement });
+              break;
+          }
         }
-      } else if (type === 'stylesheet') {
-        switch (s) {
-          case 'add':
-            this.diagram.document.styles.emit('stylesheetAdded', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'update':
-            this.diagram.document.styles.emit('stylesheetUpdated', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'remove':
-            this.diagram.document.styles.emit('stylesheetRemoved', {
-              stylesheet: id
-            });
-            break;
-        }
-      } else {
-        switch (s) {
-          case 'add':
-            this.diagram.emit('elementAdd', { element: e as DiagramElement });
-            break;
-          case 'update':
-            this.diagram.emit('elementChange', {
-              element: e as DiagramElement,
-              silent: this.metadata.nonDirty
-            });
-            break;
-          case 'remove':
-            this.diagram.emit('elementRemove', { element: e as DiagramElement });
-            break;
-        }
-      }
-    };
+      };
 
     const handled = new Set<string>();
     this.#operations.forEach(({ trackable, trackableType, type, id }) => {
-      const key = type + '/' + trackable.id;
+      const spec = UnitOfWorkManager.getSpec(trackable._trackableType);
+      const key = type + '/' + spec.id(trackable);
       if (handled.has(key)) return;
       handle(type)(trackableType, id, trackable);
       handled.add(key);
     });
 
     this.diagram.emit('elementBatchChange', {
-      removed: [...this.removed].filter(e => e.trackableType === 'element') as DiagramElement[],
-      updated: [...this.updated].filter(e => e.trackableType === 'element') as DiagramElement[],
-      added: [...this.added].filter(e => e.trackableType === 'element') as DiagramElement[]
+      removed: [...this.removed].filter(e => e._trackableType === 'element') as DiagramElement[],
+      updated: [...this.updated].filter(e => e._trackableType === 'element') as DiagramElement[],
+      added: [...this.added].filter(e => e._trackableType === 'element') as DiagramElement[]
     });
   }
 
@@ -565,7 +576,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     this.callbacks.get('before-undo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations.toReversed()) {
-      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+      const spec = UnitOfWorkManager.getSpec(op.trackableType);
       switch (op.type) {
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
@@ -596,7 +607,7 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     this.callbacks.get('before-redo')?.forEach(cb => cb(uow));
 
     for (const op of this.operations) {
-      const spec = UnitOfWorkManager.trackableSpecs[op.trackableType];
+      const spec = UnitOfWorkManager.getSpec(op.trackableType);
       switch (op.type) {
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;

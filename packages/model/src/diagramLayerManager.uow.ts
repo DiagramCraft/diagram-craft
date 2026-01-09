@@ -69,6 +69,12 @@ export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
   LayersSnapshot,
   LayerManager
 > {
+  id(_layerManager: LayerManager): string {
+    return 'layerManager';
+  }
+
+  invalidate(_l: LayerManager, _uow: UnitOfWork) {}
+
   updateElement(
     diagram: Diagram,
     _elementId: string,

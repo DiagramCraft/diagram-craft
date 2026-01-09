@@ -18,6 +18,7 @@ import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
+  DiagramStylesheetUOWSpecification,
   DiagramStylesParentChildUOWSpecification,
   DiagramStylesUOWSpecification
 } from '@diagram-craft/model/diagramStyles.uow';
@@ -37,7 +38,7 @@ type TypeMap = {
 export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOWTrackable {
   type: T;
 
-  readonly trackableType = 'stylesheet';
+  readonly _trackableType = 'stylesheet';
 
   constructor(readonly crdt: CRDTMap<StylesheetSnapshot>) {
     this.type = crdt.get('type') as T;
@@ -79,10 +80,6 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
     uow.executeUpdate(this, () => {
       this.crdt.set('name', name);
     });
-  }
-
-  invalidate(_uow: UnitOfWork): void {
-    // Do nothing
   }
 
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
@@ -264,7 +261,7 @@ export class DiagramStyles
   #activeTextStylesheet = DefaultStyles.text.default;
 
   readonly id = 'diagramStyles';
-  readonly trackableType = 'diagramStyles';
+  readonly _trackableType = 'diagramStyles';
 
   constructor(
     readonly crdt: CRDTRoot,
@@ -550,6 +547,7 @@ export class DiagramStyles
   }
 }
 
-UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesUOWSpecification();
+UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesheetUOWSpecification();
+UnitOfWorkManager.trackableSpecs['diagramStyles'] = new DiagramStylesUOWSpecification();
 UnitOfWorkManager.parentChildSpecs['diagramStyles-stylesheet'] =
   new DiagramStylesParentChildUOWSpecification();
