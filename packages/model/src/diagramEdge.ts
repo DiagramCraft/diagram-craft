@@ -61,8 +61,8 @@ import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
   DiagramEdgeSnapshot,
-  DiagramElementParentChildUOWSpecification,
-  DiagramElementUOWSpecification
+  DiagramElementChildUOWAdapter,
+  DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
@@ -1166,6 +1166,5 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 }
 
-UnitOfWorkManager.trackableSpecs['element'] = new DiagramElementUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['element-element'] =
-  new DiagramElementParentChildUOWSpecification();
+UnitOfWorkManager.adapters['element'] = new DiagramElementUOWAdapter();
+UnitOfWorkManager.childAdapters['element-element'] = new DiagramElementChildUOWAdapter();

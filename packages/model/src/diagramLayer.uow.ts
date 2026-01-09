@@ -1,8 +1,9 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWOperation,
+  UOWChildAdapter,
+  UOWAdapter
 } from '@diagram-craft/model/unitOfWork';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
@@ -18,9 +19,30 @@ import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { ModificationCRDT } from '@diagram-craft/model/diagramLayerModification';
 import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
-export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSnapshot, Layer> {
+export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
   id(layer: Layer): string {
     return layer.id;
+  }
+
+  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    const handled = new Set<string>();
+    for (const op of operations) {
+      const key = `${op.type}/${op.id}`;
+      if (handled.has(key)) continue;
+      handled.add(key);
+
+      switch (op.type) {
+        case 'add':
+          uow.diagram.layers.emit('layerAdded', { layer: op.trackable as Layer });
+          break;
+        case 'update':
+          uow.diagram.layers.emit('layerUpdated', { layer: op.trackable as Layer });
+          break;
+        case 'remove':
+          uow.diagram.layers.emit('layerRemoved', { layer: op.trackable as Layer });
+          break;
+      }
+    }
   }
 
   update(diagram: Diagram, layerId: string, snapshot: LayerSnapshot, uow: UnitOfWork): void {
@@ -37,7 +59,7 @@ export class LayerUOWSpecification implements UOWTrackableSpecification<LayerSna
   }
 }
 
-export class LayerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<
+export class LayerChildUOWAdapter implements UOWChildAdapter<
   DiagramNodeSnapshot | DiagramEdgeSnapshot
 > {
   add(

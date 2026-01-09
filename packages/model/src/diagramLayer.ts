@@ -16,9 +16,9 @@ import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { isRegularLayer } from './diagramLayerUtils';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
-  LayerParentChildUOWSpecification,
+  LayerChildUOWAdapter,
   LayerSnapshot,
-  LayerUOWSpecification
+  LayerUOWAdapter
 } from '@diagram-craft/model/diagramLayer.uow';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
@@ -183,5 +183,5 @@ declare global {
 assert.isRegularLayer = (e: Layer): asserts e is RegularLayer =>
   assert.true(isRegularLayer(e), 'not regular layer');
 
-UnitOfWorkManager.trackableSpecs['layer'] = new LayerUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['layer-element'] = new LayerParentChildUOWSpecification();
+UnitOfWorkManager.adapters['layer'] = new LayerUOWAdapter();
+UnitOfWorkManager.childAdapters['layer-element'] = new LayerChildUOWAdapter();

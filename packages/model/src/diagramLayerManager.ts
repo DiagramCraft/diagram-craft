@@ -20,8 +20,8 @@ import type { CRDTMapper } from '@diagram-craft/collaboration/datatypes/mapped/t
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
-  LayerManagerParentChildUOWSpecification,
-  LayerManagerUOWSpecification,
+  LayerManagerChildUOWAdapter,
+  LayerManagerUOWAdapter,
   LayersSnapshot
 } from '@diagram-craft/model/diagramLayerManager.uow';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -290,6 +290,5 @@ export const LayerCapabilities = {
   }
 };
 
-UnitOfWorkManager.trackableSpecs['layerManager'] = new LayerManagerUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['layerManager-layer'] =
-  new LayerManagerParentChildUOWSpecification();
+UnitOfWorkManager.adapters['layerManager'] = new LayerManagerUOWAdapter();
+UnitOfWorkManager.childAdapters['layerManager-layer'] = new LayerManagerChildUOWAdapter();

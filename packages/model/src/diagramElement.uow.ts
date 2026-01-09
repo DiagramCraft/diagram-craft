@@ -3,8 +3,8 @@ import {
   UnitOfWork,
   UOWOperation,
   UOWTrackable,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWChildAdapter,
+  UOWAdapter
 } from '@diagram-craft/model/unitOfWork';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -25,10 +25,7 @@ declare global {
 }
 
 type ElementSnapshot = DiagramNodeSnapshot | DiagramEdgeSnapshot;
-export class DiagramElementUOWSpecification implements UOWTrackableSpecification<
-  ElementSnapshot,
-  DiagramElement
-> {
+export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, DiagramElement> {
   id(e: DiagramElement): string {
     return e.id;
   }
@@ -47,6 +44,29 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
   }
 
   onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    const handled = new Set<string>();
+    for (const op of operations) {
+      const key = `${op.type}/${op.id}`;
+      if (handled.has(key)) continue;
+      handled.add(key);
+
+      switch (op.type) {
+        case 'add':
+          uow.diagram.emit('elementAdd', { element: op.trackable as DiagramElement });
+          break;
+        case 'update':
+          uow.diagram.emit('elementChange', {
+            element: op.trackable as DiagramElement,
+            silent: uow.metadata.nonDirty
+          });
+          break;
+        case 'remove':
+          uow.diagram.emit('elementRemove', { element: op.trackable as DiagramElement });
+          break;
+      }
+    }
+
+    // Batch
     const added = operations.filter(e => e.type === 'add').map(e => e.trackable as DiagramElement);
     const updated = operations
       .filter(e => e.type === 'update')
@@ -72,7 +92,7 @@ export class DiagramElementUOWSpecification implements UOWTrackableSpecification
   }
 }
 
-export class DiagramElementParentChildUOWSpecification implements UOWTrackableParentChildSpecification<ElementSnapshot> {
+export class DiagramElementChildUOWAdapter implements UOWChildAdapter<ElementSnapshot> {
   add(
     diagram: Diagram,
     parentId: string,

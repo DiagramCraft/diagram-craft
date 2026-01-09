@@ -1,7 +1,4 @@
-import type { DiagramElement } from './diagramElement';
-import { assert, mustExist } from '@diagram-craft/utils/assert';
-import type { Stylesheet, StylesheetType } from './diagramStyles';
-import type { Layer } from './diagramLayer';
+import { assert } from '@diagram-craft/utils/assert';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
@@ -28,12 +25,13 @@ export const getRemoteUnitOfWork = (diagram: Diagram) => {
 export interface Snapshot {
   _snapshotType: string;
 }
+const NULL_SNAPSHOT: Snapshot = { _snapshotType: 'dummy' };
 
 export interface UOWTrackable {
   _trackableType: string;
 }
 
-export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrackable> {
+export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
   id(element: E): string;
 
   update: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
@@ -46,7 +44,7 @@ export interface UOWTrackableSpecification<S extends Snapshot, E extends UOWTrac
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
 }
 
-export interface UOWTrackableParentChildSpecification<S extends Snapshot> {
+export interface UOWChildAdapter<S extends Snapshot> {
   add: (
     diagram: Diagram,
     parentId: string,
@@ -208,7 +206,7 @@ export class UnitOfWork {
   private snapshot(element: UOWTrackable) {
     if (!this.trackChanges) return;
 
-    const spec = UnitOfWorkManager.getSpec(element._trackableType);
+    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
     const s = spec.snapshot(element);
     this.#snapshots.add(spec.id(element), s);
     return s;
@@ -249,7 +247,7 @@ export class UnitOfWork {
   }
 
   updateElement(element: UOWTrackable, snapshot?: Snapshot) {
-    const spec = UnitOfWorkManager.getSpec(element._trackableType);
+    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
     const id = spec.id(element);
 
     const effectiveSnapshot = snapshot ?? this.#snapshots.get(id)!.at(-1)!;
@@ -266,7 +264,7 @@ export class UnitOfWork {
       trackable: element,
       trackableType: element._trackableType,
       beforeSnapshot: effectiveSnapshot,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
@@ -276,8 +274,8 @@ export class UnitOfWork {
       return;
     }
 
-    const spec = UnitOfWorkManager.getSpec(element._trackableType);
-    const parentSpec = UnitOfWorkManager.getSpec(parent._trackableType);
+    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
+    const parentSpec = UnitOfWorkManager.getAdapter(parent._trackableType);
     this.#operations.push({
       type: 'remove',
       id: spec.id(element),
@@ -286,7 +284,7 @@ export class UnitOfWork {
       idx: idx,
       parentId: parentSpec.id(parent),
       parentType: parent._trackableType,
-      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      beforeSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
   }
 
@@ -296,8 +294,8 @@ export class UnitOfWork {
       return;
     }
 
-    const spec = UnitOfWorkManager.getSpec(element._trackableType);
-    const parentSpec = UnitOfWorkManager.getSpec(parent._trackableType);
+    const spec = UnitOfWorkManager.getAdapter(element._trackableType);
+    const parentSpec = UnitOfWorkManager.getAdapter(parent._trackableType);
     const id = spec.id(element);
 
     if (this.trackChanges && !this.#snapshots.has(id)) {
@@ -324,7 +322,7 @@ export class UnitOfWork {
       idx: idx,
       parentId: parentSpec.id(parent),
       parentType: parent._trackableType,
-      afterSnapshot: this.trackChanges ? spec.snapshot(element) : undefined
+      afterSnapshot: this.trackChanges ? spec.snapshot(element) : NULL_SNAPSHOT
     });
 
     if (existingUpdates.length > 0) {
@@ -359,10 +357,8 @@ export class UnitOfWork {
     this.changeType = 'interactive';
 
     for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
-      UnitOfWorkManager.getSpec(k).onNotify?.(ops, this);
+      UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
     }
-
-    this.processEvents();
 
     return this.#snapshots;
   }
@@ -374,14 +370,12 @@ export class UnitOfWork {
     emitEvent(this.#callbacks, 'before-commit', this);
 
     for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
-      UnitOfWorkManager.getSpec(k).onBeforeCommit?.(ops, this);
+      UnitOfWorkManager.getAdapter(k).onBeforeCommit?.(ops, this);
     }
 
-    this.processEvents();
-
     for (const [k, ops] of groupBy(this.operations, op => op.trackableType)) {
-      UnitOfWorkManager.getSpec(k).onNotify?.(ops, this);
-      UnitOfWorkManager.getSpec(k).onAfterCommit?.(ops, this);
+      UnitOfWorkManager.getAdapter(k).onNotify?.(ops, this);
+      UnitOfWorkManager.getAdapter(k).onAfterCommit?.(ops, this);
     }
 
     emitEvent(this.#callbacks, 'after-commit', this);
@@ -414,69 +408,6 @@ export class UnitOfWork {
     this.state = 'aborted';
   }
 
-  private processEvents() {
-    const handle =
-      (s: 'add' | 'remove' | 'update') => (type: string, id: string, e: UOWTrackable) => {
-        if (type === 'layerManager') {
-          this.diagram.layers.emit('layerStructureChange', {});
-        } else if (type === 'layer') {
-          switch (s) {
-            case 'add':
-              this.diagram.layers.emit('layerAdded', { layer: e as Layer });
-              break;
-            case 'update':
-              this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
-              break;
-            case 'remove':
-              this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
-              break;
-          }
-        } else if (type === 'stylesheet') {
-          switch (s) {
-            case 'add':
-              this.diagram.document.styles.emit('stylesheetAdded', {
-                stylesheet: e as Stylesheet<StylesheetType>
-              });
-              break;
-            case 'update':
-              this.diagram.document.styles.emit('stylesheetUpdated', {
-                stylesheet: e as Stylesheet<StylesheetType>
-              });
-              break;
-            case 'remove':
-              this.diagram.document.styles.emit('stylesheetRemoved', {
-                stylesheet: id
-              });
-              break;
-          }
-        } else {
-          switch (s) {
-            case 'add':
-              this.diagram.emit('elementAdd', { element: e as DiagramElement });
-              break;
-            case 'update':
-              this.diagram.emit('elementChange', {
-                element: e as DiagramElement,
-                silent: this.metadata.nonDirty
-              });
-              break;
-            case 'remove':
-              this.diagram.emit('elementRemove', { element: e as DiagramElement });
-              break;
-          }
-        }
-      };
-
-    const handled = new Set<string>();
-    this.#operations.forEach(({ trackable, trackableType, type, id }) => {
-      const spec = UnitOfWorkManager.getSpec(trackable._trackableType);
-      const key = `${type}/${spec.id(trackable)}`;
-      if (handled.has(key)) return;
-      handle(type)(trackableType, id, trackable);
-      handled.add(key);
-    });
-  }
-
   get added() {
     return new Set([...this.#operations.filter(e => e.type === 'add').map(e => e.trackable)]);
   }
@@ -502,17 +433,17 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     emitEvent(this.eventMap, 'before-undo', uow);
 
     for (const op of this.operations.toReversed()) {
-      const spec = UnitOfWorkManager.getSpec(op.trackableType);
+      const spec = UnitOfWorkManager.getAdapter(op.trackableType);
       switch (op.type) {
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
           pcSpec.add(this.diagram, op.parentId, op.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
           pcSpec.remove(this.diagram, op.parentId, op.id, uow);
           break;
         }
@@ -533,17 +464,17 @@ class UnitOfWorkUndoableAction implements UndoableAction {
     emitEvent(this.eventMap, 'before-redo', uow);
 
     for (const op of this.operations) {
-      const spec = UnitOfWorkManager.getSpec(op.trackableType);
+      const spec = UnitOfWorkManager.getAdapter(op.trackableType);
       switch (op.type) {
         case 'add': {
           const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
           pcSpec.add(this.diagram, op.parentId, op.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
           const type = `${op.parentType}-${op.trackableType}`;
-          const pcSpec = mustExist(UnitOfWorkManager.parentChildSpecs[type]);
+          const pcSpec = UnitOfWorkManager.getChildAdapter(type);
           pcSpec.remove(this.diagram, op.parentId, op.id, uow);
           break;
         }

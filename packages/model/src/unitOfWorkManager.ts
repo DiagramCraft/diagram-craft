@@ -1,28 +1,24 @@
 import {
   UOWTrackable,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWChildAdapter,
+  UOWAdapter,
+  Snapshot
 } from '@diagram-craft/model/unitOfWork';
 import { mustExist } from '@diagram-craft/utils/assert';
 
 export class UnitOfWorkManager {
   // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
-  static trackableSpecs: Record<
-    UOWTrackable['_trackableType'],
-    UOWTrackableSpecification<any, any>
-  > = {};
+  static adapters: Record<UOWTrackable['_trackableType'], UOWAdapter<any, any>> = {};
   // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
-  static parentChildSpecs: Record<string, UOWTrackableParentChildSpecification<any>> = {};
+  static childAdapters: Record<string, UOWChildAdapter<any>> = {};
 
-  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
-  static getSpec(
+  static getAdapter(
     trackableType: UOWTrackable['_trackableType']
-  ): UOWTrackableSpecification<any, any> {
-    return mustExist(UnitOfWorkManager.trackableSpecs[trackableType]);
+  ): UOWAdapter<Snapshot, UOWTrackable> {
+    return mustExist(UnitOfWorkManager.adapters[trackableType]);
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
-  static getParentChildSpec(trackableType: string): UOWTrackableParentChildSpecification<any> {
-    return mustExist(UnitOfWorkManager.parentChildSpecs[trackableType]);
+  static getChildAdapter(trackableType: string): UOWChildAdapter<Snapshot> {
+    return mustExist(UnitOfWorkManager.childAdapters[trackableType]);
   }
 }

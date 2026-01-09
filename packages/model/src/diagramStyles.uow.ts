@@ -2,20 +2,47 @@ import {
   Snapshot,
   UnitOfWork,
   UOWOperation,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWChildAdapter,
+  UOWAdapter
 } from '@diagram-craft/model/unitOfWork';
 import { DiagramStyles, Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
-export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecification<
+export class StylesheetUOWAdapter implements UOWAdapter<
   StylesheetSnapshot,
   Stylesheet<StylesheetType>
 > {
   id(e: Stylesheet<StylesheetType>): string {
     return e.id;
+  }
+
+  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    const handled = new Set<string>();
+    for (const op of operations) {
+      const key = `${op.type}/${op.id}`;
+      if (handled.has(key)) continue;
+      handled.add(key);
+
+      switch (op.type) {
+        case 'add':
+          uow.diagram.document.styles.emit('stylesheetAdded', {
+            stylesheet: op.trackable as Stylesheet<StylesheetType>
+          });
+          break;
+        case 'update':
+          uow.diagram.document.styles.emit('stylesheetUpdated', {
+            stylesheet: op.trackable as Stylesheet<StylesheetType>
+          });
+          break;
+        case 'remove':
+          uow.diagram.document.styles.emit('stylesheetRemoved', {
+            stylesheet: op.id
+          });
+          break;
+      }
+    }
   }
 
   update(diagram: Diagram, id: string, snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
@@ -34,10 +61,7 @@ export class DiagramStylesheetUOWSpecification implements UOWTrackableSpecificat
   }
 }
 
-export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
-  Snapshot,
-  DiagramStyles
-> {
+export class DiagramStylesUOWAdapter implements UOWAdapter<Snapshot, DiagramStyles> {
   id(_e: DiagramStyles): string {
     return 'diagramStyles';
   }
@@ -51,7 +75,7 @@ export class DiagramStylesUOWSpecification implements UOWTrackableSpecification<
   }
 }
 
-export class DiagramStylesParentChildUOWSpecification implements UOWTrackableParentChildSpecification<StylesheetSnapshot> {
+export class DiagramStylesChildUOWAdapter implements UOWChildAdapter<StylesheetSnapshot> {
   add(
     diagram: Diagram,
     _parentId: string,

@@ -18,9 +18,9 @@ import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { UnitOfWorkManager } from '@diagram-craft/model/unitOfWorkManager';
 import {
-  DiagramStylesheetUOWSpecification,
-  DiagramStylesParentChildUOWSpecification,
-  DiagramStylesUOWSpecification,
+  StylesheetUOWAdapter,
+  DiagramStylesChildUOWAdapter,
+  DiagramStylesUOWAdapter,
   StylesheetSnapshot
 } from '@diagram-craft/model/diagramStyles.uow';
 
@@ -548,7 +548,6 @@ export class DiagramStyles
   }
 }
 
-UnitOfWorkManager.trackableSpecs['stylesheet'] = new DiagramStylesheetUOWSpecification();
-UnitOfWorkManager.trackableSpecs['diagramStyles'] = new DiagramStylesUOWSpecification();
-UnitOfWorkManager.parentChildSpecs['diagramStyles-stylesheet'] =
-  new DiagramStylesParentChildUOWSpecification();
+UnitOfWorkManager.adapters['stylesheet'] = new StylesheetUOWAdapter();
+UnitOfWorkManager.adapters['diagramStyles'] = new DiagramStylesUOWAdapter();
+UnitOfWorkManager.childAdapters['diagramStyles-stylesheet'] = new DiagramStylesChildUOWAdapter();

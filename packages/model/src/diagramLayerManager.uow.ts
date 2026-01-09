@@ -1,8 +1,9 @@
 import {
   Snapshot,
   UnitOfWork,
-  UOWTrackableParentChildSpecification,
-  UOWTrackableSpecification
+  UOWOperation,
+  UOWChildAdapter,
+  UOWAdapter
 } from '@diagram-craft/model/unitOfWork';
 import { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -15,7 +16,7 @@ import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification
 import { isDebug } from '@diagram-craft/utils/debug';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
-export class LayerManagerParentChildUOWSpecification implements UOWTrackableParentChildSpecification<LayerSnapshot> {
+export class LayerManagerChildUOWAdapter implements UOWChildAdapter<LayerSnapshot> {
   add(
     diagram: Diagram,
     _parentId: string,
@@ -65,12 +66,13 @@ export class LayerManagerParentChildUOWSpecification implements UOWTrackablePare
   }
 }
 
-export class LayerManagerUOWSpecification implements UOWTrackableSpecification<
-  LayersSnapshot,
-  LayerManager
-> {
+export class LayerManagerUOWAdapter implements UOWAdapter<LayersSnapshot, LayerManager> {
   id(_layerManager: LayerManager): string {
     return 'layerManager';
+  }
+
+  onNotify(_operations: Array<UOWOperation>, uow: UnitOfWork): void {
+    uow.diagram.layers.emit('layerStructureChange', {});
   }
 
   update(diagram: Diagram, _elementId: string, snapshot: LayersSnapshot, uow: UnitOfWork): void {
