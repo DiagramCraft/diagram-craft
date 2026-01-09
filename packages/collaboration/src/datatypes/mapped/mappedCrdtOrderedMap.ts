@@ -149,7 +149,13 @@ export class MappedCRDTOrderedMap<
 
   insert(key: string, t: T, position: number) {
     assert.false(this.#current.has(key));
-    assert.true(position >= 0 && position <= this.#entries.length);
+    assert.true(
+      position >= 0 && position <= this.#entries.length,
+      `Invalid position ${position} for insert, length ${this.#entries.length}`
+    );
+
+    // TODO: Why is this required
+    if (position === this.size) return this.add(key, t);
 
     // CRDT indices are 1-based (based on length after push in add method)
     // Convert 0-based position to 1-based CRDT index

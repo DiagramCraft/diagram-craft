@@ -158,12 +158,16 @@ export class RegularLayer extends Layer<RegularLayer> {
     }
   }
 
-  addElement(element: DiagramElement, uow: UnitOfWork) {
-    uow.executeAdd(element, this, this.#elements.size - 1, () => {
+  insertElement(element: DiagramElement, index: number, uow: UnitOfWork) {
+    uow.executeAdd(element, this, index, () => {
       if (!element.parent && !this.#elements.has(element.id))
-        this.#elements.add(element.id, element);
+        this.#elements.insert(element.id, element, index);
       this.processElementForAdd(element);
     });
+  }
+
+  addElement(element: DiagramElement, uow: UnitOfWork) {
+    this.insertElement(element, this.#elements.size, uow);
   }
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
@@ -173,7 +177,7 @@ export class RegularLayer extends Layer<RegularLayer> {
       element.removeChild(child, uow);
     }
 
-    uow.executeRemove(element, this, this.elements.indexOf(element), () => {
+    uow.executeRemove(element, this, this.#elements.get0Index(element.id), () => {
       element.detachCRDT(() => {
         this.#elements.remove(element.id);
       });

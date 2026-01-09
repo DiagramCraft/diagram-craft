@@ -88,12 +88,12 @@ export class GroupAction extends AbstractSelectionAction {
           e.parent?.removeChild(e, uow);
           activeLayer.addElement(e, uow);
         });
-
         group.layer.removeElement(group, uow);
 
-        diagram.selection.setElements(children);
-        uow.on('after', 'undo', () => diagram.selection.setElements([group]));
-        uow.on('after', 'redo', () => diagram.selection.setElements(children));
+        uow.select(
+          diagram,
+          children.map(e => e.id)
+        );
       });
     } else {
       UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
@@ -118,9 +118,7 @@ export class GroupAction extends AbstractSelectionAction {
 
         group.setChildren([...elements], uow);
 
-        diagram.selection.setElements([group]);
-        uow.on('after', 'undo', () => diagram.selection.setElements(elements));
-        uow.on('after', 'redo', () => diagram.selection.setElements([group]));
+        uow.select(diagram, [group.id]);
       });
     }
   }

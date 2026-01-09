@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { TextPasteHandler } from './clipboardPasteHandlers';
 import {
-  TestModel,
   TestDiagramBuilder,
-  TestLayerBuilder
+  TestLayerBuilder,
+  TestModel
 } from '@diagram-craft/model/test-support/testModel';
 import { BaseActionArgs } from '@diagram-craft/canvas/action';
 import { isNode } from '@diagram-craft/model/diagramElement';

@@ -44,10 +44,10 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
     parentId: string,
     _childId: string,
     childSnapshot: DiagramNodeSnapshot | DiagramEdgeSnapshot,
-    _idx: number,
+    idx: number,
     uow: UnitOfWork
   ): void {
-    if (isDebug()) console.log(`Adding element ${childSnapshot.id} to layer ${parentId}`);
+    if (isDebug()) console.log(`Adding element ${childSnapshot.id} to layer ${parentId} at ${idx}`);
 
     const layer = mustExist(diagram.layers.byId(parentId));
     assertRegularLayer(layer);
@@ -77,9 +77,13 @@ export class LayerParentChildUOWSpecification implements UOWTrackableParentChild
       child.restore(childSnapshot, uow);
     }
 
-    // TODO: Support for idx
-    layer.addElement(child, uow);
+    if (idx === -1) {
+      layer.addElement(child, uow);
+    } else {
+      layer.insertElement(child, idx, uow);
+    }
   }
+
   removeElement(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
     if (isDebug()) console.log(`Removing element ${childId} from layer ${parentId}`);
 
