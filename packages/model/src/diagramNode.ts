@@ -1001,9 +1001,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
 
   invalidateAnchors(uow: UnitOfWork) {
     const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
-    this.#anchors.set(def.getAnchors(this));
-
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => this.#anchors.set(def.getAnchors(this)));
   }
 
   getAttachmentsInUse() {
