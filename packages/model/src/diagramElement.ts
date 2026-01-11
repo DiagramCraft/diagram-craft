@@ -482,9 +482,9 @@ export const transformElements = (
 
   // We do this in a separate loop to as nodes might move which will
   // affect the start and end location of connected edges
-  for (const el of elements) {
+  /*for (const el of elements) {
     uow.updateElement(el);
-  }
+  }*/
 };
 
 export const bindElementListeners = (diagram: Diagram, releasables: Releasables) => {

@@ -81,8 +81,6 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     edge.layer.addElement(newEdge, uow);
 
     edge.setEnd(new AnchorEndpoint(element, anchor), uow);
-
-    uow.updateElement(edge);
   }
 
   private onDropAttachAsLabel(

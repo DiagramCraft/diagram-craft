@@ -113,7 +113,6 @@ export class UnitOfWork {
 
   #operations: Array<UOWOperation> = [];
   #updates = new Set<string>();
-  #snapshots = new MultiMap<string, undefined | Snapshot>();
   #undoableActions: Array<UndoableAction> = [];
   #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
 
@@ -177,12 +176,10 @@ export class UnitOfWork {
   }
 
   private snapshot(element: UOWTrackable) {
-    if (!this.trackChanges) return;
+    if (!this.trackChanges) return NULL_SNAPSHOT;
 
     const adapter = UOWRegistry.getAdapter(element._trackableType);
-    const s = adapter.snapshot(element);
-    this.#snapshots.add(adapter.id(element), s);
-    return s;
+    return adapter.snapshot(element);
   }
 
   contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
@@ -223,9 +220,8 @@ export class UnitOfWork {
     const adapter = UOWRegistry.getAdapter(element._trackableType);
     const id = adapter.id(element);
 
-    const effectiveSnapshot = snapshot ?? this.#snapshots.get(id)!.at(-1)!;
     assert.true(
-      !this.trackChanges || effectiveSnapshot !== undefined,
+      !this.trackChanges || snapshot !== undefined,
       'Must create snapshot before updating element'
     );
 
@@ -234,7 +230,7 @@ export class UnitOfWork {
     this.#operations.push({
       type: 'update',
       target: { object: element, id, type: element._trackableType },
-      beforeSnapshot: effectiveSnapshot,
+      beforeSnapshot: snapshot ?? NULL_SNAPSHOT,
       afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
   }
@@ -265,10 +261,6 @@ export class UnitOfWork {
     const adapter = UOWRegistry.getAdapter(element._trackableType);
     const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
     const id = adapter.id(element);
-
-    if (this.trackChanges && !this.#snapshots.has(id)) {
-      this.#snapshots.add(id, undefined);
-    }
 
     let existingUpdates: Array<UOWOperation> = [];
 
@@ -325,7 +317,7 @@ export class UnitOfWork {
       UOWRegistry.getAdapter(k).onNotify?.(ops, this);
     }
 
-    return this.#snapshots;
+    return;
   }
 
   commit() {
