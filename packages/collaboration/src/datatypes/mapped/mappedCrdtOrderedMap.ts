@@ -117,16 +117,6 @@ export class MappedCRDTOrderedMap<
     }
   }
 
-  setIndex(key: string, toIndex: number) {
-    for (const [k, v] of this.#current.entries()) {
-      if (k === key) {
-        v.set('index', toIndex);
-      } else if (v.get('index')! >= toIndex) {
-        v.set('index', v.get('index')! + 1);
-      }
-    }
-  }
-
   getIndex(key: string) {
     return this.#entries.findIndex(e => e[0] === key);
   }
@@ -149,45 +139,22 @@ export class MappedCRDTOrderedMap<
       `Invalid position ${position} for insert, length ${this.#entries.length}`
     );
 
-    // Determine the target CRDT index based on position
-    // CRDT indices can have gaps after removals, so we can't just use position + 1
-    let targetIndex: number;
-
-    if (position === 0) {
-      targetIndex = 1;
-    } else if (position === this.#entries.length) {
-      const lastElement = this.#entries.at(-1)!;
-      targetIndex = this.#current.get(lastElement[0])!.get('index')! + 1;
-    } else {
-      const elementAtPosition = this.#entries[position]!;
-      targetIndex = this.#current.get(elementAtPosition[0])!.get('index')!;
-    }
+    this.#entries.splice(position, 0, [key, t]);
 
     this.#current.transact(() => {
-      // Update indices of existing elements at or after the insertion position
-      // Only needed if not inserting at the end
-      if (position < this.#entries.length) {
-        for (const [, v] of this.#current.entries()) {
-          const currentIndex = v.get('index')!;
-          if (currentIndex >= targetIndex) {
-            v.set('index', currentIndex + 1);
-          }
-        }
-      }
-
       // Create and insert the new entry
       const entry = this.#current.factory.makeMap<WrapperType>();
-      entry.set('index', targetIndex);
+      entry.set('index', position);
       entry.set('value', this.mapper.toCRDT(t));
       this.#current.set(key, entry);
-    });
 
-    // Add to local entries and sort by CRDT index
-    this.#entries.push([key, t]);
-    this.#entries.sort((a, b) => {
-      const indexA = this.#current.get(a[0])?.get('index') ?? 0;
-      const indexB = this.#current.get(b[0])?.get('index') ?? 0;
-      return indexA - indexB;
+      for (let i = 0; i < this.#entries.length; i++) {
+        const [key] = this.#entries[i]!;
+        const entry = this.#current.get(key)!;
+        if (entry.get('index') !== i) {
+          entry.set('index', i);
+        }
+      }
     });
   }
 

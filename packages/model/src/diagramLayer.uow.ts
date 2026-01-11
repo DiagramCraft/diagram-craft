@@ -11,7 +11,6 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { isDebug } from '@diagram-craft/utils/debug';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { ModificationCRDT } from '@diagram-craft/model/diagramLayerModification';
 import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
@@ -65,8 +64,6 @@ export class LayerChildUOWAdapter implements UOWChildAdapter<
     idx: number,
     uow: UnitOfWork
   ): void {
-    if (isDebug()) console.log(`Adding element ${childSnapshot.id} to layer ${parentId} at ${idx}`);
-
     const layer = mustExist(diagram.layers.byId(parentId));
     assertRegularLayer(layer);
 
@@ -89,8 +86,6 @@ export class LayerChildUOWAdapter implements UOWChildAdapter<
   }
 
   remove(diagram: Diagram, parentId: string, childId: string, uow: UnitOfWork): void {
-    if (isDebug()) console.log(`Removing element ${childId} from layer ${parentId}`);
-
     const layer = mustExist(diagram.layers.byId(parentId));
     assertRegularLayer(layer);
 
