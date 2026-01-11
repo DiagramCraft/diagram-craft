@@ -64,13 +64,15 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     const performDelete = (layer: Layer) => {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Delete layer', uow => {
+      const diagram = this.context.model.activeDiagram;
+      UnitOfWork.executeWithUndo(diagram, 'Delete layer', uow => {
         for (const ref of layer.getInboundReferences()) {
           ref.diagram.layers.remove(ref, uow);
         }
 
-        this.context.model.activeDiagram.layers.remove(layer, uow);
+        diagram.layers.remove(layer, uow);
       });
+      diagram.layers.active = diagram.layers.visible[0]!;
     };
 
     // TODO: This should be a confirm dialog
