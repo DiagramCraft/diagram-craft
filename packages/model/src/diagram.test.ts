@@ -7,6 +7,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { withDebug } from '@diagram-craft/utils/debug';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -283,20 +284,50 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const layer2 = diagram.newLayer();
       const node = layer.addNode();
+      const nodeId = node.id;
+      const layer1Id = layer.id;
+      const layer2Id = layer2.id;
+
+      // Helper to get fresh node reference
+      const getNode = () => diagram.nodeLookup.get(nodeId)!;
 
       // Verify initial state
       expect(layer.elements).toContain(node);
       expect(layer2.elements).not.toContain(node);
 
       // Act
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.executeWithUndo(diagram, 'Move element', uow => {
         diagram.moveElement([node], uow, layer2);
       });
 
       // Verify
-      expect(layer.elements).not.toContain(node);
-      expect(layer2.elements).toContain(node);
-      expect(node.layer).toBe(layer2);
+      expect(layer.elements.map(e => e.id)).not.toContain(nodeId);
+      expect(layer2.elements.map(e => e.id)).toContain(nodeId);
+      expect(getNode().layer.id).toBe(layer2Id);
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        nodeId
+      );
+      expect(
+        (diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)
+      ).not.toContain(nodeId);
+      expect(getNode().layer.id).toBe(layer1Id);
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo
+      expect(
+        (diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)
+      ).not.toContain(nodeId);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        nodeId
+      );
+      expect(getNode().layer.id).toBe(layer2Id);
     });
 
     it('should move multiple elements to a different layer', () => {
@@ -305,17 +336,51 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const layer2 = diagram.newLayer();
       const node1 = layer.addNode();
       const node2 = layer.addNode();
+      const node1Id = node1.id;
+      const node2Id = node2.id;
+      const layer1Id = layer.id;
+      const layer2Id = layer2.id;
 
       // Act
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.executeWithUndo(diagram, 'Move multiple elements', uow => {
         diagram.moveElement([node1, node2], uow, layer2);
       });
 
       // Verify
-      expect(layer.elements).toHaveLength(0);
-      expect(layer2.elements).toHaveLength(2);
-      expect(layer2.elements).toContain(node1);
-      expect(layer2.elements).toContain(node2);
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo - nodes should be back in original layer
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
     });
 
     it('should move element above another element', () => {
@@ -324,9 +389,16 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const node1 = layer.addNode();
       const node2 = layer.addNode();
       const node3 = layer.addNode();
+      const node1Id = node1.id;
+      const node2Id = node2.id;
+      const node3Id = node3.id;
+      const layerId = layer.id;
+
+      // Helper to get fresh layer reference
+      const getLayer = () => diagram.layers.byId(layerId)! as RegularLayer;
 
       // Act - move node1 above node3
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.executeWithUndo(diagram, 'Move element above', uow => {
         diagram.moveElement([node1], uow, layer, {
           relation: 'above',
           element: node3
@@ -334,9 +406,20 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       });
 
       // Verify - order should be [node2, node3, node1]
-      expect(layer.elements.indexOf(node2)).toBe(0);
-      expect(layer.elements.indexOf(node3)).toBe(1);
-      expect(layer.elements.indexOf(node1)).toBe(2);
+      expect(getLayer().elements.map(e => e.id)).toEqual([node2Id, node3Id, node1Id]);
+
+      // Undo
+      withDebug(() => diagram.undoManager.undo());
+
+      // Verify undo - all nodes should be back in the layer
+      // Note: The exact order after undo may vary, so we just check presence
+      expect(getLayer().elements.map(e => e.id)).toEqual([node1Id, node2Id, node3Id]);
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo - order should be [node2, node3, node1] again
+      expect(getLayer().elements.map(e => e.id)).toEqual([node2Id, node3Id, node1Id]);
     });
 
     it('should move element below another element', () => {
@@ -365,9 +448,15 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const { diagram, layer } = TestModel.newDiagramWithLayer();
       const container = layer.addNode({ type: 'container' });
       const node = layer.addNode();
+      const containerId = container.id;
+      const nodeId = node.id;
+
+      // Helpers to get fresh references
+      const getContainer = () => diagram.nodeLookup.get(containerId)!;
+      const getNode = () => diagram.nodeLookup.get(nodeId)!;
 
       // Act
-      UnitOfWork.execute(diagram, uow => {
+      UnitOfWork.executeWithUndo(diagram, 'Move into container', uow => {
         diagram.moveElement([node], uow, layer, {
           relation: 'on',
           element: container
@@ -375,8 +464,22 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       });
 
       // Verify
-      expect(container.children).toContain(node);
-      expect(node.parent).toBe(container);
+      expect(getContainer().children.map(c => c.id)).toContain(nodeId);
+      expect(getNode().parent?.id).toBe(containerId);
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo - node should be back in layer, not in container
+      expect(getContainer().children.map(c => c.id)).not.toContain(nodeId);
+      expect(getNode().parent).toBeUndefined();
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo - node should be back in container
+      expect(getContainer().children.map(c => c.id)).toContain(nodeId);
+      expect(getNode().parent?.id).toBe(containerId);
     });
 
     it('should move element from one container to another', () => {

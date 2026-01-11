@@ -412,7 +412,7 @@ class UOWUndoableAction implements UndoableAction {
         case 'add': {
           if (isDebug()) {
             console.log(
-              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx$ {op.idx}`
+              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx ${op.idx}`
             );
           }
           const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
