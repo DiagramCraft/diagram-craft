@@ -400,16 +400,27 @@ class UOWUndoableAction implements UndoableAction {
       const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'remove': {
+          if (isDebug()) {
+            console.log(
+              `Adding child ${op.target.id}/${op.target.type} to parent ${op.parent.id} at idx ${op.idx}`
+            );
+          }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
           cAdapter.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
           break;
         }
         case 'add': {
+          if (isDebug()) {
+            console.log(
+              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx$ {op.idx}`
+            );
+          }
           const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
           adapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
+          if (isDebug()) console.log(`Updating ${op.target.id}/${op.target.type}`);
           adapter.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
           break;
       }
@@ -429,16 +440,27 @@ class UOWUndoableAction implements UndoableAction {
       const adapter = UOWRegistry.getAdapter(op.target.type);
       switch (op.type) {
         case 'add': {
+          if (isDebug()) {
+            console.log(
+              `Adding child ${op.target.id}/${op.target.type} to parent ${op.parent.id} at idx ${op.idx}`
+            );
+          }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
           cAdapter.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
           break;
         }
         case 'remove': {
+          if (isDebug()) {
+            console.log(
+              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx$ {op.idx}`
+            );
+          }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
           cAdapter.remove(this.diagram, op.parent.id, op.target.id, uow);
           break;
         }
         case 'update':
+          if (isDebug()) console.log(`Updating ${op.target.id}/${op.target.type}`);
           adapter.update(this.diagram, op.target.id, op.afterSnapshot, uow);
           break;
       }
