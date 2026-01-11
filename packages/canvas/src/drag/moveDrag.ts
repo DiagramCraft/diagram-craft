@@ -181,13 +181,17 @@ export abstract class AbstractMoveDrag extends Drag {
     enablePointerEvents(selection.elements);
 
     if (selection.isChanged()) {
-      this.diagram.setBounds(
-        Box.boundingBox(
-          selection.nodes.map(e => e.bounds),
-          true
-        ),
-        this.uow
+      const selectionBounds = Box.boundingBox(
+        selection.nodes.map(e => e.bounds),
+        true
       );
+      const diagramBounds = { ...this.diagram.bounds, r: 0 };
+      if (!Box.contains(diagramBounds, selectionBounds)) {
+        this.diagram.setBounds(
+          Box.boundingBox([diagramBounds, Box.grow(selectionBounds, 20)], true),
+          this.uow
+        );
+      }
 
       // This means we are dropping onto an element
       if (this.#currentElement) {
