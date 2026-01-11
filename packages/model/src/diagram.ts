@@ -383,13 +383,9 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Remove elements from their current position
     for (const el of elements) {
       if (el.parent) {
-        uow.executeRemove(el, el.parent, el.parent.children.indexOf(el), () =>
-          el.parent?.removeChild(el, uow)
-        );
+        el.parent?.removeChild(el, uow);
       } else {
-        uow.executeRemove(el, el.layer, el.layer.elements.indexOf(el), () =>
-          el.layer.removeElement(el, uow)
-        );
+        el.layer.removeElement(el, uow);
       }
     }
 
@@ -407,7 +403,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
         ? [...layer.elements, ...elements]
         : [...elements, ...layer.elements];
       layer.setElements(newElementOrder, uow);
-      elements.map(e => uow.addElement(e, layer, 0));
     } else if (moveIntoGroup) {
       const parent = mustExist(ref.element.parent);
       const idx = parent.children.indexOf(ref.element);
