@@ -32,28 +32,20 @@ export const deleteElements = (elements: readonly DiagramElement[], uow: UnitOfW
   for (const [parent, children] of byParent) {
     if (parent === undefined) continue;
     for (const edge of children.filter(isEdge)) {
-      uow.executeRemove(edge, parent, parent.children.indexOf(edge), () =>
-        parent.removeChild(edge, uow)
-      );
+      parent.removeChild(edge, uow);
     }
     for (const node of children.filter(isNode)) {
-      uow.executeRemove(node, parent, parent.children.indexOf(node), () =>
-        parent.removeChild(node, uow)
-      );
+      parent.removeChild(node, uow);
     }
   }
 
   const layer = elements[0]!.layer;
   const rootChildren = byParent.get(undefined) ?? [];
   for (const edge of rootChildren.filter(isEdge)) {
-    uow.executeRemove(edge, layer, layer.elements.indexOf(edge), () =>
-      layer.removeElement(edge, uow)
-    );
+    layer.removeElement(edge, uow);
   }
   for (const node of rootChildren.filter(isNode)) {
-    uow.executeRemove(node, layer, layer.elements.indexOf(node), () =>
-      layer.removeElement(node, uow)
-    );
+    layer.removeElement(node, uow);
   }
 };
 
