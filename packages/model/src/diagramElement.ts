@@ -428,6 +428,7 @@ export abstract class AbstractDiagramElement
       child.detachCRDT(() => {
         this._children.remove(child.id);
         child._setParent(undefined);
+        child.detach(uow);
       });
       // TODO: We should clear nodeLookup and edgeLookup here
     });

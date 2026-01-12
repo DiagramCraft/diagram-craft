@@ -61,10 +61,7 @@ export class AnchorHandleDrag extends Drag {
     if (isShortDrag) {
       // Undo work to drag new edge
       this.delegate.cancel();
-      UnitOfWork.execute(this.node.diagram, uow => {
-        this.edge.layer.removeElement(this.edge, uow);
-        this.edge.detach(uow);
-      });
+      UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
       diagram.selection.setElements([]);
 
       createLinkedNode(
@@ -90,10 +87,7 @@ export class AnchorHandleDrag extends Drag {
 
   cancel() {
     this.delegate.cancel();
-    UnitOfWork.execute(this.node.diagram, uow => {
-      this.edge.layer.removeElement(this.edge, uow);
-      this.edge.detach(uow);
-    });
+    UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
     this.node.diagram.selection.setElements([]);
   }
 
