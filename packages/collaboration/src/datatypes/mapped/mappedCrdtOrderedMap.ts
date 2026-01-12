@@ -148,12 +148,9 @@ export class MappedCRDTOrderedMap<
       entry.set('value', this.mapper.toCRDT(t));
       this.#current.set(key, entry);
 
-      for (let i = 0; i < this.#entries.length; i++) {
-        const [key] = this.#entries[i]!;
-        const entry = this.#current.get(key)!;
-        //        if (entry.get('index') !== i) {
-        entry.set('index', i);
-        //        }
+      for (const [k, v] of this.#current.entries()) {
+        const pos = this.#entries.findIndex(e => e[0] === k);
+        if (v.get('index') !== pos) v.set('index', pos);
       }
     });
   }
