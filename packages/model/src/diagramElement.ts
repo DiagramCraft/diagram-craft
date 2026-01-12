@@ -427,9 +427,9 @@ export abstract class AbstractDiagramElement
 
     this.diagram.register(this);
 
-    /*for (const child of this.children) {
+    for (const child of this.children) {
       child._onAttach(layer, this);
-    }*/
+    }
   }
 }
 
