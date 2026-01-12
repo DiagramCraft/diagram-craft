@@ -356,8 +356,12 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this.delegate.invalidate(uow);
   }
 
-  detach(uow: UnitOfWork): void {
-    this.delegate.detach(uow);
+  _onDetach(uow: UnitOfWork): void {
+    this.delegate._onDetach(uow);
+  }
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
+    this.delegate._detachAndRemove(uow, callback);
   }
 
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement {

@@ -100,11 +100,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     };
   }
 
-  get metadataCloned(): ElementMetadata {
-    const merged = this.metadata;
-    return JSON.parse(JSON.stringify(merged));
-  }
-
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
       const metadata = this._metadata.getClone() as ElementMetadata;
@@ -117,6 +112,13 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram) {
     this._layer = layer;
     this._diagram = diagram;
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer
+  ) {
+    this.delegate._onAttach(layer, parent);
   }
 
   get crdt() {
@@ -146,7 +148,8 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
-  abstract detach(uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork): void;
+  abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -171,12 +174,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
 
   /* Delegated methods ********************************************************************************** */
 
