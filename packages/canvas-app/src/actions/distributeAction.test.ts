@@ -54,8 +54,8 @@ describe('DistributeAction', () => {
 
     test('should be enabled when a single node with at least 2 children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 20, y: 20, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 20, y: 20, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);
@@ -70,7 +70,7 @@ describe('DistributeAction', () => {
 
     test('should not be enabled when a single node with only 1 child is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => parent.addChild(child1, uow));
 
@@ -127,9 +127,9 @@ describe('DistributeAction', () => {
   describe('distribute children of single node', () => {
     test('should distribute children horizontally when single node with children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 300, h: 100, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 0, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 250, y: 10, w: 50, h: 50, r: 0 } });
-      const child3 = layer.addNode({ bounds: { x: 100, y: 10, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 0, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 250, y: 10, w: 50, h: 50, r: 0 } });
+      const child3 = layer.createNode({ bounds: { x: 100, y: 10, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);
@@ -148,9 +148,9 @@ describe('DistributeAction', () => {
 
     test('should distribute children vertically when single node with children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 100, h: 300, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 0, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 10, y: 250, w: 50, h: 50, r: 0 } });
-      const child3 = layer.addNode({ bounds: { x: 10, y: 100, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 0, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 10, y: 250, w: 50, h: 50, r: 0 } });
+      const child3 = layer.createNode({ bounds: { x: 10, y: 100, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);

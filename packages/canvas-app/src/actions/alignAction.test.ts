@@ -55,8 +55,8 @@ describe('AlignActions', () => {
 
     test('should be enabled when a single node with at least 2 children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 20, y: 20, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 20, y: 20, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);
@@ -71,7 +71,7 @@ describe('AlignActions', () => {
 
     test('should not be enabled when a single node with only 1 child is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => parent.addChild(child1, uow));
 
@@ -156,9 +156,9 @@ describe('AlignActions', () => {
   describe('align children of single node', () => {
     test('should align children to the top when single node with children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 20, y: 30, w: 50, h: 60, r: 0 } });
-      const child3 = layer.addNode({ bounds: { x: 30, y: 15, w: 50, h: 40, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 20, y: 30, w: 50, h: 60, r: 0 } });
+      const child3 = layer.createNode({ bounds: { x: 30, y: 15, w: 50, h: 40, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);
@@ -176,9 +176,9 @@ describe('AlignActions', () => {
 
     test('should align children to the left when single node with children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 30, y: 20, w: 60, h: 50, r: 0 } });
-      const child3 = layer.addNode({ bounds: { x: 15, y: 30, w: 40, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 30, y: 20, w: 60, h: 50, r: 0 } });
+      const child3 = layer.createNode({ bounds: { x: 15, y: 30, w: 40, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);
@@ -196,8 +196,8 @@ describe('AlignActions', () => {
 
     test('should align children to the center-vertical when single node with children is selected', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 30, y: 20, w: 60, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 30, y: 20, w: 60, h: 50, r: 0 } });
 
       UnitOfWork.execute(diagram, uow => {
         parent.addChild(child1, uow);

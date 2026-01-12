@@ -172,8 +172,8 @@ describe('selection', () => {
   test('getParents()', () => {
     const selection = new Selection(diagram);
     const parent = layer.addNode();
-    const child = layer.addNode();
-    const grandchild = layer.addNode();
+    const child = layer.createNode();
+    const grandchild = layer.createNode();
 
     UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
     UnitOfWork.execute(diagram, uow => child.addChild(grandchild, uow));

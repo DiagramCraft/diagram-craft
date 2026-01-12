@@ -113,7 +113,7 @@ export class GroupAction extends AbstractSelectionAction {
 
         elements.forEach(e => {
           assertRegularLayer(e.layer);
-          e.layer.removeElement(e, uow);
+          if (e.layer.elements.includes(e)) e.layer.removeElement(e, uow);
         });
 
         group.setChildren([...elements], uow);

@@ -286,8 +286,8 @@ describe('DuplicateAction', () => {
   describe('parent preservation', () => {
     test('should preserve parent when all selected elements have the same parent', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Set parent for both children
       UnitOfWork.execute(diagram, uow => {
@@ -322,8 +322,8 @@ describe('DuplicateAction', () => {
     test('should not set parent when selected elements have different parents', () => {
       const parent1 = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
       const parent2 = layer.addNode({ bounds: { x: 600, y: 0, w: 500, h: 500, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 610, y: 10, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 610, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set different parents
       UnitOfWork.execute(diagram, uow => {
@@ -356,7 +356,7 @@ describe('DuplicateAction', () => {
 
     test('should not set parent when some selected elements have no parent', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
-      const child = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
       const orphan = layer.addNode({ bounds: { x: 600, y: 10, w: 50, h: 50, r: 0 } });
 
       // Set parent only for child

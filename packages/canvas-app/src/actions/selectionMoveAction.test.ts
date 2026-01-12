@@ -64,11 +64,11 @@ describe('SelectionMoveAction', () => {
       });
 
       // Add two children
-      const child1 = layer.addNode({
+      const child1 = layer.createNode({
         id: 'child1',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
-      const child2 = layer.addNode({
+      const child2 = layer.createNode({
         id: 'child2',
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
@@ -103,11 +103,11 @@ describe('SelectionMoveAction', () => {
       });
 
       // Add two children
-      const child1 = layer.addNode({
+      const child1 = layer.createNode({
         id: 'child1',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
-      const child2 = layer.addNode({
+      const child2 = layer.createNode({
         id: 'child2',
         bounds: { x: 70, y: 10, w: 50, h: 50, r: 0 }
       });
@@ -144,11 +144,11 @@ describe('SelectionMoveAction', () => {
       });
 
       // Add two children
-      const child1 = layer.addNode({
+      const child1 = layer.createNode({
         id: 'child1',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
-      const child2 = layer.addNode({
+      const child2 = layer.createNode({
         id: 'child2',
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
@@ -183,11 +183,11 @@ describe('SelectionMoveAction', () => {
       });
 
       // Add two children
-      const child1 = layer.addNode({
+      const child1 = layer.createNode({
         id: 'child1',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
-      const child2 = layer.addNode({
+      const child2 = layer.createNode({
         id: 'child2',
         bounds: { x: 10, y: 70, w: 50, h: 50, r: 0 }
       });
@@ -223,7 +223,7 @@ describe('SelectionMoveAction', () => {
         }
       });
 
-      const child = layer.addNode({
+      const child = layer.createNode({
         id: 'child',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
@@ -254,7 +254,7 @@ describe('SelectionMoveAction', () => {
         }
       });
 
-      const child = layer.addNode({
+      const child = layer.createNode({
         id: 'child',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 },
         props: {
@@ -293,7 +293,7 @@ describe('SelectionMoveAction', () => {
       });
 
       // Only one child - no sibling to swap with
-      const child = layer.addNode({
+      const child = layer.createNode({
         id: 'child',
         bounds: { x: 10, y: 10, w: 50, h: 50, r: 0 }
       });
