@@ -873,11 +873,11 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     }
   }
 
-  _onRemove(uow: UnitOfWork) {
+  _onDetach(uow: UnitOfWork) {
     this.diagram.nodeLookup.delete(this.id);
 
     for (const c of this.children) {
-      c._onRemove(uow);
+      c._onDetach(uow);
     }
 
     // "Detach" any edges that connects to this node

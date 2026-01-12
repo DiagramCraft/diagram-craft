@@ -1,9 +1,8 @@
 import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
-import { DiagramElement, type DiagramElementCRDT, isNode } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
 import type { Diagram } from './diagram';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
-import { DiagramEdge } from './diagramEdge';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { ElementFactory } from './elementFactory';
@@ -36,7 +35,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
           uow.addElement(e, this, this.#elements.size - 1);
-          this.processElementForAdd(e);
+          e._onAttach(this, this);
         },
         onRemoteChange: e => {
           const uow = getRemoteUnitOfWork(diagram);
@@ -48,7 +47,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         },
         onInit: e => {
           diagram.emit('elementAdd', { element: e });
-          this.processElementForAdd(e);
+          e._onAttach(this, this);
         }
       }
     );
@@ -160,10 +159,11 @@ export class RegularLayer extends Layer<RegularLayer> {
   }
 
   insertElement(element: DiagramElement, index: number, uow: UnitOfWork) {
+    assert.true(element.parent === undefined);
+    assert.false(this.#elements.has(element.id));
     uow.executeAdd(element, this, index, () => {
-      if (!element.parent && !this.#elements.has(element.id))
-        this.#elements.insert(element.id, element, index);
-      this.processElementForAdd(element);
+      this.#elements.insert(element.id, element, index);
+      element._onAttach(this, this);
     });
   }
 
@@ -188,34 +188,10 @@ export class RegularLayer extends Layer<RegularLayer> {
     const added = elements.filter(e => !this.#elements.has(e.id));
     const removed = this.#elements.values.filter(e => ids.indexOf(e.id) < 0);
 
-    for (const e of added) {
-      uow.executeAdd(e, this, this.#elements.size, () => {
-        this.#elements.add(e.id, e);
-        this.processElementForAdd(e);
-      });
-    }
+    for (const e of added) this.addElement(e, uow);
+    for (const e of removed) this.removeElement(e, uow);
 
-    for (const e of removed) {
-      uow.executeRemove(e, this, this.#elements.getIndex(e.id), () => {
-        e._detachAndRemove(uow, () => this.#elements.remove(e.id));
-      });
-    }
-
-    uow.executeUpdate(this, () => {
-      this.#elements.setOrder(ids);
-    });
-  }
-
-  private processElementForAdd(e: DiagramElement) {
-    e._setLayer(this, this.diagram);
-    if (isNode(e)) {
-      this.diagram.nodeLookup.set(e.id, e);
-      for (const child of e.children) {
-        this.processElementForAdd(child);
-      }
-    } else {
-      this.diagram.edgeLookup.set(e.id, e as DiagramEdge);
-    }
+    uow.executeUpdate(this, () => this.#elements.setOrder(ids));
   }
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {

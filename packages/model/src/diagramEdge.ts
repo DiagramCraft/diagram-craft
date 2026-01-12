@@ -1016,15 +1016,16 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     this._recalculateIntersections(uow, true);
   }
 
-  _onRemove(uow: UnitOfWork) {
+  _onDetach(uow: UnitOfWork) {
     // Update any parent
     if (this.parent) {
       this.parent.removeChild(this, uow);
     }
+    this._setParent(undefined);
 
     // All label nodes must be detached
     for (const l of this.labelNodes) {
-      l.node()._onRemove(uow);
+      l.node()._onDetach(uow);
     }
 
     if (isConnected(this.start)) {

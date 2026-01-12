@@ -314,8 +314,8 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate.invalidate(uow);
   }
 
-  _onRemove(uow: UnitOfWork): void {
-    this.delegate._onRemove(uow);
+  _onDetach(uow: UnitOfWork): void {
+    this.delegate._onDetach(uow);
   }
 
   _detachAndRemove(uow: UnitOfWork, callback: () => void) {

@@ -112,7 +112,11 @@ export interface DiagramElement {
   comments: ReadonlyArray<Comment>;
 
   _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
-  _onRemove(uow: UnitOfWork): void;
+  _onDetach(uow: UnitOfWork): void;
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer
+  ): void;
 }
 
 export abstract class AbstractDiagramElement
@@ -213,7 +217,7 @@ export abstract class AbstractDiagramElement
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
-  abstract _onRemove(uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -348,30 +352,12 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    assert.false(children.some(e => e.id === this.id));
-
     const ids = children.map(e => e.id);
     const added = children.filter(e => !this._children.has(e.id));
     const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
 
-    for (const e of added) {
-      uow.executeAdd(e, this, this._children.size, () => {
-        // Can't add yourself as a child
-        assert.false(e.id === this.id);
-        // Can't add top-level elements as children
-        assert.true(e.layer.elements.find(c => c.id === e.id) === undefined);
-
-        this._children.add(e.id, e);
-        e._setParent(this);
-        this.diagram.register(e);
-      });
-    }
-
-    for (const e of removed) {
-      uow.executeRemove(e, this, this._children.getIndex(e.id), () => {
-        e._detachAndRemove(uow, () => this._children.remove(e.id));
-      });
-    }
+    for (const e of added) this.addChild(e, uow);
+    for (const e of removed) this.removeChild(e, uow);
 
     uow.executeUpdate(this, () => this._children.setOrder(ids));
   }
@@ -393,33 +379,29 @@ export abstract class AbstractDiagramElement
       if (typeof position === 'number') {
         uow.executeAdd(child, this, position, () => {
           this._children.insert(child.id, child, position);
+          child._onAttach(this.layer, this);
         });
       } else {
         const index = this._children.getIndex(position.ref.id);
         const effectiveIndex = position.type === 'after' ? index + 1 : index;
         uow.executeAdd(child, this, effectiveIndex, () => {
           this._children.insert(child.id, child, effectiveIndex);
+          child._onAttach(this.layer, this);
         });
       }
     } else {
       uow.executeAdd(child, this, this.children.length, () => {
         this._children.add(child.id, child);
+        child._onAttach(this.layer, this);
       });
     }
-
-    child._setParent(this);
-
-    this.diagram.register(child);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child._setParent(undefined);
       child._detachAndRemove(uow, () => this._children.remove(child.id));
-
-      // TODO: We should clear nodeLookup and edgeLookup here
     });
   }
 
@@ -432,7 +414,23 @@ export abstract class AbstractDiagramElement
     callback?.();
     this._crdt.set(clone);
 
-    this._onRemove(uow);
+    this._onDetach(uow);
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer
+  ) {
+    this._setLayer(layer, this.diagram);
+    if (parent._trackableType === 'element') {
+      this._setParent(parent as DiagramElement);
+    }
+
+    this.diagram.register(this);
+
+    for (const child of this.children) {
+      child._onAttach(layer, this);
+    }
   }
 }
 

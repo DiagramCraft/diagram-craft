@@ -6,7 +6,7 @@ import {
   type ElementType
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
-import type { ModificationLayer } from './diagramLayerModification';
+import { ModificationLayer } from './diagramLayerModification';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
@@ -100,11 +100,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     };
   }
 
-  get metadataCloned(): ElementMetadata {
-    const merged = this.metadata;
-    return JSON.parse(JSON.stringify(merged));
-  }
-
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
       const metadata = this._metadata.getClone() as ElementMetadata;
@@ -117,6 +112,13 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram) {
     this._layer = layer;
     this._diagram = diagram;
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer
+  ) {
+    this.delegate._onAttach(layer, parent);
   }
 
   get crdt() {
@@ -146,7 +148,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
-  abstract _onRemove(uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork): void;
   abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
