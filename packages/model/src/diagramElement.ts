@@ -367,15 +367,13 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
-    DEBUG: {
-      assert.true(child.diagram === this.diagram);
-      // Can't add multiple times'
-      assert.false(this._children.has(child.id));
-      // Can't add yourself as a child
-      assert.false(child.id === this.id);
-      // Can't add top-level elements as children
-      assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
-    }
+    assert.true(child.diagram === this.diagram);
+    // Can't add multiple times'
+    assert.false(this._children.has(child.id));
+    // Can't add yourself as a child
+    assert.false(child.id === this.id);
+    // Can't add top-level elements as children
+    assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
 
     if (position) {
       if (typeof position === 'number') {
@@ -429,9 +427,9 @@ export abstract class AbstractDiagramElement
 
     this.diagram.register(this);
 
-    for (const child of this.children) {
+    /*for (const child of this.children) {
       child._onAttach(layer, this);
-    }
+    }*/
   }
 }
 
