@@ -1020,8 +1020,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     // Update any parent
     if (this.parent) {
       this.parent.removeChild(this, uow);
+      this._setParent(undefined);
     }
-    this._setParent(undefined);
 
     // All label nodes must be detached
     for (const l of this.labelNodes) {
