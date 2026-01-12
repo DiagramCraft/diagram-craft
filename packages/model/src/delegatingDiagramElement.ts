@@ -6,7 +6,7 @@ import {
   type ElementType
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
-import { ModificationLayer } from './diagramLayerModification';
+import type { ModificationLayer } from './diagramLayerModification';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { UnitOfWork } from './unitOfWork';
 import type { Diagram } from './diagram';
