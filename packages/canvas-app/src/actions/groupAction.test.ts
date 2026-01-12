@@ -230,8 +230,8 @@ describe('GroupAction', () => {
   describe('children with parents', () => {
     test('should handle grouping nodes that are children of other nodes', () => {
       const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
-      const child1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
-      const child2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Set parent for both children
       UnitOfWork.execute(diagram, uow => {

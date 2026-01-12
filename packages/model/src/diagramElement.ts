@@ -362,6 +362,11 @@ export abstract class AbstractDiagramElement
 
     for (const e of added) {
       uow.executeAdd(e, this, this._children.size, () => {
+        // Can't add yourself as a child
+        assert.false(e.id === this.id);
+        // Can't add top-level elements as children
+        assert.true(e.layer.elements.find(c => c.id === e.id) === undefined);
+
         this._children.add(e.id, e);
         e._setParent(this);
         this.diagram.register(e);
@@ -386,8 +391,12 @@ export abstract class AbstractDiagramElement
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     assert.true(child.diagram === this.diagram);
+    // Can't add multiple times'
     assert.false(this._children.has(child.id));
+    // Can't add yourself as a child
     assert.false(child.id === this.id);
+    // Can't add top-level elements as children
+    assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
 
     if (position) {
       if (typeof position === 'number') {
