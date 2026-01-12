@@ -151,9 +151,9 @@ export class MappedCRDTOrderedMap<
       for (let i = 0; i < this.#entries.length; i++) {
         const [key] = this.#entries[i]!;
         const entry = this.#current.get(key)!;
-        if (entry.get('index') !== i) {
-          entry.set('index', i);
-        }
+        //        if (entry.get('index') !== i) {
+        entry.set('index', i);
+        //        }
       }
     });
   }

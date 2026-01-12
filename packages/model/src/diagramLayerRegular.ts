@@ -161,10 +161,8 @@ export class RegularLayer extends Layer<RegularLayer> {
   insertElement(element: DiagramElement, index: number, uow: UnitOfWork) {
     assert.true(element.parent === undefined);
     assert.false(this.#elements.has(element.id));
-    uow.executeAdd(element, this, index, () => {
-      this.#elements.insert(element.id, element, index);
-      element._onAttach(this, this);
-    });
+    uow.executeAdd(element, this, index, () => this.#elements.insert(element.id, element, index));
+    element._onAttach(this, this);
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {

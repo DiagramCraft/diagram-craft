@@ -379,22 +379,21 @@ export abstract class AbstractDiagramElement
       if (typeof position === 'number') {
         uow.executeAdd(child, this, position, () => {
           this._children.insert(child.id, child, position);
-          child._onAttach(this.layer, this);
         });
       } else {
         const index = this._children.getIndex(position.ref.id);
         const effectiveIndex = position.type === 'after' ? index + 1 : index;
         uow.executeAdd(child, this, effectiveIndex, () => {
           this._children.insert(child.id, child, effectiveIndex);
-          child._onAttach(this.layer, this);
         });
       }
     } else {
       uow.executeAdd(child, this, this.children.length, () => {
         this._children.add(child.id, child);
-        child._onAttach(this.layer, this);
       });
     }
+
+    child._onAttach(this.layer, this);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
