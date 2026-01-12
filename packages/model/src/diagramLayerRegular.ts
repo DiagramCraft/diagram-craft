@@ -11,6 +11,7 @@ import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { SpatialIndex } from './spatialIndex';
 import { assert } from '@diagram-craft/utils/assert';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
+import { newid } from '@diagram-craft/utils/id';
 
 registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
 registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));
@@ -87,8 +88,8 @@ export class RegularLayer extends Layer<RegularLayer> {
    * @returns Snapshot of original positions for all affected parent groups (used for undo)
    *
    * @example
-   * // Move elements forward by 2 positions
-   * layer.stackModify([element1, element2], 2, uow);
+   * // Move elements forward by 1 position
+   * layer.stackModify([element1, element2], 1, uow);
    *
    * // Move elements to front (using large positive delta)
    * layer.stackModify([element], Number.MAX_SAFE_INTEGER / 2, uow);
@@ -115,7 +116,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
         for (const p of newStackPositions) {
           if (!elements.includes(p.element)) continue;
-          p.idx += positionDelta;
+          p.idx += positionDelta + 1;
         }
         newPositions.set(parent, newStackPositions);
       }
@@ -123,6 +124,9 @@ export class RegularLayer extends Layer<RegularLayer> {
       // Apply the new positions
       this.stackSet(newPositions, uow);
     });
+
+    uow.on('after', 'undo', newid(), () => this.diagram.emit('diagramChange'));
+    uow.on('after', 'redo', newid(), () => this.diagram.emit('diagramChange'));
 
     return snapshot;
   }

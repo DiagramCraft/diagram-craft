@@ -72,10 +72,10 @@ export class SelectionRestackAction extends AbstractSelectionAction {
       const elements = this.context.model.activeDiagram.selection.elements;
       switch (this.mode) {
         case 'up':
-          activeLayer.stackModify(elements, 2, uow);
+          activeLayer.stackModify(elements, 1, uow);
           break;
         case 'down':
-          activeLayer.stackModify(elements, -2, uow);
+          activeLayer.stackModify(elements, -1, uow);
           break;
         case 'top':
           activeLayer.stackModify(elements, Number.MAX_SAFE_INTEGER / 2, uow);
