@@ -146,27 +146,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     });
   });
 
-  describe('detachCRDT', () => {
-    it('text is kept when detaching', () => {
-      const node = model.layer1.addNode();
-      UnitOfWork.execute(model.diagram1, uow => node.setText('LabelNodeName', uow));
-
-      expect(node.getText()).toBe('LabelNodeName');
-      if (model.doc2) {
-        const n = model.doc2.diagrams[0]!.lookup(node.id) as DiagramNode;
-        expect(n.getText()).toBe('LabelNodeName');
-      }
-
-      node.detachCRDT();
-
-      expect(node.getText()).toBe('LabelNodeName');
-      if (model.doc2) {
-        const n = model.doc2.diagrams[0]!.lookup(node.id) as DiagramNode;
-        expect(n.getText()).toBe('LabelNodeName');
-      }
-    });
-  });
-
   describe('isLabelNode', () => {
     it('should return true when the parent is an edge', () => {
       const edge = model.layer1.addEdge();

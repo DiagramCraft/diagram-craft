@@ -179,11 +179,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     }
 
     uow.executeRemove(element, this, this.#elements.getIndex(element.id), () => {
-      element.detachCRDT(() => {
-        this.#elements.remove(element.id);
-      });
-
-      element.detach(uow);
+      element._detachAndRemove(uow, () => this.#elements.remove(element.id));
     });
   }
 
@@ -201,9 +197,7 @@ export class RegularLayer extends Layer<RegularLayer> {
 
     for (const e of removed) {
       uow.executeRemove(e, this, this.#elements.getIndex(e.id), () => {
-        e.detachCRDT(() => {
-          this.#elements.remove(e.id);
-        });
+        e._detachAndRemove(uow, () => this.#elements.remove(e.id));
       });
     }
 

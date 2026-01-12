@@ -57,7 +57,6 @@ export interface DiagramElement {
   getAttachmentsInUse(): Array<string>;
 
   invalidate(uow: UnitOfWork): void;
-  detach(uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
 
@@ -78,8 +77,6 @@ export interface DiagramElement {
 
   snapshot(): Snapshot;
   restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void): void;
 
   readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
@@ -113,6 +110,9 @@ export interface DiagramElement {
   removeChild(child: DiagramElement, uow: UnitOfWork): void;
 
   comments: ReadonlyArray<Comment>;
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
+  _onRemove(uow: UnitOfWork): void;
 }
 
 export abstract class AbstractDiagramElement
@@ -213,7 +213,7 @@ export abstract class AbstractDiagramElement
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
-  abstract detach(uow: UnitOfWork): void;
+  abstract _onRemove(uow: UnitOfWork): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -238,12 +238,6 @@ export abstract class AbstractDiagramElement
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void = () => {}) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
 
   get crdt() {
     return this._crdt;
@@ -375,10 +369,7 @@ export abstract class AbstractDiagramElement
 
     for (const e of removed) {
       uow.executeRemove(e, this, this._children.getIndex(e.id), () => {
-        e.detachCRDT(() => {
-          this._children.remove(e.id);
-          e._setParent(undefined);
-        });
+        e._detachAndRemove(uow, () => this._children.remove(e.id));
       });
     }
 
@@ -425,17 +416,23 @@ export abstract class AbstractDiagramElement
     assert.true(this._children.has(child.id));
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child.detachCRDT(() => {
-        this._children.remove(child.id);
-        child._setParent(undefined);
-        child.detach(uow);
-      });
+      child._setParent(undefined);
+      child._detachAndRemove(uow, () => this._children.remove(child.id));
+
       // TODO: We should clear nodeLookup and edgeLookup here
     });
   }
 
   get comments() {
     return this.diagram.commentManager.getAll().filter(c => c.element?.id === this.id);
+  }
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
+    const clone = this._crdt.get().clone();
+    callback?.();
+    this._crdt.set(clone);
+
+    this._onRemove(uow);
   }
 }
 

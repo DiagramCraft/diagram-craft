@@ -146,7 +146,8 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(uow: UnitOfWork): void;
-  abstract detach(uow: UnitOfWork): void;
+  abstract _onRemove(uow: UnitOfWork): void;
+  abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -171,12 +172,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
 
   /* Delegated methods ********************************************************************************** */
 
