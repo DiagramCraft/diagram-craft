@@ -7,7 +7,6 @@ import { RegularLayer } from './diagramLayerRegular';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
-import { withDebug } from '@diagram-craft/utils/debug';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -409,7 +408,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(getLayer().elements.map(e => e.id)).toEqual([node2Id, node3Id, node1Id]);
 
       // Undo
-      withDebug(() => diagram.undoManager.undo());
+      diagram.undoManager.undo();
 
       // Verify undo - all nodes should be back in the layer
       // Note: The exact order after undo may vary, so we just check presence

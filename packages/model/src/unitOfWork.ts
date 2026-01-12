@@ -104,6 +104,40 @@ const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
   } while (emitCount > 0);
 };
 
+/**
+ * Begin tracking an operation on an element within the UnitOfWork.
+ * Only for debugging
+ */
+const beginOperation = (uow: UnitOfWork, type: UOWOperation['type'], element: UOWTrackable) => {
+  // biome-ignore lint/suspicious/noExplicitAny: debugging only
+  let s = (uow.metadata as any).__operations as Set<string>;
+  if (!s) {
+    s = new Set();
+    // biome-ignore lint/suspicious/noExplicitAny: debugging only
+    (uow.metadata as any).__operations = s;
+  }
+
+  const adapter = UOWRegistry.getAdapter(element._trackableType);
+  const key = `${type}-${element._trackableType}-${adapter.id(element)}`;
+  if (s.has(key)) assert.fail(`Duplicate nested operation: ${key}`);
+
+  s!.add(`${type}-${element._trackableType}`);
+};
+
+/**
+ * End tracking an operation on an element within the UnitOfWork.
+ * Only for debugging
+ */
+const endOperation = (uow: UnitOfWork, type: UOWOperation['type'], element: UOWTrackable) => {
+  // biome-ignore lint/suspicious/noExplicitAny: debugging only
+  const s = (uow.metadata as any).__operations as Set<string>;
+  if (!s) return;
+
+  const adapter = UOWRegistry.getAdapter(element._trackableType);
+  const key = `${type}-${element._trackableType}-${adapter.id(element)}`;
+  s.delete(key);
+};
+
 export class UnitOfWork {
   uid = newid();
 
@@ -189,18 +223,38 @@ export class UnitOfWork {
   }
 
   executeUpdate<T>(element: UOWTrackable, cb: () => T): T {
-    const snapshot = this.snapshot(element);
+    DEBUG: {
+      beginOperation(this, 'update', element);
+    }
+    try {
+      const snapshot = this.snapshot(element);
 
-    const res = cb();
-    this.updateElement(element, snapshot);
-    return res;
+      const res = cb();
+      this.updateElement(element, snapshot);
+
+      return res;
+    } finally {
+      DEBUG: {
+        endOperation(this, 'update', element);
+      }
+    }
   }
 
   executeRemove<T>(element: UOWTrackable, parent: UOWTrackable, idx: number, cb: () => T) {
     assert.true(idx >= 0);
 
-    this.removeElement(element, parent, idx);
-    return cb();
+    DEBUG: {
+      beginOperation(this, 'remove', element);
+    }
+
+    try {
+      this.removeElement(element, parent, idx);
+      return cb();
+    } finally {
+      DEBUG: {
+        endOperation(this, 'remove', element);
+      }
+    }
   }
 
   executeAdd<T>(
@@ -211,9 +265,19 @@ export class UnitOfWork {
   ) {
     assert.true(idx >= 0);
 
-    const res = cb();
-    this.addElement(element, parent, idx);
-    return res;
+    DEBUG: {
+      (Array.isArray(element) ? element : [element]).forEach(e => beginOperation(this, 'add', e));
+    }
+
+    try {
+      const res = cb();
+      this.addElement(element, parent, idx);
+      return res;
+    } finally {
+      DEBUG: {
+        (Array.isArray(element) ? element : [element]).forEach(e => endOperation(this, 'add', e));
+      }
+    }
   }
 
   updateElement(element: UOWTrackable, snapshot?: Snapshot) {
