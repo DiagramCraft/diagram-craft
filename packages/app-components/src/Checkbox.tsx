@@ -1,10 +1,10 @@
 import { extractMouseEvents } from './utils';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
-import { TbCheckbox, TbSquare } from 'react-icons/tb';
+import { TbCheckbox, TbSquare, TbSquareMinus } from 'react-icons/tb';
 import { useEffect, useRef } from 'react';
+import styles from './Checkbox.module.css';
 
 export const Checkbox = (props: Props) => {
-  // TODO: Implement indeterminate state
   const ref = useRef<HTMLInputElement>(null);
 
   // Note: it's not clear why this is needed, but for some reason,
@@ -12,8 +12,9 @@ export const Checkbox = (props: Props) => {
   useEffect(() => {
     setTimeout(() => {
       ref.current!.checked = props.value;
+      ref.current!.indeterminate = props.isIndeterminate ?? false;
     });
-  }, [props.value]);
+  }, [props.value, props.isIndeterminate]);
 
   return (
     <>
@@ -21,6 +22,7 @@ export const Checkbox = (props: Props) => {
         {...extractMouseEvents(props)}
         ref={ref}
         type="checkbox"
+        className={styles.cmpCheckbox}
         checked={props.value}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         onChange={e => {
@@ -34,6 +36,12 @@ export const Checkbox = (props: Props) => {
 };
 
 export const FancyCheckbox = (props: Props) => {
+  const getIcon = () => {
+    if (props.isIndeterminate) return <TbSquareMinus />;
+    if (props.value) return <TbCheckbox />;
+    return <TbSquare />;
+  };
+
   return (
     <ToggleButtonGroup.Root
         type={'single'}
@@ -45,7 +53,7 @@ export const FancyCheckbox = (props: Props) => {
       >
         <ToggleButtonGroup.Item value={'set'}>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {props.value ? <TbCheckbox /> : <TbSquare />} {props.label}
+            {getIcon()} {props.label}
           </div>
         </ToggleButtonGroup.Item>
       </ToggleButtonGroup.Root>
