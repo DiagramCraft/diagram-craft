@@ -11,6 +11,7 @@ import { round } from '@diagram-craft/utils/math';
 type Tick = {
   pos: number;
   lbl: string;
+  value: number;
 };
 
 const roundTicks = (ticks: Tick[]) => {
@@ -25,7 +26,7 @@ const roundTicks = (ticks: Tick[]) => {
   const numberOfDecimals = stepSize >= 1 ? 0 : Math.max(0, Math.ceil(-Math.log10(stepSize)));
 
   for (let i = 0; i < ticks.length; i++) {
-    ticks[i]!.lbl = round(ticks[i]!.pos, numberOfDecimals).toString();
+    ticks[i]!.lbl = round(ticks[i]!.value, numberOfDecimals).toString();
   }
 };
 
@@ -110,7 +111,7 @@ export const Ruler = ({ orientation }: Props) => {
   if (orientation === 'horizontal') {
     if (diagram.viewBox.isInitialized()) {
       for (let x = diagram.bounds.x; x <= diagram.bounds.x + diagram.bounds.w; x += 10) {
-        ticks.push({ pos: toScreenX(x), lbl: x.toString() });
+        ticks.push({ pos: toScreenX(x), lbl: x.toString(), value: x });
       }
     }
     roundTicks(ticks);
@@ -145,7 +146,7 @@ export const Ruler = ({ orientation }: Props) => {
   } else {
     if (diagram.viewBox.isInitialized()) {
       for (let y = diagram.bounds.y; y <= diagram.bounds.y + diagram.bounds.h; y += 10) {
-        ticks.push({ pos: toScreenY(y), lbl: y.toString() });
+        ticks.push({ pos: toScreenY(y), lbl: y.toString(), value: y });
       }
     }
     roundTicks(ticks);
