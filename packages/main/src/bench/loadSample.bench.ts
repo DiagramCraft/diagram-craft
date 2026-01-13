@@ -16,7 +16,7 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
-const opts = { time: 2000 };
+const opts = { time: 1000 };
 
 const nodeRegistry = defaultNodeRegistry();
 const edgeRegistry = defaultEdgeRegistry();
