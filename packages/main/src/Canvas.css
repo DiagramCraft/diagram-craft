@@ -280,7 +280,7 @@
   }
 
   .svg-node--highlight-node__drop-target {
-    .svg-node__boundary, .svg-node--container-outline {
+    > .svg-node__boundary, > .svg-node--container-outline {
       stroke-width: 3px !important;
       stroke: #30A46C !important;
     }

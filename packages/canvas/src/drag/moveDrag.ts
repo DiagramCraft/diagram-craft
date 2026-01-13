@@ -26,6 +26,7 @@ import {
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import { getElementAndAncestors } from '@diagram-craft/model/diagramElementUtils';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -198,7 +199,14 @@ export abstract class AbstractMoveDrag extends Drag {
         const p = Point.add(selection.bounds, this.offset);
         const el = this.#currentElement;
         if (isNode(el)) {
-          el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default');
+          for (const e of getElementAndAncestors(el)) {
+            if (!isNode(e)) continue;
+
+            const pDef = e.getDefinition();
+            if (!pDef.onDrop) continue;
+            pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+            break;
+          }
         } else if (isEdge(el)) {
           const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
           el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
@@ -263,12 +271,21 @@ export abstract class AbstractMoveDrag extends Drag {
 
   private clearHighlight() {
     if (!this.#currentElement) return;
-    removeHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+
+    getElementAndAncestors(this.#currentElement).forEach(el =>
+      removeHighlight(el, Highlights.NODE__DROP_TARGET)
+    );
   }
 
   private setHighlight() {
     if (!this.#currentElement) return;
-    addHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+
+    for (const a of getElementAndAncestors(this.#currentElement)) {
+      if (isNode(a) && a.getDefinition().onDrop) {
+        addHighlight(a, Highlights.NODE__DROP_TARGET);
+        break;
+      }
+    }
   }
 
   private getLastState(max: number) {

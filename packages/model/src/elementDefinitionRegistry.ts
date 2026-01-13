@@ -100,13 +100,13 @@ export interface NodeDefinition {
     previousBounds: Box,
     uow: UnitOfWork
   ): void;
-  onDrop(
+  onDrop?: (
     coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): void;
+  ) => void;
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;

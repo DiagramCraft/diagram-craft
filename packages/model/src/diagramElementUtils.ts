@@ -12,10 +12,7 @@ import type { DiagramNode } from './diagramNode';
 import type { DiagramEdge } from './diagramEdge';
 import { ElementLookup } from './elementLookup';
 import { groupBy } from '@diagram-craft/utils/array';
-import {
-  isSerializedEndpointAnchor,
-  isSerializedEndpointPointInNode
-} from './serialization/utils';
+import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './serialization/utils';
 
 const assignNewIdsToSerializedElements = (
   elements: ReadonlyArray<SerializedNode | SerializedEdge>
@@ -151,4 +148,24 @@ export const assignNewBounds = (
 
 export const _test = {
   assignNewIdsToSerializedElements
+};
+
+/**
+ * Retrieves the specified element and its ancestors in a hierarchical structure.
+ *
+ * This function starts with the provided element and traverses upward through
+ * its parent elements, collecting all ancestors in the process.
+ *
+ * @param el  The starting element from which to gather ancestors.
+ * @returns   An array containing the starting element and all its ancestors,
+ *            ordered from the starting element to the root ancestor.
+ */
+export const getElementAndAncestors = (el: DiagramElement) => {
+  const ancestors: DiagramElement[] = [el];
+  let parent = el.parent;
+  while (parent) {
+    ancestors.push(parent);
+    parent = parent.parent;
+  }
+  return ancestors;
 };
