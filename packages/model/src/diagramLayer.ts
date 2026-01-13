@@ -1,4 +1,4 @@
-import { type DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { type DiagramElementCRDT } from './diagramElement';
 import type { UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
@@ -22,7 +22,6 @@ import {
 } from '@diagram-craft/model/diagramLayer.uow';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
-export type StackPosition = { element: DiagramElement; idx: number };
 
 export function isReferenceLayer(l: Layer): l is ReferenceLayer {
   return l.type === 'reference';

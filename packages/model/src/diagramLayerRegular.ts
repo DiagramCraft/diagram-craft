@@ -1,4 +1,4 @@
-import { Layer, LayerCRDT, StackPosition } from './diagramLayer';
+import { Layer, LayerCRDT } from './diagramLayer';
 import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
 import type { Diagram } from './diagram';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
@@ -11,6 +11,7 @@ import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { SpatialIndex } from './spatialIndex';
 import { assert } from '@diagram-craft/utils/assert';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
+import { newid } from '@diagram-craft/utils/id';
 
 registerElementFactory('node', (id, layer, _, c) => ElementFactory.emptyNode(id, layer, c));
 registerElementFactory('edge', (id, layer, _, c) => ElementFactory.emptyEdge(id, layer, c));
@@ -87,14 +88,15 @@ export class RegularLayer extends Layer<RegularLayer> {
    * @returns Snapshot of original positions for all affected parent groups (used for undo)
    *
    * @example
-   * // Move elements forward by 2 positions
-   * layer.stackModify([element1, element2], 2, uow);
+   * // Move elements forward by 1 position
+   * layer.stackModify([element1, element2], 1, uow);
    *
    * // Move elements to front (using large positive delta)
    * layer.stackModify([element], Number.MAX_SAFE_INTEGER / 2, uow);
    */
-  // TODO: Add some tests for the stack operations
   stackModify(elements: ReadonlyArray<DiagramElement>, positionDelta: number, uow: UnitOfWork) {
+    type StackPosition = { element: DiagramElement; idx: number };
+
     const snapshot = new Map<DiagramElement | undefined, StackPosition[]>();
 
     uow.executeUpdate(this, () => {
@@ -115,47 +117,32 @@ export class RegularLayer extends Layer<RegularLayer> {
         const newStackPositions = existing.map((e, i) => ({ element: e, idx: i }));
         for (const p of newStackPositions) {
           if (!elements.includes(p.element)) continue;
-          p.idx += positionDelta;
+          p.idx += positionDelta < 0 ? positionDelta - 1 : positionDelta + 1;
         }
         newPositions.set(parent, newStackPositions);
       }
 
       // Apply the new positions
-      this.stackSet(newPositions, uow);
+      for (const [parent, positions] of newPositions) {
+        // Sort by index to determine final element order
+        positions.sort((a, b) => a.idx - b.idx);
+        if (parent) {
+          // For nested elements, update the parent's children array
+          parent.setChildren(
+            positions.map(e => e.element),
+            uow
+          );
+        } else {
+          // For top-level elements, update their index in the layer's CRDT map
+          this.#elements.setOrder(positions.map(p => p.element.id));
+        }
+      }
     });
 
-    return snapshot;
-  }
+    uow.on('after', 'undo', newid(), () => this.diagram.emit('diagramChange'));
+    uow.on('after', 'redo', newid(), () => this.diagram.emit('diagramChange'));
 
-  /**
-   * Applies new stacking positions to elements within their parent containers.
-   * This is an internal method called by stackModify to execute the actual reordering.
-   *
-   * The method handles two cases:
-   * 1. Elements with a parent node: Updates the parent's children array in sorted order
-   * 2. Top-level elements (no parent): Updates their index positions directly in the layer's element map
-   *
-   * @param newPositions - Map of parent containers to their elements' new positions
-   * @param uow - Unit of work for tracking the operation
-   */
-  private stackSet(
-    newPositions: Map<DiagramElement | undefined, StackPosition[]>,
-    uow: UnitOfWork
-  ) {
-    for (const [parent, positions] of newPositions) {
-      // Sort by index to determine final element order
-      positions.sort((a, b) => a.idx - b.idx);
-      if (parent) {
-        // For nested elements, update the parent's children array
-        parent.setChildren(
-          positions.map(e => e.element),
-          uow
-        );
-      } else {
-        // For top-level elements, update their index in the layer's CRDT map
-        this.#elements.setOrder(positions.map(p => p.element.id));
-      }
-    }
+    return snapshot;
   }
 
   insertElement(element: DiagramElement, index: number, uow: UnitOfWork) {

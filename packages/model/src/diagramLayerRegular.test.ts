@@ -238,7 +238,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       });
 
       UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
-        layer1.stackModify([n1], 2, uow);
+        layer1.stackModify([n1], 1, uow);
       });
 
       expect(layer1.elements.map(e => e.id)).toEqual(['n2', 'n1', 'n3']);
@@ -265,7 +265,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3']);
 
       UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
-        layer1.stackModify([n3], -2, uow);
+        layer1.stackModify([n3], -1, uow);
       });
 
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n3', 'n2']);
@@ -294,7 +294,7 @@ describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3', 'n4']);
 
       UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
-        layer1.stackModify([n1, n2], 2, uow);
+        layer1.stackModify([n1, n2], 1, uow);
       });
 
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n3', 'n2', 'n4']);
