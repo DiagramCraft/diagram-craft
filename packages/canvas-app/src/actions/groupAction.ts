@@ -77,9 +77,11 @@ export class GroupAction extends AbstractSelectionAction {
     const activeLayer = diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
+    const elements = diagram.selection.elements;
+
     if (this.type === 'ungroup') {
       UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Ungroup', uow => {
-        const group = diagram.selection.elements[0] as DiagramNode;
+        const group = elements[0] as DiagramNode;
         assertRegularLayer(group.layer);
 
         const children = group.children;
@@ -96,6 +98,15 @@ export class GroupAction extends AbstractSelectionAction {
         );
       });
     } else {
+      // Check 1: All elements must have the same parent
+      const firstParent = elements[0]!.parent;
+      const allHaveSameParent = elements.every(e => e.parent === firstParent);
+      if (!allHaveSameParent) return;
+
+      // Check 2: No element can be a label node
+      const hasLabelNode = diagram.selection.nodes.some(n => n.isLabelNode());
+      if (hasLabelNode) return;
+
       UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
         const elements = diagram.selection.elements.toSorted((a, b) => {
           return diagram.layers.isAbove(a, b) ? 1 : -1;

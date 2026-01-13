@@ -255,4 +255,83 @@ describe('GroupAction', () => {
       expect(layer.elements).toContain(groupNode);
     });
   });
+
+  describe('validation checks', () => {
+    test('should not group nodes with different parents', () => {
+      const parent1 = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const parent2 = layer.addNode({ bounds: { x: 600, y: 0, w: 500, h: 500, r: 0 } });
+
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 620, y: 10, w: 100, h: 100, r: 0 } });
+
+      // Set different parents
+      UnitOfWork.execute(diagram, uow => {
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      const initialNodeCount = layer.elements.filter(isNode).length;
+
+      diagram.selection.setElements([child1, child2]);
+
+      // Try to group the children with different parents
+      new GroupAction('group', mockContext(diagram)).execute();
+
+      // No group should be created - node count should be unchanged
+      expect(layer.elements.filter(isNode).length).toBe(initialNodeCount);
+
+      // Selection should remain unchanged
+      expect(diagram.selection.elements).toEqual([child1, child2]);
+    });
+
+    test('should not group when one element has a parent and another does not', () => {
+      const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const child = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const standalone = layer.addNode({ bounds: { x: 200, y: 200, w: 100, h: 100, r: 0 } });
+
+      // Set parent for only one child
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child, uow);
+      });
+
+      const initialNodeCount = layer.elements.filter(isNode).length;
+
+      diagram.selection.setElements([child, standalone]);
+
+      // Try to group
+      new GroupAction('group', mockContext(diagram)).execute();
+
+      // No group should be created
+      expect(layer.elements.filter(isNode).length).toBe(initialNodeCount);
+
+      // Selection should remain unchanged
+      expect(diagram.selection.elements).toEqual([child, standalone]);
+    });
+
+    test('should not group label nodes', () => {
+      const edge = layer.addEdge();
+      const labelNode = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 50, r: 0 } });
+      const regularNode = layer.addNode({ bounds: { x: 200, y: 200, w: 100, h: 100, r: 0 } });
+
+      // Make labelNode a label node of the edge
+      UnitOfWork.execute(diagram, uow => {
+        edge.setLabelNodes([labelNode.asLabelNode()], uow);
+      });
+
+      expect(labelNode.isLabelNode()).toBe(true);
+
+      const initialNodeCount = layer.elements.filter(isNode).length;
+
+      diagram.selection.setElements([labelNode, regularNode]);
+
+      // Try to group
+      new GroupAction('group', mockContext(diagram)).execute();
+
+      // No group should be created
+      expect(layer.elements.filter(isNode).length).toBe(initialNodeCount);
+
+      // Selection should remain unchanged
+      expect(diagram.selection.elements).toEqual([labelNode, regularNode]);
+    });
+  });
 });
