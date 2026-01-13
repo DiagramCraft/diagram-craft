@@ -25,7 +25,7 @@ const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
 describe('loadSample', () => {
-  bench(
+  bench.skip(
     'loadShapes',
     async () => {
       // biome-ignore lint/suspicious/noExplicitAny: false positive
