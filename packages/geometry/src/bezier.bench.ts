@@ -13,7 +13,7 @@ const randomPoint = (d: number) => {
 
 const dimension = 100;
 
-const opts = { time: 1000 };
+const opts = { time: 200 };
 
 describe('bezier', () => {
   bench(
