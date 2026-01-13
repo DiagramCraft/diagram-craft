@@ -16,8 +16,6 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
-const opts = { time: 100, iterations: 5 };
-
 const nodeRegistry = defaultNodeRegistry();
 const edgeRegistry = defaultEdgeRegistry();
 
@@ -25,7 +23,7 @@ const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
 describe('loadSample', () => {
-  bench.skip(
+  bench(
     'loadShapes',
     async () => {
       // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -36,7 +34,10 @@ describe('loadSample', () => {
       await deserializeDiagramDocument(shapes as any, document, diagramFactory);
     },
     {
-      ...opts,
+      time: 100,
+      iterations: 5,
+      warmupIterations: 2,
+      warmupTime: 100,
       setup: () => {
         CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
         CollaborationConfig.CRDTMap = NoOpCRDTMap;
@@ -58,7 +59,10 @@ describe('loadSample', () => {
       await deserializeDiagramDocument(arrows as any, document, diagramFactory);
     },
     {
-      ...opts,
+      time: 100,
+      iterations: 5,
+      warmupIterations: 2,
+      warmupTime: 100,
       setup: () => {
         CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
         CollaborationConfig.CRDTMap = NoOpCRDTMap;
