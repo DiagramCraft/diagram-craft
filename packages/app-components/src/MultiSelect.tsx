@@ -1,9 +1,10 @@
-import React, { ChangeEvent, KeyboardEvent, useRef, useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
+import { Combobox as BaseUICombobox } from '@base-ui-components/react/combobox';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './MultiSelect.module.css';
-import { Button } from './Button';
 import { TbX } from 'react-icons/tb';
+import { usePortal } from './PortalContext';
 
 export type MultiSelectItem = {
   value: string;
@@ -11,14 +12,11 @@ export type MultiSelectItem = {
 };
 
 export const MultiSelect = (props: Props) => {
+  const portal = usePortal();
   const [inputValue, setInputValue] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Filter available items based on input and exclude already selected items
-  const filteredSuggestions = props.availableItems
+  const filteredItems = props.availableItems
     .filter(
       item =>
         item.label.toLowerCase().includes(inputValue.toLowerCase()) &&
@@ -30,102 +28,48 @@ export const MultiSelect = (props: Props) => {
     if (value.trim() && !props.selectedValues.includes(value.trim())) {
       props.onSelectionChange([...props.selectedValues, value.trim()]);
       setInputValue('');
-      setShowSuggestions(false);
-      setSelectedSuggestion(-1);
     }
   };
 
-  const removeItem = (valueToRemove: string) => {
-    props.onSelectionChange(props.selectedValues.filter(value => value !== valueToRemove));
-  };
-
-  const handleInputChange = (ev: ChangeEvent<HTMLInputElement>) => {
+  const handleInputValueChange = (value: string, eventDetails: { event?: Event }) => {
     if (props.isIndeterminate) return;
-
-    const value = ev.target.value;
     setInputValue(value);
-
-    // Check if there are suggestions for the new value
-    const newFilteredSuggestions = props.availableItems
-      .filter(
-        item =>
-          item.label.toLowerCase().includes(value.toLowerCase()) &&
-          !props.selectedValues.includes(item.value)
-      )
-      .slice(0, props.maxSuggestions ?? 10);
-
-    setShowSuggestions(
-      value.length > 0 && (newFilteredSuggestions.length > 0 || !!props.allowCustomValues)
-    );
-    setSelectedSuggestion(-1);
-    props.onInputChange?.(value, ev);
+    if (eventDetails?.event && props.onInputChange) {
+      props.onInputChange(value, eventDetails.event as unknown as ChangeEvent<HTMLInputElement>);
+    }
   };
 
-  const handleKeyDown = (ev: KeyboardEvent<HTMLInputElement>) => {
+  const handleValueChange = (newValues: string[] | null) => {
+    if (props.isIndeterminate) return;
+    props.onSelectionChange(newValues ?? []);
+    setInputValue('');
+  };
+
+  // Handle Enter key for custom values
+  const handleInputKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
     if (props.isIndeterminate) return;
 
     if (ev.key === 'Enter') {
-      ev.preventDefault();
-      if (selectedSuggestion >= 0 && selectedSuggestion < filteredSuggestions.length) {
-        addItem(filteredSuggestions[selectedSuggestion]!.value);
-      } else if (
-        selectedSuggestion === filteredSuggestions.length &&
-        !!props.allowCustomValues &&
-        inputValue.trim()
+      // Check if there's a highlighted item in the list
+      const hasHighlightedItem = ev.currentTarget
+        .closest('[data-combobox-root]')
+        ?.querySelector('[data-highlighted="true"]');
+
+      // Only add custom value if no item is highlighted and allowCustomValues is true
+      if (
+        !hasHighlightedItem &&
+        props.allowCustomValues &&
+        inputValue.trim() &&
+        !filteredItems.some(item => item.value === inputValue.trim())
       ) {
+        ev.preventDefault();
         addItem(inputValue.trim());
-      } else if (!!props.allowCustomValues && inputValue.trim() && selectedSuggestion === -1) {
-        addItem(inputValue.trim());
       }
-    } else if (ev.key === 'ArrowDown') {
-      ev.preventDefault();
-      if (showSuggestions) {
-        const maxIndex =
-          filteredSuggestions.length +
-          (!!props.allowCustomValues &&
-          inputValue.trim() &&
-          !filteredSuggestions.some(item => item.value === inputValue.trim())
-            ? 0
-            : -1);
-        setSelectedSuggestion(Math.min(selectedSuggestion + 1, maxIndex));
-      }
-    } else if (ev.key === 'ArrowUp') {
-      ev.preventDefault();
-      if (showSuggestions) {
-        setSelectedSuggestion(Math.max(selectedSuggestion - 1, -1));
-      }
-    } else if (ev.key === 'Escape') {
-      setShowSuggestions(false);
-      setSelectedSuggestion(-1);
     } else if (ev.key === 'Backspace' && inputValue === '' && props.selectedValues.length > 0) {
-      removeItem(props.selectedValues[props.selectedValues.length - 1]!);
+      // Remove last selected item when backspace is pressed on empty input
+      ev.preventDefault();
+      props.onSelectionChange(props.selectedValues.slice(0, -1));
     }
-  };
-
-  const handleSuggestionSelect = (value: string) => {
-    addItem(value);
-    inputRef.current?.focus();
-  };
-
-  const handleSuggestionClick = (value: string) => {
-    handleSuggestionSelect(value);
-  };
-
-  const handleInputFocus = () => {
-    if (props.isIndeterminate) return;
-
-    // Only show suggestions if there's input text and matching suggestions or custom values allowed
-    if (inputValue.length > 0 && (filteredSuggestions.length > 0 || !!props.allowCustomValues)) {
-      setShowSuggestions(true);
-    }
-  };
-
-  const handleInputBlur = () => {
-    // Delay hiding suggestions to allow clicking on them
-    setTimeout(() => {
-      setShowSuggestions(false);
-      setSelectedSuggestion(-1);
-    }, 200);
   };
 
   // Get label for selected value
@@ -133,71 +77,97 @@ export const MultiSelect = (props: Props) => {
     return props.availableItems.find(item => item.value === value)?.label ?? value;
   };
 
-  return (
-    <div
-      className={styles.cmpMultiSelect}
-      {...extractDataAttributes(props)}
-      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
-      style={props.style ?? {}}
-    >
-      <div className={styles.cmpMultiSelectContainer} ref={containerRef}>
-        <div className={styles.cmpMultiSelectTags}>
-          {!props.isIndeterminate &&
-            props.selectedValues.map((value, index) => (
-              <div key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
-                <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
-                <Button
-                  type="icon-only"
-                  className={styles.cmpMultiSelectTagRemove}
-                  onClick={() => removeItem(value)}
-                  tabIndex={-1}
-                >
-                  <TbX />
-                </Button>
-              </div>
-            ))}
+  // If indeterminate, render a simplified disabled version
+  if (props.isIndeterminate) {
+    return (
+      <div
+        className={styles.cmpMultiSelect}
+        {...extractDataAttributes(props)}
+        data-field-state="indeterminate"
+        style={props.style ?? {}}
+      >
+        <div className={styles.cmpMultiSelectContainer}>
+          <div className={styles.cmpMultiSelectTags}>
+            <input
+              {...PropsUtils.filterDomProperties(props)}
+              type="text"
+              value=""
+              placeholder="···"
+              disabled={true}
+              className={styles.cmpMultiSelectInput}
+              readOnly
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          <input
-            ref={inputRef}
-            {...PropsUtils.filterDomProperties(props)}
-            type="text"
-            value={props.isIndeterminate ? '' : inputValue}
-            placeholder={
-              props.isIndeterminate
-                ? '···'
-                : props.selectedValues.length === 0
-                  ? (props.placeholder ?? 'Search and select...')
-                  : ''
-            }
-            disabled={props.disabled}
-            className={styles.cmpMultiSelectInput}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-          />
+  return (
+    <BaseUICombobox.Root
+      value={props.selectedValues}
+      onValueChange={handleValueChange}
+      inputValue={inputValue}
+      onInputValueChange={handleInputValueChange}
+      multiple={true}
+      disabled={props.disabled}
+    >
+      <div
+        className={styles.cmpMultiSelect}
+        {...extractDataAttributes(props)}
+        data-field-state={props.state}
+        data-combobox-root
+        style={props.style ?? {}}
+      >
+        <div className={styles.cmpMultiSelectContainer}>
+          <div className={styles.cmpMultiSelectTags}>
+            <BaseUICombobox.Chips className={styles.cmpMultiSelectChipsContainer}>
+              {props.selectedValues.map((value, index) => (
+                <BaseUICombobox.Chip key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
+                  <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
+                  <BaseUICombobox.ChipRemove
+                    className={styles.cmpMultiSelectTagRemove}
+                    tabIndex={-1}
+                  >
+                    <TbX />
+                  </BaseUICombobox.ChipRemove>
+                </BaseUICombobox.Chip>
+              ))}
+            </BaseUICombobox.Chips>
+
+            <BaseUICombobox.Input
+              {...PropsUtils.filterDomProperties(props)}
+              className={styles.cmpMultiSelectInput}
+              placeholder={
+                props.selectedValues.length === 0 ? (props.placeholder ?? 'Search and select...') : ''
+              }
+              onKeyDown={handleInputKeyDown}
+            />
+          </div>
         </div>
 
-        {/* Suggestions dropdown */}
-        {!props.isIndeterminate &&
-          showSuggestions &&
-          (filteredSuggestions.length > 0 || (!!props.allowCustomValues && inputValue.trim())) && (
-            <div className={styles.cmpMultiSelectSuggestions}>
-              {filteredSuggestions.map((item, index) => (
-                <div
-                  key={item.value}
-                  className={styles.cmpMultiSelectSuggestion}
-                  data-selected={index === selectedSuggestion}
-                  onClick={() => handleSuggestionClick(item.value)}
-                  onMouseEnter={() => setSelectedSuggestion(index)}
-                >
-                  {item.label}
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Suggestions dropdown - only show when there are items */}
+        {filteredItems.length > 0 && (
+          <BaseUICombobox.Portal container={portal}>
+            <BaseUICombobox.Positioner side="bottom" align="start" sideOffset={2}>
+              <BaseUICombobox.Popup className={styles.cmpMultiSelectSuggestions}>
+                <BaseUICombobox.List>
+                  {filteredItems.map(item => (
+                    <BaseUICombobox.Item
+                      key={item.value}
+                      value={item.value}
+                      className={styles.cmpMultiSelectSuggestion}
+                    >
+                      {item.label}
+                    </BaseUICombobox.Item>
+                  ))}
+                </BaseUICombobox.List>
+              </BaseUICombobox.Popup>
+            </BaseUICombobox.Positioner>
+          </BaseUICombobox.Portal>
+        )}
       </div>
-    </div>
+    </BaseUICombobox.Root>
   );
 };
 
