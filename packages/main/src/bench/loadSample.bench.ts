@@ -47,28 +47,6 @@ describe('loadSample', () => {
       }
     }
   );
-  /*
-  bench(
-    'loadShapes YJS',
-    async () => {
-      const root = await documentFactory.loadCRDT(undefined, () => {});
-      const document = await documentFactory.createDocument(root, undefined, () => {});
-
-      await deserializeDiagramDocument(shapes as any, document, diagramFactory);
-    },
-    {
-      ...opts,
-      setup: () => {
-        CollaborationConfig.CRDTRoot = YJSRoot;
-        CollaborationConfig.CRDTMap = YJSMap;
-      },
-      teardown: () => {
-        CollaborationConfig.CRDTRoot = origRoot;
-        CollaborationConfig.CRDTMap = origMap;
-      }
-    }
-  );
-*/
   bench.skip(
     'loadArrows',
     async () => {
@@ -91,24 +69,4 @@ describe('loadSample', () => {
       }
     }
   );
-  /*bench(
-    'loadArrows [YJS]',
-    async () => {
-      const root = await documentFactory.loadCRDT(undefined, () => {});
-      const document = await documentFactory.createDocument(root, undefined, () => {});
-
-      await deserializeDiagramDocument(arrows as any, document, diagramFactory);
-    },
-    {
-      ...opts,
-      setup: () => {
-        CollaborationConfig.CRDTRoot = YJSRoot;
-        CollaborationConfig.CRDTMap = YJSMap;
-      },
-      teardown: () => {
-        CollaborationConfig.CRDTRoot = origRoot;
-        CollaborationConfig.CRDTMap = origMap;
-      }
-    }
-  );*/
 });
