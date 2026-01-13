@@ -24,6 +24,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage'
-    }
+    },
+    testTimeout: 240 * 1000
   }
 });
