@@ -62,7 +62,7 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
   }
 }
 
-class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
+export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
   name = $tStr('action.DIAGRAM_REMOVE.name', 'Remove Diagram');
 
   execute(props: { diagramId?: string }): void {
@@ -81,6 +81,8 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
     const undoManager = diagramToFallbackTo.undoManager;
 
     const parent = document.getDiagramPath(diagram).at(-2);
+    const peerDiagrams = parent ? parent.diagrams : document.diagrams;
+    const originalIndex = peerDiagrams.indexOf(diagram);
 
     this.context.ui.showDialog(
       new MessageDialogCommand(
@@ -91,14 +93,13 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
           cancelLabel: 'No'
         },
         () => {
-          // TODO: Retain index
           undoManager.addAndExecute(
             makeUndoableAction('Delete diagram', {
               redo: () => {
                 this.context.model.activeDiagram = diagramToFallbackTo;
                 document.removeDiagram(diagram);
               },
-              undo: () => document.addDiagram(diagram, parent)
+              undo: () => document.insertDiagram(diagram, originalIndex, parent)
             })
           );
         }

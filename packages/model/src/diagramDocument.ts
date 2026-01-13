@@ -178,25 +178,23 @@ export class DiagramDocument
     return dest;
   }
 
-  addDiagram(diagram: Diagram, parent?: Diagram) {
+  insertDiagram(diagram: Diagram, position: number, parent?: Diagram) {
     precondition.is.false(!!this.byId(diagram.id));
 
     diagram._parent = parent?.id;
     diagram._document = this;
 
-    // TODO: This should be removed
-    //const existing = this.#diagrams.get(diagram.id);
-    //if (existing) {
-    //existing.merge(diagram);
-    //} else {
-    this.#diagrams.add(diagram.id, diagram);
-    //}
+    this.#diagrams.insert(diagram.id, diagram, position);
 
     this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), {
       id: diagram.id
     });
 
     this.emit('diagramAdded', { diagram: diagram });
+  }
+
+  addDiagram(diagram: Diagram, parent?: Diagram) {
+    this.insertDiagram(diagram, this.diagrams.length, parent);
   }
 
   removeDiagram(diagram: Diagram) {
