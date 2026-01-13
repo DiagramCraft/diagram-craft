@@ -1,7 +1,7 @@
 import { DiagramElement } from './diagramElement';
 import type { Diagram } from './diagram';
 import { UnitOfWork, UOWTrackable } from './unitOfWork';
-import type { Layer, LayerCRDT } from './diagramLayer';
+import { Layer, LayerCRDT } from './diagramLayer';
 import { RuleLayer } from './diagramLayerRule';
 import { ReferenceLayer } from './diagramLayerReference';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -24,7 +24,8 @@ import {
   LayerManagerUOWAdapter,
   LayersSnapshot
 } from '@diagram-craft/model/diagramLayerManager.uow';
-import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { isRegularLayer, isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { Box } from '@diagram-craft/geometry/box';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -242,6 +243,19 @@ export class LayerManager
       this.#layers.insert(layer.id, layer, idx);
       this.#visibleLayers.set(layer.id, true);
       this.#activeLayer = layer;
+
+      if (isResolvableToRegularLayer(layer)) {
+        this.diagram.setBounds(
+          Box.grow(
+            Box.boundingBox([
+              { ...this.diagram.bounds, r: 0 },
+              ...layer.resolveForced().elements.map(e => e.bounds)
+            ]),
+            20
+          ),
+          uow
+        );
+      }
     });
   }
 
