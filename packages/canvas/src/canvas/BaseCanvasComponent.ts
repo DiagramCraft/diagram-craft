@@ -5,7 +5,7 @@ import {
   createEffect,
   isInComponent
 } from '@diagram-craft/canvas/component/component';
-import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Point } from '@diagram-craft/geometry/point';
@@ -173,7 +173,7 @@ export abstract class BaseCanvasComponent<
           }
         );
       } else {
-        throw new VerifyNotReached();
+        VERIFY_NOT_REACHED();
       }
     });
   }

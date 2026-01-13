@@ -20,6 +20,7 @@ export class ReferenceLayer<
   T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer
 > extends Layer<T> {
   #reference: LayerReference;
+  readonly #cache: T | undefined;
 
   constructor(
     id: string,
@@ -30,6 +31,9 @@ export class ReferenceLayer<
   ) {
     super(id, name, diagram, 'reference', crdt);
     this.#reference = reference;
+    this.#cache = this.diagram.document
+      .byId(this.reference.diagramId)
+      ?.layers.byId(this.reference.layerId) as T | undefined;
   }
 
   isLocked(): boolean {
@@ -45,12 +49,8 @@ export class ReferenceLayer<
     return `${l.diagram.name} / ${l.name}`;
   }
 
-  // TODO: Do we need to cache this
   resolve(): T | undefined {
-    const layer = this.diagram.document
-      .byId(this.reference.diagramId)
-      ?.layers.byId(this.reference.layerId);
-    return layer as unknown as T;
+    return this.#cache;
   }
 
   restore(snapshot: RegularLayerSnapshot, uow: UnitOfWork) {
