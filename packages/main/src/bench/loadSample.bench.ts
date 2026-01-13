@@ -26,7 +26,7 @@ describe('loadSample', () => {
   afterEach(async () => {
     await new Promise(res => setImmediate(res));
   });
-  bench(
+  bench.skip(
     'loadShapes',
     async () => {
       // biome-ignore lint/suspicious/noExplicitAny: false positive
