@@ -1,4 +1,4 @@
-import { bench, describe, afterEach } from 'vitest';
+import { bench, describe } from 'vitest';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -16,6 +16,8 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
+const opts = { time: 2000 };
+
 const nodeRegistry = defaultNodeRegistry();
 const edgeRegistry = defaultEdgeRegistry();
 
@@ -23,9 +25,6 @@ const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
 describe('loadSample', () => {
-  afterEach(async () => {
-    await new Promise(res => setImmediate(res));
-  });
   bench.skip(
     'loadShapes',
     async () => {
@@ -37,10 +36,7 @@ describe('loadSample', () => {
       await deserializeDiagramDocument(shapes as any, document, diagramFactory);
     },
     {
-      time: 100,
-      iterations: 5,
-      warmupIterations: 2,
-      warmupTime: 100,
+      ...opts,
       setup: () => {
         CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
         CollaborationConfig.CRDTMap = NoOpCRDTMap;
@@ -62,10 +58,7 @@ describe('loadSample', () => {
       await deserializeDiagramDocument(arrows as any, document, diagramFactory);
     },
     {
-      time: 100,
-      iterations: 5,
-      warmupIterations: 2,
-      warmupTime: 100,
+      ...opts,
       setup: () => {
         CollaborationConfig.CRDTRoot = NoOpCRDTRoot;
         CollaborationConfig.CRDTMap = NoOpCRDTMap;
