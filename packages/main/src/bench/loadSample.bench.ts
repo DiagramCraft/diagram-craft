@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { bench, describe, afterEach } from 'vitest';
 import {
   defaultEdgeRegistry,
   defaultNodeRegistry
@@ -23,6 +23,9 @@ const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
 
 describe('loadSample', () => {
+  afterEach(async () => {
+    await new Promise(res => setImmediate(res));
+  });
   bench(
     'loadShapes',
     async () => {
