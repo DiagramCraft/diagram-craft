@@ -205,10 +205,7 @@ export abstract class AbstractMoveDrag extends Drag {
             const pDef = e.getDefinition();
             if (!pDef.onDrop) continue;
 
-            this.uow.select(
-              this.diagram,
-              selection.elements.map(e => e.id)
-            );
+            this.uow.select(this.diagram, selection.elements);
 
             pDef.onDrop(p, e, selection.elements, this.uow, 'default');
             break;

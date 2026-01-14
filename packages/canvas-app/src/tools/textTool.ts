@@ -78,7 +78,7 @@ export class TextTool extends AbstractTool {
 
     UnitOfWork.executeWithUndo(this.diagram, 'Add text', uow => {
       layer.addElement(this.node!, uow);
-      uow.select(this.diagram, [this.node!.id]);
+      uow.select(this.diagram, [this.node!]);
     });
 
     this.resetTool();

@@ -85,7 +85,7 @@ export class EdgeTool extends AbstractTool {
 
     UnitOfWork.executeWithUndo(this.diagram, 'Add edge', uow => {
       layer.addElement(this.edge!, uow);
-      uow.select(this.diagram, [this.edge!.id]);
+      uow.select(this.diagram, [this.edge!]);
     });
 
     this.resetTool();

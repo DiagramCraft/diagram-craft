@@ -124,10 +124,7 @@ export class DuplicateAction extends AbstractSelectionAction {
         newElements.push(newEdge);
       }
 
-      uow.select(
-        diagram,
-        newElements.map(e => e.id)
-      );
+      uow.select(diagram, newElements);
     });
 
     this.emit('actionTriggered', {});

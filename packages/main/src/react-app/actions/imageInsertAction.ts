@@ -76,7 +76,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
 
         UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert image', uow => {
           layer.addElement(e, uow);
-          uow.select(this.context.model.activeDiagram, [e.id]);
+          uow.select(this.context.model.activeDiagram, [e]);
         });
       })
     );

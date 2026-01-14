@@ -158,10 +158,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
 
       newNodes.forEach(n => activeLayer.addElement(n, uow));
 
-      uow.select(
-        diagram,
-        newNodes.map(e => e.id)
-      );
+      uow.select(diagram, newNodes);
     });
 
     diagram.selection.setElements(newNodes);

@@ -92,10 +92,7 @@ export class GroupAction extends AbstractSelectionAction {
         });
         group.layer.removeElement(group, uow);
 
-        uow.select(
-          diagram,
-          children.map(e => e.id)
-        );
+        uow.select(diagram, children);
       });
     } else {
       // Check 1: All elements must have the same parent
@@ -129,7 +126,7 @@ export class GroupAction extends AbstractSelectionAction {
 
         group.setChildren([...elements], uow);
 
-        uow.select(diagram, [group.id]);
+        uow.select(diagram, [group]);
       });
     }
   }

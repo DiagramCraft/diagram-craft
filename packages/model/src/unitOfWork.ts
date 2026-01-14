@@ -5,7 +5,7 @@ import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/und
 import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
-import { ArrayOrSingle } from '@diagram-craft/utils/types';
+import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
 type ChangeType = 'interactive' | 'non-interactive';
 
@@ -378,11 +378,12 @@ export class UnitOfWork {
     }
   }
 
-  select(diagram: Diagram, after: string[]) {
-    const before = diagram.selection.elements.map(e => e.id);
-    diagram.selection.setElementIds(after);
-    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(after));
-    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(before));
+  select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {
+    const beforeIds = diagram.selection.elements.map(e => e.id);
+    const afterIds = after.map(e => (typeof e === 'string' ? e : e.id));
+    diagram.selection.setElementIds(afterIds);
+    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(afterIds));
+    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(beforeIds));
   }
 
   on(
