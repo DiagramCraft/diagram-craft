@@ -10,7 +10,6 @@ import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { isDebug } from '@diagram-craft/utils/debug';
 import { SerializedEdge, SerializedNode } from '@diagram-craft/model/serialization/serializedTypes';
 
 declare global {
@@ -75,7 +74,6 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
   }
 
   update(diagram: Diagram, elementId: string, snapshot: ElementSnapshot, uow: UnitOfWork): void {
-    if (isDebug()) console.log(`Updating element ${elementId}`);
     const element = mustExist(diagram.lookup(elementId));
     element.restore(snapshot, uow);
   }
