@@ -201,7 +201,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
       meta.style = diagram.document.styles.activeEdgeStylesheet.id;
     }, uow);
 
-    uow.select(diagram, [newNode.id, newEdge.id]);
+    uow.select(diagram, [newNode, newEdge]);
   });
 };
 

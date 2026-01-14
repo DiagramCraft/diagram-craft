@@ -5,7 +5,7 @@ import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/und
 import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
-import { ArrayOrSingle } from '@diagram-craft/utils/types';
+import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
 type ChangeType = 'interactive' | 'non-interactive';
 
@@ -89,21 +89,6 @@ export type UOWOperation =
 
 type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
 
-const emitEvent = (map: UOWEventMap, key: string, uow: UnitOfWork) => {
-  const eventCallbacks = map.get(key);
-  if (eventCallbacks === undefined) return;
-
-  let emitCount: number;
-  do {
-    emitCount = 0;
-    for (const [key, callback] of eventCallbacks.entries()) {
-      callback(uow);
-      eventCallbacks.delete(key);
-      emitCount++;
-    }
-  } while (emitCount > 0);
-};
-
 /**
  * Begin tracking an operation on an element within the UnitOfWork.
  * Only for debugging
@@ -136,6 +121,34 @@ const endOperation = (uow: UnitOfWork, type: UOWOperation['type'], element: UOWT
   const adapter = UOWRegistry.getAdapter(element._trackableType);
   const key = `${type}-${element._trackableType}-${adapter.id(element)}`;
   s.delete(key);
+};
+
+const consolidateOperations = (allOperations: UOWOperation[]) => {
+  // Collect all update operations by ID
+  const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
+  allOperations
+    .filter(op => op.type === 'update')
+    .forEach(op => updatesByIdMap.add(op.target.id, op));
+
+  const dest: Array<UOWOperation> = [];
+  const processedIds = new Set<string>();
+  allOperations.forEach(op => {
+    if (op.type === 'update') {
+      if (processedIds.has(op.target.id)) return;
+      processedIds.add(op.target.id);
+
+      const updates = updatesByIdMap.get(op.target.id) ?? [op];
+
+      dest.push({
+        ...op,
+        beforeSnapshot: updates[0]!.beforeSnapshot,
+        afterSnapshot: updates.at(-1)!.afterSnapshot
+      });
+    } else {
+      dest.push(op);
+    }
+  });
+  return dest;
 };
 
 export class UnitOfWork {
@@ -326,15 +339,29 @@ export class UnitOfWork {
     const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
     const id = adapter.id(element);
 
-    let existingUpdates: Array<UOWOperation> = [];
-
+    // Determine out-of-order updates
+    const updatesToBeReordered: Array<UOWOperation> = [];
     if (this.#updates.has(id) && this.trackChanges) {
-      const isUpdate = (e: UOWOperation) => e.target.id === id && e.type === 'update';
+      let removingUpdates = true;
+      const newOperations: Array<UOWOperation> = [];
+      for (let i = this.#operations.length - 1; i >= 0; i--) {
+        const e = this.#operations[i]!;
 
-      // Need to make sure all updates happen *after* the add
-      existingUpdates = this.#operations.filter(isUpdate);
-      if (existingUpdates.length > 0) {
-        this.#operations = this.#operations.filter(e => !isUpdate(e));
+        if (removingUpdates && e.target.id === id) {
+          if (e.type === 'update') {
+            updatesToBeReordered.push(e);
+            continue;
+          }
+
+          removingUpdates = false;
+        }
+
+        newOperations.push(e);
+      }
+
+      if (updatesToBeReordered.length > 0) {
+        this.#operations = newOperations;
+        console.warn('Out-of-order updates detected');
       }
     }
 
@@ -346,16 +373,17 @@ export class UnitOfWork {
       afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
     });
 
-    if (existingUpdates.length > 0) {
-      this.#operations.push(...existingUpdates);
+    if (updatesToBeReordered.length > 0) {
+      this.#operations.push(...updatesToBeReordered);
     }
   }
 
-  select(diagram: Diagram, after: string[]) {
-    const before = diagram.selection.elements.map(e => e.id);
-    diagram.selection.setElementIds(after);
-    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(after));
-    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(before));
+  select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {
+    const beforeIds = diagram.selection.elements.map(e => e.id);
+    const afterIds = after.map(e => (typeof e === 'string' ? e : e.id));
+    diagram.selection.setElementIds(afterIds);
+    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(afterIds));
+    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(beforeIds));
   }
 
   on(
@@ -388,7 +416,7 @@ export class UnitOfWork {
     this.state = 'committed';
     this.changeType = 'non-interactive';
 
-    emitEvent(this.#callbacks, 'before-commit', this);
+    this.emitEvent('before-commit');
 
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UOWRegistry.getAdapter(k).onBeforeCommit?.(ops, this);
@@ -399,7 +427,7 @@ export class UnitOfWork {
       UOWRegistry.getAdapter(k).onAfterCommit?.(ops, this);
     }
 
-    emitEvent(this.#callbacks, 'after-commit', this);
+    this.emitEvent('after-commit');
 
     registry.unregister(this);
   }
@@ -423,6 +451,21 @@ export class UnitOfWork {
   abort() {
     registry.unregister(this);
     this.state = 'aborted';
+  }
+
+  private emitEvent(key: string) {
+    const eventCallbacks = this.#callbacks.get(key);
+    if (eventCallbacks === undefined) return;
+
+    let emitCount: number;
+    do {
+      emitCount = 0;
+      for (const [key, callback] of eventCallbacks.entries()) {
+        callback(this);
+        eventCallbacks.delete(key);
+        emitCount++;
+      }
+    } while (emitCount > 0);
   }
 }
 
@@ -450,7 +493,7 @@ class UOWUndoableAction implements UndoableAction {
     private ops: Array<UOWOperation>,
     private eventMap: UOWEventMap
   ) {
-    this.ops = this.consolidateOperations(this.ops);
+    this.ops = consolidateOperations(this.ops);
   }
 
   undo(uow: UnitOfWork) {
@@ -458,7 +501,7 @@ class UOWUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Undoing', this.description);
     }
-    emitEvent(this.eventMap, 'before-undo', uow);
+    this.emitEvent(this.eventMap, 'before-undo', uow);
 
     for (const op of this.ops.toReversed()) {
       const adapter = UOWRegistry.getAdapter(op.target.type);
@@ -490,7 +533,7 @@ class UOWUndoableAction implements UndoableAction {
       }
     }
 
-    emitEvent(this.eventMap, 'after-undo', uow);
+    this.emitEvent(this.eventMap, 'after-undo', uow);
   }
 
   redo(uow: UnitOfWork) {
@@ -498,7 +541,7 @@ class UOWUndoableAction implements UndoableAction {
       console.log('------------------------------------');
       console.log('Redoing', this.description);
     }
-    emitEvent(this.eventMap, 'before-redo', uow);
+    this.emitEvent(this.eventMap, 'before-redo', uow);
 
     for (const op of this.ops) {
       const adapter = UOWRegistry.getAdapter(op.target.type);
@@ -530,7 +573,7 @@ class UOWUndoableAction implements UndoableAction {
       }
     }
 
-    emitEvent(this.eventMap, 'after-redo', uow);
+    this.emitEvent(this.eventMap, 'after-redo', uow);
   }
 
   merge(next: UndoableAction): boolean {
@@ -544,7 +587,7 @@ class UOWUndoableAction implements UndoableAction {
       ) &&
       Date.now() - this.timestamp!.getTime() < 2000
     ) {
-      this.ops = this.consolidateOperations([...this.ops, ...next.ops]);
+      this.ops = consolidateOperations([...this.ops, ...next.ops]);
       this.timestamp = new Date();
       return true;
     }
@@ -552,31 +595,12 @@ class UOWUndoableAction implements UndoableAction {
     return false;
   }
 
-  private consolidateOperations(allOperations: UOWOperation[]) {
-    // Collect all update operations by ID
-    const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
-    allOperations
-      .filter(op => op.type === 'update')
-      .forEach(op => updatesByIdMap.add(op.target.id, op));
+  private emitEvent(map: UOWEventMap, key: string, uow: UnitOfWork) {
+    const eventCallbacks = map.get(key);
+    if (eventCallbacks === undefined) return;
 
-    const dest: Array<UOWOperation> = [];
-    const processedIds = new Set<string>();
-    allOperations.forEach(op => {
-      if (op.type === 'update') {
-        if (processedIds.has(op.target.id)) return;
-        processedIds.add(op.target.id);
-
-        const updates = updatesByIdMap.get(op.target.id) ?? [op];
-
-        dest.push({
-          ...op,
-          beforeSnapshot: updates[0]!.beforeSnapshot,
-          afterSnapshot: updates.at(-1)!.afterSnapshot
-        });
-      } else {
-        dest.push(op);
-      }
-    });
-    return dest;
+    for (const callback of eventCallbacks.values()) {
+      callback(uow);
+    }
   }
 }

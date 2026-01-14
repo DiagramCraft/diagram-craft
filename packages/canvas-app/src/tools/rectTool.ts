@@ -59,7 +59,7 @@ export class RectTool extends AbstractTool {
 
     UnitOfWork.executeWithUndo(this.diagram, 'Add rectangle', uow => {
       layer.addElement(this.node!, uow);
-      uow.select(this.diagram, [this.node!.id]);
+      uow.select(this.diagram, [this.node!]);
     });
 
     this.resetTool();

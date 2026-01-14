@@ -315,10 +315,7 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
       diagram.layers.add(layer, uow);
 
       diagram.moveElement(diagram.selection.elements, uow, layer);
-      uow.select(
-        diagram,
-        diagram.selection.elements.map(e => e.id)
-      );
+      uow.select(diagram, diagram.selection.elements);
     });
   }
 }

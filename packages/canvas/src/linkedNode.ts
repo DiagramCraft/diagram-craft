@@ -132,7 +132,7 @@ export const createLinkedNode = (
 
     nodeLayer.addElement(edge, uow);
 
-    uow.select(diagram, [newNode.id]);
+    uow.select(diagram, [newNode]);
 
     return newNode;
   });

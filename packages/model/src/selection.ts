@@ -73,6 +73,14 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
       this.recalculateBoundingBox();
     });
     this.#releasables.add(diagram.on('elementChange', recalculateBoundingBox));
+    this.#releasables.add(
+      diagram.on('elementRemove', ev => {
+        if (this.diagram.lookup(ev.element.id) !== undefined) return;
+        if (this.#elements.includes(ev.element)) {
+          this.setElements(this.#elements.filter(e => e !== ev.element));
+        }
+      })
+    );
   }
 
   release(): void {
