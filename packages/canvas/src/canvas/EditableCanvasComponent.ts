@@ -284,9 +284,6 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
               if (!el) return;
 
               const relatedTarget = e.relatedTarget as SVGElement;
-
-              if (relatedTarget.classList.contains('svg-highlight')) return;
-
               const overlay = getAncestorWithClass(relatedTarget, 'svg-hover-overlay');
               if (overlay) return;
 

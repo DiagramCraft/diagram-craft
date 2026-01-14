@@ -135,6 +135,9 @@
     }
   }
 
+  .svg-highlight {
+    pointer-events: none;
+  }
 
   .svg-highlight__line {
     stroke-width: calc(1 * var(--zoom));
