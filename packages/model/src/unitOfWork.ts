@@ -7,8 +7,6 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
-type ChangeType = 'interactive' | 'non-interactive';
-
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
@@ -155,7 +153,6 @@ export class UnitOfWork {
   uid = newid();
 
   state: 'pending' | 'committed' | 'aborted' = 'pending';
-  changeType: ChangeType = 'non-interactive';
   metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
   #operations: Array<UOWOperation> = [];
@@ -403,8 +400,6 @@ export class UnitOfWork {
   }
 
   notify() {
-    this.changeType = 'interactive';
-
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UOWRegistry.getAdapter(k).onNotify?.(ops, this);
     }
@@ -414,7 +409,6 @@ export class UnitOfWork {
 
   commit() {
     this.state = 'committed';
-    this.changeType = 'non-interactive';
 
     this.emitEvent('before-commit');
 
