@@ -503,7 +503,7 @@ class UOWUndoableAction implements UndoableAction {
         case 'remove': {
           if (isDebug()) {
             console.log(
-              `Adding child ${op.target.id}/${op.target.type} to parent ${op.parent.id} at idx ${op.idx}`
+              `Adding child ${op.target.type}/${op.target.id} to parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
             );
           }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
@@ -513,7 +513,7 @@ class UOWUndoableAction implements UndoableAction {
         case 'add': {
           if (isDebug()) {
             console.log(
-              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx ${op.idx}`
+              `Removing child ${op.target.type}/${op.target.id} from parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
             );
           }
           const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
@@ -521,7 +521,7 @@ class UOWUndoableAction implements UndoableAction {
           break;
         }
         case 'update':
-          if (isDebug()) console.log(`Updating ${op.target.id}/${op.target.type}`);
+          if (isDebug()) console.log(`Updating ${op.target.type}/${op.target.id}`);
           adapter.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
           break;
       }
@@ -543,7 +543,7 @@ class UOWUndoableAction implements UndoableAction {
         case 'add': {
           if (isDebug()) {
             console.log(
-              `Adding child ${op.target.id}/${op.target.type} to parent ${op.parent.id} at idx ${op.idx}`
+              `Adding child ${op.target.type}/${op.target.id} to parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
             );
           }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
@@ -553,7 +553,7 @@ class UOWUndoableAction implements UndoableAction {
         case 'remove': {
           if (isDebug()) {
             console.log(
-              `Removing child ${op.target.id}/${op.target.type} from parent ${op.parent.id} at idx$ {op.idx}`
+              `Removing child ${op.target.type}/${op.target.id} from parent ${op.parent.type}/${op.parent.id} at idx$ {op.idx}`
             );
           }
           const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
@@ -561,7 +561,7 @@ class UOWUndoableAction implements UndoableAction {
           break;
         }
         case 'update':
-          if (isDebug()) console.log(`Updating ${op.target.id}/${op.target.type}`);
+          if (isDebug()) console.log(`Updating ${op.target.type}/${op.target.id}`);
           adapter.update(this.diagram, op.target.id, op.afterSnapshot, uow);
           break;
       }

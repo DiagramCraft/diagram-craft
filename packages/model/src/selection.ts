@@ -199,17 +199,17 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
   }
 
   setElementIds(elements: string[]) {
-    this.setElements(elements.map(e => this.diagram.lookup(e)!));
+    this.setElements(elements.map(e => this.diagram.lookup(e)));
   }
 
-  setElements(elements: ReadonlyArray<DiagramElement>, rebaseline = true) {
-    if (elements.some(e => e.isLocked())) return;
+  setElements(elements: ReadonlyArray<DiagramElement | undefined>, rebaseline = true) {
+    if (elements.some(e => e?.isLocked())) return;
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];
-    this.#elements = elements;
+    this.#elements = elements.filter(e => e !== undefined);
 
-    elements.forEach(e => {
+    this.#elements.forEach(e => {
       if (oldElements.includes(e)) return;
       this.emit('add', { element: e });
     });
