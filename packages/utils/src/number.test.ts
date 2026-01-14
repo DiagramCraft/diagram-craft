@@ -1,5 +1,5 @@
-import {describe, expect, it} from 'vitest';
-import {parseNum} from './number';
+import { describe, expect, it } from 'vitest';
+import { numberToString, parseNum } from './number';
 
 describe('parseNum', () => {
   it('should return the parsed number when the string represents a valid number', () => {
@@ -32,5 +32,11 @@ describe('parseNum', () => {
 
   it('should return the parsed number when the string represents 0', () => {
     expect(parseNum('0')).toBe(0);
+  });
+});
+
+describe('numberToString', () => {
+  it('should return the string representation of the number', () => {
+    expect(numberToString(42)).toBe('42');
   });
 });
