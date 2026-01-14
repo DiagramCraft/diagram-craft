@@ -372,6 +372,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     this.delegate.transform(transforms, uow, isChild);
   }
 
+  _transformWaypoints(transforms: ReadonlyArray<Transform>): void {
+    this.delegate._transformWaypoints(transforms);
+  }
+
   snapshot() {
     return this.delegate.snapshot();
   }

@@ -5,6 +5,8 @@ import type { LayoutCapableShapeNodeDefinitionInterface } from '../shape/layoutC
 import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { deepClone } from '@diagram-craft/utils/object';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
 /**
  * Layout direction for arranging children in a container.
@@ -149,7 +151,7 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
 
   // Build children recursively (only for DiagramNode children)
   const children: LayoutNode[] = node.children
-    .filter((child): child is DiagramNode => child.type === 'node')
+    .filter((child): child is DiagramNode => isNode(child))
     .map(child =>
       buildLayoutTreeRecursive(child, { x: node.bounds.x, y: node.bounds.y, r: node.bounds.r })
     );
@@ -183,7 +185,7 @@ export const buildLayoutTree = (node: DiagramNode): LayoutNode => {
 };
 
 const applyLayoutTreeRecursive = (
-  node: DiagramNode,
+  node: DiagramElement,
   layout: LayoutNode,
   uow: UnitOfWork,
   parentBounds?: ParentBounds
@@ -199,6 +201,8 @@ const applyLayoutTreeRecursive = (
       })
     : layout.bounds;
 
+  const transform = TransformFactory.fromTo(node.bounds, WritableBox.asBox(absoluteBounds));
+
   // Update the node's bounds with absolute coordinates
   node.setBounds(WritableBox.asBox(absoluteBounds), uow);
 
@@ -207,7 +211,7 @@ const applyLayoutTreeRecursive = (
   const childLayoutMap = new Map(layout.children.map(child => [child.id, child]));
 
   for (const child of node.children) {
-    if (child.type === 'node') {
+    if (isNode(child)) {
       const childLayout = childLayoutMap.get(child.id);
       if (childLayout) {
         applyLayoutTreeRecursive(child as DiagramNode, childLayout, uow, {
@@ -216,6 +220,8 @@ const applyLayoutTreeRecursive = (
           r: absoluteBounds.r
         });
       }
+    } else if (isEdge(child)) {
+      child._transformWaypoints(transform);
     }
   }
 };
