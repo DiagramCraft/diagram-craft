@@ -273,10 +273,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
               const target = e.target as SVGElement;
               const overlay = getAncestorWithClass(target, 'svg-hover-overlay');
-
-              if (overlay) {
-                return;
-              }
+              if (overlay) return;
 
               this.tool!.onMouseOver(el.id, EventHelper.point(e), e.currentTarget!);
               props.onMouseOver?.(e, el);
@@ -286,11 +283,9 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
               const el = getAncestorDiagramElement(e.target as SVGElement);
               if (!el) return;
 
-              const target = e.relatedTarget as SVGElement;
-              const overlay = getAncestorWithClass(target, 'svg-hover-overlay');
-              if (overlay) {
-                return;
-              }
+              const relatedTarget = e.relatedTarget as SVGElement;
+              const overlay = getAncestorWithClass(relatedTarget, 'svg-hover-overlay');
+              if (overlay) return;
 
               this.tool!.onMouseOut(el.id, EventHelper.point(e), e.currentTarget!);
               props.onMouseOut?.(e, el);

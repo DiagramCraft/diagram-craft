@@ -80,7 +80,9 @@ export abstract class AbstractMoveDrag extends Drag {
 
     const hover = this.diagram.lookup(id);
 
-    this.clearHighlight();
+    if (hover !== this.#currentElement) {
+      this.clearHighlight();
+    }
 
     // Need to filter any edges that are connected to the current selection
     if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.edges.includes(hover))) {

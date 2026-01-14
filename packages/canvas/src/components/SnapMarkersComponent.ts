@@ -27,7 +27,7 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[]
       svg.path({ d: 'M 0 0 L 10 5 L 0 10 z', stroke: 'var(--accent-7)', fill: 'var(--accent-7)' })
     ),
     svg.line({
-      'class': 'svg-highlight__distance-line',
+      'class': 'svg-highlight svg-highlight__distance-line',
       'x1': p1.x,
       'y1': p1.y,
       'x2': p2.x,
@@ -36,7 +36,7 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[]
       'marker-start': `url(#${marker})`
     }),
     svg.rect({
-      class: 'svg-highlight__distance-label-bg',
+      class: 'svg-highlight svg-highlight__distance-label-bg',
       x: Line.midpoint(l).x - z.num(lbl.length * 5),
       y: Line.midpoint(l).y - z.num(10),
       rx: z.num(5),
@@ -48,7 +48,7 @@ const makeDistanceMarker = (p1: Point, p2: Point, lbl: string, z: Zoom): VNode[]
       {
         x: Line.midpoint(l).x,
         y: Line.midpoint(l).y,
-        class: 'svg-highlight__distance-label'
+        class: 'svg-highlight svg-highlight__distance-label'
       },
       text(lbl)
     )
@@ -71,14 +71,14 @@ export class SnapMarkersComponent extends Component<Props> {
         const l = Line.extend(g.line, 30, 30);
         return [
           svg.line({
-            class: `svg-highlight__extension svg-highlight__color--${g.matchingMagnet.type}`,
+            class: `svg-highlight svg-highlight__extension svg-highlight__color--${g.matchingMagnet.type}`,
             x1: l.from.x,
             y1: l.from.y,
             x2: l.to.x,
             y2: l.to.y
           }),
           svg.line({
-            class: `svg-highlight__line svg-highlight__color--${g.matchingMagnet.type}`,
+            class: `svg-highlight svg-highlight__line svg-highlight__color--${g.matchingMagnet.type}`,
             x1: g.line.from.x,
             y1: g.line.from.y,
             x2: g.line.to.x,
