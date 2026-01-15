@@ -209,7 +209,10 @@ export abstract class AbstractMoveDrag extends Drag {
 
             this.uow.select(this.diagram, selection.elements);
 
-            pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+            const elementsToMove = selection.elements.filter(el => el.parent !== e);
+            if (elementsToMove.length > 0) {
+              pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+            }
             break;
           }
         } else if (isEdge(el)) {

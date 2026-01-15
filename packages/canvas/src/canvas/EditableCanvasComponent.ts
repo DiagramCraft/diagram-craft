@@ -430,7 +430,7 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
   }
 
   private redrawElements = (e: DiagramElement[]) => {
-    const resolvedElements = unique(e.map(e => (isNode(e) ? getTopMostNode(e) : e)));
+    const resolvedElements = unique(e.map(e => getTopMostNode(e)));
     for (const element of resolvedElements) {
       if (isNode(element)) {
         this.nodeRefs.get(element.id)?.redraw();
