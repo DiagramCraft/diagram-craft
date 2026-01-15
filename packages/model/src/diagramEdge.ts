@@ -189,6 +189,8 @@ export interface DiagramEdge extends DiagramElement {
   flip(uow: UnitOfWork): void;
 
   _recalculateIntersections(uow: UnitOfWork, propagate: boolean): void;
+
+  _transformWaypoints(transforms: ReadonlyArray<Transform>): void;
 }
 
 export class SimpleDiagramEdge extends AbstractDiagramElement implements DiagramEdge, UOWTrackable {
@@ -954,32 +956,35 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): void {
     uow.executeUpdate(this, () => {
       this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
-      this.#waypoints.set(
-        this.waypoints.map(w => {
-          const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
-            Point.add(w.point, cp)
-          );
-          const transformedControlPoints = absoluteControlPoints.map(cp =>
-            Transform.point(cp, ...transforms)
-          );
-          const transformedPoint = Transform.point(w.point, ...transforms);
-          const relativeControlPoints = transformedControlPoints.map(cp =>
-            Point.subtract(cp, transformedPoint)
-          );
-
-          return {
-            point: transformedPoint,
-            controlPoints: w.controlPoints
-              ? {
-                  cp1: relativeControlPoints[0]!,
-                  cp2: relativeControlPoints[1]!
-                }
-              : undefined
-          };
-        })
-      );
+      this._transformWaypoints(transforms);
     });
+  }
+
+  _transformWaypoints(transforms: ReadonlyArray<Transform>) {
+    this.#waypoints.set(
+      this.waypoints.map(w => {
+        const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
+          Point.add(w.point, cp)
+        );
+        const transformedControlPoints = absoluteControlPoints.map(cp =>
+          Transform.point(cp, ...transforms)
+        );
+        const transformedPoint = Transform.point(w.point, ...transforms);
+        const relativeControlPoints = transformedControlPoints.map(cp =>
+          Point.subtract(cp, transformedPoint)
+        );
+
+        return {
+          point: transformedPoint,
+          controlPoints: w.controlPoints
+            ? {
+                cp1: relativeControlPoints[0]!,
+                cp2: relativeControlPoints[1]!
+              }
+            : undefined
+        };
+      })
+    );
   }
 
   get intersections() {

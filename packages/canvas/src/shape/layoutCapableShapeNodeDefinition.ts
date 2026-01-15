@@ -9,14 +9,15 @@ import {
   NodeShapeConstructor,
   ShapeNodeDefinition
 } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { Transform } from '@diagram-craft/geometry/transform';
+import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { getElementAndAncestors } from '@diagram-craft/model/diagramElementUtils';
 
 type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
 
@@ -133,6 +134,8 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Toggle collapse/expand state for collapsible nodes
    */
   toggle(node: DiagramNode, uow: UnitOfWork): void {
+    const edgeSnapshot = this.snapshotEdges(node);
+
     const customProps = this.getCollapsibleProps(node);
     const mode = customProps.mode ?? 'expanded';
 
@@ -150,28 +153,20 @@ export abstract class LayoutCapableShapeNodeDefinition
       uow
     );
 
-    if (mode === 'expanded') {
-      node.updateCustomProps(
-        '_collapsible',
-        props => {
-          props.mode = 'collapsed';
-          props.bounds = currentBounds;
-        },
-        uow
-      );
-    } else {
-      node.updateCustomProps(
-        '_collapsible',
-        props => {
-          props.mode = 'expanded';
-          props.bounds = currentBounds;
-        },
-        uow
-      );
-    }
+    const newMode = mode === 'expanded' ? 'collapsed' : 'expanded';
+
+    node.updateCustomProps(
+      '_collapsible',
+      props => {
+        props.mode = newMode;
+        props.bounds = currentBounds;
+      },
+      uow
+    );
 
     // Invalidate all edges connected to descendants so they recalculate positions
     invalidateDescendantEdges(node, uow);
+    this.adjustEdges(edgeSnapshot, uow);
   }
 
   /**
@@ -233,5 +228,58 @@ export abstract class LayoutCapableShapeNodeDefinition
     }
 
     return baseActions;
+  }
+
+  protected snapshotEdges(node: DiagramNode) {
+    const layoutRoot = getElementAndAncestors(node)
+      .toReversed()
+      .find(e => isNode(e) && e.renderProps.layout.container.enabled) as DiagramNode | undefined;
+
+    const edgeBounds = new Map<string, Box>();
+    const recurse = (el: DiagramElement) => {
+      for (const c of el.children) {
+        if (isEdge(c)) edgeBounds.set(c.id, c.bounds);
+        recurse(c);
+      }
+    };
+    recurse(node);
+    return { edgeBounds, layoutRoot } as const;
+  }
+
+  protected adjustEdges(
+    snapshot: {
+      edgeBounds: Map<string, Box> | undefined;
+      layoutRoot: DiagramNode | undefined;
+    },
+    uow: UnitOfWork
+  ) {
+    if (snapshot.edgeBounds === undefined || snapshot.layoutRoot === undefined) return;
+
+    uow.on('after', 'commit', `layoutEdges/${snapshot.layoutRoot.id}`, () => {
+      console.log('Adjusting edges');
+      this.applyEdgeAdjustments(snapshot.layoutRoot!, snapshot.edgeBounds!, uow);
+      // Need to explicitly notify, as these adjustments are done post-event dispatch
+      uow.notify();
+    });
+  }
+
+  private applyEdgeAdjustments(el: DiagramElement, edgeBounds: Map<string, Box>, uow: UnitOfWork) {
+    if (isEdge(el)) {
+      const previous = edgeBounds.get(el.id);
+      if (previous) {
+        try {
+          const transform = TransformFactory.fromTo(previous, el.bounds);
+          if (transform.length > 0) {
+            uow.executeUpdate(el, () => el._transformWaypoints(transform));
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+
+    for (const c of el.children) {
+      this.applyEdgeAdjustments(c, edgeBounds, uow);
+    }
   }
 }

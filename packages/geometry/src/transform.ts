@@ -43,7 +43,7 @@
 import { Vector } from './vector';
 import { Point } from './point';
 import { Box } from './box';
-import { round } from '@diagram-craft/utils/math';
+import { isSame, round } from '@diagram-craft/utils/math';
 import { assert } from '@diagram-craft/utils/assert';
 
 /**
@@ -213,10 +213,22 @@ export const TransformFactory = {
   fromTo: (before: Box, after: Box): Transform[] => {
     if (Box.isEqual(before, after)) return [];
 
-    assert.true(before.w > 0 && before.h > 0);
+    let scaleX: number;
+    let scaleY: number;
 
-    const scaleX = after.w / before.w;
-    const scaleY = after.h / before.h;
+    if (isSame(before.w, after.w)) {
+      scaleX = 1;
+    } else {
+      assert.true(before.w !== 0, `Cannot scale by zero width from ${before.w} to ${after.w}`);
+      scaleX = after.w / before.w;
+    }
+
+    if (isSame(before.h, after.h)) {
+      scaleY = 1;
+    } else {
+      assert.true(before.h !== 0, `Cannot scale by zero height from ${before.h} to ${after.h}`);
+      scaleY = after.h / before.h;
+    }
 
     const toOrigin = Translation.toOrigin(before, 'center');
     const translateBack = Translation.toOrigin(after, 'center').invert();
