@@ -61,7 +61,7 @@ declare global {
   }
 }
 
-export type UOWOperation =
+export type UOWOperation = { notified?: boolean } & (
   | {
       type: 'add';
       target: { object: UOWTrackable; id: string; type: string };
@@ -83,7 +83,8 @@ export type UOWOperation =
 
       beforeSnapshot: Snapshot;
       afterSnapshot: Snapshot;
-    };
+    }
+);
 
 type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
 
@@ -400,11 +401,13 @@ export class UnitOfWork {
   }
 
   notify() {
-    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+    for (const [k, ops] of groupBy(
+      this.#operations.filter(op => op.notified !== true),
+      op => op.target.type
+    )) {
       UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+      ops.forEach(op => (op.notified = true));
     }
-
-    return;
   }
 
   commit() {
