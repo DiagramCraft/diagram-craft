@@ -38,7 +38,7 @@ registerCustomNodeDefaults('swimlane', {
   title: false,
   titleBorder: true,
   titleSize: 30,
-  fill: false,
+  fill: false
 });
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -74,6 +74,8 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   toggle(node: DiagramNode, uow: UnitOfWork): void {
+    const edgeSnapshot = this.snapshotEdges(node);
+
     const customProps = this.getCollapsibleProps(node);
     const mode = customProps.mode ?? 'expanded';
     const swimlaneProps = node.renderProps.custom.swimlane;
@@ -127,6 +129,8 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
     // Invalidate all edges connected to descendants so they recalculate positions
     invalidateDescendantEdges(node, uow);
+
+    this.adjustEdges(edgeSnapshot, uow);
   }
 
   getContainerPadding(node: DiagramNode) {
@@ -324,14 +328,14 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
     builder.noBoundaryNeeded();
     builder.add(
       svg.path({
-        'class': 'svg-node--container-outline',
-        'd': svgPath,
-        'x': props.node.bounds.x,
-        'y': props.node.bounds.y,
-        'width': props.node.bounds.w,
-        'height': props.node.bounds.h,
-        'fill': 'transparent',
-        'on': {
+        class: 'svg-node--container-outline',
+        d: svgPath,
+        x: props.node.bounds.x,
+        y: props.node.bounds.y,
+        width: props.node.bounds.w,
+        height: props.node.bounds.h,
+        fill: 'transparent',
+        on: {
           mousedown: props.onMouseDown,
           dblclick: builder.makeOnDblclickHandle('1')
         }

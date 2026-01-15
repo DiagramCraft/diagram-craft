@@ -5,8 +5,7 @@ import type { LayoutCapableShapeNodeDefinitionInterface } from '../shape/layoutC
 import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { deepClone } from '@diagram-craft/utils/object';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 /**
  * Layout direction for arranging children in a container.
@@ -201,8 +200,6 @@ const applyLayoutTreeRecursive = (
       })
     : layout.bounds;
 
-  const transform = TransformFactory.fromTo(node.bounds, WritableBox.asBox(absoluteBounds));
-
   // Update the node's bounds with absolute coordinates
   node.setBounds(WritableBox.asBox(absoluteBounds), uow);
 
@@ -220,8 +217,6 @@ const applyLayoutTreeRecursive = (
           r: absoluteBounds.r
         });
       }
-    } else if (isEdge(child)) {
-      child._transformWaypoints(transform);
     }
   }
 };
