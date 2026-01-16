@@ -310,6 +310,10 @@ export const Vector = {
    */
   isVertical(v: Vector) {
     return isSame(v.x, 0);
+  },
+
+  isSame(v1: Vector, v2: Vector) {
+    return isSame(v1.x, v2.x) && isSame(v1.y, v2.y);
   }
 };
 
