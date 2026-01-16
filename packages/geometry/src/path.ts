@@ -55,7 +55,7 @@ import type { RawSegment } from './pathListBuilder';
 import { BezierUtils } from './bezier';
 import { Box } from './box';
 import { assert, VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
-import { isSame, round } from '@diagram-craft/utils/math';
+import { round } from '@diagram-craft/utils/math';
 import { Vector } from './vector';
 import { Line } from './line';
 import { Lazy } from '@diagram-craft/utils/lazy';
@@ -693,10 +693,11 @@ export class Path {
    */
   simplify() {
     const simplifiedSegments: PathSegment[] = [];
-    if (this.segments.length <= 1) return this;
+    const segmentArray = this.segments;
+    if (segmentArray.length <= 1) return this;
 
-    for (let i = 0; i < this.segments.length; i++) {
-      const currentSegment = this.segments[i]!;
+    for (let i = 0; i < segmentArray.length; i++) {
+      const currentSegment = segmentArray[i]!;
 
       if (!(currentSegment instanceof LineSegment)) {
         simplifiedSegments.push(currentSegment);
@@ -712,8 +713,8 @@ export class Path {
       const consecutiveLines = [currentSegment];
 
       // Check for subsequent line segments in the same direction
-      while (i + 1 < this.segments.length) {
-        const nextSegment = this.segments[i + 1];
+      while (i + 1 < segmentArray.length) {
+        const nextSegment = segmentArray[i + 1];
 
         if (!(nextSegment instanceof LineSegment)) break;
 
@@ -723,16 +724,11 @@ export class Path {
           continue;
         }
 
-        const nextLine = Line.of(nextSegment.start, nextSegment.end);
-
         // Check if lines are in the same direction by comparing normalized direction vectors
         const currentDirection = Vector.normalize(Vector.from(currentLine.from, currentLine.to));
-        const nextDirection = Vector.normalize(Vector.from(nextLine.from, nextLine.to));
+        const nextDirection = Vector.normalize(Vector.from(nextSegment.start, nextSegment.end));
 
-        if (
-          isSame(currentDirection.x, nextDirection.x) &&
-          isSame(currentDirection.y, nextDirection.y)
-        ) {
+        if (Vector.isSame(currentDirection, nextDirection)) {
           consecutiveLines.push(nextSegment);
           i++;
         } else {
@@ -744,7 +740,7 @@ export class Path {
       if (consecutiveLines.length > 1) {
         const mergedSegment = new LineSegment(
           consecutiveLines[0]!.start,
-          consecutiveLines[consecutiveLines.length - 1]!.end
+          consecutiveLines.at(-1)!.end
         );
         // Double-check that the merged segment is not zero-length
         if (!Point.isEqual(mergedSegment.start, mergedSegment.end)) {
