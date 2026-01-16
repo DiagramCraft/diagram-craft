@@ -320,7 +320,7 @@ export const App = (props: {
   //       Can be tested if ruler indicators work at startup immediately or not
   // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(() => {
-    redraw();
+    //redraw();
   }, [svgRef.current, redraw]);
 
   const $d = application.current.model.activeDiagram;

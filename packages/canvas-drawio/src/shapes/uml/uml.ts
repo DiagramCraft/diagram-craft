@@ -52,7 +52,7 @@ export const parseUMLShapes = async (
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
-  const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [] };
+  const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [], type: 'default' };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 

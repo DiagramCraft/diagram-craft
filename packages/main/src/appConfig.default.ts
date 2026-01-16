@@ -121,6 +121,15 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
+      },
+      {
+        type: 'drawioXml',
+        opts: {
+          name: 'BPMN',
+          url: `$STENCIL_ROOT/stencils/bpmn.xml`,
+          foreground: 'var(--canvas-fg)',
+          background: 'var(--canvas-bg2)'
+        }
       }
     ]
   },

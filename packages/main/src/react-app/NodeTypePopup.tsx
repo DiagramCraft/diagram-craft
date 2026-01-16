@@ -133,6 +133,7 @@ export const NodeTypePopup = (props: Props) => {
                   diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
                   onMouseDown={() => addNode(stencil)}
+                  scaleStrokes={stencil.type !== 'default'}
                 />
               </div>
             ))}
