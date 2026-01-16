@@ -42,8 +42,13 @@ import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlan
 export const defaultNodeRegistry = () => {
   const reg = new NodeDefinitionRegistry();
 
-  const defaults: StencilPackage = { id: 'default', name: 'Default', stencils: [] };
-  const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [] };
+  const defaults: StencilPackage = {
+    id: 'default',
+    name: 'Default',
+    stencils: [],
+    type: 'default'
+  };
+  const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [], type: 'default' };
 
   reg.register(new GroupNodeDefinition());
 

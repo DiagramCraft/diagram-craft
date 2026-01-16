@@ -710,6 +710,16 @@ foreignObject {
       }
     }
   }
+
+  & .scale-strokes svg {
+    * {
+      vector-effect: initial;
+
+      path {
+        vector-effect: initial;
+      }
+    }
+  }
 }
 
 .cmp-panel__children {

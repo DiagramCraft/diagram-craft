@@ -45,7 +45,8 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDef
   stencilRegistry.register({
     id: name,
     name: name,
-    stencils: drawioStencils.map(toRegularStencil)
+    stencils: drawioStencils.map(toRegularStencil),
+    type: 'drawioXml'
   });
   stencilRegistry.activate(name);
 };

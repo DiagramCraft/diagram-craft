@@ -10,10 +10,11 @@ import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbna
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 
 const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
 
-const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
+const makeDiagramNode = (doc: DiagramDocument, n: Stencil) => {
   const cacheKey = n.id;
 
   if (NODE_CACHE.has(cacheKey)) {
@@ -22,7 +23,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
 
   const { node: stencilNode, diagram: stencilDiagram } = createThumbnailForNode(
     d => n.node(d),
-    mainDiagram.document.definitions
+    doc.definitions
   );
   stencilDiagram.viewBox.dimensions = {
     w: stencilNode.bounds.w + 10,
@@ -32,7 +33,7 @@ const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
 
   const { node: canvasNode, diagram: canvasDiagram } = createThumbnailForNode(
     d => n.canvasNode(d),
-    mainDiagram.document.definitions
+    doc.definitions
   );
   canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };
   canvasDiagram.viewBox.offset = { x: -5, y: -5 };
@@ -51,8 +52,8 @@ export const ObjectPickerPanel = (props: Props) => {
   const stencils = props.stencils;
   const diagrams = useMemo(() => {
     if (!props.isOpen) return [];
-    return stencils.map(n => makeDiagramNode(diagram, n));
-  }, [diagram, stencils, props.isOpen]);
+    return stencils.map(n => makeDiagramNode(diagram.document, n));
+  }, [diagram.document, stencils, props.isOpen]);
 
   useEffect(() => {
     if (props.isOpen) {
@@ -96,6 +97,7 @@ export const ObjectPickerPanel = (props: Props) => {
                     () => setShowHover(true)
                   );
                 }}
+                scaleStrokes={stencil.type !== 'default' && stencil.type !== 'yaml'}
               />
             </div>
           ))}

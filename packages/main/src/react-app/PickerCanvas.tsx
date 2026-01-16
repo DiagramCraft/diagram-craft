@@ -50,18 +50,15 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
   const isRuleLayer = $d.activeLayer.type === 'rule';
   return (
     <div
-      onMouseOver={isRuleLayer ? () => {
-      } : e => onMouseOver(e)}
-      onMouseLeave={isRuleLayer ? () => {
-      } : onMouseOut}
+      onMouseOver={isRuleLayer ? () => {} : e => onMouseOver(e)}
+      onMouseLeave={isRuleLayer ? () => {} : onMouseOut}
       style={{
-        filter: isRuleLayer ? 'opacity(0.3)' : 'none',
+        'filter': isRuleLayer ? 'opacity(0.3)' : 'none',
         // @ts-expect-error valid use
         '--container-outline': '#d5d5d4'
       }}
-      onPointerDown={isRuleLayer ? () => {
-      } : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {
-      })}
+      className={props.scaleStrokes === undefined || props.scaleStrokes ? 'scale-strokes' : ''}
+      onPointerDown={isRuleLayer ? () => {} : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
       {hover &&
         props.showHover &&
@@ -94,8 +91,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               context={application}
               width={80}
               height={80}
-              onClick={() => {
-              }}
+              onClick={() => {}}
               diagram={diagram}
               viewbox={props.diagram.viewBox.svgViewboxString}
               canvasFactory={() => new StaticCanvasComponent()}
@@ -137,4 +133,5 @@ type PickerCanvasProps = {
   showHover?: boolean;
   name?: string;
   onMouseDown?: (e: MouseEvent) => void;
+  scaleStrokes?: boolean;
 };

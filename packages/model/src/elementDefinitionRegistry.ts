@@ -132,6 +132,7 @@ export type Stencil = {
   name?: string;
   node: (diagram: Diagram) => DiagramNode;
   canvasNode: (diagram: Diagram) => DiagramNode;
+  type: string;
 };
 
 export type StencilPackage = {
@@ -139,6 +140,7 @@ export type StencilPackage = {
   name: string;
   group?: string;
   stencils: Array<Stencil>;
+  type: string;
 };
 
 export type StencilEvents = {
@@ -381,6 +383,7 @@ export const registerStencil = (
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
     node: makeStencilNode(def, 'picker', opts),
-    canvasNode: makeStencilNode(def, 'canvas', opts)
+    canvasNode: makeStencilNode(def, 'canvas', opts),
+    type: pkg.type
   });
 };
