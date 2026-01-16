@@ -690,7 +690,7 @@ export const buildOrthogonalEdgePath = (
 
   best.points.forEach(p => path.lineTo(p));
 
-  return path.getPaths().singular();
+  return path.getPaths().singular().simplify();
 };
 
 export const _test = {
