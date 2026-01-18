@@ -10,6 +10,7 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -160,6 +161,8 @@ export class ResizeDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
+      growBoundsForSelection(this.diagram, this.uow);
+
       this.uow.commitWithUndo('Resize');
     } else {
       this.uow.abort();
