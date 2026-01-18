@@ -751,6 +751,7 @@ export class Path {
       }
     }
 
+    if (simplifiedSegments.length === 0) return this;
     return Path.from(this, () => simplifiedSegments);
   }
 }

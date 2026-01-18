@@ -22,7 +22,9 @@ const formatValue = (
   numberOfDecimals: number
 ) => {
   const [number, unit] = parseNumberAndUnit(value) ?? [];
-  return number ? `${round(number, numberOfDecimals)} ${unit ?? defaultUnit ?? ''}` : fallback;
+  return number !== undefined
+    ? `${round(number, numberOfDecimals)} ${unit ?? defaultUnit ?? ''}`
+    : fallback;
 };
 
 let idx = 0;
