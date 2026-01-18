@@ -27,6 +27,7 @@ import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { getElementAndAncestors } from '@diagram-craft/model/diagramElementUtils';
+import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -184,17 +185,7 @@ export abstract class AbstractMoveDrag extends Drag {
     enablePointerEvents(selection.elements);
 
     if (selection.isChanged()) {
-      const selectionBounds = Box.boundingBox(
-        selection.nodes.map(e => e.bounds),
-        true
-      );
-      const diagramBounds = { ...this.diagram.bounds, r: 0 };
-      if (!Box.contains(diagramBounds, selectionBounds)) {
-        this.diagram.setBounds(
-          Box.boundingBox([diagramBounds, Box.grow(selectionBounds, 20)], true),
-          this.uow
-        );
-      }
+      growBoundsForSelection(this.diagram, this.uow);
 
       // This means we are dropping onto an element
       if (this.#currentElement) {
