@@ -4,7 +4,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { ElementFactory } from './elementFactory';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { findCommonAncestor, transformElements } from './diagramElement';
+import { findCommonAncestor, getElementAndAncestors, transformElements } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
@@ -467,5 +467,42 @@ describe('transformElements', () => {
       expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
       expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
     });
+  });
+});
+
+describe('getElementAndAncestors', () => {
+  it('should return element and its ancestors in order', () => {
+    // Setup
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const grandparent = layer.addNode({ id: 'grandparent' });
+    const parent = layer.createNode({ id: 'parent' });
+    const child = layer.createNode({ id: 'child' });
+
+    UnitOfWork.execute(diagram, uow => {
+      grandparent.addChild(parent, uow);
+      parent.addChild(child, uow);
+    });
+
+    // Act
+    const result = getElementAndAncestors(child);
+
+    // Verify
+    expect(result).toHaveLength(3);
+    expect(result[0]).toBe(child);
+    expect(result[1]).toBe(parent);
+    expect(result[2]).toBe(grandparent);
+  });
+
+  it('should return only the element when it has no parent', () => {
+    // Setup
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'node-1' });
+
+    // Act
+    const result = getElementAndAncestors(node);
+
+    // Verify
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(node);
   });
 });

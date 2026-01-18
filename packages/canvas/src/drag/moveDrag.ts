@@ -9,6 +9,7 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
 import {
   DiagramElement,
+  getElementAndAncestors,
   isEdge,
   isNode,
   transformElements
@@ -26,7 +27,6 @@ import {
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
-import { getElementAndAncestors } from '@diagram-craft/model/diagramElementUtils';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
