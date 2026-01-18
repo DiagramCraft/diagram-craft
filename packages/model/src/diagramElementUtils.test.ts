@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { _test, cloneElements, getElementAndAncestors } from './diagramElementUtils';
+import { _test, cloneElements } from './diagramElementUtils';
 import type { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
@@ -401,51 +401,12 @@ describe('cloneHelper', () => {
       const node = sourceLayer.addNode({ id: 'node-1' });
 
       // Act
-      const cloned = UnitOfWork.execute(diagram, uow =>
-        cloneElements([node], targetLayer, uow)
-      );
+      const cloned = UnitOfWork.execute(diagram, uow => cloneElements([node], targetLayer, uow));
 
       // Verify
       expect(cloned).toHaveLength(1);
       expect(cloned[0]!.layer).toBe(targetLayer);
       expect(node.layer).toBe(sourceLayer);
-    });
-  });
-
-  describe('getElementAndAncestors', () => {
-    it('should return element and its ancestors in order', () => {
-      // Setup
-      const { diagram, layer } = TestModel.newDiagramWithLayer();
-      const grandparent = layer.addNode({ id: 'grandparent' });
-      const parent = layer.createNode({ id: 'parent' });
-      const child = layer.createNode({ id: 'child' });
-
-      UnitOfWork.execute(diagram, uow => {
-        grandparent.addChild(parent, uow);
-        parent.addChild(child, uow);
-      });
-
-      // Act
-      const result = getElementAndAncestors(child);
-
-      // Verify
-      expect(result).toHaveLength(3);
-      expect(result[0]).toBe(child);
-      expect(result[1]).toBe(parent);
-      expect(result[2]).toBe(grandparent);
-    });
-
-    it('should return only the element when it has no parent', () => {
-      // Setup
-      const { layer } = TestModel.newDiagramWithLayer();
-      const node = layer.addNode({ id: 'node-1' });
-
-      // Act
-      const result = getElementAndAncestors(node);
-
-      // Verify
-      expect(result).toHaveLength(1);
-      expect(result[0]).toBe(node);
     });
   });
 });

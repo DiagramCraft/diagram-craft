@@ -11,13 +11,17 @@ import {
 } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import {
+  DiagramElement,
+  getElementAndAncestors,
+  isEdge,
+  isNode
+} from '@diagram-craft/model/diagramElement';
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { Point } from '@diagram-craft/geometry/point';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { getElementAndAncestors } from '@diagram-craft/model/diagramElementUtils';
 
 type CollapsibleProps = { collapsible?: boolean; mode?: string; bounds?: string };
 

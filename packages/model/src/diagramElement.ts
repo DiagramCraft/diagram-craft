@@ -433,19 +433,33 @@ export abstract class AbstractDiagramElement
   }
 }
 
-export const getDiagramElementPath = (element: DiagramElement): DiagramElement[] => {
-  const dest: DiagramElement[] = [];
-  let current: DiagramElement | undefined = element.parent;
-  while (current !== undefined) {
-    dest.push(current);
-    current = current.parent;
+/**
+ * Retrieves the specified element and its ancestors in a hierarchical structure.
+ *
+ * This function starts with the provided element and traverses upward through
+ * its parent elements, collecting all ancestors in the process.
+ *
+ * @param el  The starting element from which to gather ancestors.
+ * @returns   An array containing the starting element and all its ancestors,
+ *            ordered from the starting element to the root ancestor.
+ */
+export const getElementAndAncestors = (el: DiagramElement) => {
+  const ancestors: DiagramElement[] = [el];
+  let parent = el.parent;
+  while (parent) {
+    ancestors.push(parent);
+    parent = parent.parent;
   }
-  return dest;
+  return ancestors;
+};
+
+export const getAncestors = (element: DiagramElement): DiagramElement[] => {
+  return getElementAndAncestors(element).slice(1);
 };
 
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   if (element.parent === undefined) return element;
-  const path = getDiagramElementPath(element);
+  const path = getAncestors(element);
   return path.length > 0 ? path[path.length - 1]! : element;
 };
 
@@ -461,8 +475,8 @@ export const findCommonAncestor = (
   element1: DiagramElement,
   element2: DiagramElement
 ): DiagramElement | undefined => {
-  const path1 = getDiagramElementPath(element1);
-  const path2 = getDiagramElementPath(element2);
+  const path1 = getAncestors(element1);
+  const path2 = getAncestors(element2);
 
   const ancestors1 = new Set(path1);
 
