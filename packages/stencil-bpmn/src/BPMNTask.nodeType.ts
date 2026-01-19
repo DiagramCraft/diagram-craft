@@ -6,16 +6,18 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
+import { Box } from '@diagram-craft/geometry/box';
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       bpmnTask?: {
+        type?: string;
         radius?: number;
         loop?: boolean;
         multiInstance?: 'none' | 'sequential' | 'parallel';
@@ -26,11 +28,29 @@ declare global {
 }
 
 registerCustomNodeDefaults('bpmnTask', {
+  type: 'task',
   radius: 5,
   loop: false,
   multiInstance: 'none',
   compensation: false
 });
+
+const createOuterPath = (bounds: Box, radius: number) => {
+  const xr = radius / bounds.w;
+  const yr = radius / bounds.h;
+
+  return new PathListBuilder()
+    .withTransform(fromUnitLCS(bounds))
+    .moveTo(_p(xr, 0))
+    .lineTo(_p(1 - xr, 0))
+    .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
+    .lineTo(_p(1, 1 - yr))
+    .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
+    .lineTo(_p(xr, 1))
+    .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
+    .lineTo(_p(0, yr))
+    .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
+};
 
 export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -38,6 +58,23 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<BPMNTaskNodeDefinition> {
+    protected adjustStyle(
+      el: DiagramNode,
+      nodeProps: NodePropsForRendering,
+      style: Partial<CSSStyleDeclaration>
+    ) {
+      if (
+        nodeProps.custom.bpmnTask.type === 'event-sub-process' &&
+        el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
+      ) {
+        style.strokeDasharray = '2 5';
+      }
+
+      if (nodeProps.custom.bpmnTask.type === 'transaction') {
+        style.strokeWidth = '1.5';
+      }
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const node = props.node;
       shapeBuilder.boundaryPath(
@@ -50,6 +87,25 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
 
       // Render markers at the bottom
       this.buildMarkers(node, loop, multiInstance, compensation, shapeBuilder);
+
+      if (props.nodeProps.custom.bpmnTask.type === 'transaction') {
+        const offset = 3;
+        shapeBuilder.path(
+          createOuterPath(
+            Box.fromCorners(
+              _p(node.bounds.x + offset, node.bounds.y + offset),
+              _p(node.bounds.x + node.bounds.w - offset, node.bounds.y + node.bounds.h - offset)
+            ),
+            node.renderProps.custom.bpmnTask.radius - offset
+          )
+            .getPaths()
+            .all(),
+          undefined,
+          {
+            style: { fill: 'none' }
+          }
+        );
+      }
 
       shapeBuilder.text(this);
     }
@@ -109,7 +165,9 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         .moveTo(_p(cx - r, cy))
         .lineTo(_p(cx - r + 3, cy - 2.5));
 
-      shapeBuilder.path(pathBuilder.getPaths().all());
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none' }
+      });
     }
 
     private buildSequentialMarker(
@@ -132,7 +190,9 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         .moveTo(_p(startX, startY + lineSpacing * 2))
         .lineTo(_p(startX + lineWidth, startY + lineSpacing * 2));
 
-      shapeBuilder.path(pathBuilder.getPaths().all());
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none' }
+      });
     }
 
     private buildParallelMarker(cx: number, cy: number, size: number, shapeBuilder: ShapeBuilder) {
@@ -150,7 +210,9 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         .moveTo(_p(startX + lineSpacing * 2, startY))
         .lineTo(_p(startX + lineSpacing * 2, startY + lineHeight));
 
-      shapeBuilder.path(pathBuilder.getPaths().all());
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none' }
+      });
     }
 
     private buildCompensationMarker(
@@ -180,7 +242,9 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         .lineTo(_p(rightTriangleCenterX + triangleWidth / 2, cy + triangleHeight / 2))
         .lineTo(_p(rightTriangleCenterX - triangleWidth / 2, cy));
 
-      shapeBuilder.path(pathBuilder.getPaths().all());
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none' }
+      });
     }
   };
 
@@ -197,20 +261,22 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
   getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
-        id: 'radius',
-        type: 'number',
-        label: 'Radius',
-        value: def.renderProps.custom.bpmnTask.radius,
-        maxValue: 60,
-        unit: 'px',
-        isSet: def.storedProps.custom?.bpmnTask?.radius !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
+        id: 'type',
+        type: 'select',
+        label: 'Type',
+        options: [
+          { value: 'task', label: 'Task' },
+          { value: 'sub-process', label: 'Sub-process' },
+          { value: 'event-sub-process', label: 'Event sub-process' },
+          { value: 'transaction', label: 'Transaction' }
+        ],
+        value: def.renderProps.custom.bpmnTask.type ?? 'task',
+        isSet: def.storedProps.custom?.bpmnTask?.type !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.radius = undefined), uow);
+            def.updateCustomProps('bpmnTask', props => (props.type = undefined), uow);
           } else {
-            if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-
-            def.updateCustomProps('bpmnTask', props => (props.radius = value), uow);
+            def.updateCustomProps('bpmnTask', props => (props.type = value), uow);
           }
         }
       },
@@ -264,25 +330,29 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
             def.updateCustomProps('bpmnTask', props => (props.compensation = value), uow);
           }
         }
+      },
+      {
+        id: 'radius',
+        type: 'number',
+        label: 'Radius',
+        value: def.renderProps.custom.bpmnTask.radius,
+        maxValue: 60,
+        unit: 'px',
+        isSet: def.storedProps.custom?.bpmnTask?.radius !== undefined,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.radius = undefined), uow);
+          } else {
+            if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
+
+            def.updateCustomProps('bpmnTask', props => (props.radius = value), uow);
+          }
+        }
       }
     ];
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const radius = node.renderProps.custom.bpmnTask.radius;
-    const xr = radius / node.bounds.w;
-    const yr = radius / node.bounds.h;
-
-    return new PathListBuilder()
-      .withTransform(fromUnitLCS(node.bounds))
-      .moveTo(_p(xr, 0))
-      .lineTo(_p(1 - xr, 0))
-      .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
-      .lineTo(_p(1, 1 - yr))
-      .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
-      .lineTo(_p(xr, 1))
-      .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
-      .lineTo(_p(0, yr))
-      .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
+    return createOuterPath(node.bounds, node.renderProps.custom.bpmnTask.radius);
   }
 }
