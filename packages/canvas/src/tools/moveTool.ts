@@ -7,7 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { getAncestors, isNode } from '@diagram-craft/model/diagramElement';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 
 type DeferredMouseAction = {
@@ -50,23 +50,20 @@ export class MoveTool extends AbstractTool {
       this.diagram.viewBox.toDiagramPoint(point)
     );
 
-    if (isClickOnSelection) {
-      let element = this.diagram.lookup(id);
+    if (isClickOnSelection && !isClickOnBackground) {
+      let element = mustExist(this.diagram.lookup(id));
 
       // If we click on an element that is part of a group, select the group instead
       // ... except, when the group is already selected, in which case we allow for "drill-down"
-      // TODO: Is this if-statement really needed - it seems it is better to check isClickOnBackground
-      if (element) {
-        const path = getAncestors(element);
-        if (path.length > 0) {
-          for (let i = 0; i < path.length; i++) {
-            const parent = path[i];
-            if (isNode(parent) && parent.getDefinition().supports('select')) {
-              if (selection.nodes.includes(parent)) {
-                break;
-              } else {
-                element = parent;
-              }
+      const path = getAncestors(element);
+      if (path.length > 0) {
+        for (let i = 0; i < path.length; i++) {
+          const parent = path[i];
+          if (isNode(parent) && parent.getDefinition().supports('select')) {
+            if (selection.nodes.includes(parent)) {
+              break;
+            } else {
+              element = parent;
             }
           }
         }
@@ -101,7 +98,7 @@ export class MoveTool extends AbstractTool {
       // If we click on an element that is part of a group, select the group instead
       // ... except, when the group is already selected, in which case we allow for "drill-down"
       const path = getAncestors(element);
-      if (path.length > 0) {
+      if (path.length > 0 && path.find(e => isNode(e) && e.nodeType === 'group')) {
         for (let i = 0; i < path.length; i++) {
           const parent = path[i];
           if (isNode(parent) && parent.getDefinition().supports('select')) {
