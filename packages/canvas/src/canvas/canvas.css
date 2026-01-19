@@ -18,6 +18,13 @@
   }
 }
 
+.svg-edge-container {
+  .svg-node__text {
+    white-space: nowrap !important;
+    width: fit-content !important;
+  }
+}
+
 .svg-node--with-action .svg-node:hover {
   stroke: var(--cmp-border-focus) !important;
   stroke-width: 2px !important;

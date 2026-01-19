@@ -145,7 +145,7 @@ export class ShapeText extends Component<ShapeTextProps> {
             {
               class: 'svg-node__text',
               style: styleString,
-              [`data-${RAW_TEXT_DATA_ATTR}`]: applyLineBreaks(props.text),
+              [`data-${RAW_TEXT_DATA_ATTR}`]: stripOuterPTags(applyLineBreaks(props.text)),
               on: {
                 paste: (e: ClipboardEvent) => {
                   const data = e.clipboardData!.getData('text/html');
@@ -192,7 +192,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 }
               }
             },
-            [rawHTML(applyTemplate(props.text, metadata, true))]
+            [rawHTML(stripOuterPTags(applyTemplate(props.text, metadata, true)))]
           )
         ]
       )
@@ -262,3 +262,16 @@ export class ShapeText extends Component<ShapeTextProps> {
     );
   }
 }
+
+const stripOuterPTags = (text: string) => {
+  if (text.startsWith('<p>') && text.endsWith('</p>')) {
+    // Extract the content between the outer <p> and </p>
+    const content = text.slice(3, -4);
+
+    // Only strip if there are no more <p> tags in the content
+    if (!content.includes('<p>')) {
+      return content;
+    }
+  }
+  return text;
+};
