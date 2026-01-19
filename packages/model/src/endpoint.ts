@@ -31,9 +31,9 @@ export interface Endpoint {
   readonly isConnected: boolean;
 }
 
-export abstract class ConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
-  implements Endpoint
-{
+export abstract class ConnectedEndpoint<
+  T extends SerializedEndpoint = SerializedEndpoint
+> implements Endpoint {
   protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
 
   get node(): DiagramNode {
@@ -113,9 +113,7 @@ export class AnchorEndpoint
       const bounds = getBoundsRelativeToCollapsedAncestor(this.node);
       const ref = getAnchorPositionForBounds(this.node, this.anchorId, bounds);
       const rotatedOffset = calculateOffset(this.offset, bounds, true);
-      const pointInCollapsed = Point.add(ref, rotatedOffset);
-
-      return Box.projectPointToBoundary(pointInCollapsed, collapsedAncestor.bounds);
+      return Point.add(ref, rotatedOffset);
     }
 
     const bounds = this.node.bounds;
