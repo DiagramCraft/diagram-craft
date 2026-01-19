@@ -246,7 +246,7 @@ export abstract class LayoutCapableShapeNodeDefinition
         recurse(c);
       }
     };
-    recurse(node);
+    recurse(layoutRoot ?? node);
     return { edgeBounds, layoutRoot } as const;
   }
 
