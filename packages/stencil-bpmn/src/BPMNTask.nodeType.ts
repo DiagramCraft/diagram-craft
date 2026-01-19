@@ -17,7 +17,9 @@ declare global {
     interface CustomNodePropsExtensions {
       bpmnTask?: {
         radius?: number;
-        loopType?: 'none' | 'standard' | 'sequential' | 'parallel';
+        loop?: boolean;
+        multiInstance?: 'none' | 'sequential' | 'parallel';
+        compensation?: boolean;
       };
     }
   }
@@ -25,7 +27,9 @@ declare global {
 
 registerCustomNodeDefaults('bpmnTask', {
   radius: 5,
-  loopType: 'none'
+  loop: false,
+  multiInstance: 'none',
+  compensation: false
 });
 
 export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
@@ -40,77 +44,143 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         new BPMNTaskNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const loopType = node.renderProps.custom.bpmnTask.loopType ?? 'none';
-      if (loopType !== 'none') {
-        this.buildLoopIndicator(node, loopType, shapeBuilder);
-      }
+      const loop = node.renderProps.custom.bpmnTask.loop ?? false;
+      const multiInstance = node.renderProps.custom.bpmnTask.multiInstance ?? 'none';
+      const compensation = node.renderProps.custom.bpmnTask.compensation ?? false;
+
+      // Render markers at the bottom
+      this.buildMarkers(node, loop, multiInstance, compensation, shapeBuilder);
 
       shapeBuilder.text(this);
     }
 
-    private buildLoopIndicator(
+    private buildMarkers(
       node: DiagramNode,
-      loopType: 'standard' | 'sequential' | 'parallel',
+      loop: boolean,
+      multiInstance: 'none' | 'sequential' | 'parallel',
+      compensation: boolean,
       shapeBuilder: ShapeBuilder
     ) {
       const bounds = node.bounds;
-      const size = 12; // Size of the loop indicator
+      const size = 12; // Size of markers
       const centerX = bounds.x + bounds.w / 2;
       const bottomY = bounds.y + bounds.h - size - 5; // 5px from bottom
 
-      if (loopType === 'standard') {
-        // Standard loop: circular arrow
-        const cx = centerX;
-        const cy = bottomY + size / 2;
-        const r = size / 2;
+      // Calculate how many markers we need to render
+      const markers: Array<'loop' | 'multi' | 'compensation'> = [];
+      if (loop) markers.push('loop');
+      if (multiInstance !== 'none') markers.push('multi');
+      if (compensation) markers.push('compensation');
 
-        const pathBuilder = new PathListBuilder()
-          .moveTo(_p(cx - r, cy))
-          .arcTo(_p(cx, cy - r), r, r, 0, 0, 1)
-          .arcTo(_p(cx + r, cy), r, r, 0, 0, 1)
-          .arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
+      // Calculate spacing between markers
+      const markerSpacing = size + 4;
+      const totalWidth = markers.length * size + (markers.length - 1) * 4;
+      let currentX = centerX - totalWidth / 2;
 
-        // Add arrow head
-        pathBuilder
-          .moveTo(_p(cx - r, cy))
-          .lineTo(_p(cx - r - 2, cy - 2.5))
-          .moveTo(_p(cx - r, cy))
-          .lineTo(_p(cx - r + 3, cy - 2.5));
-
-        shapeBuilder.path(pathBuilder.getPaths().all());
-      } else if (loopType === 'sequential') {
-        // Sequential: three horizontal lines
-        const lineWidth = size;
-        const lineSpacing = size / 4;
-        const startX = centerX - lineWidth / 2;
-        const startY = bottomY + size / 2 - lineSpacing;
-
-        const pathBuilder = new PathListBuilder()
-          .moveTo(_p(startX, startY))
-          .lineTo(_p(startX + lineWidth, startY))
-          .moveTo(_p(startX, startY + lineSpacing))
-          .lineTo(_p(startX + lineWidth, startY + lineSpacing))
-          .moveTo(_p(startX, startY + lineSpacing * 2))
-          .lineTo(_p(startX + lineWidth, startY + lineSpacing * 2));
-
-        shapeBuilder.path(pathBuilder.getPaths().all());
-      } else if (loopType === 'parallel') {
-        // Parallel: three vertical lines
-        const lineHeight = size;
-        const lineSpacing = size / 4;
-        const startX = centerX - lineSpacing;
-        const startY = bottomY;
-
-        const pathBuilder = new PathListBuilder()
-          .moveTo(_p(startX, startY))
-          .lineTo(_p(startX, startY + lineHeight))
-          .moveTo(_p(startX + lineSpacing, startY))
-          .lineTo(_p(startX + lineSpacing, startY + lineHeight))
-          .moveTo(_p(startX + lineSpacing * 2, startY))
-          .lineTo(_p(startX + lineSpacing * 2, startY + lineHeight));
-
-        shapeBuilder.path(pathBuilder.getPaths().all());
+      // Render each marker
+      for (const marker of markers) {
+        if (marker === 'loop') {
+          this.buildLoopMarker(currentX + size / 2, bottomY + size / 2, size / 2, shapeBuilder);
+        } else if (marker === 'multi') {
+          if (multiInstance === 'sequential') {
+            this.buildSequentialMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+          } else {
+            this.buildParallelMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+          }
+        } else if (marker === 'compensation') {
+          this.buildCompensationMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+        }
+        currentX += markerSpacing;
       }
+    }
+
+    private buildLoopMarker(cx: number, cy: number, r: number, shapeBuilder: ShapeBuilder) {
+      // Standard loop: circular arrow
+      const pathBuilder = new PathListBuilder()
+        .moveTo(_p(cx - r, cy))
+        .arcTo(_p(cx, cy - r), r, r, 0, 0, 1)
+        .arcTo(_p(cx + r, cy), r, r, 0, 0, 1)
+        .arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
+
+      // Add arrow head
+      pathBuilder
+        .moveTo(_p(cx - r, cy))
+        .lineTo(_p(cx - r - 2, cy - 2.5))
+        .moveTo(_p(cx - r, cy))
+        .lineTo(_p(cx - r + 3, cy - 2.5));
+
+      shapeBuilder.path(pathBuilder.getPaths().all());
+    }
+
+    private buildSequentialMarker(
+      cx: number,
+      cy: number,
+      size: number,
+      shapeBuilder: ShapeBuilder
+    ) {
+      // Sequential: three horizontal lines
+      const lineWidth = size;
+      const lineSpacing = size / 4;
+      const startX = cx - lineWidth / 2;
+      const startY = cy - lineSpacing;
+
+      const pathBuilder = new PathListBuilder()
+        .moveTo(_p(startX, startY))
+        .lineTo(_p(startX + lineWidth, startY))
+        .moveTo(_p(startX, startY + lineSpacing))
+        .lineTo(_p(startX + lineWidth, startY + lineSpacing))
+        .moveTo(_p(startX, startY + lineSpacing * 2))
+        .lineTo(_p(startX + lineWidth, startY + lineSpacing * 2));
+
+      shapeBuilder.path(pathBuilder.getPaths().all());
+    }
+
+    private buildParallelMarker(cx: number, cy: number, size: number, shapeBuilder: ShapeBuilder) {
+      // Parallel: three vertical lines
+      const lineHeight = size;
+      const lineSpacing = size / 4;
+      const startX = cx - lineSpacing;
+      const startY = cy - lineHeight / 2;
+
+      const pathBuilder = new PathListBuilder()
+        .moveTo(_p(startX, startY))
+        .lineTo(_p(startX, startY + lineHeight))
+        .moveTo(_p(startX + lineSpacing, startY))
+        .lineTo(_p(startX + lineSpacing, startY + lineHeight))
+        .moveTo(_p(startX + lineSpacing * 2, startY))
+        .lineTo(_p(startX + lineSpacing * 2, startY + lineHeight));
+
+      shapeBuilder.path(pathBuilder.getPaths().all());
+    }
+
+    private buildCompensationMarker(
+      cx: number,
+      cy: number,
+      size: number,
+      shapeBuilder: ShapeBuilder
+    ) {
+      // Compensation: two triangles pointing left (like a rewind symbol <<)
+      const triangleWidth = size / 2;
+      const triangleHeight = size * 0.8;
+
+      // Left triangle (pointing left)
+      const leftTriangleCenterX = cx - triangleWidth / 2;
+      // Right triangle (pointing left)
+      const rightTriangleCenterX = cx + triangleWidth / 2;
+
+      const pathBuilder = new PathListBuilder()
+        // First triangle (left) - point on left, base on right
+        .moveTo(_p(leftTriangleCenterX - triangleWidth / 2, cy))
+        .lineTo(_p(leftTriangleCenterX + triangleWidth / 2, cy - triangleHeight / 2))
+        .lineTo(_p(leftTriangleCenterX + triangleWidth / 2, cy + triangleHeight / 2))
+        .lineTo(_p(leftTriangleCenterX - triangleWidth / 2, cy))
+        // Second triangle (right) - point on left, base on right
+        .moveTo(_p(rightTriangleCenterX - triangleWidth / 2, cy))
+        .lineTo(_p(rightTriangleCenterX + triangleWidth / 2, cy - triangleHeight / 2))
+        .lineTo(_p(rightTriangleCenterX + triangleWidth / 2, cy + triangleHeight / 2))
+        .lineTo(_p(rightTriangleCenterX - triangleWidth / 2, cy));
+
+      shapeBuilder.path(pathBuilder.getPaths().all());
     }
   };
 
@@ -145,26 +215,53 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         }
       },
       {
-        id: 'loopType',
+        id: 'loop',
+        type: 'boolean',
+        label: 'Loop',
+        value: def.renderProps.custom.bpmnTask.loop ?? false,
+        isSet: def.storedProps.custom?.bpmnTask?.loop !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.loop = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnTask', props => (props.loop = value), uow);
+          }
+        }
+      },
+      {
+        id: 'multiInstance',
         type: 'select',
-        label: 'Loop Type',
-        value: def.renderProps.custom.bpmnTask.loopType ?? 'none',
+        label: 'Multi-Instance',
+        value: def.renderProps.custom.bpmnTask.multiInstance ?? 'none',
         options: [
           { label: 'None', value: 'none' },
-          { label: 'Standard Loop', value: 'standard' },
-          { label: 'Sequential Multi-Instance', value: 'sequential' },
-          { label: 'Parallel Multi-Instance', value: 'parallel' }
+          { label: 'Sequential', value: 'sequential' },
+          { label: 'Parallel', value: 'parallel' }
         ],
-        isSet: def.storedProps.custom?.bpmnTask?.loopType !== undefined,
+        isSet: def.storedProps.custom?.bpmnTask?.multiInstance !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.loopType = undefined), uow);
+            def.updateCustomProps('bpmnTask', props => (props.multiInstance = undefined), uow);
           } else {
             def.updateCustomProps(
               'bpmnTask',
-              props => (props.loopType = value as 'none' | 'standard' | 'sequential' | 'parallel'),
+              props => (props.multiInstance = value as 'none' | 'sequential' | 'parallel'),
               uow
             );
+          }
+        }
+      },
+      {
+        id: 'compensation',
+        type: 'boolean',
+        label: 'Compensation',
+        value: def.renderProps.custom.bpmnTask.compensation ?? false,
+        isSet: def.storedProps.custom?.bpmnTask?.compensation !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.compensation = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnTask', props => (props.compensation = value), uow);
           }
         }
       }
