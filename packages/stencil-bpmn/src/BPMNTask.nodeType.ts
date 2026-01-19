@@ -22,6 +22,14 @@ declare global {
         loop?: boolean;
         multiInstance?: 'none' | 'sequential' | 'parallel';
         compensation?: boolean;
+        subprocessType?:
+          | 'default'
+          | 'loop'
+          | 'multi-instance'
+          | 'compensation'
+          | 'ad-hoc'
+          | 'compensation-and-ad-hoc';
+        expanded?: boolean;
       };
     }
   }
@@ -32,7 +40,9 @@ registerCustomNodeDefaults('bpmnTask', {
   radius: 5,
   loop: false,
   multiInstance: 'none',
-  compensation: false
+  compensation: false,
+  subprocessType: 'default',
+  expanded: false
 });
 
 const createOuterPath = (bounds: Box, radius: number) => {
@@ -81,12 +91,33 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         new BPMNTaskNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const loop = node.renderProps.custom.bpmnTask.loop ?? false;
-      const multiInstance = node.renderProps.custom.bpmnTask.multiInstance ?? 'none';
-      const compensation = node.renderProps.custom.bpmnTask.compensation ?? false;
+      const taskType = node.renderProps.custom.bpmnTask.type ?? 'task';
+      const isSubprocess =
+        taskType === 'sub-process' ||
+        taskType === 'event-sub-process' ||
+        taskType === 'transaction';
+      const expanded = node.renderProps.custom.bpmnTask.expanded ?? false;
 
-      // Render markers at the bottom
-      this.buildMarkers(node, loop, multiInstance, compensation, shapeBuilder);
+      // Render boxed + icon for collapsed subprocesses
+      if (isSubprocess && !expanded) {
+        this.buildSubprocessIndicator(node, shapeBuilder);
+      }
+
+      // Determine which markers to render
+      const hasSubprocessIndicator = isSubprocess && !expanded;
+
+      if (isSubprocess && !expanded) {
+        // Use subprocess type to determine markers
+        const subprocessType = node.renderProps.custom.bpmnTask.subprocessType ?? 'default';
+        this.buildSubprocessMarkers(node, subprocessType, hasSubprocessIndicator, shapeBuilder);
+      } else if (!isSubprocess) {
+        // Use individual marker properties for regular tasks
+        const loop = node.renderProps.custom.bpmnTask.loop ?? false;
+        const multiInstance = node.renderProps.custom.bpmnTask.multiInstance ?? 'none';
+        const compensation = node.renderProps.custom.bpmnTask.compensation ?? false;
+        this.buildMarkers(node, loop, multiInstance, compensation, false, false, shapeBuilder);
+      }
+      // If isSubprocess && expanded, don't render any markers or subprocess indicator
 
       if (props.nodeProps.custom.bpmnTask.type === 'transaction') {
         const offset = 3;
@@ -110,43 +141,189 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.text(this);
     }
 
+    private buildSubprocessIndicator(node: DiagramNode, shapeBuilder: ShapeBuilder) {
+      const bounds = node.bounds;
+      const boxSize = 14; // Size of the square box
+      const centerX = bounds.x + bounds.w / 2;
+      const bottomY = bounds.y + bounds.h - boxSize - 5; // 5px from bottom
+
+      // Draw the box
+      const pathBuilder = new PathListBuilder()
+        .moveTo(_p(centerX - boxSize / 2, bottomY))
+        .lineTo(_p(centerX + boxSize / 2, bottomY))
+        .lineTo(_p(centerX + boxSize / 2, bottomY + boxSize))
+        .lineTo(_p(centerX - boxSize / 2, bottomY + boxSize))
+        .lineTo(_p(centerX - boxSize / 2, bottomY));
+
+      // Draw the + inside the box
+      const plusSize = boxSize * 0.5;
+      const plusCenterX = centerX;
+      const plusCenterY = bottomY + boxSize / 2;
+
+      // Horizontal line of +
+      pathBuilder
+        .moveTo(_p(plusCenterX - plusSize / 2, plusCenterY))
+        .lineTo(_p(plusCenterX + plusSize / 2, plusCenterY));
+
+      // Vertical line of +
+      pathBuilder
+        .moveTo(_p(plusCenterX, plusCenterY - plusSize / 2))
+        .lineTo(_p(plusCenterX, plusCenterY + plusSize / 2));
+
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none', fill: 'none' }
+      });
+    }
+
+    private buildSubprocessMarkers(
+      node: DiagramNode,
+      subprocessType:
+        | 'default'
+        | 'loop'
+        | 'multi-instance'
+        | 'compensation'
+        | 'ad-hoc'
+        | 'compensation-and-ad-hoc',
+      hasSubprocessIndicator: boolean,
+      shapeBuilder: ShapeBuilder
+    ) {
+      // Decode subprocess type into individual markers
+      let loop = false;
+      let multiInstance: 'none' | 'sequential' | 'parallel' = 'none';
+      let compensation = false;
+      let adHoc = false;
+
+      switch (subprocessType) {
+        case 'loop':
+          loop = true;
+          break;
+        case 'multi-instance':
+          multiInstance = 'parallel'; // Default to parallel for multi-instance
+          break;
+        case 'compensation':
+          compensation = true;
+          break;
+        case 'ad-hoc':
+          adHoc = true;
+          break;
+        case 'compensation-and-ad-hoc':
+          compensation = true;
+          adHoc = true;
+          break;
+        case 'default':
+        default:
+          // No markers for default subprocess
+          break;
+      }
+
+      this.buildMarkers(
+        node,
+        loop,
+        multiInstance,
+        compensation,
+        adHoc,
+        hasSubprocessIndicator,
+        shapeBuilder
+      );
+    }
+
     private buildMarkers(
       node: DiagramNode,
       loop: boolean,
       multiInstance: 'none' | 'sequential' | 'parallel',
       compensation: boolean,
+      adHoc: boolean,
+      hasSubprocessIndicator: boolean,
       shapeBuilder: ShapeBuilder
     ) {
       const bounds = node.bounds;
       const size = 12; // Size of markers
       const centerX = bounds.x + bounds.w / 2;
-      const bottomY = bounds.y + bounds.h - size - 5; // 5px from bottom
-
-      // Calculate how many markers we need to render
-      const markers: Array<'loop' | 'multi' | 'compensation'> = [];
-      if (loop) markers.push('loop');
-      if (multiInstance !== 'none') markers.push('multi');
-      if (compensation) markers.push('compensation');
-
-      // Calculate spacing between markers
       const markerSpacing = size + 4;
-      const totalWidth = markers.length * size + (markers.length - 1) * 4;
-      let currentX = centerX - totalWidth / 2;
 
-      // Render each marker
-      for (const marker of markers) {
-        if (marker === 'loop') {
-          this.buildLoopMarker(currentX + size / 2, bottomY + size / 2, size / 2, shapeBuilder);
-        } else if (marker === 'multi') {
-          if (multiInstance === 'sequential') {
-            this.buildSequentialMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
-          } else {
-            this.buildParallelMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+      if (hasSubprocessIndicator) {
+        // For subprocess: position markers on the same line as the + icon
+        // Regular markers (loop, multi-instance, compensation) go on the LEFT
+        // Ad-hoc marker goes on the RIGHT
+        const subprocessIndicatorSize = 14;
+        const bottomY = bounds.y + bounds.h - subprocessIndicatorSize - 5; // Same level as + icon
+        const markerY = bottomY + subprocessIndicatorSize / 2; // Center vertically with + icon
+
+        // Collect left-side markers
+        const leftMarkers: Array<'loop' | 'multi' | 'compensation'> = [];
+        if (loop) leftMarkers.push('loop');
+        if (multiInstance !== 'none') leftMarkers.push('multi');
+        if (compensation) leftMarkers.push('compensation');
+
+        // Render left-side markers (to the left of the + icon)
+        if (leftMarkers.length > 0) {
+          const leftTotalWidth = leftMarkers.length * size + (leftMarkers.length - 1) * 4;
+          const leftStartX = centerX - subprocessIndicatorSize / 2 - 4 - leftTotalWidth;
+          let currentX = leftStartX;
+
+          for (const marker of leftMarkers) {
+            if (marker === 'loop') {
+              this.buildLoopMarker(currentX + size / 2, markerY, size / 2, shapeBuilder);
+            } else if (marker === 'multi') {
+              if (multiInstance === 'sequential') {
+                this.buildSequentialMarker(currentX + size / 2, markerY, size, shapeBuilder);
+              } else {
+                this.buildParallelMarker(currentX + size / 2, markerY, size, shapeBuilder);
+              }
+            } else if (marker === 'compensation') {
+              this.buildCompensationMarker(currentX + size / 2, markerY, size, shapeBuilder);
+            }
+            currentX += markerSpacing;
           }
-        } else if (marker === 'compensation') {
-          this.buildCompensationMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
         }
-        currentX += markerSpacing;
+
+        // Render ad-hoc marker on the right side of the + icon
+        if (adHoc) {
+          const rightX = centerX + subprocessIndicatorSize / 2 + 4;
+          this.buildAdHocMarker(rightX + size / 2, markerY, size, shapeBuilder);
+        }
+      } else {
+        // For regular tasks: position markers at the bottom center (original behavior)
+        const bottomY = bounds.y + bounds.h - size - 5;
+
+        // Calculate how many markers we need to render
+        const markers: Array<'loop' | 'multi' | 'compensation' | 'ad-hoc'> = [];
+        if (loop) markers.push('loop');
+        if (multiInstance !== 'none') markers.push('multi');
+        if (compensation) markers.push('compensation');
+        if (adHoc) markers.push('ad-hoc');
+
+        // Calculate spacing between markers
+        const totalWidth = markers.length * size + (markers.length - 1) * 4;
+        let currentX = centerX - totalWidth / 2;
+
+        // Render each marker
+        for (const marker of markers) {
+          if (marker === 'loop') {
+            this.buildLoopMarker(currentX + size / 2, bottomY + size / 2, size / 2, shapeBuilder);
+          } else if (marker === 'multi') {
+            if (multiInstance === 'sequential') {
+              this.buildSequentialMarker(
+                currentX + size / 2,
+                bottomY + size / 2,
+                size,
+                shapeBuilder
+              );
+            } else {
+              this.buildParallelMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+            }
+          } else if (marker === 'compensation') {
+            this.buildCompensationMarker(
+              currentX + size / 2,
+              bottomY + size / 2,
+              size,
+              shapeBuilder
+            );
+          } else if (marker === 'ad-hoc') {
+            this.buildAdHocMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+          }
+          currentX += markerSpacing;
+        }
       }
     }
 
@@ -246,6 +423,26 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         style: { strokeWidth: '1', strokeDasharray: 'none' }
       });
     }
+
+    private buildAdHocMarker(cx: number, cy: number, size: number, shapeBuilder: ShapeBuilder) {
+      // Ad-hoc: tilde (~) symbol
+      const width = size;
+      const amplitude = size / 2;
+      const startX = cx - width / 2;
+
+      // Draw a tilde using two curves
+      const pathBuilder = new PathListBuilder()
+        .moveTo(_p(startX, cy))
+        .cubicTo(
+          _p(startX + width, cy),
+          _p(startX + (3 * width) / 8, cy - amplitude),
+          _p(startX + (5 * width) / 8, cy + amplitude)
+        );
+
+      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
+        style: { strokeWidth: '1', strokeDasharray: 'none', fill: 'none' }
+      });
+    }
   };
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -328,6 +525,53 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
             def.updateCustomProps('bpmnTask', props => (props.compensation = undefined), uow);
           } else {
             def.updateCustomProps('bpmnTask', props => (props.compensation = value), uow);
+          }
+        }
+      },
+      {
+        id: 'subprocessType',
+        type: 'select',
+        label: 'Subprocess Type',
+        value: def.renderProps.custom.bpmnTask.subprocessType ?? 'default',
+        options: [
+          { label: 'Default', value: 'default' },
+          { label: 'Loop', value: 'loop' },
+          { label: 'Multi-Instance', value: 'multi-instance' },
+          { label: 'Compensation', value: 'compensation' },
+          { label: 'Ad-Hoc', value: 'ad-hoc' },
+          { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
+        ],
+        isSet: def.storedProps.custom?.bpmnTask?.subprocessType !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.subprocessType = undefined), uow);
+          } else {
+            def.updateCustomProps(
+              'bpmnTask',
+              props =>
+                (props.subprocessType = value as
+                  | 'default'
+                  | 'loop'
+                  | 'multi-instance'
+                  | 'compensation'
+                  | 'ad-hoc'
+                  | 'compensation-and-ad-hoc'),
+              uow
+            );
+          }
+        }
+      },
+      {
+        id: 'expanded',
+        type: 'boolean',
+        label: 'Expanded',
+        value: def.renderProps.custom.bpmnTask.expanded ?? false,
+        isSet: def.storedProps.custom?.bpmnTask?.expanded !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.expanded = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnTask', props => (props.expanded = value), uow);
           }
         }
       },
