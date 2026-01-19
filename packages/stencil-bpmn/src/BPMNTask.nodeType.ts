@@ -98,26 +98,26 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         taskType === 'transaction';
       const expanded = node.renderProps.custom.bpmnTask.expanded ?? false;
 
-      // Render boxed + icon for collapsed subprocesses
+      // Render boxed + icon for collapsed subprocesses only
       if (isSubprocess && !expanded) {
         this.buildSubprocessIndicator(node, shapeBuilder);
       }
 
       // Determine which markers to render
+      // hasSubprocessIndicator is true only when we actually render the + icon
       const hasSubprocessIndicator = isSubprocess && !expanded;
 
-      if (isSubprocess && !expanded) {
-        // Use subprocess type to determine markers
+      if (isSubprocess) {
+        // For all subprocesses (collapsed or expanded), use subprocess type to determine markers
         const subprocessType = node.renderProps.custom.bpmnTask.subprocessType ?? 'default';
         this.buildSubprocessMarkers(node, subprocessType, hasSubprocessIndicator, shapeBuilder);
-      } else if (!isSubprocess) {
+      } else {
         // Use individual marker properties for regular tasks
         const loop = node.renderProps.custom.bpmnTask.loop ?? false;
         const multiInstance = node.renderProps.custom.bpmnTask.multiInstance ?? 'none';
         const compensation = node.renderProps.custom.bpmnTask.compensation ?? false;
         this.buildMarkers(node, loop, multiInstance, compensation, false, false, shapeBuilder);
       }
-      // If isSubprocess && expanded, don't render any markers or subprocess indicator
 
       if (props.nodeProps.custom.bpmnTask.type === 'transaction') {
         const offset = 3;
