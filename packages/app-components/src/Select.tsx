@@ -21,7 +21,7 @@ const Root = (props: RootProps) => {
   return (
     <BaseUISelect.Root
       onValueChange={v => props.onChange(v ?? undefined)}
-      value={props.isIndeterminate ? undefined : props.value}
+      value={props.isIndeterminate ? '' : props.value}
       open={props.open}
       onOpenChange={open => {
         if (open) {
