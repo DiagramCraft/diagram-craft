@@ -252,7 +252,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
         id: CanvasDomHelper.edgeId(props.element),
         class: `${props.isReadOnly ? 'svg-readonly' : ''} ${getHighlights(props.element)
           .map(h => `svg-edge--highlight-${h}`)
-          .join(' ')}`,
+          .join(' ')} svg-edge-container`,
         on: {
           ...(!props.isReadOnly && props.onMouseDown ? { mousedown: onMouseDown } : {}),
           ...(!props.isReadOnly && props.onDoubleClick
