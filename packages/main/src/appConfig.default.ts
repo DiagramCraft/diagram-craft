@@ -26,7 +26,7 @@ export const defaultAppConfig: AppConfig = {
     registry: [
       {
         type: 'drawioManual',
-        shapes: /^(bpmn[A-Z][a-z]+)$/,
+        shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
         opts: {
           callback: () =>
             import('@diagram-craft/stencil-bpmn/loader').then(m => m.registerBPMNShapes)

@@ -4,6 +4,7 @@ import {
   StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
+import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -84,6 +85,25 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
             activityType: 'transaction',
             radius: 10
           }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-object',
+    name: 'Data Object',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
         }
       };
     }
