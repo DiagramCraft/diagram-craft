@@ -22,6 +22,35 @@ import scriptIcon from './icons/script.svg?raw';
 import handFingerRightIcon from './icons/hand-finger-right.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 
+type SubprocessType =
+  | 'default'
+  | 'loop'
+  | 'multi-instance'
+  | 'compensation'
+  | 'ad-hoc'
+  | 'compensation-and-ad-hoc';
+
+type MarkerType = 'loop' | 'multi' | 'compensation';
+type AllMarkerType = MarkerType | 'ad-hoc';
+
+const TASK_TYPE_ICONS: Record<string, string> = {
+  service: settingsIcon,
+  send: mailFilledIcon,
+  receive: mailIcon,
+  user: userIcon,
+  manual: handFingerRightIcon,
+  'business-rule': tableIcon,
+  script: scriptIcon
+};
+
+const ICON_MARGIN = 5;
+const ICON_SIZE = 15;
+const MARKER_SIZE = 12;
+const MARKER_SPACING = 4;
+const SUBPROCESS_INDICATOR_SIZE = 14;
+const BOTTOM_MARGIN = 5;
+const TRANSACTION_OFFSET = 3;
+
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
@@ -32,13 +61,7 @@ declare global {
         loop?: boolean;
         multiInstance?: 'none' | 'sequential' | 'parallel';
         compensation?: boolean;
-        subprocessType?:
-          | 'default'
-          | 'loop'
-          | 'multi-instance'
-          | 'compensation'
-          | 'ad-hoc'
-          | 'compensation-and-ad-hoc';
+        subprocessType?: SubprocessType;
         expanded?: boolean;
       };
     }
@@ -56,26 +79,34 @@ registerCustomNodeDefaults('bpmnActivity', {
   expanded: false
 });
 
-const createOuterPath = (bounds: Box, radius: number) => {
-  const xr = radius / bounds.w;
-  const yr = radius / bounds.h;
-
-  return new PathListBuilder()
-    .withTransform(fromUnitLCS(bounds))
-    .moveTo(_p(xr, 0))
-    .lineTo(_p(1 - xr, 0))
-    .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
-    .lineTo(_p(1, 1 - yr))
-    .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
-    .lineTo(_p(xr, 1))
-    .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
-    .lineTo(_p(0, yr))
-    .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
-};
-
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
+  }
+
+  private static createOuterPath(bounds: Box, radius: number) {
+    const xr = radius / bounds.w;
+    const yr = radius / bounds.h;
+
+    return new PathListBuilder()
+      .withTransform(fromUnitLCS(bounds))
+      .moveTo(_p(xr, 0))
+      .lineTo(_p(1 - xr, 0))
+      .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
+      .lineTo(_p(1, 1 - yr))
+      .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
+      .lineTo(_p(xr, 1))
+      .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
+      .lineTo(_p(0, yr))
+      .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
+  }
+
+  private static isSubprocessActivity(activityType: string): boolean {
+    return (
+      activityType === 'sub-process' ||
+      activityType === 'event-sub-process' ||
+      activityType === 'transaction'
+    );
   }
 
   static Shape = class extends BaseNodeComponent<BPMNActivityNodeDefinition> {
@@ -102,11 +133,8 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         new BPMNActivityNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const taskType = node.renderProps.custom.bpmnActivity.activityType ?? 'task';
-      const isSubprocess =
-        taskType === 'sub-process' ||
-        taskType === 'event-sub-process' ||
-        taskType === 'transaction';
+      const activityType = node.renderProps.custom.bpmnActivity.activityType ?? 'task';
+      const isSubprocess = BPMNActivityNodeDefinition.isSubprocessActivity(activityType);
       const expanded = node.renderProps.custom.bpmnActivity.expanded ?? false;
 
       // Render boxed + icon for collapsed subprocesses only
@@ -131,14 +159,24 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       }
 
       if (props.nodeProps.custom.bpmnActivity.activityType === 'transaction') {
-        const offset = 3;
         shapeBuilder.path(
-          createOuterPath(
+          BPMNActivityNodeDefinition.createOuterPath(
             Box.fromCorners(
-              _p(node.bounds.x + offset, node.bounds.y + offset),
-              _p(node.bounds.x + node.bounds.w - offset, node.bounds.y + node.bounds.h - offset)
+              _p(
+                node.bounds.x + TRANSACTION_OFFSET,
+                node.bounds.y + TRANSACTION_OFFSET
+              ),
+              _p(
+                node.bounds.x +
+                  node.bounds.w -
+                  TRANSACTION_OFFSET,
+                node.bounds.y +
+                  node.bounds.h -
+                  TRANSACTION_OFFSET
+              )
             ),
-            node.renderProps.custom.bpmnActivity.radius - offset
+            node.renderProps.custom.bpmnActivity.radius -
+              TRANSACTION_OFFSET
           )
             .getPaths()
             .all(),
@@ -149,72 +187,96 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         );
       }
 
-      let icon: Icon | undefined;
-      if (props.nodeProps.custom.bpmnActivity.taskType === 'service') {
-        icon = getSVGIcon(settingsIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'send') {
-        icon = getSVGIcon(mailFilledIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'receive') {
-        icon = getSVGIcon(mailIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'user') {
-        icon = getSVGIcon(userIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'manual') {
-        icon = getSVGIcon(handFingerRightIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'business-rule') {
-        icon = getSVGIcon(tableIcon);
-      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'script') {
-        icon = getSVGIcon(scriptIcon);
-      }
+      const taskType = props.nodeProps.custom.bpmnActivity.taskType;
+      const iconSvg = taskType ? TASK_TYPE_ICONS[taskType] : undefined;
 
-      if (icon) {
-        const margin = 5;
-        const iconSize = 15;
-        shapeBuilder.path(
-          PathListBuilder.fromPathList(icon.pathList)
-            .getPaths(
-              TransformFactory.fromTo(
-                Box.fromCorners(
-                  _p(icon.viewbox.x, icon.viewbox.y),
-                  _p(icon.viewbox.x + icon.viewbox.w, icon.viewbox.y + icon.viewbox.h)
-                ),
-                Box.fromCorners(
-                  _p(node.bounds.x + margin, node.bounds.y + margin),
-                  _p(node.bounds.x + margin + iconSize, node.bounds.y + margin + iconSize)
-                )
-              )
-            )
-            .all(),
-          undefined,
-          {
-            style: {
-              fill: icon.fill === 'none' ? 'none' : props.nodeProps.stroke.color,
-              stroke: icon.fill === 'none' ? props.nodeProps.stroke.color : 'none'
-            }
-          }
-        );
+      if (iconSvg) {
+        const icon = getSVGIcon(iconSvg);
+        this.renderTaskIcon(icon, node, props.nodeProps, shapeBuilder);
       }
 
       shapeBuilder.text(this);
     }
 
+    private renderTaskIcon(
+      icon: Icon,
+      node: DiagramNode,
+      nodeProps: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      shapeBuilder.path(
+        PathListBuilder.fromPathList(icon.pathList)
+          .getPaths(
+            TransformFactory.fromTo(
+              Box.fromCorners(
+                _p(icon.viewbox.x, icon.viewbox.y),
+                _p(icon.viewbox.x + icon.viewbox.w, icon.viewbox.y + icon.viewbox.h)
+              ),
+              Box.fromCorners(
+                _p(
+                  node.bounds.x + ICON_MARGIN,
+                  node.bounds.y + ICON_MARGIN
+                ),
+                _p(
+                  node.bounds.x +
+                    ICON_MARGIN +
+                    ICON_SIZE,
+                  node.bounds.y +
+                    ICON_MARGIN +
+                    ICON_SIZE
+                )
+              )
+            )
+          )
+          .all(),
+        undefined,
+        {
+          style: {
+            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
+            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none'
+          }
+        }
+      );
+    }
+
     private buildSubprocessIndicator(node: DiagramNode, shapeBuilder: ShapeBuilder) {
       const bounds = node.bounds;
-      const boxSize = 14; // Size of the square box
       const centerX = bounds.x + bounds.w / 2;
-      const bottomY = bounds.y + bounds.h - boxSize - 5; // 5px from bottom
+      const bottomY =
+        bounds.y +
+        bounds.h -
+        SUBPROCESS_INDICATOR_SIZE -
+        BOTTOM_MARGIN;
 
       // Draw the box
       const pathBuilder = new PathListBuilder()
-        .moveTo(_p(centerX - boxSize / 2, bottomY))
-        .lineTo(_p(centerX + boxSize / 2, bottomY))
-        .lineTo(_p(centerX + boxSize / 2, bottomY + boxSize))
-        .lineTo(_p(centerX - boxSize / 2, bottomY + boxSize))
-        .lineTo(_p(centerX - boxSize / 2, bottomY));
+        .moveTo(
+          _p(centerX - SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
+        )
+        .lineTo(
+          _p(centerX + SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
+        )
+        .lineTo(
+          _p(
+            centerX + SUBPROCESS_INDICATOR_SIZE / 2,
+            bottomY + SUBPROCESS_INDICATOR_SIZE
+          )
+        )
+        .lineTo(
+          _p(
+            centerX - SUBPROCESS_INDICATOR_SIZE / 2,
+            bottomY + SUBPROCESS_INDICATOR_SIZE
+          )
+        )
+        .lineTo(
+          _p(centerX - SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
+        );
 
       // Draw the + inside the box
-      const plusSize = boxSize * 0.5;
+      const plusSize = SUBPROCESS_INDICATOR_SIZE * 0.5;
       const plusCenterX = centerX;
-      const plusCenterY = bottomY + boxSize / 2;
+      const plusCenterY =
+        bottomY + SUBPROCESS_INDICATOR_SIZE / 2;
 
       // Horizontal line of +
       pathBuilder
@@ -233,13 +295,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
     private buildSubprocessMarkers(
       node: DiagramNode,
-      subprocessType:
-        | 'default'
-        | 'loop'
-        | 'multi-instance'
-        | 'compensation'
-        | 'ad-hoc'
-        | 'compensation-and-ad-hoc',
+      subprocessType: SubprocessType,
       hasSubprocessIndicator: boolean,
       shapeBuilder: ShapeBuilder
     ) {
@@ -266,7 +322,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           compensation = true;
           adHoc = true;
           break;
-        case 'default':
         default:
           // No markers for default subprocess
           break;
@@ -293,41 +348,72 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder: ShapeBuilder
     ) {
       const bounds = node.bounds;
-      const size = 12; // Size of markers
       const centerX = bounds.x + bounds.w / 2;
-      const markerSpacing = size + 4;
+      const markerSpacing =
+        MARKER_SIZE +
+        MARKER_SPACING;
 
       if (hasSubprocessIndicator) {
         // For subprocess: position markers on the same line as the + icon
         // Regular markers (loop, multi-instance, compensation) go on the LEFT
         // Ad-hoc marker goes on the RIGHT
-        const subprocessIndicatorSize = 14;
-        const bottomY = bounds.y + bounds.h - subprocessIndicatorSize - 5; // Same level as + icon
-        const markerY = bottomY + subprocessIndicatorSize / 2; // Center vertically with + icon
+        const bottomY =
+          bounds.y +
+          bounds.h -
+          SUBPROCESS_INDICATOR_SIZE -
+          BOTTOM_MARGIN;
+        const markerY =
+          bottomY + SUBPROCESS_INDICATOR_SIZE / 2;
 
         // Collect left-side markers
-        const leftMarkers: Array<'loop' | 'multi' | 'compensation'> = [];
+        const leftMarkers: MarkerType[] = [];
         if (loop) leftMarkers.push('loop');
         if (multiInstance !== 'none') leftMarkers.push('multi');
         if (compensation) leftMarkers.push('compensation');
 
         // Render left-side markers (to the left of the + icon)
         if (leftMarkers.length > 0) {
-          const leftTotalWidth = leftMarkers.length * size + (leftMarkers.length - 1) * 4;
-          const leftStartX = centerX - subprocessIndicatorSize / 2 - 4 - leftTotalWidth;
+          const leftTotalWidth =
+            leftMarkers.length * MARKER_SIZE +
+            (leftMarkers.length - 1) * MARKER_SPACING;
+          const leftStartX =
+            centerX -
+            SUBPROCESS_INDICATOR_SIZE / 2 -
+            MARKER_SPACING -
+            leftTotalWidth;
           let currentX = leftStartX;
 
           for (const marker of leftMarkers) {
             if (marker === 'loop') {
-              this.buildLoopMarker(currentX + size / 2, markerY, size / 2, shapeBuilder);
+              this.buildLoopMarker(
+                currentX + MARKER_SIZE / 2,
+                markerY,
+                MARKER_SIZE / 2,
+                shapeBuilder
+              );
             } else if (marker === 'multi') {
               if (multiInstance === 'sequential') {
-                this.buildSequentialMarker(currentX + size / 2, markerY, size, shapeBuilder);
+                this.buildSequentialMarker(
+                  currentX + MARKER_SIZE / 2,
+                  markerY,
+                  MARKER_SIZE,
+                  shapeBuilder
+                );
               } else {
-                this.buildParallelMarker(currentX + size / 2, markerY, size, shapeBuilder);
+                this.buildParallelMarker(
+                  currentX + MARKER_SIZE / 2,
+                  markerY,
+                  MARKER_SIZE,
+                  shapeBuilder
+                );
               }
             } else if (marker === 'compensation') {
-              this.buildCompensationMarker(currentX + size / 2, markerY, size, shapeBuilder);
+              this.buildCompensationMarker(
+                currentX + MARKER_SIZE / 2,
+                markerY,
+                MARKER_SIZE,
+                shapeBuilder
+              );
             }
             currentX += markerSpacing;
           }
@@ -335,48 +421,77 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
         // Render ad-hoc marker on the right side of the + icon
         if (adHoc) {
-          const rightX = centerX + subprocessIndicatorSize / 2 + 4;
-          this.buildAdHocMarker(rightX + size / 2, markerY, size, shapeBuilder);
+          const rightX =
+            centerX +
+            SUBPROCESS_INDICATOR_SIZE / 2 +
+            MARKER_SPACING;
+          this.buildAdHocMarker(
+            rightX + MARKER_SIZE / 2,
+            markerY,
+            MARKER_SIZE,
+            shapeBuilder
+          );
         }
       } else {
         // For regular tasks: position markers at the bottom center (original behavior)
-        const bottomY = bounds.y + bounds.h - size - 5;
+        const bottomY =
+          bounds.y +
+          bounds.h -
+          MARKER_SIZE -
+          BOTTOM_MARGIN;
 
         // Calculate how many markers we need to render
-        const markers: Array<'loop' | 'multi' | 'compensation' | 'ad-hoc'> = [];
+        const markers: AllMarkerType[] = [];
         if (loop) markers.push('loop');
         if (multiInstance !== 'none') markers.push('multi');
         if (compensation) markers.push('compensation');
         if (adHoc) markers.push('ad-hoc');
 
         // Calculate spacing between markers
-        const totalWidth = markers.length * size + (markers.length - 1) * 4;
+        const totalWidth =
+          markers.length * MARKER_SIZE +
+          (markers.length - 1) * MARKER_SPACING;
         let currentX = centerX - totalWidth / 2;
 
         // Render each marker
         for (const marker of markers) {
           if (marker === 'loop') {
-            this.buildLoopMarker(currentX + size / 2, bottomY + size / 2, size / 2, shapeBuilder);
+            this.buildLoopMarker(
+              currentX + MARKER_SIZE / 2,
+              bottomY + MARKER_SIZE / 2,
+              MARKER_SIZE / 2,
+              shapeBuilder
+            );
           } else if (marker === 'multi') {
             if (multiInstance === 'sequential') {
               this.buildSequentialMarker(
-                currentX + size / 2,
-                bottomY + size / 2,
-                size,
+                currentX + MARKER_SIZE / 2,
+                bottomY + MARKER_SIZE / 2,
+                MARKER_SIZE,
                 shapeBuilder
               );
             } else {
-              this.buildParallelMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+              this.buildParallelMarker(
+                currentX + MARKER_SIZE / 2,
+                bottomY + MARKER_SIZE / 2,
+                MARKER_SIZE,
+                shapeBuilder
+              );
             }
           } else if (marker === 'compensation') {
             this.buildCompensationMarker(
-              currentX + size / 2,
-              bottomY + size / 2,
-              size,
+              currentX + MARKER_SIZE / 2,
+              bottomY + MARKER_SIZE / 2,
+              MARKER_SIZE,
               shapeBuilder
             );
           } else if (marker === 'ad-hoc') {
-            this.buildAdHocMarker(currentX + size / 2, bottomY + size / 2, size, shapeBuilder);
+            this.buildAdHocMarker(
+              currentX + MARKER_SIZE / 2,
+              bottomY + MARKER_SIZE / 2,
+              MARKER_SIZE,
+              shapeBuilder
+            );
           }
           currentX += markerSpacing;
         }
@@ -628,14 +743,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           } else {
             def.updateCustomProps(
               'bpmnActivity',
-              props =>
-                (props.subprocessType = value as
-                  | 'default'
-                  | 'loop'
-                  | 'multi-instance'
-                  | 'compensation'
-                  | 'ad-hoc'
-                  | 'compensation-and-ad-hoc'),
+              props => (props.subprocessType = value as SubprocessType),
               uow
             );
           }
@@ -677,6 +785,9 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    return createOuterPath(node.bounds, node.renderProps.custom.bpmnActivity.radius);
+    return BPMNActivityNodeDefinition.createOuterPath(
+      node.bounds,
+      node.renderProps.custom.bpmnActivity.radius
+    );
   }
 }
