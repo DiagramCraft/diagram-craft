@@ -213,7 +213,8 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           style: {
             fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
             stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1'
+            strokeWidth: '1',
+            strokeDasharray: 'none'
           }
         }
       );
