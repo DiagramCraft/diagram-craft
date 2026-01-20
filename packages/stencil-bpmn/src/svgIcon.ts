@@ -3,9 +3,10 @@ import { PathList } from '@diagram-craft/geometry/pathList';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { Box } from '@diagram-craft/geometry/box';
 
 export type Icon = {
-  viewbox: { x: number; y: number; w: number; h: number };
+  viewbox: Box;
   pathList: PathList;
   fill?: string;
 };
@@ -35,7 +36,7 @@ export const getSVGIcon = (s: string) => {
 
   const [x, y, w, h] = safeSplit($root.getAttribute('viewBox') ?? '0 0 10 10', ' ', 4, 4);
   const icon = {
-    viewbox: { x: parseInt(x), y: parseInt(y), w: parseInt(w), h: parseInt(h) },
+    viewbox: { x: parseInt(x), y: parseInt(y), w: parseInt(w), h: parseInt(h), r: 0 },
     pathList: PathListBuilder.fromString(paths.join(' ')).getPaths(),
     fill: $root.getAttribute('fill') ?? undefined
   };
