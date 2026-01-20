@@ -14,11 +14,74 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   };
 
   registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
+    id: 'bpmn-activity-task',
+    name: 'Task',
     aspectRatio: 1.5,
+    texts: {
+      text: 'Task'
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
+            activityType: 'task',
+            radius: 10
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
+    id: 'bpmn-activity-sub-process',
+    name: 'Sub-process',
+    aspectRatio: 1.5,
+    texts: {
+      text: 'Sub-process'
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnActivity: {
+            activityType: 'sub-process',
+            radius: 10
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
+    id: 'bpmn-activity-event-sub-process',
+    name: 'Event sub-process',
+    aspectRatio: 1.5,
+    texts: {
+      text: 'Event sub-process'
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnActivity: {
+            activityType: 'event-sub-process',
+            radius: 10
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
+    id: 'bpmn-activity-transaction',
+    name: 'Transaction',
+    aspectRatio: 1.5,
+    texts: {
+      text: 'Transaction'
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnActivity: {
+            activityType: 'transaction',
             radius: 10
           }
         }
