@@ -325,36 +325,44 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
           for (const marker of leftMarkers) {
             if (marker === 'loop') {
-              this.buildLoopMarker(
-                currentX + MARKER_SIZE / 2,
-                markerY,
-                MARKER_SIZE / 2,
+              this.renderIcon(
+                getSVGIcon(arrowBackUpIcon),
+                Box.fromCorners(
+                  _p(currentX, markerY - MARKER_SIZE / 2),
+                  _p(currentX + MARKER_SIZE, markerY + MARKER_SIZE / 2)
+                ),
                 node.renderProps,
                 shapeBuilder
               );
             } else if (marker === 'multi') {
               if (multiInstance === 'sequential') {
-                this.buildSequentialMarker(
-                  currentX + MARKER_SIZE / 2,
-                  markerY,
-                  MARKER_SIZE,
+                this.renderIcon(
+                  getSVGIcon(linesHorizontalIcon),
+                  Box.fromCorners(
+                    _p(currentX, markerY - MARKER_SIZE / 2),
+                    _p(currentX + MARKER_SIZE, markerY + MARKER_SIZE / 2)
+                  ),
                   node.renderProps,
                   shapeBuilder
                 );
               } else {
-                this.buildParallelMarker(
-                  currentX + MARKER_SIZE / 2,
-                  markerY,
-                  MARKER_SIZE,
+                this.renderIcon(
+                  getSVGIcon(linesVerticalIcon),
+                  Box.fromCorners(
+                    _p(currentX, markerY - MARKER_SIZE / 2),
+                    _p(currentX + MARKER_SIZE, markerY + MARKER_SIZE / 2)
+                  ),
                   node.renderProps,
                   shapeBuilder
                 );
               }
             } else if (marker === 'compensation') {
-              this.buildCompensationMarker(
-                currentX + MARKER_SIZE / 2,
-                markerY,
-                MARKER_SIZE,
+              this.renderIcon(
+                getSVGIcon(playerTrackPrevIcon),
+                Box.fromCorners(
+                  _p(currentX, markerY - MARKER_SIZE / 2),
+                  _p(currentX + MARKER_SIZE, markerY + MARKER_SIZE / 2)
+                ),
                 node.renderProps,
                 shapeBuilder
               );
@@ -366,10 +374,12 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         // Render ad-hoc marker on the right side of the + icon
         if (adHoc) {
           const rightX = centerX + SUBPROCESS_INDICATOR_SIZE / 2 + MARKER_SPACING;
-          this.buildAdHocMarker(
-            rightX + MARKER_SIZE / 2,
-            markerY,
-            MARKER_SIZE,
+          this.renderIcon(
+            getSVGIcon(tildeIcon),
+            Box.fromCorners(
+              _p(rightX, markerY - MARKER_SIZE / 2),
+              _p(rightX + MARKER_SIZE, markerY + MARKER_SIZE / 2)
+            ),
             node.renderProps,
             shapeBuilder
           );
@@ -392,44 +402,54 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         // Render each marker
         for (const marker of markers) {
           if (marker === 'loop') {
-            this.buildLoopMarker(
-              currentX + MARKER_SIZE / 2,
-              bottomY + MARKER_SIZE / 2,
-              MARKER_SIZE / 2,
+            this.renderIcon(
+              getSVGIcon(arrowBackUpIcon),
+              Box.fromCorners(
+                _p(currentX, bottomY),
+                _p(currentX + MARKER_SIZE, bottomY + MARKER_SIZE)
+              ),
               node.renderProps,
               shapeBuilder
             );
           } else if (marker === 'multi') {
             if (multiInstance === 'sequential') {
-              this.buildSequentialMarker(
-                currentX + MARKER_SIZE / 2,
-                bottomY + MARKER_SIZE / 2,
-                MARKER_SIZE,
+              this.renderIcon(
+                getSVGIcon(linesHorizontalIcon),
+                Box.fromCorners(
+                  _p(currentX, bottomY),
+                  _p(currentX + MARKER_SIZE, bottomY + MARKER_SIZE)
+                ),
                 node.renderProps,
                 shapeBuilder
               );
             } else {
-              this.buildParallelMarker(
-                currentX + MARKER_SIZE / 2,
-                bottomY + MARKER_SIZE / 2,
-                MARKER_SIZE,
+              this.renderIcon(
+                getSVGIcon(linesVerticalIcon),
+                Box.fromCorners(
+                  _p(currentX, bottomY),
+                  _p(currentX + MARKER_SIZE, bottomY + MARKER_SIZE)
+                ),
                 node.renderProps,
                 shapeBuilder
               );
             }
           } else if (marker === 'compensation') {
-            this.buildCompensationMarker(
-              currentX + MARKER_SIZE / 2,
-              bottomY + MARKER_SIZE / 2,
-              MARKER_SIZE,
+            this.renderIcon(
+              getSVGIcon(playerTrackPrevIcon),
+              Box.fromCorners(
+                _p(currentX, bottomY),
+                _p(currentX + MARKER_SIZE, bottomY + MARKER_SIZE)
+              ),
               node.renderProps,
               shapeBuilder
             );
           } else if (marker === 'ad-hoc') {
-            this.buildAdHocMarker(
-              currentX + MARKER_SIZE / 2,
-              bottomY + MARKER_SIZE / 2,
-              MARKER_SIZE,
+            this.renderIcon(
+              getSVGIcon(tildeIcon),
+              Box.fromCorners(
+                _p(currentX, bottomY),
+                _p(currentX + MARKER_SIZE, bottomY + MARKER_SIZE)
+              ),
               node.renderProps,
               shapeBuilder
             );
@@ -437,81 +457,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           currentX += markerSpacing;
         }
       }
-    }
-
-    private buildLoopMarker(
-      cx: number,
-      cy: number,
-      r: number,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      this.renderIcon(
-        getSVGIcon(arrowBackUpIcon),
-        Box.fromCorners(_p(cx - r, cy - r), _p(cx + r, cy + r)),
-        nodeProps,
-        shapeBuilder
-      );
-    }
-
-    private buildSequentialMarker(
-      cx: number,
-      cy: number,
-      size: number,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      this.renderIcon(
-        getSVGIcon(linesHorizontalIcon),
-        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
-        nodeProps,
-        shapeBuilder
-      );
-    }
-
-    private buildParallelMarker(
-      cx: number,
-      cy: number,
-      size: number,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      this.renderIcon(
-        getSVGIcon(linesVerticalIcon),
-        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
-        nodeProps,
-        shapeBuilder
-      );
-    }
-
-    private buildCompensationMarker(
-      cx: number,
-      cy: number,
-      size: number,
-      props: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      this.renderIcon(
-        getSVGIcon(playerTrackPrevIcon),
-        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
-        props,
-        shapeBuilder
-      );
-    }
-
-    private buildAdHocMarker(
-      cx: number,
-      cy: number,
-      size: number,
-      props: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      this.renderIcon(
-        getSVGIcon(tildeIcon),
-        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
-        props,
-        shapeBuilder
-      );
     }
   };
 
