@@ -4,12 +4,31 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import linesVerticalIcon from './icons/lines-vertical.svg?raw';
+import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      bpmnDataObject?: {
+        collection?: boolean;
+      };
+    }
+  }
+}
+
+registerCustomNodeDefaults('bpmnDataObject', {
+  collection: false
+});
 
 const templatePaths = PathListBuilder.fromString(
   `
@@ -30,8 +49,13 @@ const innerPaths = PathListBuilder.fromString(
     `
 ).getPaths();
 
-const bounds = templatePaths.bounds();
+const pathBounds = templatePaths.bounds();
 const path = mustExist(templatePaths.all()[0]);
+
+const ICON_MARGIN = 5;
+const ICON_SIZE = 15;
+const MARKER_SIZE = 12;
+const BOTTOM_MARGIN = 1;
 
 // NodeDefinition and Shape *****************************************************
 
@@ -48,7 +72,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
 
       shapeBuilder.path(
         PathListBuilder.fromPath(mustExist(innerPaths.all()[0]))
-          .getPaths(TransformFactory.fromTo(bounds, Box.withoutRotation(props.node.bounds)))
+          .getPaths(TransformFactory.fromTo(pathBounds, Box.withoutRotation(props.node.bounds)))
           .all(),
         undefined,
         {
@@ -69,11 +93,70 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
           )
         )
       );
+
+      const dataObjectProps = props.node.renderProps.custom.bpmnDataObject;
+      const bounds = props.node.bounds;
+
+      if (dataObjectProps.collection) {
+        this.renderIcon(
+          getSVGIcon(linesVerticalIcon),
+          Box.fromCorners(
+            _p(
+              bounds.x + bounds.w / 2 - MARKER_SIZE / 2,
+              bounds.y + bounds.h - BOTTOM_MARGIN - MARKER_SIZE
+            ),
+            _p(bounds.x + bounds.w / 2 + MARKER_SIZE / 2, bounds.y + bounds.h - BOTTOM_MARGIN)
+          ),
+          props.nodeProps,
+          shapeBuilder
+        );
+      }
+    }
+
+    private renderIcon(
+      icon: Icon,
+      position: Box,
+      nodeProps: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      shapeBuilder.path(
+        PathListBuilder.fromPathList(icon.pathList)
+          .getPaths(TransformFactory.fromTo(icon.viewbox, position))
+          .all(),
+        undefined,
+        {
+          style: {
+            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
+            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
+            strokeWidth: '1',
+            strokeDasharray: 'none'
+          }
+        }
+      );
     }
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const t = TransformFactory.fromTo(bounds, Box.withoutRotation(def.bounds));
+    const t = TransformFactory.fromTo(pathBounds, Box.withoutRotation(def.bounds));
     return PathListBuilder.fromPath(path).withTransform(t);
+  }
+
+  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+    return [
+      {
+        id: 'collection',
+        type: 'boolean',
+        label: 'Collection',
+        value: def.renderProps.custom.bpmnDataObject.collection ?? false,
+        isSet: def.storedProps.custom?.bpmnDataObject?.collection !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnDataObject', props => (props.collection = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnDataObject', props => (props.collection = value), uow);
+          }
+        }
+      }
+    ];
   }
 }
