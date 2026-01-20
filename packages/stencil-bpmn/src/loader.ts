@@ -7,6 +7,7 @@ import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActi
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
 import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';
 import { BPMNEventNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNEvent.nodeType';
+import { BPMNGatewayNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNGateway.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -252,6 +253,18 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
           }
         }
       };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNGatewayNodeDefinition(), {
+    id: 'bpmn-gateway',
+    name: 'Gateway',
+    size: {
+      w: 50,
+      h: 50
+    },
+    texts: {
+      text: ''
     }
   });
 
