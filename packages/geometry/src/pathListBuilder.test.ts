@@ -209,6 +209,23 @@ describe('PathListBuilder', () => {
       expect(scaledPath.segments[0]!.end.y).toBeCloseTo(12.679);
     });
 
+    it('scales a path with smooth cubic segments correctly', () => {
+      const fromBounds: Box = { x: 0, y: 0, w: 30, h: 30, r: 0 };
+      const toBounds: Box = { x: 0, y: 0, w: 60, h: 60, r: 0 };
+
+      const scaledPath = PathListBuilder.fromString(`M 0 0 C 5 5 10 10 15 15 S 25 25 30 30`)
+        .withTransform(TransformFactory.fromTo(fromBounds, toBounds))
+        .getPaths()
+        .singular();
+
+      expect(scaledPath.start).toEqual({ x: 0, y: 0 });
+      expect(scaledPath.segments).toHaveLength(2);
+      expect(scaledPath.segments[0]).toBeInstanceOf(CubicSegment);
+      expect(scaledPath.segments[1]).toBeInstanceOf(CubicSegment);
+      expect(scaledPath.segments[0]!.end).toEqual({ x: 30, y: 30 });
+      expect(scaledPath.segments[1]!.end).toEqual({ x: 60, y: 60 });
+    });
+
     it('handles zero scaling correctly', () => {
       const fromBounds: Box = { x: 10, y: 10, w: 10, h: 10, r: 0 };
       const toBounds: Box = { x: 5, y: 5, w: 0, h: 0, r: 0 };
@@ -307,5 +324,94 @@ describe('toUnitLCS', () => {
 
     expect(unitCenter.x).toBeCloseTo(0.5);
     expect(unitCenter.y).toBeCloseTo(0.5);
+  });
+});
+
+describe('PathListBuilder.fromString - smooth cubic curves', () => {
+  it('parses absolute S command after C command', () => {
+    // C command from (0,0) to (10,10) with control points (3,3) and (7,7)
+    // S command should reflect (7,7) across (10,10) to get (13,13) as first control point
+    const path = PathListBuilder.fromString('M 0 0 C 3 3 7 7 10 10 S 17 17 20 20')
+      .getPaths()
+      .singular();
+
+    expect(path.segments).toHaveLength(2);
+    expect(path.segments[0]).toBeInstanceOf(CubicSegment);
+    expect(path.segments[1]).toBeInstanceOf(CubicSegment);
+
+    const cubic1 = path.segments[0] as CubicSegment;
+    const cubic2 = path.segments[1] as CubicSegment;
+
+    expect(cubic1.start).toEqual({ x: 0, y: 0 });
+    expect(cubic1.p1).toEqual({ x: 3, y: 3 });
+    expect(cubic1.p2).toEqual({ x: 7, y: 7 });
+    expect(cubic1.end).toEqual({ x: 10, y: 10 });
+
+    expect(cubic2.start).toEqual({ x: 10, y: 10 });
+    expect(cubic2.p1).toEqual({ x: 13, y: 13 }); // Reflected: 2*10 - 7 = 13
+    expect(cubic2.p2).toEqual({ x: 17, y: 17 });
+    expect(cubic2.end).toEqual({ x: 20, y: 20 });
+  });
+
+  it('parses relative s command after c command', () => {
+    const path = PathListBuilder.fromString('M 0 0 c 3 3 7 7 10 10 s 7 7 10 10')
+      .getPaths()
+      .singular();
+
+    expect(path.segments).toHaveLength(2);
+    const cubic1 = path.segments[0] as CubicSegment;
+    const cubic2 = path.segments[1] as CubicSegment;
+
+    expect(cubic1.start).toEqual({ x: 0, y: 0 });
+    expect(cubic1.p1).toEqual({ x: 3, y: 3 });
+    expect(cubic1.p2).toEqual({ x: 7, y: 7 });
+    expect(cubic1.end).toEqual({ x: 10, y: 10 });
+
+    expect(cubic2.start).toEqual({ x: 10, y: 10 });
+    expect(cubic2.p1).toEqual({ x: 13, y: 13 }); // Reflected
+    expect(cubic2.p2).toEqual({ x: 17, y: 17 }); // 10 + 7
+    expect(cubic2.end).toEqual({ x: 20, y: 20 }); // 10 + 10
+  });
+
+  it('handles S command without preceding cubic command', () => {
+    // When S is not preceded by C or S, first control point should be current point
+    const path = PathListBuilder.fromString('M 0 0 L 10 10 S 15 15 20 20')
+      .getPaths()
+      .singular();
+
+    expect(path.segments).toHaveLength(2);
+    expect(path.segments[1]).toBeInstanceOf(CubicSegment);
+
+    const cubic = path.segments[1] as CubicSegment;
+    expect(cubic.start).toEqual({ x: 10, y: 10 });
+    expect(cubic.p1).toEqual({ x: 10, y: 10 }); // Same as start point
+    expect(cubic.p2).toEqual({ x: 15, y: 15 });
+    expect(cubic.end).toEqual({ x: 20, y: 20 });
+  });
+
+  it('handles chained S commands', () => {
+    const path = PathListBuilder.fromString('M 0 0 C 2 2 4 4 6 6 S 10 10 12 12 S 16 16 18 18')
+      .getPaths()
+      .singular();
+
+    expect(path.segments).toHaveLength(3);
+
+    const cubic1 = path.segments[0] as CubicSegment;
+    const cubic2 = path.segments[1] as CubicSegment;
+    const cubic3 = path.segments[2] as CubicSegment;
+
+    // First cubic
+    expect(cubic1.p2).toEqual({ x: 4, y: 4 });
+    expect(cubic1.end).toEqual({ x: 6, y: 6 });
+
+    // Second cubic - reflects (4,4) across (6,6) to get (8,8)
+    expect(cubic2.p1).toEqual({ x: 8, y: 8 });
+    expect(cubic2.p2).toEqual({ x: 10, y: 10 });
+    expect(cubic2.end).toEqual({ x: 12, y: 12 });
+
+    // Third cubic - reflects (10,10) across (12,12) to get (14,14)
+    expect(cubic3.p1).toEqual({ x: 14, y: 14 });
+    expect(cubic3.p2).toEqual({ x: 16, y: 16 });
+    expect(cubic3.end).toEqual({ x: 18, y: 18 });
   });
 });

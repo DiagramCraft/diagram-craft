@@ -207,8 +207,8 @@ export class PathListBuilder {
    * Creates a PathListBuilder by parsing an SVG path string.
    *
    * Supports standard SVG path commands: M/m (move), L/l (line), H/h (horizontal line),
-   * V/v (vertical line), C/c (cubic curve), Q/q (quadratic curve), T/t (smooth curve),
-   * A/a (arc), and Z/z (close path).
+   * V/v (vertical line), C/c (cubic curve), S/s (smooth cubic curve), Q/q (quadratic curve),
+   * T/t (smooth quadratic curve), A/a (arc), and Z/z (close path).
    * Uppercase commands use absolute coordinates, lowercase use relative coordinates.
    *
    * @param path The SVG path string to parse
@@ -217,6 +217,8 @@ export class PathListBuilder {
   static fromString(path: string) {
     const d = new PathListBuilder();
     let currentPos: Point = { x: 0, y: 0 };
+    let lastControlPoint: Point | undefined;
+    let lastCommand: string | undefined;
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -256,17 +258,41 @@ export class PathListBuilder {
           d.lineTo(currentPos);
           break;
         case 'C':
+          lastControlPoint = { x: pn[2]!, y: pn[3]! };
           currentPos = { x: pn[4]!, y: pn[5]! };
-          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, { x: pn[2]!, y: pn[3]! });
+          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, lastControlPoint);
           break;
         case 'c':
+          lastControlPoint = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
           d.cubicTo(
             { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! },
             { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! },
-            { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! }
+            lastControlPoint
           );
           currentPos = { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! };
           break;
+        case 'S': {
+          // Calculate reflected control point
+          const p1 =
+            lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
+              ? { x: 2 * currentPos.x - lastControlPoint!.x, y: 2 * currentPos.y - lastControlPoint!.y }
+              : currentPos;
+          lastControlPoint = { x: pn[0]!, y: pn[1]! };
+          currentPos = { x: pn[2]!, y: pn[3]! };
+          d.cubicTo(currentPos, p1, lastControlPoint);
+          break;
+        }
+        case 's': {
+          // Calculate reflected control point
+          const p1 =
+            lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
+              ? { x: 2 * currentPos.x - lastControlPoint!.x, y: 2 * currentPos.y - lastControlPoint!.y }
+              : currentPos;
+          lastControlPoint = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          currentPos = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
+          d.cubicTo(currentPos, p1, lastControlPoint);
+          break;
+        }
         case 'Q':
           currentPos = { x: pn[2]!, y: pn[3]! };
           d.quadTo(currentPos, { x: pn[0]!, y: pn[1]! });
@@ -304,6 +330,9 @@ export class PathListBuilder {
         default:
           throw new VerifyNotReached(`command ${t} not supported: ${path}`);
       }
+
+      // Track the last command for smooth curve commands
+      lastCommand = t;
     });
 
     return d;

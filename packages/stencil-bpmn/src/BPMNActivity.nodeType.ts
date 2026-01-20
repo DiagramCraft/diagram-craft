@@ -19,7 +19,13 @@ import mailIcon from './icons/mail.svg?raw';
 import userIcon from './icons/user.svg?raw';
 import tableIcon from './icons/table.svg?raw';
 import scriptIcon from './icons/script.svg?raw';
+import squarePlusIcon from './icons/square-plus.svg?raw';
+import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
 import handFingerRightIcon from './icons/hand-finger-right.svg?raw';
+import playerTrackPrevIcon from './icons/player-track-prev.svg?raw';
+import tildeIcon from './icons/tilde.svg?raw';
+import linesVerticalIcon from './icons/lines-vertical.svg?raw';
+import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 
 type SubprocessType =
@@ -34,13 +40,13 @@ type MarkerType = 'loop' | 'multi' | 'compensation';
 type AllMarkerType = MarkerType | 'ad-hoc';
 
 const TASK_TYPE_ICONS: Record<string, string> = {
-  service: settingsIcon,
-  send: mailFilledIcon,
-  receive: mailIcon,
-  user: userIcon,
-  manual: handFingerRightIcon,
+  'service': settingsIcon,
+  'send': mailFilledIcon,
+  'receive': mailIcon,
+  'user': userIcon,
+  'manual': handFingerRightIcon,
   'business-rule': tableIcon,
-  script: scriptIcon
+  'script': scriptIcon
 };
 
 const ICON_MARGIN = 5;
@@ -162,21 +168,13 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         shapeBuilder.path(
           BPMNActivityNodeDefinition.createOuterPath(
             Box.fromCorners(
+              _p(node.bounds.x + TRANSACTION_OFFSET, node.bounds.y + TRANSACTION_OFFSET),
               _p(
-                node.bounds.x + TRANSACTION_OFFSET,
-                node.bounds.y + TRANSACTION_OFFSET
-              ),
-              _p(
-                node.bounds.x +
-                  node.bounds.w -
-                  TRANSACTION_OFFSET,
-                node.bounds.y +
-                  node.bounds.h -
-                  TRANSACTION_OFFSET
+                node.bounds.x + node.bounds.w - TRANSACTION_OFFSET,
+                node.bounds.y + node.bounds.h - TRANSACTION_OFFSET
               )
             ),
-            node.renderProps.custom.bpmnActivity.radius -
-              TRANSACTION_OFFSET
+            node.renderProps.custom.bpmnActivity.radius - TRANSACTION_OFFSET
           )
             .getPaths()
             .all(),
@@ -192,15 +190,20 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
       if (iconSvg) {
         const icon = getSVGIcon(iconSvg);
-        this.renderTaskIcon(icon, node, props.nodeProps, shapeBuilder);
+
+        const dest = Box.fromCorners(
+          _p(node.bounds.x + ICON_MARGIN, node.bounds.y + ICON_MARGIN),
+          _p(node.bounds.x + ICON_MARGIN + ICON_SIZE, node.bounds.y + ICON_MARGIN + ICON_SIZE)
+        );
+        this.renderIcon(icon, dest, props.nodeProps, shapeBuilder);
       }
 
       shapeBuilder.text(this);
     }
 
-    private renderTaskIcon(
+    private renderIcon(
       icon: Icon,
-      node: DiagramNode,
+      position: Box,
       nodeProps: NodePropsForRendering,
       shapeBuilder: ShapeBuilder
     ) {
@@ -212,20 +215,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                 _p(icon.viewbox.x, icon.viewbox.y),
                 _p(icon.viewbox.x + icon.viewbox.w, icon.viewbox.y + icon.viewbox.h)
               ),
-              Box.fromCorners(
-                _p(
-                  node.bounds.x + ICON_MARGIN,
-                  node.bounds.y + ICON_MARGIN
-                ),
-                _p(
-                  node.bounds.x +
-                    ICON_MARGIN +
-                    ICON_SIZE,
-                  node.bounds.y +
-                    ICON_MARGIN +
-                    ICON_SIZE
-                )
-              )
+              position
             )
           )
           .all(),
@@ -240,57 +230,18 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     }
 
     private buildSubprocessIndicator(node: DiagramNode, shapeBuilder: ShapeBuilder) {
-      const bounds = node.bounds;
-      const centerX = bounds.x + bounds.w / 2;
-      const bottomY =
-        bounds.y +
-        bounds.h -
-        SUBPROCESS_INDICATOR_SIZE -
-        BOTTOM_MARGIN;
+      const centerX = node.bounds.x + node.bounds.w / 2;
+      const bottomY = node.bounds.y + node.bounds.h - SUBPROCESS_INDICATOR_SIZE - BOTTOM_MARGIN;
 
-      // Draw the box
-      const pathBuilder = new PathListBuilder()
-        .moveTo(
-          _p(centerX - SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
-        )
-        .lineTo(
-          _p(centerX + SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
-        )
-        .lineTo(
-          _p(
-            centerX + SUBPROCESS_INDICATOR_SIZE / 2,
-            bottomY + SUBPROCESS_INDICATOR_SIZE
-          )
-        )
-        .lineTo(
-          _p(
-            centerX - SUBPROCESS_INDICATOR_SIZE / 2,
-            bottomY + SUBPROCESS_INDICATOR_SIZE
-          )
-        )
-        .lineTo(
-          _p(centerX - SUBPROCESS_INDICATOR_SIZE / 2, bottomY)
-        );
-
-      // Draw the + inside the box
-      const plusSize = SUBPROCESS_INDICATOR_SIZE * 0.5;
-      const plusCenterX = centerX;
-      const plusCenterY =
-        bottomY + SUBPROCESS_INDICATOR_SIZE / 2;
-
-      // Horizontal line of +
-      pathBuilder
-        .moveTo(_p(plusCenterX - plusSize / 2, plusCenterY))
-        .lineTo(_p(plusCenterX + plusSize / 2, plusCenterY));
-
-      // Vertical line of +
-      pathBuilder
-        .moveTo(_p(plusCenterX, plusCenterY - plusSize / 2))
-        .lineTo(_p(plusCenterX, plusCenterY + plusSize / 2));
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none', fill: 'none' }
-      });
+      this.renderIcon(
+        getSVGIcon(squarePlusIcon),
+        Box.fromCorners(
+          _p(centerX - SUBPROCESS_INDICATOR_SIZE / 2, bottomY),
+          _p(centerX + SUBPROCESS_INDICATOR_SIZE / 2, bottomY + SUBPROCESS_INDICATOR_SIZE)
+        ),
+        node.renderProps,
+        shapeBuilder
+      );
     }
 
     private buildSubprocessMarkers(
@@ -349,21 +300,14 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     ) {
       const bounds = node.bounds;
       const centerX = bounds.x + bounds.w / 2;
-      const markerSpacing =
-        MARKER_SIZE +
-        MARKER_SPACING;
+      const markerSpacing = MARKER_SIZE + MARKER_SPACING;
 
       if (hasSubprocessIndicator) {
         // For subprocess: position markers on the same line as the + icon
         // Regular markers (loop, multi-instance, compensation) go on the LEFT
         // Ad-hoc marker goes on the RIGHT
-        const bottomY =
-          bounds.y +
-          bounds.h -
-          SUBPROCESS_INDICATOR_SIZE -
-          BOTTOM_MARGIN;
-        const markerY =
-          bottomY + SUBPROCESS_INDICATOR_SIZE / 2;
+        const bottomY = bounds.y + bounds.h - SUBPROCESS_INDICATOR_SIZE - BOTTOM_MARGIN;
+        const markerY = bottomY + SUBPROCESS_INDICATOR_SIZE / 2;
 
         // Collect left-side markers
         const leftMarkers: MarkerType[] = [];
@@ -374,13 +318,9 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         // Render left-side markers (to the left of the + icon)
         if (leftMarkers.length > 0) {
           const leftTotalWidth =
-            leftMarkers.length * MARKER_SIZE +
-            (leftMarkers.length - 1) * MARKER_SPACING;
+            leftMarkers.length * MARKER_SIZE + (leftMarkers.length - 1) * MARKER_SPACING;
           const leftStartX =
-            centerX -
-            SUBPROCESS_INDICATOR_SIZE / 2 -
-            MARKER_SPACING -
-            leftTotalWidth;
+            centerX - SUBPROCESS_INDICATOR_SIZE / 2 - MARKER_SPACING - leftTotalWidth;
           let currentX = leftStartX;
 
           for (const marker of leftMarkers) {
@@ -389,6 +329,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                 currentX + MARKER_SIZE / 2,
                 markerY,
                 MARKER_SIZE / 2,
+                node.renderProps,
                 shapeBuilder
               );
             } else if (marker === 'multi') {
@@ -397,6 +338,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                   currentX + MARKER_SIZE / 2,
                   markerY,
                   MARKER_SIZE,
+                  node.renderProps,
                   shapeBuilder
                 );
               } else {
@@ -404,6 +346,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                   currentX + MARKER_SIZE / 2,
                   markerY,
                   MARKER_SIZE,
+                  node.renderProps,
                   shapeBuilder
                 );
               }
@@ -412,6 +355,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                 currentX + MARKER_SIZE / 2,
                 markerY,
                 MARKER_SIZE,
+                node.renderProps,
                 shapeBuilder
               );
             }
@@ -421,24 +365,18 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
         // Render ad-hoc marker on the right side of the + icon
         if (adHoc) {
-          const rightX =
-            centerX +
-            SUBPROCESS_INDICATOR_SIZE / 2 +
-            MARKER_SPACING;
+          const rightX = centerX + SUBPROCESS_INDICATOR_SIZE / 2 + MARKER_SPACING;
           this.buildAdHocMarker(
             rightX + MARKER_SIZE / 2,
             markerY,
             MARKER_SIZE,
+            node.renderProps,
             shapeBuilder
           );
         }
       } else {
         // For regular tasks: position markers at the bottom center (original behavior)
-        const bottomY =
-          bounds.y +
-          bounds.h -
-          MARKER_SIZE -
-          BOTTOM_MARGIN;
+        const bottomY = bounds.y + bounds.h - MARKER_SIZE - BOTTOM_MARGIN;
 
         // Calculate how many markers we need to render
         const markers: AllMarkerType[] = [];
@@ -448,9 +386,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         if (adHoc) markers.push('ad-hoc');
 
         // Calculate spacing between markers
-        const totalWidth =
-          markers.length * MARKER_SIZE +
-          (markers.length - 1) * MARKER_SPACING;
+        const totalWidth = markers.length * MARKER_SIZE + (markers.length - 1) * MARKER_SPACING;
         let currentX = centerX - totalWidth / 2;
 
         // Render each marker
@@ -460,6 +396,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
               currentX + MARKER_SIZE / 2,
               bottomY + MARKER_SIZE / 2,
               MARKER_SIZE / 2,
+              node.renderProps,
               shapeBuilder
             );
           } else if (marker === 'multi') {
@@ -468,6 +405,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                 currentX + MARKER_SIZE / 2,
                 bottomY + MARKER_SIZE / 2,
                 MARKER_SIZE,
+                node.renderProps,
                 shapeBuilder
               );
             } else {
@@ -475,6 +413,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
                 currentX + MARKER_SIZE / 2,
                 bottomY + MARKER_SIZE / 2,
                 MARKER_SIZE,
+                node.renderProps,
                 shapeBuilder
               );
             }
@@ -483,6 +422,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
               currentX + MARKER_SIZE / 2,
               bottomY + MARKER_SIZE / 2,
               MARKER_SIZE,
+              node.renderProps,
               shapeBuilder
             );
           } else if (marker === 'ad-hoc') {
@@ -490,6 +430,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
               currentX + MARKER_SIZE / 2,
               bottomY + MARKER_SIZE / 2,
               MARKER_SIZE,
+              node.renderProps,
               shapeBuilder
             );
           }
@@ -498,121 +439,79 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       }
     }
 
-    private buildLoopMarker(cx: number, cy: number, r: number, shapeBuilder: ShapeBuilder) {
-      // Standard loop: circular arrow
-      const pathBuilder = new PathListBuilder()
-        .moveTo(_p(cx - r, cy))
-        .arcTo(_p(cx, cy - r), r, r, 0, 0, 1)
-        .arcTo(_p(cx + r, cy), r, r, 0, 0, 1)
-        .arcTo(_p(cx, cy + r), r, r, 0, 0, 1);
-
-      // Add arrow head
-      pathBuilder
-        .moveTo(_p(cx - r, cy))
-        .lineTo(_p(cx - r - 2, cy - 2.5))
-        .moveTo(_p(cx - r, cy))
-        .lineTo(_p(cx - r + 3, cy - 2.5));
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none' }
-      });
+    private buildLoopMarker(
+      cx: number,
+      cy: number,
+      r: number,
+      nodeProps: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      this.renderIcon(
+        getSVGIcon(arrowBackUpIcon),
+        Box.fromCorners(_p(cx - r, cy - r), _p(cx + r, cy + r)),
+        nodeProps,
+        shapeBuilder
+      );
     }
 
     private buildSequentialMarker(
       cx: number,
       cy: number,
       size: number,
+      nodeProps: NodePropsForRendering,
       shapeBuilder: ShapeBuilder
     ) {
-      // Sequential: three horizontal lines
-      const lineWidth = size;
-      const lineSpacing = size / 4;
-      const startX = cx - lineWidth / 2;
-      const startY = cy - lineSpacing;
-
-      const pathBuilder = new PathListBuilder()
-        .moveTo(_p(startX, startY))
-        .lineTo(_p(startX + lineWidth, startY))
-        .moveTo(_p(startX, startY + lineSpacing))
-        .lineTo(_p(startX + lineWidth, startY + lineSpacing))
-        .moveTo(_p(startX, startY + lineSpacing * 2))
-        .lineTo(_p(startX + lineWidth, startY + lineSpacing * 2));
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none' }
-      });
+      this.renderIcon(
+        getSVGIcon(linesHorizontalIcon),
+        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
+        nodeProps,
+        shapeBuilder
+      );
     }
 
-    private buildParallelMarker(cx: number, cy: number, size: number, shapeBuilder: ShapeBuilder) {
-      // Parallel: three vertical lines
-      const lineHeight = size;
-      const lineSpacing = size / 4;
-      const startX = cx - lineSpacing;
-      const startY = cy - lineHeight / 2;
-
-      const pathBuilder = new PathListBuilder()
-        .moveTo(_p(startX, startY))
-        .lineTo(_p(startX, startY + lineHeight))
-        .moveTo(_p(startX + lineSpacing, startY))
-        .lineTo(_p(startX + lineSpacing, startY + lineHeight))
-        .moveTo(_p(startX + lineSpacing * 2, startY))
-        .lineTo(_p(startX + lineSpacing * 2, startY + lineHeight));
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none' }
-      });
+    private buildParallelMarker(
+      cx: number,
+      cy: number,
+      size: number,
+      nodeProps: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      this.renderIcon(
+        getSVGIcon(linesVerticalIcon),
+        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
+        nodeProps,
+        shapeBuilder
+      );
     }
 
     private buildCompensationMarker(
       cx: number,
       cy: number,
       size: number,
+      props: NodePropsForRendering,
       shapeBuilder: ShapeBuilder
     ) {
-      // Compensation: two triangles pointing left (like a rewind symbol <<)
-      const triangleWidth = size / 2;
-      const triangleHeight = size * 0.8;
-
-      // Left triangle (pointing left)
-      const leftTriangleCenterX = cx - triangleWidth / 2;
-      // Right triangle (pointing left)
-      const rightTriangleCenterX = cx + triangleWidth / 2;
-
-      const pathBuilder = new PathListBuilder()
-        // First triangle (left) - point on left, base on right
-        .moveTo(_p(leftTriangleCenterX - triangleWidth / 2, cy))
-        .lineTo(_p(leftTriangleCenterX + triangleWidth / 2, cy - triangleHeight / 2))
-        .lineTo(_p(leftTriangleCenterX + triangleWidth / 2, cy + triangleHeight / 2))
-        .lineTo(_p(leftTriangleCenterX - triangleWidth / 2, cy))
-        // Second triangle (right) - point on left, base on right
-        .moveTo(_p(rightTriangleCenterX - triangleWidth / 2, cy))
-        .lineTo(_p(rightTriangleCenterX + triangleWidth / 2, cy - triangleHeight / 2))
-        .lineTo(_p(rightTriangleCenterX + triangleWidth / 2, cy + triangleHeight / 2))
-        .lineTo(_p(rightTriangleCenterX - triangleWidth / 2, cy));
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none' }
-      });
+      this.renderIcon(
+        getSVGIcon(playerTrackPrevIcon),
+        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
+        props,
+        shapeBuilder
+      );
     }
 
-    private buildAdHocMarker(cx: number, cy: number, size: number, shapeBuilder: ShapeBuilder) {
-      // Ad-hoc: tilde (~) symbol
-      const width = size;
-      const amplitude = size / 2;
-      const startX = cx - width / 2;
-
-      // Draw a tilde using two curves
-      const pathBuilder = new PathListBuilder()
-        .moveTo(_p(startX, cy))
-        .cubicTo(
-          _p(startX + width, cy),
-          _p(startX + (3 * width) / 8, cy - amplitude),
-          _p(startX + (5 * width) / 8, cy + amplitude)
-        );
-
-      shapeBuilder.path(pathBuilder.getPaths().all(), undefined, {
-        style: { strokeWidth: '1', strokeDasharray: 'none', fill: 'none' }
-      });
+    private buildAdHocMarker(
+      cx: number,
+      cy: number,
+      size: number,
+      props: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      this.renderIcon(
+        getSVGIcon(tildeIcon),
+        Box.fromCorners(_p(cx - size / 2, cy - size / 2), _p(cx + size / 2, cy + size / 2)),
+        props,
+        shapeBuilder
+      );
     }
   };
 
