@@ -27,7 +27,7 @@ declare global {
     interface CustomNodePropsExtensions {
       bpmnTask?: {
         taskType?: string;
-        type?: string;
+        activityType?: string;
         radius?: number;
         loop?: boolean;
         multiInstance?: 'none' | 'sequential' | 'parallel';
@@ -47,7 +47,7 @@ declare global {
 
 registerCustomNodeDefaults('bpmnTask', {
   taskType: 'regular',
-  type: 'task',
+  activityType: 'task',
   radius: 5,
   loop: false,
   multiInstance: 'none',
@@ -85,13 +85,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
       style: Partial<CSSStyleDeclaration>
     ) {
       if (
-        nodeProps.custom.bpmnTask.type === 'event-sub-process' &&
+        nodeProps.custom.bpmnTask.activityType === 'event-sub-process' &&
         el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
       ) {
         style.strokeDasharray = '2 5';
       }
 
-      if (nodeProps.custom.bpmnTask.type === 'transaction') {
+      if (nodeProps.custom.bpmnTask.activityType === 'transaction') {
         style.strokeWidth = '1.5';
       }
     }
@@ -102,7 +102,7 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         new BPMNTaskNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const taskType = node.renderProps.custom.bpmnTask.type ?? 'task';
+      const taskType = node.renderProps.custom.bpmnTask.activityType ?? 'task';
       const isSubprocess =
         taskType === 'sub-process' ||
         taskType === 'event-sub-process' ||
@@ -130,7 +130,7 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         this.buildMarkers(node, loop, multiInstance, compensation, false, false, shapeBuilder);
       }
 
-      if (props.nodeProps.custom.bpmnTask.type === 'transaction') {
+      if (props.nodeProps.custom.bpmnTask.activityType === 'transaction') {
         const offset = 3;
         shapeBuilder.path(
           createOuterPath(
@@ -514,6 +514,26 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
   getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
       {
+        id: 'activityType',
+        type: 'select',
+        label: 'Activity Type',
+        options: [
+          { value: 'task', label: 'Task' },
+          { value: 'sub-process', label: 'Sub-process' },
+          { value: 'event-sub-process', label: 'Event sub-process' },
+          { value: 'transaction', label: 'Transaction' }
+        ],
+        value: def.renderProps.custom.bpmnTask.activityType ?? 'task',
+        isSet: def.storedProps.custom?.bpmnTask?.activityType !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.activityType = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnTask', props => (props.activityType = value), uow);
+          }
+        }
+      },
+      {
         id: 'taskType',
         type: 'select',
         label: 'Task Type',
@@ -534,26 +554,6 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
             def.updateCustomProps('bpmnTask', props => (props.taskType = undefined), uow);
           } else {
             def.updateCustomProps('bpmnTask', props => (props.taskType = value), uow);
-          }
-        }
-      },
-      {
-        id: 'type',
-        type: 'select',
-        label: 'Type',
-        options: [
-          { value: 'task', label: 'Task' },
-          { value: 'sub-process', label: 'Sub-process' },
-          { value: 'event-sub-process', label: 'Event sub-process' },
-          { value: 'transaction', label: 'Transaction' }
-        ],
-        value: def.renderProps.custom.bpmnTask.type ?? 'task',
-        isSet: def.storedProps.custom?.bpmnTask?.type !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.type = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnTask', props => (props.type = value), uow);
           }
         }
       },
