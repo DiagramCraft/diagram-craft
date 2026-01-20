@@ -206,14 +206,16 @@ export class PathListBuilder {
   /**
    * Creates a PathListBuilder by parsing an SVG path string.
    *
-   * Supports standard SVG path commands: M (move), L (line), C (cubic curve),
-   * Q (quadratic curve), T (smooth curve), and A (arc).
+   * Supports standard SVG path commands: M/m (move), L/l (line), C/c (cubic curve),
+   * Q/q (quadratic curve), T/t (smooth curve), A/a (arc), and Z/z (close path).
+   * Uppercase commands use absolute coordinates, lowercase use relative coordinates.
    *
    * @param path The SVG path string to parse
    * @returns A new PathListBuilder instance
    */
   static fromString(path: string) {
     const d = new PathListBuilder();
+    let currentPos: Point = { x: 0, y: 0 };
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -221,22 +223,66 @@ export class PathListBuilder {
 
       switch (t) {
         case 'M':
-          d.moveTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.moveTo(currentPos);
+          break;
+        case 'm':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.moveTo(currentPos);
           break;
         case 'L':
-          d.lineTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.lineTo(currentPos);
+          break;
+        case 'l':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.lineTo(currentPos);
           break;
         case 'C':
-          d.cubicTo({ x: pn[4]!, y: pn[5]! }, { x: pn[0]!, y: pn[1]! }, { x: pn[2]!, y: pn[3]! });
+          currentPos = { x: pn[4]!, y: pn[5]! };
+          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, { x: pn[2]!, y: pn[3]! });
+          break;
+        case 'c':
+          d.cubicTo(
+            { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! },
+            { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! },
+            { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! }
+          );
+          currentPos = { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! };
           break;
         case 'Q':
-          d.quadTo({ x: pn[2]!, y: pn[3]! }, { x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[2]!, y: pn[3]! };
+          d.quadTo(currentPos, { x: pn[0]!, y: pn[1]! });
+          break;
+        case 'q':
+          d.quadTo(
+            { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! },
+            { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! }
+          );
+          currentPos = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
           break;
         case 'T':
-          d.curveTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.curveTo(currentPos);
+          break;
+        case 't':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.curveTo(currentPos);
           break;
         case 'A':
-          d.arcTo({ x: pn[5]!, y: pn[6]! }, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          currentPos = { x: pn[5]!, y: pn[6]! };
+          d.arcTo(currentPos, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          break;
+        case 'a':
+          currentPos = { x: currentPos.x + pn[5]!, y: currentPos.y + pn[6]! };
+          d.arcTo(currentPos, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          break;
+        case 'Z':
+        case 'z':
+          d.close();
+          if (d.active.start) {
+            currentPos = d.active.start;
+          }
           break;
         default:
           throw new VerifyNotReached(`command ${t} not supported: ${path}`);

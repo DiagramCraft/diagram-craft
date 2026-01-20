@@ -55,3 +55,19 @@ export const hash = (arr: Uint8Array): number => {
   }
   return res >>> 0;
 };
+
+/**
+ * Generates a 32-bit hash as a number.
+ *
+ * @param arr - The string to hash
+ * @returns 32-bit unsigned integer hash value
+ *
+ * @see https://gist.github.com/eplawless/52813b1d8ad9af510d85
+ */
+export const stringHash = (arr: string): number => {
+  let res = 5381;
+  for (let i = 0; i < arr.length; i++) {
+    res = (res * 33) ^ arr.codePointAt(i)!;
+  }
+  return res >>> 0;
+};

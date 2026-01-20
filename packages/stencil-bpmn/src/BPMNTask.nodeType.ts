@@ -12,11 +12,16 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
+import settingsIcon from './icons/settings.svg?raw';
+import mailIcon from './icons/mail.svg?raw';
+import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       bpmnTask?: {
+        taskType?: string;
         type?: string;
         radius?: number;
         loop?: boolean;
@@ -36,6 +41,7 @@ declare global {
 }
 
 registerCustomNodeDefaults('bpmnTask', {
+  taskType: 'regular',
   type: 'task',
   radius: 5,
   loop: false,
@@ -135,6 +141,36 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
           {
             style: { fill: 'none' }
           }
+        );
+      }
+
+      let icon: Icon | undefined;
+      if (props.nodeProps.custom.bpmnTask.taskType === 'service') {
+        icon = getSVGIcon(settingsIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'send') {
+        icon = getSVGIcon(mailIcon);
+      }
+
+      if (icon) {
+        const margin = 5;
+        const iconSize = 15;
+        shapeBuilder.path(
+          PathListBuilder.fromPathList(icon.pathList)
+            .getPaths(
+              TransformFactory.fromTo(
+                Box.fromCorners(
+                  _p(icon.viewbox.x, icon.viewbox.y),
+                  _p(icon.viewbox.x + icon.viewbox.w, icon.viewbox.y + icon.viewbox.h)
+                ),
+                Box.fromCorners(
+                  _p(node.bounds.x + margin, node.bounds.y + margin),
+                  _p(node.bounds.x + margin + iconSize, node.bounds.y + margin + iconSize)
+                )
+              )
+            )
+            .all(),
+          undefined,
+          {}
         );
       }
 
@@ -457,6 +493,25 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
     return [
+      {
+        id: 'taskType',
+        type: 'select',
+        label: 'Task Type',
+        options: [
+          { value: 'regular', label: 'Regular' },
+          { value: 'service', label: 'Service' },
+          { value: 'send', label: 'Send' }
+        ],
+        value: def.renderProps.custom.bpmnTask.taskType ?? 'regular',
+        isSet: def.storedProps.custom?.bpmnTask?.taskType !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnTask', props => (props.taskType = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnTask', props => (props.taskType = value), uow);
+          }
+        }
+      },
       {
         id: 'type',
         type: 'select',
