@@ -3,7 +3,7 @@ import {
   registerStencil,
   StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { BPMNTaskNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNTask.nodeType';
+import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -13,12 +13,12 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     type: 'default'
   };
 
-  registerStencil(r, bpmnStencils, new BPMNTaskNodeDefinition(), {
+  registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
     aspectRatio: 1.5,
     props: () => {
       return {
         custom: {
-          bpmnTask: {
+          bpmnActivity: {
             radius: 10
           }
         }

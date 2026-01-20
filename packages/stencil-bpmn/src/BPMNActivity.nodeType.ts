@@ -25,7 +25,7 @@ import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      bpmnTask?: {
+      bpmnActivity?: {
         taskType?: string;
         activityType?: string;
         radius?: number;
@@ -45,7 +45,7 @@ declare global {
   }
 }
 
-registerCustomNodeDefaults('bpmnTask', {
+registerCustomNodeDefaults('bpmnActivity', {
   taskType: 'regular',
   activityType: 'task',
   radius: 5,
@@ -73,25 +73,25 @@ const createOuterPath = (bounds: Box, radius: number) => {
     .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
 };
 
-export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
+export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
-    super('bpmnTask', 'BPMN Task', BPMNTaskNodeDefinition.Shape);
+    super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
   }
 
-  static Shape = class extends BaseNodeComponent<BPMNTaskNodeDefinition> {
+  static Shape = class extends BaseNodeComponent<BPMNActivityNodeDefinition> {
     protected adjustStyle(
       el: DiagramNode,
       nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
       if (
-        nodeProps.custom.bpmnTask.activityType === 'event-sub-process' &&
+        nodeProps.custom.bpmnActivity.activityType === 'event-sub-process' &&
         el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
       ) {
         style.strokeDasharray = '2 5';
       }
 
-      if (nodeProps.custom.bpmnTask.activityType === 'transaction') {
+      if (nodeProps.custom.bpmnActivity.activityType === 'transaction') {
         style.strokeWidth = '1.5';
       }
     }
@@ -99,15 +99,15 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const node = props.node;
       shapeBuilder.boundaryPath(
-        new BPMNTaskNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
+        new BPMNActivityNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const taskType = node.renderProps.custom.bpmnTask.activityType ?? 'task';
+      const taskType = node.renderProps.custom.bpmnActivity.activityType ?? 'task';
       const isSubprocess =
         taskType === 'sub-process' ||
         taskType === 'event-sub-process' ||
         taskType === 'transaction';
-      const expanded = node.renderProps.custom.bpmnTask.expanded ?? false;
+      const expanded = node.renderProps.custom.bpmnActivity.expanded ?? false;
 
       // Render boxed + icon for collapsed subprocesses only
       if (isSubprocess && !expanded) {
@@ -120,17 +120,17 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
 
       if (isSubprocess) {
         // For all subprocesses (collapsed or expanded), use subprocess type to determine markers
-        const subprocessType = node.renderProps.custom.bpmnTask.subprocessType ?? 'default';
+        const subprocessType = node.renderProps.custom.bpmnActivity.subprocessType ?? 'default';
         this.buildSubprocessMarkers(node, subprocessType, hasSubprocessIndicator, shapeBuilder);
       } else {
         // Use individual marker properties for regular tasks
-        const loop = node.renderProps.custom.bpmnTask.loop ?? false;
-        const multiInstance = node.renderProps.custom.bpmnTask.multiInstance ?? 'none';
-        const compensation = node.renderProps.custom.bpmnTask.compensation ?? false;
+        const loop = node.renderProps.custom.bpmnActivity.loop ?? false;
+        const multiInstance = node.renderProps.custom.bpmnActivity.multiInstance ?? 'none';
+        const compensation = node.renderProps.custom.bpmnActivity.compensation ?? false;
         this.buildMarkers(node, loop, multiInstance, compensation, false, false, shapeBuilder);
       }
 
-      if (props.nodeProps.custom.bpmnTask.activityType === 'transaction') {
+      if (props.nodeProps.custom.bpmnActivity.activityType === 'transaction') {
         const offset = 3;
         shapeBuilder.path(
           createOuterPath(
@@ -138,7 +138,7 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
               _p(node.bounds.x + offset, node.bounds.y + offset),
               _p(node.bounds.x + node.bounds.w - offset, node.bounds.y + node.bounds.h - offset)
             ),
-            node.renderProps.custom.bpmnTask.radius - offset
+            node.renderProps.custom.bpmnActivity.radius - offset
           )
             .getPaths()
             .all(),
@@ -150,19 +150,19 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
       }
 
       let icon: Icon | undefined;
-      if (props.nodeProps.custom.bpmnTask.taskType === 'service') {
+      if (props.nodeProps.custom.bpmnActivity.taskType === 'service') {
         icon = getSVGIcon(settingsIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'send') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'send') {
         icon = getSVGIcon(mailFilledIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'receive') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'receive') {
         icon = getSVGIcon(mailIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'user') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'user') {
         icon = getSVGIcon(userIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'manual') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'manual') {
         icon = getSVGIcon(handFingerRightIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'business-rule') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'business-rule') {
         icon = getSVGIcon(tableIcon);
-      } else if (props.nodeProps.custom.bpmnTask.taskType === 'script') {
+      } else if (props.nodeProps.custom.bpmnActivity.taskType === 'script') {
         icon = getSVGIcon(scriptIcon);
       }
 
@@ -523,13 +523,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
           { value: 'event-sub-process', label: 'Event sub-process' },
           { value: 'transaction', label: 'Transaction' }
         ],
-        value: def.renderProps.custom.bpmnTask.activityType ?? 'task',
-        isSet: def.storedProps.custom?.bpmnTask?.activityType !== undefined,
+        value: def.renderProps.custom.bpmnActivity.activityType ?? 'task',
+        isSet: def.storedProps.custom?.bpmnActivity?.activityType !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.activityType = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.activityType = undefined), uow);
           } else {
-            def.updateCustomProps('bpmnTask', props => (props.activityType = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.activityType = value), uow);
           }
         }
       },
@@ -547,13 +547,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
           { value: 'business-rule', label: 'Business Rule' },
           { value: 'script', label: 'Script' }
         ],
-        value: def.renderProps.custom.bpmnTask.taskType ?? 'regular',
-        isSet: def.storedProps.custom?.bpmnTask?.taskType !== undefined,
+        value: def.renderProps.custom.bpmnActivity.taskType ?? 'regular',
+        isSet: def.storedProps.custom?.bpmnActivity?.taskType !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.taskType = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.taskType = undefined), uow);
           } else {
-            def.updateCustomProps('bpmnTask', props => (props.taskType = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.taskType = value), uow);
           }
         }
       },
@@ -561,13 +561,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'loop',
         type: 'boolean',
         label: 'Loop',
-        value: def.renderProps.custom.bpmnTask.loop ?? false,
-        isSet: def.storedProps.custom?.bpmnTask?.loop !== undefined,
+        value: def.renderProps.custom.bpmnActivity.loop ?? false,
+        isSet: def.storedProps.custom?.bpmnActivity?.loop !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.loop = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.loop = undefined), uow);
           } else {
-            def.updateCustomProps('bpmnTask', props => (props.loop = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.loop = value), uow);
           }
         }
       },
@@ -575,19 +575,19 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'multiInstance',
         type: 'select',
         label: 'Multi-Instance',
-        value: def.renderProps.custom.bpmnTask.multiInstance ?? 'none',
+        value: def.renderProps.custom.bpmnActivity.multiInstance ?? 'none',
         options: [
           { label: 'None', value: 'none' },
           { label: 'Sequential', value: 'sequential' },
           { label: 'Parallel', value: 'parallel' }
         ],
-        isSet: def.storedProps.custom?.bpmnTask?.multiInstance !== undefined,
+        isSet: def.storedProps.custom?.bpmnActivity?.multiInstance !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.multiInstance = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.multiInstance = undefined), uow);
           } else {
             def.updateCustomProps(
-              'bpmnTask',
+              'bpmnActivity',
               props => (props.multiInstance = value as 'none' | 'sequential' | 'parallel'),
               uow
             );
@@ -598,13 +598,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'compensation',
         type: 'boolean',
         label: 'Compensation',
-        value: def.renderProps.custom.bpmnTask.compensation ?? false,
-        isSet: def.storedProps.custom?.bpmnTask?.compensation !== undefined,
+        value: def.renderProps.custom.bpmnActivity.compensation ?? false,
+        isSet: def.storedProps.custom?.bpmnActivity?.compensation !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.compensation = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.compensation = undefined), uow);
           } else {
-            def.updateCustomProps('bpmnTask', props => (props.compensation = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.compensation = value), uow);
           }
         }
       },
@@ -612,7 +612,7 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'subprocessType',
         type: 'select',
         label: 'Subprocess Type',
-        value: def.renderProps.custom.bpmnTask.subprocessType ?? 'default',
+        value: def.renderProps.custom.bpmnActivity.subprocessType ?? 'default',
         options: [
           { label: 'Default', value: 'default' },
           { label: 'Loop', value: 'loop' },
@@ -621,13 +621,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
           { label: 'Ad-Hoc', value: 'ad-hoc' },
           { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
         ],
-        isSet: def.storedProps.custom?.bpmnTask?.subprocessType !== undefined,
+        isSet: def.storedProps.custom?.bpmnActivity?.subprocessType !== undefined,
         onChange: (value: string | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.subprocessType = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.subprocessType = undefined), uow);
           } else {
             def.updateCustomProps(
-              'bpmnTask',
+              'bpmnActivity',
               props =>
                 (props.subprocessType = value as
                   | 'default'
@@ -645,13 +645,13 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'expanded',
         type: 'boolean',
         label: 'Expanded',
-        value: def.renderProps.custom.bpmnTask.expanded ?? false,
-        isSet: def.storedProps.custom?.bpmnTask?.expanded !== undefined,
+        value: def.renderProps.custom.bpmnActivity.expanded ?? false,
+        isSet: def.storedProps.custom?.bpmnActivity?.expanded !== undefined,
         onChange: (value: boolean | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.expanded = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.expanded = undefined), uow);
           } else {
-            def.updateCustomProps('bpmnTask', props => (props.expanded = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.expanded = value), uow);
           }
         }
       },
@@ -659,17 +659,17 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         id: 'radius',
         type: 'number',
         label: 'Radius',
-        value: def.renderProps.custom.bpmnTask.radius,
+        value: def.renderProps.custom.bpmnActivity.radius,
         maxValue: 60,
         unit: 'px',
-        isSet: def.storedProps.custom?.bpmnTask?.radius !== undefined,
+        isSet: def.storedProps.custom?.bpmnActivity?.radius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
           if (value === undefined) {
-            def.updateCustomProps('bpmnTask', props => (props.radius = undefined), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.radius = undefined), uow);
           } else {
             if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
 
-            def.updateCustomProps('bpmnTask', props => (props.radius = value), uow);
+            def.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
           }
         }
       }
@@ -677,6 +677,6 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    return createOuterPath(node.bounds, node.renderProps.custom.bpmnTask.radius);
+    return createOuterPath(node.bounds, node.renderProps.custom.bpmnActivity.radius);
   }
 }
