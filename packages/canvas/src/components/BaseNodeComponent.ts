@@ -191,6 +191,8 @@ export class BaseNodeComponent<
       style.fill = 'none';
     }
 
+    this.adjustStyle(props.element, nodeProps, style);
+
     /* Build shape ******************************************************************* */
 
     const buildProps: BaseShapeBuildShapeProps = {
@@ -496,6 +498,12 @@ export class BaseNodeComponent<
       })
     );
   }
+
+  protected adjustStyle(
+    _element: DiagramNode,
+    _nodeProps: NodePropsForRendering,
+    _style: Partial<CSSStyleDeclaration>
+  ) {}
 }
 
 export type SimpleShapeNodeDefinitionProps = BaseShapeBuildShapeProps & {

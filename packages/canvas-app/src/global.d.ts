@@ -3,3 +3,8 @@ declare module '*.yaml' {
   const value: Record<string, any>;
   export default value;
 }
+
+declare module '*?raw' {
+  const text: string;
+  export default text;
+}

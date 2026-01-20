@@ -58,6 +58,15 @@
 export const parseSvgPath = (path: string) => {
   const commands = path.match(/[a-zA-Z][^a-zA-Z]*/g) ?? [];
   return commands.map(command => {
-    return command.trim().split(/[\s,]+/);
+    const c = command.trim();
+    return [
+      c[0]!,
+      ...(c.length > 1
+        ? c
+            .slice(1)
+            .trim()
+            .split(/[\s,]+/)
+        : [])
+    ];
   });
 };

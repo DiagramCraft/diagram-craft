@@ -431,6 +431,21 @@ importers:
         specifier: ^1.12.0
         version: 1.15.3
 
+  packages/stencil-bpmn:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/test-ui-boolean-ops:
     devDependencies:
       '@playwright/test':
