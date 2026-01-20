@@ -5,6 +5,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
+import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -87,6 +88,18 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
           }
         }
       };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNDataStoreNodeDefinition(), {
+    id: 'bpmn-data-store',
+    name: 'Data Store',
+    size: {
+      w: 70,
+      h: 70
+    },
+    texts: {
+      text: 'Data Store'
     }
   });
 
