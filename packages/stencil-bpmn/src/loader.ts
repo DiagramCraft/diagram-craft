@@ -108,6 +108,75 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
       };
     }
   });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-objects',
+    name: 'Data Objects',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            collection: true
+          }
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-input',
+    name: 'Data Input',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data Input'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            type: 'input'
+          }
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-output',
+    name: 'Data Output',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data Output'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            type: 'output'
+          }
+        }
+      };
+    }
+  });
 
   r.stencilRegistry.register(bpmnStencils, true);
 };

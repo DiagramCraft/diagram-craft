@@ -12,6 +12,8 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import linesVerticalIcon from './icons/lines-vertical.svg?raw';
+import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
+import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -21,13 +23,15 @@ declare global {
     interface CustomNodePropsExtensions {
       bpmnDataObject?: {
         collection?: boolean;
+        type?: string;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('bpmnDataObject', {
-  collection: false
+  collection: false,
+  type: 'default'
 });
 
 const templatePaths = PathListBuilder.fromString(
@@ -52,7 +56,7 @@ const innerPaths = PathListBuilder.fromString(
 const pathBounds = templatePaths.bounds();
 const path = mustExist(templatePaths.all()[0]);
 
-const ICON_MARGIN = 5;
+const ICON_MARGIN = 2;
 const ICON_SIZE = 15;
 const MARKER_SIZE = 12;
 const BOTTOM_MARGIN = 1;
@@ -111,6 +115,25 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
           shapeBuilder
         );
       }
+
+      let icon: Icon | undefined;
+      if (dataObjectProps.type === 'input') {
+        icon = getSVGIcon(arrowBigRightIcon);
+      } else if (dataObjectProps.type === 'output') {
+        icon = getSVGIcon(arrowBigRightFilledIcon);
+      }
+
+      if (icon) {
+        this.renderIcon(
+          icon,
+          Box.fromCorners(
+            _p(bounds.x + ICON_MARGIN, bounds.y + ICON_MARGIN),
+            _p(bounds.x + ICON_SIZE + ICON_MARGIN, bounds.y + ICON_SIZE + ICON_MARGIN)
+          ),
+          props.nodeProps,
+          shapeBuilder
+        );
+      }
     }
 
     private renderIcon(
@@ -154,6 +177,25 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
             def.updateCustomProps('bpmnDataObject', props => (props.collection = undefined), uow);
           } else {
             def.updateCustomProps('bpmnDataObject', props => (props.collection = value), uow);
+          }
+        }
+      },
+      {
+        id: 'type',
+        type: 'select',
+        label: 'Type',
+        options: [
+          { label: 'Default', value: 'default' },
+          { label: 'Input', value: 'input' },
+          { label: 'Output', value: 'output' }
+        ],
+        value: def.renderProps.custom.bpmnDataObject.type ?? 'default',
+        isSet: def.storedProps.custom?.bpmnDataObject?.type !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnDataObject', props => (props.type = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnDataObject', props => (props.type = value), uow);
           }
         }
       }
