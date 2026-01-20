@@ -206,8 +206,9 @@ export class PathListBuilder {
   /**
    * Creates a PathListBuilder by parsing an SVG path string.
    *
-   * Supports standard SVG path commands: M/m (move), L/l (line), C/c (cubic curve),
-   * Q/q (quadratic curve), T/t (smooth curve), A/a (arc), and Z/z (close path).
+   * Supports standard SVG path commands: M/m (move), L/l (line), H/h (horizontal line),
+   * V/v (vertical line), C/c (cubic curve), Q/q (quadratic curve), T/t (smooth curve),
+   * A/a (arc), and Z/z (close path).
    * Uppercase commands use absolute coordinates, lowercase use relative coordinates.
    *
    * @param path The SVG path string to parse
@@ -236,6 +237,22 @@ export class PathListBuilder {
           break;
         case 'l':
           currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.lineTo(currentPos);
+          break;
+        case 'H':
+          currentPos = { x: pn[0]!, y: currentPos.y };
+          d.lineTo(currentPos);
+          break;
+        case 'h':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y };
+          d.lineTo(currentPos);
+          break;
+        case 'V':
+          currentPos = { x: currentPos.x, y: pn[0]! };
+          d.lineTo(currentPos);
+          break;
+        case 'v':
+          currentPos = { x: currentPos.x, y: currentPos.y + pn[0]! };
           d.lineTo(currentPos);
           break;
         case 'C':

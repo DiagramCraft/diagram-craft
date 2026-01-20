@@ -14,7 +14,12 @@ import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import settingsIcon from './icons/settings.svg?raw';
+import mailFilledIcon from './icons/mail-filled.svg?raw';
 import mailIcon from './icons/mail.svg?raw';
+import userIcon from './icons/user.svg?raw';
+import tableIcon from './icons/table.svg?raw';
+import scriptIcon from './icons/script.svg?raw';
+import handFingerRightIcon from './icons/hand-finger-right.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 
 declare global {
@@ -148,7 +153,17 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
       if (props.nodeProps.custom.bpmnTask.taskType === 'service') {
         icon = getSVGIcon(settingsIcon);
       } else if (props.nodeProps.custom.bpmnTask.taskType === 'send') {
+        icon = getSVGIcon(mailFilledIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'receive') {
         icon = getSVGIcon(mailIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'user') {
+        icon = getSVGIcon(userIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'manual') {
+        icon = getSVGIcon(handFingerRightIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'business-rule') {
+        icon = getSVGIcon(tableIcon);
+      } else if (props.nodeProps.custom.bpmnTask.taskType === 'script') {
+        icon = getSVGIcon(scriptIcon);
       }
 
       if (icon) {
@@ -170,7 +185,12 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
             )
             .all(),
           undefined,
-          {}
+          {
+            style: {
+              fill: icon.fill === 'none' ? 'none' : props.nodeProps.stroke.color,
+              stroke: icon.fill === 'none' ? props.nodeProps.stroke.color : 'none'
+            }
+          }
         );
       }
 
@@ -500,7 +520,12 @@ export class BPMNTaskNodeDefinition extends ShapeNodeDefinition {
         options: [
           { value: 'regular', label: 'Regular' },
           { value: 'service', label: 'Service' },
-          { value: 'send', label: 'Send' }
+          { value: 'send', label: 'Send' },
+          { value: 'receive', label: 'Receive' },
+          { value: 'user', label: 'User' },
+          { value: 'manual', label: 'Manual' },
+          { value: 'business-rule', label: 'Business Rule' },
+          { value: 'script', label: 'Script' }
         ],
         value: def.renderProps.custom.bpmnTask.taskType ?? 'regular',
         isSet: def.storedProps.custom?.bpmnTask?.taskType !== undefined,
