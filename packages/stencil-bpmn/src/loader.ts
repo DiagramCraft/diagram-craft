@@ -6,6 +6,7 @@ import {
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
 import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';
+import { BPMNEventNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNEvent.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -185,6 +186,69 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
         custom: {
           bpmnDataObject: {
             type: 'output'
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
+    id: 'bpmn-event-start',
+    name: 'Start Event',
+    size: {
+      w: 40,
+      h: 40
+    },
+    texts: {
+      text: ''
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnEvent: {
+            eventType: 'start'
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
+    id: 'bpmn-event-intermediate',
+    name: 'Intermediate Event',
+    size: {
+      w: 40,
+      h: 40
+    },
+    texts: {
+      text: ''
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnEvent: {
+            eventType: 'intermediate'
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
+    id: 'bpmn-event-end',
+    name: 'End Event',
+    size: {
+      w: 40,
+      h: 40
+    },
+    texts: {
+      text: ''
+    },
+    props: () => {
+      return {
+        custom: {
+          bpmnEvent: {
+            eventType: 'end'
           }
         }
       };
