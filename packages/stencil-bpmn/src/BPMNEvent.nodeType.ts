@@ -17,13 +17,17 @@ declare global {
     interface CustomNodePropsExtensions {
       bpmnEvent?: {
         eventType?: EventType;
+        nonInterrupting?: boolean;
+        throwing?: boolean;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('bpmnEvent', {
-  eventType: 'start'
+  eventType: 'start',
+  nonInterrupting: false,
+  throwing: false
 });
 
 export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
@@ -64,16 +68,24 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
     }
 
     protected adjustStyle(
-      _el: DiagramNode,
+      el: DiagramNode,
       nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
-      const eventType = nodeProps.custom.bpmnEvent.eventType ?? 'start';
+      const eventProps = nodeProps.custom.bpmnEvent;
+      const eventType = eventProps.eventType ?? 'start';
 
       if (eventType === 'end') {
         style.strokeWidth = '3';
       } else {
         style.strokeWidth = '1';
+      }
+
+      if (
+        eventProps.nonInterrupting &&
+        el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
+      ) {
+        style.strokeDasharray = '3 3';
       }
     }
   };
@@ -114,6 +126,34 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
               props => (props.eventType = value as EventType),
               uow
             );
+          }
+        }
+      },
+      {
+        id: 'nonInterrupting',
+        type: 'boolean',
+        label: 'Non-Interrupting',
+        value: def.renderProps.custom.bpmnEvent.nonInterrupting ?? false,
+        isSet: def.storedProps.custom?.bpmnEvent?.nonInterrupting !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnEvent', props => (props.nonInterrupting = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnEvent', props => (props.nonInterrupting = value), uow);
+          }
+        }
+      },
+      {
+        id: 'throwing',
+        type: 'boolean',
+        label: 'Throwing',
+        value: def.renderProps.custom.bpmnEvent.throwing ?? false,
+        isSet: def.storedProps.custom?.bpmnEvent?.throwing !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps('bpmnEvent', props => (props.throwing = undefined), uow);
+          } else {
+            def.updateCustomProps('bpmnEvent', props => (props.throwing = value), uow);
           }
         }
       }
