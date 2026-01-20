@@ -4,6 +4,8 @@ import {
   StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
+import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
+import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -83,6 +85,106 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
           bpmnActivity: {
             activityType: 'transaction',
             radius: 10
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNDataStoreNodeDefinition(), {
+    id: 'bpmn-data-store',
+    name: 'Data Store',
+    size: {
+      w: 70,
+      h: 70
+    },
+    texts: {
+      text: 'Data Store'
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-object',
+    name: 'Data Object',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-objects',
+    name: 'Data Objects',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            collection: true
+          }
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-input',
+    name: 'Data Input',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data Input'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            type: 'input'
+          }
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
+    id: 'bpmn-data-output',
+    name: 'Data Output',
+    size: {
+      w: 35,
+      h: 50
+    },
+    texts: {
+      text: 'Data Output'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        },
+        custom: {
+          bpmnDataObject: {
+            type: 'output'
           }
         }
       };
