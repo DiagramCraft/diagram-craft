@@ -8,6 +8,7 @@ import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObje
 import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDataStore.nodeType';
 import { BPMNEventNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNEvent.nodeType';
 import { BPMNGatewayNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNGateway.nodeType';
+import { BPMNConversationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversation.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -265,6 +266,17 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     },
     texts: {
       text: ''
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNConversationNodeDefinition(), {
+    id: 'bpmn-conversation',
+    name: 'Conversation',
+    size: {
+      w: 40,
+      h: 40
+    },
+    texts: {
+      text: 'Conversation'
     }
   });
 
