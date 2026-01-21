@@ -115,7 +115,8 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     return (
       activityType === 'sub-process' ||
       activityType === 'event-sub-process' ||
-      activityType === 'transaction'
+      activityType === 'transaction' ||
+      activityType === 'call-activity-sub-process'
     );
   }
 
@@ -125,15 +126,20 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
+      const bpmnActivity = nodeProps.custom.bpmnActivity;
       if (
-        nodeProps.custom.bpmnActivity.activityType === 'event-sub-process' &&
+        bpmnActivity.activityType === 'event-sub-process' &&
         el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
       ) {
         style.strokeDasharray = '2 5';
       }
 
-      if (nodeProps.custom.bpmnActivity.activityType === 'transaction') {
+      if (bpmnActivity.activityType === 'transaction') {
         style.strokeWidth = '1.5';
+      }
+
+      if (bpmnActivity.activityType.startsWith('call-activity')) {
+        style.strokeWidth = '3';
       }
     }
 
@@ -182,7 +188,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         );
       }
 
-      const taskType = props.nodeProps.custom.bpmnActivity.taskType;
+      const taskType = activityProps.taskType;
       const iconSvg = taskType ? TASK_TYPE_ICONS[taskType] : undefined;
 
       if (iconSvg) {
@@ -296,7 +302,9 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           { value: 'task', label: 'Task' },
           { value: 'sub-process', label: 'Sub-process' },
           { value: 'event-sub-process', label: 'Event sub-process' },
-          { value: 'transaction', label: 'Transaction' }
+          { value: 'transaction', label: 'Transaction' },
+          { value: 'call-activity', label: 'Call activity' },
+          { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
         ],
         value: def.renderProps.custom.bpmnActivity.activityType ?? 'task',
         isSet: def.storedProps.custom?.bpmnActivity?.activityType !== undefined,
