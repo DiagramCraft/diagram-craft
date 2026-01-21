@@ -1,0 +1,75 @@
+stencils:
+  - id: 'bpmn-choreography-task'
+    name: Choreography Task
+    node:
+      id: kr70aj9
+      type: node
+      nodeType: bpmnChoreographyTask
+      bounds:
+        x: 0
+        'y': 0
+        w: 100
+        h: 90
+        r: 0
+      children:
+        - id: ogt6893
+          type: node
+          nodeType: bpmnChoreographyTaskParticipant
+          bounds:
+            x: 0
+            'y': 0
+            w: 100
+            h: 20
+            r: 0
+          props:
+            fill:
+              color: 'rgba(0, 0, 0, 0.1)'
+          metadata:
+            style: default
+            textStyle: default-text-default
+          texts:
+            text: Participant 1
+        - id: er40je9
+          type: node
+          nodeType: bpmnChoreographyTaskParticipant
+          bounds:
+            x: 0
+            'y': 20
+            w: 100
+            h: 50
+            r: 0
+          props:
+            custom:
+              bpmnChoreographyTaskParticipant:
+                position: middle
+            text:
+              bottom: 6
+          metadata:
+            style: default
+            textStyle: default-text-default
+          texts:
+            text: Task
+        - id: uqpekzd
+          type: node
+          nodeType: bpmnChoreographyTaskParticipant
+          bounds:
+            x: 0
+            'y': 70
+            w: 100
+            h: 20
+            r: 0
+          props:
+            custom:
+              bpmnChoreographyTaskParticipant:
+                position: bottom
+          metadata:
+            style: default
+            textStyle: default-text-default
+          texts:
+            text: Participant 2
+      props: { }
+      metadata:
+        style: default
+        textStyle: default-text-default
+      texts:
+        text: ''

@@ -14,6 +14,8 @@ import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import { BPMNChoreographyTaskNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTask.nodeType';
 import { BPMNChoreographyTaskParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTaskParticipant.nodeType';
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
+import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import stencils from './bpmnStencils.yaml';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -366,6 +368,8 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
       h: 20
     }
   });
+
+  bpmnStencils.stencils.push(...loadStencilsFromYaml(stencils));
 
   r.stencilRegistry.register(bpmnStencils, true);
 };
