@@ -187,7 +187,19 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder);
       }
 
-      shapeBuilder.text(this);
+      shapeBuilder.text(
+        this,
+        '1',
+        props.node.getText(),
+        props.nodeProps.text,
+        Box.fromCorners(
+          _p(props.node.bounds.x - 50, props.node.bounds.y + props.node.bounds.h + 10),
+          _p(
+            props.node.bounds.x + props.node.bounds.w + 50,
+            props.node.bounds.y + props.node.bounds.h + 20
+          )
+        )
+      );
     }
 
     protected adjustStyle(
