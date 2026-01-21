@@ -223,14 +223,24 @@ export class DiagramDocument
           if (isNode(element)) {
             const s = element.nodeType;
             if (!this.nodeDefinitions.hasRegistration(s)) {
+              const existingNodeDefinitions = new Set([...this.nodeDefinitions.list()]);
+
               if (!(await this.nodeDefinitions.load(s))) {
                 console.warn(`Node definition ${s} not loaded`);
               } else {
+                for (const nd of this.nodeDefinitions.list()) {
+                  if (!existingNodeDefinitions.has(nd)) {
+                    console.log('Loaded', nd);
+                    loadedTypes.add(nd);
+                  }
+                }
+
                 element.invalidate(uow);
-                loadedTypes.add(s);
+                element.invalidateAnchors(uow);
               }
             } else if (loadedTypes.has(s)) {
               element.invalidate(uow);
+              element.invalidateAnchors(uow);
             }
           }
         }
