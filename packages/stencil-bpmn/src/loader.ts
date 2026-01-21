@@ -9,6 +9,8 @@ import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDat
 import { BPMNEventNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNEvent.nodeType';
 import { BPMNGatewayNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNGateway.nodeType';
 import { BPMNConversationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversation.nodeType';
+import { BPMNAnnotationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNAnnotation.nodeType';
+import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -268,6 +270,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
       text: ''
     }
   });
+
   registerStencil(r, bpmnStencils, new BPMNConversationNodeDefinition(), {
     id: 'bpmn-conversation',
     name: 'Conversation',
@@ -278,6 +281,57 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Conversation'
     }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNAnnotationNodeDefinition(), {
+    id: 'bpmn-annotation',
+    name: 'Annotation',
+    size: {
+      w: 100,
+      h: 40
+    },
+    texts: {
+      text: 'Annotation'
+    },
+    props: () => ({
+      fill: {
+        enabled: false
+      },
+      text: {
+        align: 'left',
+        left: 12
+      }
+    })
+  });
+
+  registerStencil(r, bpmnStencils, new RoundedRectNodeDefinition(), {
+    id: 'bpmn-group',
+    name: 'Group',
+    size: {
+      w: 300,
+      h: 200
+    },
+    texts: {
+      text: 'Group'
+    },
+    props: () => ({
+      stroke: {
+        pattern: 'DASH_DOT',
+        patternSpacing: 50,
+        patternSize: 70
+      },
+      custom: {
+        roundedRect: {
+          radius: 10
+        }
+      },
+      text: {
+        valign: 'top',
+        align: 'right',
+        top: 8,
+        right: 8
+      }
+    })
   });
 
   r.stencilRegistry.register(bpmnStencils, true);

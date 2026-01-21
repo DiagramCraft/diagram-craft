@@ -30,6 +30,7 @@ export const createThumbnailForNode = (
 
     const node = factory(diagram, layer, uow);
     layer.addElement(node, uow);
+    node.invalidateAnchors(uow);
 
     return { diagram, layer, node };
   });

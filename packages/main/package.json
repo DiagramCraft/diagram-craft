@@ -29,6 +29,7 @@
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/markdown": "workspace:^",
+    "@diagram-craft/stencil-bpmn": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",

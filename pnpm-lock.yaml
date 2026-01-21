@@ -341,6 +341,9 @@ importers:
       '@diagram-craft/model':
         specifier: workspace:^
         version: link:../model
+      '@diagram-craft/stencil-bpmn':
+        specifier: workspace:^
+        version: link:../stencil-bpmn
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../utils
