@@ -13,6 +13,7 @@ import { BPMNAnnotationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNAn
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import { BPMNChoreographyTaskNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTask.nodeType';
 import { BPMNChoreographyTaskParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTaskParticipant.nodeType';
+import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -354,6 +355,15 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     },
     texts: {
       text: 'Participant'
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
+    id: 'bpmn-choreography-envelope',
+    name: 'Choreography Envelope',
+    size: {
+      w: 40,
+      h: 20
     }
   });
 

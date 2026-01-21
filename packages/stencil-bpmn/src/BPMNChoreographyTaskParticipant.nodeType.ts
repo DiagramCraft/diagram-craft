@@ -6,13 +6,20 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
+import squarePlusIcon from './icons/square-plus.svg?raw';
+import linesVerticalIcon from './icons/lines-vertical.svg?raw';
+import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
+import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
 
 type ParticipantPosition = 'top' | 'middle' | 'bottom';
+type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
 
 declare global {
   namespace DiagramCraft {
@@ -20,6 +27,8 @@ declare global {
       bpmnChoreographyTaskParticipant?: {
         position?: ParticipantPosition;
         initiating?: boolean;
+        loopType?: LoopType;
+        multiple?: boolean;
       };
     }
   }
@@ -27,10 +36,16 @@ declare global {
 
 registerCustomNodeDefaults('bpmnChoreographyTaskParticipant', {
   position: 'top',
-  initiating: false
+  initiating: false,
+  loopType: 'none',
+  multiple: false
 });
 
 // NodeDefinition and Shape *****************************************************
+
+const ICON_MARGIN = 2;
+const ICON_SIZE = 15;
+const BOTTOM_MARGIN = 2;
 
 export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -42,10 +57,10 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskParticipantNodeDefinition> {
-    buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
+    buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
+      builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
 
-      shapeBuilder.text(
+      builder.text(
         this,
         '1',
         props.node.getText(),
@@ -57,6 +72,69 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
             props.node.bounds.y + props.node.bounds.h - 5
           )
         )
+      );
+
+      const markers: Icon[] = [];
+
+      const participantProps = props.nodeProps.custom.bpmnChoreographyTaskParticipant;
+      const parentProps = (props.node.parent as DiagramNode | undefined)?.renderProps.custom
+        .bpmnChoreographyTask;
+
+      if (participantProps.position === 'middle') {
+        if (!parentProps?.expanded) {
+          if (participantProps.loopType === 'parallel') {
+            markers.push(getSVGIcon(linesVerticalIcon));
+          } else if (participantProps.loopType === 'sequential') {
+            markers.push(getSVGIcon(linesHorizontalIcon));
+          } else if (participantProps.loopType === 'standard') {
+            markers.push(getSVGIcon(arrowBackUpIcon));
+          }
+        }
+
+        if (parentProps?.type === 'sub-choreography') {
+          markers.push(getSVGIcon(squarePlusIcon));
+        }
+      } else {
+        if (participantProps.multiple) {
+          markers.push(getSVGIcon(linesVerticalIcon));
+        }
+      }
+
+      if (markers.length > 0) {
+        const width = markers.length * ICON_SIZE + (markers.length - 1) * ICON_MARGIN;
+        const centerX = props.node.bounds.x + props.node.bounds.w / 2;
+
+        let x = centerX - width / 2;
+        for (const marker of markers) {
+          const position = Box.fromCorners(
+            _p(x, props.node.bounds.y + props.node.bounds.h - ICON_SIZE - BOTTOM_MARGIN),
+            _p(x + ICON_SIZE, props.node.bounds.y + props.node.bounds.h - BOTTOM_MARGIN)
+          );
+          this.renderIcon(marker, position, props.nodeProps, builder);
+          x += ICON_SIZE + ICON_MARGIN;
+        }
+      }
+    }
+
+    private renderIcon(
+      icon: Icon,
+      position: Box,
+      nodeProps: NodePropsForRendering,
+      shapeBuilder: ShapeBuilder
+    ) {
+      shapeBuilder.path(
+        PathListBuilder.fromPathList(icon.pathList)
+          .getPaths(TransformFactory.fromTo(icon.viewbox, position))
+          .all(),
+        undefined,
+        {
+          style: {
+            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
+            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
+            strokeWidth: '1',
+            strokeDasharray: 'none'
+          }
+        }
       );
     }
   };
@@ -148,6 +226,56 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
             def.updateCustomProps(
               'bpmnChoreographyTaskParticipant',
               props => (props.initiating = value),
+              uow
+            );
+          }
+        }
+      },
+      {
+        id: 'loopType',
+        type: 'select',
+        label: 'Loop Type',
+        options: [
+          { value: 'none', label: 'None' },
+          { value: 'standard', label: 'Standard' },
+          { value: 'sequential', label: 'Sequential' },
+          { value: 'parallel', label: 'Parallel' }
+        ],
+        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.loopType ?? 'none',
+        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.loopType !== undefined,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps(
+              'bpmnChoreographyTaskParticipant',
+              props => (props.loopType = undefined),
+              uow
+            );
+          } else {
+            def.updateCustomProps(
+              'bpmnChoreographyTaskParticipant',
+              props => (props.loopType = value as LoopType),
+              uow
+            );
+          }
+        }
+      },
+      {
+        id: 'multiple',
+        type: 'boolean',
+        label: 'Multiple',
+        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.multiple ?? false,
+        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.multiple !== undefined,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          if (value === undefined) {
+            def.updateCustomProps(
+              'bpmnChoreographyTaskParticipant',
+              props => (props.multiple = undefined),
+              uow
+            );
+          } else {
+            def.updateCustomProps(
+              'bpmnChoreographyTaskParticipant',
+              props => (props.multiple = value),
               uow
             );
           }
