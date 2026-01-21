@@ -13,6 +13,7 @@ export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('group', 'Group', GroupComponent);
     this.capabilities.children = true;
+    this.capabilities['children.select-parent'] = true;
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {

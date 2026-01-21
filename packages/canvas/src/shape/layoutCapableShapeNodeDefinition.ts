@@ -111,10 +111,14 @@ export abstract class LayoutCapableShapeNodeDefinition
     }
 
     uow.on('before', 'commit', `layout/${layoutRoot.id}`, () => {
-      const layoutTree = buildLayoutTree(layoutRoot);
+      const layoutTree = this.prepareLayoutTree(layoutRoot);
       layoutChildren(layoutTree);
       applyLayoutTree(layoutRoot, layoutTree, uow);
     });
+  }
+
+  protected prepareLayoutTree(layoutRoot: DiagramNode) {
+    return buildLayoutTree(layoutRoot);
   }
 
   onDrop(

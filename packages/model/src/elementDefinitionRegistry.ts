@@ -27,7 +27,8 @@ export type NodeCapability =
   | 'anchors-configurable'
   | 'can-be-container'
   | 'can-have-layout'
-  | 'collapsible';
+  | 'collapsible'
+  | 'children.select-parent';
 
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {
