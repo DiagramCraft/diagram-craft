@@ -9,6 +9,7 @@ import { BPMNDataStoreNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNDat
 import { BPMNEventNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNEvent.nodeType';
 import { BPMNGatewayNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNGateway.nodeType';
 import { BPMNConversationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversation.nodeType';
+import { BPMNAnnotationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNAnnotation.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
@@ -280,6 +281,27 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Conversation'
     }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNAnnotationNodeDefinition(), {
+    id: 'bpmn-annotation',
+    name: 'Annotation',
+    size: {
+      w: 100,
+      h: 40
+    },
+    texts: {
+      text: 'Annotation'
+    },
+    props: () => ({
+      fill: {
+        enabled: false
+      },
+      text: {
+        align: 'left',
+        left: 12
+      }
+    })
   });
 
   registerStencil(r, bpmnStencils, new RoundedRectNodeDefinition(), {
