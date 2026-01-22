@@ -49,14 +49,12 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
       ...this.getCollapsiblePropertyDefinitions(node),
       ...(shape
         ? [
-          {
-            id: 'delimiter',
-            type: 'delimiter',
-            label: shape.name,
-            isSet: false
-          } as CustomPropertyDefinition,
-          ...shape.getCustomPropertyDefinitions(node)
-        ]
+            {
+              id: 'delimiter',
+              type: 'delimiter'
+            } as CustomPropertyDefinition,
+            ...shape.getCustomPropertyDefinitions(node)
+          ]
         : [])
     ];
   }
@@ -104,14 +102,14 @@ export class ContainerComponent extends BaseNodeComponent<ContainerNodeDefinitio
       builder.noBoundaryNeeded();
       builder.add(
         svg.path({
-          'class': 'svg-node--container-outline',
-          'd': svgPath,
-          'x': props.node.bounds.x,
-          'y': props.node.bounds.y,
-          'width': props.node.bounds.w,
-          'height': props.node.bounds.h,
-          'fill': 'transparent',
-          'on': {
+          class: 'svg-node--container-outline',
+          d: svgPath,
+          x: props.node.bounds.x,
+          y: props.node.bounds.y,
+          width: props.node.bounds.w,
+          height: props.node.bounds.h,
+          fill: 'transparent',
+          on: {
             mousedown: props.onMouseDown
           }
         })

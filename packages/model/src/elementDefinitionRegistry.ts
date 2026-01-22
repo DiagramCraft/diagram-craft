@@ -30,14 +30,36 @@ export type NodeCapability =
   | 'collapsible'
   | 'children.select-parent';
 
+/*
+interface BaseProp {
+  type: string;
+}
+
+interface CPD extends Record<string, BaseProp> {
+  number: {
+    type: 'number',
+    minValue?: number;
+    maxValue?: number;
+    step?: number;
+  },
+  group: {
+    type: 'group';
+    name?: string;
+  }
+}
+
+type Def = CPD[keyof CPD] & {
+  id: string;
+};*/
+
 // TODO: Make make this into an interface in the global namespace we can extend
 export type CustomPropertyDefinition = {
   id: string;
-  label: string;
-  isSet: boolean;
 } & (
   | {
       type: 'number';
+      label: string;
+      isSet: boolean;
       value: number;
       minValue?: number;
       maxValue?: number;
@@ -47,20 +69,22 @@ export type CustomPropertyDefinition = {
     }
   | {
       type: 'select';
+      label: string;
+      isSet: boolean;
       value: string;
       options: ReadonlyArray<{ value: string; label: string }>;
       onChange: (value: string | undefined, uow: UnitOfWork) => void;
     }
   | {
       type: 'boolean';
+      label: string;
+      isSet: boolean;
       value: boolean;
       onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
     }
   | {
-      // TODO: Fix this
       type: 'delimiter';
-      value: unknown;
-      onChange: (value: unknown | undefined, uow: UnitOfWork) => void;
+      label: string;
     }
 );
 
@@ -68,6 +92,7 @@ export const asProperty = (
   customProp: CustomPropertyDefinition,
   change: (cb: (uow: UnitOfWork) => void) => void
 ): Property<unknown> => {
+  if (!('value' in customProp) || !('onChange' in customProp)) throw new Error();
   return {
     val: customProp.value,
     set: (v: unknown) => {
