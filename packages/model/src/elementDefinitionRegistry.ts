@@ -16,8 +16,9 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
-import type { ElementMetadata, NodeProps } from './diagramProps';
+import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 export type NodeCapability =
   | 'children'
@@ -69,48 +70,78 @@ declare global {
   }
 }
 
-export const CustomProperty = {
-  number: (
-    el: DiagramNode,
-    label: string,
-    property: PropPath<NodeProps>,
-    opts?: Partial<NumberCustomPropertyType>
-  ): NumberCustomPropertyType => {
-    const acc = new DynamicAccessor<NodeProps>();
-    return {
-      id: label.toLowerCase().replace(/\s/g, '-'),
-      type: 'number',
-      label,
-      isSet: acc.get(el.storedProps as NodeProps, property) !== undefined,
-      value: acc.get(el.renderProps as NodeProps, property) as number,
-      onChange: (value: number | undefined, uow: UnitOfWork) => {
-        el.updateProps(p => acc.set(p, property, value), uow);
-      },
-      ...opts
-    };
-  },
+const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
+  return {
+    number: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<NumberCustomPropertyType>
+    ): NumberCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'number',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        value: acc.get(el.renderProps as P, property) as number,
+        onChange: (value: number | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
 
-  select: (
-    el: DiagramNode,
-    label: string,
-    property: PropPath<NodeProps>,
-    options: ReadonlyArray<{ value: string; label: string }>,
-    opts?: Partial<SelectCustomPropertyType>
-  ): SelectCustomPropertyType => {
-    const acc = new DynamicAccessor<NodeProps>();
-    return {
-      id: label.toLowerCase().replace(/\s/g, '-'),
-      type: 'select',
-      label,
-      options,
-      isSet: acc.get(el.storedProps as NodeProps, property) !== undefined,
-      value: acc.get(el.renderProps as NodeProps, property) as string,
-      onChange: (value: string | undefined, uow: UnitOfWork) => {
-        el.updateProps(p => acc.set(p, property, value), uow);
-      },
-      ...opts
-    };
-  }
+    boolean: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<BooleanCustomPropertyType>
+    ): BooleanCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'boolean',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        value: acc.get(el.renderProps as P, property) as boolean,
+        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    select: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      options: ReadonlyArray<{ value: string; label: string }>,
+      opts?: Partial<SelectCustomPropertyType>
+    ): SelectCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'select',
+        label,
+        options,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        value: acc.get(el.renderProps as P, property) as string,
+        onChange: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    }
+  };
+};
+
+export const CustomProperty = {
+  node: makeCustomPropertyHelper<DiagramNode, NodeProps>(),
+  edge: makeCustomPropertyHelper<DiagramEdge, EdgeProps>()
 };
 
 export type CustomPropertyDefinition = Array<

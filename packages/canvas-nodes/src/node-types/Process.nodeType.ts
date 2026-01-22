@@ -37,7 +37,7 @@ registerCustomNodeDefaults('process', { size: 10 });
 
 const Size = {
   definition: (node: DiagramNode): NumberCustomPropertyType =>
-    CustomProperty.number(node, 'Size', 'custom.process.size', {
+    CustomProperty.node.number(node, 'Size', 'custom.process.size', {
       maxValue: 50,
       unit: '%',
       onChange: (value, uow) => Size.set(value, node, uow)

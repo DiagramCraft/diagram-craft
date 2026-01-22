@@ -37,7 +37,7 @@ registerCustomNodeDefaults('curlyBracket', { size: 50 });
 
 const Size = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Size', 'custom.curlyBracket.size', {
+    CustomProperty.node.number(node, 'Size', 'custom.curlyBracket.size', {
       maxValue: 50,
       unit: '%',
       onChange: (value, uow) => Size.set(value, node, uow)

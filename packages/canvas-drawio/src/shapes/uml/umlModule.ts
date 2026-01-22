@@ -40,7 +40,7 @@ registerCustomNodeDefaults('umlModule', {
 
 const JettyWidth = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Width', 'custom.umlModule.jettyWidth', {
+    CustomProperty.node.number(node, 'Width', 'custom.umlModule.jettyWidth', {
       maxValue: 50,
       unit: 'px',
       onChange: (value, uow) => JettyWidth.set(value, node, uow)
@@ -57,7 +57,7 @@ const JettyWidth = {
 
 const JettyHeight = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Height', 'custom.umlModule.jettyHeight', {
+    CustomProperty.node.number(node, 'Height', 'custom.umlModule.jettyHeight', {
       maxValue: 50,
       unit: 'px',
       onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)

@@ -48,7 +48,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      CustomProperty.number(def, 'Radius', 'custom.roundedRect.radius', {
+      CustomProperty.node.number(def, 'Radius', 'custom.roundedRect.radius', {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number | undefined, uow: UnitOfWork) => {

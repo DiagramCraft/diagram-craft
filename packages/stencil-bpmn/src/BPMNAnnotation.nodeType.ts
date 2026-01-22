@@ -9,8 +9,10 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type BracketPosition = 'left' | 'right';
@@ -96,32 +98,10 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'bracketPosition',
-        type: 'select',
-        label: 'Bracket Position',
-        options: [
-          { value: 'left', label: 'Left' },
-          { value: 'right', label: 'Right' }
-        ],
-        value: def.renderProps.custom.bpmnAnnotation?.bracketPosition ?? 'left',
-        isSet: def.storedProps.custom?.bpmnAnnotation?.bracketPosition !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnAnnotation',
-              props => (props.bracketPosition = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps(
-              'bpmnAnnotation',
-              props => (props.bracketPosition = value as BracketPosition),
-              uow
-            );
-          }
-        }
-      }
+      CustomProperty.node.select(def, 'Bracket Position', 'custom.bpmnAnnotation.bracketPosition', [
+        { value: 'left', label: 'Left' },
+        { value: 'right', label: 'Right' }
+      ])
     ];
   }
 }

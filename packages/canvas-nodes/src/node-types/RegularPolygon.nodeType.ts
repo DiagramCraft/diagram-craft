@@ -51,7 +51,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [CustomProperty.number(def, 'Sides', 'custom.regularPolygon.numberOfSides')];
+    return [CustomProperty.node.number(def, 'Sides', 'custom.regularPolygon.numberOfSides')];
   }
 }
 

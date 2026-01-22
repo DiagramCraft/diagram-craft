@@ -58,8 +58,8 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      CustomProperty.number(def, 'Sides', 'custom.star.numberOfSides'),
-      CustomProperty.number(def, 'Radius', 'custom.star.innerRadius', {
+      CustomProperty.node.number(def, 'Sides', 'custom.star.numberOfSides'),
+      CustomProperty.node.number(def, 'Radius', 'custom.star.innerRadius', {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',

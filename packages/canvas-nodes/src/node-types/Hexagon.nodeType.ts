@@ -35,7 +35,7 @@ registerCustomNodeDefaults('hexagon', { size: 25 });
 
 const Size = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Size', 'custom.hexagon.size', {
+    CustomProperty.node.number(node, 'Size', 'custom.hexagon.size', {
       maxValue: 50,
       unit: '%',
       onChange: (value, uow) => Size.set(value, node, uow)

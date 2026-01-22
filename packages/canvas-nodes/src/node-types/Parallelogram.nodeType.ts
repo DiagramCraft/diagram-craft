@@ -29,7 +29,7 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode) {
     return [
-      CustomProperty.number(node, 'Slant', 'custom.parallelogram.slant', {
+      CustomProperty.node.number(node, 'Slant', 'custom.parallelogram.slant', {
         maxValue: 60,
         unit: 'px'
       })

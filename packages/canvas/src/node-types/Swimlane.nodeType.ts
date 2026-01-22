@@ -29,7 +29,7 @@ declare global {
         title?: boolean;
         titleBorder?: boolean;
         titleSize?: number;
-        fill?: boolean;
+        filled?: boolean;
       };
     }
   }
@@ -41,7 +41,7 @@ registerCustomNodeDefaults('swimlane', {
   title: false,
   titleBorder: true,
   titleSize: 30,
-  fill: false
+  filled: false
 });
 
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -154,67 +154,18 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [
       ...this.getCollapsiblePropertyDefinitions(node),
-      {
-        id: 'orientation',
-        type: 'select',
-        label: 'Orientation',
-        value: node.renderProps.custom.swimlane.orientation,
-        options: [
-          { value: 'vertical', label: 'Vertical' },
-          { value: 'horizontal', label: 'Horizontal' }
-        ],
-        isSet: node.storedProps.custom?.swimlane?.orientation !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps(
-            'swimlane',
-            props => (props.orientation = value as Orientation),
-            uow
-          );
-        }
-      },
-      {
-        id: 'title',
-        type: 'boolean',
-        label: 'Title',
-        value: node.renderProps.custom.swimlane.title,
-        isSet: node.storedProps.custom?.swimlane?.title !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.title = value), uow);
-        }
-      },
-      CustomProperty.number(node, 'Title Size', 'custom.swimlane.titleSize', {
+      CustomProperty.node.select(node, 'Orientation', 'custom.swimlane.orientation', [
+        { value: 'vertical', label: 'Vertical' },
+        { value: 'horizontal', label: 'Horizontal' }
+      ]),
+      CustomProperty.node.boolean(node, 'Title', 'custom.swimlane.title'),
+      CustomProperty.node.number(node, 'Title Size', 'custom.swimlane.titleSize', {
         unit: 'px'
       }),
-      {
-        id: 'outerBorder',
-        type: 'boolean',
-        label: 'Outer Border',
-        value: node.renderProps.custom.swimlane.outerBorder,
-        isSet: node.storedProps.custom?.swimlane?.outerBorder !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.outerBorder = value), uow);
-        }
-      },
-      {
-        id: 'titleBorder',
-        type: 'boolean',
-        label: 'Title Border',
-        value: node.renderProps.custom.swimlane.titleBorder,
-        isSet: node.storedProps.custom?.swimlane?.titleBorder !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.titleBorder = value), uow);
-        }
-      },
-      {
-        id: 'fill',
-        type: 'boolean',
-        label: 'Fill',
-        value: node.renderProps.custom.swimlane.fill,
-        isSet: node.storedProps.custom?.swimlane?.fill !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.fill = value), uow);
-        }
-      }
+      CustomProperty.node.boolean(node, 'Outer Border', 'custom.swimlane.outerBorder'),
+      CustomProperty.node.boolean(node, 'Title Border', 'custom.swimlane.titleBorder'),
+
+      CustomProperty.node.boolean(node, 'Fill', 'custom.swimlane.filled')
     ];
   }
 }
@@ -338,7 +289,7 @@ class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
     );
 
     // Step 2: Add optional background fill for entire swimlane
-    if (shapeProps.fill && nodeProps.fill.enabled !== false) {
+    if (shapeProps.filled && nodeProps.fill.enabled !== false) {
       builder.boundaryPath(boundary.all(), {
         fill: nodeProps.fill,
         stroke: { enabled: false }

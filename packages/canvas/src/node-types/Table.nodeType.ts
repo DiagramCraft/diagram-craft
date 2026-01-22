@@ -199,20 +199,11 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [
-      CustomProperty.number(node, 'Padding', 'custom.table.gap', {
+      CustomProperty.node.number(node, 'Padding', 'custom.table.gap', {
         unit: 'px'
       }),
-      {
-        id: 'title',
-        type: 'boolean',
-        label: 'Title',
-        value: node.renderProps.custom.table.title,
-        isSet: node.storedProps.custom?.table?.title !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.title = value), uow);
-        }
-      },
-      CustomProperty.number(node, 'Title Size', 'custom.table.titleSize', {
+      CustomProperty.node.boolean(node, 'Title', 'custom.table.title'),
+      CustomProperty.node.number(node, 'Title Size', 'custom.table.titleSize', {
         unit: 'px'
       })
     ];

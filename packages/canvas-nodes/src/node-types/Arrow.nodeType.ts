@@ -40,7 +40,7 @@ const $defaults = registerCustomNodeDefaults('arrow', { notch: 0, x: 40, y: 30 }
 
 const Notch = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Notch', 'custom.arrow.notch', {
+    CustomProperty.node.number(node, 'Notch', 'custom.arrow.notch', {
       unit: 'px',
       maxValue: 50,
       value: $defaults(node.renderProps.custom.arrow).notch,
@@ -58,7 +58,7 @@ const Notch = {
 
 const ArrowControlX = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Pointiness', 'custom.arrow.x', {
+    CustomProperty.node.number(node, 'Pointiness', 'custom.arrow.x', {
       unit: 'px',
       maxValue: 50,
       value: $defaults(node.renderProps.custom.arrow).x,
@@ -77,7 +77,7 @@ const ArrowControlX = {
 
 const ArrowControlY = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Thickness', 'custom.arrow.y', {
+    CustomProperty.node.number(node, 'Thickness', 'custom.arrow.y', {
       unit: '%',
       maxValue: 50,
       value: $defaults(node.renderProps.custom.arrow).y,

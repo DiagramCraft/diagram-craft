@@ -11,8 +11,10 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
@@ -108,47 +110,12 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'expanded',
-        type: 'boolean',
-        label: 'Expanded',
-        value: def.renderProps.custom.bpmnChoreographyTask?.expanded ?? false,
-        isSet: def.storedProps.custom?.bpmnChoreographyTask?.expanded !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnChoreographyTask',
-              props => (props.expanded = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps('bpmnChoreographyTask', props => (props.expanded = value), uow);
-          }
-        }
-      },
-      {
-        id: 'type',
-        type: 'select',
-        label: 'Type',
-        options: [
-          { value: 'task', label: 'Task' },
-          { value: 'sub-choreography', label: 'Sub-Choreography' },
-          { value: 'call', label: 'Call' }
-        ],
-        value: def.renderProps.custom.bpmnChoreographyTask?.type ?? 'task',
-        isSet: def.storedProps.custom?.bpmnChoreographyTask?.type !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnChoreographyTask', props => (props.type = undefined), uow);
-          } else {
-            def.updateCustomProps(
-              'bpmnChoreographyTask',
-              props => (props.type = value as ChoreographyTaskType),
-              uow
-            );
-          }
-        }
-      }
+      CustomProperty.node.boolean(def, 'Expanded', 'custom.bpmnChoreographyTask.expanded'),
+      CustomProperty.node.select(def, 'Type', 'custom.bpmnChoreographyTask.type', [
+        { value: 'task', label: 'Task' },
+        { value: 'sub-choreography', label: 'Sub-Choreography' },
+        { value: 'call', label: 'Call' }
+      ])
     ];
   }
 }

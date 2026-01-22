@@ -45,7 +45,7 @@ registerCustomNodeDefaults('cylinder', { size: 30, direction: NORTH });
 
 const Size = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Size', 'custom.cylinder.size', {
+    CustomProperty.node.number(node, 'Size', 'custom.cylinder.size', {
       maxValue: Number.MAX_VALUE,
       unit: 'px',
       onChange: (value, uow) => Size.set(value, node, uow)
@@ -60,7 +60,7 @@ const Size = {
 
 const Direction = {
   definition: (node: DiagramNode) =>
-    CustomProperty.select(node, 'Direction', 'custom.cylinder.direction', [
+    CustomProperty.node.select(node, 'Direction', 'custom.cylinder.direction', [
       { value: NORTH, label: 'North' },
       { value: SOUTH, label: 'South' },
       { value: EAST, label: 'East' },

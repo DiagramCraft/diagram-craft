@@ -35,7 +35,7 @@ registerCustomNodeDefaults('step', { size: 25 });
 
 const Size = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Size', 'custom.step.size', {
+    CustomProperty.node.number(node, 'Size', 'custom.step.size', {
       maxValue: 50,
       unit: 'px',
       onChange: (value, uow) => Size.set(value, node, uow)

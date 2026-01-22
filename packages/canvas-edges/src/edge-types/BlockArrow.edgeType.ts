@@ -8,8 +8,7 @@ import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
 import {
   CustomProperty,
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
@@ -45,15 +44,12 @@ const $defaults = registerCustomEdgeDefaults('blockArrow', {
 // Custom properties ************************************************************
 
 const ArrowDepth = {
-  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
-    id: 'arrowDepth',
-    label: 'Arrow Depth',
-    type: 'number',
-    value: round(edge.renderProps.custom.blockArrow.arrowDepth),
-    unit: 'px',
-    isSet: edge.storedProps.custom?.blockArrow?.arrowDepth !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowDepth.set(value, edge, uow)
-  }),
+  definition: (edge: DiagramEdge) =>
+    CustomProperty.edge.number(edge, 'Arrow Depth', 'custom.blockArrow.arrowDepth', {
+      value: round(edge.renderProps.custom.blockArrow.arrowDepth),
+      unit: 'px',
+      onChange: (value, uow) => ArrowDepth.set(value, edge, uow)
+    }),
 
   set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -66,15 +62,12 @@ const ArrowDepth = {
 };
 
 const ArrowWidth = {
-  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
-    id: 'arrowWidth',
-    label: 'Arrow Width',
-    type: 'number',
-    value: round(edge.renderProps.custom.blockArrow.arrowWidth),
-    unit: 'px',
-    isSet: edge.storedProps.custom?.blockArrow?.arrowWidth !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowWidth.set(value, edge, uow)
-  }),
+  definition: (edge: DiagramEdge) =>
+    CustomProperty.edge.number(edge, 'Arrow Width', 'custom.blockArrow.arrowWidth', {
+      value: round(edge.renderProps.custom.blockArrow.arrowWidth),
+      unit: 'px',
+      onChange: (value, uow) => ArrowWidth.set(value, edge, uow)
+    }),
 
   set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -87,15 +80,12 @@ const ArrowWidth = {
 };
 
 const Width = {
-  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
-    id: 'width',
-    label: 'Width',
-    type: 'number',
-    value: round(edge.renderProps.custom.blockArrow.width),
-    unit: 'px',
-    isSet: edge.storedProps.custom?.blockArrow?.width !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Width.set(value, edge, uow)
-  }),
+  definition: (edge: DiagramEdge) =>
+    CustomProperty.edge.number(edge, 'Width', 'custom.blockArrow.width', {
+      value: round(edge.renderProps.custom.blockArrow.width),
+      unit: 'px',
+      onChange: (value: number | undefined, uow: UnitOfWork) => Width.set(value, edge, uow)
+    }),
 
   set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
     if (value === undefined) {

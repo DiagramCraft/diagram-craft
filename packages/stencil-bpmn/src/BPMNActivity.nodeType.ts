@@ -297,144 +297,41 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'activityType',
-        type: 'select',
-        label: 'Activity Type',
-        options: [
-          { value: 'task', label: 'Task' },
-          { value: 'sub-process', label: 'Sub-process' },
-          { value: 'event-sub-process', label: 'Event sub-process' },
-          { value: 'transaction', label: 'Transaction' },
-          { value: 'call-activity', label: 'Call activity' },
-          { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
-        ],
-        value: def.renderProps.custom.bpmnActivity.activityType ?? 'task',
-        isSet: def.storedProps.custom?.bpmnActivity?.activityType !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.activityType = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnActivity', props => (props.activityType = value), uow);
-          }
-        }
-      },
-      {
-        id: 'taskType',
-        type: 'select',
-        label: 'Task Type',
-        options: [
-          { value: 'regular', label: 'Regular' },
-          { value: 'service', label: 'Service' },
-          { value: 'send', label: 'Send' },
-          { value: 'receive', label: 'Receive' },
-          { value: 'user', label: 'User' },
-          { value: 'manual', label: 'Manual' },
-          { value: 'business-rule', label: 'Business Rule' },
-          { value: 'script', label: 'Script' }
-        ],
-        value: def.renderProps.custom.bpmnActivity.taskType ?? 'regular',
-        isSet: def.storedProps.custom?.bpmnActivity?.taskType !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.taskType = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnActivity', props => (props.taskType = value), uow);
-          }
-        }
-      },
-      {
-        id: 'loop',
-        type: 'boolean',
-        label: 'Loop',
-        value: def.renderProps.custom.bpmnActivity.loop ?? false,
-        isSet: def.storedProps.custom?.bpmnActivity?.loop !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.loop = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnActivity', props => (props.loop = value), uow);
-          }
-        }
-      },
-      {
-        id: 'multiInstance',
-        type: 'select',
-        label: 'Multi-Instance',
-        value: def.renderProps.custom.bpmnActivity.multiInstance ?? 'none',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Sequential', value: 'sequential' },
-          { label: 'Parallel', value: 'parallel' }
-        ],
-        isSet: def.storedProps.custom?.bpmnActivity?.multiInstance !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.multiInstance = undefined), uow);
-          } else {
-            def.updateCustomProps(
-              'bpmnActivity',
-              props => (props.multiInstance = value as 'none' | 'sequential' | 'parallel'),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'compensation',
-        type: 'boolean',
-        label: 'Compensation',
-        value: def.renderProps.custom.bpmnActivity.compensation ?? false,
-        isSet: def.storedProps.custom?.bpmnActivity?.compensation !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.compensation = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnActivity', props => (props.compensation = value), uow);
-          }
-        }
-      },
-      {
-        id: 'subprocessType',
-        type: 'select',
-        label: 'Subprocess Type',
-        value: def.renderProps.custom.bpmnActivity.subprocessType ?? 'default',
-        options: [
-          { label: 'Default', value: 'default' },
-          { label: 'Loop', value: 'loop' },
-          { label: 'Multi-Instance', value: 'multi-instance' },
-          { label: 'Compensation', value: 'compensation' },
-          { label: 'Ad-Hoc', value: 'ad-hoc' },
-          { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
-        ],
-        isSet: def.storedProps.custom?.bpmnActivity?.subprocessType !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.subprocessType = undefined), uow);
-          } else {
-            def.updateCustomProps(
-              'bpmnActivity',
-              props => (props.subprocessType = value as SubprocessType),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'expanded',
-        type: 'boolean',
-        label: 'Expanded',
-        value: def.renderProps.custom.bpmnActivity.expanded ?? false,
-        isSet: def.storedProps.custom?.bpmnActivity?.expanded !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.expanded = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnActivity', props => (props.expanded = value), uow);
-          }
-        }
-      },
-      CustomProperty.number(def, 'Radius', 'custom.bpmnActivity.radius', {
+      CustomProperty.node.select(def, 'Type', 'custom.bpmnActivity.activityType', [
+        { value: 'task', label: 'Task' },
+        { value: 'sub-process', label: 'Sub-process' },
+        { value: 'event-sub-process', label: 'Event sub-process' },
+        { value: 'transaction', label: 'Transaction' },
+        { value: 'call-activity', label: 'Call activity' },
+        { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
+      ]),
+      CustomProperty.node.select(def, 'Task Type', 'custom.bpmnActivity.taskType', [
+        { value: 'regular', label: 'Regular' },
+        { value: 'service', label: 'Service' },
+        { value: 'send', label: 'Send' },
+        { value: 'receive', label: 'Receive' },
+        { value: 'user', label: 'User' },
+        { value: 'manual', label: 'Manual' },
+        { value: 'business-rule', label: 'Business Rule' },
+        { value: 'script', label: 'Script' }
+      ]),
+      CustomProperty.node.boolean(def, 'Loop', 'custom.bpmnActivity.loop'),
+      CustomProperty.node.select(def, 'Multi-Instance', 'custom.bpmnActivity.multiInstance', [
+        { label: 'None', value: 'none' },
+        { label: 'Sequential', value: 'sequential' },
+        { label: 'Parallel', value: 'parallel' }
+      ]),
+      CustomProperty.node.boolean(def, 'Compensation', 'custom.bpmnActivity.compensation'),
+      CustomProperty.node.select(def, 'Subprocess Type', 'custom.bpmnActivity.subprocessType', [
+        { label: 'Default', value: 'default' },
+        { label: 'Loop', value: 'loop' },
+        { label: 'Multi-Instance', value: 'multi-instance' },
+        { label: 'Compensation', value: 'compensation' },
+        { label: 'Ad-Hoc', value: 'ad-hoc' },
+        { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
+      ]),
+      CustomProperty.node.boolean(def, 'Expanded', 'custom.bpmnActivity.expanded'),
+      CustomProperty.node.number(def, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number | undefined, uow: UnitOfWork) => {

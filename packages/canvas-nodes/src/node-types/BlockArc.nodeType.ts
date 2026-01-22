@@ -44,7 +44,7 @@ const $defaults = registerCustomNodeDefaults('blockArc', {
 
 const InnerRadius = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Inner Radius', 'custom.blockArc.innerRadius', {
+    CustomProperty.node.number(node, 'Inner Radius', 'custom.blockArc.innerRadius', {
       maxValue: 99,
       unit: '%',
       onChange: (value, uow) => InnerRadius.set(value, node, uow)
@@ -62,7 +62,7 @@ const InnerRadius = {
 
 const StartAngle = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'Start Angle', 'custom.blockArc.startAngle', {
+    CustomProperty.node.number(node, 'Start Angle', 'custom.blockArc.startAngle', {
       minValue: -360,
       maxValue: 360,
       unit: '°',
@@ -85,7 +85,7 @@ const StartAngle = {
 
 const EndAngle = {
   definition: (node: DiagramNode) =>
-    CustomProperty.number(node, 'End Angle', 'custom.blockArc.endAngle', {
+    CustomProperty.node.number(node, 'End Angle', 'custom.blockArc.endAngle', {
       maxValue: 360,
       unit: '°',
       onChange: (value, uow) => EndAngle.set(value, node, uow)
