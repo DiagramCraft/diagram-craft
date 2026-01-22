@@ -44,7 +44,7 @@ const $defaults = registerCustomEdgeDefaults('blockArrow', {
 
 const propArrowDepth = (edge: DiagramEdge) =>
   CustomProperty.edge.number(edge, 'Arrow Depth', 'custom.blockArrow.arrowDepth', {
-    value: round(edge.renderProps.custom.blockArrow.arrowDepth),
+    get: () => round(edge.renderProps.custom.blockArrow.arrowDepth),
     unit: 'px',
     format: round,
     validate: v => v > 0
@@ -52,7 +52,7 @@ const propArrowDepth = (edge: DiagramEdge) =>
 
 const propArrowWidth = (edge: DiagramEdge) =>
   CustomProperty.edge.number(edge, 'Arrow Width', 'custom.blockArrow.arrowWidth', {
-    value: round(edge.renderProps.custom.blockArrow.arrowWidth),
+    get: () => round(edge.renderProps.custom.blockArrow.arrowWidth),
     unit: 'px',
     format: round,
     validate: v => v > 0
@@ -60,7 +60,7 @@ const propArrowWidth = (edge: DiagramEdge) =>
 
 const propWidth = (edge: DiagramEdge) =>
   CustomProperty.edge.number(edge, 'Width', 'custom.blockArrow.width', {
-    value: round(edge.renderProps.custom.blockArrow.width),
+    get: () => round(edge.renderProps.custom.blockArrow.width),
     unit: 'px',
     format: round,
     validate: v => v > 0 && v < round($defaults(edge.editProps.custom?.blockArrow).arrowWidth)

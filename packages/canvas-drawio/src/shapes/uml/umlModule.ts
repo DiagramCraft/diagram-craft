@@ -81,8 +81,8 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
         3--------------------------------2
    */
   getBoundingPathBuilder(node: DiagramNode) {
-    const width = propJettyWidth(node).value;
-    const height = propJettyHeight(node).value;
+    const width = propJettyWidth(node).get();
+    const height = propJettyHeight(node).get();
     const hw = width / 2;
 
     return new PathListBuilder()
@@ -104,8 +104,8 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      const width = propJettyWidth(props.node).value;
-      const height = propJettyHeight(props.node).value;
+      const width = propJettyWidth(props.node).get();
+      const height = propJettyHeight(props.node).get();
       const hw = width / 2;
 
       const { h, w } = props.node.bounds;

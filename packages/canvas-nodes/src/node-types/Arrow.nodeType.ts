@@ -41,7 +41,7 @@ const propNotch = (node: DiagramNode) =>
   CustomProperty.node.number(node, 'Notch', 'custom.arrow.notch', {
     unit: 'px',
     maxValue: 50,
-    value: $defaults(node.renderProps.custom.arrow).notch,
+    get: () => $defaults(node.renderProps.custom.arrow).notch,
     format: round,
     validate: v => v >= 0 && v <= node.bounds.w - $defaults(node.editProps.custom?.arrow).x
   });
@@ -50,7 +50,7 @@ const propArrowControlX = (node: DiagramNode) =>
   CustomProperty.node.number(node, 'Pointiness', 'custom.arrow.x', {
     unit: 'px',
     maxValue: 50,
-    value: $defaults(node.renderProps.custom.arrow).x,
+    get: () => $defaults(node.renderProps.custom.arrow).x,
     format: round,
     validate: v => v >= 0 && v <= Math.min(node.bounds.w, node.bounds.h)
   });
@@ -59,7 +59,7 @@ const propArrowControlY = (node: DiagramNode) =>
   CustomProperty.node.number(node, 'Thickness', 'custom.arrow.y', {
     unit: '%',
     maxValue: 50,
-    value: $defaults(node.renderProps.custom.arrow).y,
+    get: () => $defaults(node.renderProps.custom.arrow).y,
     format: round,
     validate: v => v >= 0 && v <= 100
   });
