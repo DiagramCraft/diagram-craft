@@ -44,12 +44,9 @@ const Size = {
     }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('curlyBracket', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('curlyBracket', props => (props.size = round(value)), uow);
-    }
+    if (value !== undefined && (value >= 50 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('curlyBracket', props => (props.size = newVal), uow);
   }
 };
 

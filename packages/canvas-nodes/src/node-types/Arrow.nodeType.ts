@@ -85,12 +85,9 @@ const ArrowControlY = {
     }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('arrow', props => (props.y = undefined), uow);
-    } else {
-      if (value <= 0 || value >= 50) return;
-      node.updateCustomProps('arrow', props => (props.y = round(value)), uow);
-    }
+    if (value !== undefined && (value <= 0 || value >= 50)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('arrow', props => (props.y = newVal), uow);
   }
 };
 

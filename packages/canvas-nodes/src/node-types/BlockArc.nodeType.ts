@@ -51,12 +51,9 @@ const InnerRadius = {
     }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('blockArc', props => (props.innerRadius = undefined), uow);
-    } else {
-      if (value >= 99 || value <= 0) return;
-      node.updateCustomProps('blockArc', props => (props.innerRadius = round(value)), uow);
-    }
+    if (value !== undefined && (value >= 99 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('blockArc', props => (props.innerRadius = newVal), uow);
   }
 };
 
