@@ -151,7 +151,7 @@ export const EditSchemaDialog = (props: Props) => {
     <Dialog
       title={props.title}
       open={props.open}
-      onClose={() => {}}
+      onClose={props.onCancel}
       buttons={[
         {
           label: 'Save',
