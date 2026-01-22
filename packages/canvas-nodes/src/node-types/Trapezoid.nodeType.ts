@@ -57,11 +57,11 @@ export class TrapezoidNodeDefinition extends ShapeNodeDefinition {
 
     return new PathListBuilder()
       .withTransform(fromUnitLCS(node.bounds))
-      .moveTo(_p(slantLeftPct, 0))
-      .lineTo(_p(1 - slantRightPct, 0))
-      .lineTo(_p(1, 1))
-      .lineTo(_p(0, 1))
-      .lineTo(_p(slantLeftPct, 0));
+      .moveTo(slantLeftPct, 0)
+      .lineTo(1 - slantRightPct, 0)
+      .lineTo(1, 1)
+      .lineTo(0, 1)
+      .lineTo(slantLeftPct, 0);
   }
 }
 
