@@ -92,7 +92,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const distance = Math.max(0, p.x - bounds.x);
-        propNotch(props.node).onChange(distance, uow);
+        propNotch(props.node).set(distance, uow);
         return `Notch: ${props.node.renderProps.custom.arrow.notch}px`;
       });
 
@@ -104,10 +104,10 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const newX = Math.max(0, bounds.x + w - p.x);
-        propArrowControlX(props.node).onChange(newX, uow);
+        propArrowControlX(props.node).set(newX, uow);
 
         const newY = (100 * (p.y - bounds.y)) / h;
-        propArrowControlY(props.node).onChange(newY, uow);
+        propArrowControlY(props.node).set(newY, uow);
 
         return `${props.node.renderProps.custom.arrow.x}px, ${props.node.renderProps.custom.arrow.y}%`;
       });

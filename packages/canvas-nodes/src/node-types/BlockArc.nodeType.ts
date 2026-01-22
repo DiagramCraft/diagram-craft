@@ -54,7 +54,7 @@ const propStartAngle = (node: DiagramNode) =>
     minValue: -360,
     maxValue: 360,
     unit: '°',
-    onChange: (value, uow) => {
+    set: (value, uow) => {
       if (value === undefined) {
         node.updateCustomProps('blockArc', props => (props.startAngle = undefined), uow);
       } else {
@@ -71,7 +71,7 @@ const propEndAngle = (node: DiagramNode) =>
   CustomProperty.node.number(node, 'End Angle', 'custom.blockArc.endAngle', {
     maxValue: 360,
     unit: '°',
-    onChange: (value, uow) => {
+    set: (value, uow) => {
       if (value === undefined) {
         node.updateCustomProps('blockArc', props => (props.endAngle = undefined), uow);
       } else {
@@ -103,19 +103,19 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
         const distance = Point.distance(c, p);
         const radius = Point.distance(c, Box.fromOffset(bounds, start));
 
-        propInnerRadius(props.node).onChange((distance / radius) * 100, uow);
+        propInnerRadius(props.node).set((distance / radius) * 100, uow);
         return `Inner Radius: ${props.node.renderProps.custom.blockArc.innerRadius}%`;
       });
 
       shapeBuilder.controlPoint(Box.fromOffset(bounds, start), (p, uow) => {
         const angle = Math.atan2(c.y - p.y, p.x - c.x);
-        propStartAngle(props.node).onChange(Angle.toDeg(angle), uow);
+        propStartAngle(props.node).set(Angle.toDeg(angle), uow);
         return `Start Angle: ${props.node.renderProps.custom.blockArc.startAngle}°`;
       });
 
       shapeBuilder.controlPoint(Box.fromOffset(bounds, end), (p, uow) => {
         const angle = Math.atan2(c.y - p.y, p.x - c.x);
-        propEndAngle(props.node).onChange(Angle.toDeg(angle), uow);
+        propEndAngle(props.node).set(Angle.toDeg(angle), uow);
         return `End Angle: ${props.node.renderProps.custom.blockArc.endAngle}°`;
       });
     }

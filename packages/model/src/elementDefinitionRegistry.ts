@@ -40,7 +40,7 @@ export interface CustomPropertyType<T = any> {
 
   isSet: boolean;
   value: T;
-  onChange: (value: T | undefined, uow: UnitOfWork) => void;
+  set: (value: T | undefined, uow: UnitOfWork) => void;
 }
 
 export interface NumberCustomPropertyType extends CustomPropertyType<number> {
@@ -90,7 +90,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
         value: acc.get(el.renderProps as P, property) as number,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
+        set: (value: number | undefined, uow: UnitOfWork) => {
           if (value !== undefined && opts?.validate && !opts.validate(value)) return;
           if (value !== undefined && opts?.format) value = opts.format(value);
           // @ts-expect-error
@@ -113,7 +113,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
         value: acc.get(el.renderProps as P, property) as boolean,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
+        set: (value: boolean | undefined, uow: UnitOfWork) => {
           // @ts-expect-error
           el.updateProps(p => acc.set(p, property, value), uow);
         },
@@ -136,7 +136,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
         options,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
         value: acc.get(el.renderProps as P, property) as string,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
+        set: (value: string | undefined, uow: UnitOfWork) => {
           // @ts-expect-error
           el.updateProps(p => acc.set(p, property, value), uow);
         },
@@ -179,13 +179,13 @@ export const asProperty = (
   customProp: CustomPropertyType,
   change: (cb: (uow: UnitOfWork) => void) => void
 ): Property<unknown> => {
-  if (!('value' in customProp) || !('onChange' in customProp)) throw new Error();
+  if (!('value' in customProp) || !('set' in customProp)) throw new Error();
   return {
     val: customProp.value,
     set: (v: unknown) => {
       change(uow => {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
-        customProp.onChange(v as any, uow);
+        customProp.set(v as any, uow);
       });
     },
     hasMultipleValues: false,

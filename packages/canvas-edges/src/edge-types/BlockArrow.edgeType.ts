@@ -13,7 +13,6 @@ import {
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomEdgeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
@@ -43,60 +42,29 @@ const $defaults = registerCustomEdgeDefaults('blockArrow', {
 
 // Custom properties ************************************************************
 
-const ArrowDepth = {
-  definition: (edge: DiagramEdge) =>
-    CustomProperty.edge.number(edge, 'Arrow Depth', 'custom.blockArrow.arrowDepth', {
-      value: round(edge.renderProps.custom.blockArrow.arrowDepth),
-      unit: 'px',
-      onChange: (value, uow) => ArrowDepth.set(value, edge, uow)
-    }),
+const propArrowDepth = (edge: DiagramEdge) =>
+  CustomProperty.edge.number(edge, 'Arrow Depth', 'custom.blockArrow.arrowDepth', {
+    value: round(edge.renderProps.custom.blockArrow.arrowDepth),
+    unit: 'px',
+    format: round,
+    validate: v => v > 0
+  });
 
-  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value === undefined) {
-      edge.updateCustomProps('blockArrow', props => (props.arrowDepth = undefined), uow);
-    } else {
-      if (value <= 0) return;
-      edge.updateCustomProps('blockArrow', props => (props.arrowDepth = round(value)), uow);
-    }
-  }
-};
+const propArrowWidth = (edge: DiagramEdge) =>
+  CustomProperty.edge.number(edge, 'Arrow Width', 'custom.blockArrow.arrowWidth', {
+    value: round(edge.renderProps.custom.blockArrow.arrowWidth),
+    unit: 'px',
+    format: round,
+    validate: v => v > 0
+  });
 
-const ArrowWidth = {
-  definition: (edge: DiagramEdge) =>
-    CustomProperty.edge.number(edge, 'Arrow Width', 'custom.blockArrow.arrowWidth', {
-      value: round(edge.renderProps.custom.blockArrow.arrowWidth),
-      unit: 'px',
-      onChange: (value, uow) => ArrowWidth.set(value, edge, uow)
-    }),
-
-  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value === undefined) {
-      edge.updateCustomProps('blockArrow', props => (props.arrowWidth = undefined), uow);
-    } else {
-      if (value <= 0) return;
-      edge.updateCustomProps('blockArrow', props => (props.arrowWidth = round(value)), uow);
-    }
-  }
-};
-
-const Width = {
-  definition: (edge: DiagramEdge) =>
-    CustomProperty.edge.number(edge, 'Width', 'custom.blockArrow.width', {
-      value: round(edge.renderProps.custom.blockArrow.width),
-      unit: 'px',
-      onChange: (value: number | undefined, uow: UnitOfWork) => Width.set(value, edge, uow)
-    }),
-
-  set: (value: number | undefined, edge: DiagramEdge, uow: UnitOfWork) => {
-    if (value === undefined) {
-      edge.updateCustomProps('blockArrow', props => (props.width = undefined), uow);
-    } else {
-      if (value <= 0 || value >= round($defaults(edge.editProps.custom?.blockArrow).arrowWidth))
-        return;
-      edge.updateCustomProps('blockArrow', props => (props.width = round(value)), uow);
-    }
-  }
-};
+const propWidth = (edge: DiagramEdge) =>
+  CustomProperty.edge.number(edge, 'Width', 'custom.blockArrow.width', {
+    value: round(edge.renderProps.custom.blockArrow.width),
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < round($defaults(edge.editProps.custom?.blockArrow).arrowWidth)
+  });
 
 // EdgeDefinition and Shape *****************************************************
 
@@ -168,7 +136,7 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
 
         const newWidth = round(distance * 2);
 
-        Width.set(newWidth, edge, uow);
+        propWidth(edge).set(newWidth, uow);
 
         return `Width: ${newWidth}px`;
       });
@@ -191,8 +159,8 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
           if (newArrowDepth >= path.length())
             return `Arrow Width: ${arrowWidth}px, Arrow Depth: ${arrowDepth}px`;
 
-          ArrowWidth.set(newArrowWidth, edge, uow);
-          ArrowDepth.set(newArrowDepth, edge, uow);
+          propArrowWidth(edge).set(newArrowWidth, uow);
+          propArrowDepth(edge).set(newArrowDepth, uow);
 
           return `Arrow Width: ${newArrowWidth}px, Arrow Depth: ${newArrowDepth}px`;
         }
@@ -214,9 +182,9 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
 
   getCustomPropertyDefinitions(edge: DiagramEdge) {
     return new CustomPropertyDefinition(() => [
-      Width.definition(edge),
-      ArrowWidth.definition(edge),
-      ArrowDepth.definition(edge)
+      propWidth(edge),
+      propArrowWidth(edge),
+      propArrowDepth(edge)
     ]);
   }
 }

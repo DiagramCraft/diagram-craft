@@ -60,10 +60,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
-        onChange: (value, uow) => {
-          const newVal = value === undefined ? undefined : value / 100;
-          def.updateCustomProps('star', props => (props.innerRadius = newVal), uow);
-        }
+        format: v => v / 100
       })
     ]);
   }

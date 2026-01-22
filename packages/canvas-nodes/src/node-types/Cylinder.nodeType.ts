@@ -133,26 +133,22 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
 
       if (direction === NORTH) {
         shapeBuilder.controlPoint(_p(bounds.x, bounds.y + size / 2), ({ y }, uow) => {
-          const distance = Math.max(0, y - bounds.y);
-          propSize(props.node).onChange(distance * 2, uow);
+          propSize(props.node).set(Math.max(0, y - bounds.y) * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === SOUTH) {
         shapeBuilder.controlPoint(_p(bounds.x, bounds.y - size / 2), ({ y }, uow) => {
-          const distance = Math.max(0, bounds.y - y);
-          propSize(props.node).onChange(distance * 2, uow);
+          propSize(props.node).set(Math.max(0, bounds.y - y) * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === EAST) {
         shapeBuilder.controlPoint(_p(bounds.x - size / 2, bounds.y), ({ x }, uow) => {
-          const distance = Math.max(0, bounds.x - x);
-          propSize(props.node).onChange(distance * 2, uow);
+          propSize(props.node).set(Math.max(0, bounds.x - x) * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === WEST) {
         shapeBuilder.controlPoint(_p(bounds.x + size / 2, bounds.y), ({ x }, uow) => {
-          const distance = Math.max(0, x - bounds.x);
-          propSize(props.node).onChange(distance * 2, uow);
+          propSize(props.node).set(Math.max(0, x - bounds.x) * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       }

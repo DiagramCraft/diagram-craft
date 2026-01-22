@@ -7,7 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import {
   CustomProperty,
@@ -31,20 +30,14 @@ const propSlantLeft = (def: DiagramNode) =>
   CustomProperty.node.number(def, 'Slant (left)', 'custom.trapezoid.slantLeft', {
     maxValue: 60,
     unit: 'px',
-    onChange: (value: number | undefined, uow: UnitOfWork) => {
-      if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) return;
-      def.updateCustomProps('trapezoid', props => (props.slantLeft = value), uow);
-    }
+    validate: v => v < def.bounds.w / 2 && v < def.bounds.h / 2
   });
 
 const propSlantRight = (def: DiagramNode) =>
   CustomProperty.node.number(def, 'Slant (right)', 'custom.trapezoid.slantRight', {
     maxValue: 60,
     unit: 'px',
-    onChange: (value: number | undefined, uow: UnitOfWork) => {
-      if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) return;
-      def.updateCustomProps('trapezoid', props => (props.slantRight = value), uow);
-    }
+    validate: v => v < def.bounds.w / 2 && v < def.bounds.h / 2
   });
 
 export class TrapezoidNodeDefinition extends ShapeNodeDefinition {
@@ -85,8 +78,7 @@ class TrapezoidComponent extends BaseNodeComponent {
     shapeBuilder.controlPoint(
       _p(props.node.bounds.x + slantLeft, props.node.bounds.y),
       ({ x }, uow) => {
-        const distance = Math.max(0, x - props.node.bounds.x);
-        propSlantLeft(props.node).onChange(distance, uow);
+        propSlantLeft(props.node).set(Math.max(0, x - props.node.bounds.x), uow);
         return `Slant: ${props.node.renderProps.custom.trapezoid.slantLeft}px`;
       }
     );
@@ -95,7 +87,7 @@ class TrapezoidComponent extends BaseNodeComponent {
       _p(props.node.bounds.x + props.node.bounds.w - slantRight, props.node.bounds.y),
       ({ x }, uow) => {
         const distance = Math.max(0, props.node.bounds.x + props.node.bounds.w - x);
-        propSlantRight(props.node).onChange(distance, uow);
+        propSlantRight(props.node).set(distance, uow);
         return `Slant: ${props.node.renderProps.custom.trapezoid.slantRight}px`;
       }
     );

@@ -55,8 +55,7 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       const size = props.nodeProps.custom.step.size;
 
       shapeBuilder.controlPoint(_p(bounds.x + size, bounds.y + bounds.h / 2), ({ x }, uow) => {
-        const distance = Math.max(0, x - bounds.x);
-        propSize(props.node).onChange(distance, uow);
+        propSize(props.node).set(Math.max(0, x - bounds.x), uow);
         return `Size: ${props.node.renderProps.custom.step.size}px`;
       });
     }

@@ -14,7 +14,6 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { _p } from '@diagram-craft/geometry/point';
 import { Translation } from '@diagram-craft/geometry/transform';
 
 type ExtraProps = {
@@ -86,22 +85,21 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     const height = propJettyHeight(node).value;
     const hw = width / 2;
 
-    const pb = new PathListBuilder().withTransform([new Translation(node.bounds)]);
-    pb.moveTo(_p(hw, 0))
-      .lineTo(_p(node.bounds.w, 0))
-      .lineTo(_p(node.bounds.w, node.bounds.h))
-      .lineTo(_p(hw, node.bounds.h))
-      .lineTo(_p(hw, height * 4))
-      .lineTo(_p(0, height * 4))
-      .lineTo(_p(0, height * 3))
-      .lineTo(_p(hw, height * 3))
-      .lineTo(_p(hw, height * 2))
-      .lineTo(_p(0, height * 2))
-      .lineTo(_p(0, height))
-      .lineTo(_p(hw, height))
-      .lineTo(_p(hw, 0));
-
-    return pb;
+    return new PathListBuilder()
+      .withTransform([new Translation(node.bounds)])
+      .moveTo(hw, 0)
+      .lineTo(node.bounds.w, 0)
+      .lineTo(node.bounds.w, node.bounds.h)
+      .lineTo(hw, node.bounds.h)
+      .lineTo(hw, height * 4)
+      .lineTo(0, height * 4)
+      .lineTo(0, height * 3)
+      .lineTo(hw, height * 3)
+      .lineTo(hw, height * 2)
+      .lineTo(0, height * 2)
+      .lineTo(0, height)
+      .lineTo(hw, height)
+      .close();
   }
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {

@@ -331,7 +331,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       p.number(def, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
+        set: (value: number | undefined, uow: UnitOfWork) => {
           if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) {
             return;
           }

@@ -70,8 +70,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
 
       // Draw all control points
       shapeBuilder.controlPoint(_p(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
-        const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
-        propSize(props.node).onChange(newValue, uow);
+        propSize(props.node).set((Math.max(0, x - bounds.x) / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.process.size}%`;
       });
     }

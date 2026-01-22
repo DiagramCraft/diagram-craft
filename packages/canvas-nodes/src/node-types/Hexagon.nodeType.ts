@@ -55,8 +55,7 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
       const sizePct = props.nodeProps.custom.hexagon.size / 100;
 
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
-        const distance = Math.max(0, x - bounds.x);
-        propSize(props.node).onChange((distance / bounds.w) * 100, uow);
+        propSize(props.node).set((Math.max(0, x - bounds.x) / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.hexagon.size}%`;
       });
     }
@@ -70,12 +69,12 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
 
     return new PathListBuilder()
       .withTransform(fromUnitLCS(def.bounds))
-      .moveTo(_p(x1, 0))
-      .lineTo(_p(x2, 0))
-      .lineTo(_p(1, 0.5))
-      .lineTo(_p(x2, 1))
-      .lineTo(_p(x1, 1))
-      .lineTo(_p(0, 0.5))
+      .moveTo(x1, 0)
+      .lineTo(x2, 0)
+      .lineTo(1, 0.5)
+      .lineTo(x2, 1)
+      .lineTo(x1, 1)
+      .lineTo(0, 0.5)
       .close();
   }
 

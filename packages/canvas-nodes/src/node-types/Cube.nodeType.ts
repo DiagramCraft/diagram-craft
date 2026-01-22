@@ -96,8 +96,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(
         Point.of(bounds.x + (1 - sizePct) * bounds.w, bounds.y + sizePct * bounds.h),
         ({ x }, uow) => {
-          const distance = Math.max(0, bounds.x + bounds.w - x);
-          propSize(props.node).onChange(distance, uow);
+          propSize(props.node).set(Math.max(0, bounds.x + bounds.w - x), uow);
           return `Size: ${props.node.renderProps.custom.cube.size}px`;
         }
       );
@@ -108,17 +107,15 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
     const sizePct = def.renderProps.custom.cube.size / Math.min(def.bounds.w, def.bounds.h);
 
     const lcs = new LocalCoordinateSystem(Box.withoutRotation(def.bounds), [0, 1], [0, 1], false);
-    const pathBuilder = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
-
-    pathBuilder.moveTo(Point.of(0, sizePct));
-    pathBuilder.lineTo(Point.of(sizePct, 0));
-    pathBuilder.lineTo(Point.of(1, 0));
-    pathBuilder.lineTo(Point.of(1, 1 - sizePct));
-    pathBuilder.lineTo(Point.of(1 - sizePct, 1));
-    pathBuilder.lineTo(Point.of(0, 1));
-    pathBuilder.close();
-
-    return pathBuilder;
+    return new PathListBuilder()
+      .withTransform(lcs.toGlobalTransforms)
+      .moveTo(0, sizePct)
+      .lineTo(sizePct, 0)
+      .lineTo(1, 0)
+      .lineTo(1, 1 - sizePct)
+      .lineTo(1 - sizePct, 1)
+      .lineTo(0, 1)
+      .close();
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {

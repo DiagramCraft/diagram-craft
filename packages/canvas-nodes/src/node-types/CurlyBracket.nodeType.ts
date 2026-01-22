@@ -61,8 +61,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
 
       const bounds = props.node.bounds;
       shapeBuilder.controlPoint(Box.fromOffset(bounds, _p(sizePct, 0.5)), ({ x }, uow) => {
-        const distance = Math.max(0, x - bounds.x);
-        propSize(props.node).onChange((distance / bounds.w) * 100, uow);
+        propSize(props.node).set((Math.max(0, x - bounds.x) / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.curlyBracket.size}%`;
       });
     }

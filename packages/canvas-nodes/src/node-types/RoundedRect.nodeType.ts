@@ -8,7 +8,6 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -48,13 +47,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
       p.number(def, 'Radius', 'custom.roundedRect.radius', {
         maxValue: 60,
         unit: 'px',
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) {
-            return;
-          }
-          const newVal = value === undefined ? undefined : value;
-          def.updateCustomProps('roundedRect', props => (props.radius = newVal), uow);
-        }
+        validate: v => v < def.bounds.h / 2 && v < def.bounds.h / 2
       })
     ]);
   }
