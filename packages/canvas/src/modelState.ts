@@ -41,6 +41,7 @@ class ModelState extends EventEmitter<ModelStateEvents> {
 
   set activeDiagram(diagram: Diagram) {
     this.#activeDiagram = diagram;
+    diagram.document.activeDiagramId = diagram.id;
     this.emit('activeDiagramChange', { document: diagram });
   }
 }

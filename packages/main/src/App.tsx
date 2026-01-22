@@ -124,9 +124,15 @@ export type DiagramRef = {
   url: string;
 };
 
-const updateApplicationModel = ($d: Diagram, app: Application, callback: ProgressCallback) => {
-  app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
-  app.model.activeDiagram = $d;
+const updateApplicationModel = (
+  doc: DiagramDocument,
+  app: Application,
+  callback: ProgressCallback
+) => {
+  app.model.setActiveDocument(doc, app.userState.awarenessState, callback);
+  app.model.activeDiagram =
+    [...doc.diagramIterator({ nest: true })].find(d => d.id === doc.activeDiagramId)! ??
+    doc.diagrams[0];
 
   if (!app.ready) {
     const keyMap = defaultMacAppKeymap;
@@ -240,7 +246,7 @@ export const App = (props: {
       doc.url = url;
 
       assert.arrayNotEmpty(doc.diagrams);
-      updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
+      updateApplicationModel(doc, application.current, progressCallback);
 
       Autosave.get().clear();
       setDirty(false);
@@ -265,7 +271,7 @@ export const App = (props: {
       );
       doc.addDiagram(diagram);
 
-      updateApplicationModel(diagram, application.current, progressCallback);
+      updateApplicationModel(diagram.document, application.current, progressCallback);
 
       Autosave.get().clear();
       setDirty(false);
@@ -280,7 +286,7 @@ export const App = (props: {
 
   useOnChange(props.doc, () => {
     assert.arrayNotEmpty(props.doc.diagrams);
-    updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
+    updateApplicationModel(props.doc, application.current, progressCallback);
   });
 
   const [dirty, setDirty] = useState(false);

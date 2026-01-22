@@ -294,6 +294,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       await doc.attachments.addAttachment(new Blob([buf]));
     }
   }
+
+  doc.activeDiagramId = document.activeDiagramId ?? doc.diagrams[0]?.id;
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>

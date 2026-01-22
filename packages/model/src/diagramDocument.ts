@@ -69,6 +69,7 @@ export class DiagramDocument
   url: string | undefined;
   hash: string | undefined;
   readonly #releasables = new Releasables();
+  activeDiagramId: string | undefined;
 
   constructor(
     readonly nodeDefinitions: NodeDefinitionRegistry,
