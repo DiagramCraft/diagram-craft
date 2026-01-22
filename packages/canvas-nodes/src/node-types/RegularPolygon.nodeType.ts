@@ -9,8 +9,10 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
@@ -49,18 +51,7 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      {
-        id: 'numberOfSides',
-        type: 'number',
-        label: 'Sides',
-        value: def.renderProps.custom.regularPolygon.numberOfSides,
-        isSet: def.storedProps.custom?.regularPolygon?.numberOfSides !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          def.updateCustomProps('regularPolygon', props => (props.numberOfSides = value), uow);
-        }
-      }
-    ];
+    return [CustomProperty.number(def, 'Sides', 'custom.regularPolygon.numberOfSides')];
   }
 }
 

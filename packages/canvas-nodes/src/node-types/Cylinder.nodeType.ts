@@ -8,9 +8,8 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType,
-  SelectCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -45,42 +44,28 @@ registerCustomNodeDefaults('cylinder', { size: 30, direction: NORTH });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.cylinder.size,
-    maxValue: Number.MAX_VALUE,
-    unit: 'px',
-    isSet: node.storedProps.custom?.cylinder?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Size', 'custom.cylinder.size', {
+      maxValue: Number.MAX_VALUE,
+      unit: 'px',
+      onChange: (value, uow) => Size.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('cylinder', props => (props.size = undefined), uow);
-    } else {
-      if (value >= node.bounds.h || value <= 0) return;
-      node.updateCustomProps('cylinder', props => (props.size = round(value)), uow);
-    }
+    if (value !== undefined && (value >= node.bounds.h || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('cylinder', props => (props.size = newVal), uow);
   }
 };
 
 const Direction = {
-  definition: (node: DiagramNode): SelectCustomPropertyType => ({
-    id: 'direction',
-    label: 'Direction',
-    type: 'select',
-    options: [
+  definition: (node: DiagramNode) =>
+    CustomProperty.select(node, 'Direction', 'custom.cylinder.direction', [
       { value: NORTH, label: 'North' },
       { value: SOUTH, label: 'South' },
       { value: EAST, label: 'East' },
       { value: WEST, label: 'West' }
-    ],
-    value: node.renderProps.custom.cylinder.direction,
-    isSet: node.storedProps.custom?.cylinder?.direction !== undefined,
-    onChange: (value: string | undefined, uow: UnitOfWork) => Direction.set(value, node, uow)
-  }),
+    ]),
 
   set: (value: string | undefined, node: DiagramNode, uow: UnitOfWork) => {
     assertFullDirectionOrUndefined(value);

@@ -8,6 +8,7 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
+  CustomProperty,
   CustomPropertyDefinition,
   NumberCustomPropertyType
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -35,24 +36,17 @@ registerCustomNodeDefaults('process', { size: 10 });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.process.size,
-    maxValue: 50,
-    unit: '%',
-    isSet: node.storedProps.custom?.process?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode): NumberCustomPropertyType =>
+    CustomProperty.number(node, 'Size', 'custom.process.size', {
+      maxValue: 50,
+      unit: '%',
+      onChange: (value, uow) => Size.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('process', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('process', props => (props.size = round(value)), uow);
-    }
+    if (value !== undefined && (value >= 50 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('process', props => (props.size = newVal), uow);
   }
 };
 

@@ -8,8 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -39,17 +39,13 @@ const $defaults = registerCustomNodeDefaults('arrow', { notch: 0, x: 40, y: 30 }
 // Custom properties ************************************************************
 
 const Notch = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'notch',
-    label: 'Notch',
-    type: 'number',
-    value: $defaults(node.renderProps.custom.arrow).notch,
-    maxValue: 50,
-    unit: 'px',
-    isSet: node.storedProps.custom?.arrow?.notch !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Notch.set(value, node, uow)
-  }),
-
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Notch', 'custom.arrow.notch', {
+      unit: 'px',
+      maxValue: 50,
+      value: $defaults(node.renderProps.custom.arrow).notch,
+      onChange: (value, uow) => Notch.set(value, node, uow)
+    }),
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {
       node.updateCustomProps('arrow', props => (props.notch = undefined), uow);
@@ -61,16 +57,13 @@ const Notch = {
 };
 
 const ArrowControlX = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'x',
-    label: 'Pointiness',
-    type: 'number',
-    value: $defaults(node.renderProps.custom.arrow).x,
-    isSet: node.storedProps.custom?.arrow?.x !== undefined,
-    maxValue: 50,
-    unit: 'px',
-    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowControlX.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Pointiness', 'custom.arrow.x', {
+      unit: 'px',
+      maxValue: 50,
+      value: $defaults(node.renderProps.custom.arrow).x,
+      onChange: (value, uow) => ArrowControlX.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -83,16 +76,13 @@ const ArrowControlX = {
 };
 
 const ArrowControlY = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'y',
-    label: 'Thickness',
-    type: 'number',
-    value: $defaults(node.renderProps.custom.arrow).y,
-    isSet: node.storedProps.custom?.arrow?.y !== undefined,
-    maxValue: 50,
-    unit: '%',
-    onChange: (value: number | undefined, uow: UnitOfWork) => ArrowControlY.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Thickness', 'custom.arrow.y', {
+      unit: '%',
+      maxValue: 50,
+      value: $defaults(node.renderProps.custom.arrow).y,
+      onChange: (value, uow) => ArrowControlY.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {

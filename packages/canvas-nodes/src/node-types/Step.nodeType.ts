@@ -8,8 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -34,24 +34,17 @@ registerCustomNodeDefaults('step', { size: 25 });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.step.size,
-    maxValue: 50,
-    unit: 'px',
-    isSet: node.storedProps.custom?.step?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Size', 'custom.step.size', {
+      maxValue: 50,
+      unit: 'px',
+      onChange: (value, uow) => Size.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('step', props => (props.size = undefined), uow);
-    } else {
-      if (value >= node.bounds.w / 2 || value <= 0) return;
-      node.updateCustomProps('step', props => (props.size = round(value)), uow);
-    }
+    if (value !== undefined && (value >= node.bounds.w / 2 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('step', props => (props.size = newVal), uow);
   }
 };
 

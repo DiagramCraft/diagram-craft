@@ -7,7 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -45,24 +48,17 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'radius',
-        type: 'number',
-        label: 'Radius',
-        value: def.renderProps.custom.roundedRect.radius,
+      CustomProperty.number(def, 'Radius', 'custom.roundedRect.radius', {
         maxValue: 60,
         unit: 'px',
-        isSet: def.storedProps.custom?.roundedRect?.radius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('roundedRect', props => (props.radius = undefined), uow);
-          } else {
-            if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-
-            def.updateCustomProps('roundedRect', props => (props.radius = value), uow);
+          if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) {
+            return;
           }
+          const newVal = value === undefined ? undefined : value;
+          def.updateCustomProps('roundedRect', props => (props.radius = newVal), uow);
         }
-      }
+      })
     ];
   }
 

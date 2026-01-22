@@ -11,7 +11,10 @@ import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
@@ -196,17 +199,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'gap',
-        type: 'number',
-        label: 'Padding',
-        value: node.renderProps.custom.table.gap,
-        unit: 'px',
-        isSet: node.storedProps.custom?.table?.gap !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.gap = value), uow);
-        }
-      },
+      CustomProperty.number(node, 'Padding', 'custom.table.gap', {
+        unit: 'px'
+      }),
       {
         id: 'title',
         type: 'boolean',
@@ -217,17 +212,9 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
           node.updateCustomProps('table', props => (props.title = value), uow);
         }
       },
-      {
-        id: 'titleSize',
-        type: 'number',
-        label: 'Title Size',
-        unit: 'px',
-        value: node.renderProps.custom.table.titleSize,
-        isSet: node.storedProps.custom?.table?.titleSize !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.titleSize = value), uow);
-        }
-      }
+      CustomProperty.number(node, 'Title Size', 'custom.table.titleSize', {
+        unit: 'px'
+      })
     ];
   }
 }

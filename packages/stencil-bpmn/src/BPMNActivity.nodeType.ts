@@ -7,7 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -431,24 +434,16 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           }
         }
       },
-      {
-        id: 'radius',
-        type: 'number',
-        label: 'Radius',
-        value: def.renderProps.custom.bpmnActivity.radius,
+      CustomProperty.number(def, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
-        isSet: def.storedProps.custom?.bpmnActivity?.radius !== undefined,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnActivity', props => (props.radius = undefined), uow);
-          } else {
-            if (value >= def.bounds.w / 2 || value >= def.bounds.h / 2) return;
-
-            def.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
+          if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) {
+            return;
           }
+          def.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
         }
-      }
+      })
     ];
   }
 

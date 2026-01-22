@@ -8,8 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -43,16 +43,12 @@ const $defaults = registerCustomNodeDefaults('blockArc', {
 // Custom properties ************************************************************
 
 const InnerRadius = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'innerRadius',
-    label: 'Inner Radius',
-    type: 'number',
-    value: node.renderProps.custom.blockArc.innerRadius,
-    maxValue: 99,
-    unit: '%',
-    isSet: node.storedProps.custom?.blockArc?.innerRadius !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => InnerRadius.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Inner Radius', 'custom.blockArc.innerRadius', {
+      maxValue: 99,
+      unit: '%',
+      onChange: (value, uow) => InnerRadius.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -65,16 +61,13 @@ const InnerRadius = {
 };
 
 const StartAngle = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'startAngle',
-    label: 'Start Angle',
-    type: 'number',
-    value: node.renderProps.custom.blockArc.startAngle,
-    maxValue: 360,
-    unit: '°',
-    isSet: node.storedProps.custom?.blockArc?.startAngle !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => StartAngle.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Start Angle', 'custom.blockArc.startAngle', {
+      minValue: -360,
+      maxValue: 360,
+      unit: '°',
+      onChange: (value, uow) => StartAngle.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {
@@ -91,16 +84,12 @@ const StartAngle = {
 };
 
 const EndAngle = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'endAngle',
-    label: 'End Angle',
-    type: 'number',
-    value: node.renderProps.custom.blockArc.endAngle,
-    maxValue: 360,
-    unit: '°',
-    isSet: node.storedProps.custom?.blockArc?.endAngle !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => EndAngle.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'End Angle', 'custom.blockArc.endAngle', {
+      maxValue: 360,
+      unit: '°',
+      onChange: (value, uow) => EndAngle.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {

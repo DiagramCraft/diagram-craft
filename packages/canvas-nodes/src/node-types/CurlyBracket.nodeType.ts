@@ -8,8 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -36,16 +36,12 @@ registerCustomNodeDefaults('curlyBracket', { size: 50 });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.curlyBracket.size,
-    maxValue: 50,
-    unit: '%',
-    isSet: node.storedProps.custom?.curlyBracket?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Size', 'custom.curlyBracket.size', {
+      maxValue: 50,
+      unit: '%',
+      onChange: (value, uow) => Size.set(value, node, uow)
+    }),
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
     if (value === undefined) {

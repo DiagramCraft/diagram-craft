@@ -2,8 +2,8 @@
 
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import {
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomProperty,
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
@@ -39,50 +39,36 @@ registerCustomNodeDefaults('umlModule', {
 // Custom properties ************************************************************
 
 const JettyWidth = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'jettyWidth',
-    label: 'Width',
-    type: 'number',
-    value: JettyWidth.get(node.renderProps.custom.umlModule),
-    maxValue: 50,
-    unit: 'px',
-    isSet: node.storedProps.custom?.umlModule?.jettyWidth !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => JettyWidth.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Width', 'custom.umlModule.jettyWidth', {
+      maxValue: 50,
+      unit: 'px',
+      onChange: (value, uow) => JettyWidth.set(value, node, uow)
+    }),
 
   get: (props: NodePropsForRendering['custom']['umlModule']): number => props.jettyWidth,
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('umlModule', props => (props.jettyWidth = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('umlModule', props => (props.jettyWidth = round(value)), uow);
-    }
+    if (value !== undefined && (value >= 50 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('umlModule', props => (props.jettyWidth = newVal), uow);
   }
 };
 
 const JettyHeight = {
-  definition: (node: DiagramNode): NumberCustomPropertyType => ({
-    id: 'jettyHeight',
-    label: 'Height',
-    type: 'number',
-    value: JettyHeight.get(node.renderProps.custom.umlModule),
-    maxValue: 50,
-    unit: 'px',
-    isSet: node.storedProps.custom?.umlModule?.jettyHeight !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
-  }),
+  definition: (node: DiagramNode) =>
+    CustomProperty.number(node, 'Height', 'custom.umlModule.jettyHeight', {
+      maxValue: 50,
+      unit: 'px',
+      onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
+    }),
 
   get: (props: NodePropsForRendering['custom']['umlModule']) => props.jettyHeight,
 
   set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('umlModule', props => (props.jettyHeight = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('umlModule', props => (props.jettyHeight = round(value)), uow);
-    }
+    if (value !== undefined && (value >= 50 || value <= 0)) return;
+    const newVal = value === undefined ? undefined : round(value);
+    node.updateCustomProps('umlModule', props => (props.jettyHeight = newVal), uow);
   }
 };
 

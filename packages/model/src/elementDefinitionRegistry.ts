@@ -17,6 +17,7 @@ import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
 import type { ElementMetadata, NodeProps } from './diagramProps';
+import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 
 export type NodeCapability =
   | 'children'
@@ -67,6 +68,50 @@ declare global {
     }
   }
 }
+
+export const CustomProperty = {
+  number: (
+    el: DiagramNode,
+    label: string,
+    property: PropPath<NodeProps>,
+    opts?: Partial<NumberCustomPropertyType>
+  ): NumberCustomPropertyType => {
+    const acc = new DynamicAccessor<NodeProps>();
+    return {
+      id: label.toLowerCase().replace(/\s/g, '-'),
+      type: 'number',
+      label,
+      isSet: acc.get(el.storedProps as NodeProps, property) !== undefined,
+      value: acc.get(el.renderProps as NodeProps, property) as number,
+      onChange: (value: number | undefined, uow: UnitOfWork) => {
+        el.updateProps(p => acc.set(p, property, value), uow);
+      },
+      ...opts
+    };
+  },
+
+  select: (
+    el: DiagramNode,
+    label: string,
+    property: PropPath<NodeProps>,
+    options: ReadonlyArray<{ value: string; label: string }>,
+    opts?: Partial<SelectCustomPropertyType>
+  ): SelectCustomPropertyType => {
+    const acc = new DynamicAccessor<NodeProps>();
+    return {
+      id: label.toLowerCase().replace(/\s/g, '-'),
+      type: 'select',
+      label,
+      options,
+      isSet: acc.get(el.storedProps as NodeProps, property) !== undefined,
+      value: acc.get(el.renderProps as NodeProps, property) as string,
+      onChange: (value: string | undefined, uow: UnitOfWork) => {
+        el.updateProps(p => acc.set(p, property, value), uow);
+      },
+      ...opts
+    };
+  }
+};
 
 export type CustomPropertyDefinition = Array<
   | DiagramCraft.CustomPropertyTypes[keyof DiagramCraft.CustomPropertyTypes]

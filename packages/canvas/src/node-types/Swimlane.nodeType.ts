@@ -7,7 +7,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
@@ -179,17 +182,9 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
           node.updateCustomProps('swimlane', props => (props.title = value), uow);
         }
       },
-      {
-        id: 'titleSize',
-        type: 'number',
-        label: 'Title Size',
-        unit: 'px',
-        value: node.renderProps.custom.swimlane.titleSize,
-        isSet: node.storedProps.custom?.swimlane?.titleSize !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('swimlane', props => (props.titleSize = value), uow);
-        }
-      },
+      CustomProperty.number(node, 'Title Size', 'custom.swimlane.titleSize', {
+        unit: 'px'
+      }),
       {
         id: 'outerBorder',
         type: 'boolean',

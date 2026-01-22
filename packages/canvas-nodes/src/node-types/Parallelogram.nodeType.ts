@@ -7,8 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { CustomProperty } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
@@ -28,20 +27,12 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     super('parallelogram', 'Parallelogram', ParallelogramComponent);
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
+  getCustomPropertyDefinitions(node: DiagramNode) {
     return [
-      {
-        id: 'slant',
-        type: 'number',
-        label: 'Slant',
-        value: node.renderProps.custom.parallelogram.slant,
+      CustomProperty.number(node, 'Slant', 'custom.parallelogram.slant', {
         maxValue: 60,
-        unit: 'px',
-        isSet: node.storedProps.custom?.parallelogram?.slant !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('parallelogram', props => (props.slant = value), uow);
-        }
-      }
+        unit: 'px'
+      })
     ];
   }
 

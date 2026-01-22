@@ -9,8 +9,10 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
@@ -56,32 +58,16 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
-      {
-        id: 'numberOfSides',
-        type: 'number',
-        label: 'Sides',
-        value: def.renderProps.custom.star.numberOfSides,
-        isSet: def.storedProps.custom?.star?.numberOfSides !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          def.updateCustomProps('star', props => (props.numberOfSides = value), uow);
-        }
-      },
-      {
-        id: 'innerRadius',
-        type: 'number',
-        label: 'Radius',
+      CustomProperty.number(def, 'Sides', 'custom.star.numberOfSides'),
+      CustomProperty.number(def, 'Radius', 'custom.star.innerRadius', {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
-        isSet: def.storedProps.custom?.star?.innerRadius !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('star', props => (props.innerRadius = undefined), uow);
-          } else {
-            def.updateCustomProps('star', props => (props.innerRadius = value / 100), uow);
-          }
+        onChange: (value, uow) => {
+          const newVal = value === undefined ? undefined : value / 100;
+          def.updateCustomProps('star', props => (props.innerRadius = newVal), uow);
         }
-      }
+      })
     ];
   }
 }

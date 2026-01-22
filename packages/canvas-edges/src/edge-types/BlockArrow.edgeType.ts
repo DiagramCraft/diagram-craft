@@ -7,6 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
 import {
+  CustomProperty,
   CustomPropertyDefinition,
   NumberCustomPropertyType
 } from '@diagram-craft/model/elementDefinitionRegistry';
