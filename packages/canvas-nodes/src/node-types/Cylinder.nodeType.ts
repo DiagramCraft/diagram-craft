@@ -210,7 +210,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(0, size / 2));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Size.definition(node), Direction.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [Size.definition(node), Direction.definition(node)]);
   }
 }

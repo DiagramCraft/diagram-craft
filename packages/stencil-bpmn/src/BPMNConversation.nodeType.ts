@@ -7,10 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import squarePlusIcon from './icons/square-plus.svg?raw';
@@ -113,14 +110,14 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(def, 'Type', 'custom.bpmnConversation.type', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Type', 'custom.bpmnConversation.type', [
         { value: 'conversation', label: 'Conversation' },
         { value: 'sub-conversation', label: 'Sub-conversation' },
         { value: 'call-conversation', label: 'Call-conversation' },
         { value: 'call-conversation-collaboration', label: 'Call-conversation Collaboration' }
       ])
-    ];
+    ]);
   }
 }

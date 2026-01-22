@@ -225,8 +225,12 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Notch.definition(node), ArrowControlX.definition(node), ArrowControlY.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [
+      Notch.definition(node),
+      ArrowControlX.definition(node),
+      ArrowControlY.definition(node)
+    ]);
   }
 
   private rotate(point: Point) {

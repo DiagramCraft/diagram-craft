@@ -141,7 +141,10 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [JettyWidth.definition(node), JettyHeight.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [
+      JettyWidth.definition(node),
+      JettyHeight.definition(node)
+    ]);
   }
 }

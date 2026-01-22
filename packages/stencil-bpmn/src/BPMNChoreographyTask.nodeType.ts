@@ -11,10 +11,7 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
@@ -108,14 +105,14 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
       .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.boolean(def, 'Expanded', 'custom.bpmnChoreographyTask.expanded'),
-      CustomProperty.node.select(def, 'Type', 'custom.bpmnChoreographyTask.type', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.boolean(def, 'Expanded', 'custom.bpmnChoreographyTask.expanded'),
+      p.select(def, 'Type', 'custom.bpmnChoreographyTask.type', [
         { value: 'task', label: 'Task' },
         { value: 'sub-choreography', label: 'Sub-Choreography' },
         { value: 'call', label: 'Call' }
       ])
-    ];
+    ]);
   }
 }

@@ -6,10 +6,7 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { Box } from '@diagram-craft/geometry/box';
@@ -259,16 +256,16 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(def, 'EventType', 'custom.bpmnEvent.eventType', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'EventType', 'custom.bpmnEvent.eventType', [
         { value: 'start', label: 'Start' },
         { value: 'intermediate', label: 'Intermediate' },
         { value: 'end', label: 'End' }
       ]),
-      CustomProperty.node.boolean(def, 'Non-Interrupting', 'custom.bpmnEvent.nonInterrupting'),
-      CustomProperty.node.boolean(def, 'Throwing', 'custom.bpmnEvent.throwing'),
-      CustomProperty.node.select(def, 'Marker', 'custom.bpmnEvent.marker', [
+      p.boolean(def, 'Non-Interrupting', 'custom.bpmnEvent.nonInterrupting'),
+      p.boolean(def, 'Throwing', 'custom.bpmnEvent.throwing'),
+      p.select(def, 'Marker', 'custom.bpmnEvent.marker', [
         { value: 'none', label: 'None' },
         { value: 'message', label: 'Message' },
         { value: 'timer', label: 'Timer' },
@@ -279,6 +276,6 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         { value: 'conditional', label: 'Conditional' },
         { value: 'link', label: 'Link' }
       ])
-    ];
+    ]);
   }
 }

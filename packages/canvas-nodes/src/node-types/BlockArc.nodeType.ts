@@ -160,8 +160,12 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
       .arcTo(start, R, R, 0, largeArcFlag, 1);
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [InnerRadius.definition(node), StartAngle.definition(node), EndAngle.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [
+      InnerRadius.definition(node),
+      StartAngle.definition(node),
+      EndAngle.definition(node)
+    ]);
   }
 
   private getPointsOfSignificance(node: DiagramNode) {

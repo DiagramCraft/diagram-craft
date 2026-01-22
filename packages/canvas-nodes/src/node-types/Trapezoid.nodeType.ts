@@ -9,7 +9,10 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { CustomProperty } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -50,7 +53,7 @@ export class TrapezoidNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode) {
-    return [slantLeftPropDef(def), slantRightPropDef(def)];
+    return new CustomPropertyDefinition(() => [slantLeftPropDef(def), slantRightPropDef(def)]);
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

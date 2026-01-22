@@ -9,10 +9,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import xFilledIcon from './icons/x-filled.svg?raw';
 import pentagonIcon from './icons/pentagon.svg?raw';
@@ -162,9 +159,9 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(def, 'Type', 'custom.bpmnGateway.type', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Type', 'custom.bpmnGateway.type', [
         { value: 'default', label: 'Default' },
         { value: 'exclusive', label: 'Exclusive' },
         { value: 'inclusive', label: 'Inclusive' },
@@ -180,6 +177,6 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
           label: 'Event Based Start Process Parallel'
         }
       ])
-    ];
+    ]);
   }
 }

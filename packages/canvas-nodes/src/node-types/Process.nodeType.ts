@@ -86,7 +86,7 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [Size.definition(node)]);
   }
 }

@@ -106,7 +106,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(1, 0));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [Size.definition(node)]);
   }
 }

@@ -170,7 +170,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getCustomPropertyDefinitions(_node: DiagramNode): CustomPropertyDefinition {
-    return [];
+    return new CustomPropertyDefinition(() => []);
   }
 
   getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {

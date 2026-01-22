@@ -33,7 +33,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   for (const key of $d.document.nodeDefinitions.list()) {
     const def = $d.document.nodeDefinitions.get(key);
     const customProps = def.getCustomPropertyDefinitions(node);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       nodeTypesWithCustomProps.push(key);
     }
   }

@@ -7,10 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
@@ -151,22 +148,22 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [
-      ...this.getCollapsiblePropertyDefinitions(node),
-      CustomProperty.node.select(node, 'Orientation', 'custom.swimlane.orientation', [
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      this.getCollapsiblePropertyDefinitions(node),
+      p.select(node, 'Orientation', 'custom.swimlane.orientation', [
         { value: 'vertical', label: 'Vertical' },
         { value: 'horizontal', label: 'Horizontal' }
       ]),
-      CustomProperty.node.boolean(node, 'Title', 'custom.swimlane.title'),
-      CustomProperty.node.number(node, 'Title Size', 'custom.swimlane.titleSize', {
+      p.boolean(node, 'Title', 'custom.swimlane.title'),
+      p.number(node, 'Title Size', 'custom.swimlane.titleSize', {
         unit: 'px'
       }),
-      CustomProperty.node.boolean(node, 'Outer Border', 'custom.swimlane.outerBorder'),
-      CustomProperty.node.boolean(node, 'Title Border', 'custom.swimlane.titleBorder'),
+      p.boolean(node, 'Outer Border', 'custom.swimlane.outerBorder'),
+      p.boolean(node, 'Title Border', 'custom.swimlane.titleBorder'),
 
-      CustomProperty.node.boolean(node, 'Fill', 'custom.swimlane.filled')
-    ];
+      p.boolean(node, 'Fill', 'custom.swimlane.filled')
+    ]);
   }
 }
 

@@ -29,7 +29,7 @@ export const ElementCustomPropertiesPanelForm = ({
 }) => {
   return (
     <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
-      {Object.entries(customProperties).map(([key, value]) => {
+      {Object.entries(customProperties.entries).map(([key, value]) => {
         if (value.type === 'delimiter') {
           return (
             <React.Fragment key={key}>

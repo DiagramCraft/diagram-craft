@@ -9,10 +9,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
@@ -50,8 +47,10 @@ export class RegularPolygonNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [CustomProperty.node.number(def, 'Sides', 'custom.regularPolygon.numberOfSides')];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(def, 'Sides', 'custom.regularPolygon.numberOfSides')
+    ]);
   }
 }
 

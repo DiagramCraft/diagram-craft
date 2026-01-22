@@ -7,10 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -295,9 +292,9 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(def, 'Type', 'custom.bpmnActivity.activityType', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Type', 'custom.bpmnActivity.activityType', [
         { value: 'task', label: 'Task' },
         { value: 'sub-process', label: 'Sub-process' },
         { value: 'event-sub-process', label: 'Event sub-process' },
@@ -305,7 +302,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         { value: 'call-activity', label: 'Call activity' },
         { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
       ]),
-      CustomProperty.node.select(def, 'Task Type', 'custom.bpmnActivity.taskType', [
+      p.select(def, 'Task Type', 'custom.bpmnActivity.taskType', [
         { value: 'regular', label: 'Regular' },
         { value: 'service', label: 'Service' },
         { value: 'send', label: 'Send' },
@@ -315,14 +312,14 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         { value: 'business-rule', label: 'Business Rule' },
         { value: 'script', label: 'Script' }
       ]),
-      CustomProperty.node.boolean(def, 'Loop', 'custom.bpmnActivity.loop'),
-      CustomProperty.node.select(def, 'Multi-Instance', 'custom.bpmnActivity.multiInstance', [
+      p.boolean(def, 'Loop', 'custom.bpmnActivity.loop'),
+      p.select(def, 'Multi-Instance', 'custom.bpmnActivity.multiInstance', [
         { label: 'None', value: 'none' },
         { label: 'Sequential', value: 'sequential' },
         { label: 'Parallel', value: 'parallel' }
       ]),
-      CustomProperty.node.boolean(def, 'Compensation', 'custom.bpmnActivity.compensation'),
-      CustomProperty.node.select(def, 'Subprocess Type', 'custom.bpmnActivity.subprocessType', [
+      p.boolean(def, 'Compensation', 'custom.bpmnActivity.compensation'),
+      p.select(def, 'Subprocess Type', 'custom.bpmnActivity.subprocessType', [
         { label: 'Default', value: 'default' },
         { label: 'Loop', value: 'loop' },
         { label: 'Multi-Instance', value: 'multi-instance' },
@@ -330,8 +327,8 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         { label: 'Ad-Hoc', value: 'ad-hoc' },
         { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
       ]),
-      CustomProperty.node.boolean(def, 'Expanded', 'custom.bpmnActivity.expanded'),
-      CustomProperty.node.number(def, 'Radius', 'custom.bpmnActivity.radius', {
+      p.boolean(def, 'Expanded', 'custom.bpmnActivity.expanded'),
+      p.number(def, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number | undefined, uow: UnitOfWork) => {
@@ -341,7 +338,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           def.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
         }
       })
-    ];
+    ]);
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

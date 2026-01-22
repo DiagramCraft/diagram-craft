@@ -7,10 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
@@ -182,39 +179,21 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(
-        def,
-        'Position',
-        'custom.bpmnChoreographyTaskParticipant.position',
-        [
-          { value: 'top', label: 'Top' },
-          { value: 'middle', label: 'Middle' },
-          { value: 'bottom', label: 'Bottom' }
-        ]
-      ),
-      CustomProperty.node.boolean(
-        def,
-        'Initiating',
-        'custom.bpmnChoreographyTaskParticipant.initiating'
-      ),
-      CustomProperty.node.select(
-        def,
-        'Loop Type',
-        'custom.bpmnChoreographyTaskParticipant.loopType',
-        [
-          { value: 'none', label: 'None' },
-          { value: 'standard', label: 'Standard' },
-          { value: 'sequential', label: 'Sequential' },
-          { value: 'parallel', label: 'Parallel' }
-        ]
-      ),
-      CustomProperty.node.boolean(
-        def,
-        'Multiple',
-        'custom.bpmnChoreographyTaskParticipant.multiple'
-      )
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Position', 'custom.bpmnChoreographyTaskParticipant.position', [
+        { value: 'top', label: 'Top' },
+        { value: 'middle', label: 'Middle' },
+        { value: 'bottom', label: 'Bottom' }
+      ]),
+      p.boolean(def, 'Initiating', 'custom.bpmnChoreographyTaskParticipant.initiating'),
+      p.select(def, 'Loop Type', 'custom.bpmnChoreographyTaskParticipant.loopType', [
+        { value: 'none', label: 'None' },
+        { value: 'standard', label: 'Standard' },
+        { value: 'sequential', label: 'Sequential' },
+        { value: 'parallel', label: 'Parallel' }
+      ]),
+      p.boolean(def, 'Multiple', 'custom.bpmnChoreographyTaskParticipant.multiple')
+    ]);
   }
 }

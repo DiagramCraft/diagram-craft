@@ -127,6 +127,6 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
   }
 
   getCustomPropertyDefinitions(_edge: DiagramEdge): CustomPropertyDefinition {
-    return [];
+    return new CustomPropertyDefinition(() => []);
   }
 }

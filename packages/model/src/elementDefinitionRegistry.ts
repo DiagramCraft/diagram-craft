@@ -1,6 +1,6 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import type { DiagramElement } from './diagramElement';
+import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -135,7 +135,9 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
         },
         ...opts
       };
-    }
+    },
+
+    delimiter: (label: string) => ({ type: 'delimiter', label })
   };
 };
 
@@ -144,10 +146,27 @@ export const CustomProperty = {
   edge: makeCustomPropertyHelper<DiagramEdge, EdgeProps>()
 };
 
-export type CustomPropertyDefinition = Array<
+export type CustomPropertyDefinitionEntry =
   | DiagramCraft.CustomPropertyTypes[keyof DiagramCraft.CustomPropertyTypes]
-  | { type: 'delimiter'; label: string }
->;
+  | { type: 'delimiter'; label: string };
+
+export class CustomPropertyDefinition {
+  private readonly arr: Array<CustomPropertyDefinitionEntry>;
+
+  constructor(
+    fn: (
+      p: (typeof CustomProperty)['node']
+    ) => Array<CustomPropertyDefinitionEntry | CustomPropertyDefinition>
+  ) {
+    this.arr = fn(CustomProperty.node).flatMap(e =>
+      e instanceof CustomPropertyDefinition ? e.entries : e
+    );
+  }
+
+  get entries() {
+    return this.arr;
+  }
+}
 
 export const asProperty = (
   customProp: CustomPropertyType,
@@ -172,6 +191,7 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
+
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 
   getBoundingPath(node: DiagramNode): PathList;
@@ -180,6 +200,7 @@ export interface NodeDefinition {
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
+
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
@@ -187,6 +208,7 @@ export interface NodeDefinition {
     previousBounds: Box,
     uow: UnitOfWork
   ): void;
+
   onDrop?: (
     coord: Point,
     node: DiagramNode,
@@ -194,6 +216,7 @@ export interface NodeDefinition {
     uow: UnitOfWork,
     operation: string
   ) => void;
+
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;

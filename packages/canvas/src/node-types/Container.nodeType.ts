@@ -3,7 +3,10 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  CustomPropertyDefinitionEntry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderElement } from '../components/renderElement';
@@ -43,21 +46,16 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.collapsible = true;
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
+  getCustomPropertyDefinitions(node: DiagramNode) {
     const shape = getShape(node);
-    return [
-      ...this.getCollapsiblePropertyDefinitions(node),
-      ...(shape
-        ? [
-            {
-              type: 'delimiter',
-              label: 'Shape'
-            },
-            ...shape.getCustomPropertyDefinitions(node)
-          ]
-        : [])
-      // TODO: Can we remove this type spec
-    ] as CustomPropertyDefinition;
+    return new CustomPropertyDefinition(
+      p =>
+        [
+          this.getCollapsiblePropertyDefinitions(node),
+          ...(shape ? [p.delimiter('Shape'), shape.getCustomPropertyDefinitions(node)] : [])
+          // TODO: Can we remove this type spec
+        ] as CustomPropertyDefinitionEntry[]
+    );
   }
 
   getBoundingPathBuilder(node: DiagramNode): PathListBuilder {

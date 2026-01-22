@@ -11,10 +11,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
@@ -197,16 +194,16 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.number(node, 'Padding', 'custom.table.gap', {
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(node, 'Padding', 'custom.table.gap', {
         unit: 'px'
       }),
-      CustomProperty.node.boolean(node, 'Title', 'custom.table.title'),
-      CustomProperty.node.number(node, 'Title Size', 'custom.table.titleSize', {
+      p.boolean(node, 'Title', 'custom.table.title'),
+      p.number(node, 'Title Size', 'custom.table.titleSize', {
         unit: 'px'
       })
-    ];
+    ]);
   }
 }
 

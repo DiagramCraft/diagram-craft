@@ -133,6 +133,6 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Size.definition(node)];
+    return new CustomPropertyDefinition(() => [Size.definition(node)]);
   }
 }

@@ -9,10 +9,7 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '@diagram-craft/model/anchor';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type BracketPosition = 'left' | 'right';
@@ -96,12 +93,12 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.select(def, 'Bracket Position', 'custom.bpmnAnnotation.bracketPosition', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Bracket Position', 'custom.bpmnAnnotation.bracketPosition', [
         { value: 'left', label: 'Left' },
         { value: 'right', label: 'Right' }
       ])
-    ];
+    ]);
   }
 }

@@ -7,10 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -46,9 +43,9 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.number(def, 'Radius', 'custom.roundedRect.radius', {
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(def, 'Radius', 'custom.roundedRect.radius', {
         maxValue: 60,
         unit: 'px',
         onChange: (value: number | undefined, uow: UnitOfWork) => {
@@ -59,7 +56,7 @@ export class RoundedRectNodeDefinition extends ShapeNodeDefinition {
           def.updateCustomProps('roundedRect', props => (props.radius = newVal), uow);
         }
       })
-    ];
+    ]);
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

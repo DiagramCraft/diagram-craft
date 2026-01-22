@@ -212,7 +212,11 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     return !['arrows', 'line-hops'].includes(capability);
   }
 
-  getCustomPropertyDefinitions(edge: DiagramEdge): CustomPropertyDefinition {
-    return [Width.definition(edge), ArrowWidth.definition(edge), ArrowDepth.definition(edge)];
+  getCustomPropertyDefinitions(edge: DiagramEdge) {
+    return new CustomPropertyDefinition(() => [
+      Width.definition(edge),
+      ArrowWidth.definition(edge),
+      ArrowDepth.definition(edge)
+    ]);
   }
 }

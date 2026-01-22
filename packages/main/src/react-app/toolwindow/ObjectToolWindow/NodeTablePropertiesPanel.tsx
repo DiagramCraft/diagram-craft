@@ -34,7 +34,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
       <div className={'cmp-labeled-table'}>
-        {Object.entries(customProperties).map(([key, value]) => {
+        {Object.entries(customProperties.entries).map(([key, value]) => {
           if (value.type === 'delimiter') return <div key={key}></div>;
 
           const prop = asProperty(value, cb => {

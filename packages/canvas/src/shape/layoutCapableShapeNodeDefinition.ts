@@ -1,6 +1,5 @@
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
-  CustomProperty,
   CustomPropertyDefinition,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -204,8 +203,10 @@ export abstract class LayoutCapableShapeNodeDefinition
   /**
    * Get standard collapsible custom property definitions
    */
-  protected getCollapsiblePropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [CustomProperty.node.boolean(node, 'Collapsible', 'custom._collapsible.collapsible')];
+  protected getCollapsiblePropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.boolean(node, 'Collapsible', 'custom._collapsible.collapsible')
+    ]);
   }
 
   /**

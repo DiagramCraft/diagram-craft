@@ -96,7 +96,7 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(0, 0));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [Size.definition(node)]);
   }
 }

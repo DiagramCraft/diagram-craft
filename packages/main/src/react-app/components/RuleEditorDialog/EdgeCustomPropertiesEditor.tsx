@@ -32,7 +32,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
   for (const key of $d.document.edgeDefinitions.list()) {
     const def = $d.document.edgeDefinitions.get(key);
     const customProps = def.getCustomPropertyDefinitions(edge);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       edgeTypesWithCustomProps.push(key);
     }
   }

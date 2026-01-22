@@ -15,10 +15,7 @@ import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
 import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -166,14 +163,14 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     return PathListBuilder.fromPath(path).withTransform(t);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.boolean(def, 'Collection', 'custom.bpmnDataObject.collection'),
-      CustomProperty.node.select(def, 'Type', 'custom.bpmnDataObject.type', [
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.boolean(def, 'Collection', 'custom.bpmnDataObject.collection'),
+      p.select(def, 'Type', 'custom.bpmnDataObject.type', [
         { label: 'Default', value: 'default' },
         { label: 'Input', value: 'input' },
         { label: 'Output', value: 'output' }
       ])
-    ];
+    ]);
   }
 }

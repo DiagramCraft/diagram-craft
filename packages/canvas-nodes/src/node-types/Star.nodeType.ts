@@ -9,10 +9,7 @@ import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  CustomProperty,
-  CustomPropertyDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
@@ -56,10 +53,10 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return [
-      CustomProperty.node.number(def, 'Sides', 'custom.star.numberOfSides'),
-      CustomProperty.node.number(def, 'Radius', 'custom.star.innerRadius', {
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(def, 'Sides', 'custom.star.numberOfSides'),
+      p.number(def, 'Radius', 'custom.star.innerRadius', {
         value: round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
@@ -68,7 +65,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
           def.updateCustomProps('star', props => (props.innerRadius = newVal), uow);
         }
       })
-    ];
+    ]);
   }
 }
 
