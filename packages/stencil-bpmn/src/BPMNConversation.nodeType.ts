@@ -9,7 +9,6 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import squarePlusIcon from './icons/square-plus.svg?raw';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -111,32 +110,14 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'type',
-        type: 'select',
-        label: 'Type',
-        options: [
-          { value: 'conversation', label: 'Conversation' },
-          { value: 'sub-conversation', label: 'Sub-conversation' },
-          { value: 'call-conversation', label: 'Call-conversation' },
-          { value: 'call-conversation-collaboration', label: 'Call-conversation Collaboration' }
-        ],
-        value: def.renderProps.custom.bpmnConversation?.type ?? 'Conversation',
-        isSet: def.storedProps.custom?.bpmnConversation?.type !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnConversation', props => (props.type = undefined), uow);
-          } else {
-            def.updateCustomProps(
-              'bpmnConversation',
-              props => (props.type = value as ConversationType),
-              uow
-            );
-          }
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Type', 'custom.bpmnConversation.type', [
+        { value: 'conversation', label: 'Conversation' },
+        { value: 'sub-conversation', label: 'Sub-conversation' },
+        { value: 'call-conversation', label: 'Call-conversation' },
+        { value: 'call-conversation-collaboration', label: 'Call-conversation Collaboration' }
+      ])
+    ]);
   }
 }

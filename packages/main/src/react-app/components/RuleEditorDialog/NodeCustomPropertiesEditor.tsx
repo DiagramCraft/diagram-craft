@@ -4,7 +4,6 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/ElementCustomPropertiesPanel';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { useDiagram } from '../../../application';
@@ -34,7 +33,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   for (const key of $d.document.nodeDefinitions.list()) {
     const def = $d.document.nodeDefinitions.get(key);
     const customProps = def.getCustomPropertyDefinitions(node);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       nodeTypesWithCustomProps.push(key);
     }
   }
@@ -74,7 +73,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
             customProperties={$d.document.nodeDefinitions
               .get(type)
               .getCustomPropertyDefinitions(node)}
-            onChange={(_value: CustomPropertyDefinition) => {
+            onChange={() => {
               return (cb: (uow: UnitOfWork) => void) => {
                 UnitOfWork.executeSilently($d, cb);
 

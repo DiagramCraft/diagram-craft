@@ -4,13 +4,12 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { Point, _p } from '@diagram-craft/geometry/point';
+import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import xFilledIcon from './icons/x-filled.svg?raw';
 import pentagonIcon from './icons/pentagon.svg?raw';
@@ -160,38 +159,24 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'type',
-        type: 'select',
-        label: 'Type',
-        options: [
-          { value: 'default', label: 'Default' },
-          { value: 'exclusive', label: 'Exclusive' },
-          { value: 'inclusive', label: 'Inclusive' },
-          { value: 'parallel', label: 'Parallel' },
-          { value: 'complex', label: 'Complex' },
-          { value: 'event-based', label: 'Event Based' },
-          {
-            value: 'event-based-start-process-inclusive',
-            label: 'Event Based Start Process Inclusive'
-          },
-          {
-            value: 'event-based-start-process-parallel',
-            label: 'Event Based Start Process Parallel'
-          }
-        ],
-        value: def.renderProps.custom.bpmnGateway.type ?? 'default',
-        isSet: def.storedProps.custom?.bpmnGateway?.type !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnGateway', props => (props.type = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnGateway', props => (props.type = value as GatewayType), uow);
-          }
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Type', 'custom.bpmnGateway.type', [
+        { value: 'default', label: 'Default' },
+        { value: 'exclusive', label: 'Exclusive' },
+        { value: 'inclusive', label: 'Inclusive' },
+        { value: 'parallel', label: 'Parallel' },
+        { value: 'complex', label: 'Complex' },
+        { value: 'event-based', label: 'Event Based' },
+        {
+          value: 'event-based-start-process-inclusive',
+          label: 'Event Based Start Process Inclusive'
+        },
+        {
+          value: 'event-based-start-process-parallel',
+          label: 'Event Based Start Process Parallel'
         }
-      }
-    ];
+      ])
+    ]);
   }
 }

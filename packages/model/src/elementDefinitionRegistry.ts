@@ -1,6 +1,6 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import type { DiagramElement } from './diagramElement';
+import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
@@ -16,7 +16,9 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
-import type { ElementMetadata, NodeProps } from './diagramProps';
+import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 export type NodeCapability =
   | 'children'
@@ -30,50 +32,160 @@ export type NodeCapability =
   | 'collapsible'
   | 'children.select-parent';
 
-// TODO: Make make this into an interface in the global namespace we can extend
-export type CustomPropertyDefinition = {
+// biome-ignore lint/suspicious/noExplicitAny: convenient
+export interface CustomPropertyType<T = any> {
   id: string;
+  type: string;
   label: string;
+
   isSet: boolean;
-} & (
-  | {
-      type: 'number';
-      value: number;
-      minValue?: number;
-      maxValue?: number;
-      step?: number;
-      unit?: string;
-      onChange: (value: number | undefined, uow: UnitOfWork) => void;
+  get: () => T;
+  set: (value: T | undefined, uow: UnitOfWork) => void;
+}
+
+export interface NumberCustomPropertyType extends CustomPropertyType<number> {
+  type: 'number';
+  minValue?: number;
+  maxValue?: number;
+  step?: number;
+  unit?: string;
+}
+
+export interface SelectCustomPropertyType extends CustomPropertyType<string> {
+  type: 'select';
+  options: ReadonlyArray<{ value: string; label: string }>;
+}
+
+export interface BooleanCustomPropertyType extends CustomPropertyType<boolean> {
+  type: 'boolean';
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomPropertyTypes {
+      number: NumberCustomPropertyType;
+      select: SelectCustomPropertyType;
+      boolean: BooleanCustomPropertyType;
     }
-  | {
-      type: 'select';
-      value: string;
-      options: ReadonlyArray<{ value: string; label: string }>;
-      onChange: (value: string | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      type: 'boolean';
-      value: boolean;
-      onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      // TODO: Fix this
-      type: 'delimiter';
-      value: unknown;
-      onChange: (value: unknown | undefined, uow: UnitOfWork) => void;
-    }
-);
+  }
+}
+
+type CommonCustomPropertyOpts<T> = {
+  validate?: (value: T) => boolean;
+  format?: (value: T) => T;
+};
+
+const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
+  return {
+    number: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<NumberCustomPropertyType & CommonCustomPropertyOpts<number>>
+    ): NumberCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'number',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as number,
+        set: (value: number | undefined, uow: UnitOfWork) => {
+          if (value !== undefined && opts?.validate && !opts.validate(value)) return;
+          if (value !== undefined && opts?.format) value = opts.format(value);
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    boolean: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<BooleanCustomPropertyType>
+    ): BooleanCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'boolean',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as boolean,
+        set: (value: boolean | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    select: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      options: ReadonlyArray<{ value: string; label: string }>,
+      opts?: Partial<SelectCustomPropertyType>
+    ): SelectCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'select',
+        label,
+        options,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as string,
+        set: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    delimiter: (label: string) => ({ type: 'delimiter', label })
+  };
+};
+
+export const CustomProperty = {
+  node: makeCustomPropertyHelper<DiagramNode, NodeProps>(),
+  edge: makeCustomPropertyHelper<DiagramEdge, EdgeProps>()
+};
+
+export type CustomPropertyDefinitionEntry =
+  | DiagramCraft.CustomPropertyTypes[keyof DiagramCraft.CustomPropertyTypes]
+  | { type: 'delimiter'; label: string };
+
+export class CustomPropertyDefinition {
+  private readonly arr: Array<CustomPropertyDefinitionEntry>;
+
+  constructor(
+    fn: (
+      p: (typeof CustomProperty)['node']
+    ) => Array<CustomPropertyDefinitionEntry | CustomPropertyDefinition>
+  ) {
+    this.arr = fn(CustomProperty.node).flatMap(e =>
+      e instanceof CustomPropertyDefinition ? e.entries : e
+    );
+  }
+
+  get entries() {
+    return this.arr;
+  }
+}
 
 export const asProperty = (
-  customProp: CustomPropertyDefinition,
+  customProp: CustomPropertyType,
   change: (cb: (uow: UnitOfWork) => void) => void
 ): Property<unknown> => {
+  if (!('get' in customProp) || !('set' in customProp)) throw new Error();
   return {
-    val: customProp.value,
+    val: customProp.get(),
     set: (v: unknown) => {
       change(uow => {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
-        customProp.onChange(v as any, uow);
+        customProp.set(v as any, uow);
       });
     },
     hasMultipleValues: false,
@@ -86,7 +198,8 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
-  getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
+
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 
   getBoundingPath(node: DiagramNode): PathList;
 
@@ -94,6 +207,7 @@ export interface NodeDefinition {
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
+
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
@@ -101,6 +215,7 @@ export interface NodeDefinition {
     previousBounds: Box,
     uow: UnitOfWork
   ): void;
+
   onDrop?: (
     coord: Point,
     node: DiagramNode,
@@ -108,6 +223,7 @@ export interface NodeDefinition {
     uow: UnitOfWork,
     operation: string
   ) => void;
+
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;

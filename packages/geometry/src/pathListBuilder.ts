@@ -37,7 +37,7 @@
  * @module
  */
 
-import { Point } from './point';
+import { _p, Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
 import {
@@ -50,6 +50,7 @@ import { Transform, TransformFactory } from './transform';
 import { parseSvgPath } from './svgPathUtils';
 import { PathList } from './pathList';
 import { Lazy } from '@diagram-craft/utils/lazy';
+import { isObj } from '@diagram-craft/utils/object';
 
 /**
  * Represents a raw cubic Bézier curve segment in an SVG path.
@@ -217,7 +218,7 @@ export class PathListBuilder {
   static fromString(path: string) {
     const d = new PathListBuilder();
     let currentPos: Point = { x: 0, y: 0 };
-    let lastControlPoint: Point | undefined;
+    let lastCP: Point | undefined;
     let lastCommand: string | undefined;
 
     parseSvgPath(path).forEach(p => {
@@ -258,16 +259,16 @@ export class PathListBuilder {
           d.lineTo(currentPos);
           break;
         case 'C':
-          lastControlPoint = { x: pn[2]!, y: pn[3]! };
+          lastCP = { x: pn[2]!, y: pn[3]! };
           currentPos = { x: pn[4]!, y: pn[5]! };
-          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, lastControlPoint);
+          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, lastCP);
           break;
         case 'c':
-          lastControlPoint = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
+          lastCP = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
           d.cubicTo(
             { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! },
             { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! },
-            lastControlPoint
+            lastCP
           );
           currentPos = { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! };
           break;
@@ -275,22 +276,22 @@ export class PathListBuilder {
           // Calculate reflected control point
           const p1 =
             lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
-              ? { x: 2 * currentPos.x - lastControlPoint!.x, y: 2 * currentPos.y - lastControlPoint!.y }
+              ? { x: 2 * currentPos.x - lastCP!.x, y: 2 * currentPos.y - lastCP!.y }
               : currentPos;
-          lastControlPoint = { x: pn[0]!, y: pn[1]! };
+          lastCP = { x: pn[0]!, y: pn[1]! };
           currentPos = { x: pn[2]!, y: pn[3]! };
-          d.cubicTo(currentPos, p1, lastControlPoint);
+          d.cubicTo(currentPos, p1, lastCP);
           break;
         }
         case 's': {
           // Calculate reflected control point
           const p1 =
             lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
-              ? { x: 2 * currentPos.x - lastControlPoint!.x, y: 2 * currentPos.y - lastControlPoint!.y }
+              ? { x: 2 * currentPos.x - lastCP!.x, y: 2 * currentPos.y - lastCP!.y }
               : currentPos;
-          lastControlPoint = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          lastCP = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
           currentPos = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
-          d.cubicTo(currentPos, p1, lastControlPoint);
+          d.cubicTo(currentPos, p1, lastCP);
           break;
         }
         case 'Q':
@@ -382,9 +383,11 @@ export class PathListBuilder {
    * @param p The point to move to
    * @returns This builder (for chaining)
    */
-  moveTo(p: Point) {
+  moveTo(p: Point): PathListBuilder;
+  moveTo(x: number, y: number): PathListBuilder;
+  moveTo(a: unknown, b?: unknown): PathListBuilder {
     if (this.active.start) this.newSegment();
-    this.active.start = p;
+    this.active.start = isObj(a) ? (a as Point) : _p(a as number, b as number);
     this.pathCache.clear();
     return this;
   }
@@ -395,9 +398,15 @@ export class PathListBuilder {
    * @param p The endpoint of the line
    * @returns This builder (for chaining)
    */
-  lineTo(p: Point) {
+  lineTo(p: Point): PathListBuilder;
+  lineTo(x: number, y: number): PathListBuilder;
+  lineTo(a: unknown, b?: unknown): PathListBuilder {
     precondition.is.present(this.active.start);
-    this.active.instructions.push(['L', p.x, p.y]);
+    if (isObj(a)) {
+      this.active.instructions.push(['L', (a as Point).x, (a as Point).y]);
+    } else {
+      this.active.instructions.push(['L', a as number, b as number]);
+    }
     this.pathCache.clear();
     return this;
   }

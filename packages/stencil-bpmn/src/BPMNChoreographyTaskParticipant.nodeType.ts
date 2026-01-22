@@ -9,7 +9,6 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -180,107 +179,21 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'position',
-        type: 'select',
-        label: 'Position',
-        options: [
-          { value: 'top', label: 'Top' },
-          { value: 'middle', label: 'Middle' },
-          { value: 'bottom', label: 'Bottom' }
-        ],
-        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.position ?? 'top',
-        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.position !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.position = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.position = value as ParticipantPosition),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'initiating',
-        type: 'boolean',
-        label: 'Initiating',
-        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.initiating ?? false,
-        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.initiating !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.initiating = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.initiating = value),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'loopType',
-        type: 'select',
-        label: 'Loop Type',
-        options: [
-          { value: 'none', label: 'None' },
-          { value: 'standard', label: 'Standard' },
-          { value: 'sequential', label: 'Sequential' },
-          { value: 'parallel', label: 'Parallel' }
-        ],
-        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.loopType ?? 'none',
-        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.loopType !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.loopType = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.loopType = value as LoopType),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'multiple',
-        type: 'boolean',
-        label: 'Multiple',
-        value: def.renderProps.custom.bpmnChoreographyTaskParticipant?.multiple ?? false,
-        isSet: def.storedProps.custom?.bpmnChoreographyTaskParticipant?.multiple !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.multiple = undefined),
-              uow
-            );
-          } else {
-            def.updateCustomProps(
-              'bpmnChoreographyTaskParticipant',
-              props => (props.multiple = value),
-              uow
-            );
-          }
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Position', 'custom.bpmnChoreographyTaskParticipant.position', [
+        { value: 'top', label: 'Top' },
+        { value: 'middle', label: 'Middle' },
+        { value: 'bottom', label: 'Bottom' }
+      ]),
+      p.boolean(def, 'Initiating', 'custom.bpmnChoreographyTaskParticipant.initiating'),
+      p.select(def, 'Loop Type', 'custom.bpmnChoreographyTaskParticipant.loopType', [
+        { value: 'none', label: 'None' },
+        { value: 'standard', label: 'Standard' },
+        { value: 'sequential', label: 'Sequential' },
+        { value: 'parallel', label: 'Parallel' }
+      ]),
+      p.boolean(def, 'Multiple', 'custom.bpmnChoreographyTaskParticipant.multiple')
+    ]);
   }
 }

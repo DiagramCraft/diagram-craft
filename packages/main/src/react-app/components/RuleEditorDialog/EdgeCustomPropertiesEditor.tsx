@@ -4,7 +4,6 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/ElementCustomPropertiesPanel';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
@@ -33,7 +32,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
   for (const key of $d.document.edgeDefinitions.list()) {
     const def = $d.document.edgeDefinitions.get(key);
     const customProps = def.getCustomPropertyDefinitions(edge);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       edgeTypesWithCustomProps.push(key);
     }
   }
@@ -73,7 +72,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
             customProperties={$d.document.edgeDefinitions
               .get(type)
               .getCustomPropertyDefinitions(edge)}
-            onChange={(_value: CustomPropertyDefinition) => {
+            onChange={() => {
               return (cb: (uow: UnitOfWork) => void) => {
                 UnitOfWork.executeSilently($d, cb);
 

@@ -7,7 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { Box } from '@diagram-craft/geometry/box';
@@ -257,88 +256,26 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'eventType',
-        type: 'select',
-        label: 'Event Type',
-        options: [
-          { value: 'start', label: 'Start' },
-          { value: 'intermediate', label: 'Intermediate' },
-          { value: 'end', label: 'End' }
-        ],
-        value: def.renderProps.custom.bpmnEvent.eventType ?? 'start',
-        isSet: def.storedProps.custom?.bpmnEvent?.eventType !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnEvent', props => (props.eventType = undefined), uow);
-          } else {
-            def.updateCustomProps(
-              'bpmnEvent',
-              props => (props.eventType = value as EventType),
-              uow
-            );
-          }
-        }
-      },
-      {
-        id: 'nonInterrupting',
-        type: 'boolean',
-        label: 'Non-Interrupting',
-        value: def.renderProps.custom.bpmnEvent.nonInterrupting ?? false,
-        isSet: def.storedProps.custom?.bpmnEvent?.nonInterrupting !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnEvent', props => (props.nonInterrupting = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnEvent', props => (props.nonInterrupting = value), uow);
-          }
-        }
-      },
-      {
-        id: 'throwing',
-        type: 'boolean',
-        label: 'Throwing',
-        value: def.renderProps.custom.bpmnEvent.throwing ?? false,
-        isSet: def.storedProps.custom?.bpmnEvent?.throwing !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnEvent', props => (props.throwing = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnEvent', props => (props.throwing = value), uow);
-          }
-        }
-      },
-      {
-        id: 'marker',
-        type: 'select',
-        label: 'Marker',
-        options: [
-          { value: 'none', label: 'None' },
-          { value: 'message', label: 'Message' },
-          { value: 'timer', label: 'Timer' },
-          { value: 'error', label: 'Error' },
-          { value: 'escalation', label: 'Escalation' },
-          { value: 'cancel', label: 'Cancel' },
-          { value: 'compensation', label: 'Compensation' },
-          { value: 'conditional', label: 'Conditional' },
-          { value: 'link', label: 'Link' },
-          { value: 'signal', label: 'Signal' },
-          { value: 'terminate', label: 'Terminate' },
-          { value: 'multiple', label: 'Multiple' },
-          { value: 'parallel-multiple', label: 'Parallel Multiple' }
-        ],
-        value: def.renderProps.custom.bpmnEvent.marker ?? 'none',
-        isSet: def.storedProps.custom?.bpmnEvent?.marker !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnEvent', props => (props.marker = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnEvent', props => (props.marker = value as MarkerType), uow);
-          }
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'EventType', 'custom.bpmnEvent.eventType', [
+        { value: 'start', label: 'Start' },
+        { value: 'intermediate', label: 'Intermediate' },
+        { value: 'end', label: 'End' }
+      ]),
+      p.boolean(def, 'Non-Interrupting', 'custom.bpmnEvent.nonInterrupting'),
+      p.boolean(def, 'Throwing', 'custom.bpmnEvent.throwing'),
+      p.select(def, 'Marker', 'custom.bpmnEvent.marker', [
+        { value: 'none', label: 'None' },
+        { value: 'message', label: 'Message' },
+        { value: 'timer', label: 'Timer' },
+        { value: 'error', label: 'Error' },
+        { value: 'escalation', label: 'Escalation' },
+        { value: 'cancel', label: 'Cancel' },
+        { value: 'compensation', label: 'Compensation' },
+        { value: 'conditional', label: 'Conditional' },
+        { value: 'link', label: 'Link' }
+      ])
+    ]);
   }
 }

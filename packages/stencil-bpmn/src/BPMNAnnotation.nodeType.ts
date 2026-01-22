@@ -10,7 +10,6 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 type BracketPosition = 'left' | 'right';
@@ -40,13 +39,9 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
     const bracketPosition = def.renderProps.custom.bpmnAnnotation?.bracketPosition ?? 'left';
 
     if (bracketPosition === 'right') {
-      return [
-        { start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 }
-      ];
+      return [{ start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 }];
     } else {
-      return [
-        { start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI }
-      ];
+      return [{ start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI }];
     }
   }
 
@@ -54,27 +49,26 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
 
-      const bracketPosition =
-        props.nodeProps.custom.bpmnAnnotation?.bracketPosition ?? 'left';
+      const bracketPosition = props.nodeProps.custom.bpmnAnnotation?.bracketPosition ?? 'left';
 
       const textBox =
         bracketPosition === 'right'
           ? Box.fromCorners(
               _p(props.node.bounds.x + 5, props.node.bounds.y + 5),
-              _p(props.node.bounds.x + props.node.bounds.w - 10, props.node.bounds.y + props.node.bounds.h - 5)
+              _p(
+                props.node.bounds.x + props.node.bounds.w - 10,
+                props.node.bounds.y + props.node.bounds.h - 5
+              )
             )
           : Box.fromCorners(
               _p(props.node.bounds.x + 10, props.node.bounds.y + 5),
-              _p(props.node.bounds.x + props.node.bounds.w - 5, props.node.bounds.y + props.node.bounds.h - 5)
+              _p(
+                props.node.bounds.x + props.node.bounds.w - 5,
+                props.node.bounds.y + props.node.bounds.h - 5
+              )
             );
 
-      shapeBuilder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        textBox
-      );
+      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBox);
     }
   };
 
@@ -99,26 +93,12 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'bracketPosition',
-        type: 'select',
-        label: 'Bracket Position',
-        options: [
-          { value: 'left', label: 'Left' },
-          { value: 'right', label: 'Right' }
-        ],
-        value: def.renderProps.custom.bpmnAnnotation?.bracketPosition ?? 'left',
-        isSet: def.storedProps.custom?.bpmnAnnotation?.bracketPosition !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnAnnotation', props => (props.bracketPosition = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnAnnotation', props => (props.bracketPosition = value as BracketPosition), uow);
-          }
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Bracket Position', 'custom.bpmnAnnotation.bracketPosition', [
+        { value: 'left', label: 'Left' },
+        { value: 'right', label: 'Right' }
+      ])
+    ]);
   }
 }

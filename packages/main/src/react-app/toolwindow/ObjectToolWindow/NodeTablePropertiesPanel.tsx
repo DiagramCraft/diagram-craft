@@ -5,11 +5,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  asProperty,
-  CustomPropertyDefinition,
-  NodeDefinition
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { asProperty, NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from '../../hooks/useTable';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { PropertyEditor } from '../../components/PropertyEditor';
@@ -29,8 +25,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
   }
 
   const def: EdgeDefinition | NodeDefinition = element.getDefinition();
-  const customProperties: ReadonlyArray<CustomPropertyDefinition> =
-    def.getCustomPropertyDefinitions(element);
+  const customProperties = def.getCustomPropertyDefinitions(element);
 
   if (Object.keys(customProperties).length === 0) {
     return <div></div>;
@@ -39,7 +34,9 @@ export const NodeTablePropertiesPanel = (props: Props) => {
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
       <div className={'cmp-labeled-table'}>
-        {Object.entries(customProperties).map(([key, value]) => {
+        {Object.entries(customProperties.entries).map(([key, value]) => {
+          if (value.type === 'delimiter') return <div key={key}></div>;
+
           const prop = asProperty(value, cb => {
             UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
           });

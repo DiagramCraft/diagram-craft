@@ -194,41 +194,16 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'gap',
-        type: 'number',
-        label: 'Padding',
-        value: node.renderProps.custom.table.gap,
-        unit: 'px',
-        isSet: node.storedProps.custom?.table?.gap !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.gap = value), uow);
-        }
-      },
-      {
-        id: 'title',
-        type: 'boolean',
-        label: 'Title',
-        value: node.renderProps.custom.table.title,
-        isSet: node.storedProps.custom?.table?.title !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.title = value), uow);
-        }
-      },
-      {
-        id: 'titleSize',
-        type: 'number',
-        label: 'Title Size',
-        unit: 'px',
-        value: node.renderProps.custom.table.titleSize,
-        isSet: node.storedProps.custom?.table?.titleSize !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.titleSize = value), uow);
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(node, 'Padding', 'custom.table.gap', {
+        unit: 'px'
+      }),
+      p.boolean(node, 'Title', 'custom.table.title'),
+      p.number(node, 'Title Size', 'custom.table.titleSize', {
+        unit: 'px'
+      })
+    ]);
   }
 }
 

@@ -8,7 +8,6 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
 declare global {
@@ -28,21 +27,13 @@ export class ParallelogramNodeDefinition extends ShapeNodeDefinition {
     super('parallelogram', 'Parallelogram', ParallelogramComponent);
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'slant',
-        type: 'number',
-        label: 'Slant',
-        value: node.renderProps.custom.parallelogram.slant,
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(node, 'Slant', 'custom.parallelogram.slant', {
         maxValue: 60,
-        unit: 'px',
-        isSet: node.storedProps.custom?.parallelogram?.slant !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('parallelogram', props => (props.slant = value), uow);
-        }
-      }
-    ];
+        unit: 'px'
+      })
+    ]);
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

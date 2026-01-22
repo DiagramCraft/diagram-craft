@@ -7,8 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -32,27 +34,13 @@ registerCustomNodeDefaults('cube', { size: 10 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.cube.size,
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.cube.size', {
     maxValue: 50,
     unit: 'px',
-    isSet: node.storedProps.custom?.cube?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('cube', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('cube', props => (props.size = round(value)), uow);
-    }
-  }
-};
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -108,8 +96,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
       shapeBuilder.controlPoint(
         Point.of(bounds.x + (1 - sizePct) * bounds.w, bounds.y + sizePct * bounds.h),
         ({ x }, uow) => {
-          const distance = Math.max(0, bounds.x + bounds.w - x);
-          Size.set(distance, props.node, uow);
+          propSize(props.node).set(Math.max(0, bounds.x + bounds.w - x), uow);
           return `Size: ${props.node.renderProps.custom.cube.size}px`;
         }
       );
@@ -120,20 +107,18 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
     const sizePct = def.renderProps.custom.cube.size / Math.min(def.bounds.w, def.bounds.h);
 
     const lcs = new LocalCoordinateSystem(Box.withoutRotation(def.bounds), [0, 1], [0, 1], false);
-    const pathBuilder = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
-
-    pathBuilder.moveTo(Point.of(0, sizePct));
-    pathBuilder.lineTo(Point.of(sizePct, 0));
-    pathBuilder.lineTo(Point.of(1, 0));
-    pathBuilder.lineTo(Point.of(1, 1 - sizePct));
-    pathBuilder.lineTo(Point.of(1 - sizePct, 1));
-    pathBuilder.lineTo(Point.of(0, 1));
-    pathBuilder.close();
-
-    return pathBuilder;
+    return new PathListBuilder()
+      .withTransform(lcs.toGlobalTransforms)
+      .moveTo(0, sizePct)
+      .lineTo(sizePct, 0)
+      .lineTo(1, 0)
+      .lineTo(1, 1 - sizePct)
+      .lineTo(1 - sizePct, 1)
+      .lineTo(0, 1)
+      .close();
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

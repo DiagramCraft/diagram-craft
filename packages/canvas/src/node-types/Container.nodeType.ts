@@ -3,7 +3,10 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  CustomPropertyDefinitionEntry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderElement } from '../components/renderElement';
@@ -43,22 +46,16 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.collapsible = true;
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode) {
     const shape = getShape(node);
-    return [
-      ...this.getCollapsiblePropertyDefinitions(node),
-      ...(shape
-        ? [
-          {
-            id: 'delimiter',
-            type: 'delimiter',
-            label: shape.name,
-            isSet: false
-          } as CustomPropertyDefinition,
-          ...shape.getCustomPropertyDefinitions(node)
-        ]
-        : [])
-    ];
+    return new CustomPropertyDefinition(
+      p =>
+        [
+          this.getCollapsiblePropertyDefinitions(node),
+          ...(shape ? [p.delimiter('Shape'), shape.getCustomPropertyDefinitions(node)] : [])
+          // TODO: Can we remove this type spec
+        ] as CustomPropertyDefinitionEntry[]
+    );
   }
 
   getBoundingPathBuilder(node: DiagramNode): PathListBuilder {
@@ -104,14 +101,14 @@ export class ContainerComponent extends BaseNodeComponent<ContainerNodeDefinitio
       builder.noBoundaryNeeded();
       builder.add(
         svg.path({
-          'class': 'svg-node--container-outline',
-          'd': svgPath,
-          'x': props.node.bounds.x,
-          'y': props.node.bounds.y,
-          'width': props.node.bounds.w,
-          'height': props.node.bounds.h,
-          'fill': 'transparent',
-          'on': {
+          class: 'svg-node--container-outline',
+          d: svgPath,
+          x: props.node.bounds.x,
+          y: props.node.bounds.y,
+          width: props.node.bounds.w,
+          height: props.node.bounds.h,
+          fill: 'transparent',
+          on: {
             mousedown: props.onMouseDown
           }
         })

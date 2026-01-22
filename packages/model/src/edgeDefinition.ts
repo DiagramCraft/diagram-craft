@@ -30,7 +30,7 @@ export interface EdgeDefinition {
     operation: EdgeDropOperation
   ): void;
 
-  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition>;
+  getCustomPropertyDefinitions(edge: DiagramEdge): CustomPropertyDefinition;
 }
 
 export abstract class AbstractEdgeDefinition implements EdgeDefinition {
@@ -126,7 +126,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     uow.updateElement(edge);
   }
 
-  getCustomPropertyDefinitions(_edge: DiagramEdge): Array<CustomPropertyDefinition> {
-    return [];
+  getCustomPropertyDefinitions(_edge: DiagramEdge): CustomPropertyDefinition {
+    return new CustomPropertyDefinition(() => []);
   }
 }

@@ -16,7 +16,6 @@ import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
 import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   namespace DiagramCraft {
@@ -164,41 +163,14 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     return PathListBuilder.fromPath(path).withTransform(t);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'collection',
-        type: 'boolean',
-        label: 'Collection',
-        value: def.renderProps.custom.bpmnDataObject.collection ?? false,
-        isSet: def.storedProps.custom?.bpmnDataObject?.collection !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnDataObject', props => (props.collection = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnDataObject', props => (props.collection = value), uow);
-          }
-        }
-      },
-      {
-        id: 'type',
-        type: 'select',
-        label: 'Type',
-        options: [
-          { label: 'Default', value: 'default' },
-          { label: 'Input', value: 'input' },
-          { label: 'Output', value: 'output' }
-        ],
-        value: def.renderProps.custom.bpmnDataObject.type ?? 'default',
-        isSet: def.storedProps.custom?.bpmnDataObject?.type !== undefined,
-        onChange: (value: string | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('bpmnDataObject', props => (props.type = undefined), uow);
-          } else {
-            def.updateCustomProps('bpmnDataObject', props => (props.type = value), uow);
-          }
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.boolean(def, 'Collection', 'custom.bpmnDataObject.collection'),
+      p.select(def, 'Type', 'custom.bpmnDataObject.type', [
+        { label: 'Default', value: 'default' },
+        { label: 'Input', value: 'input' },
+        { label: 'Output', value: 'output' }
+      ])
+    ]);
   }
 }
