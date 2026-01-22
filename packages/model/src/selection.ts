@@ -1,7 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramElement, getAncestors, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
@@ -207,7 +207,10 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];
-    this.#elements = elements.filter(e => e !== undefined);
+    this.#elements = elements
+      .filter(e => e !== undefined)
+      // Ensure we cannot select children in case one of their ancestors is selected
+      .filter(e => !getAncestors(e).some(p => elements.includes(p)));
 
     this.#elements.forEach(e => {
       if (oldElements.includes(e)) return;
