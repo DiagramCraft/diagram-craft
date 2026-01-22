@@ -11,13 +11,12 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { assertFullDirectionOrUndefined, FullDirection } from '@diagram-craft/geometry/direction';
+import { FullDirection } from '@diagram-craft/geometry/direction';
 
 const NORTH = 'north';
 const SOUTH = 'south';
@@ -43,35 +42,21 @@ registerCustomNodeDefaults('cylinder', { size: 30, direction: NORTH });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Size', 'custom.cylinder.size', {
-      maxValue: Number.MAX_VALUE,
-      unit: 'px',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.cylinder.size', {
+    maxValue: Number.MAX_VALUE,
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < node.bounds.h
+  });
 
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= node.bounds.h || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('cylinder', props => (props.size = newVal), uow);
-  }
-};
-
-const Direction = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.select(node, 'Direction', 'custom.cylinder.direction', [
-      { value: NORTH, label: 'North' },
-      { value: SOUTH, label: 'South' },
-      { value: EAST, label: 'East' },
-      { value: WEST, label: 'West' }
-    ]),
-
-  set: (value: string | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    assertFullDirectionOrUndefined(value);
-    node.updateCustomProps('cylinder', props => (props.direction = value), uow);
-  }
-};
+const propDirection = (node: DiagramNode) =>
+  CustomProperty.node.select(node, 'Direction', 'custom.cylinder.direction', [
+    { value: NORTH, label: 'North' },
+    { value: SOUTH, label: 'South' },
+    { value: EAST, label: 'East' },
+    { value: WEST, label: 'West' }
+  ]);
 
 // NodeDefinition and Shape *****************************************************
 
@@ -149,25 +134,25 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
       if (direction === NORTH) {
         shapeBuilder.controlPoint(_p(bounds.x, bounds.y + size / 2), ({ y }, uow) => {
           const distance = Math.max(0, y - bounds.y);
-          Size.set(distance * 2, props.node, uow);
+          propSize(props.node).onChange(distance * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === SOUTH) {
         shapeBuilder.controlPoint(_p(bounds.x, bounds.y - size / 2), ({ y }, uow) => {
           const distance = Math.max(0, bounds.y - y);
-          Size.set(distance * 2, props.node, uow);
+          propSize(props.node).onChange(distance * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === EAST) {
         shapeBuilder.controlPoint(_p(bounds.x - size / 2, bounds.y), ({ x }, uow) => {
           const distance = Math.max(0, bounds.x - x);
-          Size.set(distance * 2, props.node, uow);
+          propSize(props.node).onChange(distance * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       } else if (direction === WEST) {
         shapeBuilder.controlPoint(_p(bounds.x + size / 2, bounds.y), ({ x }, uow) => {
           const distance = Math.max(0, x - bounds.x);
-          Size.set(distance * 2, props.node, uow);
+          propSize(props.node).onChange(distance * 2, uow);
           return `Size: ${props.node.renderProps.custom.cylinder.size}px`;
         });
       }
@@ -211,6 +196,6 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [Size.definition(node), Direction.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node), propDirection(node)]);
   }
 }

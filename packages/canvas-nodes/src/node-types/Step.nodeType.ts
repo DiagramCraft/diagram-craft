@@ -11,7 +11,6 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
@@ -33,20 +32,13 @@ registerCustomNodeDefaults('step', { size: 25 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Size', 'custom.step.size', {
-      maxValue: 50,
-      unit: 'px',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= node.bounds.w / 2 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('step', props => (props.size = newVal), uow);
-  }
-};
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.step.size', {
+    maxValue: 50,
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < node.bounds.w / 2
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -64,7 +56,7 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
 
       shapeBuilder.controlPoint(_p(bounds.x + size, bounds.y + bounds.h / 2), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
-        Size.set(distance, props.node, uow);
+        propSize(props.node).onChange(distance, uow);
         return `Size: ${props.node.renderProps.custom.step.size}px`;
       });
     }
@@ -97,6 +89,6 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [Size.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

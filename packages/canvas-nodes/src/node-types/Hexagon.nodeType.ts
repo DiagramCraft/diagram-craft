@@ -11,7 +11,6 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
@@ -33,23 +32,13 @@ registerCustomNodeDefaults('hexagon', { size: 25 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Size', 'custom.hexagon.size', {
-      maxValue: 50,
-      unit: '%',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('hexagon', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('hexagon', props => (props.size = round(value)), uow);
-    }
-  }
-};
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.hexagon.size', {
+    maxValue: 50,
+    unit: '%',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -67,7 +56,7 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
 
       shapeBuilder.controlPoint(Point.of(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
-        Size.set((distance / bounds.w) * 100, props.node, uow);
+        propSize(props.node).onChange((distance / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.hexagon.size}%`;
       });
     }
@@ -91,6 +80,6 @@ export class HexagonNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [Size.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

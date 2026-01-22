@@ -11,7 +11,6 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { Box } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
@@ -38,58 +37,32 @@ const $defaults = registerCustomNodeDefaults('arrow', { notch: 0, x: 40, y: 30 }
 
 // Custom properties ************************************************************
 
-const Notch = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Notch', 'custom.arrow.notch', {
-      unit: 'px',
-      maxValue: 50,
-      value: $defaults(node.renderProps.custom.arrow).notch,
-      onChange: (value, uow) => Notch.set(value, node, uow)
-    }),
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('arrow', props => (props.notch = undefined), uow);
-    } else {
-      if (value >= node.bounds.w - $defaults(node.editProps.custom?.arrow).x || value <= 0) return;
-      node.updateCustomProps('arrow', props => (props.notch = round(value)), uow);
-    }
-  }
-};
+const propNotch = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Notch', 'custom.arrow.notch', {
+    unit: 'px',
+    maxValue: 50,
+    value: $defaults(node.renderProps.custom.arrow).notch,
+    format: round,
+    validate: v => v >= 0 && v <= node.bounds.w - $defaults(node.editProps.custom?.arrow).x
+  });
 
-const ArrowControlX = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Pointiness', 'custom.arrow.x', {
-      unit: 'px',
-      maxValue: 50,
-      value: $defaults(node.renderProps.custom.arrow).x,
-      onChange: (value, uow) => ArrowControlX.set(value, node, uow)
-    }),
+const propArrowControlX = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Pointiness', 'custom.arrow.x', {
+    unit: 'px',
+    maxValue: 50,
+    value: $defaults(node.renderProps.custom.arrow).x,
+    format: round,
+    validate: v => v >= 0 && v <= Math.min(node.bounds.w, node.bounds.h)
+  });
 
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('arrow', props => (props.x = undefined), uow);
-    } else {
-      if (value >= Math.min(node.bounds.w, node.bounds.h) || value <= 0) return;
-      node.updateCustomProps('arrow', props => (props.x = round(value)), uow);
-    }
-  }
-};
-
-const ArrowControlY = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Thickness', 'custom.arrow.y', {
-      unit: '%',
-      maxValue: 50,
-      value: $defaults(node.renderProps.custom.arrow).y,
-      onChange: (value, uow) => ArrowControlY.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value <= 0 || value >= 50)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('arrow', props => (props.y = newVal), uow);
-  }
-};
+const propArrowControlY = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Thickness', 'custom.arrow.y', {
+    unit: '%',
+    maxValue: 50,
+    value: $defaults(node.renderProps.custom.arrow).y,
+    format: round,
+    validate: v => v >= 0 && v <= 100
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -119,7 +92,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const distance = Math.max(0, p.x - bounds.x);
-        Notch.set(distance, props.node, uow);
+        propNotch(props.node).onChange(distance, uow);
         return `Notch: ${props.node.renderProps.custom.arrow.notch}px`;
       });
 
@@ -131,10 +104,10 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
         const p = Point.rotateAround(pos, -this.def.rotation, Box.center(bounds));
 
         const newX = Math.max(0, bounds.x + w - p.x);
-        ArrowControlX.set(newX, props.node, uow);
+        propArrowControlX(props.node).onChange(newX, uow);
 
         const newY = (100 * (p.y - bounds.y)) / h;
-        ArrowControlY.set(newY, props.node, uow);
+        propArrowControlY(props.node).onChange(newY, uow);
 
         return `${props.node.renderProps.custom.arrow.x}px, ${props.node.renderProps.custom.arrow.y}%`;
       });
@@ -224,9 +197,9 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode) {
     return new CustomPropertyDefinition(() => [
-      Notch.definition(node),
-      ArrowControlX.definition(node),
-      ArrowControlY.definition(node)
+      propNotch(node),
+      propArrowControlX(node),
+      propArrowControlY(node)
     ]);
   }
 

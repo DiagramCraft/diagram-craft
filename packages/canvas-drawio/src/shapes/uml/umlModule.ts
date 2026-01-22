@@ -1,11 +1,10 @@
 // NodeProps extension for custom props *****************************************
 
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import {
@@ -38,39 +37,21 @@ registerCustomNodeDefaults('umlModule', {
 
 // Custom properties ************************************************************
 
-const JettyWidth = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Width', 'custom.umlModule.jettyWidth', {
-      maxValue: 50,
-      unit: 'px',
-      onChange: (value, uow) => JettyWidth.set(value, node, uow)
-    }),
+const propJettyWidth = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Width', 'custom.umlModule.jettyWidth', {
+    maxValue: 50,
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
-  get: (props: NodePropsForRendering['custom']['umlModule']): number => props.jettyWidth,
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= 50 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('umlModule', props => (props.jettyWidth = newVal), uow);
-  }
-};
-
-const JettyHeight = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Height', 'custom.umlModule.jettyHeight', {
-      maxValue: 50,
-      unit: 'px',
-      onChange: (value: number | undefined, uow: UnitOfWork) => JettyHeight.set(value, node, uow)
-    }),
-
-  get: (props: NodePropsForRendering['custom']['umlModule']) => props.jettyHeight,
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= 50 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('umlModule', props => (props.jettyHeight = newVal), uow);
-  }
-};
+const propJettyHeight = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Height', 'custom.umlModule.jettyHeight', {
+    maxValue: 50,
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -101,8 +82,8 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
         3--------------------------------2
    */
   getBoundingPathBuilder(node: DiagramNode) {
-    const width = JettyWidth.get(node.renderProps.custom.umlModule);
-    const height = JettyHeight.get(node.renderProps.custom.umlModule);
+    const width = propJettyWidth(node).value;
+    const height = propJettyHeight(node).value;
     const hw = width / 2;
 
     const pb = new PathListBuilder().withTransform([new Translation(node.bounds)]);
@@ -125,8 +106,8 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
 
   static Shape = class extends BaseNodeComponent<UmlModuleNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      const width = JettyWidth.get(props.nodeProps.custom.umlModule);
-      const height = JettyHeight.get(props.nodeProps.custom.umlModule);
+      const width = propJettyWidth(props.node).value;
+      const height = propJettyHeight(props.node).value;
       const hw = width / 2;
 
       const { h, w } = props.node.bounds;
@@ -142,9 +123,6 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
   };
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [
-      JettyWidth.definition(node),
-      JettyHeight.definition(node)
-    ]);
+    return new CustomPropertyDefinition(() => [propJettyWidth(node), propJettyHeight(node)]);
   }
 }

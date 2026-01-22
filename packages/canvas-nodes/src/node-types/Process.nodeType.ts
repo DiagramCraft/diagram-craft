@@ -9,10 +9,8 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   CustomProperty,
-  CustomPropertyDefinition,
-  NumberCustomPropertyType
+  CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { withAdjustedProperties } from '@diagram-craft/model/diagramProps';
@@ -35,20 +33,13 @@ registerCustomNodeDefaults('process', { size: 10 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode): NumberCustomPropertyType =>
-    CustomProperty.node.number(node, 'Size', 'custom.process.size', {
-      maxValue: 50,
-      unit: '%',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= 50 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('process', props => (props.size = newVal), uow);
-  }
-};
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.process.size', {
+    maxValue: 50,
+    unit: '%',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -80,13 +71,13 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
       // Draw all control points
       shapeBuilder.controlPoint(_p(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
         const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
-        Size.set(newValue, props.node, uow);
+        propSize(props.node).onChange(newValue, uow);
         return `Size: ${props.node.renderProps.custom.process.size}%`;
       });
     }
   };
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [Size.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

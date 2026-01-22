@@ -11,7 +11,6 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Box } from '@diagram-craft/geometry/box';
@@ -35,20 +34,13 @@ registerCustomNodeDefaults('curlyBracket', { size: 50 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Size', 'custom.curlyBracket.size', {
-      maxValue: 50,
-      unit: '%',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= 50 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('curlyBracket', props => (props.size = newVal), uow);
-  }
-};
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.curlyBracket.size', {
+    maxValue: 50,
+    unit: '%',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -70,7 +62,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
       const bounds = props.node.bounds;
       shapeBuilder.controlPoint(Box.fromOffset(bounds, _p(sizePct, 0.5)), ({ x }, uow) => {
         const distance = Math.max(0, x - bounds.x);
-        Size.set((distance / bounds.w) * 100, props.node, uow);
+        propSize(props.node).onChange((distance / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.curlyBracket.size}%`;
       });
     }
@@ -104,6 +96,6 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {
-    return new CustomPropertyDefinition(() => [Size.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

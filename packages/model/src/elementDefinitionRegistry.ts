@@ -70,13 +70,18 @@ declare global {
   }
 }
 
+type CommonCustomPropertyOpts<T> = {
+  validate?: (value: T) => boolean;
+  format?: (value: T) => T;
+};
+
 const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
   return {
     number: (
       el: T,
       label: string,
       property: PropPath<P>,
-      opts?: Partial<NumberCustomPropertyType>
+      opts?: Partial<NumberCustomPropertyType & CommonCustomPropertyOpts<number>>
     ): NumberCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
@@ -86,6 +91,8 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
         isSet: acc.get(el.storedProps as P, property) !== undefined,
         value: acc.get(el.renderProps as P, property) as number,
         onChange: (value: number | undefined, uow: UnitOfWork) => {
+          if (value !== undefined && opts?.validate && !opts.validate(value)) return;
+          if (value !== undefined && opts?.format) value = opts.format(value);
           // @ts-expect-error
           el.updateProps(p => acc.set(p, property, value), uow);
         },

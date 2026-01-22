@@ -11,7 +11,6 @@ import {
   CustomProperty,
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -35,20 +34,13 @@ registerCustomNodeDefaults('cube', { size: 10 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode) =>
-    CustomProperty.node.number(node, 'Size', 'custom.cube.size', {
-      maxValue: 50,
-      unit: 'px',
-      onChange: (value, uow) => Size.set(value, node, uow)
-    }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value !== undefined && (value >= 50 || value <= 0)) return;
-    const newVal = value === undefined ? undefined : round(value);
-    node.updateCustomProps('cube', props => (props.size = newVal), uow);
-  }
-};
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.cube.size', {
+    maxValue: 50,
+    unit: 'px',
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -105,7 +97,7 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
         Point.of(bounds.x + (1 - sizePct) * bounds.w, bounds.y + sizePct * bounds.h),
         ({ x }, uow) => {
           const distance = Math.max(0, bounds.x + bounds.w - x);
-          Size.set(distance, props.node, uow);
+          propSize(props.node).onChange(distance, uow);
           return `Size: ${props.node.renderProps.custom.cube.size}px`;
         }
       );
@@ -130,6 +122,6 @@ export class CubeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(() => [Size.definition(node)]);
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }
