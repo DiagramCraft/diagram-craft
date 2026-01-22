@@ -92,6 +92,7 @@ export interface SerializedDiagramDocument {
   };
   stories?: ReadonlyArray<SerializedStory>;
   hash?: string;
+  activeDiagramId?: string;
 }
 
 export type SerializedOverride = {
