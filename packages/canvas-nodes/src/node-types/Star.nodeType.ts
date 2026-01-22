@@ -54,7 +54,7 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'numberOfSides',

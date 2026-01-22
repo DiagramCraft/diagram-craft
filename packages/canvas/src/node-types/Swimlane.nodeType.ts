@@ -148,7 +148,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [
       ...this.getCollapsiblePropertyDefinitions(node),
       {

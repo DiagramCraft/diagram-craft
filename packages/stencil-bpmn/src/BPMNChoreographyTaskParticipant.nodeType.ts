@@ -180,7 +180,7 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'position',

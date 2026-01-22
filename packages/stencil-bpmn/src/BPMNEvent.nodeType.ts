@@ -257,7 +257,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'eventType',

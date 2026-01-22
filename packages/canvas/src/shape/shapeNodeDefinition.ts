@@ -169,7 +169,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
-  getCustomPropertyDefinitions(_node: DiagramNode): ReadonlyArray<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(_node: DiagramNode): CustomPropertyDefinition {
     return [];
   }
 

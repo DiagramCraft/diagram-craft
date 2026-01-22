@@ -1,7 +1,10 @@
 // NodeProps extension for custom props *****************************************
 
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
@@ -36,7 +39,7 @@ registerCustomNodeDefaults('umlModule', {
 // Custom properties ************************************************************
 
 const JettyWidth = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'jettyWidth',
     label: 'Width',
     type: 'number',
@@ -60,7 +63,7 @@ const JettyWidth = {
 };
 
 const JettyHeight = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'jettyHeight',
     label: 'Height',
     type: 'number',
@@ -152,7 +155,7 @@ export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [JettyWidth.definition(node), JettyHeight.definition(node)];
   }
 }

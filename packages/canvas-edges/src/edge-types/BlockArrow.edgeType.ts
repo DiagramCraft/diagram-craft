@@ -6,7 +6,10 @@ import { RawSegment } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefinition';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
@@ -41,7 +44,7 @@ const $defaults = registerCustomEdgeDefaults('blockArrow', {
 // Custom properties ************************************************************
 
 const ArrowDepth = {
-  definition: (edge: DiagramEdge): CustomPropertyDefinition => ({
+  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
     id: 'arrowDepth',
     label: 'Arrow Depth',
     type: 'number',
@@ -62,7 +65,7 @@ const ArrowDepth = {
 };
 
 const ArrowWidth = {
-  definition: (edge: DiagramEdge): CustomPropertyDefinition => ({
+  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
     id: 'arrowWidth',
     label: 'Arrow Width',
     type: 'number',
@@ -83,7 +86,7 @@ const ArrowWidth = {
 };
 
 const Width = {
-  definition: (edge: DiagramEdge): CustomPropertyDefinition => ({
+  definition: (edge: DiagramEdge): NumberCustomPropertyType => ({
     id: 'width',
     label: 'Width',
     type: 'number',
@@ -218,7 +221,7 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     return !['arrows', 'line-hops'].includes(capability);
   }
 
-  getCustomPropertyDefinitions(edge: DiagramEdge): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(edge: DiagramEdge): CustomPropertyDefinition {
     return [Width.definition(edge), ArrowWidth.definition(edge), ArrowDepth.definition(edge)];
   }
 }

@@ -106,7 +106,7 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
       .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'expanded',

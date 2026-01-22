@@ -203,7 +203,7 @@ export abstract class LayoutCapableShapeNodeDefinition
   /**
    * Get standard collapsible custom property definitions
    */
-  protected getCollapsiblePropertyDefinitions(node: DiagramNode): CustomPropertyDefinition[] {
+  protected getCollapsiblePropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     const customProps = node.renderProps.custom['_collapsible'];
     const storedProps = node.storedProps.custom?.['_collapsible'];
 

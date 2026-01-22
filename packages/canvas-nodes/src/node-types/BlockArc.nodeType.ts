@@ -7,7 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { Angle } from '@diagram-craft/geometry/angle';
@@ -40,7 +43,7 @@ const $defaults = registerCustomNodeDefaults('blockArc', {
 // Custom properties ************************************************************
 
 const InnerRadius = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'innerRadius',
     label: 'Inner Radius',
     type: 'number',
@@ -62,7 +65,7 @@ const InnerRadius = {
 };
 
 const StartAngle = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'startAngle',
     label: 'Start Angle',
     type: 'number',
@@ -88,7 +91,7 @@ const StartAngle = {
 };
 
 const EndAngle = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'endAngle',
     label: 'End Angle',
     type: 'number',
@@ -168,7 +171,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
       .arcTo(start, R, R, 0, largeArcFlag, 1);
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [InnerRadius.definition(node), StartAngle.definition(node), EndAngle.definition(node)];
   }
 

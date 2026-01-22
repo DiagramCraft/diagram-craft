@@ -111,7 +111,7 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'type',

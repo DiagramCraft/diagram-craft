@@ -164,7 +164,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     return PathListBuilder.fromPath(path).withTransform(t);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'collection',

@@ -43,20 +43,21 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.collapsible = true;
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     const shape = getShape(node);
     return [
       ...this.getCollapsiblePropertyDefinitions(node),
       ...(shape
         ? [
             {
-              id: 'delimiter',
-              type: 'delimiter'
-            } as CustomPropertyDefinition,
+              type: 'delimiter',
+              label: 'Shape'
+            },
             ...shape.getCustomPropertyDefinitions(node)
           ]
         : [])
-    ];
+      // TODO: Can we remove this type spec
+    ] as CustomPropertyDefinition;
   }
 
   getBoundingPathBuilder(node: DiagramNode): PathListBuilder {

@@ -30,66 +30,51 @@ export type NodeCapability =
   | 'collapsible'
   | 'children.select-parent';
 
-/*
-interface BaseProp {
+// biome-ignore lint/suspicious/noExplicitAny: convenient
+export interface CustomPropertyType<T = any> {
+  id: string;
   type: string;
+  label: string;
+
+  isSet: boolean;
+  value: T;
+  onChange: (value: T | undefined, uow: UnitOfWork) => void;
 }
 
-interface CPD extends Record<string, BaseProp> {
-  number: {
-    type: 'number',
-    minValue?: number;
-    maxValue?: number;
-    step?: number;
-  },
-  group: {
-    type: 'group';
-    name?: string;
+export interface NumberCustomPropertyType extends CustomPropertyType<number> {
+  type: 'number';
+  minValue?: number;
+  maxValue?: number;
+  step?: number;
+  unit?: string;
+}
+
+export interface SelectCustomPropertyType extends CustomPropertyType<string> {
+  type: 'select';
+  options: ReadonlyArray<{ value: string; label: string }>;
+}
+
+export interface BooleanCustomPropertyType extends CustomPropertyType<boolean> {
+  type: 'boolean';
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomPropertyTypes {
+      number: NumberCustomPropertyType;
+      select: SelectCustomPropertyType;
+      boolean: BooleanCustomPropertyType;
+    }
   }
 }
 
-type Def = CPD[keyof CPD] & {
-  id: string;
-};*/
-
-// TODO: Make make this into an interface in the global namespace we can extend
-export type CustomPropertyDefinition = {
-  id: string;
-} & (
-  | {
-      type: 'number';
-      label: string;
-      isSet: boolean;
-      value: number;
-      minValue?: number;
-      maxValue?: number;
-      step?: number;
-      unit?: string;
-      onChange: (value: number | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      type: 'select';
-      label: string;
-      isSet: boolean;
-      value: string;
-      options: ReadonlyArray<{ value: string; label: string }>;
-      onChange: (value: string | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      type: 'boolean';
-      label: string;
-      isSet: boolean;
-      value: boolean;
-      onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      type: 'delimiter';
-      label: string;
-    }
-);
+export type CustomPropertyDefinition = Array<
+  | DiagramCraft.CustomPropertyTypes[keyof DiagramCraft.CustomPropertyTypes]
+  | { type: 'delimiter'; label: string }
+>;
 
 export const asProperty = (
-  customProp: CustomPropertyDefinition,
+  customProp: CustomPropertyType,
   change: (cb: (uow: UnitOfWork) => void) => void
 ): Property<unknown> => {
   if (!('value' in customProp) || !('onChange' in customProp)) throw new Error();
@@ -111,7 +96,7 @@ export interface NodeDefinition {
   name: string;
 
   supports(capability: NodeCapability): boolean;
-  getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 
   getBoundingPath(node: DiagramNode): PathList;
 

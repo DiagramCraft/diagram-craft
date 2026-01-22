@@ -9,7 +9,7 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NumberCustomPropertyType } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -24,7 +24,7 @@ declare global {
 
 registerCustomNodeDefaults('trapezoid', { slantLeft: 5, slantRight: 5 });
 
-const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 'number' } => ({
+const slantLeftPropDef = (def: DiagramNode): NumberCustomPropertyType => ({
   id: 'slantLeft',
   type: 'number',
   label: 'Slant (left)',
@@ -42,7 +42,7 @@ const slantLeftPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 
   }
 });
 
-const slantRightPropDef = (def: DiagramNode): CustomPropertyDefinition & { type: 'number' } => ({
+const slantRightPropDef = (def: DiagramNode): NumberCustomPropertyType => ({
   id: 'slantRight',
   type: 'number',
   label: 'Slant (right)',

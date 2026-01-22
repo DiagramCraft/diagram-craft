@@ -194,7 +194,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [
       {
         id: 'gap',

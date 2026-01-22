@@ -7,7 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { Box } from '@diagram-craft/geometry/box';
@@ -36,7 +39,7 @@ const $defaults = registerCustomNodeDefaults('arrow', { notch: 0, x: 40, y: 30 }
 // Custom properties ************************************************************
 
 const Notch = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'notch',
     label: 'Notch',
     type: 'number',
@@ -58,7 +61,7 @@ const Notch = {
 };
 
 const ArrowControlX = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'x',
     label: 'Pointiness',
     type: 'number',
@@ -80,7 +83,7 @@ const ArrowControlX = {
 };
 
 const ArrowControlY = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'y',
     label: 'Thickness',
     type: 'number',
@@ -232,7 +235,7 @@ export class ArrowNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [Notch.definition(node), ArrowControlX.definition(node), ArrowControlY.definition(node)];
   }
 

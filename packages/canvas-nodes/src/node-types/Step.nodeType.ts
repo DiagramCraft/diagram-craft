@@ -7,7 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -31,7 +34,7 @@ registerCustomNodeDefaults('step', { size: 25 });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'size',
     label: 'Size',
     type: 'number',
@@ -100,7 +103,7 @@ export class StepNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(0, 0));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [Size.definition(node)];
   }
 }

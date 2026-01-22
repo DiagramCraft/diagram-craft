@@ -7,7 +7,11 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NumberCustomPropertyType,
+  SelectCustomPropertyType
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
@@ -41,7 +45,7 @@ registerCustomNodeDefaults('cylinder', { size: 30, direction: NORTH });
 // Custom properties ************************************************************
 
 const Size = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): NumberCustomPropertyType => ({
     id: 'size',
     label: 'Size',
     type: 'number',
@@ -63,7 +67,7 @@ const Size = {
 };
 
 const Direction = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
+  definition: (node: DiagramNode): SelectCustomPropertyType => ({
     id: 'direction',
     label: 'Direction',
     type: 'select',
@@ -221,7 +225,7 @@ export class CylinderNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(0, size / 2));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition {
     return [Size.definition(node), Direction.definition(node)];
   }
 }
