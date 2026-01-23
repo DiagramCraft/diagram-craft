@@ -6,6 +6,7 @@ import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegis
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { _p, Point } from '@diagram-craft/geometry/point';
 
 /**
  * Layout direction for arranging children in a container.
@@ -110,7 +111,7 @@ const isLayoutCapableShapeNodeDefinitionInterface = (
   def: NodeDefinition
 ): def is LayoutCapableShapeNodeDefinitionInterface => 'getContainerPadding' in def;
 
-type ParentBounds = { x: number; y: number; r: number };
+type ParentBounds = Box;
 const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds): LayoutNode => {
   const layoutProps = node.renderProps.layout;
 
@@ -151,9 +152,7 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
   // Build children recursively (only for DiagramNode children)
   const children: LayoutNode[] = node.children
     .filter((child): child is DiagramNode => isNode(child))
-    .map(child =>
-      buildLayoutTreeRecursive(child, { x: node.bounds.x, y: node.bounds.y, r: node.bounds.r })
-    );
+    .map(child => buildLayoutTreeRecursive(child, node.bounds));
 
   return {
     id: node.id,
@@ -190,18 +189,36 @@ const applyLayoutTreeRecursive = (
   parentBounds?: ParentBounds
 ) => {
   // Convert relative bounds to absolute bounds
-  const absoluteBounds = parentBounds
-    ? Box.asReadWrite({
-        x: parentBounds.x + layout.bounds.x,
-        y: parentBounds.y + layout.bounds.y,
-        w: layout.bounds.w,
-        h: layout.bounds.h,
-        r: parentBounds.r + layout.bounds.r
-      })
-    : layout.bounds;
+  let absoluteBounds: Box;
+
+  if (parentBounds) {
+    // When the parent is rotated, we need to rotate the child's relative position
+    // by the parent's rotation before adding it to the parent's absolute position
+    // All rotations are around the center of the shape, so we rotate
+    // the center of the child around the parent's center and then adjust
+    // back to the top-left corner of the child's bounds.'
+    const rotatedPosition = Point.subtract(
+      Point.rotateAround(
+        Box.center(WritableBox.asBox(layout.bounds)),
+        parentBounds.r,
+        Point.of(parentBounds.w / 2, parentBounds.h / 2)
+      ),
+      Point.of(layout.bounds.w / 2, layout.bounds.h / 2)
+    );
+
+    absoluteBounds = {
+      x: parentBounds.x + rotatedPosition.x,
+      y: parentBounds.y + rotatedPosition.y,
+      w: layout.bounds.w,
+      h: layout.bounds.h,
+      r: parentBounds.r + layout.bounds.r
+    };
+  } else {
+    absoluteBounds = WritableBox.asBox(layout.bounds);
+  }
 
   // Update the node's bounds with absolute coordinates
-  node.setBounds(WritableBox.asBox(absoluteBounds), uow);
+  node.setBounds(absoluteBounds, uow);
 
   // Apply layout recursively to children
   // Match children by ID since the order might have changed
@@ -211,11 +228,7 @@ const applyLayoutTreeRecursive = (
     if (isNode(child)) {
       const childLayout = childLayoutMap.get(child.id);
       if (childLayout) {
-        applyLayoutTreeRecursive(child as DiagramNode, childLayout, uow, {
-          x: absoluteBounds.x,
-          y: absoluteBounds.y,
-          r: absoluteBounds.r
-        });
+        applyLayoutTreeRecursive(child as DiagramNode, childLayout, uow, absoluteBounds);
       }
     }
   }
