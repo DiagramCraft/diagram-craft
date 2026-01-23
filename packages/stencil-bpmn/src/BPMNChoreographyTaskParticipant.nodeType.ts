@@ -58,20 +58,7 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskParticipantNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
-
-      builder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        Box.fromCorners(
-          _p(props.node.bounds.x + 5, props.node.bounds.y + 5),
-          _p(
-            props.node.bounds.x + props.node.bounds.w - 5,
-            props.node.bounds.y + props.node.bounds.h - 5
-          )
-        )
-      );
+      builder.text(this);
 
       const markers: Icon[] = [];
 

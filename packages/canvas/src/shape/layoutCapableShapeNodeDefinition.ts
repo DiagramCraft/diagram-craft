@@ -9,7 +9,7 @@ import {
   NodeShapeConstructor,
   ShapeNodeDefinition
 } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
 import {
   DiagramElement,
@@ -65,31 +65,6 @@ export abstract class LayoutCapableShapeNodeDefinition
 
     this.capabilities['can-have-layout'] = true;
     this.capabilities.children = true;
-  }
-
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    newBounds: Box,
-    previousBounds: Box,
-    uow: UnitOfWork
-  ) {
-    if (
-      newBounds.w === previousBounds.w &&
-      newBounds.h === previousBounds.h &&
-      newBounds.r === previousBounds.r
-    ) {
-      return super.onTransform(transforms, node, newBounds, previousBounds, uow);
-    }
-
-    const newWidth = newBounds.w;
-    const newHeight = newBounds.h;
-
-    if (newWidth !== newBounds.w || newHeight !== newBounds.h) {
-      node.setBounds({ ...newBounds, w: newWidth, h: newHeight }, uow);
-    }
-
-    return this.layoutChildren(node, uow);
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

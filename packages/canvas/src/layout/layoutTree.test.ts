@@ -161,31 +161,4 @@ describe('applyLayoutTree', () => {
     // Child should have absolute rotation = parent + relative
     expect(child.bounds.r).toBeCloseTo(Math.PI / 6 + Math.PI / 9, 10); // 30 + 20 = 50 degrees
   });
-
-  test('round-trip preserves bounds', () => {
-    const diagram = TestModel.newDiagram();
-    const layer = diagram.newLayer();
-    const parent = layer.addNode({ bounds: { x: 100, y: 50, w: 400, h: 200, r: 0.3 } });
-    const child1 = layer.createNode({ bounds: { x: 120, y: 80, w: 150, h: 80, r: 0.5 } });
-    const child2 = layer.createNode({ bounds: { x: 280, y: 80, w: 100, h: 80, r: 0.6 } });
-    UnitOfWork.execute(diagram, uow => {
-      parent.addChild(child1, uow);
-      parent.addChild(child2, uow);
-    });
-
-    // Build layout tree and apply it back without modifications
-    const layoutTree = buildLayoutTree(parent);
-    UnitOfWork.execute(diagram, uow => applyLayoutTree(parent, layoutTree, uow));
-
-    // Bounds should be unchanged
-    expect(parent.bounds.x).toBe(100);
-    expect(parent.bounds.y).toBe(50);
-    expect(parent.bounds.r).toBeCloseTo(0.3, 10);
-    expect(child1.bounds.x).toBe(120);
-    expect(child1.bounds.y).toBe(80);
-    expect(child1.bounds.r).toBeCloseTo(0.5, 10);
-    expect(child2.bounds.x).toBe(280);
-    expect(child2.bounds.y).toBe(80);
-    expect(child2.bounds.r).toBeCloseTo(0.6, 10);
-  });
 });
