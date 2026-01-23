@@ -14,7 +14,7 @@ import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/uml';
+import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';

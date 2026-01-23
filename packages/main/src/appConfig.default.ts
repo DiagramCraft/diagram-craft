@@ -29,7 +29,9 @@ export const defaultAppConfig: AppConfig = {
         shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
         opts: {
           callback: () =>
-            import('@diagram-craft/stencil-bpmn/loader').then(m => m.registerBPMNShapes)
+            import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(
+              m => m.registerBPMNShapes
+            )
         }
       },
       {
@@ -37,7 +39,9 @@ export const defaultAppConfig: AppConfig = {
         shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
         opts: {
           callback: () =>
-            import('@diagram-craft/canvas-drawio/shapes/uml/uml').then(m => m.registerUMLShapes)
+            import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
+              m => m.registerUMLShapes
+            )
         }
       },
       {

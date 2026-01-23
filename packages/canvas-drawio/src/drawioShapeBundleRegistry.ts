@@ -23,7 +23,7 @@ import { registerGCP2Shapes } from './shapes/gcp2/gcp2';
 import { registerC4Shapes } from './shapes/c4';
 import { registerSalesforceShapes } from './shapes/salesforce';
 import { registerAndroidShapes } from './shapes/android/android';
-import { registerUMLShapes } from './shapes/uml/uml';
+import { registerUMLShapes } from './shapes/uml/canvas-drawio-stencil-uml-loader';
 
 type ShapeBundle = (
   registry: NodeDefinitionRegistry,
