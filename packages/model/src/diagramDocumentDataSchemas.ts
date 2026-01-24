@@ -15,6 +15,12 @@ export type DataSchemaField =
   | {
       id: string;
       name: string;
+      type: 'select';
+      options: Array<{ value: string; label: string }>;
+    }
+  | {
+      id: string;
+      name: string;
       type: 'reference';
       schemaId: string;
       minCount: number;

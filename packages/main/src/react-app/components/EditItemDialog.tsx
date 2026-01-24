@@ -1,14 +1,17 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Data } from '@diagram-craft/model/dataProvider';
-import { decodeDataReferences, encodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  decodeDataReferences,
+  encodeDataReferences
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
 import { useDiagram, useDocument } from '../../application';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import { ReferenceFieldEditor } from './ReferenceFieldEditor';
+import { Select } from '@diagram-craft/app-components/Select';
 
 type EditItemDialogProps = {
   open: boolean;
@@ -166,13 +169,14 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         {schema.fields.map(field => (
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
-            {field.type === 'reference' ? (
+            {field.type === 'reference' && (
               <ReferenceFieldEditor
                 field={field}
                 selectedValues={formData[field.id] as string[]}
                 onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
               />
-            ) : field.type === 'longtext' ? (
+            )}
+            {field.type === 'longtext' && (
               <TextArea
                 value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
@@ -180,11 +184,18 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
                   minHeight: '5rem'
                 }}
               />
-            ) : (
-              <TextInput
+            )}
+            {field.type === 'select' && (
+              <Select.Root
                 value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
-              />
+              >
+                {field.options.map(o => (
+                  <Select.Item key={o.value} value={o.value}>
+                    {o.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
             )}
           </div>
         ))}
