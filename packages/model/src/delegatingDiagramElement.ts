@@ -116,9 +116,10 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   _onAttach(
     layer: RegularLayer | ModificationLayer,
-    parent: DiagramElement | RegularLayer | ModificationLayer
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
   ) {
-    this.delegate._onAttach(layer, parent);
+    this.delegate._onAttach(layer, parent, uow);
   }
 
   get crdt() {

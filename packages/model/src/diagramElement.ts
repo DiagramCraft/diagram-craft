@@ -115,7 +115,8 @@ export interface DiagramElement {
   _onDetach(uow: UnitOfWork): void;
   _onAttach(
     layer: RegularLayer | ModificationLayer,
-    parent: DiagramElement | RegularLayer | ModificationLayer
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
   ): void;
 }
 
@@ -393,7 +394,7 @@ export abstract class AbstractDiagramElement
       });
     }
 
-    child._onAttach(this.layer, this);
+    child._onAttach(this.layer, this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -418,7 +419,8 @@ export abstract class AbstractDiagramElement
 
   _onAttach(
     layer: RegularLayer | ModificationLayer,
-    parent: DiagramElement | RegularLayer | ModificationLayer
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
   ) {
     this._setLayer(layer, this.diagram);
     if (parent._trackableType === 'element') {
@@ -428,7 +430,7 @@ export abstract class AbstractDiagramElement
     this.diagram.register(this);
 
     for (const child of this.children) {
-      child._onAttach(layer, this);
+      child._onAttach(layer, this, uow);
     }
   }
 }

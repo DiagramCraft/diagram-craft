@@ -28,11 +28,11 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { Anchor } from './anchor';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import type { RegularLayer } from './diagramLayerRegular';
+import { RegularLayer } from './diagramLayerRegular';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { unique } from '@diagram-craft/utils/array';
-import type { ModificationLayer } from './diagramLayerModification';
+import { ModificationLayer } from './diagramLayerModification';
 import { getAdjustments } from './diagramLayerUtils';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import type { PropertyInfo } from './property';
@@ -907,6 +907,15 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     if (this.layer.elements.includes(this)) {
       this.layer.removeElement(this, uow);
     }
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
+  ) {
+    super._onAttach(layer, parent, uow);
+    this.getDefinition().onAdd(layer.diagram, uow);
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {

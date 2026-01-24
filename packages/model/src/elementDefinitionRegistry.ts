@@ -226,6 +226,8 @@ export interface NodeDefinition {
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
+  onAdd(diagram: Diagram, uow: UnitOfWork): void;
+
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }
 

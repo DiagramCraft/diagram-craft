@@ -17,6 +17,7 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
+import { Diagram } from '@diagram-craft/model/diagram';
 
 export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -63,6 +64,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'children.select-parent': false
     };
   }
+
+  onAdd(_diagram: Diagram, _uow: UnitOfWork) {}
 
   supports(capability: NodeCapability): boolean {
     return this.capabilities[capability];
