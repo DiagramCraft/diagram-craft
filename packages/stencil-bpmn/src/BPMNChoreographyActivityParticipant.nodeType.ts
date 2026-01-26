@@ -18,7 +18,7 @@ import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyTask.nodeType';
+import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';
 
 type ParticipantPosition = 'top' | 'middle' | 'bottom';
 type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
@@ -31,7 +31,7 @@ type Data = {
 
 const SCHEMA: DataSchema = {
   id: 'bpmnChoreographyActivityParticipant',
-  name: 'BPMN Choreography Task Participant',
+  name: 'BPMN Choreography Participant',
   providerId: 'default',
   fields: [
     {
@@ -61,14 +61,14 @@ const SCHEMA: DataSchema = {
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      bpmnChoreographyTaskParticipant?: {
+      bpmnChoreographyActivityParticipant?: {
         position?: ParticipantPosition;
       };
     }
   }
 }
 
-registerCustomNodeDefaults('bpmnChoreographyTaskParticipant', {
+registerCustomNodeDefaults('bpmnChoreographyActivityParticipant', {
   position: 'top'
 });
 
@@ -78,16 +78,16 @@ const ICON_MARGIN = 2;
 const ICON_SIZE = 15;
 const BOTTOM_MARGIN = 2;
 
-export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefinition {
+export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super(
-      'bpmnChoreographyTaskParticipant',
-      'BPMN Choreography Task Participant',
-      BPMNChoreographyTaskParticipantNodeDefinition.Shape
+      'bpmnChoreographyActivityParticipant',
+      'BPMN Choreography Participant',
+      BPMNChoreographyActivityParticipantNodeDefinition.Shape
     );
   }
 
-  static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskParticipantNodeDefinition> {
+  static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityParticipantNodeDefinition> {
     private getData(node: DiagramNode): Data {
       const data = node.metadata.data?.data?.find(
         e => e.schema === 'bpmnChoreographyActivityParticipant'
@@ -115,10 +115,10 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
       const parentData = this.getParentData(props.node);
       const parentProps =
         parent && isNode(parent)
-          ? parent.renderProps.custom.bpmnChoreographyTask
+          ? parent.renderProps.custom.bpmnChoreographyActivity
           : { expanded: false };
 
-      if (props.nodeProps.custom.bpmnChoreographyTaskParticipant.position === 'middle') {
+      if (props.nodeProps.custom.bpmnChoreographyActivityParticipant.position === 'middle') {
         if (!parentProps?.expanded) {
           if (data.loopType === 'parallel') {
             markers.push(getSVGIcon(linesVerticalIcon));
@@ -178,7 +178,7 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const position = def.renderProps.custom.bpmnChoreographyTaskParticipant?.position ?? 'top';
+    const position = def.renderProps.custom.bpmnChoreographyActivityParticipant?.position ?? 'top';
     const radius = 5;
     const xr = radius / def.bounds.w;
     const yr = radius / def.bounds.h;
@@ -220,7 +220,7 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
 
   getCustomPropertyDefinitions(node: DiagramNode) {
     const def = new CustomPropertyDefinition(p => [
-      p.select(node, 'Position', 'custom.bpmnChoreographyTaskParticipant.position', [
+      p.select(node, 'Position', 'custom.bpmnChoreographyActivityParticipant.position', [
         { value: 'top', label: 'Top' },
         { value: 'middle', label: 'Middle' },
         { value: 'bottom', label: 'Bottom' }

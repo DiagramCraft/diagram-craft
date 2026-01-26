@@ -4,7 +4,7 @@ stencils:
     node:
       id: kr70aj9
       type: node
-      nodeType: bpmnChoreographyTask
+      nodeType: bpmnChoreographyActivity
       bounds:
         x: 0
         'y': 0
@@ -14,7 +14,7 @@ stencils:
       children:
         - id: ogt6893
           type: node
-          nodeType: bpmnChoreographyTaskParticipant
+          nodeType: bpmnChoreographyActivityParticipant
           bounds:
             x: 0
             'y': 0
@@ -31,7 +31,7 @@ stencils:
             text: Participant 1
         - id: er40je9
           type: node
-          nodeType: bpmnChoreographyTaskParticipant
+          nodeType: bpmnChoreographyActivityParticipant
           bounds:
             x: 0
             'y': 20
@@ -40,7 +40,7 @@ stencils:
             r: 0
           props:
             custom:
-              bpmnChoreographyTaskParticipant:
+              bpmnChoreographyActivityParticipant:
                 position: middle
             text:
               bottom: 6
@@ -51,7 +51,7 @@ stencils:
             text: Task
         - id: uqpekzd
           type: node
-          nodeType: bpmnChoreographyTaskParticipant
+          nodeType: bpmnChoreographyActivityParticipant
           bounds:
             x: 0
             'y': 70
@@ -60,7 +60,7 @@ stencils:
             r: 0
           props:
             custom:
-              bpmnChoreographyTaskParticipant:
+              bpmnChoreographyActivityParticipant:
                 position: bottom
           metadata:
             style: default

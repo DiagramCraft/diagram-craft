@@ -23,7 +23,7 @@ export type Data = {
 
 const SCHEMA: DataSchema = {
   id: 'bpmnChoreographyActivity',
-  name: 'BPMN Choreography Task',
+  name: 'BPMN Choreography Activity',
   providerId: 'default',
   fields: [
     {
@@ -47,21 +47,21 @@ const SCHEMA: DataSchema = {
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      bpmnChoreographyTask?: { expanded?: boolean };
+      bpmnChoreographyActivity?: { expanded?: boolean };
     }
   }
 }
 
-registerCustomNodeDefaults('bpmnChoreographyTask', {
+registerCustomNodeDefaults('bpmnChoreographyActivity', {
   expanded: false
 });
 
-export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDefinition {
+export class BPMNChoreographyActivityNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
     super(
-      'bpmnChoreographyTask',
-      'BPMN Choreography Task',
-      BPMNChoreographyTaskNodeDefinition.Shape
+      'bpmnChoreographyActivity',
+      'BPMN Choreography Activity',
+      BPMNChoreographyActivityNodeDefinition.Shape
     );
 
     this.capabilities.children = true;
@@ -69,7 +69,7 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
     this.capabilities['children.select-parent'] = true;
   }
 
-  static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskNodeDefinition> {
+  static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityNodeDefinition> {
     private getData(node: DiagramNode): Data {
       const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnChoreographyActivity');
       return { ...(data?.data ?? {}) } as Data;
@@ -136,7 +136,7 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
 
   getCustomPropertyDefinitions(node: DiagramNode) {
     const def = new CustomPropertyDefinition(p => [
-      p.boolean(node, 'Expanded', 'custom.bpmnChoreographyTask.expanded')
+      p.boolean(node, 'Expanded', 'custom.bpmnChoreographyActivity.expanded')
     ]);
     def.dataSchemas = [SCHEMA];
     return def;
