@@ -285,8 +285,8 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     id: 'bpmn-event-start',
     name: 'Start Event',
     size: {
-      w: 40,
-      h: 40
+      w: 30,
+      h: 30
     },
     texts: {
       text: ''
@@ -311,8 +311,8 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     id: 'bpmn-event-intermediate',
     name: 'Intermediate Event',
     size: {
-      w: 40,
-      h: 40
+      w: 30,
+      h: 30
     },
     texts: {
       text: ''
@@ -337,8 +337,8 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     id: 'bpmn-event-end',
     name: 'End Event',
     size: {
-      w: 40,
-      h: 40
+      w: 30,
+      h: 30
     },
     texts: {
       text: ''
@@ -363,8 +363,8 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     id: 'bpmn-gateway',
     name: 'Gateway',
     size: {
-      w: 50,
-      h: 50
+      w: 30,
+      h: 30
     },
     texts: {
       text: '%name%'

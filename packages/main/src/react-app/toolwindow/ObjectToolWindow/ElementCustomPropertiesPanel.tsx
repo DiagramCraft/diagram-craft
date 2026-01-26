@@ -112,11 +112,15 @@ export const ElementCustomPropertiesPanelForm = ({
       )}
       {customProperties.dataSchemas.length > 0 && (
         <>
-          <div style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem' }}>Style:</div>
+          {customProperties.entries.length > 0 && (
+            <>
+              <div style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem' }}>Style:</div>
 
-          <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
-            <CustomPropertyList customProperties={customProperties} onChange={onChange} />
-          </div>
+              <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+                <CustomPropertyList customProperties={customProperties} onChange={onChange} />
+              </div>
+            </>
+          )}
 
           {customProperties.dataSchemas.map(schema => (
             <React.Fragment key={schema.id}>
