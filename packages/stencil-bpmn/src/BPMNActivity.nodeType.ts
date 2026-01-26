@@ -12,7 +12,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import settingsIcon from './icons/settings.svg?raw';
 import mailFilledIcon from './icons/mail-filled.svg?raw';
 import mailIcon from './icons/mail.svg?raw';
@@ -28,6 +28,10 @@ import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 
 type SubprocessType =
   | 'default'
@@ -181,7 +185,29 @@ type MarkerSpec = {
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
+    this.capabilities.children = true;
   }
+
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ): void {
+    node.diagram.moveElement(elements, uow, node.layer, {
+      relation: 'on',
+      element: node
+    });
+  }
+
+  onTransform(
+    _transforms: ReadonlyArray<Transform>,
+    _node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    _uow: UnitOfWork
+  ): void {}
 
   private static isSubprocessActivity(activityType: string): boolean {
     return (
@@ -240,6 +266,13 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           markers.left.push('compensation');
           markers.right.push('ad-hoc');
         } else if (data.subprocessType === 'multi-instance') markers.left.push('parallel');
+
+        if (props.nodeProps.custom.bpmnActivity.expanded) {
+          markers.left.forEach(m => markers.center.push(m));
+          markers.right.forEach(m => markers.center.push(m));
+          markers.left.splice(0, markers.left.length);
+          markers.right.splice(0, markers.right.length);
+        }
       } else {
         // Use individual marker properties for regular tasks
         if (data.loop) markers.center.push('loop');
@@ -279,6 +312,18 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       }
 
       shapeBuilder.text(this);
+
+      shapeBuilder.add(
+        svg.g(
+          {},
+          ...props.node.children.map(child =>
+            svg.g(
+              { transform: Transforms.rotateBack(props.node.bounds) },
+              renderElement(this, child, props)
+            )
+          )
+        )
+      );
     }
 
     private renderIcon(
