@@ -14,6 +14,7 @@ import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { Box } from '@diagram-craft/geometry/box';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
+import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 type Orientation = 'vertical' | 'horizontal';
 
@@ -44,8 +45,18 @@ registerCustomNodeDefaults('swimlane', {
 export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
 
-  constructor() {
-    super('swimlane', 'Swimlane', SwimlaneComponent);
+  constructor();
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  constructor(type: string, component: NodeShapeConstructor<any>);
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  constructor(type: string, name: string, component: NodeShapeConstructor<any>);
+  constructor(
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    ...arr: [] | [string, NodeShapeConstructor<any>] | [string, string, NodeShapeConstructor<any>]
+  ) {
+    if (arr.length === 0) super('swimlane', 'Swimlane', SwimlaneComponent);
+    else if (arr.length === 2) super(arr[0], arr[1]);
+    else super(arr[0], arr[1], arr[2]);
 
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
@@ -168,7 +179,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 }
 
 // TODO: Support fill (should be only for title)
-class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
+export class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition> {
   private renderTitleBorder(
     builder: ShapeBuilder,
     bounds: { x: number; y: number; w: number; h: number },

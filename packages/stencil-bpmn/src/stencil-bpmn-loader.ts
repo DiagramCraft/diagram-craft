@@ -16,6 +16,7 @@ import { BPMNChoreographyTaskParticipantNodeDefinition } from '@diagram-craft/st
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import stencils from './bpmnStencils.yaml';
+import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -467,6 +468,107 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     size: {
       w: 40,
       h: 20
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-vertical-lane',
+    name: 'Vertical Lane',
+    size: {
+      w: 100,
+      h: 400
+    },
+    texts: {
+      text: 'Lane'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-horizonal-lane',
+    name: 'Horizontal Lane',
+    size: {
+      w: 400,
+      h: 100
+    },
+    texts: {
+      text: 'Lane'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true,
+            orientation: 'horizontal'
+          }
+        }
+      };
+    }
+  });
+  registerStencil(r, bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-vertical-pool',
+    name: 'Vertical Pool',
+    size: {
+      w: 200,
+      h: 400
+    },
+    texts: {
+      text: 'Pool'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true
+          }
+        },
+        layout: {
+          container: {
+            enabled: true,
+            autoShrink: true,
+            direction: 'horizontal',
+            alignItems: 'stretch'
+          }
+        }
+      };
+    }
+  });
+
+  registerStencil(r, bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-horizonal-pool',
+    name: 'Horizontal Pool',
+    size: {
+      w: 400,
+      h: 200
+    },
+    texts: {
+      text: 'Pool'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true,
+            orientation: 'horizontal'
+          }
+        },
+        layout: {
+          container: {
+            enabled: true,
+            autoShrink: true,
+            direction: 'vertical',
+            alignItems: 'stretch'
+          }
+        }
+      };
     }
   });
 
