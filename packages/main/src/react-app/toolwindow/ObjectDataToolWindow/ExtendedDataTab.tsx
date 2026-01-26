@@ -10,13 +10,13 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert } from '@diagram-craft/utils/assert';
 import { unique } from '@diagram-craft/utils/array';
 import { TbFilter, TbFilterOff, TbLink, TbLinkOff, TbPencil } from 'react-icons/tb';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/externalDataHelpers';
-import { Select } from '@diagram-craft/app-components/Select';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { DataFields } from './DataFields';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -170,6 +170,12 @@ export const ExtendedDataTab = () => {
 
   if ($d.selection.elements.length !== 1) return null;
 
+  const mustHaveSchemas = new Set<string>();
+  $d.selection.elements
+    .filter(isNode)
+    .flatMap(e => e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas)
+    .forEach(s => mustHaveSchemas.add(s));
+
   return (
     <>
       <ToolWindow.TabActions>
@@ -213,6 +219,7 @@ export const ExtendedDataTab = () => {
                           <input
                             className="cmp-accordion__enabled"
                             type={'checkbox'}
+                            disabled={isSchemaEnabled && mustHaveSchemas.has(schema.id)}
                             checked={isSchemaEnabled}
                             onChange={e => {
                               const isChecked = e.target.checked;
@@ -309,59 +316,11 @@ export const ExtendedDataTab = () => {
                       </Accordion.ItemHeaderButtons>
                     </Accordion.ItemHeader>
                     <Accordion.ItemContent forceMount={true}>
-                      <div className={'cmp-labeled-table'}>
-                        {schema.fields.map(f => {
-                          const v = unique(
-                            $d.selection.elements.map(e => {
-                              const d = findEntryBySchema(e, schema.id);
-                              try {
-                                return d?.data?.[f.id] ?? '';
-                              } catch (_e) {
-                                return '';
-                              }
-                            })
-                          );
-
-                          return (
-                            <React.Fragment key={f.id}>
-                              <div className={'cmp-labeled-table__label util-a-top-center'}>
-                                {f.name}:
-                              </div>
-                              <div className={'cmp-labeled-table__value'}>
-                                {f.type === 'text' && (
-                                  <TextInput
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={v => changDataCallback(schema.id, f.id, v)}
-                                  />
-                                )}
-                                {f.type === 'longtext' && (
-                                  <TextArea
-                                    style={{ height: '40px' }}
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={v => changDataCallback(schema.id, f.id, v)}
-                                  />
-                                )}
-                                {f.type === 'select' && (
-                                  <Select.Root
-                                    value={v[0]?.toString() ?? ''}
-                                    isIndeterminate={v.length > 1}
-                                    disabled={isExternal}
-                                    onChange={v => changDataCallback(schema.id, f.id, v)}
-                                  >
-                                    {f.options.map(o => (
-                                      <Select.Item key={o.value} value={o.value}>
-                                        {o.label}
-                                      </Select.Item>
-                                    ))}
-                                  </Select.Root>
-                                )}
-                              </div>
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
+                      <DataFields
+                        schema={schema}
+                        disabled={isExternal}
+                        onChange={(field, value) => changDataCallback(schema.id, field.id, value)}
+                      />
                     </Accordion.ItemContent>
                   </Accordion.Item>
                 );

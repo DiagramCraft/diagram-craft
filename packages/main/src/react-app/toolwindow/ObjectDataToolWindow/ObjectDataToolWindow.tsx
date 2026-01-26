@@ -1,5 +1,5 @@
 import { useDiagram } from '../../../application';
-import { ObjectNamePanel } from './ObjectNamePanel';
+import { BasicInfoTab } from './BasicInfoTab';
 import { ExtendedDataTab } from './ExtendedDataTab';
 import { ToolWindow } from '../ToolWindow';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -17,7 +17,7 @@ export const ObjectDataToolWindow = () => {
     <ToolWindow.Root id={'object-data'} defaultTab={'name'}>
       <ToolWindow.Tab id={'name'} title={'Basic Info'}>
         <ToolWindow.TabContent>
-          {$d.selection.elements.length === 1 && <ObjectNamePanel mode="headless" />}
+          {$d.selection.elements.length === 1 && <BasicInfoTab mode="headless" />}
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'data'} title={'Extended Data'}>

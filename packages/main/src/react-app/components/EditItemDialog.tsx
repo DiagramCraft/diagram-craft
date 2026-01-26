@@ -187,7 +187,11 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
             )}
             {field.type === 'select' && (
               <Select.Root
-                value={(formData[field.id] as string | undefined) ?? ''}
+                value={
+                  (formData[field.id] === ''
+                    ? field.options[0]?.value
+                    : (formData[field.id] as string)) ?? ''
+                }
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
               >
                 {field.options.map(o => (

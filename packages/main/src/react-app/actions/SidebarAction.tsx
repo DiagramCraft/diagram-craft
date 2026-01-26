@@ -69,6 +69,12 @@ export const sidebarActions = (context: ActionContext) => ({
     3,
     $tStr('action.SIDEBAR_COMMENT.name', 'Comments Panel'),
     context
+  ),
+  SIDEBAR_STYLE_OVERVIEW: new SidebarAction(
+    'right',
+    4,
+    $tStr('action.SIDEBAR_STYLE_OVERVIEW.name', 'Style Overview Panel'),
+    context
   )
 });
 

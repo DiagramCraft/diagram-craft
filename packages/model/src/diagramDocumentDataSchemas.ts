@@ -15,6 +15,11 @@ export type DataSchemaField =
   | {
       id: string;
       name: string;
+      type: 'checkbox';
+    }
+  | {
+      id: string;
+      name: string;
       type: 'select';
       options: Array<{ value: string; label: string }>;
     }

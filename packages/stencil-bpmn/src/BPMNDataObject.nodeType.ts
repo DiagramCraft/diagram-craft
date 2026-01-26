@@ -10,28 +10,47 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
 import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      bpmnDataObject?: {
-        collection?: boolean;
-        type?: string;
-      };
+type Data = {
+  collection?: boolean;
+  type?: string;
+};
+
+const SCHEMA: DataSchema = {
+  id: 'bpmnDataObject',
+  name: 'BPMN Data Object',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'collection',
+      name: 'Collection',
+      type: 'checkbox'
+    },
+    {
+      id: 'type',
+      name: 'Type',
+      type: 'select',
+      options: [
+        { label: 'Default', value: 'default' },
+        { label: 'Input', value: 'input' },
+        { label: 'Output', value: 'output' }
+      ]
     }
-  }
-}
-
-registerCustomNodeDefaults('bpmnDataObject', {
-  collection: false,
-  type: 'default'
-});
+  ]
+};
 
 const templatePaths = PathListBuilder.fromString(
   `
@@ -67,7 +86,16 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     super('bpmnDataObject', 'BPMN Data Object', BPMNDataObjectNodeType.Shape);
   }
 
+  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
+    this.ensureSchema(diagram, 'bpmnDataObject', SCHEMA);
+  }
+
   static Shape = class extends BaseNodeComponent<BPMNDataObjectNodeType> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnDataObject');
+      return { type: 'default', ...(data?.data ?? {}) } as Data;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       shapeBuilder.boundaryPath(
         new BPMNDataObjectNodeType().getBoundingPathBuilder(props.node).getPaths().all()
@@ -97,10 +125,10 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
         )
       );
 
-      const dataObjectProps = props.node.renderProps.custom.bpmnDataObject;
+      const data = this.getData(props.node);
       const bounds = props.node.bounds;
 
-      if (dataObjectProps.collection) {
+      if (data.collection) {
         this.renderIcon(
           getSVGIcon(linesVerticalIcon),
           Box.fromCorners(
@@ -116,9 +144,9 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
       }
 
       let icon: Icon | undefined;
-      if (dataObjectProps.type === 'input') {
+      if (data.type === 'input') {
         icon = getSVGIcon(arrowBigRightIcon);
-      } else if (dataObjectProps.type === 'output') {
+      } else if (data.type === 'output') {
         icon = getSVGIcon(arrowBigRightFilledIcon);
       }
 
@@ -163,14 +191,9 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     return PathListBuilder.fromPath(path).withTransform(t);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.boolean(def, 'Collection', 'custom.bpmnDataObject.collection'),
-      p.select(def, 'Type', 'custom.bpmnDataObject.type', [
-        { label: 'Default', value: 'default' },
-        { label: 'Input', value: 'input' },
-        { label: 'Output', value: 'output' }
-      ])
-    ]);
+  getCustomPropertyDefinitions(_node: DiagramNode) {
+    const def = new CustomPropertyDefinition();
+    def.dataSchemas = ['bpmnDataObject'];
+    return def;
   }
 }

@@ -7,7 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -32,6 +31,9 @@ import pentagonFilledIcon from './icons/pentagon-filled.svg?raw';
 import crossIcon from './icons/cross.svg?raw';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { _p } from '@diagram-craft/geometry/point';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type EventType = 'start' | 'intermediate' | 'end';
 type MarkerType =
@@ -49,29 +51,73 @@ type MarkerType =
   | 'multiple'
   | 'parallel-multiple';
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      bpmnEvent?: {
-        eventType?: EventType;
-        nonInterrupting?: boolean;
-        throwing?: boolean;
-        marker?: MarkerType;
-      };
-    }
-  }
-}
+type Data = {
+  eventType?: EventType;
+  nonInterrupting?: boolean;
+  throwing?: boolean;
+  marker?: MarkerType;
+};
 
-registerCustomNodeDefaults('bpmnEvent', {
-  eventType: 'start',
-  nonInterrupting: false,
-  throwing: false,
-  marker: 'none'
-});
+const SCHEMA: DataSchema = {
+  id: 'bpmnEvent',
+  name: 'BPMN Event',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'eventType',
+      name: 'Event Type',
+      type: 'select',
+      options: [
+        { value: 'start', label: 'Start' },
+        { value: 'intermediate', label: 'Intermediate' },
+        { value: 'end', label: 'End' }
+      ]
+    },
+    {
+      id: 'nonInterrupting',
+      name: 'Non-Interrupting',
+      type: 'checkbox'
+    },
+    {
+      id: 'throwing',
+      name: 'Throwing',
+      type: 'checkbox'
+    },
+    {
+      id: 'marker',
+      name: 'Marker',
+      type: 'select',
+      options: [
+        { value: 'none', label: 'None' },
+        { value: 'message', label: 'Message' },
+        { value: 'timer', label: 'Timer' },
+        { value: 'error', label: 'Error' },
+        { value: 'escalation', label: 'Escalation' },
+        { value: 'cancel', label: 'Cancel' },
+        { value: 'compensation', label: 'Compensation' },
+        { value: 'conditional', label: 'Conditional' },
+        { value: 'link', label: 'Link' },
+        { value: 'signal', label: 'Signal' },
+        { value: 'terminate', label: 'Terminate' },
+        { value: 'multiple', label: 'Multiple' },
+        { value: 'parallel-multiple', label: 'Parallel Multiple' }
+      ]
+    }
+  ]
+};
 
 export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnEvent', 'BPMN Event', BPMNEventNodeDefinition.Shape);
+  }
+
+  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
+    this.ensureSchema(diagram, 'bpmnEvent', SCHEMA);
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -85,6 +131,11 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<BPMNEventNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnEvent');
+      return { type: 'default', ...(data?.data ?? {}) } as Data;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const node = props.node;
       const bounds = node.bounds;
@@ -92,8 +143,8 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       const cx = bounds.x + bounds.w / 2;
       const cy = bounds.y + bounds.h / 2;
 
-      const eventProps = node.renderProps.custom.bpmnEvent;
-      const eventType = eventProps.eventType ?? 'start';
+      const data = this.getData(node);
+      const eventType = data.eventType ?? 'start';
 
       shapeBuilder.boundaryPath(
         new BPMNEventNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
@@ -115,54 +166,54 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         });
       }
 
-      const shouldUseFilledIcon = eventType === 'end' || eventProps.throwing;
-      if (eventProps.marker === 'message') {
+      const shouldUseFilledIcon = eventType === 'end' || data.throwing;
+      if (data.marker === 'message') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? mailFilledIcon : mailIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'timer') {
+      } else if (data.marker === 'timer') {
         this.renderIcon(getSVGIcon(clockHour3Icon), props.node, shapeBuilder);
-      } else if (eventProps.marker === 'error') {
+      } else if (data.marker === 'error') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? zigzagFilledIcon : zigzagIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'escalation') {
+      } else if (data.marker === 'escalation') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? navigationFilledIcon : navigationIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'cancel') {
+      } else if (data.marker === 'cancel') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? xFilledIcon : xIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'compensation') {
+      } else if (data.marker === 'compensation') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? playerTrackPrevFilledIcon : playerTrackPrevIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'conditional') {
+      } else if (data.marker === 'conditional') {
         this.renderIcon(getSVGIcon(boxWithLinesIcon), props.node, shapeBuilder);
-      } else if (eventProps.marker === 'link') {
+      } else if (data.marker === 'link') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? arrowBigRightFilledIcon : arrowBigRightIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'signal') {
+      } else if (data.marker === 'signal') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? triangleFilledIcon : triangleIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'terminate') {
+      } else if (data.marker === 'terminate') {
         const innerRadius = 0.7;
         const rx = (bounds.w / 2) * innerRadius;
         const ry = (bounds.h / 2) * innerRadius;
@@ -176,13 +227,13 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
           style: { fill: props.nodeProps.stroke.color }
         });
-      } else if (eventProps.marker === 'multiple') {
+      } else if (data.marker === 'multiple') {
         this.renderIcon(
           getSVGIcon(shouldUseFilledIcon ? pentagonFilledIcon : pentagonIcon),
           props.node,
           shapeBuilder
         );
-      } else if (eventProps.marker === 'parallel-multiple') {
+      } else if (data.marker === 'parallel-multiple') {
         this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder);
       }
 
@@ -202,12 +253,12 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
     }
 
     protected adjustStyle(
-      el: DiagramNode,
-      nodeProps: NodePropsForRendering,
+      node: DiagramNode,
+      _nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
-      const eventProps = nodeProps.custom.bpmnEvent;
-      const eventType = eventProps.eventType ?? 'start';
+      const data = this.getData(node);
+      const eventType = data.eventType ?? 'start';
 
       if (eventType === 'end') {
         style.strokeWidth = '3';
@@ -215,10 +266,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         style.strokeWidth = '1';
       }
 
-      if (
-        eventProps.nonInterrupting &&
-        el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
-      ) {
+      if (data.nonInterrupting && node.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default') {
         style.strokeDasharray = '3 3';
       }
     }
@@ -256,26 +304,9 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.select(def, 'EventType', 'custom.bpmnEvent.eventType', [
-        { value: 'start', label: 'Start' },
-        { value: 'intermediate', label: 'Intermediate' },
-        { value: 'end', label: 'End' }
-      ]),
-      p.boolean(def, 'Non-Interrupting', 'custom.bpmnEvent.nonInterrupting'),
-      p.boolean(def, 'Throwing', 'custom.bpmnEvent.throwing'),
-      p.select(def, 'Marker', 'custom.bpmnEvent.marker', [
-        { value: 'none', label: 'None' },
-        { value: 'message', label: 'Message' },
-        { value: 'timer', label: 'Timer' },
-        { value: 'error', label: 'Error' },
-        { value: 'escalation', label: 'Escalation' },
-        { value: 'cancel', label: 'Cancel' },
-        { value: 'compensation', label: 'Compensation' },
-        { value: 'conditional', label: 'Conditional' },
-        { value: 'link', label: 'Link' }
-      ])
-    ]);
+  getCustomPropertyDefinitions(_node: DiagramNode) {
+    const def = new CustomPropertyDefinition(() => []);
+    def.dataSchemas = ['bpmnEvent'];
+    return def;
   }
 }

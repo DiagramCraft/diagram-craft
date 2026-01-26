@@ -5,12 +5,11 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import xFilledIcon from './icons/x-filled.svg?raw';
 import pentagonIcon from './icons/pentagon.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
@@ -18,6 +17,9 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import crossIcon from './icons/cross.svg?raw';
 import crossFilledIcon from './icons/cross-filled.svg?raw';
 import medicalCrossFilledIcon from './icons/medical-cross-filled.svg?raw';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type GatewayType =
   | 'default'
@@ -29,23 +31,51 @@ type GatewayType =
   | 'event-based-start-process-inclusive'
   | 'event-based-start-process-parallel';
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      bpmnGateway?: {
-        type?: GatewayType;
-      };
-    }
-  }
-}
+type Data = {
+  type: GatewayType;
+};
 
-registerCustomNodeDefaults('bpmnGateway', {
-  type: 'default'
-});
+const SCHEMA: DataSchema = {
+  id: 'bpmnGateway',
+  name: 'BPMN Gateway',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'type',
+      name: 'Type',
+      type: 'select',
+      options: [
+        { value: 'default', label: 'Default' },
+        { value: 'exclusive', label: 'Exclusive' },
+        { value: 'inclusive', label: 'Inclusive' },
+        { value: 'parallel', label: 'Parallel' },
+        { value: 'complex', label: 'Complex' },
+        { value: 'event-based', label: 'Event Based' },
+        {
+          value: 'event-based-start-process-inclusive',
+          label: 'Event Based Start Process Inclusive'
+        },
+        {
+          value: 'event-based-start-process-parallel',
+          label: 'Event Based Start Process Parallel'
+        }
+      ]
+    }
+  ]
+};
 
 export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnGateway', 'BPMN Gateway', BPMNGatewayNodeDefinition.Shape);
+  }
+
+  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
+    this.ensureSchema(diagram, 'bpmnGateway', SCHEMA);
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -59,6 +89,11 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<BPMNGatewayNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnGateway');
+      return { type: 'default', ...(data?.data ?? {}) } as Data;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       const boundary = new BPMNGatewayNodeDefinition()
         .getBoundingPathBuilder(props.node)
@@ -84,33 +119,33 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
       const cx = bounds.x + bounds.w / 2;
       const cy = bounds.y + bounds.h / 2;
 
-      const gatewayProps = props.nodeProps.custom.bpmnGateway;
+      const data = this.getData(props.node);
 
-      if (gatewayProps.type === 'exclusive') {
+      if (data.type === 'exclusive') {
         this.renderIcon(getSVGIcon(xFilledIcon), props.node, shapeBuilder);
-      } else if (gatewayProps.type === 'inclusive') {
+      } else if (data.type === 'inclusive') {
         const innerCircle = this.makeCircle(bounds, cx, cy, 0.55);
 
         shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
           style: { fill: 'none', strokeWidth: '3' }
         });
-      } else if (gatewayProps.type === 'parallel') {
+      } else if (data.type === 'parallel') {
         this.renderIcon(getSVGIcon(crossFilledIcon), props.node, shapeBuilder, 7);
-      } else if (gatewayProps.type === 'complex') {
+      } else if (data.type === 'complex') {
         this.renderIcon(getSVGIcon(medicalCrossFilledIcon), props.node, shapeBuilder, 7);
-      } else if (gatewayProps.type.startsWith('event-based')) {
+      } else if (data.type.startsWith('event-based')) {
         const innerCircle = this.makeCircle(bounds, cx, cy, 0.6);
         shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
           style: { fill: 'none', strokeWidth: '1' }
         });
 
-        if (gatewayProps.type === 'event-based') {
+        if (data.type === 'event-based') {
           const innerCircle = this.makeCircle(bounds, cx, cy, 0.5);
           shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
             style: { fill: 'none', strokeWidth: '1' }
           });
           this.renderIcon(getSVGIcon(pentagonIcon), props.node, shapeBuilder, 14);
-        } else if (gatewayProps.type === 'event-based-start-process-inclusive') {
+        } else if (data.type === 'event-based-start-process-inclusive') {
           this.renderIcon(getSVGIcon(pentagonIcon), props.node, shapeBuilder, 14);
         } else {
           this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder, 14);
@@ -149,34 +184,18 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
   };
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const pathBuilder = new PathListBuilder().withTransform(fromUnitLCS(def.bounds));
-    pathBuilder.moveTo(Point.of(0.5, 0));
-    pathBuilder.lineTo(Point.of(1, 0.5));
-    pathBuilder.lineTo(Point.of(0.5, 1));
-    pathBuilder.lineTo(Point.of(0, 0.5));
-    pathBuilder.lineTo(Point.of(0.5, 0));
-
-    return pathBuilder;
+    return new PathListBuilder()
+      .withTransform(fromUnitLCS(def.bounds))
+      .moveTo(0.5, 0)
+      .lineTo(1, 0.5)
+      .lineTo(0.5, 1)
+      .lineTo(0, 0.5)
+      .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.select(def, 'Type', 'custom.bpmnGateway.type', [
-        { value: 'default', label: 'Default' },
-        { value: 'exclusive', label: 'Exclusive' },
-        { value: 'inclusive', label: 'Inclusive' },
-        { value: 'parallel', label: 'Parallel' },
-        { value: 'complex', label: 'Complex' },
-        { value: 'event-based', label: 'Event Based' },
-        {
-          value: 'event-based-start-process-inclusive',
-          label: 'Event Based Start Process Inclusive'
-        },
-        {
-          value: 'event-based-start-process-parallel',
-          label: 'Event Based Start Process Parallel'
-        }
-      ])
-    ]);
+  getCustomPropertyDefinitions(_node: DiagramNode) {
+    const def = new CustomPropertyDefinition(() => []);
+    def.dataSchemas = ['bpmnGateway'];
+    return def;
   }
 }

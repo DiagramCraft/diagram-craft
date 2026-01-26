@@ -7,12 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {}
-  }
-}
-
 // NodeDefinition and Shape *****************************************************
 
 export class BPMNChoreographyEnvelopeNodeDefinition extends ShapeNodeDefinition {

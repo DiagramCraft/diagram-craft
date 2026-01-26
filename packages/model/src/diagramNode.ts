@@ -915,7 +915,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     uow: UnitOfWork
   ) {
     super._onAttach(layer, parent, uow);
-    this.getDefinition().onAdd(layer.diagram, uow);
+    this.getDefinition().onAdd(this, layer.diagram, uow);
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {

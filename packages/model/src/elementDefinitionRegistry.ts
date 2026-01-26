@@ -160,14 +160,21 @@ export type CustomPropertyDefinitionEntry =
 export class CustomPropertyDefinition {
   private readonly arr: Array<CustomPropertyDefinitionEntry>;
 
+  /**
+   * This indicates schemas that cannot be removed from the nodes
+   * and that will be displayed in a more prominent way.
+   */
+  dataSchemas: string[] = [];
+
   constructor(
-    fn: (
+    fn?: (
       p: (typeof CustomProperty)['node']
     ) => Array<CustomPropertyDefinitionEntry | CustomPropertyDefinition>
   ) {
-    this.arr = fn(CustomProperty.node).flatMap(e =>
-      e instanceof CustomPropertyDefinition ? e.entries : e
-    );
+    this.arr =
+      fn?.(CustomProperty.node).flatMap(e =>
+        e instanceof CustomPropertyDefinition ? e.entries : e
+      ) ?? [];
   }
 
   get entries() {
@@ -226,7 +233,7 @@ export interface NodeDefinition {
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
 
-  onAdd(diagram: Diagram, uow: UnitOfWork): void;
+  onAdd(node: DiagramNode, diagram: Diagram, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }

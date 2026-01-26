@@ -8,12 +8,15 @@ import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { unique } from '@diagram-craft/utils/array';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { DataFields } from './DataFields';
+import React from 'react';
 
 type ObjectNamePanelProps = {
   mode: 'accordion' | 'panel' | 'headless';
 };
 
-export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
+export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const name = useElementMetadata($d, 'name', '');
@@ -44,13 +47,67 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
     [$d, redraw]
   );
 
+  const changDataCallback = useCallback(
+    (schema: string, id: string, v: string | undefined) => {
+      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
+        $d.selection.elements.forEach(e => {
+          e.updateMetadata(p => {
+            p.data ??= {};
+            p.data.data ??= [];
+            let s = p.data.data.find(e => e.schema === schema);
+            if (!s) {
+              s = { schema, type: 'schema', data: {}, enabled: true };
+              p.data.data.push(s);
+            } else if (!s.enabled) {
+              s.enabled = true;
+            }
+            s.data ??= {};
+            s.data[id] = v;
+          }, uow);
+        });
+      });
+    },
+    [$d]
+  );
+
+  const mustHaveSchemas =
+    $d.selection.type === 'nodes' || $d.selection.type === 'single-node'
+      ? [
+          ...$d.selection.elements
+            .filter(isNode)
+            .map(e => new Set(e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas))
+            .reduce((acc, set) => new Set([...acc].filter(x => set.has(x))))
+            .entries()
+        ].map(([k]) => $d.document.data.db.getSchema(k))
+      : [];
+
+  const hasOtherName = mustHaveSchemas.some(s => s.fields.some(f => f.id === 'name'));
+
   return (
     <ToolWindowPanel mode={mode} id="basic" title="Name">
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <TextInput value={name.val} onChange={v => name.set(v)} />
+      {[...(mustHaveSchemas ?? [])].map(s => (
+        <div key={s.id} style={{ marginBottom: '1rem' }}>
+          <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>{s.name}</div>
+          <DataFields
+            schema={s}
+            onChange={(field, value) => changDataCallback(s.id, field.id, value)}
+          />
         </div>
+      ))}
+
+      {mustHaveSchemas && (
+        <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>Basic Info</div>
+      )}
+
+      <div className={'cmp-labeled-table'}>
+        {!hasOtherName && (
+          <React.Fragment>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <TextInput value={name.val} onChange={v => name.set(v)} />
+            </div>
+          </React.Fragment>
+        )}
         <div className={'cmp-labeled-table__label util-a-top-center'}>Tags:</div>
         <div className={'cmp-labeled-table__value'}>
           <MultiSelect
