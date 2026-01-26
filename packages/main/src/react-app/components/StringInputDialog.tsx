@@ -34,9 +34,7 @@ export const StringInputDialog = (props: Props) => {
     <Dialog
       title={props.title ?? 'Rename'}
       open={props.open}
-      onClose={() => {
-        props.onCancel?.();
-      }}
+      onClose={() => props.onCancel?.()}
       buttons={[
         {
           label: props.saveButtonLabel ?? 'Ok',

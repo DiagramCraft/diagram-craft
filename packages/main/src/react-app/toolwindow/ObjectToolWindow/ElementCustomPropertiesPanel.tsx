@@ -119,7 +119,7 @@ export const ElementCustomPropertiesPanelForm = ({
           </div>
 
           {customProperties.dataSchemas.map(schema => (
-            <>
+            <React.Fragment key={schema.id}>
               <div
                 style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem', marginTop: '1rem' }}
               >
@@ -128,7 +128,7 @@ export const ElementCustomPropertiesPanelForm = ({
               <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
                 <DataFields key={schema.id} schema={schema} />
               </div>
-            </>
+            </React.Fragment>
           ))}
         </>
       )}

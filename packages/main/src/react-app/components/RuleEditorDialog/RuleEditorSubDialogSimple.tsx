@@ -50,7 +50,6 @@ export const RuleEditorSubDialogSimple = forwardRef<
   useImperativeHandle(ref, () => ({
     apply: (dest: AdjustmentRule) => {
       if (dest.type === 'advanced') throw new VerifyNotReached();
-      console.log('APPLY');
       dest.clauses = clauses
         // TODO: Additional validations
         .filter(c => c.type !== undefined)
