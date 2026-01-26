@@ -12,6 +12,7 @@ import { useDiagram, useDocument } from '../../application';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import { ReferenceFieldEditor } from './ReferenceFieldEditor';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 type EditItemDialogProps = {
   open: boolean;
@@ -25,7 +26,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const diagram = useDiagram();
   const db = document.data.db;
   const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, document.data.db);
-  const [formData, setFormData] = useState<Record<string, undefined | string | string[]>>({});
+  const [formData, setFormData] = useState<Record<string, undefined | string | string[] | boolean>>(
+    {}
+  );
   const [submitError, setSubmitError] = useState<string | undefined>();
 
   const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
@@ -183,6 +186,12 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
                 style={{
                   minHeight: '5rem'
                 }}
+              />
+            )}
+            {field.type === 'boolean' && (
+              <Checkbox
+                value={(formData[field.id] as boolean | undefined) ?? false}
+                onChange={checked => setFormData(prev => ({ ...prev, [field.id]: checked }))}
               />
             )}
             {field.type === 'select' && (
