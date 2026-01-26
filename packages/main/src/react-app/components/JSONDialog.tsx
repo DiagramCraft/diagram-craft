@@ -30,7 +30,7 @@ export function JSONDialog<T>(
     <Dialog
       title={props.title}
       open={props.open}
-      onClose={() => {}}
+      onClose={() => props.onCancel?.()}
       buttons={[
         {
           label: 'Save',
