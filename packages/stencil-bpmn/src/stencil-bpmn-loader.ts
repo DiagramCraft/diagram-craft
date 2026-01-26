@@ -11,8 +11,8 @@ import { BPMNGatewayNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNGatew
 import { BPMNConversationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversation.nodeType';
 import { BPMNAnnotationNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNAnnotation.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
-import { BPMNChoreographyTaskNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTask.nodeType';
-import { BPMNChoreographyTaskParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyTaskParticipant.nodeType';
+import { BPMNChoreographyActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivity.nodeType';
+import { BPMNChoreographyActivityParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityParticipant.nodeType';
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import stencils from './bpmnStencils.yaml';
@@ -441,7 +441,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     })
   });
 
-  registerStencil(r, bpmnStencils, new BPMNChoreographyTaskNodeDefinition(), {
+  registerStencil(r, bpmnStencils, new BPMNChoreographyActivityNodeDefinition(), {
     id: 'bpmn-choreography',
     name: 'Choreography',
     size: {
@@ -450,7 +450,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
-  registerStencil(r, bpmnStencils, new BPMNChoreographyTaskParticipantNodeDefinition(), {
+  registerStencil(r, bpmnStencils, new BPMNChoreographyActivityParticipantNodeDefinition(), {
     id: 'bpmn-choreography-participant',
     name: 'Choreography Participant',
     size: {
