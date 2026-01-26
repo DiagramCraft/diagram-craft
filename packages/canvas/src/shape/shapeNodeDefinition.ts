@@ -66,7 +66,11 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     };
   }
 
-  onAdd(_node: DiagramNode, _diagram: Diagram, _uow: UnitOfWork) {}
+  onAdd(node: DiagramNode, _diagram: Diagram, _uow: UnitOfWork) {
+    for (const schema of this.getCustomPropertyDefinitions(node).dataSchemas) {
+      this.ensureSchema(node.diagram, schema.id, schema);
+    }
+  }
 
   supports(capability: NodeCapability): boolean {
     return this.capabilities[capability];

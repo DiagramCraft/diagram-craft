@@ -17,8 +17,6 @@ import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyTask.nodeType';
 
@@ -87,10 +85,6 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
       'BPMN Choreography Task Participant',
       BPMNChoreographyTaskParticipantNodeDefinition.Shape
     );
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnChoreographyActivityParticipant', SCHEMA);
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskParticipantNodeDefinition> {
@@ -232,7 +226,7 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
         { value: 'bottom', label: 'Bottom' }
       ])
     ]);
-    def.dataSchemas = ['bpmnChoreographyActivityParticipant'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

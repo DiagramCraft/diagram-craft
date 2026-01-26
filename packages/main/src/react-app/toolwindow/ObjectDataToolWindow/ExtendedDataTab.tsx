@@ -174,7 +174,7 @@ export const ExtendedDataTab = () => {
   $d.selection.elements
     .filter(isNode)
     .flatMap(e => e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas)
-    .forEach(s => mustHaveSchemas.add(s));
+    .forEach(s => mustHaveSchemas.add(s.id));
 
   return (
     <>

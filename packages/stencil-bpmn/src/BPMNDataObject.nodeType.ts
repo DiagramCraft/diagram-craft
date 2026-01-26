@@ -16,8 +16,6 @@ import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type Data = {
   collection?: boolean;
@@ -84,10 +82,6 @@ const BOTTOM_MARGIN = 1;
 export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
   constructor() {
     super('bpmnDataObject', 'BPMN Data Object', BPMNDataObjectNodeType.Shape);
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnDataObject', SCHEMA);
   }
 
   static Shape = class extends BaseNodeComponent<BPMNDataObjectNodeType> {
@@ -193,7 +187,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(_node: DiagramNode) {
     const def = new CustomPropertyDefinition();
-    def.dataSchemas = ['bpmnDataObject'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

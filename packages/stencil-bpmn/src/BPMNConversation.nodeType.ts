@@ -13,8 +13,6 @@ import squarePlusIcon from './icons/square-plus.svg?raw';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { getSVGIcon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type ConversationType =
   | 'conversation'
@@ -55,10 +53,6 @@ const SCHEMA: DataSchema = {
 export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnConversation', 'BPMN Conversation', BPMNConversationNodeDefinition.Shape);
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnConversation', SCHEMA);
   }
 
   static Shape = class extends BaseNodeComponent<BPMNConversationNodeDefinition> {
@@ -138,7 +132,7 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(_node: DiagramNode) {
     const def = new CustomPropertyDefinition();
-    def.dataSchemas = ['bpmnConversation'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

@@ -18,8 +18,6 @@ import crossIcon from './icons/cross.svg?raw';
 import crossFilledIcon from './icons/cross-filled.svg?raw';
 import medicalCrossFilledIcon from './icons/medical-cross-filled.svg?raw';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type GatewayType =
   | 'default'
@@ -72,10 +70,6 @@ const SCHEMA: DataSchema = {
 export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnGateway', 'BPMN Gateway', BPMNGatewayNodeDefinition.Shape);
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnGateway', SCHEMA);
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -195,7 +189,7 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(_node: DiagramNode) {
     const def = new CustomPropertyDefinition(() => []);
-    def.dataSchemas = ['bpmnGateway'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

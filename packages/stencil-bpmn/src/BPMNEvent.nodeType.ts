@@ -31,8 +31,6 @@ import pentagonFilledIcon from './icons/pentagon-filled.svg?raw';
 import crossIcon from './icons/cross.svg?raw';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { _p } from '@diagram-craft/geometry/point';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type EventType = 'start' | 'intermediate' | 'end';
@@ -114,10 +112,6 @@ const SCHEMA: DataSchema = {
 export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnEvent', 'BPMN Event', BPMNEventNodeDefinition.Shape);
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnEvent', SCHEMA);
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -306,7 +300,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(_node: DiagramNode) {
     const def = new CustomPropertyDefinition(() => []);
-    def.dataSchemas = ['bpmnEvent'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

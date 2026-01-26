@@ -28,7 +28,6 @@ import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
 
 type SubprocessType =
   | 'default'
@@ -186,10 +185,6 @@ type MarkerSpec = {
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnActivity', SCHEMA);
   }
 
   private static isSubprocessActivity(activityType: string): boolean {
@@ -391,7 +386,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         }
       })
     ]);
-    def.dataSchemas = ['bpmnActivity'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 

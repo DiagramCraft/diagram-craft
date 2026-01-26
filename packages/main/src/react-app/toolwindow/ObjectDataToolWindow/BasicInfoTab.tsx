@@ -78,7 +78,7 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
             .map(e => new Set(e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas))
             .reduce((acc, set) => new Set([...acc].filter(x => set.has(x))))
             .entries()
-        ].map(([k]) => $d.document.data.db.getSchema(k))
+        ].map(([k]) => $d.document.data.db.getSchema(k.id))
       : [];
 
   const hasOtherName = mustHaveSchemas.some(s => s.fields.some(f => f.id === 'name'));

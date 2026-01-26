@@ -14,8 +14,6 @@ import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
 
@@ -69,10 +67,6 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
     this.capabilities.children = true;
     this.capabilities['can-have-layout'] = false;
     this.capabilities['children.select-parent'] = true;
-  }
-
-  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
-    this.ensureSchema(diagram, 'bpmnChoreographyActivity', SCHEMA);
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskNodeDefinition> {
@@ -144,7 +138,7 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
     const def = new CustomPropertyDefinition(p => [
       p.boolean(node, 'Expanded', 'custom.bpmnChoreographyTask.expanded')
     ]);
-    def.dataSchemas = ['bpmnChoreographyActivity'];
+    def.dataSchemas = [SCHEMA];
     return def;
   }
 }

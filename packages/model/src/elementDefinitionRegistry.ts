@@ -19,6 +19,7 @@ import type { EdgeDefinition } from './edgeDefinition';
 import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 export type NodeCapability =
   | 'children'
@@ -164,7 +165,7 @@ export class CustomPropertyDefinition {
    * This indicates schemas that cannot be removed from the nodes
    * and that will be displayed in a more prominent way.
    */
-  dataSchemas: string[] = [];
+  dataSchemas: DataSchema[] = [];
 
   constructor(
     fn?: (
