@@ -61,13 +61,15 @@ declare global {
     interface CustomNodePropsExtensions {
       bpmnActivity?: {
         radius?: number;
+        expanded?: boolean;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('bpmnActivity', {
-  radius: 5
+  radius: 5,
+  expanded: false
 });
 
 type Data = {
@@ -77,7 +79,6 @@ type Data = {
   multiInstance?: 'none' | 'sequential' | 'parallel';
   compensation?: boolean;
   subprocessType?: SubprocessType;
-  expanded?: boolean;
 };
 
 const SCHEMA: DataSchema = {
@@ -235,7 +236,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
       const markers: MarkerSpec = { left: [], center: [], right: [] };
       if (BPMNActivityNodeDefinition.isSubprocessActivity(activityType)) {
-        if (!data.expanded) markers.center.push('subprocess');
+        if (!props.nodeProps.custom.bpmnActivity.expanded) markers.center.push('subprocess');
 
         if (data.subprocessType === 'loop') markers.left.push('loop');
         else if (data.subprocessType === 'compensation') markers.left.push('compensation');
@@ -375,6 +376,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
   getCustomPropertyDefinitions(node: DiagramNode) {
     const def = new CustomPropertyDefinition(p => [
+      p.boolean(node, 'Expanded', 'custom.bpmnActivity.expanded'),
       p.number(node, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
