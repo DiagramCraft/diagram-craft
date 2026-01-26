@@ -262,7 +262,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       });
     } else {
       // This is only for debugging purposes
-      data.db.updateSchema(schemaDef);
+      //data.db.updateSchema(schemaDef);
     }
   }
 }
