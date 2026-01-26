@@ -19,7 +19,7 @@ import type { EdgeDefinition } from './edgeDefinition';
 import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 export type NodeCapability =
   | 'children'
