@@ -17,6 +17,8 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -62,6 +64,12 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'collapsible': false,
       'children.select-parent': false
     };
+  }
+
+  onAdd(node: DiagramNode, _diagram: Diagram, _uow: UnitOfWork) {
+    for (const schema of this.getCustomPropertyDefinitions(node).dataSchemas) {
+      this.ensureSchema(node.diagram, schema.id, schema);
+    }
   }
 
   supports(capability: NodeCapability): boolean {
@@ -241,6 +249,20 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
           def.layoutChildren(child, uow);
         }
       }
+    }
+  }
+
+  protected ensureSchema(diagram: Diagram, schemaName: string, schemaDef: DataSchema) {
+    const data = diagram.document.data;
+    if (!data.db.findSchemaByName(schemaName)) {
+      data.db.addSchema(schemaDef, 'default').then(() => {
+        data.setSchemaMetadata(schemaName, {
+          availableForElementLocalData: true
+        });
+      });
+    } else {
+      // This is only for debugging purposes
+      //data.db.updateSchema(schemaDef);
     }
   }
 }

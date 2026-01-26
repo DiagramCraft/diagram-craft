@@ -13,23 +13,47 @@ import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/la
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
+
+export type Data = {
+  type?: ChoreographyTaskType;
+};
+
+const SCHEMA: DataSchema = {
+  id: 'bpmnChoreographyActivity',
+  name: 'BPMN Choreography Task',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'type',
+      name: 'Type',
+      type: 'select',
+      options: [
+        { value: 'task', label: 'Task' },
+        { value: 'sub-choreography', label: 'Sub-Choreography' },
+        { value: 'call', label: 'Call' }
+      ]
+    }
+  ]
+};
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      bpmnChoreographyTask?: {
-        expanded?: boolean;
-        type?: ChoreographyTaskType;
-      };
+      bpmnChoreographyTask?: { expanded?: boolean };
     }
   }
 }
 
 registerCustomNodeDefaults('bpmnChoreographyTask', {
-  expanded: false,
-  type: 'task'
+  expanded: false
 });
 
 export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -46,6 +70,11 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnChoreographyActivity');
+      return { ...(data?.data ?? {}) } as Data;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       super.buildShape(props, builder);
 
@@ -60,12 +89,12 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
     }
 
     protected adjustStyle(
-      _element: DiagramNode,
-      nodeProps: NodePropsForRendering,
+      node: DiagramNode,
+      _nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
-      const props = nodeProps.custom.bpmnChoreographyTask;
-      if (props.type === 'call') {
+      const data = this.getData(node);
+      if (data.type === 'call') {
         style.strokeWidth = '3';
         style.paintOrder = 'stroke';
       }
@@ -105,14 +134,11 @@ export class BPMNChoreographyTaskNodeDefinition extends LayoutCapableShapeNodeDe
       .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.boolean(def, 'Expanded', 'custom.bpmnChoreographyTask.expanded'),
-      p.select(def, 'Type', 'custom.bpmnChoreographyTask.type', [
-        { value: 'task', label: 'Task' },
-        { value: 'sub-choreography', label: 'Sub-Choreography' },
-        { value: 'call', label: 'Call' }
-      ])
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    const def = new CustomPropertyDefinition(p => [
+      p.boolean(node, 'Expanded', 'custom.bpmnChoreographyTask.expanded')
     ]);
+    def.dataSchemas = [SCHEMA];
+    return def;
   }
 }

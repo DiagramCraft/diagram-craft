@@ -9,10 +9,10 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import squarePlusIcon from './icons/square-plus.svg?raw';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { getSVGIcon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type ConversationType =
   | 'conversation'
@@ -20,19 +20,33 @@ type ConversationType =
   | 'call-conversation'
   | 'call-conversation-collaboration';
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      bpmnConversation?: {
-        type?: ConversationType;
-      };
-    }
-  }
-}
+type Data = {
+  type?: ConversationType;
+};
 
-registerCustomNodeDefaults('bpmnConversation', {
-  type: 'conversation'
-});
+const SCHEMA: DataSchema = {
+  id: 'bpmnConversation',
+  name: 'BPMN Conversation',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'type',
+      name: 'Type',
+      type: 'select',
+      options: [
+        { value: 'conversation', label: 'Conversation' },
+        { value: 'sub-conversation', label: 'Sub-conversation' },
+        { value: 'call-conversation', label: 'Call-conversation' },
+        { value: 'call-conversation-collaboration', label: 'Call-conversation Collaboration' }
+      ]
+    }
+  ]
+};
 
 // NodeDefinition and Shape *****************************************************
 
@@ -42,6 +56,11 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<BPMNConversationNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnConversation');
+      return { type: 'conversation', ...(data?.data ?? {}) } as Data;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
 
@@ -59,8 +78,8 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
         )
       );
 
-      const type = props.nodeProps.custom.bpmnConversation.type;
-      if (type === 'sub-conversation' || type === 'call-conversation-collaboration') {
+      const data = this.getData(props.node);
+      if (data.type === 'sub-conversation' || data.type === 'call-conversation-collaboration') {
         const icon = getSVGIcon(squarePlusIcon);
 
         const centerX = props.node.bounds.x + props.node.bounds.w / 2;
@@ -85,11 +104,12 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
     }
 
     protected adjustStyle(
-      _element: DiagramNode,
-      nodeProps: NodePropsForRendering,
+      node: DiagramNode,
+      _nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
-      if (nodeProps.custom.bpmnConversation.type.startsWith('call-conversation')) {
+      const data = this.getData(node);
+      if (data.type?.startsWith('call-conversation')) {
         style.strokeWidth = '3';
       }
     }
@@ -110,14 +130,9 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
       .close();
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.select(def, 'Type', 'custom.bpmnConversation.type', [
-        { value: 'conversation', label: 'Conversation' },
-        { value: 'sub-conversation', label: 'Sub-conversation' },
-        { value: 'call-conversation', label: 'Call-conversation' },
-        { value: 'call-conversation-collaboration', label: 'Call-conversation Collaboration' }
-      ])
-    ]);
+  getCustomPropertyDefinitions(_node: DiagramNode) {
+    const def = new CustomPropertyDefinition();
+    def.dataSchemas = [SCHEMA];
+    return def;
   }
 }

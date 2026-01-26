@@ -8,12 +8,15 @@ import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { unique } from '@diagram-craft/utils/array';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { DataFields } from './DataFields';
+import React from 'react';
 
 type ObjectNamePanelProps = {
   mode: 'accordion' | 'panel' | 'headless';
 };
 
-export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
+export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
   const $d = useDiagram();
   const redraw = useRedraw();
   const name = useElementMetadata($d, 'name', '');
@@ -44,13 +47,34 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
     [$d, redraw]
   );
 
+  const mustHaveSchemas =
+    $d.selection.type === 'nodes' || $d.selection.type === 'single-node'
+      ? [
+          ...$d.selection.elements
+            .filter(isNode)
+            .map(e => new Set(e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas))
+            .reduce((acc, set) => new Set([...acc].filter(x => set.has(x))))
+            .entries()
+        ].map(([k]) => $d.document.data.db.getSchema(k.id))
+      : [];
+
+  const hasOtherName = mustHaveSchemas.some(s => s.fields.some(f => f.id === 'name'));
+
   return (
     <ToolWindowPanel mode={mode} id="basic" title="Name">
+      {mustHaveSchemas && (
+        <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>Basic Info</div>
+      )}
+
       <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <TextInput value={name.val} onChange={v => name.set(v)} />
-        </div>
+        {!hasOtherName && (
+          <React.Fragment>
+            <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <TextInput value={name.val} onChange={v => name.set(v)} />
+            </div>
+          </React.Fragment>
+        )}
         <div className={'cmp-labeled-table__label util-a-top-center'}>Tags:</div>
         <div className={'cmp-labeled-table__value'}>
           <MultiSelect
@@ -72,6 +96,15 @@ export const ObjectNamePanel = ({ mode }: ObjectNamePanelProps) => {
           />
         </div>
       </div>
+
+      {[...(mustHaveSchemas ?? [])].map(s => (
+        <div key={s.id} style={{ marginTop: '1rem' }}>
+          <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>{s.name}</div>
+          <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+            <DataFields schema={s} />
+          </div>
+        </div>
+      ))}
     </ToolWindowPanel>
   );
 };

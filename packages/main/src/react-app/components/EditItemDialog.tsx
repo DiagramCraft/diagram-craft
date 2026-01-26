@@ -1,14 +1,18 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Data } from '@diagram-craft/model/dataProvider';
-import { decodeDataReferences, encodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  decodeDataReferences,
+  encodeDataReferences
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import React, { useState } from 'react';
 import { useDiagram, useDocument } from '../../application';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import { ReferenceFieldEditor } from './ReferenceFieldEditor';
+import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 type EditItemDialogProps = {
   open: boolean;
@@ -22,7 +26,9 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const diagram = useDiagram();
   const db = document.data.db;
   const dbUndoable = new DataManagerUndoableFacade(diagram.undoManager, document.data.db);
-  const [formData, setFormData] = useState<Record<string, undefined | string | string[]>>({});
+  const [formData, setFormData] = useState<Record<string, undefined | string | string[] | boolean>>(
+    {}
+  );
   const [submitError, setSubmitError] = useState<string | undefined>();
 
   const schema = db.schemas.find(s => s.id === props.selectedSchema) ?? db.schemas[0];
@@ -166,13 +172,14 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         {schema.fields.map(field => (
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
-            {field.type === 'reference' ? (
+            {field.type === 'reference' && (
               <ReferenceFieldEditor
                 field={field}
                 selectedValues={formData[field.id] as string[]}
                 onSelectionChange={values => setFormData(prev => ({ ...prev, [field.id]: values }))}
               />
-            ) : field.type === 'longtext' ? (
+            )}
+            {field.type === 'longtext' && (
               <TextArea
                 value={(formData[field.id] as string | undefined) ?? ''}
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
@@ -180,11 +187,28 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
                   minHeight: '5rem'
                 }}
               />
-            ) : (
-              <TextInput
-                value={(formData[field.id] as string | undefined) ?? ''}
-                onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
+            )}
+            {field.type === 'boolean' && (
+              <Checkbox
+                value={(formData[field.id] as boolean | undefined) ?? false}
+                onChange={checked => setFormData(prev => ({ ...prev, [field.id]: checked }))}
               />
+            )}
+            {field.type === 'select' && (
+              <Select.Root
+                value={
+                  (formData[field.id] === ''
+                    ? field.options[0]?.value
+                    : (formData[field.id] as string)) ?? ''
+                }
+                onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
+              >
+                {field.options.map(o => (
+                  <Select.Item key={o.value} value={o.value}>
+                    {o.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
             )}
           </div>
         ))}

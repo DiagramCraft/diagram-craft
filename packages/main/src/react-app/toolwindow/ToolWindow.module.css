@@ -26,4 +26,5 @@
   overflow: scroll;
   top: calc(var(--tab-height) + 1px);
   background-color: var(--panel-bg);
+  scrollbar-width: none;
 }

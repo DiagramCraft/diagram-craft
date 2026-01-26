@@ -27,6 +27,7 @@ import tildeIcon from './icons/tilde.svg?raw';
 import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type SubprocessType =
   | 'default'
@@ -59,13 +60,7 @@ declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       bpmnActivity?: {
-        taskType?: string;
-        activityType?: string;
         radius?: number;
-        loop?: boolean;
-        multiInstance?: 'none' | 'sequential' | 'parallel';
-        compensation?: boolean;
-        subprocessType?: SubprocessType;
         expanded?: boolean;
       };
     }
@@ -73,15 +68,92 @@ declare global {
 }
 
 registerCustomNodeDefaults('bpmnActivity', {
-  taskType: 'regular',
-  activityType: 'task',
   radius: 5,
-  loop: false,
-  multiInstance: 'none',
-  compensation: false,
-  subprocessType: 'default',
   expanded: false
 });
+
+type Data = {
+  taskType?: string;
+  activityType?: string;
+  loop?: boolean;
+  multiInstance?: 'none' | 'sequential' | 'parallel';
+  compensation?: boolean;
+  subprocessType?: SubprocessType;
+};
+
+const SCHEMA: DataSchema = {
+  id: 'bpmnActivity',
+  name: 'BPMN Activity',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'name',
+      name: 'Name',
+      type: 'text'
+    },
+    {
+      id: 'activityType',
+      name: 'Type',
+      type: 'select',
+      options: [
+        { value: 'task', label: 'Task' },
+        { value: 'sub-process', label: 'Sub-process' },
+        { value: 'event-sub-process', label: 'Event sub-process' },
+        { value: 'transaction', label: 'Transaction' },
+        { value: 'call-activity', label: 'Call activity' },
+        { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
+      ]
+    },
+    {
+      id: 'taskType',
+      name: 'Task Type',
+      type: 'select',
+      options: [
+        { value: 'regular', label: 'Regular' },
+        { value: 'service', label: 'Service' },
+        { value: 'send', label: 'Send' },
+        { value: 'receive', label: 'Receive' },
+        { value: 'user', label: 'User' },
+        { value: 'manual', label: 'Manual' },
+        { value: 'business-rule', label: 'Business Rule' },
+        { value: 'script', label: 'Script' }
+      ]
+    },
+    {
+      id: 'loop',
+      name: 'Loop',
+      type: 'boolean'
+    },
+    {
+      id: 'multiInstance',
+      name: 'Multi-Instance',
+      type: 'select',
+      options: [
+        { label: 'None', value: 'none' },
+        { label: 'Sequential', value: 'sequential' },
+        { label: 'Parallel', value: 'parallel' }
+      ]
+    },
+    {
+      id: 'compensation',
+      name: 'Compensation',
+      type: 'boolean'
+    },
+    {
+      id: 'subprocessType',
+      name: 'Subprocess Type',
+      type: 'select',
+      options: [
+        { label: 'Default', value: 'default' },
+        { label: 'Loop', value: 'loop' },
+        { label: 'Multi-Instance', value: 'multi-instance' },
+        { label: 'Compensation', value: 'compensation' },
+        { label: 'Ad-Hoc', value: 'ad-hoc' },
+        { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
+      ]
+    }
+  ]
+};
 
 const createOutline = (bounds: Box, radius: number) => {
   const xr = radius / bounds.w;
@@ -121,24 +193,29 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   }
 
   static Shape = class extends BaseNodeComponent<BPMNActivityNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(e => e.schema === 'bpmnActivity');
+      return { ...(data?.data ?? {}) } as Data;
+    }
+
     protected adjustStyle(
-      el: DiagramNode,
-      nodeProps: NodePropsForRendering,
+      node: DiagramNode,
+      _nodeProps: NodePropsForRendering,
       style: Partial<CSSStyleDeclaration>
     ) {
-      const bpmnActivity = nodeProps.custom.bpmnActivity;
+      const data = this.getData(node);
       if (
-        bpmnActivity.activityType === 'event-sub-process' &&
-        el.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
+        data.activityType === 'event-sub-process' &&
+        node.getPropsInfo('stroke.pattern')!.at(-1)!.type === 'default'
       ) {
         style.strokeDasharray = '2 5';
       }
 
-      if (bpmnActivity.activityType === 'transaction') {
+      if (data.activityType === 'transaction') {
         style.strokeWidth = '1.5';
       }
 
-      if (bpmnActivity.activityType.startsWith('call-activity')) {
+      if (data.activityType?.startsWith('call-activity')) {
         style.strokeWidth = '3';
       }
     }
@@ -149,26 +226,26 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         new BPMNActivityNodeDefinition().getBoundingPathBuilder(node).getPaths().all()
       );
 
-      const activityProps = node.renderProps.custom.bpmnActivity;
-      const activityType = activityProps.activityType ?? 'task';
+      const data = this.getData(props.node);
+      const activityType = data.activityType ?? 'task';
 
       const markers: MarkerSpec = { left: [], center: [], right: [] };
       if (BPMNActivityNodeDefinition.isSubprocessActivity(activityType)) {
-        if (!activityProps.expanded) markers.center.push('subprocess');
+        if (!props.nodeProps.custom.bpmnActivity.expanded) markers.center.push('subprocess');
 
-        if (activityProps.subprocessType === 'loop') markers.left.push('loop');
-        else if (activityProps.subprocessType === 'compensation') markers.left.push('compensation');
-        else if (activityProps.subprocessType === 'ad-hoc') markers.right.push('ad-hoc');
-        else if (activityProps.subprocessType === 'compensation-and-ad-hoc') {
+        if (data.subprocessType === 'loop') markers.left.push('loop');
+        else if (data.subprocessType === 'compensation') markers.left.push('compensation');
+        else if (data.subprocessType === 'ad-hoc') markers.right.push('ad-hoc');
+        else if (data.subprocessType === 'compensation-and-ad-hoc') {
           markers.left.push('compensation');
           markers.right.push('ad-hoc');
-        } else if (activityProps.subprocessType === 'multi-instance') markers.left.push('parallel');
+        } else if (data.subprocessType === 'multi-instance') markers.left.push('parallel');
       } else {
         // Use individual marker properties for regular tasks
-        if (activityProps.loop) markers.center.push('loop');
-        if (activityProps.multiInstance === 'sequential') markers.center.push('sequential');
-        if (activityProps.multiInstance === 'parallel') markers.center.push('parallel');
-        if (activityProps.compensation) markers.center.push('compensation');
+        if (data.loop) markers.center.push('loop');
+        if (data.multiInstance === 'sequential') markers.center.push('sequential');
+        if (data.multiInstance === 'parallel') markers.center.push('parallel');
+        if (data.compensation) markers.center.push('compensation');
       }
 
       this.addMarkers(node, markers, shapeBuilder);
@@ -177,7 +254,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         shapeBuilder.path(
           createOutline(
             Box.grow(node.bounds, -TRANSACTION_OFFSET),
-            activityProps.radius - TRANSACTION_OFFSET
+            props.nodeProps.custom.bpmnActivity.radius - TRANSACTION_OFFSET
           )
             .getPaths()
             .all(),
@@ -188,7 +265,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         );
       }
 
-      const taskType = activityProps.taskType;
+      const taskType = data.taskType;
       const iconSvg = taskType ? TASK_TYPE_ICONS[taskType] : undefined;
 
       if (iconSvg) {
@@ -292,53 +369,22 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     ];
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.select(def, 'Type', 'custom.bpmnActivity.activityType', [
-        { value: 'task', label: 'Task' },
-        { value: 'sub-process', label: 'Sub-process' },
-        { value: 'event-sub-process', label: 'Event sub-process' },
-        { value: 'transaction', label: 'Transaction' },
-        { value: 'call-activity', label: 'Call activity' },
-        { value: 'call-activity-sub-process', label: 'Call activity sub-process' }
-      ]),
-      p.select(def, 'Task Type', 'custom.bpmnActivity.taskType', [
-        { value: 'regular', label: 'Regular' },
-        { value: 'service', label: 'Service' },
-        { value: 'send', label: 'Send' },
-        { value: 'receive', label: 'Receive' },
-        { value: 'user', label: 'User' },
-        { value: 'manual', label: 'Manual' },
-        { value: 'business-rule', label: 'Business Rule' },
-        { value: 'script', label: 'Script' }
-      ]),
-      p.boolean(def, 'Loop', 'custom.bpmnActivity.loop'),
-      p.select(def, 'Multi-Instance', 'custom.bpmnActivity.multiInstance', [
-        { label: 'None', value: 'none' },
-        { label: 'Sequential', value: 'sequential' },
-        { label: 'Parallel', value: 'parallel' }
-      ]),
-      p.boolean(def, 'Compensation', 'custom.bpmnActivity.compensation'),
-      p.select(def, 'Subprocess Type', 'custom.bpmnActivity.subprocessType', [
-        { label: 'Default', value: 'default' },
-        { label: 'Loop', value: 'loop' },
-        { label: 'Multi-Instance', value: 'multi-instance' },
-        { label: 'Compensation', value: 'compensation' },
-        { label: 'Ad-Hoc', value: 'ad-hoc' },
-        { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
-      ]),
-      p.boolean(def, 'Expanded', 'custom.bpmnActivity.expanded'),
-      p.number(def, 'Radius', 'custom.bpmnActivity.radius', {
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    const def = new CustomPropertyDefinition(p => [
+      p.boolean(node, 'Expanded', 'custom.bpmnActivity.expanded'),
+      p.number(node, 'Radius', 'custom.bpmnActivity.radius', {
         maxValue: 60,
         unit: 'px',
         set: (value: number | undefined, uow: UnitOfWork) => {
-          if (value !== undefined && (value >= def.bounds.w / 2 || value >= def.bounds.h / 2)) {
+          if (value !== undefined && (value >= node.bounds.w / 2 || value >= node.bounds.h / 2)) {
             return;
           }
-          def.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
+          node.updateCustomProps('bpmnActivity', props => (props.radius = value), uow);
         }
       })
     ]);
+    def.dataSchemas = [SCHEMA];
+    return def;
   }
 
   getBoundingPathBuilder(node: DiagramNode) {

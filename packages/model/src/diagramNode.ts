@@ -909,6 +909,15 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     }
   }
 
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
+  ) {
+    super._onAttach(layer, parent, uow);
+    this.getDefinition().onAdd(this, layer.diagram, uow);
+  }
+
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
     applyNodeTransform(this, transforms, uow, isChild);
   }

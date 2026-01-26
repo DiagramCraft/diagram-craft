@@ -32,11 +32,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Task'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'task'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'task',
             radius: 10
           }
         }
@@ -51,11 +64,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Sub-process'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'sub-process'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'sub-process',
             radius: 10
           }
         }
@@ -70,11 +96,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Event sub-process'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'event-sub-process'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'event-sub-process',
             radius: 10
           }
         }
@@ -89,11 +128,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Transaction'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'transaction'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'transaction',
             radius: 10
           }
         }
@@ -141,15 +193,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Data'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnDataObject',
+            data: {
+              collection: true
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         text: {
           valign: 'top'
-        },
-        custom: {
-          bpmnDataObject: {
-            collection: true
-          }
         }
       };
     }
@@ -164,15 +225,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Data Input'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnDataObject',
+            data: {
+              type: 'input'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         text: {
           valign: 'top'
-        },
-        custom: {
-          bpmnDataObject: {
-            type: 'input'
-          }
         }
       };
     }
@@ -187,15 +257,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Data Output'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnDataObject',
+            data: {
+              type: 'output'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         text: {
           valign: 'top'
-        },
-        custom: {
-          bpmnDataObject: {
-            type: 'output'
-          }
         }
       };
     }
@@ -211,14 +290,19 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: ''
     },
-    props: () => {
-      return {
-        custom: {
-          bpmnEvent: {
-            eventType: 'start'
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnEvent',
+            data: {
+              eventType: 'start'
+            }
           }
-        }
-      };
+        ]
+      }
     }
   });
 
@@ -232,14 +316,19 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: ''
     },
-    props: () => {
-      return {
-        custom: {
-          bpmnEvent: {
-            eventType: 'intermediate'
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnEvent',
+            data: {
+              eventType: 'intermediate'
+            }
           }
-        }
-      };
+        ]
+      }
     }
   });
 
@@ -253,14 +342,19 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: ''
     },
-    props: () => {
-      return {
-        custom: {
-          bpmnEvent: {
-            eventType: 'end'
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnEvent',
+            data: {
+              eventType: 'end'
+            }
           }
-        }
-      };
+        ]
+      }
     }
   });
 
@@ -272,7 +366,14 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
       h: 50
     },
     texts: {
-      text: ''
+      text: '%name%'
+    },
+    props: () => {
+      return {
+        text: {
+          valign: 'top'
+        }
+      };
     }
   });
 
