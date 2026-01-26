@@ -16,28 +16,62 @@ import squarePlusIcon from './icons/square-plus.svg?raw';
 import linesVerticalIcon from './icons/lines-vertical.svg?raw';
 import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
 import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyTask.nodeType';
 
 type ParticipantPosition = 'top' | 'middle' | 'bottom';
 type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
+
+type Data = {
+  initiating?: boolean;
+  loopType?: LoopType;
+  multiple?: boolean;
+};
+
+const SCHEMA: DataSchema = {
+  id: 'bpmnChoreographyActivityParticipant',
+  name: 'BPMN Choreography Task Participant',
+  providerId: 'default',
+  fields: [
+    {
+      id: 'initiating',
+      name: 'Initiating',
+      type: 'boolean'
+    },
+    {
+      id: 'loopType',
+      name: 'Loop Type',
+      type: 'select',
+      options: [
+        { label: 'None', value: 'none' },
+        { label: 'Standard', value: 'standard' },
+        { label: 'Sequential', value: 'sequential' },
+        { label: 'Parallel', value: 'parallel' }
+      ]
+    },
+    {
+      id: 'multiple',
+      name: 'Multiple',
+      type: 'boolean'
+    }
+  ]
+};
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       bpmnChoreographyTaskParticipant?: {
         position?: ParticipantPosition;
-        initiating?: boolean;
-        loopType?: LoopType;
-        multiple?: boolean;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('bpmnChoreographyTaskParticipant', {
-  position: 'top',
-  initiating: false,
-  loopType: 'none',
-  multiple: false
+  position: 'top'
 });
 
 // NodeDefinition and Shape *****************************************************
@@ -55,33 +89,57 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
     );
   }
 
+  onAdd(_node: DiagramNode, diagram: Diagram, _uow: UnitOfWork) {
+    this.ensureSchema(diagram, 'bpmnChoreographyActivityParticipant', SCHEMA);
+  }
+
   static Shape = class extends BaseNodeComponent<BPMNChoreographyTaskParticipantNodeDefinition> {
+    private getData(node: DiagramNode): Data {
+      const data = node.metadata.data?.data?.find(
+        e => e.schema === 'bpmnChoreographyActivityParticipant'
+      );
+      return { ...(data?.data ?? {}) } as Data;
+    }
+
+    private getParentData(node: DiagramNode): BPMNChoreographyActivityData {
+      const parent = node.parent;
+      if (!isNode(parent)) return {};
+
+      const data = parent.metadata.data?.data?.find(e => e.schema === 'bpmnChoreographyActivity');
+      return { ...(data?.data ?? {}) } as BPMNChoreographyActivityData;
+    }
+
     buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
       builder.text(this);
 
       const markers: Icon[] = [];
 
-      const participantProps = props.nodeProps.custom.bpmnChoreographyTaskParticipant;
-      const parentProps = (props.node.parent as DiagramNode | undefined)?.renderProps.custom
-        .bpmnChoreographyTask;
+      const parent = props.node.parent;
 
-      if (participantProps.position === 'middle') {
+      const data = this.getData(props.node);
+      const parentData = this.getParentData(props.node);
+      const parentProps =
+        parent && isNode(parent)
+          ? parent.renderProps.custom.bpmnChoreographyTask
+          : { expanded: false };
+
+      if (props.nodeProps.custom.bpmnChoreographyTaskParticipant.position === 'middle') {
         if (!parentProps?.expanded) {
-          if (participantProps.loopType === 'parallel') {
+          if (data.loopType === 'parallel') {
             markers.push(getSVGIcon(linesVerticalIcon));
-          } else if (participantProps.loopType === 'sequential') {
+          } else if (data.loopType === 'sequential') {
             markers.push(getSVGIcon(linesHorizontalIcon));
-          } else if (participantProps.loopType === 'standard') {
+          } else if (data.loopType === 'standard') {
             markers.push(getSVGIcon(arrowBackUpIcon));
           }
-        }
 
-        if (parentProps?.type === 'sub-choreography') {
-          markers.push(getSVGIcon(squarePlusIcon));
+          if (parentData?.type === 'sub-choreography') {
+            markers.push(getSVGIcon(squarePlusIcon));
+          }
         }
       } else {
-        if (participantProps.multiple) {
+        if (data.multiple) {
           markers.push(getSVGIcon(linesVerticalIcon));
         }
       }
@@ -166,21 +224,15 @@ export class BPMNChoreographyTaskParticipantNodeDefinition extends ShapeNodeDefi
     }
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [
-      p.select(def, 'Position', 'custom.bpmnChoreographyTaskParticipant.position', [
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    const def = new CustomPropertyDefinition(p => [
+      p.select(node, 'Position', 'custom.bpmnChoreographyTaskParticipant.position', [
         { value: 'top', label: 'Top' },
         { value: 'middle', label: 'Middle' },
         { value: 'bottom', label: 'Bottom' }
-      ]),
-      p.boolean(def, 'Initiating', 'custom.bpmnChoreographyTaskParticipant.initiating'),
-      p.select(def, 'Loop Type', 'custom.bpmnChoreographyTaskParticipant.loopType', [
-        { value: 'none', label: 'None' },
-        { value: 'standard', label: 'Standard' },
-        { value: 'sequential', label: 'Sequential' },
-        { value: 'parallel', label: 'Parallel' }
-      ]),
-      p.boolean(def, 'Multiple', 'custom.bpmnChoreographyTaskParticipant.multiple')
+      ])
     ]);
+    def.dataSchemas = ['bpmnChoreographyActivityParticipant'];
+    return def;
   }
 }
