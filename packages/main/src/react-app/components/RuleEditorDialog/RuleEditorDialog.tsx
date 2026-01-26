@@ -38,7 +38,7 @@ export const RuleEditorDialog = (props: Props) => {
   return (
     <Dialog
       open={props.open}
-      onClose={() => {}}
+      onClose={props.onCancel ?? (() => {})}
       buttons={[
         {
           type: 'cancel',
