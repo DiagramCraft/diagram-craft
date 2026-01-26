@@ -47,29 +47,6 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
     [$d, redraw]
   );
 
-  const changDataCallback = useCallback(
-    (schema: string, id: string, v: boolean | string | undefined) => {
-      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
-        $d.selection.elements.forEach(e => {
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.data ??= [];
-            let s = p.data.data.find(e => e.schema === schema);
-            if (!s) {
-              s = { schema, type: 'schema', data: {}, enabled: true };
-              p.data.data.push(s);
-            } else if (!s.enabled) {
-              s.enabled = true;
-            }
-            s.data ??= {};
-            s.data[id] = v;
-          }, uow);
-        });
-      });
-    },
-    [$d]
-  );
-
   const mustHaveSchemas =
     $d.selection.type === 'nodes' || $d.selection.type === 'single-node'
       ? [
@@ -85,16 +62,6 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
 
   return (
     <ToolWindowPanel mode={mode} id="basic" title="Name">
-      {[...(mustHaveSchemas ?? [])].map(s => (
-        <div key={s.id} style={{ marginBottom: '1rem' }}>
-          <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>{s.name}</div>
-          <DataFields
-            schema={s}
-            onChange={(field, value) => changDataCallback(s.id, field.id, value)}
-          />
-        </div>
-      ))}
-
       {mustHaveSchemas && (
         <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>Basic Info</div>
       )}
@@ -129,6 +96,15 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
           />
         </div>
       </div>
+
+      {[...(mustHaveSchemas ?? [])].map(s => (
+        <div key={s.id} style={{ marginTop: '1rem' }}>
+          <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>{s.name}</div>
+          <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+            <DataFields schema={s} />
+          </div>
+        </div>
+      ))}
     </ToolWindowPanel>
   );
 };

@@ -200,6 +200,10 @@ foreignObject {
 
 
 /* Base HTML element styling */
+dd {
+  margin: 0;
+}
+
 input[type="checkbox"] {
   margin: 0;
 

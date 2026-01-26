@@ -34,29 +34,6 @@ export const ExtendedDataTab = () => {
   useEventListener($d, 'diagramChange', redraw);
   useEventListener($d, 'elementBatchChange', redraw);
 
-  const changDataCallback = useCallback(
-    (schema: string, id: string, v: boolean | string | undefined) => {
-      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
-        $d.selection.elements.forEach(e => {
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.data ??= [];
-            let s = p.data.data.find(e => e.schema === schema);
-            if (!s) {
-              s = { schema, type: 'schema', data: {}, enabled: true };
-              p.data.data.push(s);
-            } else if (!s.enabled) {
-              s.enabled = true;
-            }
-            s.data ??= {};
-            s.data[id] = v;
-          }, uow);
-        });
-      });
-    },
-    [$d]
-  );
-
   const changeCustomCallback = useCallback(
     (id: string, v: string | undefined) => {
       UnitOfWork.executeWithUndo($d, 'Update data', uow => {
@@ -316,11 +293,9 @@ export const ExtendedDataTab = () => {
                       </Accordion.ItemHeaderButtons>
                     </Accordion.ItemHeader>
                     <Accordion.ItemContent forceMount={true}>
-                      <DataFields
-                        schema={schema}
-                        disabled={isExternal}
-                        onChange={(field, value) => changDataCallback(schema.id, field.id, value)}
-                      />
+                      <div className={'cmp-labeled-table'}>
+                        <DataFields schema={schema} disabled={isExternal} />
+                      </div>
                     </Accordion.ItemContent>
                   </Accordion.Item>
                 );

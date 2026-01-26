@@ -151,11 +151,6 @@ const SCHEMA: DataSchema = {
         { label: 'Ad-Hoc', value: 'ad-hoc' },
         { label: 'Compensation and Ad-Hoc', value: 'compensation-and-ad-hoc' }
       ]
-    },
-    {
-      id: 'expanded',
-      name: 'Expanded',
-      type: 'boolean'
     }
   ]
 };

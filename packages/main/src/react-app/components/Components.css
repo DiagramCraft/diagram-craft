@@ -174,8 +174,42 @@
   row-gap: 0.5rem;
   align-items: center;
 
+  > dl {
+    display: contents;
+  }
+
   &.cmp-labeled-table--wide {
     grid-template-columns: 1fr 5rem !important;
+  }
+
+  &.cmp-labeled-table--inline {
+    grid-template-rows: min-content min-content;
+    row-gap: 0.25rem;
+
+    .cmp-labeled-table__label, dt {
+      grid-column: 2/3;
+    }
+
+    .cmp-labeled-table__value, dd {
+      grid-column: 2/3;
+      margin-bottom: 0.25rem
+    }
+
+    dt:has(+ dd[data-type="boolean"]) {
+      display: none;
+    }
+
+    dd[data-type="boolean"] {
+      position: relative;
+      margin-top: 0.25rem;
+
+      &::after {
+        content: attr(data-label);
+        position: absolute;
+        left: 20px;
+        top: 0;
+      }
+    }
   }
 
   .cmp-labeled-table__row {
@@ -183,7 +217,7 @@
     margin-bottom: -2px;
   }
 
-  .cmp-labeled-table__label {
+  .cmp-labeled-table__label, dt {
     display: flex;
     align-items: center;
     font-size: 11px;
