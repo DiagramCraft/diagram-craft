@@ -11,7 +11,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
   const [currentValue, setCurrentValue] = useState(props.value.toString());
   const hasFocus = useRef(false);
 
-  if (origValue !== props.value.toString() && !hasFocus.current && !props.isIndeterminate) {
+  if (origValue !== props.value.toString() && !props.isIndeterminate) {
     setOrigValue(props.value.toString());
     setCurrentValue(props.value.toString());
   }
