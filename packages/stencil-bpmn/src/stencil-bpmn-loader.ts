@@ -32,11 +32,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Task'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'task'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'task',
             radius: 10
           }
         }
@@ -51,11 +64,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Sub-process'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'sub-process'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'sub-process',
             radius: 10
           }
         }
@@ -70,11 +96,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Event sub-process'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'event-sub-process'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'event-sub-process',
             radius: 10
           }
         }
@@ -89,11 +128,24 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     texts: {
       text: 'Transaction'
     },
+    metadata: {
+      data: {
+        data: [
+          {
+            type: 'schema',
+            enabled: true,
+            schema: 'bpmnActivity',
+            data: {
+              activityType: 'transaction'
+            }
+          }
+        ]
+      }
+    },
     props: () => {
       return {
         custom: {
           bpmnActivity: {
-            activityType: 'transaction',
             radius: 10
           }
         }

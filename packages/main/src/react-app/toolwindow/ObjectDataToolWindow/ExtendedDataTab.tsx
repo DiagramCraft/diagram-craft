@@ -35,7 +35,7 @@ export const ExtendedDataTab = () => {
   useEventListener($d, 'elementBatchChange', redraw);
 
   const changDataCallback = useCallback(
-    (schema: string, id: string, v: string | undefined) => {
+    (schema: string, id: string, v: boolean | string | undefined) => {
       UnitOfWork.executeWithUndo($d, 'Update data', uow => {
         $d.selection.elements.forEach(e => {
           e.updateMetadata(p => {

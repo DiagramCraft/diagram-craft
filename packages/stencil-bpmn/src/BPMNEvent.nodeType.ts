@@ -81,12 +81,12 @@ const SCHEMA: DataSchema = {
     {
       id: 'nonInterrupting',
       name: 'Non-Interrupting',
-      type: 'checkbox'
+      type: 'boolean'
     },
     {
       id: 'throwing',
       name: 'Throwing',
-      type: 'checkbox'
+      type: 'boolean'
     },
     {
       id: 'marker',

@@ -37,7 +37,7 @@ const SCHEMA: DataSchema = {
     {
       id: 'collection',
       name: 'Collection',
-      type: 'checkbox'
+      type: 'boolean'
     },
     {
       id: 'type',

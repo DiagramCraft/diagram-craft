@@ -12,7 +12,7 @@ const DataField = (props: {
   field: DataSchemaField;
   value: unknown[];
   disabled?: boolean;
-  onChange: (v: string | undefined) => void;
+  onChange: (v: boolean | string | undefined) => void;
 }) => (
   <React.Fragment>
     <div className={'cmp-labeled-table__label util-a-top-center'}>{props.field.name}:</div>
@@ -24,11 +24,11 @@ const DataField = (props: {
           onChange={props.onChange}
         />
       )}
-      {props.field.type === 'checkbox' && (
+      {props.field.type === 'boolean' && (
         <Checkbox
           value={props.value.length > 1 ? false : props.value[0]?.toString() === 'true'}
           disabled={props.disabled}
-          onChange={v => props.onChange(v ? 'true' : 'false')}
+          onChange={v => props.onChange(v ? true : false)}
         />
       )}
       {props.field.type === 'longtext' && (
@@ -63,7 +63,7 @@ const DataField = (props: {
 
 export const DataFields = (props: {
   schema: DataSchema;
-  onChange: (field: DataSchemaField, value: string | undefined) => void;
+  onChange: (field: DataSchemaField, value: boolean | string | undefined) => void;
   disabled?: boolean;
 }) => {
   const $d = useDiagram();

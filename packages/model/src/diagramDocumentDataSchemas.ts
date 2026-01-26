@@ -15,7 +15,7 @@ export type DataSchemaField =
   | {
       id: string;
       name: string;
-      type: 'checkbox';
+      type: 'boolean';
     }
   | {
       id: string;
