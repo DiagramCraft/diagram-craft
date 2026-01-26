@@ -2,7 +2,7 @@ import { TbX } from 'react-icons/tb';
 import React from 'react';
 import { usePortal } from './PortalContext';
 import styles from './Popover.module.css';
-import { Popover as BaseUIPopover } from '@base-ui-components/react/popover';
+import { Popover as BaseUIPopover } from '@base-ui/react/popover';
 
 const Root = (props: RootProps) => {
   return (

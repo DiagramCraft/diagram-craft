@@ -1,7 +1,7 @@
 import React, { type ReactElement } from 'react';
 import { assert } from '@diagram-craft/utils/assert';
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui/react/context-menu';
+import { Menu as BaseUIMenu } from '@base-ui/react/menu';
 import { TbCheck, TbChevronRight } from 'react-icons/tb';
 import styles from './Menu.module.css';
 

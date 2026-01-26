@@ -9,7 +9,7 @@ import React, {
 import { usePortal } from './PortalContext';
 import { assert } from '@diagram-craft/utils/assert';
 import styles from './Dialog.module.css';
-import { AlertDialog as BaseUIAlertDialog } from '@base-ui-components/react/alert-dialog';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
 
 type DialogContextType = {
   onDialogShow: () => void;

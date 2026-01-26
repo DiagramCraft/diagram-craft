@@ -7,6 +7,7 @@ import { TbPlus, TbTrash } from 'react-icons/tb';
 import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
+import { Scrollable } from '@diagram-craft/app-components/Scrollable';
 
 type Props = {
   title: string;
@@ -211,18 +212,14 @@ export const EditSchemaDialog = (props: Props) => {
 
         {errors.fields && <div className="cmp-error">{errors.fields}</div>}
 
-        <div
-          className="scroll-shadows"
+        <Scrollable
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '0.5rem',
-            paddingTop: '0.5rem',
-            overflowY: 'scroll',
             maxHeight: '50vh',
             borderTop: '1px solid var(--cmp-border)',
-            border: '1px solid var(--cmp-border)',
-            padding: '1rem'
+            border: '1px solid var(--cmp-border)'
           }}
         >
           {fields.map((field, index) => {
@@ -491,7 +488,7 @@ export const EditSchemaDialog = (props: Props) => {
               </div>
             );
           })}
-        </div>
+        </Scrollable>
       </div>
     </Dialog>
   );

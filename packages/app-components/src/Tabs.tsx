@@ -1,6 +1,6 @@
 import styles from './Tabs.module.css';
 import React, { CSSProperties } from 'react';
-import { Tabs as BaseUITabs } from '@base-ui-components/react/tabs';
+import { Tabs as BaseUITabs } from '@base-ui/react/tabs';
 
 const Root = (props: RootProps) => {
   return (

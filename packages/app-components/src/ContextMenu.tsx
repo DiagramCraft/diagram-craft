@@ -1,4 +1,4 @@
-import { ContextMenu as BaseUIContextMenu } from '@base-ui-components/react/context-menu';
+import { ContextMenu as BaseUIContextMenu } from '@base-ui/react/context-menu';
 import React, { type ReactElement } from 'react';
 import { Menu as _Menu } from './Menu';
 import styles from './Menu.module.css';

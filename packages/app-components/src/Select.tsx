@@ -4,7 +4,7 @@ import styles from './Select.module.css';
 import { extractDataAttributes, extractMouseEvents } from './utils';
 import React, { CSSProperties, ReactNode } from 'react';
 import { disablePropertyEditorTooltip, enablePropertyEditorTooltip } from './Tooltip';
-import { Select as BaseUISelect } from '@base-ui-components/react/select';
+import { Select as BaseUISelect } from '@base-ui/react/select';
 
 const Root = (props: RootProps) => {
   const portal = usePortal();

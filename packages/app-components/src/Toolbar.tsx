@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Toolbar.module.css';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
-import { Toolbar as BaseUIToolbar } from '@base-ui-components/react/toolbar';
+import { Toolbar as BaseUIToolbar } from '@base-ui/react/toolbar';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 
 const Root = (props: RootProps) => {
