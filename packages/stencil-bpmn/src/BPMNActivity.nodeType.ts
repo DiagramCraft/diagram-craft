@@ -240,6 +240,13 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           markers.left.push('compensation');
           markers.right.push('ad-hoc');
         } else if (data.subprocessType === 'multi-instance') markers.left.push('parallel');
+
+        if (props.nodeProps.custom.bpmnActivity.expanded) {
+          markers.left.forEach(m => markers.center.push(m));
+          markers.right.forEach(m => markers.center.push(m));
+          markers.left.splice(0, markers.left.length);
+          markers.right.splice(0, markers.right.length);
+        }
       } else {
         // Use individual marker properties for regular tasks
         if (data.loop) markers.center.push('loop');
