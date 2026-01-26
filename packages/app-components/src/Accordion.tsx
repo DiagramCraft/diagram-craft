@@ -2,7 +2,7 @@ import { TbChevronDown } from 'react-icons/tb';
 import React from 'react';
 import styles from './Accordion.module.css';
 import { extractDataAttributes } from './utils';
-import { Accordion as BaseUIAccordion } from '@base-ui-components/react/accordion';
+import { Accordion as BaseUIAccordion } from '@base-ui/react/accordion';
 
 const asArray = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : undefined);
 

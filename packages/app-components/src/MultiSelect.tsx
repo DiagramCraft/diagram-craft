@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useState } from 'react';
-import { Combobox as BaseUICombobox } from '@base-ui-components/react/combobox';
+import { Combobox as BaseUICombobox } from '@base-ui/react/combobox';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './MultiSelect.module.css';
@@ -139,7 +139,9 @@ export const MultiSelect = (props: Props) => {
               {...PropsUtils.filterDomProperties(props)}
               className={styles.cmpMultiSelectInput}
               placeholder={
-                props.selectedValues.length === 0 ? (props.placeholder ?? 'Search and select...') : ''
+                props.selectedValues.length === 0
+                  ? (props.placeholder ?? 'Search and select...')
+                  : ''
               }
               onKeyDown={handleInputKeyDown}
             />

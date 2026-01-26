@@ -1,6 +1,6 @@
 import React, { type ReactElement } from 'react';
 import styles from './Tooltip.module.css';
-import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip';
+import { Tooltip as BaseUITooltip } from '@base-ui/react/tooltip';
 
 let hidePopupRuleId: number[] = [];
 

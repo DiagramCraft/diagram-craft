@@ -1,7 +1,7 @@
 import { NumberInput } from './NumberInput';
 import styles from './Slider.module.css';
 import { extractDataAttributes, extractMouseEvents } from './utils';
-import { Slider as BaseUISlider } from '@base-ui-components/react/slider';
+import { Slider as BaseUISlider } from '@base-ui/react/slider';
 
 export const Slider = (props: Props) => {
   return (

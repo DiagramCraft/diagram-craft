@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import styles from './ToggleButtonGroup.module.css';
 import { extractDataAttributes } from './utils';
-import { Toggle as BaseUIToggle } from '@base-ui-components/react/toggle';
-import { ToggleGroup as BaseUIToggleGroup } from '@base-ui-components/react/toggle-group';
+import { Toggle as BaseUIToggle } from '@base-ui/react/toggle';
+import { ToggleGroup as BaseUIToggleGroup } from '@base-ui/react/toggle-group';
 
 export const ToggleButton = (props: Props) => {
   return (

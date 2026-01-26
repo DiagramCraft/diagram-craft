@@ -1,8 +1,8 @@
 import React from 'react';
 import { extractDataAttributes, extractMouseEvents } from './utils';
 import styles from './ToggleButtonGroup.module.css';
-import { Toggle as BaseUIToggle } from '@base-ui-components/react/toggle';
-import { ToggleGroup as BaseUIToggleGroup } from '@base-ui-components/react/toggle-group';
+import { Toggle as BaseUIToggle } from '@base-ui/react/toggle';
+import { ToggleGroup as BaseUIToggleGroup } from '@base-ui/react/toggle-group';
 
 const Root = (props: RootProps) => {
   return (

@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { TbMinus, TbPlus } from 'react-icons/tb';
 import styles from './Collapsible.module.css';
-import { Collapsible as BaseUICollapsible } from '@base-ui-components/react/collapsible';
+import { Collapsible as BaseUICollapsible } from '@base-ui/react/collapsible';
 
 export const Collapsible = (props: Props) => {
   const [open, setOpen] = useState(props.defaultOpen ?? false);

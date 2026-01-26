@@ -1180,19 +1180,3 @@ foreignObject {
 }
 
 
-.scroll-shadows {
-  --__scroll-bg: var(--panel-bg);
-  --__scroll-shadow-bg: color-mix(in srgb, var(--base-bg) 90%, transparent);
-
-  max-height: 200px;
-  overflow: auto;
-
-  background: linear-gradient(var(--__scroll-bg) 30%, rgba(255, 255, 255, 0)) center top,
-  linear-gradient(rgba(255, 255, 255, 0), var(--__scroll-bg) 70%) center bottom,
-  radial-gradient(farthest-side at 50% 0, var(--__scroll-shadow-bg), rgba(0, 0, 0, 0)) center top,
-  radial-gradient(farthest-side at 50% 100%, var(--__scroll-shadow-bg), rgba(0, 0, 0, 0)) center bottom;
-
-  background-repeat: no-repeat;
-  background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-  background-attachment: local, local, scroll, scroll;
-}

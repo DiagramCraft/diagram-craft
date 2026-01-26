@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import styles from './Menu.module.css';
 import { Menu } from './Menu';
-import { Menu as BaseUIMenu } from '@base-ui-components/react/menu';
+import { Menu as BaseUIMenu } from '@base-ui/react/menu';
 import { PortalContextProvider, usePortal } from './PortalContext';
 import { TbCircle, TbEye, TbLock, TbRectangle } from 'react-icons/tb';
 
