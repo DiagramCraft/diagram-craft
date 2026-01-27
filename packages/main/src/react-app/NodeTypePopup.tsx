@@ -26,11 +26,16 @@ export const NodeTypePopup = (props: Props) => {
       const dimension = 50;
       const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
 
-      UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
-        const layer = diagram.activeLayer;
-        assertRegularLayer(layer);
+      const layer = diagram.activeLayer;
+      assertRegularLayer(layer);
 
-        const node = cloneElements([registration.node(diagram)], layer, uow)[0] as DiagramNode;
+      // Need to clone outside of the primary uow in order to avoid out-of-order updates
+      const node = UnitOfWork.execute(
+        diagram,
+        uow => cloneElements([registration.node(diagram)], layer, uow)[0] as DiagramNode
+      );
+
+      UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
         layer.addElement(node, uow);
 
         assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
