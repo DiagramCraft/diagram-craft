@@ -1024,7 +1024,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   _onDetach(uow: UnitOfWork) {
     // Update any parent
     if (this.parent) {
-      this.parent.removeChild(this, uow);
+      if (this.parent.children.includes(this)) this.parent.removeChild(this, uow);
       this._setParent(undefined);
     }
 

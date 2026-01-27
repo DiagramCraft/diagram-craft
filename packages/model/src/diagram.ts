@@ -380,13 +380,21 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
 
-    // Remove elements from their current position
-    for (const el of elements) {
+    const removeChild = (el: DiagramElement) => {
       if (el.parent) {
         el.parent?.removeChild(el, uow);
       } else {
         el.layer.removeElement(el, uow);
       }
+    };
+
+    // Remove elements from their current position
+    // First we remove edges and then nodes
+    for (const el of elements) {
+      if (isEdge(el)) removeChild(el);
+    }
+    for (const el of elements) {
+      if (isNode(el)) removeChild(el);
     }
 
     const moveIntoLayer = ref === undefined;

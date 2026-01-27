@@ -358,8 +358,8 @@ export class UnitOfWork {
       }
 
       if (updatesToBeReordered.length > 0) {
+        console.warn('Out-of-order updates detected', this.#operations, updatesToBeReordered);
         this.#operations = newOperations;
-        console.warn('Out-of-order updates detected');
       }
     }
 

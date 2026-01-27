@@ -884,16 +884,14 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     for (const anchor of this.#edges.keys) {
       for (const id of this.#edges.get(anchor) ?? []) {
         const edge = this.diagram.edgeLookup.get(id)!;
-        let isChanged = false;
-        if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
-          edge.setStart(new FreeEndpoint(edge.start.position), uow);
-          isChanged = true;
-        }
-        if (edge.end instanceof ConnectedEndpoint && edge.end.node === this) {
-          edge.setEnd(new FreeEndpoint(edge.end.position), uow);
-          isChanged = true;
-        }
-        if (isChanged) uow.updateElement(edge);
+        uow.executeUpdate(edge, () => {
+          if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
+            edge.setStart(new FreeEndpoint(edge.start.position), uow);
+          }
+          if (edge.end instanceof ConnectedEndpoint && edge.end.node === this) {
+            edge.setEnd(new FreeEndpoint(edge.end.position), uow);
+          }
+        });
       }
     }
 
