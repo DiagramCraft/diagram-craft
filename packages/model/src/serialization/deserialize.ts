@@ -29,7 +29,7 @@ import type { DataManager } from '../diagramDocumentData';
 import { ElementLookup } from '../elementLookup';
 import { ElementFactory } from '../elementFactory';
 import { DelegatingDiagramNode } from '../delegatingDiagramNode';
-import type { DiagramElement } from '../diagramElement';
+import { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
 
@@ -189,6 +189,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.hash = document.hash;
   }
 
+  const dest = await deserializeDiagrams(doc, diagrams, diagramFactory);
+
   doc.root.transact(() => {
     doc.customPalette.setColors(document.customPalette);
 
@@ -214,7 +216,6 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       doc.data.setSchemaMetadata(schema.id, metadata);
     }
 
-    const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
     dest.forEach(d => doc.addDiagram(d));
 
     // Populate document tags from all element tags
@@ -301,7 +302,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>
   Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory);
 
-const deserializeDiagrams = <T extends Diagram>(
+const deserializeDiagrams = async <T extends Diagram>(
   doc: DiagramDocument,
   diagrams: ReadonlyArray<SerializedDiagram>,
   diagramFactory: DiagramFactory<T>
@@ -313,6 +314,27 @@ const deserializeDiagrams = <T extends Diagram>(
 
     const newDiagram = diagramFactory($d, doc);
     UnitOfWork.executeSilently(newDiagram, uow => newDiagram.setBounds($d.canvas, uow));
+
+    // First ensure all node types are loaded
+    const loaded = new Set<string>();
+    for (const d of diagrams) {
+      for (const l of d.layers) {
+        if (l.layerType === 'regular') {
+          for (const e of l.elements) {
+            if (e.type === 'node') {
+              for (const c of unfoldGroup(e)) {
+                if (c.type === 'node') {
+                  if (!loaded.has(c.nodeType) && !doc.nodeDefinitions.hasRegistration(c.nodeType)) {
+                    loaded.add(c.nodeType);
+                    await doc.nodeDefinitions.load(c.nodeType);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     // This needs to be done in multiple steps as later steps depend on earlier ones:
     //
@@ -482,7 +504,7 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
-    deserializeDiagrams(doc, $d.diagrams, diagramFactory).forEach(d =>
+    (await deserializeDiagrams(doc, $d.diagrams, diagramFactory)).forEach(d =>
       doc.addDiagram(d, newDiagram)
     );
   }
