@@ -140,6 +140,10 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   cancel() {
+    if (this.hoverElement) {
+      removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
+    }
+
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
     this.uow.abort();
   }
