@@ -885,6 +885,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     return this.layer.isLocked();
   }
 
+  // TODO: Should this really be in DiagramEdge??
   path(): Path {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
