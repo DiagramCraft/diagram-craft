@@ -18,7 +18,12 @@ export class RoundingPathRenderer implements PathRenderer {
       ];
     }
 
-    const rounded = applyRounding(el.renderProps.effects.roundingAmount, path.path.segments);
+    const rounded = applyRounding(
+      el.renderProps.effects.roundingAmount,
+      path.path.segments,
+      isNode(el)
+    );
+
     return [
       {
         path: new Path(
@@ -88,11 +93,16 @@ const roundLinePair = (
 };
 
 // TODO: Maybe change this to use https://observablehq.com/@carpiediem/svg-paths-with-circular-corners
-// TODO: This is also found in edgePathBuilder.ts - let's keep in on place
-const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) => {
+const applyRounding = (
+  rounding: number,
+  segments: ReadonlyArray<PathSegment>,
+  ensureConsistentRounding = true
+) => {
   const d = [...segments];
 
-  let maxRounding = Number.MAX_SAFE_INTEGER;
+  const maxRoundingByPair: number[] = [];
+
+  let pairIdx = 0;
   let pairFound = true;
   while (pairFound) {
     pairFound = false;
@@ -108,6 +118,8 @@ const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) =
 
         const q = 3;
 
+        let maxRounding = Number.MAX_SAFE_INTEGER;
+
         const l1 = Line.of(previous.start, previous.end);
         if (res.cutoff > Line.length(l1) / q) {
           maxRounding = Math.min(maxRounding, (Line.length(l1) / q) * Math.tan(res.theta / 2));
@@ -117,10 +129,13 @@ const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) =
         if (res.cutoff > Line.length(l2) / q) {
           maxRounding = Math.min(maxRounding, (Line.length(l2) / q) * Math.tan(res.theta / 2));
         }
+
+        maxRoundingByPair[pairIdx++] = maxRounding;
       }
     }
   }
 
+  pairIdx = 0;
   pairFound = true;
   while (pairFound) {
     pairFound = false;
@@ -130,6 +145,10 @@ const applyRounding = (rounding: number, segments: ReadonlyArray<PathSegment>) =
 
       if (previous instanceof LineSegment && current instanceof LineSegment) {
         if (!Point.isEqual(previous.end, current.start)) continue;
+
+        let maxRounding = ensureConsistentRounding
+          ? Math.min(...maxRoundingByPair)
+          : maxRoundingByPair[pairIdx++]!;
 
         // TODO: We need to analytically determine the maxD value
         const res = roundLinePair(previous, current, Math.min(maxRounding, rounding));
