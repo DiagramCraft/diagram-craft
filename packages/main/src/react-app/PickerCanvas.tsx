@@ -9,6 +9,8 @@ import {
 } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createPortal } from 'react-dom';
 
+const canvasFactory = () => new StaticCanvasComponent();
+
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
   const $d = useDiagram();
@@ -94,7 +96,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               onClick={() => {}}
               diagram={diagram}
               viewbox={props.diagram.viewBox.svgViewboxString}
-              canvasFactory={() => new StaticCanvasComponent()}
+              canvasFactory={canvasFactory}
             />
 
             <div
@@ -118,7 +120,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         height={props.height ?? 40}
         diagram={diagram}
         viewbox={`${props.diagram.viewBox.svgViewboxString}`}
-        canvasFactory={() => new StaticCanvasComponent()}
+        canvasFactory={canvasFactory}
       />
     </div>
   );
