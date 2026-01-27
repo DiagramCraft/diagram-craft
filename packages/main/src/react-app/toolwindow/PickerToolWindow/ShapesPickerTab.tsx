@@ -70,7 +70,7 @@ export const ShapesPickerTab = () => {
         <ObjectPickerPanel
           id={'basic-shapes'}
           title={'Basic shapes'}
-          stencils={stencilRegistry.get('default').stencils}
+          stencilPackage={stencilRegistry.get('default')}
           isOpen={open.includes('basic-shapes')}
         />
 
@@ -79,7 +79,7 @@ export const ShapesPickerTab = () => {
             key={group.id}
             id={group.id}
             title={group.name}
-            stencils={group.stencils}
+            stencilPackage={group}
             isOpen={open.includes(group.id)}
           />
         ))}

@@ -259,7 +259,7 @@ export type Stencil = {
   name?: string;
   node: (diagram: Diagram) => DiagramNode;
   canvasNode: (diagram: Diagram) => DiagramNode;
-  type: string;
+  type: 'default' | string;
 };
 
 export type StencilPackage = {
@@ -267,7 +267,13 @@ export type StencilPackage = {
   name: string;
   group?: string;
   stencils: Array<Stencil>;
-  type: string;
+  type: 'default' | string;
+
+  subPackages?: Array<{
+    id: string;
+    name: string;
+    stencils: Array<Stencil>;
+  }>;
 };
 
 export type StencilEvents = {
@@ -459,6 +465,7 @@ export type MakeStencilNodeOpts = {
   props?: MakeStencilNodeOptsProps;
   metadata?: ElementMetadata;
   texts?: NodeTexts;
+  subPackage?: string;
 };
 
 export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
@@ -505,12 +512,20 @@ export const registerStencil = (
   def: NodeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {
+  if ((pkg.subPackages ?? []).length > 0) {
+    assert.true(!!opts?.subPackage);
+  }
+
   reg.register(def);
-  pkg.stencils.push({
+  const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
     node: makeStencilNode(def, 'picker', opts),
     canvasNode: makeStencilNode(def, 'canvas', opts),
     type: pkg.type
-  });
+  };
+  pkg.stencils.push(stencil);
+  if (opts?.subPackage) {
+    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
+  }
 };

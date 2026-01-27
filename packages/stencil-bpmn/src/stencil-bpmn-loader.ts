@@ -23,12 +23,20 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     id: 'bpmn2',
     name: 'BPMN 2.0',
     stencils: [],
-    type: 'default'
+    type: 'default',
+
+    subPackages: [
+      { id: 'core', name: 'Core', stencils: [] },
+      { id: 'collaboration', name: 'Collaboration', stencils: [] },
+      { id: 'process', name: 'Process', stencils: [] },
+      { id: 'choreography', name: 'Choreography', stencils: [] }
+    ]
   };
 
   registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-task',
     name: 'Task',
+    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Task'
@@ -61,6 +69,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-sub-process',
     name: 'Sub-process',
+    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Sub-process'
@@ -93,6 +102,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-event-sub-process',
     name: 'Event sub-process',
+    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Event sub-process'
@@ -125,6 +135,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-transaction',
     name: 'Transaction',
+    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Transaction'
@@ -157,6 +168,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNDataStoreNodeDefinition(), {
     id: 'bpmn-data-store',
     name: 'Data Store',
+    subPackage: 'process',
     size: {
       w: 70,
       h: 70
@@ -169,6 +181,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-object',
     name: 'Data Object',
+    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -187,6 +200,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-objects',
     name: 'Data Objects',
+    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -219,6 +233,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-input',
     name: 'Data Input',
+    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -251,6 +266,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-output',
     name: 'Data Output',
+    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -284,6 +300,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-start',
     name: 'Start Event',
+    subPackage: 'process',
     size: {
       w: 30,
       h: 30
@@ -310,6 +327,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-intermediate',
     name: 'Intermediate Event',
+    subPackage: 'process',
     size: {
       w: 30,
       h: 30
@@ -336,6 +354,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-end',
     name: 'End Event',
+    subPackage: 'process',
     size: {
       w: 30,
       h: 30
@@ -362,6 +381,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNGatewayNodeDefinition(), {
     id: 'bpmn-gateway',
     name: 'Gateway',
+    subPackage: 'process',
     size: {
       w: 30,
       h: 30
@@ -381,6 +401,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNConversationNodeDefinition(), {
     id: 'bpmn-conversation',
     name: 'Conversation',
+    subPackage: 'collaboration',
     size: {
       w: 40,
       h: 40
@@ -393,6 +414,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNAnnotationNodeDefinition(), {
     id: 'bpmn-annotation',
     name: 'Annotation',
+    subPackage: 'core',
     size: {
       w: 100,
       h: 40
@@ -414,6 +436,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new RoundedRectNodeDefinition(), {
     id: 'bpmn-group',
     name: 'Group',
+    subPackage: 'core',
     size: {
       w: 300,
       h: 200
@@ -444,6 +467,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNChoreographyActivityNodeDefinition(), {
     id: 'bpmn-choreography',
     name: 'Choreography',
+    subPackage: 'choreography',
     size: {
       w: 100,
       h: 100
@@ -453,6 +477,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNChoreographyActivityParticipantNodeDefinition(), {
     id: 'bpmn-choreography-participant',
     name: 'Choreography Participant',
+    subPackage: 'choreography',
     size: {
       w: 100,
       h: 30
@@ -465,6 +490,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
     id: 'bpmn-choreography-envelope',
     name: 'Choreography Envelope',
+    subPackage: 'choreography',
     size: {
       w: 40,
       h: 20
@@ -474,6 +500,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNLane(), {
     id: 'bpmn-vertical-lane',
     name: 'Vertical Lane',
+    subPackage: 'collaboration',
     size: {
       w: 100,
       h: 400
@@ -495,6 +522,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNLane(), {
     id: 'bpmn-horizonal-lane',
     name: 'Horizontal Lane',
+    subPackage: 'collaboration',
     size: {
       w: 400,
       h: 100
@@ -516,6 +544,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNLane(), {
     id: 'bpmn-vertical-pool',
     name: 'Vertical Pool',
+    subPackage: 'collaboration',
     size: {
       w: 200,
       h: 400
@@ -545,6 +574,7 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   registerStencil(r, bpmnStencils, new BPMNLane(), {
     id: 'bpmn-horizonal-pool',
     name: 'Horizontal Pool',
+    subPackage: 'collaboration',
     size: {
       w: 400,
       h: 200
