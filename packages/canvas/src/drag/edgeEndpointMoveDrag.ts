@@ -59,14 +59,17 @@ export class EdgeEndpointMoveDrag extends Drag {
       type === 'start' &&
       this.edge.end instanceof ConnectedEndpoint &&
       this.edge.end.node.id === id
-    )
+    ) {
       return;
+    }
+
     if (
       type === 'end' &&
       this.edge.start instanceof ConnectedEndpoint &&
       this.edge.start.node.id === id
-    )
+    ) {
       return;
+    }
 
     this.hoverElement = id;
 
@@ -137,6 +140,10 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   cancel() {
+    if (this.hoverElement) {
+      removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
+    }
+
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
     this.uow.abort();
   }

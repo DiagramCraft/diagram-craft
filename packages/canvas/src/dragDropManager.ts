@@ -154,10 +154,10 @@ export class DragDopManager extends EventEmitter<{
   private drag?: Drag;
   private dragStarted = false;
 
-  initiate(drag: Drag, onEndCallback = () => {}) {
+  initiate(drag: Drag, onEndCallback = () => {}, startImmediately = false) {
     this.drag = drag;
-    this.dragStarted = false;
 
+    this.dragStarted = startImmediately;
     this.emit('dragStart', { drag });
     this.drag.on('drag', () => {
       this.dragStarted = true;
