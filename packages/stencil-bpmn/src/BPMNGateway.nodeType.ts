@@ -10,13 +10,15 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import xFilledIcon from './icons/x-filled.svg?raw';
-import pentagonIcon from './icons/pentagon.svg?raw';
+import {
+  xFilledIcon,
+  pentagonIcon,
+  crossIcon,
+  crossFilledIcon,
+  medicalCrossFilledIcon
+} from './icons/icons';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import crossIcon from './icons/cross.svg?raw';
-import crossFilledIcon from './icons/cross-filled.svg?raw';
-import medicalCrossFilledIcon from './icons/medical-cross-filled.svg?raw';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type GatewayType =

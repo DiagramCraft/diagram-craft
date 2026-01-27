@@ -12,10 +12,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import squarePlusIcon from './icons/square-plus.svg?raw';
-import linesVerticalIcon from './icons/lines-vertical.svg?raw';
-import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
-import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
+import {
+  squarePlusIcon,
+  linesVerticalIcon,
+  linesHorizontalIcon,
+  arrowBackUpIcon
+} from './icons/icons';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';

@@ -13,19 +13,21 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
-import settingsIcon from './icons/settings.svg?raw';
-import mailFilledIcon from './icons/mail-filled.svg?raw';
-import mailIcon from './icons/mail.svg?raw';
-import userIcon from './icons/user.svg?raw';
-import tableIcon from './icons/table.svg?raw';
-import scriptIcon from './icons/script.svg?raw';
-import squarePlusIcon from './icons/square-plus.svg?raw';
-import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
-import handFingerRightIcon from './icons/hand-finger-right.svg?raw';
-import playerTrackPrevIcon from './icons/player-track-prev.svg?raw';
-import tildeIcon from './icons/tilde.svg?raw';
-import linesVerticalIcon from './icons/lines-vertical.svg?raw';
-import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
+import {
+  settingsIcon,
+  mailFilledIcon,
+  mailIcon,
+  userIcon,
+  tableIcon,
+  scriptIcon,
+  squarePlusIcon,
+  arrowBackUpIcon,
+  handFingerRightIcon,
+  playerTrackPrevIcon,
+  tildeIcon,
+  linesVerticalIcon,
+  linesHorizontalIcon
+} from './icons/icons';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';

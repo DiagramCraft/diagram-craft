@@ -9,7 +9,7 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import squarePlusIcon from './icons/square-plus.svg?raw';
+import { squarePlusIcon } from './icons/icons';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { getSVGIcon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';

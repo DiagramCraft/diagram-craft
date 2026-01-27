@@ -10,25 +10,27 @@ import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinition
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import mailFilledIcon from './icons/mail-filled.svg?raw';
-import mailIcon from './icons/mail.svg?raw';
-import zigzagIcon from './icons/zigzag.svg?raw';
-import navigationIcon from './icons/navigation.svg?raw';
-import navigationFilledIcon from './icons/navigation-filled.svg?raw';
-import xIcon from './icons/x.svg?raw';
-import xFilledIcon from './icons/x-filled.svg?raw';
-import zigzagFilledIcon from './icons/zigzag-filled.svg?raw';
-import clockHour3Icon from './icons/clock-hour-3.svg?raw';
-import playerTrackPrevIcon from './icons/player-track-prev.svg?raw';
-import playerTrackPrevFilledIcon from './icons/player-track-prev-filled.svg?raw';
-import boxWithLinesIcon from './icons/box-with-lines.svg?raw';
-import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
-import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
-import triangleIcon from './icons/triangle.svg?raw';
-import triangleFilledIcon from './icons/triangle-filled.svg?raw';
-import pentagonIcon from './icons/pentagon.svg?raw';
-import pentagonFilledIcon from './icons/pentagon-filled.svg?raw';
-import crossIcon from './icons/cross.svg?raw';
+import {
+  mailFilledIcon,
+  mailIcon,
+  zigzagIcon,
+  navigationIcon,
+  navigationFilledIcon,
+  xIcon,
+  xFilledIcon,
+  zigzagFilledIcon,
+  clockHour3Icon,
+  playerTrackPrevIcon,
+  playerTrackPrevFilledIcon,
+  boxWithLinesIcon,
+  arrowBigRightIcon,
+  arrowBigRightFilledIcon,
+  triangleIcon,
+  triangleFilledIcon,
+  pentagonIcon,
+  pentagonFilledIcon,
+  crossIcon
+} from './icons/icons';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { _p } from '@diagram-craft/geometry/point';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
