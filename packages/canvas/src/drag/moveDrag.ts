@@ -77,7 +77,6 @@ export abstract class AbstractMoveDrag extends Drag {
     if (!id) return;
 
     const selection = this.diagram.selection;
-    if (selection.type !== 'single-node') return;
 
     const hover = this.diagram.lookup(id);
 
