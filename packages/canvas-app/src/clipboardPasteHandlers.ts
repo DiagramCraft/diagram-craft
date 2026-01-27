@@ -11,6 +11,7 @@ import { BaseActionArgs } from '@diagram-craft/canvas/action';
 import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/utils';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)
@@ -222,10 +223,13 @@ export class ElementsPasteHandler extends PasteHandler {
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
       newElements.forEach(e => layer.addElement(e, uow));
+
+      diagram.selection.setElements(newElements);
+
+      growBoundsForSelection(diagram, uow);
+
       uow.on('after', 'undo', newid(), () => this.clearPastePoint());
     });
-
-    diagram.selection.setElements(newElements);
 
     this.registerPastePoint(hash, point);
   }

@@ -46,8 +46,12 @@ export const ObjectInfoPanel = () => {
     >
       <div className={styles.objectInfoToolWindow}>
         {state === 'selection' && <SelectionInfoDetails obj={diagram.selection} />}
-        {state === 'node' && <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />}
-        {state === 'edge' && <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />}
+        {state === 'node' && diagram.nodeLookup.get(nodeId!) && (
+          <NodeInfoDetails obj={diagram.nodeLookup.get(nodeId!)!} />
+        )}
+        {state === 'edge' && diagram.edgeLookup.get(edgeId!) && (
+          <EdgeInfoDetails obj={diagram.edgeLookup.get(edgeId!)!} />
+        )}
         {state === undefined && <DiagramInfoDetails obj={diagram} />}
       </div>
     </ToolWindowPanel>
