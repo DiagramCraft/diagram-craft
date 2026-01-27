@@ -16,6 +16,7 @@ import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { Anchor } from '@diagram-craft/model/anchor';
 
 type Data = {
   collection?: boolean;
@@ -189,5 +190,15 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     const def = new CustomPropertyDefinition();
     def.dataSchemas = [SCHEMA];
     return def;
+  }
+
+  getShapeAnchors(_def: DiagramNode): Anchor[] {
+    return [
+      { start: _p(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+      { start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 },
+      { start: _p(0.5, 1), id: '3', type: 'point', isPrimary: true, normal: Math.PI / 2 },
+      { start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI },
+      { start: _p(0.5, 0.5), clip: true, id: 'c', type: 'center' }
+    ];
   }
 }
