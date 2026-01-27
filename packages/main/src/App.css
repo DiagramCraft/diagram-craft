@@ -701,6 +701,33 @@ foreignObject {
   flex-wrap: wrap;
   gap: 0.2rem;
 
+  .cmp-object-picker__divider {
+    width: 100%;
+    position: relative;
+    anchor-name: --picker-divider;
+    height: 18px;
+
+    > span {
+      position: absolute;
+      left: 0;
+      top: 0;
+      padding-right: 0.25rem;
+      z-index: 6;
+      background: var(--base-bg);
+    }
+
+    &::before {
+      z-index: 5;
+      position: absolute;
+      left: 0;
+      top: 9px;
+      right: 0;
+      content: '';
+      border-bottom: 1px solid var(--base-fg-more-dim);
+      margin-left: 0.25rem;
+    }
+  }
+
   & svg {
     margin: 0.2rem;
     display: block;
