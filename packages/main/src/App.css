@@ -255,6 +255,12 @@ input::-webkit-input-placeholder {
   color: var(--panel-fg);
 }
 
+textarea::selection,
+input::selection {
+  background-color: var(--highlight-reverse-bg);
+  color: var(--highlight-reverse-fg);
+}
+
 
 div[data-field-state='set'],
 button[data-field-state='set'],
