@@ -59,14 +59,17 @@ export class EdgeEndpointMoveDrag extends Drag {
       type === 'start' &&
       this.edge.end instanceof ConnectedEndpoint &&
       this.edge.end.node.id === id
-    )
+    ) {
       return;
+    }
+
     if (
       type === 'end' &&
       this.edge.start instanceof ConnectedEndpoint &&
       this.edge.start.node.id === id
-    )
+    ) {
       return;
+    }
 
     this.hoverElement = id;
 
