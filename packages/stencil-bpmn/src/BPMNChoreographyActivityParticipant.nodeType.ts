@@ -6,19 +6,20 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
-import squarePlusIcon from './icons/square-plus.svg?raw';
-import linesVerticalIcon from './icons/lines-vertical.svg?raw';
-import linesHorizontalIcon from './icons/lines-horizontal.svg?raw';
-import arrowBackUpIcon from './icons/arrow-back-up.svg?raw';
+import { getIcon, Markers, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
+import {
+  arrowBackUpIcon,
+  linesHorizontalIcon,
+  linesVerticalIcon,
+  squarePlusIcon
+} from './icons/icons';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';
+import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
 type ParticipantPosition = 'top' | 'middle' | 'bottom';
 type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
@@ -75,7 +76,6 @@ registerCustomNodeDefaults('bpmnChoreographyActivityParticipant', {
 // NodeDefinition and Shape *****************************************************
 
 const ICON_MARGIN = 2;
-const ICON_SIZE = 15;
 const BOTTOM_MARGIN = 2;
 
 export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNodeDefinition {
@@ -107,8 +107,6 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
       builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
       builder.text(this);
 
-      const markers: Icon[] = [];
-
       const parent = props.node.parent;
 
       const data = this.getData(props.node);
@@ -118,62 +116,33 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
           ? parent.renderProps.custom.bpmnChoreographyActivity
           : { expanded: false };
 
+      const markers: Markers = { left: [], center: [], right: [] };
+
       if (props.nodeProps.custom.bpmnChoreographyActivityParticipant.position === 'middle') {
         if (!parentProps?.expanded) {
           if (data.loopType === 'parallel') {
-            markers.push(getSVGIcon(linesVerticalIcon));
+            markers.center.push(getIcon(linesVerticalIcon));
           } else if (data.loopType === 'sequential') {
-            markers.push(getSVGIcon(linesHorizontalIcon));
+            markers.center.push(getIcon(linesHorizontalIcon));
           } else if (data.loopType === 'standard') {
-            markers.push(getSVGIcon(arrowBackUpIcon));
+            markers.center.push(getIcon(arrowBackUpIcon));
           }
 
           if (parentData?.type === 'sub-choreography') {
-            markers.push(getSVGIcon(squarePlusIcon));
+            markers.center.push(getIcon(squarePlusIcon));
           }
         }
       } else {
         if (data.multiple) {
-          markers.push(getSVGIcon(linesVerticalIcon));
+          markers.center.push(getIcon(linesVerticalIcon));
         }
       }
 
-      if (markers.length > 0) {
-        const width = markers.length * ICON_SIZE + (markers.length - 1) * ICON_MARGIN;
-        const centerX = props.node.bounds.x + props.node.bounds.w / 2;
-
-        let x = centerX - width / 2;
-        for (const marker of markers) {
-          const position = Box.fromCorners(
-            _p(x, props.node.bounds.y + props.node.bounds.h - ICON_SIZE - BOTTOM_MARGIN),
-            _p(x + ICON_SIZE, props.node.bounds.y + props.node.bounds.h - BOTTOM_MARGIN)
-          );
-          this.renderIcon(marker, position, props.nodeProps, builder);
-          x += ICON_SIZE + ICON_MARGIN;
-        }
-      }
-    }
-
-    private renderIcon(
-      icon: Icon,
-      position: Box,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      shapeBuilder.path(
-        PathListBuilder.fromPathList(icon.pathList)
-          .getPaths(TransformFactory.fromTo(icon.viewbox, position))
-          .all(),
-        undefined,
-        {
-          style: {
-            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
-            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1',
-            strokeDasharray: 'none'
-          }
-        }
-      );
+      renderMarkers(props.node, markers, builder, {
+        size: ICON_SIZE,
+        bottomMargin: BOTTOM_MARGIN,
+        spacing: ICON_MARGIN
+      });
     }
   };
 

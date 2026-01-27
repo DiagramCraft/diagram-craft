@@ -7,30 +7,36 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import {
+  createBelowShapeTextBox,
+  getIcon,
+  Icon,
+  RECTANGULAR_SHAPE_ANCHORS,
+  renderIcon
+} from '@diagram-craft/stencil-bpmn/utils';
 import { Box } from '@diagram-craft/geometry/box';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
-import mailFilledIcon from './icons/mail-filled.svg?raw';
-import mailIcon from './icons/mail.svg?raw';
-import zigzagIcon from './icons/zigzag.svg?raw';
-import navigationIcon from './icons/navigation.svg?raw';
-import navigationFilledIcon from './icons/navigation-filled.svg?raw';
-import xIcon from './icons/x.svg?raw';
-import xFilledIcon from './icons/x-filled.svg?raw';
-import zigzagFilledIcon from './icons/zigzag-filled.svg?raw';
-import clockHour3Icon from './icons/clock-hour-3.svg?raw';
-import playerTrackPrevIcon from './icons/player-track-prev.svg?raw';
-import playerTrackPrevFilledIcon from './icons/player-track-prev-filled.svg?raw';
-import boxWithLinesIcon from './icons/box-with-lines.svg?raw';
-import arrowBigRightIcon from './icons/arrow-big-right.svg?raw';
-import arrowBigRightFilledIcon from './icons/arrow-big-right-filled.svg?raw';
-import triangleIcon from './icons/triangle.svg?raw';
-import triangleFilledIcon from './icons/triangle-filled.svg?raw';
-import pentagonIcon from './icons/pentagon.svg?raw';
-import pentagonFilledIcon from './icons/pentagon-filled.svg?raw';
-import crossIcon from './icons/cross.svg?raw';
+import {
+  arrowBigRightFilledIcon,
+  arrowBigRightIcon,
+  boxWithLinesIcon,
+  clockHour3Icon,
+  crossIcon,
+  mailFilledIcon,
+  mailIcon,
+  navigationFilledIcon,
+  navigationIcon,
+  pentagonFilledIcon,
+  pentagonIcon,
+  playerTrackPrevFilledIcon,
+  playerTrackPrevIcon,
+  triangleFilledIcon,
+  triangleIcon,
+  xFilledIcon,
+  xIcon,
+  zigzagFilledIcon,
+  zigzagIcon
+} from './icons/icons';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { _p } from '@diagram-craft/geometry/point';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type EventType = 'start' | 'intermediate' | 'end';
@@ -115,13 +121,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { start: _p(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 },
-      { start: _p(0.5, 1), id: '3', type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI },
-      { start: _p(0.5, 0.5), clip: true, id: 'c', type: 'center' }
-    ];
+    return RECTANGULAR_SHAPE_ANCHORS;
   }
 
   static Shape = class extends BaseNodeComponent<BPMNEventNodeDefinition> {
@@ -163,47 +163,47 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       const shouldUseFilledIcon = eventType === 'end' || data.throwing;
       if (data.marker === 'message') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? mailFilledIcon : mailIcon),
+          getIcon(shouldUseFilledIcon ? mailFilledIcon : mailIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'timer') {
-        this.renderIcon(getSVGIcon(clockHour3Icon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(clockHour3Icon), props.node, shapeBuilder);
       } else if (data.marker === 'error') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? zigzagFilledIcon : zigzagIcon),
+          getIcon(shouldUseFilledIcon ? zigzagFilledIcon : zigzagIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'escalation') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? navigationFilledIcon : navigationIcon),
+          getIcon(shouldUseFilledIcon ? navigationFilledIcon : navigationIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'cancel') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? xFilledIcon : xIcon),
+          getIcon(shouldUseFilledIcon ? xFilledIcon : xIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'compensation') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? playerTrackPrevFilledIcon : playerTrackPrevIcon),
+          getIcon(shouldUseFilledIcon ? playerTrackPrevFilledIcon : playerTrackPrevIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'conditional') {
-        this.renderIcon(getSVGIcon(boxWithLinesIcon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(boxWithLinesIcon), props.node, shapeBuilder);
       } else if (data.marker === 'link') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? arrowBigRightFilledIcon : arrowBigRightIcon),
+          getIcon(shouldUseFilledIcon ? arrowBigRightFilledIcon : arrowBigRightIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'signal') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? triangleFilledIcon : triangleIcon),
+          getIcon(shouldUseFilledIcon ? triangleFilledIcon : triangleIcon),
           props.node,
           shapeBuilder
         );
@@ -223,12 +223,12 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         });
       } else if (data.marker === 'multiple') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? pentagonFilledIcon : pentagonIcon),
+          getIcon(shouldUseFilledIcon ? pentagonFilledIcon : pentagonIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'parallel-multiple') {
-        this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(crossIcon), props.node, shapeBuilder);
       }
 
       shapeBuilder.text(
@@ -236,13 +236,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         '1',
         props.node.getText(),
         props.nodeProps.text,
-        Box.fromCorners(
-          _p(props.node.bounds.x - 50, props.node.bounds.y + props.node.bounds.h + 10),
-          _p(
-            props.node.bounds.x + props.node.bounds.w + 50,
-            props.node.bounds.y + props.node.bounds.h + 20
-          )
-        )
+        createBelowShapeTextBox(props.node.bounds)
       );
     }
 
@@ -266,21 +260,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
     }
 
     private renderIcon(icon: Icon, node: DiagramNode, shapeBuilder: ShapeBuilder) {
-      const nodeProps = node.renderProps;
-      shapeBuilder.path(
-        PathListBuilder.fromPathList(icon.pathList)
-          .getPaths(TransformFactory.fromTo(icon.viewbox, Box.grow(node.bounds, -5)))
-          .all(),
-        undefined,
-        {
-          style: {
-            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
-            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1',
-            strokeDasharray: 'none'
-          }
-        }
-      );
+      return renderIcon(icon, Box.grow(node.bounds, -5), node.renderProps, shapeBuilder);
     }
   };
 

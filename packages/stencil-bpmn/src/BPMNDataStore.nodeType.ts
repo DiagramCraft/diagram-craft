@@ -9,6 +9,7 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
+import { RECTANGULAR_SHAPE_ANCHORS } from '@diagram-craft/stencil-bpmn/utils';
 
 const SIZE = 15;
 
@@ -34,13 +35,7 @@ export class BPMNDataStoreNodeDefinition extends ShapeNodeDefinition {
   };
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { id: '1', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: '2', start: _p(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
-      { id: '3', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: '4', start: _p(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
-    ];
+    return RECTANGULAR_SHAPE_ANCHORS;
   }
 
   getInteriorPathBuilder(def: DiagramNode) {
