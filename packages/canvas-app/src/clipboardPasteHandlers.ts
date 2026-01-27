@@ -213,7 +213,10 @@ export class ElementsPasteHandler extends PasteHandler {
       }
     }
 
-    const newElements = UnitOfWork.execute(diagram, uow =>
+    // This needs to be executeSilently, as the elements are not added
+    // to the diagram in this UOW - hence onCommit hooks will not work
+    // properly
+    const newElements = UnitOfWork.executeSilently(diagram, uow =>
       deserializeDiagramElements(elements, layer, uow)
     );
 
