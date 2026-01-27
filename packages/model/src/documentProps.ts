@@ -33,6 +33,12 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
       this._history.push(['djql', '.elements[]', 'active-layer', '.elements[]']);
       this._history.push([
         'djql',
+        '.elements[] | select(.nodeType=="rect")',
+        'active-layer',
+        '.elements[]'
+      ]);
+      this._history.push([
+        'djql',
         '.elements[] | select(.edges | length > 0)',
         'active-layer',
         '.elements[] | select(.edges | length > 0)'

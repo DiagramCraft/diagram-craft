@@ -78,6 +78,14 @@ export class QueryRegularLayer extends QueryLayer {
   get elements() {
     return this.regularLayer.elements.map(e => QueryElement.fromElement(e));
   }
+
+  get allElements() {
+    const recurse = (e: DiagramElement): Array<DiagramElement> => {
+      return [e, ...e.children.flatMap(recurse)];
+    };
+
+    return this.regularLayer.elements.flatMap(recurse).map(e => QueryElement.fromElement(e));
+  }
 }
 
 export class QueryRuleLayer extends QueryLayer {
