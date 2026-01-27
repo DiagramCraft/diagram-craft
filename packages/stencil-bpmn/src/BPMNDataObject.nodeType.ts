@@ -4,17 +4,18 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
-import { linesVerticalIcon, arrowBigRightIcon, arrowBigRightFilledIcon } from './icons/icons';
+import { arrowBigRightFilledIcon, arrowBigRightIcon, linesVerticalIcon } from './icons/icons';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Anchor } from '@diagram-craft/model/anchor';
+import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type Data = {
   collection?: boolean;
@@ -90,13 +91,15 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
     }
 
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
+      const bounds = props.node.bounds;
+
       shapeBuilder.boundaryPath(
         new BPMNDataObjectNodeType().getBoundingPathBuilder(props.node).getPaths().all()
       );
 
       shapeBuilder.path(
         PathListBuilder.fromPath(mustExist(innerPaths.all()[0]))
-          .getPaths(TransformFactory.fromTo(pathBounds, Box.withoutRotation(props.node.bounds)))
+          .getPaths(TransformFactory.fromTo(pathBounds, Box.withoutRotation(bounds)))
           .all(),
         undefined,
         {
@@ -110,19 +113,15 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
         props.node.getText(),
         props.nodeProps.text,
         Box.fromCorners(
-          _p(props.node.bounds.x - 50, props.node.bounds.y + props.node.bounds.h + 10),
-          _p(
-            props.node.bounds.x + props.node.bounds.w + 50,
-            props.node.bounds.y + props.node.bounds.h + 20
-          )
+          _p(bounds.x - 50, bounds.y + bounds.h + 10),
+          _p(bounds.x + bounds.w + 50, bounds.y + bounds.h + 20)
         )
       );
 
       const data = this.getData(props.node);
-      const bounds = props.node.bounds;
 
       if (data.collection) {
-        this.renderIcon(
+        renderIcon(
           getSVGIcon(linesVerticalIcon),
           Box.fromCorners(
             _p(
@@ -144,7 +143,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
       }
 
       if (icon) {
-        this.renderIcon(
+        renderIcon(
           icon,
           Box.fromCorners(
             _p(bounds.x + ICON_MARGIN, bounds.y + ICON_MARGIN),
@@ -154,28 +153,6 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
           shapeBuilder
         );
       }
-    }
-
-    private renderIcon(
-      icon: Icon,
-      position: Box,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      shapeBuilder.path(
-        PathListBuilder.fromPathList(icon.pathList)
-          .getPaths(TransformFactory.fromTo(icon.viewbox, position))
-          .all(),
-        undefined,
-        {
-          style: {
-            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
-            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1',
-            strokeDasharray: 'none'
-          }
-        }
-      );
     }
   };
 
@@ -191,12 +168,6 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { start: _p(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 },
-      { start: _p(0.5, 1), id: '3', type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI },
-      { start: _p(0.5, 0.5), clip: true, id: 'c', type: 'center' }
-    ];
+    return RECTANGULAR_SHAPE_ANCHORS;
   }
 }

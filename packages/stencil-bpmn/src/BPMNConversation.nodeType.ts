@@ -10,9 +10,10 @@ import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagram
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { squarePlusIcon } from './icons/icons';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { getSVGIcon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { renderIcon } from '@diagram-craft/stencil-bpmn/utils';
+import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
 type ConversationType =
   | 'conversation'
@@ -62,6 +63,8 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
     }
 
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
+      const bounds = props.node.bounds;
+
       shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
 
       shapeBuilder.text(
@@ -70,11 +73,8 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
         props.node.getText(),
         props.nodeProps.text,
         Box.fromCorners(
-          _p(props.node.bounds.x - 50, props.node.bounds.y + props.node.bounds.h + 10),
-          _p(
-            props.node.bounds.x + props.node.bounds.w + 50,
-            props.node.bounds.y + props.node.bounds.h + 20
-          )
+          _p(bounds.x - 50, bounds.y + bounds.h + 10),
+          _p(bounds.x + bounds.w + 50, bounds.y + bounds.h + 20)
         )
       );
 
@@ -82,24 +82,14 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
       if (data.type === 'sub-conversation' || data.type === 'call-conversation-collaboration') {
         const icon = getSVGIcon(squarePlusIcon);
 
-        const centerX = props.node.bounds.x + props.node.bounds.w / 2;
-        const iconSize = 15;
+        const centerX = bounds.x + bounds.w / 2;
         const margin = 1.5;
         const position = Box.fromCorners(
-          _p(centerX - iconSize / 2, props.node.bounds.y + props.node.bounds.h - iconSize - margin),
-          _p(centerX + iconSize / 2, props.node.bounds.y + props.node.bounds.h - margin)
+          _p(centerX - ICON_SIZE / 2, bounds.y + bounds.h - ICON_SIZE - margin),
+          _p(centerX + ICON_SIZE / 2, bounds.y + bounds.h - margin)
         );
-        shapeBuilder.path(
-          PathListBuilder.fromPathList(icon.pathList)
-            .getPaths(TransformFactory.fromTo(icon.viewbox, position))
-            .all(),
-          undefined,
-          {
-            style: {
-              strokeWidth: '1'
-            }
-          }
-        );
+
+        renderIcon(icon, position, props.nodeProps, shapeBuilder);
       }
     }
 

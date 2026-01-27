@@ -12,21 +12,20 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import {
-  settingsIcon,
-  mailFilledIcon,
-  mailIcon,
-  userIcon,
-  tableIcon,
-  scriptIcon,
-  squarePlusIcon,
   arrowBackUpIcon,
   handFingerRightIcon,
-  playerTrackPrevIcon,
-  tildeIcon,
+  linesHorizontalIcon,
   linesVerticalIcon,
-  linesHorizontalIcon
+  mailFilledIcon,
+  mailIcon,
+  playerTrackPrevIcon,
+  scriptIcon,
+  settingsIcon,
+  squarePlusIcon,
+  tableIcon,
+  tildeIcon,
+  userIcon
 } from './icons/icons';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -34,6 +33,14 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
+import {
+  BOTTOM_MARGIN,
+  ICON_MARGIN,
+  ICON_SIZE,
+  MARKER_SIZE,
+  MARKER_SPACING
+} from '@diagram-craft/stencil-bpmn/spacing';
+import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type SubprocessType =
   | 'default'
@@ -55,11 +62,6 @@ const TASK_TYPE_ICONS: Record<string, string> = {
   'script': scriptIcon
 };
 
-const ICON_MARGIN = 5;
-const ICON_SIZE = 15;
-const MARKER_SIZE = 12;
-const MARKER_SPACING = 4;
-const BOTTOM_MARGIN = 5;
 const TRANSACTION_OFFSET = 3;
 
 declare global {
@@ -197,19 +199,11 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
     uow: UnitOfWork,
     _operation: string
   ): void {
-    node.diagram.moveElement(elements, uow, node.layer, {
-      relation: 'on',
-      element: node
-    });
+    node.diagram.moveElement(elements, uow, node.layer, { relation: 'on', element: node });
   }
 
-  onTransform(
-    _transforms: ReadonlyArray<Transform>,
-    _node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
-    _uow: UnitOfWork
-  ): void {}
+  // We don't want to change children if resizing activity
+  onTransform(): void {}
 
   private static isSubprocessActivity(activityType: string): boolean {
     return (
@@ -310,7 +304,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           _p(node.bounds.x + ICON_MARGIN, node.bounds.y + ICON_MARGIN),
           _p(node.bounds.x + ICON_MARGIN + ICON_SIZE, node.bounds.y + ICON_MARGIN + ICON_SIZE)
         );
-        this.renderIcon(icon, dest, props.nodeProps, shapeBuilder);
+        renderIcon(icon, dest, props.nodeProps, shapeBuilder);
       }
 
       shapeBuilder.text(this);
@@ -325,28 +319,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
             )
           )
         )
-      );
-    }
-
-    private renderIcon(
-      icon: Icon,
-      position: Box,
-      nodeProps: NodePropsForRendering,
-      shapeBuilder: ShapeBuilder
-    ) {
-      shapeBuilder.path(
-        PathListBuilder.fromPathList(icon.pathList)
-          .getPaths(TransformFactory.fromTo(icon.viewbox, position))
-          .all(),
-        undefined,
-        {
-          style: {
-            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
-            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1',
-            strokeDasharray: 'none'
-          }
-        }
       );
     }
 
@@ -377,7 +349,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
               break;
           }
 
-          this.renderIcon(
+          renderIcon(
             icon,
             Box.fromCorners(_p(currentX, pos.y), _p(currentX + MARKER_SIZE, pos.y + MARKER_SIZE)),
             node.renderProps,
@@ -407,13 +379,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   };
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { id: '1', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: '2', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: '3', start: _p(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
-      { id: '4', start: _p(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
-    ];
+    return RECTANGULAR_SHAPE_ANCHORS;
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {

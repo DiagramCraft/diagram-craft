@@ -9,31 +9,31 @@ import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagram
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
 import { Box } from '@diagram-craft/geometry/box';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
 import {
+  arrowBigRightFilledIcon,
+  arrowBigRightIcon,
+  boxWithLinesIcon,
+  clockHour3Icon,
+  crossIcon,
   mailFilledIcon,
   mailIcon,
-  zigzagIcon,
-  navigationIcon,
   navigationFilledIcon,
-  xIcon,
-  xFilledIcon,
-  zigzagFilledIcon,
-  clockHour3Icon,
-  playerTrackPrevIcon,
-  playerTrackPrevFilledIcon,
-  boxWithLinesIcon,
-  arrowBigRightIcon,
-  arrowBigRightFilledIcon,
-  triangleIcon,
-  triangleFilledIcon,
-  pentagonIcon,
+  navigationIcon,
   pentagonFilledIcon,
-  crossIcon
+  pentagonIcon,
+  playerTrackPrevFilledIcon,
+  playerTrackPrevIcon,
+  triangleFilledIcon,
+  triangleIcon,
+  xFilledIcon,
+  xIcon,
+  zigzagFilledIcon,
+  zigzagIcon
 } from './icons/icons';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { _p } from '@diagram-craft/geometry/point';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type EventType = 'start' | 'intermediate' | 'end';
 type MarkerType =
@@ -117,13 +117,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
-    return [
-      { start: _p(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { start: _p(1, 0.5), id: '2', type: 'point', isPrimary: true, normal: 0 },
-      { start: _p(0.5, 1), id: '3', type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { start: _p(0, 0.5), id: '4', type: 'point', isPrimary: true, normal: Math.PI },
-      { start: _p(0.5, 0.5), clip: true, id: 'c', type: 'center' }
-    ];
+    return RECTANGULAR_SHAPE_ANCHORS;
   }
 
   static Shape = class extends BaseNodeComponent<BPMNEventNodeDefinition> {
@@ -268,21 +262,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
     }
 
     private renderIcon(icon: Icon, node: DiagramNode, shapeBuilder: ShapeBuilder) {
-      const nodeProps = node.renderProps;
-      shapeBuilder.path(
-        PathListBuilder.fromPathList(icon.pathList)
-          .getPaths(TransformFactory.fromTo(icon.viewbox, Box.grow(node.bounds, -5)))
-          .all(),
-        undefined,
-        {
-          style: {
-            fill: icon.fill === 'none' ? 'none' : nodeProps.stroke.color,
-            stroke: icon.fill === 'none' ? nodeProps.stroke.color : 'none',
-            strokeWidth: '1',
-            strokeDasharray: 'none'
-          }
-        }
-      );
+      return renderIcon(icon, Box.grow(node.bounds, -5), node.renderProps, shapeBuilder);
     }
   };
 
