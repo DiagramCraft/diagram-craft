@@ -198,7 +198,11 @@ export const DJQLSearchTab = () => {
             </div>
           </ToolWindowPanel>
 
-          <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
+          <ToolWindowPanel
+            mode={'accordion'}
+            id={'response'}
+            title={`Query Response ${res ? `(${res.length} hits)` : 0}`}
+          >
             <div className={'cmp-query-response'}>
               {!!error && <div className={'cmp-error'}>{error}</div>}
               {res?.map((e, idx) => (
