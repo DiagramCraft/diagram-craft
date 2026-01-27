@@ -27,10 +27,11 @@ import {
   userIcon
 } from './icons/icons';
 import {
-  getSVGIcon,
-  Icon,
+  getIcon,
+  Markers,
   RECTANGULAR_SHAPE_ANCHORS,
   renderIcon,
+  renderMarkers,
   roundedRectOutline
 } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -53,8 +54,6 @@ type SubprocessType =
   | 'compensation'
   | 'ad-hoc'
   | 'compensation-and-ad-hoc';
-
-type MarkerType = 'loop' | 'sequential' | 'parallel' | 'compensation' | 'ad-hoc' | 'subprocess';
 
 const TASK_TYPE_ICONS: Record<string, string> = {
   'service': settingsIcon,
@@ -167,12 +166,6 @@ const SCHEMA: DataSchema = {
   ]
 };
 
-type MarkerSpec = {
-  left: MarkerType[];
-  center: MarkerType[];
-  right: MarkerType[];
-};
-
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
@@ -238,17 +231,20 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       const data = this.getData(props.node);
       const activityType = data.activityType ?? 'task';
 
-      const markers: MarkerSpec = { left: [], center: [], right: [] };
+      const markers: Markers = { left: [], center: [], right: [] };
       if (BPMNActivityNodeDefinition.isSubprocessActivity(activityType)) {
-        if (!props.nodeProps.custom.bpmnActivity.expanded) markers.center.push('subprocess');
+        if (!props.nodeProps.custom.bpmnActivity.expanded)
+          markers.center.push(getIcon(squarePlusIcon));
 
-        if (data.subprocessType === 'loop') markers.left.push('loop');
-        else if (data.subprocessType === 'compensation') markers.left.push('compensation');
-        else if (data.subprocessType === 'ad-hoc') markers.right.push('ad-hoc');
+        if (data.subprocessType === 'loop') markers.left.push(getIcon(arrowBackUpIcon));
+        else if (data.subprocessType === 'compensation')
+          markers.left.push(getIcon(playerTrackPrevIcon));
+        else if (data.subprocessType === 'ad-hoc') markers.right.push(getIcon(tildeIcon));
         else if (data.subprocessType === 'compensation-and-ad-hoc') {
-          markers.left.push('compensation');
-          markers.right.push('ad-hoc');
-        } else if (data.subprocessType === 'multi-instance') markers.left.push('parallel');
+          markers.left.push(getIcon(playerTrackPrevIcon));
+          markers.right.push(getIcon(tildeIcon));
+        } else if (data.subprocessType === 'multi-instance')
+          markers.left.push(getIcon(linesVerticalIcon));
 
         if (props.nodeProps.custom.bpmnActivity.expanded) {
           markers.left.forEach(m => markers.center.push(m));
@@ -258,13 +254,17 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
         }
       } else {
         // Use individual marker properties for regular tasks
-        if (data.loop) markers.center.push('loop');
-        if (data.multiInstance === 'sequential') markers.center.push('sequential');
-        if (data.multiInstance === 'parallel') markers.center.push('parallel');
-        if (data.compensation) markers.center.push('compensation');
+        if (data.loop) markers.center.push(getIcon(arrowBackUpIcon));
+        if (data.multiInstance === 'sequential') markers.center.push(getIcon(linesHorizontalIcon));
+        if (data.multiInstance === 'parallel') markers.center.push(getIcon(linesVerticalIcon));
+        if (data.compensation) markers.center.push(getIcon(playerTrackPrevIcon));
       }
 
-      this.addMarkers(node, markers, shapeBuilder);
+      renderMarkers(node, markers, shapeBuilder, {
+        size: MARKER_SIZE,
+        spacing: MARKER_SPACING,
+        bottomMargin: BOTTOM_MARGIN
+      });
 
       if (activityType === 'transaction') {
         shapeBuilder.path(
@@ -285,7 +285,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
       const iconSvg = taskType ? TASK_TYPE_ICONS[taskType] : undefined;
 
       if (iconSvg) {
-        const icon = getSVGIcon(iconSvg);
+        const icon = getIcon(iconSvg);
 
         const dest = Box.fromCorners(
           _p(node.bounds.x + ICON_MARGIN, node.bounds.y + ICON_MARGIN),
@@ -307,61 +307,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
           )
         )
       );
-    }
-
-    private addMarkers(node: DiagramNode, markers: MarkerSpec, shapeBuilder: ShapeBuilder) {
-      const renderMarkers = (markers: MarkerType[], pos: Point) => {
-        let currentX = pos.x;
-
-        for (const marker of markers) {
-          let icon: Icon;
-          switch (marker) {
-            case 'loop':
-              icon = getSVGIcon(arrowBackUpIcon);
-              break;
-            case 'compensation':
-              icon = getSVGIcon(playerTrackPrevIcon);
-              break;
-            case 'ad-hoc':
-              icon = getSVGIcon(tildeIcon);
-              break;
-            case 'subprocess':
-              icon = getSVGIcon(squarePlusIcon);
-              break;
-            case 'sequential':
-              icon = getSVGIcon(linesHorizontalIcon);
-              break;
-            case 'parallel':
-              icon = getSVGIcon(linesVerticalIcon);
-              break;
-          }
-
-          renderIcon(
-            icon,
-            Box.fromCorners(_p(currentX, pos.y), _p(currentX + MARKER_SIZE, pos.y + MARKER_SIZE)),
-            node.renderProps,
-            shapeBuilder
-          );
-
-          currentX += MARKER_SIZE + MARKER_SPACING;
-        }
-      };
-
-      const width = (arr: MarkerType[]) =>
-        arr.length * MARKER_SIZE + (arr.length - 1) * MARKER_SPACING;
-
-      const bounds = node.bounds;
-      const centerX = bounds.x + bounds.w / 2;
-
-      const y = bounds.y + bounds.h - MARKER_SIZE - BOTTOM_MARGIN;
-
-      const centerWidth = width(markers.center);
-      renderMarkers(markers.center, _p(centerX - centerWidth / 2, y));
-
-      const leftWidth = width(markers.left);
-      renderMarkers(markers.left, _p(centerX - centerWidth / 2 - MARKER_SPACING - leftWidth, y));
-
-      renderMarkers(markers.right, _p(centerX + centerWidth / 2 + MARKER_SPACING, y));
     }
   };
 

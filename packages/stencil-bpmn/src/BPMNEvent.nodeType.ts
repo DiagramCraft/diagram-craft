@@ -8,7 +8,7 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
-  getSVGIcon,
+  getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
   renderIcon
@@ -163,47 +163,47 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
       const shouldUseFilledIcon = eventType === 'end' || data.throwing;
       if (data.marker === 'message') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? mailFilledIcon : mailIcon),
+          getIcon(shouldUseFilledIcon ? mailFilledIcon : mailIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'timer') {
-        this.renderIcon(getSVGIcon(clockHour3Icon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(clockHour3Icon), props.node, shapeBuilder);
       } else if (data.marker === 'error') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? zigzagFilledIcon : zigzagIcon),
+          getIcon(shouldUseFilledIcon ? zigzagFilledIcon : zigzagIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'escalation') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? navigationFilledIcon : navigationIcon),
+          getIcon(shouldUseFilledIcon ? navigationFilledIcon : navigationIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'cancel') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? xFilledIcon : xIcon),
+          getIcon(shouldUseFilledIcon ? xFilledIcon : xIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'compensation') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? playerTrackPrevFilledIcon : playerTrackPrevIcon),
+          getIcon(shouldUseFilledIcon ? playerTrackPrevFilledIcon : playerTrackPrevIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'conditional') {
-        this.renderIcon(getSVGIcon(boxWithLinesIcon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(boxWithLinesIcon), props.node, shapeBuilder);
       } else if (data.marker === 'link') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? arrowBigRightFilledIcon : arrowBigRightIcon),
+          getIcon(shouldUseFilledIcon ? arrowBigRightFilledIcon : arrowBigRightIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'signal') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? triangleFilledIcon : triangleIcon),
+          getIcon(shouldUseFilledIcon ? triangleFilledIcon : triangleIcon),
           props.node,
           shapeBuilder
         );
@@ -223,12 +223,12 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         });
       } else if (data.marker === 'multiple') {
         this.renderIcon(
-          getSVGIcon(shouldUseFilledIcon ? pentagonFilledIcon : pentagonIcon),
+          getIcon(shouldUseFilledIcon ? pentagonFilledIcon : pentagonIcon),
           props.node,
           shapeBuilder
         );
       } else if (data.marker === 'parallel-multiple') {
-        this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(crossIcon), props.node, shapeBuilder);
       }
 
       shapeBuilder.text(

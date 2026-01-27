@@ -8,9 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { getSVGIcon, Icon, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
+import { getIcon, Markers, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
 import {
   arrowBackUpIcon,
   linesHorizontalIcon,
@@ -108,8 +107,6 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
       builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
       builder.text(this);
 
-      const markers: Icon[] = [];
-
       const parent = props.node.parent;
 
       const data = this.getData(props.node);
@@ -119,40 +116,33 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
           ? parent.renderProps.custom.bpmnChoreographyActivity
           : { expanded: false };
 
+      const markers: Markers = { left: [], center: [], right: [] };
+
       if (props.nodeProps.custom.bpmnChoreographyActivityParticipant.position === 'middle') {
         if (!parentProps?.expanded) {
           if (data.loopType === 'parallel') {
-            markers.push(getSVGIcon(linesVerticalIcon));
+            markers.center.push(getIcon(linesVerticalIcon));
           } else if (data.loopType === 'sequential') {
-            markers.push(getSVGIcon(linesHorizontalIcon));
+            markers.center.push(getIcon(linesHorizontalIcon));
           } else if (data.loopType === 'standard') {
-            markers.push(getSVGIcon(arrowBackUpIcon));
+            markers.center.push(getIcon(arrowBackUpIcon));
           }
 
           if (parentData?.type === 'sub-choreography') {
-            markers.push(getSVGIcon(squarePlusIcon));
+            markers.center.push(getIcon(squarePlusIcon));
           }
         }
       } else {
         if (data.multiple) {
-          markers.push(getSVGIcon(linesVerticalIcon));
+          markers.center.push(getIcon(linesVerticalIcon));
         }
       }
 
-      if (markers.length > 0) {
-        const width = markers.length * ICON_SIZE + (markers.length - 1) * ICON_MARGIN;
-        const centerX = props.node.bounds.x + props.node.bounds.w / 2;
-
-        let x = centerX - width / 2;
-        for (const marker of markers) {
-          const position = Box.fromCorners(
-            _p(x, props.node.bounds.y + props.node.bounds.h - ICON_SIZE - BOTTOM_MARGIN),
-            _p(x + ICON_SIZE, props.node.bounds.y + props.node.bounds.h - BOTTOM_MARGIN)
-          );
-          renderIcon(marker, position, props.nodeProps, builder);
-          x += ICON_SIZE + ICON_MARGIN;
-        }
-      }
+      renderMarkers(props.node, markers, builder, {
+        size: ICON_SIZE,
+        bottomMargin: BOTTOM_MARGIN,
+        spacing: ICON_MARGIN
+      });
     }
   };
 

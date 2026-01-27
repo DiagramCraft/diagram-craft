@@ -18,7 +18,7 @@ import {
   xFilledIcon
 } from './icons/icons';
 import {
-  getSVGIcon,
+  getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
   renderIcon
@@ -114,7 +114,7 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
       const data = this.getData(props.node);
 
       if (data.type === 'exclusive') {
-        this.renderIcon(getSVGIcon(xFilledIcon), props.node, shapeBuilder);
+        this.renderIcon(getIcon(xFilledIcon), props.node, shapeBuilder);
       } else if (data.type === 'inclusive') {
         const innerCircle = this.makeCircle(bounds, cx, cy, 0.55);
 
@@ -122,9 +122,9 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
           style: { fill: 'none', strokeWidth: '3' }
         });
       } else if (data.type === 'parallel') {
-        this.renderIcon(getSVGIcon(crossFilledIcon), props.node, shapeBuilder, 7);
+        this.renderIcon(getIcon(crossFilledIcon), props.node, shapeBuilder, 7);
       } else if (data.type === 'complex') {
-        this.renderIcon(getSVGIcon(medicalCrossFilledIcon), props.node, shapeBuilder, 7);
+        this.renderIcon(getIcon(medicalCrossFilledIcon), props.node, shapeBuilder, 7);
       } else if (data.type.startsWith('event-based')) {
         const innerCircle = this.makeCircle(bounds, cx, cy, 0.6);
         shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
@@ -136,11 +136,11 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
           shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
             style: { fill: 'none', strokeWidth: '1' }
           });
-          this.renderIcon(getSVGIcon(pentagonIcon), props.node, shapeBuilder, 14);
+          this.renderIcon(getIcon(pentagonIcon), props.node, shapeBuilder, 14);
         } else if (data.type === 'event-based-start-process-inclusive') {
-          this.renderIcon(getSVGIcon(pentagonIcon), props.node, shapeBuilder, 14);
+          this.renderIcon(getIcon(pentagonIcon), props.node, shapeBuilder, 14);
         } else {
-          this.renderIcon(getSVGIcon(crossIcon), props.node, shapeBuilder, 14);
+          this.renderIcon(getIcon(crossIcon), props.node, shapeBuilder, 14);
         }
       }
     }

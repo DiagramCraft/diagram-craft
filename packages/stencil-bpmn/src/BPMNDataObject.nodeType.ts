@@ -12,10 +12,11 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { arrowBigRightFilledIcon, arrowBigRightIcon, linesVerticalIcon } from './icons/icons';
 import {
-  getSVGIcon,
+  getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
-  renderIcon
+  renderIcon,
+  renderMarkers
 } from '@diagram-craft/stencil-bpmn/utils';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -125,25 +126,19 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
       const data = this.getData(props.node);
 
       if (data.collection) {
-        renderIcon(
-          getSVGIcon(linesVerticalIcon),
-          Box.fromCorners(
-            _p(
-              bounds.x + bounds.w / 2 - MARKER_SIZE / 2,
-              bounds.y + bounds.h - BOTTOM_MARGIN - MARKER_SIZE
-            ),
-            _p(bounds.x + bounds.w / 2 + MARKER_SIZE / 2, bounds.y + bounds.h - BOTTOM_MARGIN)
-          ),
-          props.nodeProps,
-          shapeBuilder
+        renderMarkers(
+          props.node,
+          { center: [getIcon(linesVerticalIcon)], left: [], right: [] },
+          shapeBuilder,
+          { size: MARKER_SIZE, spacing: 0, bottomMargin: BOTTOM_MARGIN }
         );
       }
 
       let icon: Icon | undefined;
       if (data.type === 'input') {
-        icon = getSVGIcon(arrowBigRightIcon);
+        icon = getIcon(arrowBigRightIcon);
       } else if (data.type === 'output') {
-        icon = getSVGIcon(arrowBigRightFilledIcon);
+        icon = getIcon(arrowBigRightFilledIcon);
       }
 
       if (icon) {

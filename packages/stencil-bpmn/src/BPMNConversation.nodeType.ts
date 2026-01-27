@@ -10,7 +10,7 @@ import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagram
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { squarePlusIcon } from './icons/icons';
-import { getSVGIcon, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
+import { getIcon, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
@@ -79,16 +79,16 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
 
       const data = this.getData(props.node);
       if (data.type === 'sub-conversation' || data.type === 'call-conversation-collaboration') {
-        const icon = getSVGIcon(squarePlusIcon);
-
-        const centerX = bounds.x + bounds.w / 2;
-        const margin = 1.5;
-        const position = Box.fromCorners(
-          _p(centerX - ICON_SIZE / 2, bounds.y + bounds.h - ICON_SIZE - margin),
-          _p(centerX + ICON_SIZE / 2, bounds.y + bounds.h - margin)
+        renderMarkers(
+          props.node,
+          { center: [getIcon(squarePlusIcon)], left: [], right: [] },
+          shapeBuilder,
+          {
+            size: ICON_SIZE,
+            spacing: 0,
+            bottomMargin: 1.5
+          }
         );
-
-        renderIcon(icon, position, props.nodeProps, shapeBuilder);
       }
     }
 

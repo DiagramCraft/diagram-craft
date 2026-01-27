@@ -1,7 +1,7 @@
-import { _p } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
-import { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -57,6 +57,53 @@ export const renderIcon = (
   );
 };
 
+export type Markers = {
+  left: Array<Icon>;
+  center: Array<Icon>;
+  right: Array<Icon>;
+};
+
+export const renderMarkers = (
+  node: DiagramNode,
+  markers: Markers,
+  shapeBuilder: ShapeBuilder,
+  dim: {
+    size: number;
+    bottomMargin: number;
+    spacing: number;
+  }
+) => {
+  const renderIconArray = (markers: Array<Icon>, pos: Point) => {
+    let currentX = pos.x;
+
+    for (const icon of markers) {
+      renderIcon(
+        icon,
+        Box.fromCorners(_p(currentX, pos.y), _p(currentX + dim.size, pos.y + dim.size)),
+        node.renderProps,
+        shapeBuilder
+      );
+
+      currentX += dim.size + dim.spacing;
+    }
+  };
+
+  const width = (arr: Icon[]) => arr.length * dim.size + (arr.length - 1) * dim.spacing;
+
+  const bounds = node.bounds;
+  const centerX = bounds.x + bounds.w / 2;
+
+  const y = bounds.y + bounds.h - dim.size - dim.bottomMargin;
+
+  const centerWidth = width(markers.center);
+  renderIconArray(markers.center, _p(centerX - centerWidth / 2, y));
+
+  const leftWidth = width(markers.left);
+  renderIconArray(markers.left, _p(centerX - centerWidth / 2 - dim.spacing - leftWidth, y));
+
+  renderIconArray(markers.right, _p(centerX + centerWidth / 2 + dim.spacing, y));
+};
+
 export type Icon = {
   viewbox: Box;
   pathList: PathList;
@@ -65,7 +112,7 @@ export type Icon = {
 
 const iconCache = new Map<number, Icon>();
 
-export const getSVGIcon = (s: string) => {
+export const getIcon = (s: string) => {
   const key = stringHash(s);
   if (iconCache.has(key)) return iconCache.get(key)!;
 
