@@ -4,7 +4,6 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -27,7 +26,13 @@ import {
   tildeIcon,
   userIcon
 } from './icons/icons';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import {
+  getSVGIcon,
+  Icon,
+  RECTANGULAR_SHAPE_ANCHORS,
+  renderIcon,
+  roundedRectOutline
+} from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
@@ -40,7 +45,6 @@ import {
   MARKER_SIZE,
   MARKER_SPACING
 } from '@diagram-craft/stencil-bpmn/spacing';
-import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type SubprocessType =
   | 'default'
@@ -163,23 +167,6 @@ const SCHEMA: DataSchema = {
   ]
 };
 
-const createOutline = (bounds: Box, radius: number) => {
-  const xr = radius / bounds.w;
-  const yr = radius / bounds.h;
-
-  return new PathListBuilder()
-    .withTransform(fromUnitLCS(bounds))
-    .moveTo(_p(xr, 0))
-    .lineTo(_p(1 - xr, 0))
-    .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
-    .lineTo(_p(1, 1 - yr))
-    .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
-    .lineTo(_p(xr, 1))
-    .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
-    .lineTo(_p(0, yr))
-    .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
-};
-
 type MarkerSpec = {
   left: MarkerType[];
   center: MarkerType[];
@@ -281,7 +268,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
       if (activityType === 'transaction') {
         shapeBuilder.path(
-          createOutline(
+          roundedRectOutline(
             Box.grow(node.bounds, -TRANSACTION_OFFSET),
             props.nodeProps.custom.bpmnActivity.radius - TRANSACTION_OFFSET
           )
@@ -401,6 +388,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
-    return createOutline(node.bounds, node.renderProps.custom.bpmnActivity.radius);
+    return roundedRectOutline(node.bounds, node.renderProps.custom.bpmnActivity.radius);
   }
 }

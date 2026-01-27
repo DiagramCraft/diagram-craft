@@ -11,11 +11,15 @@ import { mustExist } from '@diagram-craft/utils/assert';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { arrowBigRightFilledIcon, arrowBigRightIcon, linesVerticalIcon } from './icons/icons';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import {
+  getSVGIcon,
+  Icon,
+  RECTANGULAR_SHAPE_ANCHORS,
+  renderIcon
+} from '@diagram-craft/stencil-bpmn/utils';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type Data = {
   collection?: boolean;

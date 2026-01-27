@@ -7,7 +7,12 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import {
+  getSVGIcon,
+  Icon,
+  RECTANGULAR_SHAPE_ANCHORS,
+  renderIcon
+} from '@diagram-craft/stencil-bpmn/utils';
 import { Box } from '@diagram-craft/geometry/box';
 import {
   arrowBigRightFilledIcon,
@@ -33,7 +38,6 @@ import {
 import { Anchor } from '@diagram-craft/model/anchor';
 import { _p } from '@diagram-craft/geometry/point';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type EventType = 'start' | 'intermediate' | 'end';
 type MarkerType =

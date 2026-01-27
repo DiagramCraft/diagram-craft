@@ -10,7 +10,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { getSVGIcon, Icon, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 import {
   arrowBackUpIcon,
   linesHorizontalIcon,
@@ -21,7 +21,6 @@ import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
-import { renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type ParticipantPosition = 'top' | 'middle' | 'bottom';
 type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';

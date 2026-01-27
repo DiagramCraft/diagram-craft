@@ -17,9 +17,13 @@ import {
   pentagonIcon,
   xFilledIcon
 } from './icons/icons';
-import { getSVGIcon, Icon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import {
+  getSVGIcon,
+  Icon,
+  RECTANGULAR_SHAPE_ANCHORS,
+  renderIcon
+} from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { RECTANGULAR_SHAPE_ANCHORS, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 
 type GatewayType =
   | 'default'

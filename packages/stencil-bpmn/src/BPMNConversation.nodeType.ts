@@ -10,9 +10,8 @@ import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagram
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { squarePlusIcon } from './icons/icons';
-import { getSVGIcon } from '@diagram-craft/stencil-bpmn/svgIcon';
+import { getSVGIcon, renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { renderIcon } from '@diagram-craft/stencil-bpmn/utils';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
 type ConversationType =
