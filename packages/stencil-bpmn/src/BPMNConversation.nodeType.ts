@@ -8,9 +8,8 @@ import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { Box } from '@diagram-craft/geometry/box';
 import { squarePlusIcon } from './icons/icons';
-import { getIcon, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
+import { createBelowShapeTextBox, getIcon, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
@@ -71,10 +70,7 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
         '1',
         props.node.getText(),
         props.nodeProps.text,
-        Box.fromCorners(
-          _p(bounds.x - 50, bounds.y + bounds.h + 10),
-          _p(bounds.x + bounds.w + 50, bounds.y + bounds.h + 20)
-        )
+        createBelowShapeTextBox(bounds)
       );
 
       const data = this.getData(props.node);

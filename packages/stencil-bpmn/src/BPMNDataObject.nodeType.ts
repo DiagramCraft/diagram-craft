@@ -12,6 +12,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { arrowBigRightFilledIcon, arrowBigRightIcon, linesVerticalIcon } from './icons/icons';
 import {
+  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -21,6 +22,10 @@ import {
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { Anchor } from '@diagram-craft/model/anchor';
+import { ICON_SIZE, MARKER_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
+
+const ICON_MARGIN = 2;
+const BOTTOM_MARGIN = 1;
 
 type Data = {
   collection?: boolean;
@@ -77,11 +82,6 @@ const innerPaths = PathListBuilder.fromString(
 const pathBounds = templatePaths.bounds();
 const path = mustExist(templatePaths.all()[0]);
 
-const ICON_MARGIN = 2;
-const ICON_SIZE = 15;
-const MARKER_SIZE = 12;
-const BOTTOM_MARGIN = 1;
-
 // NodeDefinition and Shape *****************************************************
 
 export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
@@ -117,10 +117,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
         '1',
         props.node.getText(),
         props.nodeProps.text,
-        Box.fromCorners(
-          _p(bounds.x - 50, bounds.y + bounds.h + 10),
-          _p(bounds.x + bounds.w + 50, bounds.y + bounds.h + 20)
-        )
+        createBelowShapeTextBox(bounds)
       );
 
       const data = this.getData(props.node);

@@ -8,6 +8,7 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
+  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -36,7 +37,6 @@ import {
   zigzagIcon
 } from './icons/icons';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { _p } from '@diagram-craft/geometry/point';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type EventType = 'start' | 'intermediate' | 'end';
@@ -236,13 +236,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         '1',
         props.node.getText(),
         props.nodeProps.text,
-        Box.fromCorners(
-          _p(props.node.bounds.x - 50, props.node.bounds.y + props.node.bounds.h + 10),
-          _p(
-            props.node.bounds.x + props.node.bounds.w + 50,
-            props.node.bounds.y + props.node.bounds.h + 20
-          )
-        )
+        createBelowShapeTextBox(props.node.bounds)
       );
     }
 

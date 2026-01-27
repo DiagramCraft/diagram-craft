@@ -5,7 +5,6 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -18,6 +17,7 @@ import {
   xFilledIcon
 } from './icons/icons';
 import {
+  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -102,10 +102,7 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
         '1',
         props.node.getText(),
         props.nodeProps.text,
-        Box.fromCorners(
-          _p(bounds.x - 50, bounds.y + bounds.h + 10),
-          _p(bounds.x + bounds.w + 50, bounds.y + bounds.h + 20)
-        )
+        createBelowShapeTextBox(bounds)
       );
 
       const cx = bounds.x + bounds.w / 2;
