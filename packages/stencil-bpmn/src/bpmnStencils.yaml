@@ -31,7 +31,7 @@ stencils:
             text: Participant 1
         - id: er40je9
           type: node
-          nodeType: bpmnChoreographyActivityParticipant
+          nodeType: bpmnChoreographyActivityName
           bounds:
             x: 0
             'y': 20
@@ -39,9 +39,6 @@ stencils:
             h: 50
             r: 0
           props:
-            custom:
-              bpmnChoreographyActivityParticipant:
-                position: middle
             text:
               bottom: 6
           metadata:

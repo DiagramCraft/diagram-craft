@@ -10,23 +10,14 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { getIcon, Markers, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
-import {
-  arrowBackUpIcon,
-  linesHorizontalIcon,
-  linesVerticalIcon,
-  squarePlusIcon
-} from './icons/icons';
+import { linesVerticalIcon } from './icons/icons';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { isNode } from '@diagram-craft/model/diagramElement';
-import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
-type ParticipantPosition = 'top' | 'middle' | 'bottom';
-type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
+type ParticipantPosition = 'top' | 'bottom';
 
 type Data = {
   initiating?: boolean;
-  loopType?: LoopType;
   multiple?: boolean;
 };
 
@@ -39,17 +30,6 @@ const SCHEMA: DataSchema = {
       id: 'initiating',
       name: 'Initiating',
       type: 'boolean'
-    },
-    {
-      id: 'loopType',
-      name: 'Loop Type',
-      type: 'select',
-      options: [
-        { label: 'None', value: 'none' },
-        { label: 'Standard', value: 'standard' },
-        { label: 'Sequential', value: 'sequential' },
-        { label: 'Parallel', value: 'parallel' }
-      ]
     },
     {
       id: 'multiple',
@@ -95,47 +75,15 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
       return { ...(data?.data ?? {}) } as Data;
     }
 
-    private getParentData(node: DiagramNode): BPMNChoreographyActivityData {
-      const parent = node.parent;
-      if (!isNode(parent)) return {};
-
-      const data = parent.metadata.data?.data?.find(e => e.schema === 'bpmnChoreographyActivity');
-      return { ...(data?.data ?? {}) } as BPMNChoreographyActivityData;
-    }
-
     buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
       builder.text(this);
 
-      const parent = props.node.parent;
-
       const data = this.getData(props.node);
-      const parentData = this.getParentData(props.node);
-      const parentProps =
-        parent && isNode(parent)
-          ? parent.renderProps.custom.bpmnChoreographyActivity
-          : { expanded: false };
-
       const markers: Markers = { left: [], center: [], right: [] };
 
-      if (props.nodeProps.custom.bpmnChoreographyActivityParticipant.position === 'middle') {
-        if (!parentProps?.expanded) {
-          if (data.loopType === 'parallel') {
-            markers.center.push(getIcon(linesVerticalIcon));
-          } else if (data.loopType === 'sequential') {
-            markers.center.push(getIcon(linesHorizontalIcon));
-          } else if (data.loopType === 'standard') {
-            markers.center.push(getIcon(arrowBackUpIcon));
-          }
-
-          if (parentData?.type === 'sub-choreography') {
-            markers.center.push(getIcon(squarePlusIcon));
-          }
-        }
-      } else {
-        if (data.multiple) {
-          markers.center.push(getIcon(linesVerticalIcon));
-        }
+      if (data.multiple) {
+        markers.center.push(getIcon(linesVerticalIcon));
       }
 
       renderMarkers(props.node, markers, builder, {
@@ -163,7 +111,7 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
         .lineTo(_p(0, 1))
         .lineTo(_p(0, yr))
         .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
-    } else if (position === 'bottom') {
+    } else {
       // Round bottom two corners only
       return new PathListBuilder()
         .withTransform(fromUnitLCS(def.bounds))
@@ -175,15 +123,6 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
         .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
         .lineTo(_p(0, 0))
         .close();
-    } else {
-      // Middle position - no rounded corners
-      return new PathListBuilder()
-        .withTransform(fromUnitLCS(def.bounds))
-        .moveTo(_p(0, 0))
-        .lineTo(_p(1, 0))
-        .lineTo(_p(1, 1))
-        .lineTo(_p(0, 1))
-        .close();
     }
   }
 
@@ -191,7 +130,6 @@ export class BPMNChoreographyActivityParticipantNodeDefinition extends ShapeNode
     const def = new CustomPropertyDefinition(p => [
       p.select(node, 'Position', 'custom.bpmnChoreographyActivityParticipant.position', [
         { value: 'top', label: 'Top' },
-        { value: 'middle', label: 'Middle' },
         { value: 'bottom', label: 'Bottom' }
       ])
     ]);

@@ -17,8 +17,11 @@ import { roundedRectOutline } from '@diagram-craft/stencil-bpmn/utils';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
 
+type LoopType = 'none' | 'standard' | 'sequential' | 'parallel';
+
 export type Data = {
   type?: ChoreographyTaskType;
+  loopType?: LoopType;
 };
 
 const SCHEMA: DataSchema = {
@@ -39,6 +42,17 @@ const SCHEMA: DataSchema = {
         { value: 'task', label: 'Task' },
         { value: 'sub-choreography', label: 'Sub-Choreography' },
         { value: 'call', label: 'Call' }
+      ]
+    },
+    {
+      id: 'loopType',
+      name: 'Loop Type',
+      type: 'select',
+      options: [
+        { label: 'None', value: 'none' },
+        { label: 'Standard', value: 'standard' },
+        { label: 'Sequential', value: 'sequential' },
+        { label: 'Parallel', value: 'parallel' }
       ]
     }
   ]

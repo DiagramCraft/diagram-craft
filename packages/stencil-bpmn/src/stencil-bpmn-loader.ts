@@ -17,6 +17,7 @@ import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-b
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import stencils from './bpmnStencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
+import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 
 export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
   const bpmnStencils: StencilPackage = {
@@ -487,6 +488,19 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
+  registerStencil(r, bpmnStencils, new BPMNChoreographyActivityNameNodeDefinition(), {
+    id: 'bpmn-choreography-name',
+    name: 'Choreography Activity Name',
+    subPackage: 'choreography',
+    size: {
+      w: 100,
+      h: 30
+    },
+    texts: {
+      text: 'Task'
+    }
+  });
+
   registerStencil(r, bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
     id: 'bpmn-choreography-envelope',
     name: 'Choreography Envelope',
@@ -602,7 +616,10 @@ export const registerBPMNShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
-  bpmnStencils.stencils.push(...loadStencilsFromYaml(stencils));
+  loadStencilsFromYaml(stencils).forEach(s => {
+    bpmnStencils.stencils.push(s);
+    bpmnStencils.subPackages!.find(p => p.id === 'choreography')?.stencils.push(s);
+  });
 
   r.stencilRegistry.register(bpmnStencils, true);
 };
