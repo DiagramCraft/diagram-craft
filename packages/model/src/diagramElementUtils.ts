@@ -121,11 +121,7 @@ export const cloneElements = (
     );
   };
 
-  if (uow) {
-    return cb(uow);
-  } else {
-    return UnitOfWork.executeSilently(targetLayer.diagram, cb);
-  }
+  return uow ? cb(uow) : UnitOfWork.executeSilently(targetLayer.diagram, cb);
 };
 
 export const assignNewBounds = (

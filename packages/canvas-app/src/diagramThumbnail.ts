@@ -9,12 +9,13 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 export const createStencilDiagram = (defs: Definitions) => {
   const id = newid();
-  return new Diagram(
-    id,
-    id,
-    new DiagramDocument(defs.nodeDefinitions, defs.edgeDefinitions, true, new NoOpCRDTRoot()),
-    new NoOpCRDTMap<DiagramCRDT>()
+  const doc = new DiagramDocument(
+    defs.nodeDefinitions,
+    defs.edgeDefinitions,
+    true,
+    new NoOpCRDTRoot()
   );
+  return new Diagram(id, id, doc, new NoOpCRDTMap<DiagramCRDT>());
 };
 
 export const createThumbnail = (
