@@ -105,19 +105,27 @@ export const deleteElements = (elements: readonly DiagramElement[], uow: UnitOfW
 export const cloneElements = (
   elements: readonly DiagramElement[],
   targetLayer: RegularLayer,
-  uow: UnitOfWork
+  uow?: UnitOfWork
 ) => {
-  const source = elements.map(e => deepClone(serializeDiagramElement(e)));
+  const cb = (uow: UnitOfWork) => {
+    const source = elements.map(e => deepClone(serializeDiagramElement(e)));
 
-  assignNewIdsToSerializedElements(source);
+    assignNewIdsToSerializedElements(source);
 
-  return deserializeDiagramElements(
-    source,
-    targetLayer,
-    uow,
-    new ElementLookup<DiagramNode>(),
-    new ElementLookup<DiagramEdge>()
-  );
+    return deserializeDiagramElements(
+      source,
+      targetLayer,
+      uow,
+      new ElementLookup<DiagramNode>(),
+      new ElementLookup<DiagramEdge>()
+    );
+  };
+
+  if (uow) {
+    return cb(uow);
+  } else {
+    return UnitOfWork.executeSilently(targetLayer.diagram, cb);
+  }
 };
 
 export const assignNewBounds = (

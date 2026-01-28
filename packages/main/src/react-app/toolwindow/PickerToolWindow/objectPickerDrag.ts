@@ -191,9 +191,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.#elements = UnitOfWork.execute(this.diagram, uow =>
-      cloneElements(sourceLayer.elements, activeLayer, uow)
-    );
+    this.#elements = cloneElements(sourceLayer.elements, activeLayer);
 
     const sourceBounds = Box.boundingBox(this.source.map(e => e.bounds));
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
