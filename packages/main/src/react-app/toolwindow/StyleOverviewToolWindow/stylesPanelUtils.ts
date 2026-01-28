@@ -101,8 +101,8 @@ export const createPreview = (
   nodeType: string,
   defs: Definitions
 ) => {
-  if (type === 'edge') {
-    const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+  const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+    if (type === 'edge') {
       return [
         ElementFactory.edge(
           newid(),
@@ -114,14 +114,7 @@ export const createPreview = (
           layer
         )
       ];
-    }, defs);
-
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
-
-    return { diagram, element: elements[0] };
-  } else {
-    const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+    } else {
       return [
         ElementFactory.node(
           newid(),
@@ -132,14 +125,14 @@ export const createPreview = (
           {}
         )
       ];
-    }, defs);
+    }
+  }, defs);
 
-    // Set viewBox to show the node with padding
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
+  // Set viewBox to show the node with padding
+  diagram.viewBox.dimensions = { w: 50, h: 50 };
+  diagram.viewBox.offset = { x: 0, y: 0 };
 
-    return { diagram, element: elements[0]! };
-  }
+  return { diagram: diagram, element: elements[0]! };
 };
 
 const sortGroups = <T>(groups: StylesheetGroup<T>[]) =>
