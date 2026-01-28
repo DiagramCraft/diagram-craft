@@ -6,6 +6,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { Box } from '@diagram-craft/geometry/box';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -45,34 +46,35 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const v = diagram.viewBox;
 
-        const node = UnitOfWork.execute(
-          diagram,
-          uow => cloneElements(stencil.elementsForPicker(diagram), layer as RegularLayer, uow)[0]!
-        );
+        const elements = cloneElements(stencil.elementsForPicker(diagram), layer as RegularLayer);
+        const bbox = Box.boundingBox(elements.map(e => e.bounds));
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+          for (const node of elements) {
+            layer.addElement(node, uow);
+
+            node.updateMetadata(meta => {
+              meta.style = document.styles.activeNodeStylesheet.id;
+              meta.textStyle = document.styles.activeTextStylesheet.id;
+            }, uow);
+          }
+
           assignNewBounds(
-            [node],
+            elements,
             {
-              x: v.offset.x + (v.dimensions.w - node.bounds.w) / 2,
-              y: v.offset.y + (v.dimensions.h - node.bounds.h) / 2
+              x: v.offset.x + (v.dimensions.w - bbox.w) / 2,
+              y: v.offset.y + (v.dimensions.h - bbox.h) / 2
             },
 
             // TODO: Adjust scale so it always fits into the window
             { x: 1, y: 1 },
             uow
           );
-          node.updateMetadata(meta => {
-            meta.style = document.styles.activeNodeStylesheet.id;
-            meta.textStyle = document.styles.activeTextStylesheet.id;
-          }, uow);
-
-          layer.addElement(node, uow);
         });
 
         diagram.document.props.recentStencils.register(stencil.id);
 
-        diagram.selection.toggle(node);
+        diagram.selection.setElements(elements);
       },
       onCancel: () => {},
       props: {
