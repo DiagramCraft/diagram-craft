@@ -4,10 +4,7 @@ import type { DiagramElement, ElementPropsForRendering } from '@diagram-craft/mo
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
-import {
-  createThumbnailForEdge,
-  createThumbnail
-} from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -105,22 +102,24 @@ export const createPreview = (
   defs: Definitions
 ) => {
   if (type === 'edge') {
-    const { diagram, edge } = createThumbnailForEdge((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.edge(
-        newid(),
-        new FreeEndpoint({ x: 5, y: 25 }),
-        new FreeEndpoint({ x: 45, y: 25 }),
-        props as Partial<EdgeProps>,
-        {},
-        [],
-        layer
-      );
+    const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+      return [
+        ElementFactory.edge(
+          newid(),
+          new FreeEndpoint({ x: 5, y: 25 }),
+          new FreeEndpoint({ x: 45, y: 25 }),
+          props as Partial<EdgeProps>,
+          {},
+          [],
+          layer
+        )
+      ];
     }, defs);
 
     diagram.viewBox.dimensions = { w: 50, h: 50 };
     diagram.viewBox.offset = { x: 0, y: 0 };
 
-    return { diagram, element: edge };
+    return { diagram, element: elements[0] };
   } else {
     const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
       return [
