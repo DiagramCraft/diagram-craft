@@ -39,7 +39,8 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
       this.context.ui.showDialog({
         id: 'shapeSelect',
         props: {
-          title: 'Change shape'
+          title: 'Change shape',
+          excludeMultiElementStencils: true
         },
         onOk: (stencilId: string) => {
           const stencil = document.nodeDefinitions.stencilRegistry.getStencil(stencilId);

@@ -7,7 +7,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
-const createDiagram = (defs: Definitions) => {
+export const createStencilDiagram = (defs: Definitions) => {
   const id = newid();
   return new Diagram(
     id,
@@ -21,7 +21,7 @@ export const createThumbnail = (
   factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramElement[],
   definitions: Definitions
 ) => {
-  const diagram = createDiagram(definitions);
+  const diagram = createStencilDiagram(definitions);
 
   return UnitOfWork.execute(diagram, uow => {
     const layer = new RegularLayer(newid(), newid(), [], diagram);

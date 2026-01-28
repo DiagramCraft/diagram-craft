@@ -8,7 +8,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Box } from '@diagram-craft/geometry/box';
 
 const SIZE = 35;
@@ -71,7 +71,17 @@ export const ShapeSelectDialog = (props: Props) => {
 
   if (!props.open) return <div></div>;
 
-  const recentStencils = document.props.recentStencils.stencils;
+  const recentStencils = document.props.recentStencils.stencils.filter(s => {
+    const stencil = stencilRegistry.getStencil(s)!;
+    if (!stencil) return false;
+
+    if (props.excludeMultiElementStencils) {
+      const $d = createStencilDiagram(document.definitions);
+      const elements = stencil.elementsForPicker($d);
+      return elements.length === 1;
+    }
+    return true;
+  });
   return (
     <Dialog
       open={props.open}
@@ -148,4 +158,5 @@ type Props = {
   onOk: (stencilId: string) => void;
   onCancel?: () => void;
   title: string;
+  excludeMultiElementStencils?: boolean;
 };
