@@ -255,11 +255,13 @@ declare global {
   }
 }
 
+export type StencilElements = { bounds: Box; elements: DiagramElement[] };
+
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (diagram: Diagram) => { bounds: Box; elements: DiagramElement[] };
-  elementsForCanvas: (diagram: Diagram) => { bounds: Box; elements: DiagramElement[] };
+  elementsForPicker: (diagram: Diagram) => StencilElements;
+  elementsForCanvas: (diagram: Diagram) => StencilElements;
   type: 'default' | string;
 };
 

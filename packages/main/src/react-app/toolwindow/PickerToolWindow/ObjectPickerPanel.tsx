@@ -11,7 +11,6 @@ import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { Box } from '@diagram-craft/geometry/box';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -30,24 +29,16 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   }
 
   const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
-    d => n.elementsForPicker(d).elements,
-    doc.definitions
+    d => n.elementsForPicker(d),
+    doc.definitions,
+    { padding: 5 }
   );
 
-  const stencilBbox = Box.boundingBox(stencilElements.map(e => e.bounds));
-  stencilDiagram.viewBox.dimensions = {
-    w: stencilBbox.w + 10,
-    h: stencilBbox.h + 10
-  };
-  stencilDiagram.viewBox.offset = { x: -5, y: -5 };
-
-  const { elements: canvasElements, diagram: canvasDiagram } = createThumbnail(
-    d => n.elementsForCanvas(d).elements,
-    doc.definitions
+  const { elements: canvasElements } = createThumbnail(
+    d => n.elementsForCanvas(d),
+    doc.definitions,
+    { padding: 5 }
   );
-  const canvasBbox = Box.boundingBox(canvasElements.map(e => e.bounds));
-  canvasDiagram.viewBox.dimensions = { w: canvasBbox.w + 10, h: canvasBbox.h + 10 };
-  canvasDiagram.viewBox.offset = { x: -5, y: -5 };
 
   const entry: StencilEntry = {
     stencil: n,

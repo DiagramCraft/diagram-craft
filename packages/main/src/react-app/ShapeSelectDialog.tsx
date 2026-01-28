@@ -10,6 +10,7 @@ import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Box } from '@diagram-craft/geometry/box';
+import { isEdge } from '@diagram-craft/model/diagramElement';
 
 const SIZE = 35;
 
@@ -25,7 +26,7 @@ const getDiagram = (props: {
   }
 
   const { diagram, elements } = createThumbnail(
-    d => props.stencil.elementsForCanvas(d).elements,
+    d => props.stencil.elementsForCanvas(d),
     props.document.definitions
   );
   const bbox = Box.boundingBox(elements.map(e => e.bounds));
@@ -75,11 +76,14 @@ export const ShapeSelectDialog = (props: Props) => {
     const stencil = stencilRegistry.getStencil(s)!;
     if (!stencil) return false;
 
-    if (props.excludeMultiElementStencils) {
-      const $d = createStencilDiagram(document.definitions);
-      const elements = stencil.elementsForPicker($d).elements;
-      return elements.length === 1;
-    }
+    const { diagram: $d } = createStencilDiagram(document.definitions);
+
+    const elements = stencil.elementsForPicker($d).elements;
+
+    if (props.excludeMultiElementStencils && elements.length > 1) return false;
+
+    if (elements.length === 1 && !props.includeEdges && isEdge(elements[0])) return false;
+
     return true;
   });
   return (
@@ -159,4 +163,5 @@ type Props = {
   onCancel?: () => void;
   title: string;
   excludeMultiElementStencils?: boolean;
+  includeEdges?: boolean;
 };
