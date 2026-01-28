@@ -30,7 +30,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   }
 
   const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
-    d => n.elementsForPicker(d),
+    d => n.elementsForPicker(d).elements,
     doc.definitions
   );
 
@@ -42,7 +42,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
   const { elements: canvasElements, diagram: canvasDiagram } = createThumbnail(
-    d => n.elementsForCanvas(d),
+    d => n.elementsForCanvas(d).elements,
     doc.definitions
   );
   const canvasBbox = Box.boundingBox(canvasElements.map(e => e.bounds));

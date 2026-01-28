@@ -46,7 +46,10 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const v = diagram.viewBox;
 
-        const elements = cloneElements(stencil.elementsForPicker(diagram), layer as RegularLayer);
+        const elements = cloneElements(
+          stencil.elementsForPicker(diagram).elements,
+          layer as RegularLayer
+        );
         const bbox = Box.boundingBox(elements.map(e => e.bounds));
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {

@@ -8,6 +8,7 @@ import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { Box } from '@diagram-craft/geometry/box';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 export const loadStencilsFromYaml = (stencils: any) => {
@@ -35,7 +36,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
         );
         elements.forEach(e => layer.addElement(e, uow));
 
-        return elements;
+        return { elements: elements, bounds: Box.boundingBox(elements.map(e => e.bounds)) };
       });
     };
     dest.push({

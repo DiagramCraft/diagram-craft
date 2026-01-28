@@ -371,7 +371,7 @@ const SHAPES_DEFS = [
 
 const writeShape = (
   shape: string,
-  factory: (diagram: Diagram) => DiagramElement[],
+  factory: (diagram: Diagram) => { elements: DiagramElement[] },
   y: number,
   layer: RegularLayer,
   diagram: Diagram,
@@ -409,7 +409,7 @@ const writeShape = (
   UnitOfWork.execute(diagram, uow => {
     for (let i = 0; i < SHAPES_DEFS.length; i++) {
       const def = SHAPES_DEFS[i]!;
-      const els = factory(diagram);
+      const els = factory(diagram).elements;
       if (els.length !== 1) throw new Error('Expected single element');
 
       const el = els[0]!.duplicate(undefined, `${shape}-${i}`);

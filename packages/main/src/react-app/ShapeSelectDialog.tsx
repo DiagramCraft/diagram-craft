@@ -25,7 +25,7 @@ const getDiagram = (props: {
   }
 
   const { diagram, elements } = createThumbnail(
-    d => props.stencil.elementsForCanvas(d),
+    d => props.stencil.elementsForCanvas(d).elements,
     props.document.definitions
   );
   const bbox = Box.boundingBox(elements.map(e => e.bounds));
@@ -77,7 +77,7 @@ export const ShapeSelectDialog = (props: Props) => {
 
     if (props.excludeMultiElementStencils) {
       const $d = createStencilDiagram(document.definitions);
-      const elements = stencil.elementsForPicker($d);
+      const elements = stencil.elementsForPicker($d).elements;
       return elements.length === 1;
     }
     return true;

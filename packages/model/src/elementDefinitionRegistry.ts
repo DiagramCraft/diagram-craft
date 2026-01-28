@@ -258,8 +258,8 @@ declare global {
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (diagram: Diagram) => DiagramElement[];
-  elementsForCanvas: (diagram: Diagram) => DiagramElement[];
+  elementsForPicker: (diagram: Diagram) => { bounds: Box; elements: DiagramElement[] };
+  elementsForCanvas: (diagram: Diagram) => { bounds: Box; elements: DiagramElement[] };
   type: 'default' | string;
 };
 
@@ -512,7 +512,7 @@ export const makeStencilNode =
         uow
       );
 
-      return [n];
+      return { bounds: n.bounds, elements: [n] };
     });
 
 export const makeStencilEdge =
@@ -534,7 +534,7 @@ export const makeStencilEdge =
         layer
       );
 
-      return [e];
+      return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
 
 export const registerStencil = (

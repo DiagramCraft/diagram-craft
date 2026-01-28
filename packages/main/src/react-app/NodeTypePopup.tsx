@@ -31,7 +31,7 @@ export const NodeTypePopup = (props: Props) => {
 
       // Need to clone outside of the primary uow in order to avoid out-of-order updates
       const elements = UnitOfWork.execute(diagram, uow =>
-        cloneElements(registration.elementsForPicker(diagram), layer, uow)
+        cloneElements(registration.elementsForPicker(diagram).elements, layer, uow)
       );
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
@@ -87,7 +87,7 @@ export const NodeTypePopup = (props: Props) => {
         )
       );
 
-      const elements = n.elementsForPicker(dest);
+      const elements = n.elementsForPicker(dest).elements;
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
 
