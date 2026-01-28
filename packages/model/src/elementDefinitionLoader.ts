@@ -25,18 +25,20 @@ export const loadStencilsFromYaml = (stencils: any) => {
         )
       );
 
-      return UnitOfWork.execute(diagram, uow => {
-        const node = deserializeDiagramElements(
-          [stencil.node],
-          layer,
-          uow,
-          new ElementLookup<DiagramNode>(),
-          new ElementLookup<DiagramEdge>()
-        )[0] as DiagramNode;
-        layer.addElement(node, uow);
+      return [
+        UnitOfWork.execute(diagram, uow => {
+          const node = deserializeDiagramElements(
+            [stencil.node],
+            layer,
+            uow,
+            new ElementLookup<DiagramNode>(),
+            new ElementLookup<DiagramEdge>()
+          )[0] as DiagramNode;
+          layer.addElement(node, uow);
 
-        return node;
-      });
+          return node;
+        })
+      ];
     };
     dest.push({
       id: stencil.id,

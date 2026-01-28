@@ -6,7 +6,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
   createThumbnailForEdge,
-  createThumbnailForNode
+  createThumbnail
 } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -122,22 +122,24 @@ export const createPreview = (
 
     return { diagram, element: edge };
   } else {
-    const { diagram, node } = createThumbnailForNode((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.node(
-        newid(),
-        nodeType,
-        { x: 5, y: 5, w: 40, h: 40, r: 0 },
-        layer,
-        props as Partial<NodeProps>,
-        {}
-      );
+    const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+      return [
+        ElementFactory.node(
+          newid(),
+          nodeType,
+          { x: 5, y: 5, w: 40, h: 40, r: 0 },
+          layer,
+          props as Partial<NodeProps>,
+          {}
+        )
+      ];
     }, defs);
 
     // Set viewBox to show the node with padding
     diagram.viewBox.dimensions = { w: 50, h: 50 };
     diagram.viewBox.offset = { x: 0, y: 0 };
 
-    return { diagram, element: node };
+    return { diagram, element: elements[0]! };
   }
 };
 

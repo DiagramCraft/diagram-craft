@@ -8,7 +8,8 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { Box } from '@diagram-craft/geometry/box';
 
 const SIZE = 35;
 
@@ -23,14 +24,12 @@ const getDiagram = (props: {
     return NODE_CACHE.get(props.stencil.id)!;
   }
 
-  const { diagram, node } = createThumbnailForNode(
+  const { diagram, elements } = createThumbnail(
     d => props.stencil.elementsForCanvas(d),
     props.document.definitions
   );
-  diagram.viewBox.dimensions = {
-    w: node.bounds.w + 10,
-    h: node.bounds.h + 10
-  };
+  const bbox = Box.boundingBox(elements.map(e => e.bounds));
+  diagram.viewBox.dimensions = { w: bbox.w + 10, h: bbox.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };
 
   NODE_CACHE.set(props.stencil.id, diagram);

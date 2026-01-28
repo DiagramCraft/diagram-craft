@@ -64,14 +64,20 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.collapsible = true;
   }
 
-  // We don't want to resize children
+  // We don't want to resize children unless the container has an active layout enabled
   onTransform(
-    _transforms: ReadonlyArray<Transform>,
+    transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
     _newBounds: Box,
     _previousBounds: Box,
     uow: UnitOfWork
   ) {
+    if (node.renderProps.layout.container.enabled) {
+      for (const child of node.children) {
+        child.transform(transforms, uow, true);
+      }
+    }
+
     this.layoutChildren(node, uow);
   }
 

@@ -5,53 +5,57 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
-import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { Box } from '@diagram-craft/geometry/box';
 
 type StencilEntry = {
   stencil: Stencil;
   stencilDiagram: Diagram;
-  stencilNode: DiagramElement;
-  canvasNode: DiagramElement;
+  stencilElements: DiagramElement[];
+  canvasElements: DiagramElement[];
 };
 
-const NODE_CACHE = new Map<string, StencilEntry>();
+const STENCIL_CACHE = new Map<string, StencilEntry>();
 
 const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   const cacheKey = n.id;
 
-  if (NODE_CACHE.has(cacheKey)) {
-    return NODE_CACHE.get(cacheKey)!;
+  if (STENCIL_CACHE.has(cacheKey)) {
+    return STENCIL_CACHE.get(cacheKey)!;
   }
 
-  const { node: stencilNode, diagram: stencilDiagram } = createThumbnailForNode(
+  const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
     d => n.elementsForPicker(d),
     doc.definitions
   );
+
+  const stencilBbox = Box.boundingBox(stencilElements.map(e => e.bounds));
   stencilDiagram.viewBox.dimensions = {
-    w: stencilNode.bounds.w + 10,
-    h: stencilNode.bounds.h + 10
+    w: stencilBbox.w + 10,
+    h: stencilBbox.h + 10
   };
   stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
-  const { node: canvasNode, diagram: canvasDiagram } = createThumbnailForNode(
+  const { elements: canvasElements, diagram: canvasDiagram } = createThumbnail(
     d => n.elementsForCanvas(d),
     doc.definitions
   );
-  canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };
+  const canvasBbox = Box.boundingBox(canvasElements.map(e => e.bounds));
+  canvasDiagram.viewBox.dimensions = { w: canvasBbox.w + 10, h: canvasBbox.h + 10 };
   canvasDiagram.viewBox.offset = { x: -5, y: -5 };
 
   const entry: StencilEntry = {
     stencil: n,
     stencilDiagram,
-    stencilNode,
-    canvasNode
+    stencilElements,
+    canvasElements
   };
-  NODE_CACHE.set(cacheKey, entry);
+  STENCIL_CACHE.set(cacheKey, entry);
 
   return entry;
 };
@@ -139,8 +143,8 @@ export const ObjectPickerPanel = (props: Props) => {
                     showHover={showHover}
                     name={
                       s.stencil.name ??
-                      (isNode(s.stencilNode)
-                        ? diagram.document.nodeDefinitions.get(s.stencilNode.nodeType).name
+                      (isNode(s.stencilElements?.[0])
+                        ? diagram.document.nodeDefinitions.get(s.stencilElements?.[0].nodeType).name
                         : undefined) ??
                       'unknown'
                     }
@@ -149,7 +153,7 @@ export const ObjectPickerPanel = (props: Props) => {
 
                       setShowHover(false);
                       DRAG_DROP_MANAGER.initiate(
-                        new ObjectPickerDrag(ev, s.canvasNode, diagram, s.stencil.id, app),
+                        new ObjectPickerDrag(ev, s.canvasElements, diagram, s.stencil.id, app),
                         () => setShowHover(true)
                       );
                     }}

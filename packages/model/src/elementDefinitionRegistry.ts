@@ -257,8 +257,8 @@ declare global {
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (diagram: Diagram) => DiagramElement;
-  elementsForCanvas: (diagram: Diagram) => DiagramElement;
+  elementsForPicker: (diagram: Diagram) => DiagramElement[];
+  elementsForCanvas: (diagram: Diagram) => DiagramElement[];
   type: 'default' | string;
 };
 
@@ -479,37 +479,39 @@ export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeP
 export const makeStencilNode =
   (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
   ($d: Diagram) => {
-    return UnitOfWork.execute($d, uow => {
-      const typeId = isNodeDefinition(type) ? type.type : type;
+    return [
+      UnitOfWork.execute($d, uow => {
+        const typeId = isNodeDefinition(type) ? type.type : type;
 
-      const layer = $d.activeLayer;
-      assertRegularLayer(layer);
+        const layer = $d.activeLayer;
+        assertRegularLayer(layer);
 
-      const n = ElementFactory.node(
-        newid(),
-        typeId,
-        Box.applyAspectRatio(
-          { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
-          opts?.aspectRatio ?? 1
-        ),
-        layer,
-        opts?.props?.(t) ?? {},
-        opts?.metadata ?? {},
-        opts?.texts
-      );
+        const n = ElementFactory.node(
+          newid(),
+          typeId,
+          Box.applyAspectRatio(
+            { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
+            opts?.aspectRatio ?? 1
+          ),
+          layer,
+          opts?.props?.(t) ?? {},
+          opts?.metadata ?? {},
+          opts?.texts
+        );
 
-      const size = { w: 100, h: 100 };
+        const size = { w: 100, h: 100 };
 
-      n.setBounds(
-        Box.applyAspectRatio(
-          { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
-          opts?.aspectRatio ?? 1
-        ),
-        uow
-      );
+        n.setBounds(
+          Box.applyAspectRatio(
+            { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
+            opts?.aspectRatio ?? 1
+          ),
+          uow
+        );
 
-      return n;
-    });
+        return n;
+      })
+    ];
   };
 
 export const registerStencil = (

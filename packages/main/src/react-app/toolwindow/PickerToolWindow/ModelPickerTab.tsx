@@ -32,7 +32,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
-import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { EditItemDialog } from '../../components/EditItemDialog';
@@ -90,7 +90,7 @@ const ItemContextMenu = (props: {
 
 const handleDragStart = (
   ev: React.MouseEvent,
-  node: DiagramElement,
+  elements: DiagramElement[],
   diagram: Diagram,
   app: Application,
   isRegularLayer: boolean
@@ -98,7 +98,9 @@ const handleDragStart = (
   if (!isRegularLayer) return;
   if (ev.button !== 0) return;
 
-  DRAG_DROP_MANAGER.initiate(new ObjectPickerDrag(ev.nativeEvent, node, diagram, undefined, app));
+  DRAG_DROP_MANAGER.initiate(
+    new ObjectPickerDrag(ev.nativeEvent, elements, diagram, undefined, app)
+  );
 
   ev.preventDefault();
   ev.stopPropagation();
@@ -129,10 +131,13 @@ const makeTemplateNode = (
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = createThumbnailForNode(
-    (_diagram, layer, uow) => deserializeDiagramElements([tpl], layer, uow)[0] as DiagramNode,
+  const { elements, diagram } = createThumbnail(
+    (_diagram, layer, uow) => deserializeDiagramElements([tpl], layer, uow),
     definitions
   );
+  assert.arrayWithExactlyOneElement(elements);
+  const node = elements[0];
+
   UnitOfWork.execute(node.diagram, uow => {
     node.setBounds({ ...node.bounds, x: 0, y: 0 }, uow);
 
@@ -161,8 +166,8 @@ const makeDefaultNode = (
   schema: DataSchema,
   definitions: Definitions
 ): DiagramElement => {
-  return createThumbnailForNode(
-    (_diagram, layer) =>
+  return createThumbnail(
+    (_diagram, layer) => [
       ElementFactory.node(
         newid(),
         'rect',
@@ -177,43 +182,46 @@ const makeDefaultNode = (
         {
           text: `%${schema.fields[0]!.id}%`
         }
-      ),
+      )
+    ],
     definitions
-  ).node;
+  ).elements[0]!;
 };
 
 const TemplateGridItem = (props: {
   item: Data;
   schema: DataSchema;
-  node: DiagramElement;
+  elements: DiagramElement[];
   onEditItem: (item: Data) => void;
   onDeleteItem: (item: Data) => void;
 }) => {
   const app = useApplication();
   const diagram = useDiagram();
-  const { item, schema, node } = props;
+  const { item, schema, elements } = props;
+
+  const itemDiagram = elements[0]!.diagram;
 
   return (
     <div
       key={item._uid}
       style={{ background: 'transparent' }}
-      data-width={node.diagram.viewBox.dimensions.w}
+      data-width={itemDiagram.viewBox.dimensions.w}
     >
       <ContextMenu.Root>
         <ContextMenu.Trigger
           element={
             <div
               onMouseDown={ev =>
-                handleDragStart(ev, node, diagram, app, isRegularLayer(diagram.activeLayer))
+                handleDragStart(ev, elements, diagram, app, isRegularLayer(diagram.activeLayer))
               }
               className={'light-theme'}
             >
               <PickerCanvas
                 width={PICKER_CANVAS_SIZE}
                 height={PICKER_CANVAS_SIZE}
-                diagramWidth={node.diagram.viewBox.dimensions.w}
-                diagramHeight={node.diagram.viewBox.dimensions.h}
-                diagram={node.diagram}
+                diagramWidth={itemDiagram.viewBox.dimensions.w}
+                diagramHeight={itemDiagram.viewBox.dimensions.h}
+                diagram={itemDiagram}
                 showHover={true}
                 name={item[schema.fields[0]!.id] as string}
                 onMouseDown={() => {}}
@@ -296,7 +304,7 @@ const DataProviderGridView = (props: DataViewProps) => {
             key={item._uid}
             item={item}
             schema={schema}
-            node={makeTemplateNode(item, schema, document.definitions, t)}
+            elements={[makeTemplateNode(item, schema, document.definitions, t)]}
             onEditItem={props.onEditItem}
             onDeleteItem={props.onDeleteItem}
           />
@@ -355,7 +363,7 @@ const DataProviderListView = (props: DataViewProps) => {
                             : makeDefaultNode(item, schema, document.definitions);
                         handleDragStart(
                           ev,
-                          node,
+                          [node],
                           diagram,
                           app,
                           isRegularLayer(diagram.activeLayer)
@@ -408,7 +416,7 @@ const DataProviderListView = (props: DataViewProps) => {
                                             onMouseDown={ev =>
                                               handleDragStart(
                                                 ev,
-                                                n,
+                                                [n],
                                                 diagram,
                                                 app,
                                                 isRegularLayer(diagram.activeLayer)

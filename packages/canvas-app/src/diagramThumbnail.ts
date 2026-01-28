@@ -18,8 +18,8 @@ const createDiagram = (defs: Definitions) => {
   );
 };
 
-export const createThumbnailForNode = (
-  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramElement,
+export const createThumbnail = (
+  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramElement[],
   definitions: Definitions
 ) => {
   const diagram = createDiagram(definitions);
@@ -28,14 +28,17 @@ export const createThumbnailForNode = (
     const layer = new RegularLayer(newid(), newid(), [], diagram);
     diagram.layers.add(layer, uow);
 
-    const el = factory(diagram, layer, uow);
-    layer.addElement(el, uow);
-    if (isNode(el)) el.invalidateAnchors(uow);
+    const els = factory(diagram, layer, uow);
+    for (const el of els) {
+      layer.addElement(el, uow);
+      if (isNode(el)) el.invalidateAnchors(uow);
+    }
 
-    return { diagram, layer, node: el };
+    return { diagram, layer, elements: els };
   });
 };
 
+// TODO: We should be able to remove this
 export const createThumbnailForEdge = (
   factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramEdge,
   definitions: Definitions
