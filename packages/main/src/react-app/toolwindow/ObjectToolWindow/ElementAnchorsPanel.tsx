@@ -9,7 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useMemo } from 'react';
-import { createThumbnailForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -22,6 +22,7 @@ import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
+import { assert } from '@diagram-craft/utils/assert';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -43,11 +44,14 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const previewDiagram = useMemo(() => {
     if (!selectedNode) return null;
 
-    const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailForNode(
-      (d, layer) => {
-        const serializedNode = serializeDiagramElement(selectedNode);
+    const {
+      diagram: thumbnailDiagram,
+      elements: [duplicatedNode]
+    } = createThumbnail((d, layer) => {
+      const serializedNode = serializeDiagramElement(selectedNode);
 
-        return UnitOfWork.execute(
+      return [
+        UnitOfWork.execute(
           d,
           uow =>
             deserializeDiagramElements(
@@ -57,10 +61,10 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
               new ElementLookup<DiagramNode>(),
               new ElementLookup<DiagramEdge>()
             )[0] as DiagramNode
-        );
-      },
-      diagram.document.definitions
-    );
+        )
+      ];
+    }, diagram.document.definitions);
+    assert.present(duplicatedNode);
 
     const padding = 10;
     thumbnailDiagram.viewBox.dimensions = {

@@ -26,23 +26,23 @@ export const loadStencilsFromYaml = (stencils: any) => {
       );
 
       return UnitOfWork.execute(diagram, uow => {
-        const node = deserializeDiagramElements(
-          [stencil.node],
+        const elements = deserializeDiagramElements(
+          stencil.node ? [stencil.node] : stencil.elements,
           layer,
           uow,
           new ElementLookup<DiagramNode>(),
           new ElementLookup<DiagramEdge>()
-        )[0] as DiagramNode;
-        layer.addElement(node, uow);
+        );
+        elements.forEach(e => layer.addElement(e, uow));
 
-        return node;
+        return elements;
       });
     };
     dest.push({
       id: stencil.id,
       name: stencil.name,
-      node: mkNode,
-      canvasNode: mkNode,
+      elementsForPicker: mkNode,
+      elementsForCanvas: mkNode,
       type: 'yaml'
     });
   }

@@ -1,4 +1,54 @@
 stencils:
+  - id: 'bpmn-choreography-participant-with-decorator'
+    name: Choreography Participant with Decorator
+    elements:
+      - id: fe8xt1j
+        type: node
+        nodeType: bpmnChoreographyActivityParticipant
+        bounds:
+          x: 0
+          'y': 55
+          w: 100
+          h: 30
+          r: 0
+        props: { }
+        texts:
+          text: Participant
+      - id: qobvhcc
+        type: node
+        nodeType: bpmnChoreographyEnvelope
+        bounds:
+          x: 30
+          'y': 0
+          w: 40
+          h: 20
+          r: 0
+        props: { }
+        texts:
+          text: ''
+      - id: d9yp91u
+        type: edge
+        start:
+          anchor: '500_0'
+          node:
+            id: fe8xt1j
+          offset:
+            x: 0
+            'y': 0
+        end:
+          anchor: '500_1000'
+          node:
+            id: qobvhcc
+          offset:
+            x: 0
+            'y': 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50
+
   - id: 'bpmn-choreography-task'
     name: Choreography Task
     node:

@@ -23,6 +23,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { getTypedKeys } from '@diagram-craft/utils/object';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -363,7 +364,7 @@ const SHAPES_DEFS = [
 
 const writeShape = (
   shape: string,
-  factory: (diagram: Diagram) => DiagramNode,
+  factory: (diagram: Diagram) => DiagramElement[],
   y: number,
   layer: RegularLayer,
   diagram: Diagram,
@@ -401,12 +402,17 @@ const writeShape = (
   UnitOfWork.execute(diagram, uow => {
     for (let i = 0; i < SHAPES_DEFS.length; i++) {
       const def = SHAPES_DEFS[i]!;
-      const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
-      n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
-      n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
-      const name = def(n, uow);
-      n.invalidateAnchors(uow);
-      layer.addElement(n, uow);
+      const els = factory(diagram);
+      if (els.length !== 1) throw new Error('Expected single element');
+
+      const el = els[0]!.duplicate(undefined, `${shape}-${i}`);
+      if (!isNode(el)) throw new Error('Expected node');
+
+      el.transform([new Scale(dimensions.w / el.bounds.w, dimensions.h / el.bounds.h)], uow);
+      el.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
+      const name = def(el, uow);
+      el.invalidateAnchors(uow);
+      layer.addElement(el, uow);
 
       const label = ElementFactory.node(
         `${shape}-${i}-label`,
@@ -466,7 +472,7 @@ const shapesTestFile = async (
 
     for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
-      writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
+      writeShape(stencil.name ?? stencil.id, stencil.elementsForPicker, y, layer, diagram, opts);
       y += opts.yDiff;
     }
 
@@ -488,7 +494,14 @@ const shapesTestFile = async (
     let y = 10;
     for (const stencil of nodeDefinitions.stencilRegistry.get(p).stencils) {
       if (stencil.id === shape) {
-        const ret = writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
+        const ret = writeShape(
+          stencil.name ?? stencil.id,
+          stencil.elementsForPicker,
+          y,
+          layer,
+          diagram,
+          opts
+        );
         x = ret.x;
         y = ret.y;
         break;

@@ -4,7 +4,7 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
@@ -39,7 +39,8 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
       this.context.ui.showDialog({
         id: 'shapeSelect',
         props: {
-          title: 'Change shape'
+          title: 'Change shape',
+          excludeMultiElementStencils: true
         },
         onOk: (stencilId: string) => {
           const stencil = document.nodeDefinitions.stencilRegistry.getStencil(stencilId);
@@ -47,7 +48,10 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);
 
-          const node = stencil.node(diagram);
+          const elements = stencil.elementsForPicker(diagram);
+          assert.arrayWithExactlyOneElement(elements);
+          const node = elements[0]!;
+          if (!isNode(node)) throw new VerifyNotReached();
 
           UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
             for (const e of diagram.selection.elements) {

@@ -1,14 +1,10 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import type { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { DiagramElement, ElementPropsForRendering } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
-import {
-  createThumbnailForEdge,
-  createThumbnailForNode
-} from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -26,7 +22,7 @@ export type StyleCombination = {
   stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | undefined;
   elements: DiagramElement[];
   previewDiagram?: Diagram;
-  previewElement?: DiagramNode | DiagramEdge;
+  previewElement?: DiagramElement;
   differences: string[];
   propsDifferences: Partial<ElementProps>;
   props: ElementPropsForRendering;
@@ -105,41 +101,38 @@ export const createPreview = (
   nodeType: string,
   defs: Definitions
 ) => {
-  if (type === 'edge') {
-    const { diagram, edge } = createThumbnailForEdge((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.edge(
-        newid(),
-        new FreeEndpoint({ x: 5, y: 25 }),
-        new FreeEndpoint({ x: 45, y: 25 }),
-        props as Partial<EdgeProps>,
-        {},
-        [],
-        layer
-      );
-    }, defs);
+  const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+    if (type === 'edge') {
+      return [
+        ElementFactory.edge(
+          newid(),
+          new FreeEndpoint({ x: 5, y: 25 }),
+          new FreeEndpoint({ x: 45, y: 25 }),
+          props as Partial<EdgeProps>,
+          {},
+          [],
+          layer
+        )
+      ];
+    } else {
+      return [
+        ElementFactory.node(
+          newid(),
+          nodeType,
+          { x: 5, y: 5, w: 40, h: 40, r: 0 },
+          layer,
+          props as Partial<NodeProps>,
+          {}
+        )
+      ];
+    }
+  }, defs);
 
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
+  // Set viewBox to show the node with padding
+  diagram.viewBox.dimensions = { w: 50, h: 50 };
+  diagram.viewBox.offset = { x: 0, y: 0 };
 
-    return { diagram, element: edge };
-  } else {
-    const { diagram, node } = createThumbnailForNode((_: Diagram, layer: RegularLayer) => {
-      return ElementFactory.node(
-        newid(),
-        nodeType,
-        { x: 5, y: 5, w: 40, h: 40, r: 0 },
-        layer,
-        props as Partial<NodeProps>,
-        {}
-      );
-    }, defs);
-
-    // Set viewBox to show the node with padding
-    diagram.viewBox.dimensions = { w: 50, h: 50 };
-    diagram.viewBox.offset = { x: 0, y: 0 };
-
-    return { diagram, element: node };
-  }
+  return { diagram: diagram, element: elements[0]! };
 };
 
 const sortGroups = <T>(groups: StylesheetGroup<T>[]) =>

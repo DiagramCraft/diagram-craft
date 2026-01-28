@@ -30,10 +30,11 @@ export const NodeTypePopup = (props: Props) => {
       assertRegularLayer(layer);
 
       // Need to clone outside of the primary uow in order to avoid out-of-order updates
-      const node = UnitOfWork.execute(
-        diagram,
-        uow => cloneElements([registration.node(diagram)], layer, uow)[0] as DiagramNode
+      const elements = UnitOfWork.execute(diagram, uow =>
+        cloneElements(registration.elementsForPicker(diagram), layer, uow)
       );
+      assert.arrayWithExactlyOneElement(elements);
+      const node = elements[0]! as DiagramNode;
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
         layer.addElement(node, uow);
@@ -86,7 +87,10 @@ export const NodeTypePopup = (props: Props) => {
         )
       );
 
-      const node = n.node(dest);
+      const elements = n.elementsForPicker(dest);
+      assert.arrayWithExactlyOneElement(elements);
+      const node = elements[0]! as DiagramNode;
+
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
       UnitOfWork.execute(dest, uow => layer.addElement(node, uow));

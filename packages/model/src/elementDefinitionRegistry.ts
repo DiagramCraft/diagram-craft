@@ -257,8 +257,8 @@ declare global {
 export type Stencil = {
   id: string;
   name?: string;
-  node: (diagram: Diagram) => DiagramNode;
-  canvasNode: (diagram: Diagram) => DiagramNode;
+  elementsForPicker: (diagram: Diagram) => DiagramElement[];
+  elementsForCanvas: (diagram: Diagram) => DiagramElement[];
   type: 'default' | string;
 };
 
@@ -478,8 +478,8 @@ export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeP
 
 export const makeStencilNode =
   (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
-  ($d: Diagram) => {
-    return UnitOfWork.execute($d, uow => {
+  ($d: Diagram) =>
+    UnitOfWork.execute($d, uow => {
       const typeId = isNodeDefinition(type) ? type.type : type;
 
       const layer = $d.activeLayer;
@@ -508,9 +508,8 @@ export const makeStencilNode =
         uow
       );
 
-      return n;
+      return [n];
     });
-  };
 
 export const registerStencil = (
   reg: NodeDefinitionRegistry,
@@ -526,8 +525,8 @@ export const registerStencil = (
   const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    node: makeStencilNode(def, 'picker', opts),
-    canvasNode: makeStencilNode(def, 'canvas', opts),
+    elementsForPicker: makeStencilNode(def, 'picker', opts),
+    elementsForCanvas: makeStencilNode(def, 'canvas', opts),
     type: pkg.type
   };
   pkg.stencils.push(stencil);
