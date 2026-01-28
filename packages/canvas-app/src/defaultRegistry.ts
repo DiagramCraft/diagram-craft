@@ -140,6 +140,5 @@ export const defaultEdgeRegistry = (stencilRegistry: StencilRegistry) => {
   const arrows = mustExist(stencilRegistry.get('arrow'));
   registerStencil(reg, arrows, new BlockArrowEdgeDefinition());
 
-  //reg.register(new BlockArrowEdgeDefinition());
   return reg;
 };

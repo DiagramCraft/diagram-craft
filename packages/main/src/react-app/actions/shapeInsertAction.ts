@@ -6,7 +6,6 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { Box } from '@diagram-craft/geometry/box';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -46,14 +45,11 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const v = diagram.viewBox;
 
-        const elements = cloneElements(
-          stencil.elementsForPicker(diagram).elements,
-          layer as RegularLayer
-        );
-        const bbox = Box.boundingBox(elements.map(e => e.bounds));
+        const { bounds, elements } = stencil.elementsForPicker(diagram);
+        const newElements = cloneElements(elements, layer as RegularLayer);
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
-          for (const node of elements) {
+          for (const node of newElements) {
             layer.addElement(node, uow);
 
             node.updateMetadata(meta => {
@@ -63,10 +59,10 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
           }
 
           assignNewBounds(
-            elements,
+            newElements,
             {
-              x: v.offset.x + (v.dimensions.w - bbox.w) / 2,
-              y: v.offset.y + (v.dimensions.h - bbox.h) / 2
+              x: v.offset.x + (v.dimensions.w - bounds.w) / 2,
+              y: v.offset.y + (v.dimensions.h - bounds.h) / 2
             },
 
             // TODO: Adjust scale so it always fits into the window
@@ -77,7 +73,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         diagram.document.props.recentStencils.register(stencil.id);
 
-        diagram.selection.setElements(elements);
+        diagram.selection.setElements(newElements);
       },
       onCancel: () => {},
       props: {

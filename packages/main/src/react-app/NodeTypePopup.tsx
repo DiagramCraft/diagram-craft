@@ -87,6 +87,7 @@ export const NodeTypePopup = (props: Props) => {
         )
       );
 
+      // TODO: Can we use createThumbnail here somehow
       const elements = n.elementsForPicker(dest).elements;
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
