@@ -15,7 +15,10 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  NodeDefinitionRegistry,
+  StencilRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -138,7 +141,11 @@ const writeArrow = (
 };
 
 const arrowsTestFile = async () => {
-  const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+  const stencilRegistry = new StencilRegistry();
+  const document = new DiagramDocument(
+    defaultNodeRegistry(stencilRegistry),
+    defaultEdgeRegistry(stencilRegistry)
+  );
 
   const { diagram, layer } = DocumentBuilder.empty('arrows', 'Arrows', document);
 
@@ -463,7 +470,10 @@ const shapesTestFile = async (
     shapesPerLine: Number.MAX_SAFE_INTEGER
   }
 ) => {
-  const document = new DiagramDocument(nodeDefinitions, defaultEdgeRegistry());
+  const document = new DiagramDocument(
+    nodeDefinitions,
+    defaultEdgeRegistry(nodeDefinitions.stencilRegistry)
+  );
 
   const { diagram, layer } = DocumentBuilder.empty('shapes', 'Shapes', document);
 
@@ -527,7 +537,7 @@ const shapesTestFile = async (
   );
 };
 
-const nodeDefinitions = defaultNodeRegistry();
+const nodeDefinitions = defaultNodeRegistry(new StencilRegistry());
 await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();

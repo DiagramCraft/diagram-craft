@@ -11,6 +11,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { SnapManager } from './snapManager';
+import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const r = new Random(123456);
 
@@ -26,10 +27,11 @@ const randomBox = () => {
 
 const opts = { time: 2000 };
 
+const stencilRegistry = new StencilRegistry();
 const { diagram: d } = DocumentBuilder.empty(
   '1',
   '1',
-  new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
+  new DiagramDocument(defaultNodeRegistry(stencilRegistry), defaultEdgeRegistry(stencilRegistry))
 );
 
 UnitOfWork.execute(d, uow => {

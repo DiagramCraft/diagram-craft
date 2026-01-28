@@ -12,14 +12,16 @@ import shapes from '../../public/sample/shapes.json';
 import arrows from '../../public/sample/arrows.json';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
+import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
 const opts = { time: 2000 };
 
-const nodeRegistry = defaultNodeRegistry();
-const edgeRegistry = defaultEdgeRegistry();
+const stencilRegistry = new StencilRegistry();
+const nodeRegistry = defaultNodeRegistry(stencilRegistry);
+const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
 
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
