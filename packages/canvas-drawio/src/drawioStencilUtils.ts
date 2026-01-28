@@ -30,8 +30,8 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
   return {
     id: drawio.key,
     name: drawio.key,
-    node: mkNode,
-    canvasNode: mkNode,
+    elementsForPicker: mkNode,
+    elementsForCanvas: mkNode,
     type: 'drawioXml'
   };
 };

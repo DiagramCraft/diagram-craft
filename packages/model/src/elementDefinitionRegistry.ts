@@ -257,8 +257,8 @@ declare global {
 export type Stencil = {
   id: string;
   name?: string;
-  node: (diagram: Diagram) => DiagramElement;
-  canvasNode: (diagram: Diagram) => DiagramElement;
+  elementsForPicker: (diagram: Diagram) => DiagramElement;
+  elementsForCanvas: (diagram: Diagram) => DiagramElement;
   type: 'default' | string;
 };
 
@@ -526,8 +526,8 @@ export const registerStencil = (
   const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    node: makeStencilNode(def, 'picker', opts),
-    canvasNode: makeStencilNode(def, 'canvas', opts),
+    elementsForPicker: makeStencilNode(def, 'picker', opts),
+    elementsForCanvas: makeStencilNode(def, 'canvas', opts),
     type: pkg.type
   };
   pkg.stencils.push(stencil);

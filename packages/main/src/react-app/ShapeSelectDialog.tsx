@@ -24,7 +24,7 @@ const getDiagram = (props: {
   }
 
   const { diagram, node } = createThumbnailForNode(
-    d => props.stencil.node(d),
+    d => props.stencil.elementsForCanvas(d),
     props.document.definitions
   );
   diagram.viewBox.dimensions = {

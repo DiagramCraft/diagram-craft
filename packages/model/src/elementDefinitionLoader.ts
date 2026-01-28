@@ -41,8 +41,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
     dest.push({
       id: stencil.id,
       name: stencil.name,
-      node: mkNode,
-      canvasNode: mkNode,
+      elementsForPicker: mkNode,
+      elementsForCanvas: mkNode,
       type: 'yaml'
     });
   }

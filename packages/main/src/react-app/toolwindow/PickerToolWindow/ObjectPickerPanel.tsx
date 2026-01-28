@@ -29,7 +29,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   }
 
   const { node: stencilNode, diagram: stencilDiagram } = createThumbnailForNode(
-    d => n.node(d),
+    d => n.elementsForPicker(d),
     doc.definitions
   );
   stencilDiagram.viewBox.dimensions = {
@@ -39,7 +39,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   stencilDiagram.viewBox.offset = { x: -5, y: -5 };
 
   const { node: canvasNode, diagram: canvasDiagram } = createThumbnailForNode(
-    d => n.canvasNode(d),
+    d => n.elementsForCanvas(d),
     doc.definitions
   );
   canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };

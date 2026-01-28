@@ -47,7 +47,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const node = UnitOfWork.execute(
           diagram,
-          uow => cloneElements([stencil.node(diagram)], layer as RegularLayer, uow)[0]!
+          uow => cloneElements([stencil.elementsForPicker(diagram)], layer as RegularLayer, uow)[0]!
         );
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
