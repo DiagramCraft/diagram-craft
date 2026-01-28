@@ -151,6 +151,8 @@ export class Defaults<T> {
       defaultsToVerify = this.cachedDefaultsObject;
     }
 
+    propsToVerify ??= {};
+
     return DiagramDefaultsPrivate.isSameAsDefaults(propsToVerify, defaultsToVerify);
   }
 

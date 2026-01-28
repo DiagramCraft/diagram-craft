@@ -310,9 +310,15 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   }
 
   getStencil(id: string) {
-    assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = safeSplit(id, DELIMITER, 2);
-    return this.get(pkgId).stencils.find(s => s.id === id);
+    if (id.includes(DELIMITER)) {
+      const [pkgId] = safeSplit(id, DELIMITER, 2);
+      return this.get(pkgId).stencils.find(s => s.id === id);
+    } else {
+      return this.stencils
+        .values()
+        .flatMap(pkg => pkg.stencils)
+        .find(s => s.id === id);
+    }
   }
 
   get(id: string): StencilPackage {

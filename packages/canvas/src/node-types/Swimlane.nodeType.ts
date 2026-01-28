@@ -15,6 +15,7 @@ import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { Box } from '@diagram-craft/geometry/box';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import { Transform } from '@diagram-craft/geometry/transform';
 
 type Orientation = 'vertical' | 'horizontal';
 
@@ -61,6 +62,17 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.capabilities.fill = true;
     this.capabilities.rounding = false;
     this.capabilities.collapsible = true;
+  }
+
+  // We don't want to resize children
+  onTransform(
+    _transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    uow: UnitOfWork
+  ) {
+    this.layoutChildren(node, uow);
   }
 
   private getCollapsedBounds(

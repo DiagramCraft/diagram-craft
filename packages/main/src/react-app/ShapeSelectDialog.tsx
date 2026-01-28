@@ -4,7 +4,6 @@ import { useDiagram, useDocument } from '../application';
 import { PickerCanvas } from './PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -92,8 +91,8 @@ export const ShapeSelectDialog = (props: Props) => {
             style={{ maxWidth: '30rem' }}
           >
             {recentStencils.map(stencilId => {
-              const stencil = stencilRegistry.getStencil(stencilId)!;
-              assert.present(stencil, `Stencil ${stencilId} not found`);
+              const stencil = stencilRegistry.getStencil(stencilId);
+              if (!stencil) return null;
 
               return (
                 <StencilView
