@@ -1,6 +1,5 @@
 import { Diagram } from '@diagram-craft/model/diagram';
-import type { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { DiagramElement, ElementPropsForRendering } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -26,7 +25,7 @@ export type StyleCombination = {
   stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | undefined;
   elements: DiagramElement[];
   previewDiagram?: Diagram;
-  previewElement?: DiagramNode | DiagramEdge;
+  previewElement?: DiagramElement;
   differences: string[];
   propsDifferences: Partial<ElementProps>;
   props: ElementPropsForRendering;

@@ -257,8 +257,8 @@ declare global {
 export type Stencil = {
   id: string;
   name?: string;
-  node: (diagram: Diagram) => DiagramNode;
-  canvasNode: (diagram: Diagram) => DiagramNode;
+  node: (diagram: Diagram) => DiagramElement;
+  canvasNode: (diagram: Diagram) => DiagramElement;
   type: 'default' | string;
 };
 

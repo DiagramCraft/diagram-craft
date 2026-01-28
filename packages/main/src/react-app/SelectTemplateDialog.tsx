@@ -9,10 +9,11 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useDocument } from '../application';
 import type { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
-const TEMPLATE_CACHE = new Map<string, DiagramNode>();
+const TEMPLATE_CACHE = new Map<string, DiagramElement>();
 
-const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): DiagramNode => {
+const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): DiagramElement => {
   if (TEMPLATE_CACHE.has(template.id)) {
     return TEMPLATE_CACHE.get(template.id)!;
   }

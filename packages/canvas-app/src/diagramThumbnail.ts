@@ -1,4 +1,3 @@
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
@@ -7,6 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 const createDiagram = (defs: Definitions) => {
   const id = newid();
@@ -19,7 +19,7 @@ const createDiagram = (defs: Definitions) => {
 };
 
 export const createThumbnailForNode = (
-  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramNode,
+  factory: (diagram: Diagram, layer: RegularLayer, uow: UnitOfWork) => DiagramElement,
   definitions: Definitions
 ) => {
   const diagram = createDiagram(definitions);
@@ -28,11 +28,11 @@ export const createThumbnailForNode = (
     const layer = new RegularLayer(newid(), newid(), [], diagram);
     diagram.layers.add(layer, uow);
 
-    const node = factory(diagram, layer, uow);
-    layer.addElement(node, uow);
-    node.invalidateAnchors(uow);
+    const el = factory(diagram, layer, uow);
+    layer.addElement(el, uow);
+    if (isNode(el)) el.invalidateAnchors(uow);
 
-    return { diagram, layer, node };
+    return { diagram, layer, node: el };
   });
 };
 

@@ -1,8 +1,7 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
@@ -11,13 +10,13 @@ import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import React from 'react';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 type StencilEntry = {
   stencil: Stencil;
   stencilDiagram: Diagram;
-  stencilNode: DiagramNode;
-  canvasNode: DiagramNode;
+  stencilNode: DiagramElement;
+  canvasNode: DiagramElement;
 };
 
 const NODE_CACHE = new Map<string, StencilEntry>();
@@ -140,7 +139,9 @@ export const ObjectPickerPanel = (props: Props) => {
                     showHover={showHover}
                     name={
                       s.stencil.name ??
-                      diagram.document.nodeDefinitions.get(s.stencilNode.nodeType).name ??
+                      (isNode(s.stencilNode)
+                        ? diagram.document.nodeDefinitions.get(s.stencilNode.nodeType).name
+                        : undefined) ??
                       'unknown'
                     }
                     onMouseDown={ev => {

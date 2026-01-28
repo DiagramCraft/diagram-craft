@@ -1,6 +1,5 @@
 import { AbstractMoveDrag } from '@diagram-craft/canvas/drag/moveDrag';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
@@ -31,7 +30,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
   constructor(
     event: MouseEvent,
-    readonly source: DiagramNode,
+    readonly source: DiagramElement,
     readonly diagram: Diagram,
     readonly stencilId: string | undefined,
     context: Context

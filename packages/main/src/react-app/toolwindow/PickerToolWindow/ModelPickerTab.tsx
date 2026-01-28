@@ -45,8 +45,9 @@ import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGro
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
-const NODE_CACHE = new Map<string, DiagramNode>();
+const NODE_CACHE = new Map<string, DiagramElement>();
 const PICKER_CANVAS_SIZE = 42;
 
 const useSchemaAndData = (selectedSchema: string, search: string) => {
@@ -89,7 +90,7 @@ const ItemContextMenu = (props: {
 
 const handleDragStart = (
   ev: React.MouseEvent,
-  node: DiagramNode,
+  node: DiagramElement,
   diagram: Diagram,
   app: Application,
   isRegularLayer: boolean
@@ -155,7 +156,11 @@ const makeTemplateNode = (
   return node;
 };
 
-const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definitions): DiagramNode => {
+const makeDefaultNode = (
+  item: Data,
+  schema: DataSchema,
+  definitions: Definitions
+): DiagramElement => {
   return createThumbnailForNode(
     (_diagram, layer) =>
       ElementFactory.node(
@@ -180,7 +185,7 @@ const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Definition
 const TemplateGridItem = (props: {
   item: Data;
   schema: DataSchema;
-  node: DiagramNode;
+  node: DiagramElement;
   onEditItem: (item: Data) => void;
   onDeleteItem: (item: Data) => void;
 }) => {
