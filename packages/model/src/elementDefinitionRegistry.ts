@@ -32,7 +32,12 @@ export type NodeCapability =
   | 'can-be-container'
   | 'can-have-layout'
   | 'collapsible'
-  | 'children.select-parent';
+  | 'children.select-parent'
+
+  /**
+   * Are direct children managed by the parent?
+   */
+  | 'children.managed-by-parent';
 
 // biome-ignore lint/suspicious/noExplicitAny: convenient
 export interface CustomPropertyType<T = any> {
