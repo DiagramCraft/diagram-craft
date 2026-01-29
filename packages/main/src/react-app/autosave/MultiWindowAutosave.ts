@@ -93,7 +93,6 @@ export const MultiWindowAutosave = {
       if (entry) {
         const doc = await documentFactory.createDocument(root, entry.url, progressCallback);
         await deserializeDiagramDocument(entry.diagram, doc, diagramFactory);
-        await doc.load();
         return {
           document: doc,
           url: entry.url
@@ -141,7 +140,6 @@ export const MultiWindowAutosave = {
       // Load the selected autosave
       const doc = await documentFactory.createDocument(root, selectedEntry.url, progressCallback);
       await deserializeDiagramDocument(selectedEntry.diagram, doc, diagramFactory);
-      await doc.load();
 
       return { document: doc, url: selectedEntry.url };
     } catch (e) {
