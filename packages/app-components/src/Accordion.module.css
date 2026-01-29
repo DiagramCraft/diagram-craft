@@ -125,7 +125,7 @@
     transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
   }
 
-  .cmp-accordion__trigger[data-state='open'] > .cmp-accordion__chevron {
+  .cmp-accordion__trigger[data-panel-open] > .cmp-accordion__chevron {
     transform: rotate(180deg);
   }
 }
