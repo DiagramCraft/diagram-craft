@@ -359,7 +359,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
 
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  stencilRegistry: StencilRegistry,
+  registry: Registry,
   opts: StencilLoaderOpts[T]
 ) => Promise<void>;
 
@@ -380,16 +380,16 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       basic: {
-        loader: () => Promise<(stencils: StencilRegistry) => Promise<void>>;
+        loader: () => Promise<(registry: Registry) => Promise<void>>;
       };
     }
   }
 }
 
-export const stencilLoaderBasic: StencilLoader<'basic'> = async (stencilRegistry, opts) => {
+export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
   await (
     await opts.loader()
-  )(stencilRegistry);
+  )(registry);
 };
 
 export class NodeDefinitionRegistry {

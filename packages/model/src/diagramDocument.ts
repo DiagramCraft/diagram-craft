@@ -204,6 +204,42 @@ export class DiagramDocument
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
   }
+
+  // TODO: We should probably move this into the diagram loaders and/or deserialization
+  //       This way, warnings as anchors are determined during deserialization are triggered
+  async load() {
+    return;
+    /*    const loadedTypes = new Set<string>();
+    for (const diagram of this.diagramIterator({ nest: true })) {
+      await UnitOfWork.executeAsync(diagram, async uow => {
+        for (const element of diagram.allElements()) {
+          if (isNode(element)) {
+            const s = element.nodeType;
+            if (!this.registry.nodes.hasRegistration(s)) {
+              const existingNodeDefinitions = new Set([...this.registry.nodes.list()]);
+
+              if (!(await this.registry.nodes.load(s))) {
+                console.warn(`Node definition ${s} not loaded`);
+              } else {
+                for (const nd of this.registry.nodes.list()) {
+                  if (!existingNodeDefinitions.has(nd)) {
+                    console.log('Loaded', nd);
+                    loadedTypes.add(nd);
+                  }
+                }
+
+                element.invalidate(uow);
+                element.invalidateAnchors(uow);
+              }
+            } else if (loadedTypes.has(s)) {
+              element.invalidate(uow);
+              element.invalidateAnchors(uow);
+            }
+          }
+        }
+      });
+    }*/
+  }
 }
 
 /*

@@ -39,6 +39,7 @@ export const ElectronAutosave: Autosave = {
       const { diagram, url } = autosaveData;
       const doc = await documentFactory.createDocument(root, url, progressCallback);
       await deserializeDiagramDocument(diagram, doc, diagramFactory);
+      await doc.load();
 
       return { document: doc, url };
     } catch (e) {
