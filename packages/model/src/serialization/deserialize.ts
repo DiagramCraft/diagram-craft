@@ -331,10 +331,13 @@ const deserializeDiagrams = async <T extends Diagram>(
                 }
               }
             } else if (e.type === 'edge') {
-              /*if (!loaded.has(e.edgeType) && !doc.registry.edges.hasRegistration(e.edgeType)) {
-                loaded.add(e.edgeType);
-                await doc.registry.edges.load(e.edgeType);
-              }*/
+              const edgeType = e.props.shape;
+              if (!edgeType) continue;
+
+              if (!loaded.has(edgeType) && !doc.registry.edges.hasRegistration(edgeType)) {
+                loaded.add(edgeType);
+                await doc.registry.edges.load(edgeType);
+              }
             }
           }
         }
