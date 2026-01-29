@@ -19,12 +19,12 @@ const origMap = CollaborationConfig.CRDTMap;
 
 const opts = { time: 2000 };
 
-const stencilRegistry = new StencilRegistry();
-const nodeRegistry = defaultNodeRegistry(stencilRegistry);
-const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
+const stencils = new StencilRegistry();
+const nodes = defaultNodeRegistry(stencils);
+const edges = defaultEdgeRegistry(stencils);
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry, stencilRegistry);
+const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
 
 describe('loadSample', () => {
   bench.skip(
