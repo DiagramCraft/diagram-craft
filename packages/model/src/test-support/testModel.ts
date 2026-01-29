@@ -16,6 +16,7 @@ import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Point } from '@diagram-craft/geometry/point';
 import type { NodeProps } from '../diagramProps';
+import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -26,7 +27,16 @@ export class TestModel {
   }
 
   static newDocument(root?: CRDTRoot) {
-    return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+    const stencils = new StencilRegistry();
+    return new DiagramDocument(
+      {
+        nodes: defaultNodeRegistry(stencils),
+        edges: defaultEdgeRegistry(stencils),
+        stencils
+      },
+      false,
+      root
+    );
   }
 
   static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {

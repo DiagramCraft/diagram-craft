@@ -102,7 +102,7 @@ export class TextTool extends AbstractTool {
       undoManager.add(new CompoundUndoableAction([actions[0]!, actions.at(-1)!]));
 
       setTimeout(() => {
-        this.diagram.document.nodeDefinitions.get('text').requestFocus(this.node!);
+        this.diagram.document.registry.nodes.get('text').requestFocus(this.node!);
       }, 10);
     });
 

@@ -148,7 +148,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const { diagram: dest } = createThumbnail(
       (_d, l, uow) => cloneElements(this.source, l, uow),
-      this.diagram.document.definitions
+      this.diagram.document.registry
     );
 
     const bounds = Box.boundingBox(this.source.map(e => e.bounds));
@@ -197,7 +197,9 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
 
     const scaleX = sourceBounds.w / bounds.w;
-    const scaleY = sourceBounds.h / bounds.h;
+
+    // Prevent NaN for zero-heigh edges
+    const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
     this.#elements.forEach(e => activeLayer.addElement(e, this.uow));
 

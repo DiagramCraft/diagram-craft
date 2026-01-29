@@ -7,13 +7,13 @@ import { deserializeDiagramElements } from '@diagram-craft/model/serialization/d
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useDocument } from '../application';
-import type { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 
 const TEMPLATE_CACHE = new Map<string, DiagramElement>();
 
-const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): DiagramElement => {
+const makeTemplatePreview = (template: DataTemplate, definitions: Registry): DiagramElement => {
   if (TEMPLATE_CACHE.has(template.id)) {
     return TEMPLATE_CACHE.get(template.id)!;
   }
@@ -76,7 +76,7 @@ export const SelectTemplateDialog = (props: Props) => {
           }}
         >
           {props.templates.map(template => {
-            const node = makeTemplatePreview(template, document.definitions);
+            const node = makeTemplatePreview(template, document.registry);
             const isSelected = selectedTemplate === template.id;
             return (
               <div

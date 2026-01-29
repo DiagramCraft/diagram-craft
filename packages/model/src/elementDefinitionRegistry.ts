@@ -2,7 +2,7 @@ import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { Point } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -20,6 +20,7 @@ import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
 import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
 export type NodeCapability =
   | 'children'
@@ -254,11 +255,13 @@ declare global {
   }
 }
 
+export type StencilElements = { bounds: Box; elements: DiagramElement[] };
+
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (diagram: Diagram) => DiagramElement[];
-  elementsForCanvas: (diagram: Diagram) => DiagramElement[];
+  elementsForPicker: (diagram: Diagram) => StencilElements;
+  elementsForCanvas: (diagram: Diagram) => StencilElements;
   type: 'default' | string;
 };
 
@@ -375,7 +378,8 @@ export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
   private preRegistrations: Array<PreregistrationEntry<keyof StencilLoaderOpts>> = [];
 
-  public stencilRegistry = new StencilRegistry();
+  // TODO: Ideally separate StencilRegistry from NodeDefinitionRegistry
+  constructor(public readonly stencilRegistry: StencilRegistry) {}
 
   preregister<K extends keyof StencilLoaderOpts>(
     shapes: RegExp,
@@ -455,12 +459,15 @@ export class EdgeDefinitionRegistry {
   }
 }
 
-export type Definitions = {
-  nodeDefinitions: NodeDefinitionRegistry;
-  edgeDefinitions: EdgeDefinitionRegistry;
+export type Registry = {
+  nodes: NodeDefinitionRegistry;
+  edges: EdgeDefinitionRegistry;
+  stencils: StencilRegistry;
 };
 
 const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
+  typeof type !== 'string';
+const isEdgeDefinition = (type: string | EdgeDefinition): type is EdgeDefinition =>
   typeof type !== 'string';
 
 export type MakeStencilNodeOpts = {
@@ -474,7 +481,7 @@ export type MakeStencilNodeOpts = {
   subPackage?: string;
 };
 
-export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
+export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps | EdgeProps>;
 
 export const makeStencilNode =
   (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
@@ -493,7 +500,7 @@ export const makeStencilNode =
           opts?.aspectRatio ?? 1
         ),
         layer,
-        opts?.props?.(t) ?? {},
+        (opts?.props?.(t) ?? {}) as NodeProps,
         opts?.metadata ?? {},
         opts?.texts
       );
@@ -508,25 +515,56 @@ export const makeStencilNode =
         uow
       );
 
-      return [n];
+      return { bounds: n.bounds, elements: [n] };
+    });
+
+export const makeStencilEdge =
+  (type: string | EdgeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
+  ($d: Diagram) =>
+    UnitOfWork.execute($d, _uow => {
+      const typeId = isEdgeDefinition(type) ? type.type : type;
+
+      const layer = $d.activeLayer;
+      assertRegularLayer(layer);
+
+      const e = ElementFactory.edge(
+        newid(),
+        new FreeEndpoint(_p(0, 50)),
+        new FreeEndpoint(_p(100, 50)),
+        { ...(opts?.props?.(t) ?? {}), shape: typeId } as EdgeProps,
+        opts?.metadata ?? {},
+        [],
+        layer
+      );
+
+      return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
 
 export const registerStencil = (
-  reg: NodeDefinitionRegistry,
+  reg: NodeDefinitionRegistry | EdgeDefinitionRegistry,
   pkg: StencilPackage,
-  def: NodeDefinition,
+  def: NodeDefinition | EdgeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {
   if ((pkg.subPackages ?? []).length > 0) {
     assert.true(!!opts?.subPackage);
   }
-
+  // @ts-ignore
   reg.register(def);
+
+  const isNodeDef = 'getBoundingPath' in def;
+  const elementsForPicker = isNodeDef
+    ? makeStencilNode(def, 'picker', opts)
+    : makeStencilEdge(def, 'picker', opts);
+  const elementsForCanvas = isNodeDef
+    ? makeStencilNode(def, 'canvas', opts)
+    : makeStencilEdge(def, 'canvas', opts);
+
   const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    elementsForPicker: makeStencilNode(def, 'picker', opts),
-    elementsForCanvas: makeStencilNode(def, 'canvas', opts),
+    elementsForPicker,
+    elementsForCanvas,
     type: pkg.type
   };
   pkg.stencils.push(stencil);

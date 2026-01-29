@@ -9,6 +9,7 @@ import {
   defaultEdgeRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 describe('AIModel', () => {
   let document: DiagramDocument;
@@ -16,10 +17,11 @@ describe('AIModel', () => {
 
   beforeEach(() => {
     // Use the default registries with all node types registered
-    const nodeRegistry = defaultNodeRegistry();
-    const edgeRegistry = defaultEdgeRegistry();
+    const stencils = new StencilRegistry();
+    const nodeDefinitions = defaultNodeRegistry(stencils);
+    const edgeDefinitions = defaultEdgeRegistry(stencils);
 
-    document = new DiagramDocument(nodeRegistry, edgeRegistry);
+    document = new DiagramDocument({ nodes: nodeDefinitions, edges: edgeDefinitions, stencils });
     const { diagram } = DocumentBuilder.empty(newid(), 'Test Diagram', document);
     aiModel = new AIModel(diagram);
   });

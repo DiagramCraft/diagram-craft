@@ -12,9 +12,9 @@ export const makeReflection = (node: DiagramNode, children: VNode[]) => {
 
   const center = Box.center(bounds);
 
-  let pathBounds: Box | undefined ;
+  let pathBounds: Box | undefined;
   if (props.effects?.reflection) {
-    const paths = node.diagram.document.nodeDefinitions.get(node.nodeType).getBoundingPath(node);
+    const paths = node.diagram.document.registry.nodes.get(node.nodeType).getBoundingPath(node);
 
     pathBounds = paths.bounds();
   }

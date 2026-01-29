@@ -31,7 +31,7 @@ export const NodeTypePopup = (props: Props) => {
 
       // Need to clone outside of the primary uow in order to avoid out-of-order updates
       const elements = UnitOfWork.execute(diagram, uow =>
-        cloneElements(registration.elementsForPicker(diagram), layer, uow)
+        cloneElements(registration.elementsForPicker(diagram).elements, layer, uow)
       );
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
@@ -74,20 +74,16 @@ export const NodeTypePopup = (props: Props) => {
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
   const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
-    const nodes = diagram.document.nodeDefinitions.stencilRegistry.get('default').stencils;
+    const nodes = diagram.document.registry.stencils.get('default').stencils;
     return nodes.map(n => {
       const { diagram: dest, layer } = DocumentBuilder.empty(
         n.id,
         n.name ?? n.id,
-        new DiagramDocument(
-          diagram.document.nodeDefinitions,
-          diagram.document.edgeDefinitions,
-          true,
-          new NoOpCRDTRoot()
-        )
+        new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
       );
 
-      const elements = n.elementsForPicker(dest);
+      // TODO: Can we use createThumbnail here somehow
+      const elements = n.elementsForPicker(dest).elements;
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
 

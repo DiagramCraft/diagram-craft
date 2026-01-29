@@ -43,12 +43,12 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           excludeMultiElementStencils: true
         },
         onOk: (stencilId: string) => {
-          const stencil = document.nodeDefinitions.stencilRegistry.getStencil(stencilId);
+          const stencil = document.registry.stencils.getStencil(stencilId);
 
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);
 
-          const elements = stencil.elementsForPicker(diagram);
+          const elements = stencil.elementsForPicker(diagram).elements;
           assert.arrayWithExactlyOneElement(elements);
           const node = elements[0]!;
           if (!isNode(node)) throw new VerifyNotReached();

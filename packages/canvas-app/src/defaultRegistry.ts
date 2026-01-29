@@ -13,7 +13,8 @@ import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
   registerStencil,
-  StencilPackage
+  StencilPackage,
+  StencilRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
@@ -38,9 +39,10 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
+import { mustExist } from '@diagram-craft/utils/assert';
 
-export const defaultNodeRegistry = () => {
-  const reg = new NodeDefinitionRegistry();
+export const defaultNodeRegistry = (stencilRegistry: StencilRegistry) => {
+  const reg = new NodeDefinitionRegistry(stencilRegistry);
 
   const defaults: StencilPackage = {
     id: 'default',
@@ -125,16 +127,18 @@ export const defaultNodeRegistry = () => {
 
   defaults.stencils.push(...loadStencilsFromYaml(stencils));
 
-  const stencilRegistry = reg.stencilRegistry;
   stencilRegistry.register(defaults);
   stencilRegistry.register(arrows, true);
 
   return reg;
 };
 
-export const defaultEdgeRegistry = () => {
-  const dest = new EdgeDefinitionRegistry();
-  dest.defaultValue = new SimpleEdgeDefinition();
-  dest.register(new BlockArrowEdgeDefinition());
-  return dest;
+export const defaultEdgeRegistry = (stencilRegistry: StencilRegistry) => {
+  const reg = new EdgeDefinitionRegistry();
+  reg.defaultValue = new SimpleEdgeDefinition();
+
+  const arrows = mustExist(stencilRegistry.get('arrow'));
+  registerStencil(reg, arrows, new BlockArrowEdgeDefinition());
+
+  return reg;
 };
