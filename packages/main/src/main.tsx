@@ -26,23 +26,23 @@ ELECTRON: {
   }
 }
 
-const stencilRegistry = new StencilRegistry();
-const nodeRegistry = defaultNodeRegistry(stencilRegistry);
+const stencils = new StencilRegistry();
+const nodes = defaultNodeRegistry(stencils);
 const stencilRegistryConfig: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
 for (let i = 0; i < stencilRegistryConfig.length; i++) {
   const s = stencilRegistryConfig[i]!;
   if (s.shapes) {
-    nodeRegistry.preregister(s.shapes, s.type, s.opts);
+    nodes.preregister(s.shapes, s.type, s.opts);
   }
 }
-registerDrawioBaseNodeTypes(nodeRegistry);
+registerDrawioBaseNodeTypes(nodes);
 
-const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
+const edges = defaultEdgeRegistry(stencils);
 
 registerDefaultEffects();
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry, stencilRegistry);
+const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
 
 const diagrams: Array<DiagramRef> = [];
 
@@ -63,6 +63,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     diagram={diagrams[0]}
     diagramFactory={diagramFactory}
     documentFactory={documentFactory}
-    nodeRegistry={nodeRegistry}
+    nodeRegistry={nodes}
   />
 );
