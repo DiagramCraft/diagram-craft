@@ -22,20 +22,144 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
+/**
+ * Node capability flags that control various node behaviors and features.
+ *
+ * These capabilities are used throughout the canvas system to conditionally enable/disable
+ * features, render UI panels, and control node behavior. Check capabilities using
+ * `node.getDefinition().supports('capability-name')`.
+ *
+ * @see {@link NodeDefinition.supports}
+ */
 export type NodeCapability =
+  /**
+   * Whether a node can contain child elements.
+   *
+   * When enabled, the node appears as expandable in the layer panel and supports nesting.
+   * Default: false
+   *
+   * @example
+   * Group, Table, TableRow, layout containers
+   */
   | 'children'
+
+  /**
+   * Whether a node can have fill properties (colors, gradients, patterns).
+   *
+   * When disabled, fill is set to 'none' in rendering, sketch fill effects are skipped,
+   * and the fill panel is hidden in the UI.
+   * Default: true
+   *
+   * @example
+   * Disabled by: CurlyBracket, Table, TableRow
+   */
   | 'fill'
+
+  /**
+   * Whether corner rounding effects can be applied to the node's path.
+   *
+   * When disabled, the rounding effects panel is hidden.
+   * Default: true
+   */
   | 'rounding'
+
+  /**
+   * Whether a node can be directly selected by clicking.
+   *
+   * When disabled, ancestor nodes are selected instead.
+   * Default: true
+   *
+   * @example
+   * Disabled by: TableRow (parent table controls selection)
+   */
   | 'select'
+
+  /**
+   * Whether edges can connect to any point on the node's boundary (not just predefined anchors).
+   *
+   * When disabled, only edge anchors are used for connections. The implementation uses
+   * a 5px preference threshold for anchor points.
+   * Default: true
+   *
+   * @example
+   * Disabled by: UmlLifeline
+   * @see packages/model/src/anchor.ts:241-258
+   */
   | 'connect-to-boundary'
+
+  /**
+   * Whether the anchor strategy can be changed.
+   *
+   * Allows configuration of anchor strategies: shape-defaults, per-edge, per-path,
+   * north-south, east-west, directions, custom, none.
+   * When disabled, the anchors configuration panel is hidden.
+   * Default: true
+   *
+   * @example
+   * Disabled by: CurlyBracket, UmlLifeline, UmlDestroy
+   */
   | 'anchors-configurable'
+
+  /**
+   * Whether a node can serve as a container in layout operations.
+   *
+   * Used to filter available shapes when changing selection to container types.
+   * Different from 'children' - affects layout system eligibility rather than parent-child relationships.
+   * Default: true
+   *
+   * @example
+   * Disabled by: Table, TableRow, FlexShapeNodeDefinition (when not a group)
+   */
   | 'can-be-container'
+
+  /**
+   * Whether a node supports the auto-layout system.
+   *
+   * Enables group layout, container padding, and layout tree traversal for nested containers.
+   * When enabled, the layout controls panel becomes available.
+   * Default: false
+   *
+   * @example
+   * Enabled by: LayoutCapableShapeNodeDefinition subclasses (except BPMNChoreographyActivity)
+   */
   | 'can-have-layout'
+
+  /**
+   * Whether a node can be toggled between expanded and collapsed states.
+   *
+   * When enabled, a collapse/expand toggle button is rendered and children can be hidden.
+   * Default: false
+   *
+   * @example
+   * Enabled by: LayoutCapableShapeNodeDefinition subclasses
+   * @see packages/canvas/src/shape/collapsible.ts:27, 130
+   */
   | 'collapsible'
+
+  /**
+   * Whether clicking a child selects the parent instead (group selection behavior).
+   *
+   * When enabled:
+   * - First click on child selects parent
+   * - Second click "drills down" to select child
+   *
+   * Default: false
+   *
+   * @example
+   * Enabled by: Group, BPMNChoreographyActivity
+   * @see packages/canvas/src/tools/moveTool.ts:103-116
+   */
   | 'children.select-parent'
 
   /**
-   * Are direct children managed by the parent?
+   * Whether the parent exclusively manages child lifecycle (prevents independent deletion).
+   *
+   * When enabled, children cannot be deleted independently.
+   * Default: false
+   *
+   * @example
+   * Enabled by: TableRow (table cells managed by table structure)
+   * @see packages/canvas-app/src/actions/selectionDeleteAction.ts:45
    */
   | 'children.managed-by-parent';
 
