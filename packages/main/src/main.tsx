@@ -18,6 +18,7 @@ import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
+import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -25,22 +26,23 @@ ELECTRON: {
   }
 }
 
-const nodeRegistry = defaultNodeRegistry();
-const stencilRegistry: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
-for (let i = 0; i < stencilRegistry.length; i++) {
-  const s = stencilRegistry[i]!;
+const stencils = new StencilRegistry();
+const nodes = defaultNodeRegistry(stencils);
+const stencilRegistryConfig: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
+for (let i = 0; i < stencilRegistryConfig.length; i++) {
+  const s = stencilRegistryConfig[i]!;
   if (s.shapes) {
-    nodeRegistry.preregister(s.shapes, s.type, s.opts);
+    nodes.preregister(s.shapes, s.type, s.opts);
   }
 }
-registerDrawioBaseNodeTypes(nodeRegistry);
+registerDrawioBaseNodeTypes(nodes);
 
-const edgeRegistry = defaultEdgeRegistry();
+const edges = defaultEdgeRegistry(stencils);
 
 registerDefaultEffects();
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
+const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
 
 const diagrams: Array<DiagramRef> = [];
 
@@ -57,10 +59,10 @@ if (location.hash !== '') {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <AppLoader
-    stencils={stencilRegistry}
+    stencils={stencilRegistryConfig}
     diagram={diagrams[0]}
     diagramFactory={diagramFactory}
     documentFactory={documentFactory}
-    nodeRegistry={nodeRegistry}
+    nodeRegistry={nodes}
   />
 );

@@ -65,7 +65,7 @@ const intersectWithNode = (
 ): PointOnPath => {
   const collapsedAncestor = getCollapsedAncestor(endpoint.node);
   const node = collapsedAncestor ?? endpoint.node;
-  const nodeDefinition = diagram.document.nodeDefinitions.get(node.nodeType);
+  const nodeDefinition = diagram.document.registry.nodes.get(node.nodeType);
 
   const endIntersections = nodeDefinition
     .getBoundingPath(node)

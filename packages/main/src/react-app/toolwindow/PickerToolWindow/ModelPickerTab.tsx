@@ -29,7 +29,7 @@ import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
-import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { useEventListener } from '../../hooks/useEventListener';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
@@ -121,7 +121,7 @@ const makeDataReference = (item: Data, schema: DataSchema): ElementDataEntry => 
 const makeTemplateNode = (
   item: Data,
   schema: DataSchema,
-  definitions: Definitions,
+  definitions: Registry,
   template: DataTemplate
 ) => {
   const cacheKey = `${item._uid}/${template.id}`;
@@ -161,11 +161,7 @@ const makeTemplateNode = (
   return node;
 };
 
-const makeDefaultNode = (
-  item: Data,
-  schema: DataSchema,
-  definitions: Definitions
-): DiagramElement => {
+const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Registry): DiagramElement => {
   return createThumbnail(
     (_diagram, layer) => [
       ElementFactory.node(
@@ -304,7 +300,7 @@ const DataProviderGridView = (props: DataViewProps) => {
             key={item._uid}
             item={item}
             schema={schema}
-            elements={[makeTemplateNode(item, schema, document.definitions, t)]}
+            elements={[makeTemplateNode(item, schema, document.registry, t)]}
             onEditItem={props.onEditItem}
             onDeleteItem={props.onDeleteItem}
           />
@@ -354,13 +350,8 @@ const DataProviderListView = (props: DataViewProps) => {
                       onMouseDown={ev => {
                         const node =
                           dataTemplates.length > 0
-                            ? makeTemplateNode(
-                                item,
-                                schema,
-                                document.definitions,
-                                dataTemplates[0]!
-                              )
-                            : makeDefaultNode(item, schema, document.definitions);
+                            ? makeTemplateNode(item, schema, document.registry, dataTemplates[0]!)
+                            : makeDefaultNode(item, schema, document.registry);
                         handleDragStart(
                           ev,
                           [node],
@@ -398,10 +389,10 @@ const DataProviderListView = (props: DataViewProps) => {
                               {dataTemplates
                                 .map(
                                   t =>
-                                    [
-                                      t,
-                                      makeTemplateNode(item, schema, document.definitions, t)
-                                    ] as [DataTemplate, DiagramNode]
+                                    [t, makeTemplateNode(item, schema, document.registry, t)] as [
+                                      DataTemplate,
+                                      DiagramNode
+                                    ]
                                 )
                                 .map(([t, n]) => (
                                   <div

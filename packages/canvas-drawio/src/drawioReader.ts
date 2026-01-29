@@ -534,7 +534,7 @@ const parseShape = async (
   } else if (style.styleName === 'image' || style.has('image')) {
     return await parseImage(id, bounds, props, metadata, texts, style, layer, queue);
   } else if (style.shape?.startsWith('mxgraph.') || getShapeBundle(style.shape) !== undefined) {
-    const registry = diagram.document.nodeDefinitions;
+    const registry = diagram.document.registry.nodes;
 
     const bundle = getShapeBundle(style.shape);
     if (!bundle) {

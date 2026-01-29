@@ -15,7 +15,10 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  NodeDefinitionRegistry,
+  StencilRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -138,7 +141,12 @@ const writeArrow = (
 };
 
 const arrowsTestFile = async () => {
-  const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+  const stencilRegistry = new StencilRegistry();
+  const document = new DiagramDocument({
+    nodes: defaultNodeRegistry(stencilRegistry),
+    edges: defaultEdgeRegistry(stencilRegistry),
+    stencils: stencilRegistry
+  });
 
   const { diagram, layer } = DocumentBuilder.empty('arrows', 'Arrows', document);
 
@@ -364,7 +372,7 @@ const SHAPES_DEFS = [
 
 const writeShape = (
   shape: string,
-  factory: (diagram: Diagram) => DiagramElement[],
+  factory: (diagram: Diagram) => { elements: DiagramElement[] },
   y: number,
   layer: RegularLayer,
   diagram: Diagram,
@@ -402,7 +410,7 @@ const writeShape = (
   UnitOfWork.execute(diagram, uow => {
     for (let i = 0; i < SHAPES_DEFS.length; i++) {
       const def = SHAPES_DEFS[i]!;
-      const els = factory(diagram);
+      const els = factory(diagram).elements;
       if (els.length !== 1) throw new Error('Expected single element');
 
       const el = els[0]!.duplicate(undefined, `${shape}-${i}`);
@@ -453,6 +461,7 @@ const writeShape = (
 
 const shapesTestFile = async (
   nodeDefinitions: NodeDefinitionRegistry,
+  stencils: StencilRegistry,
   pkg: string,
   file: string,
   opts: ShapeOpts = {
@@ -463,7 +472,11 @@ const shapesTestFile = async (
     shapesPerLine: Number.MAX_SAFE_INTEGER
   }
 ) => {
-  const document = new DiagramDocument(nodeDefinitions, defaultEdgeRegistry());
+  const document = new DiagramDocument({
+    nodes: nodeDefinitions,
+    edges: defaultEdgeRegistry(stencils),
+    stencils
+  });
 
   const { diagram, layer } = DocumentBuilder.empty('shapes', 'Shapes', document);
 
@@ -527,14 +540,15 @@ const shapesTestFile = async (
   );
 };
 
-const nodeDefinitions = defaultNodeRegistry();
+const registry = new StencilRegistry();
+const nodeDefinitions = defaultNodeRegistry(registry);
 await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();
-shapesTestFile(nodeDefinitions, 'pkg:default', 'shapes.json');
-shapesTestFile(nodeDefinitions, 'pkg:arrow', 'shapes-arrow.json');
-shapesTestFile(nodeDefinitions, 'pkg:uml', 'shapes-uml.json');
-shapesTestFile(nodeDefinitions, 'shape:default:table', 'shape-default-table.json', {
+shapesTestFile(nodeDefinitions, registry, 'pkg:default', 'shapes.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:arrow', 'shapes-arrow.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:uml', 'shapes-uml.json');
+shapesTestFile(nodeDefinitions, registry, 'shape:default:table', 'shape-default-table.json', {
   xDiff: 300,
   yDiff: 250,
   startX: 50,

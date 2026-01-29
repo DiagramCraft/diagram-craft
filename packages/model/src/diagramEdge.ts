@@ -299,7 +299,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   getDefinition(): EdgeDefinition {
-    return this.diagram.document.edgeDefinitions.get(this.renderProps.shape);
+    return this.diagram.document.registry.edges.get(this.renderProps.shape);
   }
 
   /* Props *************************************************************************************************** */

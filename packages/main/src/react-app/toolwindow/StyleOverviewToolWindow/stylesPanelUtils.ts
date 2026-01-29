@@ -3,7 +3,7 @@ import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { DiagramElement, ElementPropsForRendering } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -99,7 +99,7 @@ export const createPreview = (
   props: Partial<ElementProps>,
   type: string,
   nodeType: string,
-  defs: Definitions
+  defs: Registry
 ) => {
   const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
     if (type === 'edge') {
@@ -260,7 +260,7 @@ export const collectStyles = (
       combo.props,
       combo.elements[0]!.type,
       nodeType,
-      diagram.document.definitions
+      diagram.document.registry
     );
 
     combo.previewDiagram = preview.diagram;
@@ -276,7 +276,7 @@ export const collectStyles = (
         style.stylesheet?.props ?? {},
         style.elements[0]!.type,
         'rect',
-        diagram.document.definitions
+        diagram.document.registry
       );
 
       groupMap.set(key, {

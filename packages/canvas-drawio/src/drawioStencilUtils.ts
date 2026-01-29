@@ -12,22 +12,20 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
   const mkNode = ($d: Diagram) => {
     const type = 'drawio';
 
-    const def = $d.document.nodeDefinitions.get(type);
+    const def = $d.document.registry.nodes.get(type);
     assertDrawioShapeNodeDefinition(def);
 
     const layer = $d.activeLayer;
     assertRegularLayer(layer);
 
-    return [
-      UnitOfWork.execute($d, uow => {
-        const node = ElementFactory.node(newid(), type, Box.unit(), layer, drawio.props, {});
-        const size = def.getSize(node);
+    return UnitOfWork.execute($d, uow => {
+      const node = ElementFactory.node(newid(), type, Box.unit(), layer, drawio.props, {});
+      const size = def.getSize(node);
 
-        node.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, uow);
+      node.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, uow);
 
-        return node;
-      })
-    ];
+      return { elements: [node], bounds: node.bounds };
+    });
   };
   return {
     id: drawio.key,

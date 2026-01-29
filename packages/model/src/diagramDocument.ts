@@ -3,7 +3,7 @@ import { DiagramStyles } from './diagramStyles';
 import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import { Registry } from './elementDefinitionRegistry';
 import { isNode } from './diagramElement';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
@@ -72,8 +72,7 @@ export class DiagramDocument
   activeDiagramId: string | undefined;
 
   constructor(
-    readonly nodeDefinitions: NodeDefinitionRegistry,
-    readonly edgeDefinitions: EdgeDefinitionRegistry,
+    readonly registry: Registry,
     isStencil?: boolean,
     crdtRoot?: CRDTRoot
   ) {
@@ -129,13 +128,6 @@ export class DiagramDocument
 
   deactivate(callback: ProgressCallback) {
     CollaborationConfig.Backend.disconnect(callback);
-  }
-
-  get definitions() {
-    return {
-      nodeDefinitions: this.nodeDefinitions,
-      edgeDefinitions: this.edgeDefinitions
-    };
   }
 
   // Exposed for query purposes
@@ -223,13 +215,13 @@ export class DiagramDocument
         for (const element of diagram.allElements()) {
           if (isNode(element)) {
             const s = element.nodeType;
-            if (!this.nodeDefinitions.hasRegistration(s)) {
-              const existingNodeDefinitions = new Set([...this.nodeDefinitions.list()]);
+            if (!this.registry.nodes.hasRegistration(s)) {
+              const existingNodeDefinitions = new Set([...this.registry.nodes.list()]);
 
-              if (!(await this.nodeDefinitions.load(s))) {
+              if (!(await this.registry.nodes.load(s))) {
                 console.warn(`Node definition ${s} not loaded`);
               } else {
-                for (const nd of this.nodeDefinitions.list()) {
+                for (const nd of this.registry.nodes.list()) {
                   if (!existingNodeDefinitions.has(nd)) {
                     console.log('Loaded', nd);
                     loadedTypes.add(nd);

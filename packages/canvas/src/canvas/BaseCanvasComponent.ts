@@ -112,7 +112,7 @@ export abstract class BaseCanvasComponent<
 
       if (isEdge(e)) {
         const edge = e;
-        const edgeDef = $d.document.edgeDefinitions.get(edge.renderProps.shape);
+        const edgeDef = $d.document.registry.edges.get(edge.renderProps.shape);
 
         return this.subComponent(
           () => new (edgeDef as ShapeEdgeDefinition).component(edgeDef as ShapeEdgeDefinition),
@@ -143,7 +143,7 @@ export abstract class BaseCanvasComponent<
         );
       } else if (isNode(e)) {
         const node = e;
-        const nodeDef = $d.document.nodeDefinitions.get(node.nodeType);
+        const nodeDef = $d.document.registry.nodes.get(node.nodeType);
 
         return this.subComponent<NodeComponentProps>(
           () => new (nodeDef as ShapeNodeDefinition).component(nodeDef as ShapeNodeDefinition),

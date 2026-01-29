@@ -48,8 +48,7 @@ const ElementStylesheetItem = ({
 }: ElementStylesheetItemProps) => {
   const previewDiagram = useMemo(
     () =>
-      createPreview(stylesheet.props, stylesheet.type, 'rect', diagram.document.definitions)
-        .diagram,
+      createPreview(stylesheet.props, stylesheet.type, 'rect', diagram.document.registry).diagram,
     [stylesheet, diagram]
   );
 

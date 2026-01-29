@@ -33,7 +33,7 @@ const getShape = (node: DiagramNode): ShapeNodeDefinition | undefined => {
   const shape = node.renderProps.custom.container.shape;
   if (shape === '') return undefined;
 
-  return node.diagram.document.nodeDefinitions.get(shape) as ShapeNodeDefinition | undefined;
+  return node.diagram.document.registry.nodes.get(shape) as ShapeNodeDefinition | undefined;
 };
 
 export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {

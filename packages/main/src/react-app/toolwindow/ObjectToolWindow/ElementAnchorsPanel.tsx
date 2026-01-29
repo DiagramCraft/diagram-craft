@@ -63,7 +63,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
             )[0] as DiagramNode
         )
       ];
-    }, diagram.document.definitions);
+    }, diagram.document.registry);
     assert.present(duplicatedNode);
 
     const padding = 10;
@@ -77,7 +77,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
     };
 
     return thumbnailDiagram;
-  }, [selectedNode, diagram.document.definitions]);
+  }, [selectedNode, diagram.document.registry]);
 
   if (!selectedNode || !previewDiagram) return null;
 

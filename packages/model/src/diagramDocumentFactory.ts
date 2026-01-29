@@ -2,7 +2,7 @@ import { DiagramDocument } from './diagramDocument';
 import { Diagram } from './diagram';
 import { SerializedDiagram } from './serialization/serializedTypes';
 import { newid } from '@diagram-craft/utils/id';
-import { EdgeDefinitionRegistry, type NodeDefinitionRegistry } from './elementDefinitionRegistry';
+import { Registry } from './elementDefinitionRegistry';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import { CRDT, type CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
@@ -30,10 +30,7 @@ export const makeDefaultDiagramFactory = () => (d: SerializedDiagram, doc: Diagr
   return new Diagram(d.id, d.name, doc);
 };
 
-export const makeDefaultDocumentFactory = (
-  nodeRegistry: NodeDefinitionRegistry,
-  edgeRegistry: EdgeDefinitionRegistry
-): DocumentFactory => {
+export const makeDefaultDocumentFactory = (registry: Registry): DocumentFactory => {
   return {
     loadCRDT: async (
       url: string | undefined,
@@ -61,7 +58,7 @@ export const makeDefaultDocumentFactory = (
       url: string | undefined,
       _statusCallback: ProgressCallback
     ) => {
-      const doc = new DiagramDocument(nodeRegistry, edgeRegistry, false, root);
+      const doc = new DiagramDocument(registry, false, root);
       if (url) doc.url = url;
       return doc;
     }
