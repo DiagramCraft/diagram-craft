@@ -98,10 +98,8 @@ export const defaultStencilRegistry = () => {
     stencils: [],
     type: 'default'
   };
-  stencilRegistry.register(defaults);
 
   const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [], type: 'default' };
-  stencilRegistry.register(arrows, true);
 
   addStencil(defaults, new RectNodeDefinition());
   addStencil(defaults, new RoundedRectNodeDefinition(), {
@@ -143,17 +141,11 @@ export const defaultStencilRegistry = () => {
   addStencil(defaults, new DiamondNodeDefinition());
   addStencil(defaults, new HexagonNodeDefinition());
   addStencil(defaults, new TriangleNodeDefinition());
-  addStencil(defaults, new ProcessNodeDefinition(), {
-    size: { w: 100, h: 60 }
-  });
+  addStencil(defaults, new ProcessNodeDefinition(), { size: { w: 100, h: 60 } });
   addStencil(defaults, new CylinderNodeDefinition());
-  addStencil(defaults, new CurlyBracketNodeDefinition(), {
-    size: { w: 35, h: 100 }
-  });
+  addStencil(defaults, new CurlyBracketNodeDefinition(), { size: { w: 35, h: 100 } });
   addStencil(defaults, new BlockArcNodeDefinition());
-  addStencil(defaults, new CloudNodeDefinition(), {
-    size: { w: 100, h: 70 }
-  });
+  addStencil(defaults, new CloudNodeDefinition(), { size: { w: 100, h: 70 } });
   addStencil(defaults, new StepNodeDefinition());
   addStencil(defaults, new LineNodeDefinition());
   addStencil(defaults, new DelayNodeDefinition());
@@ -172,6 +164,8 @@ export const defaultStencilRegistry = () => {
   // Edges
   addStencil(arrows, new BlockArrowEdgeDefinition());
 
+  stencilRegistry.register(defaults);
+  stencilRegistry.register(arrows, true);
   return stencilRegistry;
 };
 
