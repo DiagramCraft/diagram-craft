@@ -318,7 +318,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     } else {
       return this.stencils
         .values()
-        .flatMap(pkg => pkg.stencils)
+        .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(p => p.stencils) ?? [])])
         .find(s => s.id === id);
     }
   }
