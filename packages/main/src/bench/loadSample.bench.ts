@@ -1,7 +1,8 @@
 import { bench, describe } from 'vitest';
 import {
   defaultEdgeRegistry,
-  defaultNodeRegistry
+  defaultNodeRegistry,
+  defaultStencilRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import {
   makeDefaultDiagramFactory,
@@ -12,16 +13,15 @@ import shapes from '../../public/sample/shapes.json';
 import arrows from '../../public/sample/arrows.json';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
-import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const origRoot = CollaborationConfig.CRDTRoot;
 const origMap = CollaborationConfig.CRDTMap;
 
 const opts = { time: 2000 };
 
-const stencils = new StencilRegistry();
-const nodes = defaultNodeRegistry(stencils);
-const edges = defaultEdgeRegistry(stencils);
+const stencils = defaultStencilRegistry();
+const nodes = defaultNodeRegistry();
+const edges = defaultEdgeRegistry();
 
 const diagramFactory = makeDefaultDiagramFactory();
 const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });

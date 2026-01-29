@@ -4,8 +4,7 @@ import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './di
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Registry } from './elementDefinitionRegistry';
-import { isNode } from './diagramElement';
-import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
@@ -204,41 +203,6 @@ export class DiagramDocument
 
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
-  }
-
-  // TODO: We should probably move this into the diagram loaders and/or deserialization
-  //       This way, warnings as anchors are determined during deserialization are triggered
-  async load() {
-    const loadedTypes = new Set<string>();
-    for (const diagram of this.diagramIterator({ nest: true })) {
-      await UnitOfWork.executeAsync(diagram, async uow => {
-        for (const element of diagram.allElements()) {
-          if (isNode(element)) {
-            const s = element.nodeType;
-            if (!this.registry.nodes.hasRegistration(s)) {
-              const existingNodeDefinitions = new Set([...this.registry.nodes.list()]);
-
-              if (!(await this.registry.nodes.load(s))) {
-                console.warn(`Node definition ${s} not loaded`);
-              } else {
-                for (const nd of this.registry.nodes.list()) {
-                  if (!existingNodeDefinitions.has(nd)) {
-                    console.log('Loaded', nd);
-                    loadedTypes.add(nd);
-                  }
-                }
-
-                element.invalidate(uow);
-                element.invalidateAnchors(uow);
-              }
-            } else if (loadedTypes.has(s)) {
-              element.invalidate(uow);
-              element.invalidateAnchors(uow);
-            }
-          }
-        }
-      });
-    }
   }
 }
 

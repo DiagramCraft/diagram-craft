@@ -66,7 +66,7 @@ export const ShapeSelectDialog = (props: Props) => {
   const document = useDocument();
   const diagram = useDiagram();
   const ref = useRef<HTMLInputElement>(null);
-  const stencilRegistry = diagram.document.registry.nodes.stencilRegistry;
+  const stencilRegistry = diagram.document.registry.stencils;
 
   const [search, setSearch] = useState('');
 

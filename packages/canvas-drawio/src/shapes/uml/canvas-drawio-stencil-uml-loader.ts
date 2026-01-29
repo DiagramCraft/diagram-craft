@@ -1,8 +1,9 @@
 import {
+  addStencil,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
-  registerStencil,
-  StencilPackage
+  StencilPackage,
+  StencilRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
@@ -51,7 +52,7 @@ export const parseUMLShapes = async (
   return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
-export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
+export const registerUMLStencils = async (stencilRegistry: StencilRegistry) => {
   const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [], type: 'default' };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
@@ -72,9 +73,9 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
   const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
     deepMerge(props('picker'), p);
 
-  registerStencil(r, umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
+  addStencil(umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
 
-  registerStencil(r, umlStencils, new Folder(), {
+  addStencil(umlStencils, new Folder(), {
     aspectRatio: 1.5,
     props: mergedProps({
       text: {
@@ -87,24 +88,24 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
     }
   });
 
-  registerStencil(r, umlStencils, new UmlEntity(), { props });
+  addStencil(umlStencils, new UmlEntity(), { props });
 
-  registerStencil(r, umlStencils, new UmlControl(), { aspectRatio: 7 / 8, props });
+  addStencil(umlStencils, new UmlControl(), { aspectRatio: 7 / 8, props });
 
-  registerStencil(r, umlStencils, new UmlDestroy(), { size: { w: 10, h: 10 } });
+  addStencil(umlStencils, new UmlDestroy(), { size: { w: 10, h: 10 } });
 
-  registerStencil(r, umlStencils, new UmlLifeline(r), { props });
+  addStencil(umlStencils, new UmlLifeline(), { props });
 
-  registerStencil(r, umlStencils, new UmlBoundary(), {
+  addStencil(umlStencils, new UmlBoundary(), {
     aspectRatio: 1.25,
     texts: {
       text: 'Boundary Object'
     }
   });
 
-  registerStencil(r, umlStencils, new UmlFrame(), { props });
+  addStencil(umlStencils, new UmlFrame(), { props });
 
-  registerStencil(r, umlStencils, new UmlModuleNodeDefinition(), {
+  addStencil(umlStencils, new UmlModuleNodeDefinition(), {
     props: mergedProps({
       text: {
         left: 22,
@@ -117,20 +118,34 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
     size: { w: 90, h: 50 }
   });
 
-  registerStencil(r, umlStencils, new ProvidedRequiredInterface(), {
+  addStencil(umlStencils, new ProvidedRequiredInterface(), {
     props,
     size: { w: 20, h: 20 }
   });
 
-  registerStencil(r, umlStencils, new RequiredInterface(), {
+  addStencil(umlStencils, new RequiredInterface(), {
     props,
     size: { w: 20, h: 20 },
     aspectRatio: 0.5
   });
 
+  stencilRegistry.register(umlStencils, true);
+};
+
+export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
+  r.register(new UmlActor());
+  r.register(new Folder());
+  r.register(new UmlEntity());
+  r.register(new UmlControl());
+  r.register(new UmlDestroy());
+  r.register(new UmlLifeline());
+  r.register(new UmlBoundary());
+  r.register(new UmlFrame());
+  r.register(new UmlModuleNodeDefinition());
+  r.register(new ProvidedRequiredInterface());
+  r.register(new RequiredInterface());
+
   shapeParsers['umlLifeline'] = parseUMLShapes;
   shapeParsers['module'] = parseUMLShapes;
   shapeParsers['component'] = parseUMLShapes;
-
-  r.stencilRegistry.register(umlStencils, true);
 };

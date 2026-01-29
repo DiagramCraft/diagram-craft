@@ -1,8 +1,5 @@
 import { DiagramDocument } from '../diagramDocument';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
@@ -16,7 +13,6 @@ import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Point } from '@diagram-craft/geometry/point';
 import type { NodeProps } from '../diagramProps';
-import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -27,16 +23,7 @@ export class TestModel {
   }
 
   static newDocument(root?: CRDTRoot) {
-    const stencils = new StencilRegistry();
-    return new DiagramDocument(
-      {
-        nodes: defaultNodeRegistry(stencils),
-        edges: defaultEdgeRegistry(stencils),
-        stencils
-      },
-      false,
-      root
-    );
+    return new DiagramDocument(defaultRegistry(), false, root);
   }
 
   static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {

@@ -3,7 +3,6 @@ import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
@@ -27,7 +26,7 @@ declare global {
 registerCustomNodeDefaults('umlLifeline', { participant: '' });
 
 export class UmlLifeline extends SimpleShapeNodeDefinition {
-  constructor(private readonly registry: NodeDefinitionRegistry) {
+  constructor() {
     super('umlLifeline', 'UML Lifeline');
     this.capabilities['connect-to-boundary'] = false;
     this.capabilities['anchors-configurable'] = false;
@@ -72,7 +71,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participant = coalesce(props.node.renderProps.custom.umlLifeline?.participant, 'rect')!;
 
-    const shape = this.registry.get(participant);
+    const shape = props.node.diagram.document.registry.nodes.get(participant);
     if (!shape) VERIFY_NOT_REACHED();
 
     const nodeComponent = (shape as ShapeNodeDefinition).component;

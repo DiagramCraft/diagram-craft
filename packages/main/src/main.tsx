@@ -3,10 +3,7 @@ import './initial-loader';
 import ReactDOM from 'react-dom/client';
 import { AppLoader } from './AppLoader';
 import './index.css';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 import { DiagramRef } from './App';
 import { UserState } from './UserState';
@@ -14,11 +11,10 @@ import {
   makeDefaultDiagramFactory,
   makeDefaultDocumentFactory
 } from '@diagram-craft/model/diagramDocumentFactory';
-import { AppConfig, type StencilRegistryConfig } from './appConfig';
+import { AppConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
-import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -26,23 +22,23 @@ ELECTRON: {
   }
 }
 
-const stencils = new StencilRegistry();
-const nodes = defaultNodeRegistry(stencils);
-const stencilRegistryConfig: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
-for (let i = 0; i < stencilRegistryConfig.length; i++) {
-  const s = stencilRegistryConfig[i]!;
-  if (s.shapes) {
-    nodes.preregister(s.shapes, s.type, s.opts);
-  }
-}
-registerDrawioBaseNodeTypes(nodes);
+const elementDefConfig = AppConfig.get().elementDefinitions?.registry ?? [];
 
-const edges = defaultEdgeRegistry(stencils);
+const { stencils, nodes, edges } = defaultRegistry(elementDefConfig);
+
+// TODO: Can we avoid this - i.e. why is not working to use
+//      {
+//         shapes: /^(drawio|drawioImage|transparent)$/,
+//         nodeDefinitionLoader: async () => {
+//           return async d => registerDrawioBaseNodeTypes(d);
+//         }
+//       }
+registerDrawioBaseNodeTypes(nodes);
 
 registerDefaultEffects();
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils });
+const documentFactory = makeDefaultDocumentFactory({ nodes, edges, stencils: stencils });
 
 const diagrams: Array<DiagramRef> = [];
 
@@ -59,7 +55,7 @@ if (location.hash !== '') {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <AppLoader
-    stencils={stencilRegistryConfig}
+    stencils={AppConfig.get().stencils?.registry ?? []}
     diagram={diagrams[0]}
     diagramFactory={diagramFactory}
     documentFactory={documentFactory}

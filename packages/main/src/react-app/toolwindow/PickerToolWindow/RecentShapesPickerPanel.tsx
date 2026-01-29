@@ -3,7 +3,7 @@ import { useDiagram } from '../../../application';
 
 export const RecentShapesPickerPanel = () => {
   const diagram = useDiagram();
-  const stencilRegistry = diagram.document.registry.nodes.stencilRegistry;
+  const stencilRegistry = diagram.document.registry.stencils;
 
   return (
     <ObjectPickerPanel

@@ -1,7 +1,8 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import {
   defaultEdgeRegistry,
-  defaultNodeRegistry
+  defaultNodeRegistry,
+  defaultRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -141,12 +142,7 @@ const writeArrow = (
 };
 
 const arrowsTestFile = async () => {
-  const stencilRegistry = new StencilRegistry();
-  const document = new DiagramDocument({
-    nodes: defaultNodeRegistry(stencilRegistry),
-    edges: defaultEdgeRegistry(stencilRegistry),
-    stencils: stencilRegistry
-  });
+  const document = new DiagramDocument(defaultRegistry());
 
   const { diagram, layer } = DocumentBuilder.empty('arrows', 'Arrows', document);
 
@@ -474,7 +470,7 @@ const shapesTestFile = async (
 ) => {
   const document = new DiagramDocument({
     nodes: nodeDefinitions,
-    edges: defaultEdgeRegistry(stencils),
+    edges: defaultEdgeRegistry(),
     stencils
   });
 
@@ -483,7 +479,7 @@ const shapesTestFile = async (
   if (pkg.startsWith('pkg:')) {
     let y = 10;
 
-    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4)).stencils) {
+    for (const stencil of stencils.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
       writeShape(stencil.name ?? stencil.id, stencil.elementsForPicker, y, layer, diagram, opts);
       y += opts.yDiff;
@@ -505,7 +501,7 @@ const shapesTestFile = async (
 
     let x = 0;
     let y = 10;
-    for (const stencil of nodeDefinitions.stencilRegistry.get(p).stencils) {
+    for (const stencil of stencils.get(p).stencils) {
       if (stencil.id === shape) {
         const ret = writeShape(
           stencil.name ?? stencil.id,
@@ -541,7 +537,7 @@ const shapesTestFile = async (
 };
 
 const registry = new StencilRegistry();
-const nodeDefinitions = defaultNodeRegistry(registry);
+const nodeDefinitions = defaultNodeRegistry();
 await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();
