@@ -149,7 +149,7 @@ export const AppLoader = (props: Props) => {
       assert.present(loader, `Stencil loader ${def.type} not found`);
 
       // biome-ignore lint/suspicious/noExplicitAny: false positive
-      loader().then(loader => loader(doc.registry.stencils, def.opts as any));
+      loader().then(loader => loader(doc.registry, def.opts as any));
     }
   }, [props.stencils, doc]);
 

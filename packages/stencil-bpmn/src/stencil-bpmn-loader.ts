@@ -1,8 +1,9 @@
 import {
   addStencil,
+  EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  StencilPackage,
-  StencilRegistry
+  Registry,
+  StencilPackage
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
@@ -19,8 +20,31 @@ import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoad
 import stencils from './bpmnStencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
+import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
 
-export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => {
+export const registerBPMNNodes = async (nodes: NodeDefinitionRegistry) => {
+  nodes.register(new BPMNActivityNodeDefinition());
+  nodes.register(new BPMNDataStoreNodeDefinition());
+  nodes.register(new BPMNDataObjectNodeType());
+  nodes.register(new BPMNEventNodeDefinition());
+  nodes.register(new BPMNGatewayNodeDefinition());
+  nodes.register(new BPMNConversationNodeDefinition());
+  nodes.register(new BPMNAnnotationNodeDefinition());
+  nodes.register(new BPMNChoreographyActivityNodeDefinition());
+  nodes.register(new BPMNChoreographyActivityParticipantNodeDefinition());
+  nodes.register(new BPMNChoreographyActivityNameNodeDefinition());
+  nodes.register(new BPMNChoreographyEnvelopeNodeDefinition());
+  nodes.register(new BPMNLane());
+};
+
+export const registerBPMNEdges = async (edges: EdgeDefinitionRegistry) => {
+  edges.register(new BPMNConversationEdgeDefinition());
+};
+
+export const registerBPMNStencils = async (registry: Registry) => {
+  await registerBPMNNodes(registry.nodes);
+  await registerBPMNEdges(registry.edges);
+
   const bpmnStencils: StencilPackage = {
     id: 'bpmn2',
     name: 'BPMN 2.0',
@@ -617,25 +641,20 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
+  addStencil(bpmnStencils, new BPMNConversationEdgeDefinition(), {
+    id: 'bpmn-conversation-edge',
+    name: 'Conversation Edge',
+    subPackage: 'collaboration',
+    size: {
+      w: 10,
+      h: 10
+    }
+  });
+
   loadStencilsFromYaml(stencils).forEach(s => {
     bpmnStencils.stencils.push(s);
     bpmnStencils.subPackages!.find(p => p.id === 'choreography')?.stencils.push(s);
   });
 
-  stencilRegistry.register(bpmnStencils, true);
-};
-
-export const registerBPMNShapes = async (nodes: NodeDefinitionRegistry) => {
-  nodes.register(new BPMNActivityNodeDefinition());
-  nodes.register(new BPMNDataStoreNodeDefinition());
-  nodes.register(new BPMNDataObjectNodeType());
-  nodes.register(new BPMNEventNodeDefinition());
-  nodes.register(new BPMNGatewayNodeDefinition());
-  nodes.register(new BPMNConversationNodeDefinition());
-  nodes.register(new BPMNAnnotationNodeDefinition());
-  nodes.register(new BPMNChoreographyActivityNodeDefinition());
-  nodes.register(new BPMNChoreographyActivityParticipantNodeDefinition());
-  nodes.register(new BPMNChoreographyActivityNameNodeDefinition());
-  nodes.register(new BPMNChoreographyEnvelopeNodeDefinition());
-  nodes.register(new BPMNLane());
+  registry.stencils.register(bpmnStencils, true);
 };

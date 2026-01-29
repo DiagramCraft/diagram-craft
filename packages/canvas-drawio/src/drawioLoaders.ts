@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (stencilRegistry, opts) => {
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (registry, opts) => {
   const { name, url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
 
@@ -26,13 +26,13 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (stencil
     return;
   }
 
-  stencilRegistry.register({
+  registry.stencils.register({
     id: name,
     name: name,
     stencils: drawioStencils.map(toRegularStencil),
     type: 'drawioXml'
   });
-  stencilRegistry.activate(name);
+  registry.stencils.activate(name);
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

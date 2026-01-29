@@ -40,6 +40,7 @@ export const loadFileFromUrl = async (
   const root = opts?.root ?? (await documentFactory.loadCRDT(url, userState, progressCallback));
   const doc = await documentFactory.createDocument(root, url, progressCallback);
   await fileLoader(content, doc, diagramFactory);
+  await doc.load();
 
   return doc;
 };

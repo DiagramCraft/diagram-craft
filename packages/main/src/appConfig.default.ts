@@ -21,7 +21,9 @@ export const defaultAppConfig: AppConfig = {
       {
         shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
         nodeDefinitionLoader: () =>
-          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNShapes)
+          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNNodes),
+        edgeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNEdges)
       },
       {
         shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
