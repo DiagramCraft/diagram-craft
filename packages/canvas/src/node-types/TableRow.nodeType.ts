@@ -15,6 +15,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     this.capabilities.select = false;
     this.capabilities.children = true;
     this.capabilities['can-be-container'] = false;
+    this.capabilities['children.managed-by-parent'] = true;
   }
 
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {

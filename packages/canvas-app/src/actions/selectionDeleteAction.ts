@@ -39,6 +39,12 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
     if (diagram.selection.isEmpty()) return;
 
     const deletableElements = diagram.selection.elements.filter(e => {
+      const parent = e.parent;
+      if (parent && isNode(parent)) {
+        const parentDef = parent.getDefinition();
+        if (parentDef.supports('children.managed-by-parent')) return false;
+      }
+
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);
     });
 

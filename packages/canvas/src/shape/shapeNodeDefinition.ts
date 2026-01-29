@@ -62,7 +62,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       'can-be-container': true,
       'can-have-layout': false,
       'collapsible': false,
-      'children.select-parent': false
+      'children.select-parent': false,
+      'children.managed-by-parent': false
     };
   }
 
