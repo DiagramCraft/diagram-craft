@@ -185,7 +185,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
     throw new VerifyNotReached();
   }
 
-  if (Object.keys(customProperties).length === 0) {
+  if (customProperties.entries.length === 0 && customProperties.dataSchemas.length === 0) {
     return <div></div>;
   }
 
