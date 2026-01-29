@@ -252,6 +252,7 @@ if (typeof window !== 'undefined') {
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {}
+    interface ElementDefinitionLoaderOptsExtensions {}
   }
 }
 
@@ -368,25 +369,38 @@ export const stencilLoaderRegistry: Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
 }> = {};
 
-type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
-  type: K;
+export type ElementDefinitionLoader = (nodeDefinition: NodeDefinitionRegistry) => Promise<void>;
+
+type PreregistrationEntry = {
   shapes: RegExp;
-  opts: StencilLoaderOpts[K];
+  callback: () => Promise<ElementDefinitionLoader>;
+};
+
+declare global {
+  namespace DiagramCraft {
+    interface StencilLoaderOptsExtensions {
+      basic: {
+        callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
+      };
+    }
+  }
+}
+
+export const stencilLoaderBasic: StencilLoader<'basic'> = async (nodeDefinitions, opts) => {
+  await (
+    await opts.callback()
+  )(nodeDefinitions);
 };
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
-  private preRegistrations: Array<PreregistrationEntry<keyof StencilLoaderOpts>> = [];
+  private preRegistrations: Array<PreregistrationEntry> = [];
 
   // TODO: Ideally separate StencilRegistry from NodeDefinitionRegistry
   constructor(public readonly stencilRegistry: StencilRegistry) {}
 
-  preregister<K extends keyof StencilLoaderOpts>(
-    shapes: RegExp,
-    type: K,
-    opts: StencilLoaderOpts[K]
-  ) {
-    this.preRegistrations.push({ shapes, type, opts });
+  preregister(shapes: RegExp, callback: () => Promise<ElementDefinitionLoader>) {
+    this.preRegistrations.push({ shapes, callback });
   }
 
   list() {
@@ -400,14 +414,9 @@ export class NodeDefinitionRegistry {
     if (idx === -1) return false;
 
     const entry = this.preRegistrations[idx]!;
-    //this.preRegistrations.splice(idx, 1);
 
-    const loader = stencilLoaderRegistry[entry.type];
-    assert.present(loader, `Stencil loader ${entry.type} not found`);
-
-    const l = await loader();
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    await l(this, entry.opts as any);
+    const loader = await entry.callback();
+    await loader(this);
 
     return true;
   }
@@ -540,6 +549,9 @@ export const makeStencilEdge =
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
 
+/**
+ * @deprecated
+ */
 export const registerStencil = (
   reg: NodeDefinitionRegistry | EdgeDefinitionRegistry,
   pkg: StencilPackage,
@@ -551,6 +563,36 @@ export const registerStencil = (
   }
   // @ts-ignore
   reg.register(def);
+
+  const isNodeDef = 'getBoundingPath' in def;
+  const elementsForPicker = isNodeDef
+    ? makeStencilNode(def, 'picker', opts)
+    : makeStencilEdge(def, 'picker', opts);
+  const elementsForCanvas = isNodeDef
+    ? makeStencilNode(def, 'canvas', opts)
+    : makeStencilEdge(def, 'canvas', opts);
+
+  const stencil = {
+    id: opts?.id ?? def.type,
+    name: opts?.name ?? def.name,
+    elementsForPicker,
+    elementsForCanvas,
+    type: pkg.type
+  };
+  pkg.stencils.push(stencil);
+  if (opts?.subPackage) {
+    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
+  }
+};
+
+export const _registerStencil = (
+  pkg: StencilPackage,
+  def: NodeDefinition | EdgeDefinition,
+  opts?: MakeStencilNodeOpts
+) => {
+  if ((pkg.subPackages ?? []).length > 0) {
+    assert.true(!!opts?.subPackage);
+  }
 
   const isNodeDef = 'getBoundingPath' in def;
   const elementsForPicker = isNodeDef

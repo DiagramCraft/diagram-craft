@@ -14,7 +14,11 @@ import {
   makeDefaultDiagramFactory,
   makeDefaultDocumentFactory
 } from '@diagram-craft/model/diagramDocumentFactory';
-import { AppConfig, type StencilRegistryConfig } from './appConfig';
+import {
+  AppConfig,
+  ElementDefinitionRegistryConfig,
+  type StencilRegistryConfig
+} from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
@@ -28,16 +32,19 @@ ELECTRON: {
 
 const stencils = new StencilRegistry();
 const nodes = defaultNodeRegistry(stencils);
-const stencilRegistryConfig: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
-for (let i = 0; i < stencilRegistryConfig.length; i++) {
-  const s = stencilRegistryConfig[i]!;
+const elementDefinitionRegistryConfig: ElementDefinitionRegistryConfig =
+  AppConfig.get().elementDefinitions?.registry ?? [];
+for (let i = 0; i < elementDefinitionRegistryConfig.length; i++) {
+  const s = elementDefinitionRegistryConfig[i]!;
   if (s.shapes) {
-    nodes.preregister(s.shapes, s.type, s.opts);
+    nodes.preregister(s.shapes, s.callback);
   }
 }
 registerDrawioBaseNodeTypes(nodes);
 
 const edges = defaultEdgeRegistry(stencils);
+
+const stencilRegistryConfig: StencilRegistryConfig = AppConfig.get().stencils?.registry ?? [];
 
 registerDefaultEffects();
 

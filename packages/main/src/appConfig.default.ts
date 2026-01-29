@@ -4,6 +4,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import { stencilLoaderBasic } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const random = new Random(Date.now());
 
@@ -15,32 +16,45 @@ if (!window.electronAPI) {
 }
 
 export const defaultAppConfig: AppConfig = {
+  elementDefinitions: {
+    registry: [
+      {
+        shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
+        callback: () =>
+          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNShapes)
+      },
+      {
+        shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+        callback: () =>
+          import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
+            m => m.registerUMLShapes
+          )
+      }
+    ]
+  },
   stencils: {
     loaders: {
-      drawioManual: () =>
-        import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual),
+      basic: () => Promise.resolve(stencilLoaderBasic),
 
       drawioXml: () =>
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml)
     },
     registry: [
       {
-        type: 'drawioManual',
-        shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
+        type: 'basic',
         opts: {
           callback: () =>
             import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(
-              m => m.registerBPMNShapes
+              m => m.registerBPMNStencils
             )
         }
       },
       {
-        type: 'drawioManual',
-        shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+        type: 'basic',
         opts: {
           callback: () =>
             import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
-              m => m.registerUMLShapes
+              m => m.registerUMLStencils
             )
         }
       },
