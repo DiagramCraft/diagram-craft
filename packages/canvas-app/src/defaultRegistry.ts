@@ -13,7 +13,7 @@ import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
   LazyElementLoaderEntry,
-  _registerStencil,
+  addStencil,
   StencilPackage,
   StencilRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -103,8 +103,8 @@ export const defaultStencilRegistry = () => {
   const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [], type: 'default' };
   stencilRegistry.register(arrows, true);
 
-  _registerStencil(defaults, new RectNodeDefinition());
-  _registerStencil(defaults, new RoundedRectNodeDefinition(), {
+  addStencil(defaults, new RectNodeDefinition());
+  addStencil(defaults, new RoundedRectNodeDefinition(), {
     props: mode => ({
       custom: {
         roundedRect: {
@@ -113,8 +113,8 @@ export const defaultStencilRegistry = () => {
       }
     })
   });
-  _registerStencil(defaults, new CircleNodeDefinition());
-  _registerStencil(defaults, new TextNodeDefinition(), {
+  addStencil(defaults, new CircleNodeDefinition());
+  addStencil(defaults, new TextNodeDefinition(), {
     texts: { text: 'Text' },
     size: { w: 25, h: 10 },
     metadata: {
@@ -136,41 +136,41 @@ export const defaultStencilRegistry = () => {
       }
     })
   });
-  _registerStencil(defaults, new StarNodeDefinition());
-  _registerStencil(defaults, new RegularPolygonNodeDefinition());
-  _registerStencil(defaults, new ParallelogramNodeDefinition());
-  _registerStencil(defaults, new TrapezoidNodeDefinition());
-  _registerStencil(defaults, new DiamondNodeDefinition());
-  _registerStencil(defaults, new HexagonNodeDefinition());
-  _registerStencil(defaults, new TriangleNodeDefinition());
-  _registerStencil(defaults, new ProcessNodeDefinition(), {
+  addStencil(defaults, new StarNodeDefinition());
+  addStencil(defaults, new RegularPolygonNodeDefinition());
+  addStencil(defaults, new ParallelogramNodeDefinition());
+  addStencil(defaults, new TrapezoidNodeDefinition());
+  addStencil(defaults, new DiamondNodeDefinition());
+  addStencil(defaults, new HexagonNodeDefinition());
+  addStencil(defaults, new TriangleNodeDefinition());
+  addStencil(defaults, new ProcessNodeDefinition(), {
     size: { w: 100, h: 60 }
   });
-  _registerStencil(defaults, new CylinderNodeDefinition());
-  _registerStencil(defaults, new CurlyBracketNodeDefinition(), {
+  addStencil(defaults, new CylinderNodeDefinition());
+  addStencil(defaults, new CurlyBracketNodeDefinition(), {
     size: { w: 35, h: 100 }
   });
-  _registerStencil(defaults, new BlockArcNodeDefinition());
-  _registerStencil(defaults, new CloudNodeDefinition(), {
+  addStencil(defaults, new BlockArcNodeDefinition());
+  addStencil(defaults, new CloudNodeDefinition(), {
     size: { w: 100, h: 70 }
   });
-  _registerStencil(defaults, new StepNodeDefinition());
-  _registerStencil(defaults, new LineNodeDefinition());
-  _registerStencil(defaults, new DelayNodeDefinition());
-  _registerStencil(defaults, new DocumentNodeDefinition());
-  _registerStencil(defaults, new CubeNodeDefinition());
-  _registerStencil(defaults, new ContainerNodeDefinition());
+  addStencil(defaults, new StepNodeDefinition());
+  addStencil(defaults, new LineNodeDefinition());
+  addStencil(defaults, new DelayNodeDefinition());
+  addStencil(defaults, new DocumentNodeDefinition());
+  addStencil(defaults, new CubeNodeDefinition());
+  addStencil(defaults, new ContainerNodeDefinition());
 
   // Arrow stencils
-  _registerStencil(arrows, new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0));
-  _registerStencil(arrows, new ArrowNodeDefinition('arrow-up', 'Arrow Up', -Math.PI / 2));
-  _registerStencil(arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
-  _registerStencil(arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
+  addStencil(arrows, new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0));
+  addStencil(arrows, new ArrowNodeDefinition('arrow-up', 'Arrow Up', -Math.PI / 2));
+  addStencil(arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
+  addStencil(arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
   defaults.stencils.push(...loadStencilsFromYaml(stencils));
 
   // Edges
-  _registerStencil(arrows, new BlockArrowEdgeDefinition());
+  addStencil(arrows, new BlockArrowEdgeDefinition());
 
   return stencilRegistry;
 };

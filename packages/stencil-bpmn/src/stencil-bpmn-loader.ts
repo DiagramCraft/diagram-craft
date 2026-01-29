@@ -1,5 +1,5 @@
 import {
-  _registerStencil,
+  addStencil,
   NodeDefinitionRegistry,
   StencilPackage,
   StencilRegistry
@@ -35,7 +35,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     ]
   };
 
-  _registerStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-task',
     name: 'Task',
     subPackage: 'process',
@@ -68,7 +68,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-sub-process',
     name: 'Sub-process',
     subPackage: 'process',
@@ -101,7 +101,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-event-sub-process',
     name: 'Event sub-process',
     subPackage: 'process',
@@ -134,7 +134,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-transaction',
     name: 'Transaction',
     subPackage: 'process',
@@ -167,7 +167,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNDataStoreNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNDataStoreNodeDefinition(), {
     id: 'bpmn-data-store',
     name: 'Data Store',
     subPackage: 'process',
@@ -180,7 +180,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-object',
     name: 'Data Object',
     subPackage: 'process',
@@ -199,7 +199,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
       };
     }
   });
-  _registerStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-objects',
     name: 'Data Objects',
     subPackage: 'process',
@@ -232,7 +232,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
       };
     }
   });
-  _registerStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-input',
     name: 'Data Input',
     subPackage: 'process',
@@ -265,7 +265,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
       };
     }
   });
-  _registerStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-output',
     name: 'Data Output',
     subPackage: 'process',
@@ -299,7 +299,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-start',
     name: 'Start Event',
     subPackage: 'process',
@@ -326,7 +326,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-intermediate',
     name: 'Intermediate Event',
     subPackage: 'process',
@@ -353,7 +353,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
     id: 'bpmn-event-end',
     name: 'End Event',
     subPackage: 'process',
@@ -380,7 +380,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNGatewayNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNGatewayNodeDefinition(), {
     id: 'bpmn-gateway',
     name: 'Gateway',
     subPackage: 'process',
@@ -400,7 +400,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNConversationNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNConversationNodeDefinition(), {
     id: 'bpmn-conversation',
     name: 'Conversation',
     subPackage: 'collaboration',
@@ -413,7 +413,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNAnnotationNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNAnnotationNodeDefinition(), {
     id: 'bpmn-annotation',
     name: 'Annotation',
     subPackage: 'core',
@@ -435,7 +435,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     })
   });
 
-  _registerStencil(bpmnStencils, new RoundedRectNodeDefinition(), {
+  addStencil(bpmnStencils, new RoundedRectNodeDefinition(), {
     id: 'bpmn-group',
     name: 'Group',
     subPackage: 'core',
@@ -466,7 +466,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     })
   });
 
-  _registerStencil(bpmnStencils, new BPMNChoreographyActivityNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNChoreographyActivityNodeDefinition(), {
     id: 'bpmn-choreography',
     name: 'Choreography',
     subPackage: 'choreography',
@@ -476,7 +476,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNChoreographyActivityParticipantNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNChoreographyActivityParticipantNodeDefinition(), {
     id: 'bpmn-choreography-participant',
     name: 'Choreography Participant',
     subPackage: 'choreography',
@@ -489,7 +489,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNChoreographyActivityNameNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNChoreographyActivityNameNodeDefinition(), {
     id: 'bpmn-choreography-name',
     name: 'Choreography Activity Name',
     subPackage: 'choreography',
@@ -502,7 +502,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
+  addStencil(bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
     id: 'bpmn-choreography-envelope',
     name: 'Choreography Envelope',
     subPackage: 'choreography',
@@ -512,7 +512,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNLane(), {
+  addStencil(bpmnStencils, new BPMNLane(), {
     id: 'bpmn-vertical-lane',
     name: 'Vertical Lane',
     subPackage: 'collaboration',
@@ -534,7 +534,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNLane(), {
+  addStencil(bpmnStencils, new BPMNLane(), {
     id: 'bpmn-horizonal-lane',
     name: 'Horizontal Lane',
     subPackage: 'collaboration',
@@ -556,7 +556,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
       };
     }
   });
-  _registerStencil(bpmnStencils, new BPMNLane(), {
+  addStencil(bpmnStencils, new BPMNLane(), {
     id: 'bpmn-vertical-pool',
     name: 'Vertical Pool',
     subPackage: 'collaboration',
@@ -586,7 +586,7 @@ export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => 
     }
   });
 
-  _registerStencil(bpmnStencils, new BPMNLane(), {
+  addStencil(bpmnStencils, new BPMNLane(), {
     id: 'bpmn-horizonal-pool',
     name: 'Horizontal Pool',
     subPackage: 'collaboration',

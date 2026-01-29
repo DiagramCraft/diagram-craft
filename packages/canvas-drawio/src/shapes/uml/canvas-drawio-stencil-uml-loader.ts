@@ -1,5 +1,5 @@
 import {
-  _registerStencil,
+  addStencil,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
   StencilPackage,
@@ -73,9 +73,9 @@ export const registerUMLStencils = async (stencilRegistry: StencilRegistry) => {
   const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
     deepMerge(props('picker'), p);
 
-  _registerStencil(umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
+  addStencil(umlStencils, new UmlActor(), { aspectRatio: 0.6, props });
 
-  _registerStencil(umlStencils, new Folder(), {
+  addStencil(umlStencils, new Folder(), {
     aspectRatio: 1.5,
     props: mergedProps({
       text: {
@@ -88,24 +88,24 @@ export const registerUMLStencils = async (stencilRegistry: StencilRegistry) => {
     }
   });
 
-  _registerStencil(umlStencils, new UmlEntity(), { props });
+  addStencil(umlStencils, new UmlEntity(), { props });
 
-  _registerStencil(umlStencils, new UmlControl(), { aspectRatio: 7 / 8, props });
+  addStencil(umlStencils, new UmlControl(), { aspectRatio: 7 / 8, props });
 
-  _registerStencil(umlStencils, new UmlDestroy(), { size: { w: 10, h: 10 } });
+  addStencil(umlStencils, new UmlDestroy(), { size: { w: 10, h: 10 } });
 
-  _registerStencil(umlStencils, new UmlLifeline(), { props });
+  addStencil(umlStencils, new UmlLifeline(), { props });
 
-  _registerStencil(umlStencils, new UmlBoundary(), {
+  addStencil(umlStencils, new UmlBoundary(), {
     aspectRatio: 1.25,
     texts: {
       text: 'Boundary Object'
     }
   });
 
-  _registerStencil(umlStencils, new UmlFrame(), { props });
+  addStencil(umlStencils, new UmlFrame(), { props });
 
-  _registerStencil(umlStencils, new UmlModuleNodeDefinition(), {
+  addStencil(umlStencils, new UmlModuleNodeDefinition(), {
     props: mergedProps({
       text: {
         left: 22,
@@ -118,12 +118,12 @@ export const registerUMLStencils = async (stencilRegistry: StencilRegistry) => {
     size: { w: 90, h: 50 }
   });
 
-  _registerStencil(umlStencils, new ProvidedRequiredInterface(), {
+  addStencil(umlStencils, new ProvidedRequiredInterface(), {
     props,
     size: { w: 20, h: 20 }
   });
 
-  _registerStencil(umlStencils, new RequiredInterface(), {
+  addStencil(umlStencils, new RequiredInterface(), {
     props,
     size: { w: 20, h: 20 },
     aspectRatio: 0.5

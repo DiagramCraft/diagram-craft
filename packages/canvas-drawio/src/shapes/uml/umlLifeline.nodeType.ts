@@ -3,7 +3,6 @@ import {
   SimpleShapeNodeDefinition,
   SimpleShapeNodeDefinitionProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';

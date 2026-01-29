@@ -248,11 +248,9 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// TODO: Rename this to NodeTypeLoader
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {}
-    interface ElementDefinitionLoaderOptsExtensions {}
   }
 }
 
@@ -489,11 +487,6 @@ export type Registry = {
   stencils: StencilRegistry;
 };
 
-const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
-  typeof type !== 'string';
-const isEdgeDefinition = (type: string | EdgeDefinition): type is EdgeDefinition =>
-  typeof type !== 'string';
-
 export type MakeStencilNodeOpts = {
   id?: string;
   name?: string;
@@ -508,11 +501,8 @@ export type MakeStencilNodeOpts = {
 export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps | EdgeProps>;
 
 export const makeStencilNode =
-  (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
-  ($d: Diagram) =>
+  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
     UnitOfWork.execute($d, uow => {
-      const typeId = isNodeDefinition(type) ? type.type : type;
-
       const layer = $d.activeLayer;
       assertRegularLayer(layer);
 
@@ -543,11 +533,8 @@ export const makeStencilNode =
     });
 
 export const makeStencilEdge =
-  (type: string | EdgeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
-  ($d: Diagram) =>
+  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
     UnitOfWork.execute($d, _uow => {
-      const typeId = isEdgeDefinition(type) ? type.type : type;
-
       const layer = $d.activeLayer;
       assertRegularLayer(layer);
 
@@ -564,7 +551,7 @@ export const makeStencilEdge =
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
 
-export const _registerStencil = (
+export const addStencil = (
   pkg: StencilPackage,
   def: NodeDefinition | EdgeDefinition,
   opts?: MakeStencilNodeOpts
@@ -575,11 +562,11 @@ export const _registerStencil = (
 
   const isNodeDef = 'getBoundingPath' in def;
   const elementsForPicker = isNodeDef
-    ? makeStencilNode(def, 'picker', opts)
-    : makeStencilEdge(def, 'picker', opts);
+    ? makeStencilNode(def.type, 'picker', opts)
+    : makeStencilEdge(def.type, 'picker', opts);
   const elementsForCanvas = isNodeDef
-    ? makeStencilNode(def, 'canvas', opts)
-    : makeStencilEdge(def, 'canvas', opts);
+    ? makeStencilNode(def.type, 'canvas', opts)
+    : makeStencilEdge(def.type, 'canvas', opts);
 
   const stencil = {
     id: opts?.id ?? def.type,
