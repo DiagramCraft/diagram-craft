@@ -175,8 +175,8 @@ export const defaultStencilRegistry = () => {
   return stencilRegistry;
 };
 
-export const defaultRegistry = () => ({
-  nodes: defaultNodeRegistry(),
-  edges: defaultEdgeRegistry(),
+export const defaultRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> = []) => ({
+  nodes: defaultNodeRegistry(lazyLoaders),
+  edges: defaultEdgeRegistry(lazyLoaders),
   stencils: defaultStencilRegistry()
 });

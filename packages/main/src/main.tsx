@@ -3,11 +3,7 @@ import './initial-loader';
 import ReactDOM from 'react-dom/client';
 import { AppLoader } from './AppLoader';
 import './index.css';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry,
-  defaultStencilRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 import { DiagramRef } from './App';
 import { UserState } from './UserState';
@@ -28,13 +24,16 @@ ELECTRON: {
 
 const elementDefConfig = AppConfig.get().elementDefinitions?.registry ?? [];
 
-const stencils = defaultStencilRegistry();
-const nodes = defaultNodeRegistry(elementDefConfig);
+const { stencils, nodes, edges } = defaultRegistry(elementDefConfig);
 
-// TODO: Is this needed?
+// TODO: Can we avoid this - i.e. why is not working to use
+//      {
+//         shapes: /^(drawio|drawioImage|transparent)$/,
+//         nodeDefinitionLoader: async () => {
+//           return async d => registerDrawioBaseNodeTypes(d);
+//         }
+//       }
 registerDrawioBaseNodeTypes(nodes);
-
-const edges = defaultEdgeRegistry(elementDefConfig);
 
 registerDefaultEffects();
 
