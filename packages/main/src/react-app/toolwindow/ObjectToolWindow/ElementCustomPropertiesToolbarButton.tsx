@@ -33,7 +33,7 @@ export const ElementCustomPropertiesToolbarButton = () => {
 
   let disabled = false;
 
-  const def = diagram.document.nodeDefinitions.get(node.nodeType);
+  const def = diagram.document.registry.nodes.get(node.nodeType);
   const customProperties = def.getCustomPropertyDefinitions(node);
   if (Object.keys(customProperties).length === 0) {
     disabled = true;

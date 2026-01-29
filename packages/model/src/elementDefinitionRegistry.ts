@@ -459,9 +459,10 @@ export class EdgeDefinitionRegistry {
   }
 }
 
-export type Definitions = {
-  nodeDefinitions: NodeDefinitionRegistry;
-  edgeDefinitions: EdgeDefinitionRegistry;
+export type Registry = {
+  nodes: NodeDefinitionRegistry;
+  edges: EdgeDefinitionRegistry;
+  stencils: StencilRegistry;
 };
 
 const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>

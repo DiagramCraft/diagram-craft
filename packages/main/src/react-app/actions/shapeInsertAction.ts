@@ -37,7 +37,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
         const diagram = this.context.model.activeDiagram;
         const document = this.context.model.activeDocument;
 
-        const stencil = document.nodeDefinitions.stencilRegistry.getStencil(stencilId);
+        const stencil = document.registry.nodes.stencilRegistry.getStencil(stencilId);
 
         assert.present(stencil);
         const layer = diagram.activeLayer;

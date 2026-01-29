@@ -30,15 +30,13 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
   const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
     d => n.elementsForPicker(d),
-    doc.definitions,
+    doc.registry,
     { padding: 5 }
   );
 
-  const { elements: canvasElements } = createThumbnail(
-    d => n.elementsForCanvas(d),
-    doc.definitions,
-    { padding: 5 }
-  );
+  const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
+    padding: 5
+  });
 
   const entry: StencilEntry = {
     stencil: n,
@@ -135,7 +133,7 @@ export const ObjectPickerPanel = (props: Props) => {
                     name={
                       s.stencil.name ??
                       (isNode(s.stencilElements?.[0])
-                        ? diagram.document.nodeDefinitions.get(s.stencilElements?.[0].nodeType).name
+                        ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType).name
                         : undefined) ??
                       'unknown'
                     }

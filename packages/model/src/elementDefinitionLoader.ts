@@ -18,12 +18,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
       const { layer } = DocumentBuilder.empty(
         newid(),
         stencil.name,
-        new DiagramDocument(
-          diagram.document.nodeDefinitions,
-          diagram.document.edgeDefinitions,
-          true,
-          new NoOpCRDTRoot()
-        )
+        new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
       );
 
       return UnitOfWork.execute(diagram, uow => {

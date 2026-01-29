@@ -324,9 +324,9 @@ const deserializeDiagrams = async <T extends Diagram>(
             if (e.type === 'node') {
               for (const c of unfoldGroup(e)) {
                 if (c.type === 'node') {
-                  if (!loaded.has(c.nodeType) && !doc.nodeDefinitions.hasRegistration(c.nodeType)) {
+                  if (!loaded.has(c.nodeType) && !doc.registry.nodes.hasRegistration(c.nodeType)) {
                     loaded.add(c.nodeType);
-                    await doc.nodeDefinitions.load(c.nodeType);
+                    await doc.registry.nodes.load(c.nodeType);
                   }
                 }
               }

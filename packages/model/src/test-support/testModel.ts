@@ -27,10 +27,13 @@ export class TestModel {
   }
 
   static newDocument(root?: CRDTRoot) {
-    const stencilRegistry = new StencilRegistry();
+    const stencils = new StencilRegistry();
     return new DiagramDocument(
-      defaultNodeRegistry(stencilRegistry),
-      defaultEdgeRegistry(stencilRegistry),
+      {
+        nodes: defaultNodeRegistry(stencils),
+        edges: defaultEdgeRegistry(stencils),
+        stencils
+      },
       false,
       root
     );

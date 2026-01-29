@@ -27,7 +27,7 @@ const getDiagram = (props: {
 
   const { diagram, elements } = createThumbnail(
     d => props.stencil.elementsForCanvas(d),
-    props.document.definitions
+    props.document.registry
   );
   const bbox = Box.boundingBox(elements.map(e => e.bounds));
   diagram.viewBox.dimensions = { w: bbox.w + 10, h: bbox.h + 10 };
@@ -66,7 +66,7 @@ export const ShapeSelectDialog = (props: Props) => {
   const document = useDocument();
   const diagram = useDiagram();
   const ref = useRef<HTMLInputElement>(null);
-  const stencilRegistry = diagram.document.nodeDefinitions.stencilRegistry;
+  const stencilRegistry = diagram.document.registry.nodes.stencilRegistry;
 
   const [search, setSearch] = useState('');
 
@@ -76,7 +76,7 @@ export const ShapeSelectDialog = (props: Props) => {
     const stencil = stencilRegistry.getStencil(s)!;
     if (!stencil) return false;
 
-    const { diagram: $d } = createStencilDiagram(document.definitions);
+    const { diagram: $d } = createStencilDiagram(document.registry);
 
     const elements = stencil.elementsForPicker($d).elements;
 

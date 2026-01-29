@@ -42,7 +42,7 @@ const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
 registerDefaultEffects();
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
+const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry, stencilRegistry);
 
 const diagrams: Array<DiagramRef> = [];
 

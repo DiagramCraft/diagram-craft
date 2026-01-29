@@ -29,14 +29,14 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
   );
 
   const edgeTypesWithCustomProps: string[] = [];
-  for (const key of $d.document.edgeDefinitions.list()) {
-    const def = $d.document.edgeDefinitions.get(key);
+  for (const key of $d.document.registry.edges.list()) {
+    const def = $d.document.registry.edges.get(key);
     const customProps = def.getCustomPropertyDefinitions(edge);
     if (customProps.entries.length > 0) {
       edgeTypesWithCustomProps.push(key);
     }
   }
-  sortBy(edgeTypesWithCustomProps, e => $d.document.edgeDefinitions.get(e).name);
+  sortBy(edgeTypesWithCustomProps, e => $d.document.registry.edges.get(e).name);
 
   const onChange = () => {
     props.onChange();
@@ -58,7 +58,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
           {edgeTypesWithCustomProps.map(e => {
             return (
               <Select.Item key={e} value={e}>
-                {$d.document.edgeDefinitions.get(e).name}
+                {$d.document.registry.edges.get(e).name}
               </Select.Item>
             );
           })}
@@ -69,7 +69,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
         <div>
           <ElementCustomPropertiesPanelForm
             element={edge}
-            customProperties={$d.document.edgeDefinitions
+            customProperties={$d.document.registry.edges
               .get(type)
               .getCustomPropertyDefinitions(edge)}
             onChange={() => {

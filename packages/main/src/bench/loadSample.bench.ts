@@ -24,7 +24,7 @@ const nodeRegistry = defaultNodeRegistry(stencilRegistry);
 const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
 
 const diagramFactory = makeDefaultDiagramFactory();
-const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry);
+const documentFactory = makeDefaultDocumentFactory(nodeRegistry, edgeRegistry, stencilRegistry);
 
 describe('loadSample', () => {
   bench.skip(

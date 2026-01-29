@@ -1,4 +1,4 @@
-import { Definitions, StencilElements } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry, StencilElements } from '@diagram-craft/model/elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
@@ -8,14 +8,9 @@ import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 
-export const createStencilDiagram = (defs: Definitions) => {
+export const createStencilDiagram = (defs: Registry) => {
   const id = newid();
-  const doc = new DiagramDocument(
-    defs.nodeDefinitions,
-    defs.edgeDefinitions,
-    true,
-    new NoOpCRDTRoot()
-  );
+  const doc = new DiagramDocument(defs, true, new NoOpCRDTRoot());
   const d = new Diagram(id, id, doc, new NoOpCRDTMap<DiagramCRDT>());
 
   const layer = new RegularLayer(newid(), newid(), [], d);
@@ -30,7 +25,7 @@ export const createThumbnail = (
     layer: RegularLayer,
     uow: UnitOfWork
   ) => StencilElements | Array<DiagramElement>,
-  definitions: Definitions,
+  definitions: Registry,
   opts?: { padding: number }
 ) => {
   const { diagram, layer } = createStencilDiagram(definitions);

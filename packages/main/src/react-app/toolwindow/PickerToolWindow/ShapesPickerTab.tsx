@@ -22,7 +22,7 @@ const getActiveStencils = (stencilRegistry: StencilRegistry) => {
 
 export const ShapesPickerTab = () => {
   const diagram = useDiagram();
-  const stencilRegistry = diagram.document.nodeDefinitions.stencilRegistry;
+  const stencilRegistry = diagram.document.registry.stencils;
 
   const userState = UserState.get();
   const [open, setOpen] = useState([

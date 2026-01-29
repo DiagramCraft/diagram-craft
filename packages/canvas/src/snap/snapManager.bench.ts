@@ -27,11 +27,15 @@ const randomBox = () => {
 
 const opts = { time: 2000 };
 
-const stencilRegistry = new StencilRegistry();
+const stencils = new StencilRegistry();
 const { diagram: d } = DocumentBuilder.empty(
   '1',
   '1',
-  new DiagramDocument(defaultNodeRegistry(stencilRegistry), defaultEdgeRegistry(stencilRegistry))
+  new DiagramDocument({
+    nodes: defaultNodeRegistry(stencils),
+    edges: defaultEdgeRegistry(stencils),
+    stencils
+  })
 );
 
 UnitOfWork.execute(d, uow => {

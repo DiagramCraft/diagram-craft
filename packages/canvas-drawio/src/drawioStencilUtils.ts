@@ -12,7 +12,7 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
   const mkNode = ($d: Diagram) => {
     const type = 'drawio';
 
-    const def = $d.document.nodeDefinitions.get(type);
+    const def = $d.document.registry.nodes.get(type);
     assertDrawioShapeNodeDefinition(def);
 
     const layer = $d.activeLayer;

@@ -17,11 +17,11 @@ describe('AIModel', () => {
 
   beforeEach(() => {
     // Use the default registries with all node types registered
-    const stencilRegistry = new StencilRegistry();
-    const nodeRegistry = defaultNodeRegistry(stencilRegistry);
-    const edgeRegistry = defaultEdgeRegistry(stencilRegistry);
+    const stencils = new StencilRegistry();
+    const nodeDefinitions = defaultNodeRegistry(stencils);
+    const edgeDefinitions = defaultEdgeRegistry(stencils);
 
-    document = new DiagramDocument(nodeRegistry, edgeRegistry);
+    document = new DiagramDocument({ nodes: nodeDefinitions, edges: edgeDefinitions, stencils });
     const { diagram } = DocumentBuilder.empty(newid(), 'Test Diagram', document);
     aiModel = new AIModel(diagram);
   });

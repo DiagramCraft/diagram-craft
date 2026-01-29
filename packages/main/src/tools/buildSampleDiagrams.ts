@@ -142,10 +142,11 @@ const writeArrow = (
 
 const arrowsTestFile = async () => {
   const stencilRegistry = new StencilRegistry();
-  const document = new DiagramDocument(
-    defaultNodeRegistry(stencilRegistry),
-    defaultEdgeRegistry(stencilRegistry)
-  );
+  const document = new DiagramDocument({
+    nodes: defaultNodeRegistry(stencilRegistry),
+    edges: defaultEdgeRegistry(stencilRegistry),
+    stencils: stencilRegistry
+  });
 
   const { diagram, layer } = DocumentBuilder.empty('arrows', 'Arrows', document);
 
@@ -460,6 +461,7 @@ const writeShape = (
 
 const shapesTestFile = async (
   nodeDefinitions: NodeDefinitionRegistry,
+  stencils: StencilRegistry,
   pkg: string,
   file: string,
   opts: ShapeOpts = {
@@ -470,10 +472,11 @@ const shapesTestFile = async (
     shapesPerLine: Number.MAX_SAFE_INTEGER
   }
 ) => {
-  const document = new DiagramDocument(
-    nodeDefinitions,
-    defaultEdgeRegistry(nodeDefinitions.stencilRegistry)
-  );
+  const document = new DiagramDocument({
+    nodes: nodeDefinitions,
+    edges: defaultEdgeRegistry(stencils),
+    stencils
+  });
 
   const { diagram, layer } = DocumentBuilder.empty('shapes', 'Shapes', document);
 
@@ -537,14 +540,15 @@ const shapesTestFile = async (
   );
 };
 
-const nodeDefinitions = defaultNodeRegistry(new StencilRegistry());
+const registry = new StencilRegistry();
+const nodeDefinitions = defaultNodeRegistry(registry);
 await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();
-shapesTestFile(nodeDefinitions, 'pkg:default', 'shapes.json');
-shapesTestFile(nodeDefinitions, 'pkg:arrow', 'shapes-arrow.json');
-shapesTestFile(nodeDefinitions, 'pkg:uml', 'shapes-uml.json');
-shapesTestFile(nodeDefinitions, 'shape:default:table', 'shape-default-table.json', {
+shapesTestFile(nodeDefinitions, registry, 'pkg:default', 'shapes.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:arrow', 'shapes-arrow.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:uml', 'shapes-uml.json');
+shapesTestFile(nodeDefinitions, registry, 'shape:default:table', 'shape-default-table.json', {
   xDiff: 300,
   yDiff: 250,
   startX: 50,

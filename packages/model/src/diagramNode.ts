@@ -325,7 +325,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   getDefinition() {
-    return this.diagram.document.nodeDefinitions.get(this.nodeType);
+    return this.diagram.document.registry.nodes.get(this.nodeType);
   }
 
   get nodeType() {
@@ -1008,7 +1008,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   invalidateAnchors(uow: UnitOfWork) {
-    const def = this.diagram.document.nodeDefinitions.get(this.nodeType);
+    const def = this.diagram.document.registry.nodes.get(this.nodeType);
     uow.executeUpdate(this, () => this.#anchors.set(def.getAnchors(this)));
   }
 

@@ -148,7 +148,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const { diagram: dest } = createThumbnail(
       (_d, l, uow) => cloneElements(this.source, l, uow),
-      this.diagram.document.definitions
+      this.diagram.document.registry
     );
 
     const bounds = Box.boundingBox(this.source.map(e => e.bounds));
