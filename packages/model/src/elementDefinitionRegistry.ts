@@ -561,22 +561,21 @@ export const addStencil = (
   }
 
   const isNodeDef = 'getBoundingPath' in def;
-  const elementsForPicker = isNodeDef
-    ? makeStencilNode(def.type, 'picker', opts)
-    : makeStencilEdge(def.type, 'picker', opts);
-  const elementsForCanvas = isNodeDef
-    ? makeStencilNode(def.type, 'canvas', opts)
-    : makeStencilEdge(def.type, 'canvas', opts);
-
   const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    elementsForPicker,
-    elementsForCanvas,
+    elementsForPicker: isNodeDef
+      ? makeStencilNode(def.type, 'picker', opts)
+      : makeStencilEdge(def.type, 'picker', opts),
+    elementsForCanvas: isNodeDef
+      ? makeStencilNode(def.type, 'canvas', opts)
+      : makeStencilEdge(def.type, 'canvas', opts),
     type: pkg.type
   };
-  pkg.stencils.push(stencil);
+
   if (opts?.subPackage) {
     pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
+  } else {
+    pkg.stencils.push(stencil);
   }
 };
