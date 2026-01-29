@@ -361,7 +361,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
 
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  nodeDefinition: NodeDefinitionRegistry,
+  stencilRegistry: StencilRegistry,
   opts: StencilLoaderOpts[T]
 ) => Promise<void>;
 
@@ -382,26 +382,22 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       basic: {
-        loader: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
+        loader: () => Promise<(stencils: StencilRegistry) => Promise<void>>;
       };
     }
   }
 }
 
-export const stencilLoaderBasic: StencilLoader<'basic'> = async (nodeDefinitions, opts) => {
+export const stencilLoaderBasic: StencilLoader<'basic'> = async (stencilRegistry, opts) => {
   await (
     await opts.loader()
-  )(nodeDefinitions);
+  )(stencilRegistry);
 };
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
 
-  // TODO: Ideally separate StencilRegistry from NodeDefinitionRegistry
-  constructor(
-    public readonly stencilRegistry: StencilRegistry,
-    private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []
-  ) {}
+  constructor(private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []) {}
 
   list() {
     return this.nodes.keys();
@@ -448,13 +444,10 @@ export class NodeDefinitionRegistry {
 export class EdgeDefinitionRegistry {
   private edges = new Map<string, EdgeDefinition>();
 
-  constructor(private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []) {}
-
-  #defaultValue: EdgeDefinition | undefined = undefined;
-
-  set defaultValue(value: EdgeDefinition | undefined) {
-    this.#defaultValue = value;
-  }
+  constructor(
+    private readonly defaultValue: EdgeDefinition,
+    private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []
+  ) {}
 
   list() {
     return this.edges.keys();
@@ -480,7 +473,7 @@ export class EdgeDefinitionRegistry {
   }
 
   get(type: string): EdgeDefinition {
-    const r = this.edges.get(type) ?? this.#defaultValue;
+    const r = this.edges.get(type) ?? this.defaultValue;
     assert.present(r);
     return r;
   }
@@ -570,42 +563,6 @@ export const makeStencilEdge =
 
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
-
-/**
- * @deprecated
- */
-export const registerStencil = (
-  reg: NodeDefinitionRegistry | EdgeDefinitionRegistry,
-  pkg: StencilPackage,
-  def: NodeDefinition | EdgeDefinition,
-  opts?: MakeStencilNodeOpts
-) => {
-  if ((pkg.subPackages ?? []).length > 0) {
-    assert.true(!!opts?.subPackage);
-  }
-  // @ts-ignore
-  reg.register(def);
-
-  const isNodeDef = 'getBoundingPath' in def;
-  const elementsForPicker = isNodeDef
-    ? makeStencilNode(def, 'picker', opts)
-    : makeStencilEdge(def, 'picker', opts);
-  const elementsForCanvas = isNodeDef
-    ? makeStencilNode(def, 'canvas', opts)
-    : makeStencilEdge(def, 'canvas', opts);
-
-  const stencil = {
-    id: opts?.id ?? def.type,
-    name: opts?.name ?? def.name,
-    elementsForPicker,
-    elementsForCanvas,
-    type: pkg.type
-  };
-  pkg.stencils.push(stencil);
-  if (opts?.subPackage) {
-    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
-  }
-};
 
 export const _registerStencil = (
   pkg: StencilPackage,

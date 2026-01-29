@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDefinitions, opts) => {
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (stencilRegistry, opts) => {
   const { name, url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
 
@@ -26,7 +26,6 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDef
     return;
   }
 
-  const stencilRegistry = nodeDefinitions.stencilRegistry;
   stencilRegistry.register({
     id: name,
     name: name,

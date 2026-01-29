@@ -1,7 +1,8 @@
 import {
   _registerStencil,
   NodeDefinitionRegistry,
-  StencilPackage
+  StencilPackage,
+  StencilRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
@@ -19,7 +20,7 @@ import stencils from './bpmnStencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 
-export const registerBPMNStencils = async (nodes: NodeDefinitionRegistry) => {
+export const registerBPMNStencils = async (stencilRegistry: StencilRegistry) => {
   const bpmnStencils: StencilPackage = {
     id: 'bpmn2',
     name: 'BPMN 2.0',
@@ -621,7 +622,7 @@ export const registerBPMNStencils = async (nodes: NodeDefinitionRegistry) => {
     bpmnStencils.subPackages!.find(p => p.id === 'choreography')?.stencils.push(s);
   });
 
-  nodes.stencilRegistry.register(bpmnStencils, true);
+  stencilRegistry.register(bpmnStencils, true);
 };
 
 export const registerBPMNShapes = async (nodes: NodeDefinitionRegistry) => {

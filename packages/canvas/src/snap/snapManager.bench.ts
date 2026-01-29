@@ -3,15 +3,11 @@ import { bench, describe } from 'vitest';
 import { Random } from '@diagram-craft/utils/random';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { SnapManager } from './snapManager';
-import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const r = new Random(123456);
 
@@ -27,16 +23,7 @@ const randomBox = () => {
 
 const opts = { time: 2000 };
 
-const stencils = new StencilRegistry();
-const { diagram: d } = DocumentBuilder.empty(
-  '1',
-  '1',
-  new DiagramDocument({
-    nodes: defaultNodeRegistry(stencils),
-    edges: defaultEdgeRegistry(stencils),
-    stencils
-  })
-);
+const { diagram: d } = DocumentBuilder.empty('1', '1', new DiagramDocument(defaultRegistry()));
 
 UnitOfWork.execute(d, uow => {
   for (let i = 0; i < 1000; i++) {

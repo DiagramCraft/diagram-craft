@@ -5,7 +5,8 @@ import { AppLoader } from './AppLoader';
 import './index.css';
 import {
   defaultEdgeRegistry,
-  defaultNodeRegistry
+  defaultNodeRegistry,
+  defaultStencilRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { registerDrawioBaseNodeTypes } from '@diagram-craft/canvas-drawio/register';
 import { DiagramRef } from './App';
@@ -18,7 +19,6 @@ import { AppConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
-import { StencilRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 
 ELECTRON: {
   if (window.electronAPI) {
@@ -26,13 +26,15 @@ ELECTRON: {
   }
 }
 
-const stencils = new StencilRegistry();
-const nodes = defaultNodeRegistry(stencils, AppConfig.get().elementDefinitions?.registry ?? []);
+const elementDefConfig = AppConfig.get().elementDefinitions?.registry ?? [];
+
+const stencils = defaultStencilRegistry();
+const nodes = defaultNodeRegistry(elementDefConfig);
 
 // TODO: Is this needed?
 registerDrawioBaseNodeTypes(nodes);
 
-const edges = defaultEdgeRegistry(stencils);
+const edges = defaultEdgeRegistry(elementDefConfig);
 
 registerDefaultEffects();
 

@@ -13,7 +13,7 @@ export const PickerSearchPanel = () => {
   const [search, setSearch] = useState('');
 
   const document = useDocument();
-  const stencilRegistry = document.registry.nodes.stencilRegistry;
+  const stencilRegistry = document.registry.stencils;
 
   let stencils: Stencil[] = [];
   if (!isEmptyString(search)) {
