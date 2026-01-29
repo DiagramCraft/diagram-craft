@@ -369,18 +369,20 @@ export const stencilLoaderRegistry: Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
 }> = {};
 
-export type ElementDefinitionLoader = (nodeDefinition: NodeDefinitionRegistry) => Promise<void>;
+export type NodeDefinitionLoader = (nodes: NodeDefinitionRegistry) => Promise<void>;
+export type EdgeDefinitionLoader = (edges: EdgeDefinitionRegistry) => Promise<void>;
 
-type PreregistrationEntry = {
+export type LazyElementLoaderEntry = {
   shapes: RegExp;
-  callback: () => Promise<ElementDefinitionLoader>;
+  nodeDefinitionLoader?: () => Promise<NodeDefinitionLoader>;
+  edgeDefinitionLoader?: () => Promise<EdgeDefinitionLoader>;
 };
 
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       basic: {
-        callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
+        loader: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
       };
     }
   }
@@ -388,20 +390,18 @@ declare global {
 
 export const stencilLoaderBasic: StencilLoader<'basic'> = async (nodeDefinitions, opts) => {
   await (
-    await opts.callback()
+    await opts.loader()
   )(nodeDefinitions);
 };
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
-  private preRegistrations: Array<PreregistrationEntry> = [];
 
   // TODO: Ideally separate StencilRegistry from NodeDefinitionRegistry
-  constructor(public readonly stencilRegistry: StencilRegistry) {}
-
-  preregister(shapes: RegExp, callback: () => Promise<ElementDefinitionLoader>) {
-    this.preRegistrations.push({ shapes, callback });
-  }
+  constructor(
+    public readonly stencilRegistry: StencilRegistry,
+    private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []
+  ) {}
 
   list() {
     return this.nodes.keys();
@@ -410,12 +410,13 @@ export class NodeDefinitionRegistry {
   async load(s: string): Promise<boolean> {
     if (this.hasRegistration(s)) return true;
 
-    const idx = this.preRegistrations.findIndex(a => a.shapes.test(s));
+    const idx = this.lazyNodeLoaders.findIndex(a => a.shapes.test(s));
     if (idx === -1) return false;
 
-    const entry = this.preRegistrations[idx]!;
+    const entry = this.lazyNodeLoaders[idx]!;
+    assert.present(entry.nodeDefinitionLoader, `No node definition loader for ${s}`);
 
-    const loader = await entry.callback();
+    const loader = await entry.nodeDefinitionLoader();
     await loader(this);
 
     return true;
@@ -447,6 +448,8 @@ export class NodeDefinitionRegistry {
 export class EdgeDefinitionRegistry {
   private edges = new Map<string, EdgeDefinition>();
 
+  constructor(private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []) {}
+
   #defaultValue: EdgeDefinition | undefined = undefined;
 
   set defaultValue(value: EdgeDefinition | undefined) {
@@ -457,6 +460,21 @@ export class EdgeDefinitionRegistry {
     return this.edges.keys();
   }
 
+  async load(s: string): Promise<boolean> {
+    if (this.hasRegistration(s)) return true;
+
+    const idx = this.lazyNodeLoaders.findIndex(a => a.shapes.test(s));
+    if (idx === -1) return false;
+
+    const entry = this.lazyNodeLoaders[idx]!;
+    assert.present(entry.edgeDefinitionLoader, `No edge definition loader for ${s}`);
+
+    const loader = await entry.edgeDefinitionLoader();
+    await loader(this);
+
+    return true;
+  }
+
   register(edge: EdgeDefinition) {
     this.edges.set(edge.type, edge);
   }
@@ -465,6 +483,10 @@ export class EdgeDefinitionRegistry {
     const r = this.edges.get(type) ?? this.#defaultValue;
     assert.present(r);
     return r;
+  }
+
+  hasRegistration(type: string) {
+    return this.edges.has(type);
   }
 }
 

@@ -20,12 +20,12 @@ export const defaultAppConfig: AppConfig = {
     registry: [
       {
         shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
-        callback: () =>
+        nodeDefinitionLoader: () =>
           import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNShapes)
       },
       {
         shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
-        callback: () =>
+        nodeDefinitionLoader: () =>
           import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
             m => m.registerUMLShapes
           )
@@ -43,7 +43,7 @@ export const defaultAppConfig: AppConfig = {
       {
         type: 'basic',
         opts: {
-          callback: () =>
+          loader: () =>
             import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(
               m => m.registerBPMNStencils
             )
@@ -52,7 +52,7 @@ export const defaultAppConfig: AppConfig = {
       {
         type: 'basic',
         opts: {
-          callback: () =>
+          loader: () =>
             import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
               m => m.registerUMLStencils
             )

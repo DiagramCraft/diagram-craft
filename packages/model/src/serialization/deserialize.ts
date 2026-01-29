@@ -330,6 +330,11 @@ const deserializeDiagrams = async <T extends Diagram>(
                   }
                 }
               }
+            } else if (e.type === 'edge') {
+              /*if (!loaded.has(e.edgeType) && !doc.registry.edges.hasRegistration(e.edgeType)) {
+                loaded.add(e.edgeType);
+                await doc.registry.edges.load(e.edgeType);
+              }*/
             }
           }
         }

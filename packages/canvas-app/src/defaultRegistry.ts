@@ -12,6 +12,7 @@ import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.node
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
+  LazyElementLoaderEntry,
   registerStencil,
   StencilPackage,
   StencilRegistry
@@ -41,8 +42,11 @@ import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoad
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { mustExist } from '@diagram-craft/utils/assert';
 
-export const defaultNodeRegistry = (stencilRegistry: StencilRegistry) => {
-  const reg = new NodeDefinitionRegistry(stencilRegistry);
+export const defaultNodeRegistry = (
+  stencilRegistry: StencilRegistry,
+  lazyNodeLoaders: Array<LazyElementLoaderEntry> = []
+) => {
+  const reg = new NodeDefinitionRegistry(stencilRegistry, lazyNodeLoaders);
 
   const defaults: StencilPackage = {
     id: 'default',

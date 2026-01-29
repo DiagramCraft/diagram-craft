@@ -2,7 +2,7 @@ import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
 import {
-  ElementDefinitionLoader,
+  LazyElementLoaderEntry,
   StencilLoaderOpts,
   stencilLoaderRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -146,10 +146,7 @@ type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
 
-type ElementDefinitionRegistryConfigEntry = {
-  shapes?: RegExp;
-  callback: () => Promise<ElementDefinitionLoader>;
-};
+type ElementDefinitionRegistryConfigEntry = LazyElementLoaderEntry;
 
 export type ElementDefinitionRegistryConfig = Array<ElementDefinitionRegistryConfigEntry>;
 

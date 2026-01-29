@@ -4,7 +4,7 @@ import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './di
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Registry } from './elementDefinitionRegistry';
-import { isNode } from './diagramElement';
+import { isEdge, isNode } from './diagramElement';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
@@ -235,6 +235,8 @@ export class DiagramDocument
               element.invalidate(uow);
               element.invalidateAnchors(uow);
             }
+          } else if (isEdge(element)) {
+            // TODO: Implement
           }
         }
       });
