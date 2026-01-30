@@ -61,7 +61,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
     this.capabilities['style.fill'] = true;
     this.capabilities['style.rounding'] = false;
-    this.capabilities.collapsible = true;
+    this.capabilities['children.collapsible'] = true;
   }
 
   // We don't want to resize children unless the container has an active layout enabled

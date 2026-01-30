@@ -47,7 +47,7 @@ export const LayoutElementPanel = (props: Props) => {
   const parentIsNode = isNode(firstParent);
   if (!parentIsNode) return null;
 
-  const parentSupportsLayout = firstParent.getDefinition().supports('can-have-layout');
+  const parentSupportsLayout = firstParent.getDefinition().supports('children.can-have-layout');
   if (!parentSupportsLayout) return null;
 
   return (

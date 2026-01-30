@@ -33,17 +33,6 @@ import { FreeEndpoint } from '@diagram-craft/model/endpoint';
  */
 export type NodeCapability =
   /**
-   * Whether a node can contain child elements.
-   *
-   * When enabled, the node appears as expandable in the layer panel and supports nesting.
-   * Default: false
-   *
-   * @example
-   * Group, Table, TableRow, layout containers
-   */
-  | 'children.allowed'
-
-  /**
    * Whether a node can have fill properties (colors, gradients, patterns).
    *
    * When disabled, fill is set to 'none' in rendering, sketch fill effects are skipped,
@@ -74,7 +63,7 @@ export type NodeCapability =
    * Disabled by: UmlLifeline
    * @see packages/model/src/anchor.ts:241-258
    */
-  | 'connect-to-boundary'
+  | 'anchors.boundary'
 
   /**
    * Whether the anchor strategy can be changed.
@@ -87,7 +76,18 @@ export type NodeCapability =
    * @example
    * Disabled by: CurlyBracket, UmlLifeline, UmlDestroy
    */
-  | 'anchors-configurable'
+  | 'anchors.configurable'
+
+  /**
+   * Whether a node can contain child elements.
+   *
+   * When enabled, the node appears as expandable in the layer panel and supports nesting.
+   * Default: false
+   *
+   * @example
+   * Group, Table, TableRow, layout containers
+   */
+  | 'children.allowed'
 
   /**
    * Whether a node can serve as a container in layout operations.
@@ -99,7 +99,7 @@ export type NodeCapability =
    * @example
    * Disabled by: Table, TableRow, FlexShapeNodeDefinition (when not a group)
    */
-  | 'can-be-container'
+  | 'children.can-convert-to-container'
 
   /**
    * Whether a node supports the auto-layout system.
@@ -111,7 +111,7 @@ export type NodeCapability =
    * @example
    * Enabled by: LayoutCapableShapeNodeDefinition subclasses (except BPMNChoreographyActivity)
    */
-  | 'can-have-layout'
+  | 'children.can-have-layout'
 
   /**
    * Whether a node can be toggled between expanded and collapsed states.
@@ -123,7 +123,7 @@ export type NodeCapability =
    * Enabled by: LayoutCapableShapeNodeDefinition subclasses
    * @see packages/canvas/src/shape/collapsible.ts:27, 130
    */
-  | 'collapsible'
+  | 'children.collapsible'
 
   /**
    * Whether clicking a child selects the parent instead (group selection behavior).

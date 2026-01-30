@@ -50,7 +50,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
     this.capabilities['style.fill'] = false;
-    this.capabilities['anchors-configurable'] = false;
+    this.capabilities['anchors.configurable'] = false;
   }
 
   static Shape = class extends BaseNodeComponent<CurlyBracketNodeDefinition> {

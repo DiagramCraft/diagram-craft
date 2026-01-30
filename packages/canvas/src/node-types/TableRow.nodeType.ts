@@ -13,7 +13,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     super('tableRow', 'Table Row', TableRowComponent);
     this.capabilities['style.fill'] = false;
     this.capabilities['children.allowed'] = true;
-    this.capabilities['can-be-container'] = false;
+    this.capabilities['children.can-convert-to-container'] = false;
     this.capabilities['children.managed-by-parent'] = true;
   }
 

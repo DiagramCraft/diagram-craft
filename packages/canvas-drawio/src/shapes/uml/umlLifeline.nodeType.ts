@@ -28,8 +28,8 @@ registerCustomNodeDefaults('umlLifeline', { participant: '' });
 export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor() {
     super('umlLifeline', 'UML Lifeline');
-    this.capabilities['connect-to-boundary'] = false;
-    this.capabilities['anchors-configurable'] = false;
+    this.capabilities['anchors.boundary'] = false;
+    this.capabilities['anchors.configurable'] = false;
   }
 
   getShapeAnchors(node: DiagramNode): Anchor[] {

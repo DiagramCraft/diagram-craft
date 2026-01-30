@@ -13,7 +13,7 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { ElementFactory } from './elementFactory';
 import type { EdgeProps } from './diagramProps';
 
-export type EdgeCapability = 'arrows' | 'fill' | 'line-hops';
+export type EdgeCapability = 'style.arrows' | 'style.fill' | 'style.line-hops';
 export type EdgeDropOperation = 'attach' | 'split';
 
 export interface EdgeDefinition {

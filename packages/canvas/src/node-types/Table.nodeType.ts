@@ -82,7 +82,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 
     this.capabilities['style.fill'] = false;
     this.capabilities['children.allowed'] = true;
-    this.capabilities['can-be-container'] = false;
+    this.capabilities['children.can-convert-to-container'] = false;
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

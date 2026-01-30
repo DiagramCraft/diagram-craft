@@ -42,7 +42,7 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
-    this.capabilities.collapsible = true;
+    this.capabilities['children.collapsible'] = true;
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {

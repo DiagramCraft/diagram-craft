@@ -63,7 +63,7 @@ export abstract class LayoutCapableShapeNodeDefinition
     if (arr.length === 2) super(arr[0], arr[1]);
     else super(arr[0], arr[1], arr[2]);
 
-    this.capabilities['can-have-layout'] = true;
+    this.capabilities['children.can-have-layout'] = true;
     this.capabilities['children.allowed'] = true;
   }
 
@@ -80,7 +80,7 @@ export abstract class LayoutCapableShapeNodeDefinition
     while (
       layoutRoot.parent &&
       isNode(layoutRoot.parent) &&
-      layoutRoot.parent.getDefinition().supports('can-have-layout')
+      layoutRoot.parent.getDefinition().supports('children.can-have-layout')
     ) {
       layoutRoot = layoutRoot.parent;
     }
@@ -156,7 +156,7 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Check if children should be rendered based on collapse state
    */
   shouldRenderChildren(node: DiagramNode): boolean {
-    if (!this.supports('collapsible')) {
+    if (!this.supports('children.collapsible')) {
       return true; // Always render if not collapsible
     }
 
@@ -190,7 +190,7 @@ export abstract class LayoutCapableShapeNodeDefinition
   getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
     const baseActions = super.getShapeActions(_node);
 
-    if (this.supports('collapsible')) {
+    if (this.supports('children.collapsible')) {
       return [...baseActions, 'SHAPE_TOGGLE_COLLAPSIBLE'];
     }
 

@@ -271,15 +271,15 @@ export const EdgeLinePanel = (props: Props) => {
 
   const supportsArrows =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.some(e => e.getDefinition().supports('arrows'));
+    $d.selection.edges.some(e => e.getDefinition().supports('style.arrows'));
 
   const supportsLineHops =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.some(e => e.getDefinition().supports('line-hops'));
+    $d.selection.edges.some(e => e.getDefinition().supports('style.line-hops'));
 
   const supportsFill =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.every(e => e.getDefinition().supports('fill'));
+    $d.selection.edges.every(e => e.getDefinition().supports('style.fill'));
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>

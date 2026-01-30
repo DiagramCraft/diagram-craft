@@ -55,11 +55,11 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     this.capabilities = {
       'style.fill': true,
       'style.rounding': true,
-      'connect-to-boundary': true,
-      'anchors-configurable': true,
-      'can-be-container': true,
-      'can-have-layout': false,
-      'collapsible': false,
+      'anchors.boundary': true,
+      'anchors.configurable': true,
+      'children.can-convert-to-container': true,
+      'children.can-have-layout': false,
+      'children.collapsible': false,
       'children.allowed': false,
       'children.select-parent': false,
       'children.managed-by-parent': false
@@ -91,7 +91,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getAnchors(node: DiagramNode) {
-    const anchorStrategy = node.getDefinition().supports('anchors-configurable')
+    const anchorStrategy = node.getDefinition().supports('anchors.configurable')
       ? (node.renderProps.anchors.type ?? 'shape-defaults')
       : 'shape-defaults';
 

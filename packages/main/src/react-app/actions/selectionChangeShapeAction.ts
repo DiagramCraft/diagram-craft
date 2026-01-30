@@ -112,7 +112,7 @@ export class SelectionChangeToContainerAction extends AbstractSelectionAction<Ap
       if (!node) return false;
 
       const definition = node.getDefinition();
-      return definition.supports('can-be-container');
+      return definition.supports('children.can-convert-to-container');
     };
 
     return [

@@ -33,7 +33,7 @@ export const NodeFillPanel = (props: Props) => {
 
   const panelDisabled =
     $d.selection.nodes.every(n => !n.getDefinition().supports('style.fill')) &&
-    $d.selection.edges.every(n => !n.getDefinition().supports('fill'));
+    $d.selection.edges.every(n => !n.getDefinition().supports('style.fill'));
 
   if (panelDisabled) return null;
 

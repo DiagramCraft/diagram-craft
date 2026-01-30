@@ -10,7 +10,7 @@ import { Point } from '@diagram-craft/geometry/point';
 export class UmlDestroy extends SimpleShapeNodeDefinition {
   constructor() {
     super('umlDestroy', 'UML Destroy');
-    this.capabilities['anchors-configurable'] = false;
+    this.capabilities['anchors.configurable'] = false;
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {

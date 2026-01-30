@@ -35,7 +35,7 @@ export const getCollapsedAncestor = (node: DiagramNode): DiagramNode | null => {
  */
 export const getExpandedBounds = (node: DiagramNode): Box => {
   const def = node.getDefinition();
-  if (def.supports?.('collapsible')) {
+  if (def.supports?.('children.collapsible')) {
     const customProps = node.renderProps.custom['_collapsible'];
     if (customProps?.mode === 'collapsed' && customProps?.bounds) {
       const storedBounds = Box.fromString(customProps.bounds);
