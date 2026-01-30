@@ -77,6 +77,8 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
       for (const op of operations) {
         (op.target.object as DiagramElement).invalidate('quick', uow);
       }
+
+      uow.metadata.invalidated?.clear();
     }
   }
 

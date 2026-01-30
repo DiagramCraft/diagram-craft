@@ -851,12 +851,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
    *
    */
   invalidate(scope: InvalidationScope, uow: UnitOfWork) {
-    if (scope === 'full') {
-      // Prevent infinite recursion
-      uow.metadata.invalidated ??= new Set();
-      if (uow.metadata.invalidated.has(this)) return;
-      uow.metadata.invalidated.add(this);
-    }
+    // Prevent infinite recursion
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     if (this.parent) {
       this.parent.invalidate(scope, uow);
