@@ -5,7 +5,7 @@ import { ShapeEdgeDefinition } from '@diagram-craft/canvas/shape/shapeEdgeDefini
 import { DiagramEdge, EdgePropsForRendering } from '@diagram-craft/model/diagramEdge';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
-import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import type { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 import { deepMerge } from '@diagram-craft/utils/object';
 
@@ -46,7 +46,7 @@ export class BPMNConversationEdgeDefinition extends ShapeEdgeDefinition {
     }
   };
 
-  supports(capability: EdgeCapability): boolean {
+  getFlag(capability: EdgeFlags): boolean {
     return !['arrows', 'line-hops'].includes(capability);
   }
 }

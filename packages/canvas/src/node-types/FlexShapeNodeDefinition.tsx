@@ -1,6 +1,6 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
@@ -218,10 +218,10 @@ export class FlexShapeNodeDefinition<
     }
   }
 
-  supports(capability: NodeCapability): boolean {
+  getFlag(capability: NodeFlags): boolean {
     if (capability === 'children.allowed') return this.config.isGroup;
     if (capability === 'children.can-convert-to-container') return false;
-    return super.supports(capability);
+    return super.getFlag(capability);
   }
 
   onDrop(

@@ -78,7 +78,7 @@ export const ObjectToolWindow = () => {
 
     setEdgeSupportsFill(
       diagram.selection.isEdgesOnly() &&
-        diagram.selection.edges.every(e => e.getDefinition().supports('style.fill'))
+        diagram.selection.edges.every(e => e.getDefinition().getFlag('style.fill'))
     );
   };
   useEventListener(diagram.selection, 'change', callback);

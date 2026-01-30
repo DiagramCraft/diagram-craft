@@ -238,7 +238,7 @@ export const getClosestAnchor = (
   }
 
   // Check if boundary point is closer (with 5px preference threshold)
-  if (includeBoundary && node.getDefinition().supports('anchors.boundary')) {
+  if (includeBoundary && node.getDefinition().getFlag('anchors.boundary')) {
     let closestPoint: Point | undefined;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;
 

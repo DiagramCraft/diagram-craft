@@ -80,7 +80,7 @@ export abstract class LayoutCapableShapeNodeDefinition
     while (
       layoutRoot.parent &&
       isNode(layoutRoot.parent) &&
-      layoutRoot.parent.getDefinition().supports('children.can-have-layout')
+      layoutRoot.parent.getDefinition().getFlag('children.can-have-layout')
     ) {
       layoutRoot = layoutRoot.parent;
     }
@@ -156,7 +156,7 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Check if children should be rendered based on collapse state
    */
   shouldRenderChildren(node: DiagramNode): boolean {
-    if (!this.supports('children.collapsible')) {
+    if (!this.getFlag('children.collapsible')) {
       return true; // Always render if not collapsible
     }
 
@@ -190,7 +190,7 @@ export abstract class LayoutCapableShapeNodeDefinition
   getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
     const baseActions = super.getShapeActions(_node);
 
-    if (this.supports('children.collapsible')) {
+    if (this.getFlag('children.collapsible')) {
       return [...baseActions, 'SHAPE_TOGGLE_COLLAPSIBLE'];
     }
 

@@ -14,17 +14,12 @@ import { ElementFactory } from './elementFactory';
 import type { EdgeProps } from './diagramProps';
 
 /**
- * Edge capability flags that control various edge styling and visual features.
+ * Edge flags that control various edge styling and visual features.
  *
- * These capabilities are used throughout the canvas system to conditionally enable/disable
- * styling options, render UI panels, and control edge appearance. Check capabilities using
- * `edge.getDefinition().supports('capability-name')`.
- *
- * By default, all edge definitions support all capabilities unless explicitly overridden.
- *
- * @see {@link EdgeDefinition.supports}
+ * These flags are used throughout the canvas system to conditionally enable/disable
+ * styling options, render UI panels, and control edge appearance.
  */
-export type EdgeCapability =
+export type EdgeFlags =
   /**
    * Whether an edge can display arrow decorations at its start and end points.
    *
@@ -89,7 +84,7 @@ export interface EdgeDefinition {
   type: string;
   name: string;
 
-  supports(capability: EdgeCapability): boolean;
+  getFlag(capability: EdgeFlags): boolean;
 
   onDrop(
     coord: Point,
@@ -111,7 +106,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     this.type = type;
   }
 
-  supports(_capability: EdgeCapability): boolean {
+  getFlag(_flag: EdgeFlags): boolean {
     return true;
   }
 

@@ -42,7 +42,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
       const parent = e.parent;
       if (parent && isNode(parent)) {
         const parentDef = parent.getDefinition();
-        if (parentDef.supports('children.managed-by-parent')) return false;
+        if (parentDef.getFlag('children.managed-by-parent')) return false;
       }
 
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);

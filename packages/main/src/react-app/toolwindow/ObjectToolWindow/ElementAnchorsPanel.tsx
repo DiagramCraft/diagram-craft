@@ -288,7 +288,7 @@ export const ElementAnchorsPanel = (props: Props) => {
 
   const disabled =
     !diagram.selection.isNodesOnly() ||
-    diagram.selection.nodes.some(e => !e.getDefinition().supports('anchors.configurable'));
+    diagram.selection.nodes.some(e => !e.getDefinition().getFlag('anchors.configurable'));
 
   return (
     <ToolWindowPanel

@@ -9,7 +9,7 @@ import { Point } from '@diagram-craft/geometry/point';
 
 export class RoundingPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
-    if (isNode(el) && !el.getDefinition().supports('style.rounding')) {
+    if (isNode(el) && !el.getDefinition().getFlag('style.rounding')) {
       return [
         {
           path: path.path.asSvgPath(),

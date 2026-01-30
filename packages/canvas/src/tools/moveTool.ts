@@ -60,7 +60,7 @@ export class MoveTool extends AbstractTool {
         const parent = path[i]!;
 
         // While children.select-parent select parent
-        if (isNode(parent) && parent.getDefinition().supports('children.select-parent')) {
+        if (isNode(parent) && parent.getDefinition().getFlag('children.select-parent')) {
           // If a parent is already selected, we select the immediate children
           if (selection.nodes.includes(parent)) {
             break;
@@ -105,7 +105,7 @@ export class MoveTool extends AbstractTool {
         const parent = path[i]!;
 
         // While children.select-parent select parent
-        if (isNode(parent) && parent.getDefinition().supports('children.select-parent')) {
+        if (isNode(parent) && parent.getDefinition().getFlag('children.select-parent')) {
           // If a parent is already selected, we select the immediate children
           if (selection.nodes.includes(parent)) {
             break;

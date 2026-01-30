@@ -55,7 +55,7 @@ export type BaseShapeBuildShapeProps = {
 };
 
 export class BaseNodeComponent<
-  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'supports'> = ShapeNodeDefinition
+  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'getFlag'> = ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();
@@ -187,7 +187,7 @@ export class BaseNodeComponent<
       this
     );
 
-    if (!this.def.supports('style.fill')) {
+    if (!this.def.getFlag('style.fill')) {
       style.fill = 'none';
     }
 

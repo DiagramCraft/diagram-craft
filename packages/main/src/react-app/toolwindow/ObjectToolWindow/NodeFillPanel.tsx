@@ -32,8 +32,8 @@ export const NodeFillPanel = (props: Props) => {
   useEventListener($d.selection, 'change', redraw);
 
   const panelDisabled =
-    $d.selection.nodes.every(n => !n.getDefinition().supports('style.fill')) &&
-    $d.selection.edges.every(n => !n.getDefinition().supports('style.fill'));
+    $d.selection.nodes.every(n => !n.getDefinition().getFlag('style.fill')) &&
+    $d.selection.edges.every(n => !n.getDefinition().getFlag('style.fill'));
 
   if (panelDisabled) return null;
 

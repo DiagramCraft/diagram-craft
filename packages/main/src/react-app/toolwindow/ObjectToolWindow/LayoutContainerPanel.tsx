@@ -28,7 +28,7 @@ export const LayoutContainerPanel = (props: Props) => {
 
   const shouldShow =
     diagram.selection.isNodesOnly() &&
-    diagram.selection.nodes.every(n => n.getDefinition().supports('children.can-have-layout'));
+    diagram.selection.nodes.every(n => n.getDefinition().getFlag('children.can-have-layout'));
 
   if (!shouldShow) return null;
 

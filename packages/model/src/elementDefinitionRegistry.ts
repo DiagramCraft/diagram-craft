@@ -23,15 +23,12 @@ import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
 /**
- * Node capability flags that control various node behaviors and features.
+ * Node flags that control various node behaviors and features.
  *
- * These capabilities are used throughout the canvas system to conditionally enable/disable
- * features, render UI panels, and control node behavior. Check capabilities using
- * `node.getDefinition().supports('capability-name')`.
- *
- * @see {@link NodeDefinition.supports}
+ * These flags are used throughout the canvas system to conditionally enable/disable
+ * features, render UI panels, and control node behavior.
  */
-export type NodeCapability =
+export type NodeFlags =
   /**
    * Whether a node can have fill properties (colors, gradients, patterns).
    *
@@ -324,7 +321,7 @@ export interface NodeDefinition {
   type: string;
   name: string;
 
-  supports(capability: NodeCapability): boolean;
+  getFlag(capability: NodeFlags): boolean;
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 

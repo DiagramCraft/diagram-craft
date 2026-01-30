@@ -5,7 +5,7 @@ import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   CustomPropertyDefinition,
-  NodeCapability,
+  NodeFlags,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -25,7 +25,7 @@ export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
-  protected capabilities: Record<NodeCapability, boolean>;
+  protected capabilities: Record<NodeFlags, boolean>;
 
   public readonly name: string;
   public readonly type: string;
@@ -72,8 +72,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     }
   }
 
-  supports(capability: NodeCapability): boolean {
-    return this.capabilities[capability];
+  getFlag(flag: NodeFlags): boolean {
+    return this.capabilities[flag];
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
@@ -91,7 +91,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getAnchors(node: DiagramNode) {
-    const anchorStrategy = node.getDefinition().supports('anchors.configurable')
+    const anchorStrategy = node.getDefinition().getFlag('anchors.configurable')
       ? (node.renderProps.anchors.type ?? 'shape-defaults')
       : 'shape-defaults';
 

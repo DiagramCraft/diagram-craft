@@ -24,7 +24,7 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
     const def = props.node.getDefinition() as LayoutCapableShapeNodeDefinition;
 
     // Only render if node supports collapsible capability
-    if (!def.supports('children.collapsible')) return svg.g({});
+    if (!def.getFlag('children.collapsible')) return svg.g({});
 
     const collapsibleProps = def.getCollapsibleProps(props.node);
     if (!collapsibleProps.collapsible) return svg.g({});
@@ -127,7 +127,7 @@ export class CollapsibleToggleAction extends AbstractSelectionAction<Context> {
       const node = $s.nodes[0];
       if (!node) return false;
 
-      return node.getDefinition().supports('children.collapsible');
+      return node.getDefinition().getFlag('children.collapsible');
     };
 
     return [

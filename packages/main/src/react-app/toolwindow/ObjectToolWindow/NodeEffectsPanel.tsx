@@ -149,7 +149,7 @@ export const NodeEffectsPanelForm = ({
         </div>
       </Collapsible>
 
-      {$d.selection.nodes.some(e => e.getDefinition().supports('style.rounding')) && (
+      {$d.selection.nodes.some(e => e.getDefinition().getFlag('style.rounding')) && (
         <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>

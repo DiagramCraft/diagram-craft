@@ -339,7 +339,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const e = props.element;
 
   const childrenAllowed =
-    isNode(e) && diagram.document.registry.nodes.get(e.nodeType).supports('children.allowed');
+    isNode(e) && diagram.document.registry.nodes.get(e.nodeType).getFlag('children.allowed');
 
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(
