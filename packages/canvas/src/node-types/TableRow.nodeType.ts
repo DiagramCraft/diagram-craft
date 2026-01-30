@@ -11,9 +11,9 @@ import { renderElement } from '../components/renderElement';
 export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('tableRow', 'Table Row', TableRowComponent);
-    this.capabilities.fill = false;
+    this.capabilities['style.fill'] = false;
     this.capabilities.select = false;
-    this.capabilities.children = true;
+    this.capabilities['children.allowed'] = true;
     this.capabilities['can-be-container'] = false;
     this.capabilities['children.managed-by-parent'] = true;
   }

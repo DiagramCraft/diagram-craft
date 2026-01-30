@@ -18,7 +18,7 @@ const getNotch = (def: DiagramNode) => {
 export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('mxgraph.gcp2.doubleRect', 'GCP Double Rect', GCPDoubleRectNodeDefinition.Shape);
-    this.capabilities.rounding = false;
+    this.capabilities['style.rounding'] = false;
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

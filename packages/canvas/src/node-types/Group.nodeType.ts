@@ -12,7 +12,7 @@ import { renderElement } from '../components/renderElement';
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('group', 'Group', GroupComponent);
-    this.capabilities.children = true;
+    this.capabilities['children.allowed'] = true;
     this.capabilities['children.select-parent'] = true;
   }
 

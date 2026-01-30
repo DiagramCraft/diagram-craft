@@ -59,8 +59,8 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     else if (arr.length === 2) super(arr[0], arr[1]);
     else super(arr[0], arr[1], arr[2]);
 
-    this.capabilities.fill = true;
-    this.capabilities.rounding = false;
+    this.capabilities['style.fill'] = true;
+    this.capabilities['style.rounding'] = false;
     this.capabilities.collapsible = true;
   }
 

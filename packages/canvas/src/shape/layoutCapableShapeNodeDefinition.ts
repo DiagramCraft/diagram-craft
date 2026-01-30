@@ -64,7 +64,7 @@ export abstract class LayoutCapableShapeNodeDefinition
     else super(arr[0], arr[1], arr[2]);
 
     this.capabilities['can-have-layout'] = true;
-    this.capabilities.children = true;
+    this.capabilities['children.allowed'] = true;
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

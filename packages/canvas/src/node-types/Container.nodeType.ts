@@ -42,7 +42,6 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
-    this.capabilities.fill = true;
     this.capabilities.collapsible = true;
   }
 

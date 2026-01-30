@@ -47,7 +47,7 @@ const propSize = (node: DiagramNode) =>
 export class CubeNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('cube', 'Cube', CubeNodeDefinition.Shape);
-    this.capabilities.rounding = false;
+    this.capabilities['style.rounding'] = false;
   }
 
   static Shape = class extends BaseNodeComponent<CubeNodeDefinition> {

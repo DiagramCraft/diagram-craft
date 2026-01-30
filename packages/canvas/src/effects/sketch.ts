@@ -32,7 +32,7 @@ export class SketchPathRenderer implements PathRenderer {
     fillStyle.stroke = 'none';
 
     const dest: RenderedStyledPath[] = [];
-    if (isNode(el) && !el.getDefinition().supports('fill')) {
+    if (isNode(el) && !el.getDefinition().supports('style.fill')) {
       // Do nothing
     } else if (el.renderProps.effects?.sketchFillType === 'hachure') {
       const lines = calculateHachureLines(el.bounds, path.path, Math.PI / 4, 10);

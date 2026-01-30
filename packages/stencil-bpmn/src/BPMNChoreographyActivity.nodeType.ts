@@ -78,7 +78,7 @@ export class BPMNChoreographyActivityNodeDefinition extends LayoutCapableShapeNo
       BPMNChoreographyActivityNodeDefinition.Shape
     );
 
-    this.capabilities.children = true;
+    this.capabilities['children.allowed'] = true;
     this.capabilities['can-have-layout'] = false;
     this.capabilities['children.select-parent'] = true;
   }

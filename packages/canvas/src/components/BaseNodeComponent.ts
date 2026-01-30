@@ -187,7 +187,7 @@ export class BaseNodeComponent<
       this
     );
 
-    if (!this.def.supports('fill')) {
+    if (!this.def.supports('style.fill')) {
       style.fill = 'none';
     }
 

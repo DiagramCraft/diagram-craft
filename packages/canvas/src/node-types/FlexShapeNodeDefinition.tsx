@@ -219,7 +219,7 @@ export class FlexShapeNodeDefinition<
   }
 
   supports(capability: NodeCapability): boolean {
-    if (capability === 'children') return this.config.isGroup;
+    if (capability === 'children.allowed') return this.config.isGroup;
     if (capability === 'can-be-container') return false;
     return super.supports(capability);
   }

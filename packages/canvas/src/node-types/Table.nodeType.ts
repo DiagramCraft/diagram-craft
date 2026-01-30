@@ -80,8 +80,8 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('table', 'Table', TableComponent);
 
-    this.capabilities.fill = false;
-    this.capabilities.children = true;
+    this.capabilities['style.fill'] = false;
+    this.capabilities['children.allowed'] = true;
     this.capabilities['can-be-container'] = false;
   }
 

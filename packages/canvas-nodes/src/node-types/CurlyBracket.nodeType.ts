@@ -49,7 +49,7 @@ const RADIUS = 10;
 export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
-    this.capabilities.fill = false;
+    this.capabilities['style.fill'] = false;
     this.capabilities['anchors-configurable'] = false;
   }
 

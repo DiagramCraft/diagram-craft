@@ -41,7 +41,7 @@ export type NodeCapability =
    * @example
    * Group, Table, TableRow, layout containers
    */
-  | 'children'
+  | 'children.allowed'
 
   /**
    * Whether a node can have fill properties (colors, gradients, patterns).
@@ -53,7 +53,7 @@ export type NodeCapability =
    * @example
    * Disabled by: CurlyBracket, Table, TableRow
    */
-  | 'fill'
+  | 'style.fill'
 
   /**
    * Whether corner rounding effects can be applied to the node's path.
@@ -61,7 +61,7 @@ export type NodeCapability =
    * When disabled, the rounding effects panel is hidden.
    * Default: true
    */
-  | 'rounding'
+  | 'style.rounding'
 
   /**
    * Whether a node can be directly selected by clicking.

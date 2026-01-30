@@ -169,7 +169,7 @@ const SCHEMA: DataSchema = {
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
-    this.capabilities.children = true;
+    this.capabilities['children.allowed'] = true;
   }
 
   onDrop(
