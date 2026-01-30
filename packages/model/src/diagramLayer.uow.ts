@@ -1,4 +1,5 @@
 import {
+  NotificationPhase,
   Snapshot,
   UnitOfWork,
   UOWAdapter,
@@ -18,7 +19,7 @@ import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/d
 export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
   id = (layer: Layer) => layer.id;
 
-  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+  onNotify(operations: Array<UOWOperation>, _phase: NotificationPhase, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
       const key = `${op.type}/${op.target.id}`;

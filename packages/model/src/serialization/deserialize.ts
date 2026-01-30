@@ -405,7 +405,7 @@ const deserializeDiagrams = async <T extends Diagram>(
           // populate with partial data during the adding of elements
           layer.elements.forEach(e => {
             e.clearCache();
-            e.invalidate(uow);
+            e.invalidate('full', uow);
           });
         }
       }

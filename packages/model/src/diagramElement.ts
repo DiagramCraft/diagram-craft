@@ -48,6 +48,8 @@ type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 
 export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge';
 
+export type InvalidationScope = 'full' | 'quick';
+
 export interface DiagramElement {
   _trackableType: 'element';
 
@@ -56,7 +58,7 @@ export interface DiagramElement {
 
   getAttachmentsInUse(): Array<string>;
 
-  invalidate(uow: UnitOfWork): void;
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
 
@@ -207,7 +209,7 @@ export abstract class AbstractDiagramElement
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      UnitOfWork.executeSilently(this._diagram, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this._diagram, uow => this.invalidate('full', uow));
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -217,7 +219,7 @@ export abstract class AbstractDiagramElement
 
   abstract getAttachmentsInUse(): Array<string>;
 
-  abstract invalidate(uow: UnitOfWork): void;
+  abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
   abstract _onDetach(uow: UnitOfWork): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(

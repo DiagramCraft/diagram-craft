@@ -3,7 +3,8 @@ import {
   type DiagramElementCRDT,
   type ElementPropsForEditing,
   type ElementPropsForRendering,
-  type ElementType
+  type ElementType,
+  InvalidationScope
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
@@ -56,7 +57,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -148,7 +149,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract getAttachmentsInUse(): Array<string>;
 
-  abstract invalidate(uow: UnitOfWork): void;
+  abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
   abstract _onDetach(uow: UnitOfWork): void;
   abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;

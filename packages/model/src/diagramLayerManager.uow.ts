@@ -3,7 +3,8 @@ import {
   UnitOfWork,
   UOWOperation,
   UOWChildAdapter,
-  UOWAdapter
+  UOWAdapter,
+  NotificationPhase
 } from '@diagram-craft/model/unitOfWork';
 import { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { Diagram } from '@diagram-craft/model/diagram';
@@ -69,7 +70,7 @@ export class LayerManagerChildUOWAdapter implements UOWChildAdapter<LayerSnapsho
 export class LayerManagerUOWAdapter implements UOWAdapter<LayersSnapshot, LayerManager> {
   id = () => 'layerManager';
 
-  onNotify(_operations: Array<UOWOperation>, uow: UnitOfWork): void {
+  onNotify(_operations: Array<UOWOperation>, _phase: NotificationPhase, uow: UnitOfWork): void {
     uow.diagram.layers.emit('layerStructureChange', {});
   }
 

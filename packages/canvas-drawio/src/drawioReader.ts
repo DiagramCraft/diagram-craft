@@ -613,7 +613,7 @@ const parseLabelNode = (
   attachLabelNode(textNode, edge, $geometry, uow);
 
   queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-  queue.add(() => edge.invalidate(uow), 1);
+  queue.add(() => edge.invalidate('full', uow), 1);
 };
 
 const parseEdge = (
@@ -748,7 +748,7 @@ const parseEdge = (
 
     queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
     queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
-    queue.add(() => edge.invalidate(uow), 1);
+    queue.add(() => edge.invalidate('full', uow), 1);
   }
 
   return edge;

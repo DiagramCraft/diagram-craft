@@ -9,6 +9,7 @@ import {
   AbstractDiagramElement,
   DiagramElement,
   type DiagramElementCRDT,
+  InvalidationScope,
   isEdge,
   isNode
 } from './diagramElement';
@@ -1008,14 +1009,18 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
    * Note, that whilst an edge can be part of a group, a change to the edge will not
    * impact the state and/or bounds of the parent group/container
    */
-  invalidate(uow: UnitOfWork) {
-    // Ensure we don't get into an infinite loop
-    uow.metadata.invalidated ??= new Set();
-    if (uow.metadata.invalidated.has(this)) return;
-    uow.metadata.invalidated.add(this);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork) {
+    if (scope === 'full') {
+      // Ensure we don't get into an infinite loop
+      uow.metadata.invalidated ??= new Set();
+      if (uow.metadata.invalidated.has(this)) return;
+      uow.metadata.invalidated.add(this);
+    }
 
     this.adjustLabelNodePosition(uow);
-    this._recalculateIntersections(uow, true);
+    if (scope === 'full') {
+      this._recalculateIntersections(uow, true);
+    }
   }
 
   _onDetach(uow: UnitOfWork) {

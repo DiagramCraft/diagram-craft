@@ -429,6 +429,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     this.svgRef?.classList.add(`tool-${s}`);
   }
 
+  // TODO: This can be optimized - the current implementation may cause edges to be redrawn
+  //       multiple times if they are shared between nodes
   private redrawElements = (e: DiagramElement[]) => {
     const resolvedElements = unique(e.map(e => getTopMostNode(e)));
     for (const element of resolvedElements) {

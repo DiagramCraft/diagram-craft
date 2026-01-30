@@ -4,6 +4,7 @@ import {
   AbstractDiagramElement,
   DiagramElement,
   type DiagramElementCRDT,
+  InvalidationScope,
   isEdge,
   isNode
 } from './diagramElement';
@@ -849,27 +850,29 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
    *             -> label edge                                          Note, cannot revisit node
    *
    */
-  invalidate(uow: UnitOfWork) {
-    // Prevent infinite recursion
-    uow.metadata.invalidated ??= new Set();
-    if (uow.metadata.invalidated.has(this)) return;
-    uow.metadata.invalidated.add(this);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork) {
+    if (scope === 'full') {
+      // Prevent infinite recursion
+      uow.metadata.invalidated ??= new Set();
+      if (uow.metadata.invalidated.has(this)) return;
+      uow.metadata.invalidated.add(this);
+    }
 
     if (this.parent) {
-      this.parent.invalidate(uow);
+      this.parent.invalidate(scope, uow);
     }
 
     // Invalidate all attached edges
     for (const edge of this.edges) {
-      edge.invalidate(uow);
+      edge.invalidate(scope, uow);
     }
 
     for (const child of this.children) {
-      child.invalidate(uow);
+      child.invalidate(scope, uow);
     }
 
     if (this.isLabelNode()) {
-      this.labelEdge()!.invalidate(uow);
+      this.labelEdge()!.invalidate(scope, uow);
     }
   }
 

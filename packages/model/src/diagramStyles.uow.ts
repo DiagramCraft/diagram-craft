@@ -3,7 +3,8 @@ import {
   UnitOfWork,
   UOWOperation,
   UOWChildAdapter,
-  UOWAdapter
+  UOWAdapter,
+  NotificationPhase
 } from '@diagram-craft/model/unitOfWork';
 import { DiagramStyles, Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
 import { mustExist } from '@diagram-craft/utils/assert';
@@ -16,7 +17,7 @@ export class StylesheetUOWAdapter implements UOWAdapter<
 > {
   id = (e: Stylesheet<StylesheetType>) => e.id;
 
-  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+  onNotify(operations: Array<UOWOperation>, _phase: NotificationPhase, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
       const key = `${op.type}/${op.target.id}`;

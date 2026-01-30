@@ -174,7 +174,7 @@ export const invalidateDescendantEdges = (node: DiagramNode, uow: UnitOfWork): v
   for (const descendant of descendants) {
     if (isNode(descendant)) {
       for (const edge of descendant.edges) {
-        edge.invalidate(uow);
+        edge.invalidate('full', uow);
       }
     }
   }

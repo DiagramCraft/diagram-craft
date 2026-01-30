@@ -1,4 +1,5 @@
 import {
+  NotificationPhase,
   Snapshot,
   UnitOfWork,
   UOWAdapter,
@@ -32,12 +33,12 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
     operations.forEach(({ target }) => {
       const el = target.object as DiagramElement;
       if (handled.has(el.id)) return;
-      el.invalidate(uow);
+      el.invalidate('full', uow);
       handled.add(el.id);
     });
   }
 
-  onNotify(operations: Array<UOWOperation>, uow: UnitOfWork): void {
+  onNotify(operations: Array<UOWOperation>, phase: NotificationPhase, uow: UnitOfWork): void {
     const handled = new Set<string>();
     for (const op of operations) {
       const key = `${op.type}/${op.target.id}`;
@@ -71,6 +72,12 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
       .filter(e => e.type === 'remove')
       .map(e => e.target.object as DiagramElement);
     uow.diagram.emit('elementBatchChange', { removed, updated, added });
+
+    if (phase === 'notify') {
+      for (const op of operations) {
+        (op.target.object as DiagramElement).invalidate('quick', uow);
+      }
+    }
   }
 
   update(diagram: Diagram, elementId: string, snapshot: ElementSnapshot, uow: UnitOfWork): void {
