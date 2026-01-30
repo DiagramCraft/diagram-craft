@@ -16,7 +16,7 @@ import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, InvalidationScope } from './diagramElement';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
@@ -68,7 +68,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<NodeProps>(propsMap, () => {
-      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -95,7 +95,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localTexts = new CRDTObject<NodeTexts>(textsMap, () => {
-      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -310,8 +310,8 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return this.delegate.getAttachmentsInUse();
   }
 
-  invalidate(uow: UnitOfWork): void {
-    this.delegate.invalidate(uow);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void {
+    this.delegate.invalidate(scope, uow);
   }
 
   _onDetach(uow: UnitOfWork): void {

@@ -29,12 +29,14 @@ export interface UOWTrackable {
   _trackableType: string;
 }
 
+export type NotificationPhase = 'commit' | 'notify';
+
 export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
   id(element: E): string;
 
   update: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
 
-  onNotify?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onNotify?: (elements: Array<UOWOperation>, phase: NotificationPhase, uow: UnitOfWork) => void;
   onBeforeCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
   onAfterCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
 
@@ -406,7 +408,7 @@ export class UnitOfWork {
       this.#operations.filter(op => op.notified !== true),
       op => op.target.type
     )) {
-      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+      UOWRegistry.getAdapter(k).onNotify?.(ops, 'notify', this);
       ops.forEach(op => (op.notified = true));
     }
   }
@@ -421,7 +423,7 @@ export class UnitOfWork {
     }
 
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
-      UOWRegistry.getAdapter(k).onNotify?.(ops, this);
+      UOWRegistry.getAdapter(k).onNotify?.(ops, 'commit', this);
       UOWRegistry.getAdapter(k).onAfterCommit?.(ops, this);
     }
 

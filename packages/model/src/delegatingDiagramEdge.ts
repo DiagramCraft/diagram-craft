@@ -19,7 +19,7 @@ import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
-import { DiagramElement } from './diagramElement';
+import { DiagramElement, InvalidationScope } from './diagramElement';
 import { SerializedEdge, SerializedEndpoint } from './serialization/serializedTypes';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
@@ -77,7 +77,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<EdgeProps>(propsMap, () => {
-      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate(uow));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -352,8 +352,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return this.delegate.getAttachmentsInUse();
   }
 
-  invalidate(uow: UnitOfWork): void {
-    this.delegate.invalidate(uow);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void {
+    this.delegate.invalidate(scope, uow);
   }
 
   _onDetach(uow: UnitOfWork): void {

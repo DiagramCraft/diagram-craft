@@ -208,7 +208,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
         if (!(layer instanceof RegularLayer)) return;
 
         UnitOfWork.execute(this, uow =>
-          layer.elements.filter(isEdge).forEach(e => e.invalidate(uow))
+          layer.elements.filter(isEdge).forEach(e => e.invalidate('full', uow))
         );
       }
     };
