@@ -9,7 +9,8 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   CustomProperty,
-  CustomPropertyDefinition
+  CustomPropertyDefinition,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -49,8 +50,10 @@ const RADIUS = 10;
 export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
-    this.capabilities['style.fill'] = false;
-    this.capabilities['anchors.configurable'] = false;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.AnchorsConfigurable]: false
+    });
   }
 
   static Shape = class extends BaseNodeComponent<CurlyBracketNodeDefinition> {

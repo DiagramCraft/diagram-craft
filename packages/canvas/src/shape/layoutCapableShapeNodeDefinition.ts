@@ -1,7 +1,8 @@
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   CustomPropertyDefinition,
-  NodeDefinition
+  NodeDefinition,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionMap } from '@diagram-craft/canvas/action';
@@ -63,8 +64,10 @@ export abstract class LayoutCapableShapeNodeDefinition
     if (arr.length === 2) super(arr[0], arr[1]);
     else super(arr[0], arr[1], arr[2]);
 
-    this.capabilities['children.can-have-layout'] = true;
-    this.capabilities['children.allowed'] = true;
+    this.setFlags({
+      [NodeFlags.ChildrenCanHaveLayout]: true,
+      [NodeFlags.ChildrenSelectParent]: true
+    });
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -80,7 +83,7 @@ export abstract class LayoutCapableShapeNodeDefinition
     while (
       layoutRoot.parent &&
       isNode(layoutRoot.parent) &&
-      layoutRoot.parent.getDefinition().getFlag('children.can-have-layout')
+      layoutRoot.parent.getDefinition().hasFlag(NodeFlags.ChildrenCanHaveLayout)
     ) {
       layoutRoot = layoutRoot.parent;
     }
@@ -156,7 +159,7 @@ export abstract class LayoutCapableShapeNodeDefinition
    * Check if children should be rendered based on collapse state
    */
   shouldRenderChildren(node: DiagramNode): boolean {
-    if (!this.getFlag('children.collapsible')) {
+    if (!this.hasFlag(NodeFlags.ChildrenCollapsible)) {
       return true; // Always render if not collapsible
     }
 
@@ -190,7 +193,7 @@ export abstract class LayoutCapableShapeNodeDefinition
   getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
     const baseActions = super.getShapeActions(_node);
 
-    if (this.getFlag('children.collapsible')) {
+    if (this.hasFlag(NodeFlags.ChildrenCollapsible)) {
       return [...baseActions, 'SHAPE_TOGGLE_COLLAPSIBLE'];
     }
 

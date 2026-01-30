@@ -6,6 +6,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { isNode } from '@diagram-craft/model/diagramElement';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export const LayoutElementPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -47,7 +48,7 @@ export const LayoutElementPanel = (props: Props) => {
   const parentIsNode = isNode(firstParent);
   if (!parentIsNode) return null;
 
-  const parentSupportsLayout = firstParent.getDefinition().getFlag('children.can-have-layout');
+  const parentSupportsLayout = firstParent.getDefinition().hasFlag(NodeFlags.ChildrenCanHaveLayout);
   if (!parentSupportsLayout) return null;
 
   return (

@@ -5,6 +5,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -42,7 +43,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
       const parent = e.parent;
       if (parent && isNode(parent)) {
         const parentDef = parent.getDefinition();
-        if (parentDef.getFlag('children.managed-by-parent')) return false;
+        if (parentDef.hasFlag(NodeFlags.ChildrenManagedByParent)) return false;
       }
 
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);

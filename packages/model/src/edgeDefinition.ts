@@ -13,13 +13,17 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { ElementFactory } from './elementFactory';
 import type { EdgeProps } from './diagramProps';
 
+export type EdgeFlag = string & { __brand: 'edgeFlag' };
+
+export const makeEdgeFlag = (flag: string): EdgeFlag => flag as EdgeFlag;
+
 /**
  * Edge flags that control various edge styling and visual features.
  *
  * These flags are used throughout the canvas system to conditionally enable/disable
  * styling options, render UI panels, and control edge appearance.
  */
-export type EdgeFlags =
+export const EdgeFlags = {
   /**
    * Whether an edge can display arrow decorations at its start and end points.
    *
@@ -36,7 +40,7 @@ export type EdgeFlags =
    * Disabled by: BlockArrow, BPMNConversationEdge
    * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:272-274
    */
-  | 'style.arrows'
+  StyleArrows: makeEdgeFlag('style.arrows'),
 
   /**
    * Whether an edge's interior/fill can be styled with colors.
@@ -54,7 +58,7 @@ export type EdgeFlags =
    * Disabled by: SimpleEdgeDefinition (standard edges)
    * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:280-282
    */
-  | 'style.fill'
+  StyleFill: makeEdgeFlag('style.fill'),
 
   /**
    * Whether an edge can display line hop visualizations where edges cross.
@@ -76,7 +80,8 @@ export type EdgeFlags =
    * Disabled by: BlockArrow, BPMNConversationEdge
    * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:276-278
    */
-  | 'style.line-hops';
+  StyleLineHops: makeEdgeFlag('style.line-hops')
+};
 
 export type EdgeDropOperation = 'attach' | 'split';
 
@@ -84,7 +89,7 @@ export interface EdgeDefinition {
   type: string;
   name: string;
 
-  getFlag(capability: EdgeFlags): boolean;
+  hasFlag(flag: EdgeFlag): boolean;
 
   onDrop(
     coord: Point,
@@ -106,7 +111,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     this.type = type;
   }
 
-  getFlag(_flag: EdgeFlags): boolean {
+  hasFlag(_flag: EdgeFlag): boolean {
     return true;
   }
 

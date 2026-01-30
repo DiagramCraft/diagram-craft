@@ -13,6 +13,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type FormProps = {
   diagram: Diagram;
@@ -149,7 +150,7 @@ export const NodeEffectsPanelForm = ({
         </div>
       </Collapsible>
 
-      {$d.selection.nodes.some(e => e.getDefinition().getFlag('style.rounding')) && (
+      {$d.selection.nodes.some(e => e.getDefinition().hasFlag(NodeFlags.StyleRounding)) && (
         <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
           <div className={'cmp-labeled-table'}>
             <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>

@@ -10,7 +10,10 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { roundedRectOutline } from '@diagram-craft/stencil-bpmn/utils';
@@ -78,9 +81,11 @@ export class BPMNChoreographyActivityNodeDefinition extends LayoutCapableShapeNo
       BPMNChoreographyActivityNodeDefinition.Shape
     );
 
-    this.capabilities['children.allowed'] = true;
-    this.capabilities['children.can-have-layout'] = false;
-    this.capabilities['children.select-parent'] = true;
+    this.setFlags({
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenCanHaveLayout]: false,
+      [NodeFlags.ChildrenSelectParent]: true
+    });
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityNodeDefinition> {

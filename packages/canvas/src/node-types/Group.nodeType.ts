@@ -8,12 +8,15 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { renderElement } from '../components/renderElement';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class GroupNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('group', 'Group', GroupComponent);
-    this.capabilities['children.allowed'] = true;
-    this.capabilities['children.select-parent'] = true;
+    this.setFlags({
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenSelectParent]: true
+    });
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork) {

@@ -12,6 +12,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -112,7 +113,7 @@ export class SelectionChangeToContainerAction extends AbstractSelectionAction<Ap
       if (!node) return false;
 
       const definition = node.getDefinition();
-      return definition.getFlag('children.can-convert-to-container');
+      return definition.hasFlag(NodeFlags.ChildrenCanConvertToContainer);
     };
 
     return [

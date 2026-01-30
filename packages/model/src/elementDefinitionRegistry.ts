@@ -22,13 +22,17 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
+export type NodeFlag = string & { __brand: 'nodeFlag' };
+
+export const makeNodeFlag = (flag: string): NodeFlag => flag as NodeFlag;
+
 /**
  * Node flags that control various node behaviors and features.
  *
  * These flags are used throughout the canvas system to conditionally enable/disable
  * features, render UI panels, and control node behavior.
  */
-export type NodeFlags =
+export const NodeFlags = {
   /**
    * Whether a node can have fill properties (colors, gradients, patterns).
    *
@@ -39,7 +43,7 @@ export type NodeFlags =
    * @example
    * Disabled by: CurlyBracket, Table, TableRow
    */
-  | 'style.fill'
+  StyleFill: makeNodeFlag('style.fill'),
 
   /**
    * Whether corner rounding effects can be applied to the node's path.
@@ -47,7 +51,7 @@ export type NodeFlags =
    * When disabled, the rounding effects panel is hidden.
    * Default: true
    */
-  | 'style.rounding'
+  StyleRounding: makeNodeFlag('style.rounding'),
 
   /**
    * Whether edges can connect to any point on the node's boundary (not just predefined anchors).
@@ -60,7 +64,7 @@ export type NodeFlags =
    * Disabled by: UmlLifeline
    * @see packages/model/src/anchor.ts:241-258
    */
-  | 'anchors.boundary'
+  AnchorsBoundary: makeNodeFlag('anchors.boundary'),
 
   /**
    * Whether the anchor strategy can be changed.
@@ -73,7 +77,7 @@ export type NodeFlags =
    * @example
    * Disabled by: CurlyBracket, UmlLifeline, UmlDestroy
    */
-  | 'anchors.configurable'
+  AnchorsConfigurable: makeNodeFlag('anchors.configurable'),
 
   /**
    * Whether a node can contain child elements.
@@ -84,7 +88,7 @@ export type NodeFlags =
    * @example
    * Group, Table, TableRow, layout containers
    */
-  | 'children.allowed'
+  ChildrenAllowed: makeNodeFlag('children.allowed'),
 
   /**
    * Whether a node can serve as a container in layout operations.
@@ -96,7 +100,7 @@ export type NodeFlags =
    * @example
    * Disabled by: Table, TableRow, FlexShapeNodeDefinition (when not a group)
    */
-  | 'children.can-convert-to-container'
+  ChildrenCanConvertToContainer: makeNodeFlag('children.can-convert-to-container'),
 
   /**
    * Whether a node supports the auto-layout system.
@@ -108,7 +112,7 @@ export type NodeFlags =
    * @example
    * Enabled by: LayoutCapableShapeNodeDefinition subclasses (except BPMNChoreographyActivity)
    */
-  | 'children.can-have-layout'
+  ChildrenCanHaveLayout: makeNodeFlag('children.can-have-layout'),
 
   /**
    * Whether a node can be toggled between expanded and collapsed states.
@@ -120,7 +124,7 @@ export type NodeFlags =
    * Enabled by: LayoutCapableShapeNodeDefinition subclasses
    * @see packages/canvas/src/shape/collapsible.ts:27, 130
    */
-  | 'children.collapsible'
+  ChildrenCollapsible: makeNodeFlag('children.collapsible'),
 
   /**
    * Whether clicking a child selects the parent instead (group selection behavior).
@@ -135,7 +139,7 @@ export type NodeFlags =
    * Enabled by: Group, BPMNChoreographyActivity
    * @see packages/canvas/src/tools/moveTool.ts:103-116
    */
-  | 'children.select-parent'
+  ChildrenSelectParent: makeNodeFlag('children.select-parent'),
 
   /**
    * Whether the parent exclusively manages child lifecycle (prevents independent deletion).
@@ -147,7 +151,8 @@ export type NodeFlags =
    * Enabled by: TableRow (table cells managed by table structure)
    * @see packages/canvas-app/src/actions/selectionDeleteAction.ts:45
    */
-  | 'children.managed-by-parent';
+  ChildrenManagedByParent: makeNodeFlag('children.managed-by-parent')
+};
 
 // biome-ignore lint/suspicious/noExplicitAny: convenient
 export interface CustomPropertyType<T = any> {
@@ -321,7 +326,7 @@ export interface NodeDefinition {
   type: string;
   name: string;
 
-  getFlag(capability: NodeFlags): boolean;
+  hasFlag(flag: NodeFlag): boolean;
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 

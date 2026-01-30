@@ -15,7 +15,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomEdgeDefaults } from '@diagram-craft/model/diagramDefaults';
-import type { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
+import { EdgeFlag, EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
 // EdgeProps extension for custom props *****************************************
@@ -176,8 +176,8 @@ export class BlockArrowEdgeDefinition extends ShapeEdgeDefinition {
     }
   };
 
-  getFlag(capability: EdgeFlags): boolean {
-    return !['arrows', 'line-hops'].includes(capability);
+  hasFlag(flag: EdgeFlag): boolean {
+    return ![EdgeFlags.StyleArrows, EdgeFlags.StyleLineHops].includes(flag);
   }
 
   getCustomPropertyDefinitions(edge: DiagramEdge) {

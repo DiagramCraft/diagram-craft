@@ -5,6 +5,8 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 
 export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
@@ -32,8 +34,8 @@ export const NodeFillPanel = (props: Props) => {
   useEventListener($d.selection, 'change', redraw);
 
   const panelDisabled =
-    $d.selection.nodes.every(n => !n.getDefinition().getFlag('style.fill')) &&
-    $d.selection.edges.every(n => !n.getDefinition().getFlag('style.fill'));
+    $d.selection.nodes.every(n => !n.getDefinition().hasFlag(NodeFlags.StyleFill)) &&
+    $d.selection.edges.every(n => !n.getDefinition().hasFlag(EdgeFlags.StyleFill));
 
   if (panelDisabled) return null;
 

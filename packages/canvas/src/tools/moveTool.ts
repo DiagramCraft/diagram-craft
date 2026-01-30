@@ -9,6 +9,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { getAncestors, isNode } from '@diagram-craft/model/diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type DeferredMouseAction = {
   callback: () => void;
@@ -60,7 +61,7 @@ export class MoveTool extends AbstractTool {
         const parent = path[i]!;
 
         // While children.select-parent select parent
-        if (isNode(parent) && parent.getDefinition().getFlag('children.select-parent')) {
+        if (isNode(parent) && parent.getDefinition().hasFlag(NodeFlags.ChildrenSelectParent)) {
           // If a parent is already selected, we select the immediate children
           if (selection.nodes.includes(parent)) {
             break;
@@ -105,7 +106,7 @@ export class MoveTool extends AbstractTool {
         const parent = path[i]!;
 
         // While children.select-parent select parent
-        if (isNode(parent) && parent.getDefinition().getFlag('children.select-parent')) {
+        if (isNode(parent) && parent.getDefinition().hasFlag(NodeFlags.ChildrenSelectParent)) {
           // If a parent is already selected, we select the immediate children
           if (selection.nodes.includes(parent)) {
             break;

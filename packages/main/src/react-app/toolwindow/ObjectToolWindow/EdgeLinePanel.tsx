@@ -13,6 +13,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { EdgeType, LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 
 type FormProps = {
   diagram: Diagram;
@@ -271,15 +272,15 @@ export const EdgeLinePanel = (props: Props) => {
 
   const supportsArrows =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.some(e => e.getDefinition().getFlag('style.arrows'));
+    $d.selection.edges.some(e => e.getDefinition().hasFlag(EdgeFlags.StyleArrows));
 
   const supportsLineHops =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.some(e => e.getDefinition().getFlag('style.line-hops'));
+    $d.selection.edges.some(e => e.getDefinition().hasFlag(EdgeFlags.StyleLineHops));
 
   const supportsFill =
     !$d.selection.isEdgesOnly() ||
-    $d.selection.edges.every(e => e.getDefinition().getFlag('style.fill'));
+    $d.selection.edges.every(e => e.getDefinition().hasFlag(EdgeFlags.StyleFill));
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} id="line" title={'Line'} hasCheckbox={false}>
