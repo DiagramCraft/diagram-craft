@@ -64,17 +64,6 @@ export type NodeCapability =
   | 'style.rounding'
 
   /**
-   * Whether a node can be directly selected by clicking.
-   *
-   * When disabled, ancestor nodes are selected instead.
-   * Default: true
-   *
-   * @example
-   * Disabled by: TableRow (parent table controls selection)
-   */
-  | 'select'
-
-  /**
    * Whether edges can connect to any point on the node's boundary (not just predefined anchors).
    *
    * When disabled, only edge anchors are used for connections. The implementation uses

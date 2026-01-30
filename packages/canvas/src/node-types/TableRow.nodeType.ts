@@ -12,7 +12,6 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('tableRow', 'Table Row', TableRowComponent);
     this.capabilities['style.fill'] = false;
-    this.capabilities.select = false;
     this.capabilities['children.allowed'] = true;
     this.capabilities['can-be-container'] = false;
     this.capabilities['children.managed-by-parent'] = true;
