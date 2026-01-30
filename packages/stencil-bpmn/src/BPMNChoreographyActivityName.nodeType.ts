@@ -12,9 +12,16 @@ import {
   linesVerticalIcon,
   squarePlusIcon
 } from './icons/icons';
-import { isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity.nodeType';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
+import { Point } from '@diagram-craft/geometry/point';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+import { renderElement } from '@diagram-craft/canvas/components/renderElement';
+import { Transform } from '@diagram-craft/geometry/transform';
+import { Box } from '@diagram-craft/geometry/box';
 
 // NodeDefinition and Shape *****************************************************
 
@@ -28,6 +35,31 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
       'BPMN Choreography Name',
       BPMNChoreographyActivityNameNodeDefinition.Shape
     );
+    this.capabilities['children'] = true;
+    this.capabilities['children.select-parent'] = false;
+  }
+
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ): void {
+    node.diagram.moveElement(elements, uow, node.layer, { relation: 'on', element: node });
+  }
+
+  // We don't want to change children if resizing activity
+  onTransform(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    _newBounds: Box,
+    _previousBounds: Box,
+    uow: UnitOfWork
+  ): void {
+    for (const child of node.children) {
+      child.transform(transforms, uow, true);
+    }
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityNameNodeDefinition> {
@@ -53,15 +85,15 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
 
       const markers: Markers = { left: [], center: [], right: [] };
 
-      if (!parentProps?.expanded) {
-        if (parentData.loopType === 'parallel') {
-          markers.center.push(getIcon(linesVerticalIcon));
-        } else if (parentData.loopType === 'sequential') {
-          markers.center.push(getIcon(linesHorizontalIcon));
-        } else if (parentData.loopType === 'standard') {
-          markers.center.push(getIcon(arrowBackUpIcon));
-        }
+      if (parentData.loopType === 'parallel') {
+        markers.center.push(getIcon(linesVerticalIcon));
+      } else if (parentData.loopType === 'sequential') {
+        markers.center.push(getIcon(linesHorizontalIcon));
+      } else if (parentData.loopType === 'standard') {
+        markers.center.push(getIcon(arrowBackUpIcon));
+      }
 
+      if (!parentProps?.expanded) {
         if (parentData?.type === 'sub-choreography') {
           markers.center.push(getIcon(squarePlusIcon));
         }
@@ -72,6 +104,18 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
         bottomMargin: BOTTOM_MARGIN,
         spacing: ICON_MARGIN
       });
+
+      builder.add(
+        svg.g(
+          {},
+          ...props.node.children.map(child =>
+            svg.g(
+              { transform: Transforms.rotateBack(props.node.bounds) },
+              renderElement(this, child, props)
+            )
+          )
+        )
+      );
     }
   };
 }

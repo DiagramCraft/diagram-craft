@@ -94,36 +94,37 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     const path = edge.path();
     const projection = path.projectPoint(coord);
 
-    edge.addLabelNode(
-      {
-        id: element.id,
-        node: () => element,
-        offset: Point.ORIGIN,
-        timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
-        type: 'horizontal'
-      },
-      uow
-    );
+    uow.executeUpdate(edge, () => {
+      uow.executeUpdate(element, () => {
+        edge.addLabelNode(
+          {
+            id: element.id,
+            node: () => element,
+            offset: Point.ORIGIN,
+            timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
+            type: 'horizontal'
+          },
+          uow
+        );
 
-    // TODO: Perhaps create a helper to add an element as a label edge
-    // TODO: Maybe use detach here
-    if (edge.parent) {
-      if (element.parent) {
-        if (isNode(element.parent)) {
-          element.parent.removeChild(element, uow);
-        } else {
-          // This means that element.parent is an edge - implying
-          // element is a label node - however, we've already covered
-          // this case at the beginning of the function
-          VERIFY_NOT_REACHED();
+        // TODO: Perhaps create a helper to add an element as a label edge
+        // TODO: Maybe use detach here
+        if (edge.parent) {
+          if (element.parent) {
+            if (isNode(element.parent)) {
+              element.parent.removeChild(element, uow);
+            } else {
+              // This means that element.parent is an edge - implying
+              // element is a label node - however, we've already covered
+              // this case at the beginning of the function
+              VERIFY_NOT_REACHED();
+            }
+          }
+
+          edge.parent.addChild(element, uow);
         }
-      }
-
-      edge.parent.addChild(element, uow);
-    }
-
-    uow.updateElement(element);
-    uow.updateElement(edge);
+      });
+    });
   }
 
   getCustomPropertyDefinitions(_edge: DiagramEdge): CustomPropertyDefinition {

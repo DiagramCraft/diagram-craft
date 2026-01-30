@@ -654,11 +654,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
           assert.true(node.parent === this);
 
-          const inDiagram =
-            layer.diagram.nodeLookup.has(node.id) || layer.diagram.edgeLookup.has(node.id);
-          if (!inDiagram) {
-            layer.addElement(node, uow);
-          }
+          layer.diagram.register(node);
         } else {
           assert.fail('Label nodes should be part of regular layer');
         }
