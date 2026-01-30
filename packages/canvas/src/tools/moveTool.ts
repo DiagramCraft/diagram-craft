@@ -9,6 +9,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { getAncestors, isNode } from '@diagram-craft/model/diagramElement';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type DeferredMouseAction = {
   callback: () => void;
@@ -56,16 +57,19 @@ export class MoveTool extends AbstractTool {
       // If we click on an element that is part of a group, select the group instead
       // ... except, when the group is already selected, in which case we allow for "drill-down"
       const path = getAncestors(element);
-      if (path.length > 0) {
-        for (let i = 0; i < path.length; i++) {
-          const parent = path[i];
-          if (isNode(parent) && parent.getDefinition().supports('select')) {
-            if (selection.nodes.includes(parent)) {
-              break;
-            } else {
-              element = parent;
-            }
+      for (let i = 0; i < path.length; i++) {
+        const parent = path[i]!;
+
+        // While children.select-parent select parent
+        if (isNode(parent) && parent.getDefinition().hasFlag(NodeFlags.ChildrenSelectParent)) {
+          // If a parent is already selected, we select the immediate children
+          if (selection.nodes.includes(parent)) {
+            break;
           }
+
+          element = parent;
+        } else {
+          break;
         }
       }
 
@@ -98,20 +102,19 @@ export class MoveTool extends AbstractTool {
       // If we click on an element that is part of a group, select the group instead
       // ... except, when the group is already selected, in which case we allow for "drill-down"
       const path = getAncestors(element);
-      if (
-        path.length > 0 &&
-        path.find(e => isNode(e) && e.getDefinition().supports('children.select-parent'))
-      ) {
-        for (let i = 0; i < path.length; i++) {
-          const parent = path[i];
-          if (isNode(parent) && parent.getDefinition().supports('select')) {
-            if (selection.nodes.includes(parent)) {
-              selection.toggle(parent);
-              break;
-            } else {
-              element = parent;
-            }
+      for (let i = 0; i < path.length; i++) {
+        const parent = path[i]!;
+
+        // While children.select-parent select parent
+        if (isNode(parent) && parent.getDefinition().hasFlag(NodeFlags.ChildrenSelectParent)) {
+          // If a parent is already selected, we select the immediate children
+          if (selection.nodes.includes(parent)) {
+            break;
           }
+
+          element = parent;
+        } else {
+          break;
         }
       }
 

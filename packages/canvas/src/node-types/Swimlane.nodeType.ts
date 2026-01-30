@@ -7,7 +7,10 @@ import { Point } from '@diagram-craft/geometry/point';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { renderElement } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
@@ -59,9 +62,11 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     else if (arr.length === 2) super(arr[0], arr[1]);
     else super(arr[0], arr[1], arr[2]);
 
-    this.capabilities.fill = true;
-    this.capabilities.rounding = false;
-    this.capabilities.collapsible = true;
+    this.setFlags({
+      [NodeFlags.StyleFill]: true,
+      [NodeFlags.StyleRounding]: false,
+      [NodeFlags.ChildrenCollapsible]: true
+    });
   }
 
   // We don't want to resize children unless the container has an active layout enabled

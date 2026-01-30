@@ -4,6 +4,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Point } from '@diagram-craft/geometry/point';
 import type { UnitOfWork } from './unitOfWork';
 import { EffectsRegistry } from './effect';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 /**
  * Finds the first collapsed ancestor container of a node.
@@ -35,7 +36,7 @@ export const getCollapsedAncestor = (node: DiagramNode): DiagramNode | null => {
  */
 export const getExpandedBounds = (node: DiagramNode): Box => {
   const def = node.getDefinition();
-  if (def.supports?.('collapsible')) {
+  if (def.hasFlag?.(NodeFlags.ChildrenCollapsible)) {
     const customProps = node.renderProps.custom['_collapsible'];
     if (customProps?.mode === 'collapsed' && customProps?.bounds) {
       const storedBounds = Box.fromString(customProps.bounds);

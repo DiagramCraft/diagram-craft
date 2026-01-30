@@ -88,6 +88,7 @@ import { PointOnPath } from '@diagram-craft/geometry/pathPosition';
 import { round } from '@diagram-craft/utils/math';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { Angle } from '@diagram-craft/geometry/angle';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 /**
  * An attachment point on a node where edges can connect.
@@ -238,7 +239,7 @@ export const getClosestAnchor = (
   }
 
   // Check if boundary point is closer (with 5px preference threshold)
-  if (includeBoundary && node.getDefinition().supports('connect-to-boundary')) {
+  if (includeBoundary && node.getDefinition().hasFlag(NodeFlags.AnchorsBoundary)) {
     let closestPoint: Point | undefined;
     let closestPointDistance = Number.MAX_SAFE_INTEGER;
 

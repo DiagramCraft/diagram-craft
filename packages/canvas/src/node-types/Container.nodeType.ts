@@ -5,7 +5,8 @@ import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import {
   CustomPropertyDefinition,
-  CustomPropertyDefinitionEntry
+  CustomPropertyDefinitionEntry,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -42,8 +43,9 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor(id = 'container', name = 'Container', component = ContainerComponent) {
     super(id, name, component);
 
-    this.capabilities.fill = true;
-    this.capabilities.collapsible = true;
+    this.setFlags({
+      [NodeFlags.ChildrenCollapsible]: true
+    });
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {

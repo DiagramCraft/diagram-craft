@@ -6,10 +6,11 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { BezierUtils } from '@diagram-craft/geometry/bezier';
 import { Point } from '@diagram-craft/geometry/point';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class RoundingPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
-    if (isNode(el) && !el.getDefinition().supports('rounding')) {
+    if (isNode(el) && !el.getDefinition().hasFlag(NodeFlags.StyleRounding)) {
       return [
         {
           path: path.path.asSvgPath(),

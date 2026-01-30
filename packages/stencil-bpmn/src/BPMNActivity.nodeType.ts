@@ -6,7 +6,10 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
@@ -169,7 +172,7 @@ const SCHEMA: DataSchema = {
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
-    this.capabilities.children = true;
+    this.setFlags({ [NodeFlags.ChildrenAllowed]: true });
   }
 
   onDrop(

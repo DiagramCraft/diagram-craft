@@ -9,7 +9,8 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   CustomProperty,
-  CustomPropertyDefinition
+  CustomPropertyDefinition,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
@@ -47,7 +48,7 @@ const propSize = (node: DiagramNode) =>
 export class CubeNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('cube', 'Cube', CubeNodeDefinition.Shape);
-    this.capabilities.rounding = false;
+    this.setFlags({ [NodeFlags.StyleRounding]: false });
   }
 
   static Shape = class extends BaseNodeComponent<CubeNodeDefinition> {

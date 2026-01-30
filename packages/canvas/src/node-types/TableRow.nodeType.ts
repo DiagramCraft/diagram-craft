@@ -7,15 +7,17 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { renderElement } from '../components/renderElement';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('tableRow', 'Table Row', TableRowComponent);
-    this.capabilities.fill = false;
-    this.capabilities.select = false;
-    this.capabilities.children = true;
-    this.capabilities['can-be-container'] = false;
-    this.capabilities['children.managed-by-parent'] = true;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: false,
+      [NodeFlags.ChildrenManagedByParent]: true
+    });
   }
 
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {

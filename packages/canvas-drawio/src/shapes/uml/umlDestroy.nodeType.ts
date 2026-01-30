@@ -6,11 +6,12 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { Point } from '@diagram-craft/geometry/point';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class UmlDestroy extends SimpleShapeNodeDefinition {
   constructor() {
     super('umlDestroy', 'UML Destroy');
-    this.capabilities['anchors-configurable'] = false;
+    this.setFlags({ [NodeFlags.AnchorsConfigurable]: false });
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {

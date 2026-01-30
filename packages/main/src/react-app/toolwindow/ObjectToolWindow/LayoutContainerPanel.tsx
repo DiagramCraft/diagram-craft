@@ -8,6 +8,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbArrowsHorizontal, TbArrowsVertical } from 'react-icons/tb';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export const LayoutContainerPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -28,7 +29,7 @@ export const LayoutContainerPanel = (props: Props) => {
 
   const shouldShow =
     diagram.selection.isNodesOnly() &&
-    diagram.selection.nodes.every(n => n.getDefinition().supports('can-have-layout'));
+    diagram.selection.nodes.every(n => n.getDefinition().hasFlag(NodeFlags.ChildrenCanHaveLayout));
 
   if (!shouldShow) return null;
 

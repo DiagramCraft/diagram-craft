@@ -23,6 +23,7 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
 import { assert } from '@diagram-craft/utils/assert';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -288,7 +289,7 @@ export const ElementAnchorsPanel = (props: Props) => {
 
   const disabled =
     !diagram.selection.isNodesOnly() ||
-    diagram.selection.nodes.some(e => !e.getDefinition().supports('anchors-configurable'));
+    diagram.selection.nodes.some(e => !e.getDefinition().hasFlag(NodeFlags.AnchorsConfigurable));
 
   return (
     <ToolWindowPanel

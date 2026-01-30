@@ -17,6 +17,7 @@ import { round } from '@diagram-craft/utils/math';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { parseSvgPath } from '@diagram-craft/geometry/svgPathUtils';
 import type { ArrowShape } from '../arrowShapes';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class SketchPathRenderer implements PathRenderer {
   render(el: DiagramElement, path: StyledPath): RenderedStyledPath[] {
@@ -32,7 +33,7 @@ export class SketchPathRenderer implements PathRenderer {
     fillStyle.stroke = 'none';
 
     const dest: RenderedStyledPath[] = [];
-    if (isNode(el) && !el.getDefinition().supports('fill')) {
+    if (isNode(el) && !el.getDefinition().hasFlag(NodeFlags.StyleFill)) {
       // Do nothing
     } else if (el.renderProps.effects?.sketchFillType === 'hachure') {
       const lines = calculateHachureLines(el.bounds, path.path, Math.PI / 4, 10);

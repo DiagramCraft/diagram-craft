@@ -11,7 +11,10 @@ import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderElement } from '../components/renderElement';
@@ -80,9 +83,11 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('table', 'Table', TableComponent);
 
-    this.capabilities.fill = false;
-    this.capabilities.children = true;
-    this.capabilities['can-be-container'] = false;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: false
+    });
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

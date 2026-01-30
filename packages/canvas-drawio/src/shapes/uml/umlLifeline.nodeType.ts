@@ -12,6 +12,7 @@ import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefini
 import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -28,8 +29,10 @@ registerCustomNodeDefaults('umlLifeline', { participant: '' });
 export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor() {
     super('umlLifeline', 'UML Lifeline');
-    this.capabilities['connect-to-boundary'] = false;
-    this.capabilities['anchors-configurable'] = false;
+    this.setFlags({
+      [NodeFlags.AnchorsBoundary]: false,
+      [NodeFlags.AnchorsConfigurable]: false
+    });
   }
 
   getShapeAnchors(node: DiagramNode): Anchor[] {

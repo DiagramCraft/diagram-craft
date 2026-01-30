@@ -4,6 +4,7 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useDiagram } from '../../../application';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 // TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {
@@ -11,7 +12,9 @@ export const NodeFillToolbarButton = () => {
 
   const fill = useNodeProperty(diagram, 'fill.color');
 
-  const disabled = diagram.selection.nodes.every(n => !n.getDefinition().supports('fill'));
+  const disabled = diagram.selection.nodes.every(
+    n => !n.getDefinition().hasFlag(NodeFlags.StyleFill)
+  );
 
   return (
     <Popover.Root>

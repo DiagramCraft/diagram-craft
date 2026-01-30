@@ -25,7 +25,7 @@ import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
-import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import { EdgeFlag, EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
@@ -313,7 +313,7 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
     }
   };
 
-  supports(capability: EdgeCapability): boolean {
-    return !['fill'].includes(capability);
+  hasFlag(flag: EdgeFlag): boolean {
+    return ![EdgeFlags.StyleFill].includes(flag);
   }
 }

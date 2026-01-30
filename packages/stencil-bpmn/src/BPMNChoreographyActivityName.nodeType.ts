@@ -22,6 +22,7 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 // NodeDefinition and Shape *****************************************************
 
@@ -35,8 +36,10 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
       'BPMN Choreography Name',
       BPMNChoreographyActivityNameNodeDefinition.Shape
     );
-    this.capabilities['children'] = true;
-    this.capabilities['children.select-parent'] = false;
+    this.setFlags({
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenSelectParent]: false
+    });
   }
 
   onDrop(

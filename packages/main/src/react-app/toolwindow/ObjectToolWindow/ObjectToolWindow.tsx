@@ -31,6 +31,7 @@ import { NamedIndicatorPanel } from './NamedIndicatorPanel';
 import { ToolWindow } from '../ToolWindow';
 import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
+import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 
 type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
 
@@ -78,7 +79,7 @@ export const ObjectToolWindow = () => {
 
     setEdgeSupportsFill(
       diagram.selection.isEdgesOnly() &&
-        diagram.selection.edges.every(e => e.getDefinition().supports('fill'))
+        diagram.selection.edges.every(e => e.getDefinition().hasFlag(EdgeFlags.StyleFill))
     );
   };
   useEventListener(diagram.selection, 'change', callback);

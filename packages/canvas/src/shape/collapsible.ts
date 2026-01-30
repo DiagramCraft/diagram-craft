@@ -14,6 +14,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { Context } from '../context';
 import { mustExist } from '@diagram-craft/utils/assert';
 import type { LayoutCapableShapeNodeDefinition } from './layoutCapableShapeNodeDefinition';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 /**
  * Generic overlay component for collapsible nodes
@@ -24,7 +25,7 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
     const def = props.node.getDefinition() as LayoutCapableShapeNodeDefinition;
 
     // Only render if node supports collapsible capability
-    if (!def.supports('collapsible')) return svg.g({});
+    if (!def.hasFlag(NodeFlags.ChildrenCollapsible)) return svg.g({});
 
     const collapsibleProps = def.getCollapsibleProps(props.node);
     if (!collapsibleProps.collapsible) return svg.g({});
@@ -127,7 +128,7 @@ export class CollapsibleToggleAction extends AbstractSelectionAction<Context> {
       const node = $s.nodes[0];
       if (!node) return false;
 
-      return node.getDefinition().supports('collapsible');
+      return node.getDefinition().hasFlag(NodeFlags.ChildrenCollapsible);
     };
 
     return [

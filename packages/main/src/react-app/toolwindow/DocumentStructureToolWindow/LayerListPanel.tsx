@@ -41,6 +41,7 @@ import {
   type Modification,
   ModificationLayer
 } from '@diagram-craft/model/diagramLayerModification';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -339,7 +340,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const e = props.element;
 
   const childrenAllowed =
-    isNode(e) && diagram.document.registry.nodes.get(e.nodeType).supports('children');
+    isNode(e) && diagram.document.registry.nodes.get(e.nodeType).hasFlag(NodeFlags.ChildrenAllowed);
 
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(

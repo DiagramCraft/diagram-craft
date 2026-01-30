@@ -5,8 +5,9 @@ import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   CustomPropertyDefinition,
-  NodeCapability,
-  NodeDefinition
+  NodeDefinition,
+  NodeFlag,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -25,7 +26,7 @@ export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
-  protected capabilities: Record<NodeCapability, boolean>;
+  private flags: Record<NodeFlag, boolean> = {};
 
   public readonly name: string;
   public readonly type: string;
@@ -52,19 +53,22 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       throw new VerifyNotReached();
     }
 
-    this.capabilities = {
-      'fill': true,
-      'select': true,
-      'children': false,
-      'connect-to-boundary': true,
-      'anchors-configurable': true,
-      'rounding': true,
-      'can-be-container': true,
-      'can-have-layout': false,
-      'collapsible': false,
-      'children.select-parent': false,
-      'children.managed-by-parent': false
-    };
+    this.setFlags({
+      [NodeFlags.StyleFill]: true,
+      [NodeFlags.StyleRounding]: true,
+      [NodeFlags.AnchorsBoundary]: true,
+      [NodeFlags.AnchorsConfigurable]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: true,
+      [NodeFlags.ChildrenCanHaveLayout]: false,
+      [NodeFlags.ChildrenCollapsible]: false,
+      [NodeFlags.ChildrenAllowed]: false,
+      [NodeFlags.ChildrenSelectParent]: false,
+      [NodeFlags.ChildrenManagedByParent]: false
+    });
+  }
+
+  protected setFlags(flags: Record<NodeFlag, boolean>) {
+    this.flags = { ...this.flags, ...flags };
   }
 
   onAdd(node: DiagramNode, _diagram: Diagram, _uow: UnitOfWork) {
@@ -73,8 +77,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     }
   }
 
-  supports(capability: NodeCapability): boolean {
-    return this.capabilities[capability];
+  hasFlag(flag: NodeFlag): boolean {
+    return this.flags[flag] ?? false;
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
@@ -92,7 +96,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getAnchors(node: DiagramNode) {
-    const anchorStrategy = node.getDefinition().supports('anchors-configurable')
+    const anchorStrategy = node.getDefinition().hasFlag(NodeFlags.AnchorsConfigurable)
       ? (node.renderProps.anchors.type ?? 'shape-defaults')
       : 'shape-defaults';
 
