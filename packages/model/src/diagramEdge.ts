@@ -1010,12 +1010,10 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
    * impact the state and/or bounds of the parent group/container
    */
   invalidate(scope: InvalidationScope, uow: UnitOfWork) {
-    if (scope === 'full') {
-      // Ensure we don't get into an infinite loop
-      uow.metadata.invalidated ??= new Set();
-      if (uow.metadata.invalidated.has(this)) return;
-      uow.metadata.invalidated.add(this);
-    }
+    // Ensure we don't get into an infinite loop
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     this.adjustLabelNodePosition(uow);
     if (scope === 'full') {
