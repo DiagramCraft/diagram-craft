@@ -13,7 +13,76 @@ import { assertRegularLayer } from './diagramLayerUtils';
 import { ElementFactory } from './elementFactory';
 import type { EdgeProps } from './diagramProps';
 
-export type EdgeCapability = 'style.arrows' | 'style.fill' | 'style.line-hops';
+/**
+ * Edge capability flags that control various edge styling and visual features.
+ *
+ * These capabilities are used throughout the canvas system to conditionally enable/disable
+ * styling options, render UI panels, and control edge appearance. Check capabilities using
+ * `edge.getDefinition().supports('capability-name')`.
+ *
+ * By default, all edge definitions support all capabilities unless explicitly overridden.
+ *
+ * @see {@link EdgeDefinition.supports}
+ */
+export type EdgeCapability =
+  /**
+   * Whether an edge can display arrow decorations at its start and end points.
+   *
+   * When supported, the UI shows arrow/line ending selectors where users can choose
+   * arrow types (none, triangle, filled-triangle, etc.) and sizes for both the start
+   * and end of the edge.
+   *
+   * When disabled, edges override `getArrow()` to return `undefined`, preventing
+   * arrow rendering entirely.
+   *
+   * Default: true
+   *
+   * @example
+   * Disabled by: BlockArrow, BPMNConversationEdge
+   * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:272-274
+   */
+  | 'style.arrows'
+
+  /**
+   * Whether an edge's interior/fill can be styled with colors.
+   *
+   * When supported, the fill color picker appears in the Fill Panel for edges.
+   * This is useful for edges that have a filled area (like BlockArrow) rather than
+   * just a stroke line.
+   *
+   * The fill panel is only displayed when ALL selected edges support fill.
+   *
+   * Default: false (SimpleEdgeDefinition disables this by default)
+   *
+   * @example
+   * Enabled by: BlockArrow, BPMNConversationEdge
+   * Disabled by: SimpleEdgeDefinition (standard edges)
+   * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:280-282
+   */
+  | 'style.fill'
+
+  /**
+   * Whether an edge can display line hop visualizations where edges cross.
+   *
+   * When supported, the UI shows line hops configuration with options for:
+   * - 'none': No gap where lines cross
+   * - 'below-hide': Creates a gap when one line goes below another
+   * - 'below-line': Shows a line across the gap when line goes below
+   * - 'below-arc': Draws an arc when line goes below
+   * - 'above-arc': Draws an arc when line goes above
+   *
+   * Line hops help visualize depth relationships between crossing edges.
+   * This capability is typically disabled for special edge types where line hops
+   * don't make sense visually (like filled block arrows).
+   *
+   * Default: true
+   *
+   * @example
+   * Disabled by: BlockArrow, BPMNConversationEdge
+   * @see packages/main/src/react-app/toolwindow/ObjectToolWindow/EdgeLinePanel.tsx:276-278
+   */
+  | 'style.line-hops';
+
 export type EdgeDropOperation = 'attach' | 'split';
 
 export interface EdgeDefinition {
