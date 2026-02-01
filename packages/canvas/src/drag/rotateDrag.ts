@@ -29,7 +29,15 @@ export class RotateDrag extends Drag {
 
     const center = Box.center(selection.source.boundingBox);
 
-    const targetAngle = Vector.angle(Vector.from(center, event.offset)) + Math.PI / 2 - Math.PI / 4;
+    const handlePosition = { x: before.x + before.w, y: before.y };
+
+    // Calculate the initial angle from center to the handle position
+    const initialAngle = Vector.angle(Vector.from(center, handlePosition));
+
+    // Calculate the current angle from center to the mouse position
+    const currentAngle = Vector.angle(Vector.from(center, event.offset));
+
+    const targetAngle = currentAngle - initialAngle;
 
     const result = snapManager.snapRotate({ ...before, r: targetAngle });
     const adjustedAngle = isFreeDrag(event.modifiers) ? targetAngle : result.adjusted.r;
