@@ -5,9 +5,6 @@ import {
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import * as svg from '@diagram-craft/canvas/component/vdom-svg';
-import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
-import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { LayoutCapableShapeNodeDefinition } from '@diagram-craft/canvas/shape/layoutCapableShapeNodeDefinition';
 import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
 import {
@@ -17,6 +14,7 @@ import {
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { roundedRectOutline } from '@diagram-craft/stencil-bpmn/utils';
+import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 
 type ChoreographyTaskType = 'task' | 'sub-choreography' | 'call';
 
@@ -97,14 +95,7 @@ export class BPMNChoreographyActivityNodeDefinition extends LayoutCapableShapeNo
     buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
       super.buildShape(props, builder);
 
-      props.node.children.forEach(child => {
-        builder.add(
-          svg.g(
-            { transform: Transforms.rotateBack(props.node.bounds) },
-            renderElement(this, child, props)
-          )
-        );
-      });
+      builder.add(renderChildren(this, props.node, props));
     }
 
     protected adjustStyle(

@@ -6,19 +6,17 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import {
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { renderElement } from '../components/renderElement';
+import { renderChildren } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { Box } from '@diagram-craft/geometry/box';
 import { invalidateDescendantEdges } from '@diagram-craft/model/collapsible';
 import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
-import { Transform } from '@diagram-craft/geometry/transform';
 
 type Orientation = 'vertical' | 'horizontal';
 
@@ -65,25 +63,10 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.setFlags({
       [NodeFlags.StyleFill]: true,
       [NodeFlags.StyleRounding]: false,
-      [NodeFlags.ChildrenCollapsible]: true
+      [NodeFlags.ChildrenCollapsible]: true,
+      [NodeFlags.ChildrenTransformScaleX]: false,
+      [NodeFlags.ChildrenTransformScaleY]: false
     });
-  }
-
-  // We don't want to resize children unless the container has an active layout enabled
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
-    uow: UnitOfWork
-  ) {
-    if (node.renderProps.layout.container.enabled) {
-      for (const child of node.children) {
-        child.transform(transforms, uow, true);
-      }
-    }
-
-    this.layoutChildren(node, uow);
   }
 
   private getCollapsedBounds(
@@ -330,14 +313,7 @@ export class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition>
     // Step 3: Render all child elements (e.g. swimlane rows)
     // Children are wrapped in a group with rotation transform to handle rotated swimlanes
     if (this.def.shouldRenderChildren(props.node)) {
-      props.node.children.forEach(child => {
-        builder.add(
-          svg.g(
-            { transform: Transforms.rotateBack(props.node.bounds) },
-            renderElement(this, child, props)
-          )
-        );
-      });
+      builder.add(renderChildren(this, props.node, props));
     }
 
     // Step 4: Build the outer border (rectangle around the entire swimlane)

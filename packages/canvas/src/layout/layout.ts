@@ -563,6 +563,7 @@ export const layoutChildren = (layoutNode: LayoutNode) => {
       }
     }
 
+    child.layoutHasBeenApplied = true;
     currentOffset += finalSize + gap + justifyOffset.itemSpacing;
     layoutChildren(child); // Recursively layout children
   }

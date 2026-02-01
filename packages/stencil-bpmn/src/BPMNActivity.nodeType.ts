@@ -39,9 +39,7 @@ import {
 } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import * as svg from '@diagram-craft/canvas/component/vdom-svg';
-import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
-import { renderElement } from '@diagram-craft/canvas/components/renderElement';
+import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import {
   BOTTOM_MARGIN,
   ICON_MARGIN,
@@ -172,7 +170,11 @@ const SCHEMA: DataSchema = {
 export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('bpmnActivity', 'BPMN Activity', BPMNActivityNodeDefinition.Shape);
-    this.setFlags({ [NodeFlags.ChildrenAllowed]: true });
+    this.setFlags({
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenTransformScaleX]: false,
+      [NodeFlags.ChildrenTransformScaleY]: false
+    });
   }
 
   onDrop(
@@ -184,9 +186,6 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
   ): void {
     node.diagram.moveElement(elements, uow, node.layer, { relation: 'on', element: node });
   }
-
-  // We don't want to change children if resizing activity
-  onTransform(): void {}
 
   private static isSubprocessActivity(activityType: string): boolean {
     return (
@@ -299,17 +298,7 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
       shapeBuilder.text(this);
 
-      shapeBuilder.add(
-        svg.g(
-          {},
-          ...props.node.children.map(child =>
-            svg.g(
-              { transform: Transforms.rotateBack(props.node.bounds) },
-              renderElement(this, child, props)
-            )
-          )
-        )
-      );
+      shapeBuilder.add(renderChildren(this, props.node, props));
     }
   };
 

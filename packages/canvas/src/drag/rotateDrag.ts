@@ -62,6 +62,8 @@ export class RotateDrag extends Drag {
 
     if (selection.isChanged()) {
       this.uow.commitWithUndo('Rotate');
+    } else {
+      this.uow.abort();
     }
 
     selection.forceRotation(undefined);

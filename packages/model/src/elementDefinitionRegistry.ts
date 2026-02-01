@@ -151,7 +151,12 @@ export const NodeFlags = {
    * Enabled by: TableRow (table cells managed by table structure)
    * @see packages/canvas-app/src/actions/selectionDeleteAction.ts:45
    */
-  ChildrenManagedByParent: makeNodeFlag('children.managed-by-parent')
+  ChildrenManagedByParent: makeNodeFlag('children.managed-by-parent'),
+
+  ChildrenTransformRotate: makeNodeFlag('children.transform-rotate'),
+  ChildrenTransformScaleX: makeNodeFlag('children.transform-scale-x'),
+  ChildrenTransformScaleY: makeNodeFlag('children.transform-scale-y'),
+  ChildrenTransformTranslate: makeNodeFlag('children.transform-translate')
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: convenient

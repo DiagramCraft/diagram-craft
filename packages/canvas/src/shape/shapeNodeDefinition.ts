@@ -63,7 +63,11 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       [NodeFlags.ChildrenCollapsible]: false,
       [NodeFlags.ChildrenAllowed]: false,
       [NodeFlags.ChildrenSelectParent]: false,
-      [NodeFlags.ChildrenManagedByParent]: false
+      [NodeFlags.ChildrenManagedByParent]: false,
+      [NodeFlags.ChildrenTransformRotate]: true,
+      [NodeFlags.ChildrenTransformScaleX]: true,
+      [NodeFlags.ChildrenTransformScaleY]: true,
+      [NodeFlags.ChildrenTransformTranslate]: true
     });
   }
 
@@ -231,10 +235,32 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
+    newBounds: Box,
+    prevBounds: Box,
     uow: UnitOfWork
   ): void {
+    const isRotated = newBounds.r !== prevBounds.r;
+    if (isRotated && !this.hasFlag(NodeFlags.ChildrenTransformRotate)) return;
+
+    /**
+     * Rotation might include translation to handle rotation around specific
+     * points - we allow this, even is not allowing translations
+     */
+    const isTranslated = newBounds.x !== prevBounds.x || newBounds.y !== prevBounds.y;
+    if (isTranslated && !isRotated && !this.hasFlag(NodeFlags.ChildrenTransformTranslate)) return;
+
+    const layout = node.renderProps.layout.container.enabled;
+
+    const isScaledX = newBounds.w !== prevBounds.w;
+    if (isScaledX && !this.hasFlag(NodeFlags.ChildrenTransformScaleX) && !layout) {
+      return;
+    }
+
+    const isScaledY = newBounds.h !== prevBounds.h;
+    if (isScaledY && !this.hasFlag(NodeFlags.ChildrenTransformScaleY) && !layout) {
+      return;
+    }
+
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }

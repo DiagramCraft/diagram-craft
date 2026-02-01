@@ -1,7 +1,6 @@
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import {
   CustomPropertyDefinition,
@@ -10,7 +9,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { renderElement } from '../components/renderElement';
+import { renderChildren } from '../components/renderElement';
 import { type PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
@@ -118,14 +117,7 @@ export class ContainerComponent extends BaseNodeComponent<ContainerNodeDefinitio
     }
 
     if (this.def.shouldRenderChildren(props.node)) {
-      props.node.children.forEach(child => {
-        builder.add(
-          svg.g(
-            { transform: Transforms.rotateBack(props.node.bounds) },
-            renderElement(this, child, props)
-          )
-        );
-      });
+      builder.add(renderChildren(this, props.node, props));
     }
   }
 }
