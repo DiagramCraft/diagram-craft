@@ -371,7 +371,7 @@ export class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition>
           w: bounds.h,
           x: bounds.x - bounds.h / 2 + titleSize / 2,
           y: bounds.y + (bounds.h - titleSize) / 2,
-          r: -Math.PI / 2
+          r: props.node.bounds.r - Math.PI / 2
         });
       } else {
         builder.text(this, '1', props.node.getText(), nodeProps.text, {
