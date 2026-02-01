@@ -10,14 +10,13 @@ import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transf
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import {
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
-import { renderElement } from '../components/renderElement';
+import { renderChildren } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
@@ -236,14 +235,7 @@ class TableComponent extends BaseNodeComponent {
       })
     );
 
-    props.node.children.forEach(child => {
-      builder.add(
-        svg.g(
-          { transform: Transforms.rotateBack(props.node.bounds) },
-          renderElement(this, child, props)
-        )
-      );
-    });
+    builder.add(renderChildren(this, props.node, props));
 
     const gap = props.nodeProps.custom.table.gap;
 

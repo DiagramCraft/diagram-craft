@@ -6,13 +6,12 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import {
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { renderElement } from '../components/renderElement';
+import { renderChildren } from '../components/renderElement';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { Box } from '@diagram-craft/geometry/box';
@@ -314,14 +313,7 @@ export class SwimlaneComponent extends BaseNodeComponent<SwimlaneNodeDefinition>
     // Step 3: Render all child elements (e.g. swimlane rows)
     // Children are wrapped in a group with rotation transform to handle rotated swimlanes
     if (this.def.shouldRenderChildren(props.node)) {
-      props.node.children.forEach(child => {
-        builder.add(
-          svg.g(
-            { transform: Transforms.rotateBack(props.node.bounds) },
-            renderElement(this, child, props)
-          )
-        );
-      });
+      builder.add(renderChildren(this, props.node, props));
     }
 
     // Step 4: Build the outer border (rectangle around the entire swimlane)

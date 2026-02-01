@@ -17,11 +17,7 @@ import { Data as BPMNChoreographyActivityData } from './BPMNChoreographyActivity
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import * as svg from '@diagram-craft/canvas/component/vdom-svg';
-import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
-import { renderElement } from '@diagram-craft/canvas/components/renderElement';
-import { Transform } from '@diagram-craft/geometry/transform';
-import { Box } from '@diagram-craft/geometry/box';
+import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 // NodeDefinition and Shape *****************************************************
@@ -38,7 +34,9 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
     );
     this.setFlags({
       [NodeFlags.ChildrenAllowed]: true,
-      [NodeFlags.ChildrenSelectParent]: false
+      [NodeFlags.ChildrenSelectParent]: false,
+      [NodeFlags.ChildrenTransformScaleX]: false,
+      [NodeFlags.ChildrenTransformScaleY]: false
     });
   }
 
@@ -50,19 +48,6 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
     _operation: string
   ): void {
     node.diagram.moveElement(elements, uow, node.layer, { relation: 'on', element: node });
-  }
-
-  // We don't want to change children if resizing activity
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
-    uow: UnitOfWork
-  ): void {
-    for (const child of node.children) {
-      child.transform(transforms, uow, true);
-    }
   }
 
   static Shape = class extends BaseNodeComponent<BPMNChoreographyActivityNameNodeDefinition> {
@@ -108,17 +93,7 @@ export class BPMNChoreographyActivityNameNodeDefinition extends ShapeNodeDefinit
         spacing: ICON_MARGIN
       });
 
-      builder.add(
-        svg.g(
-          {},
-          ...props.node.children.map(child =>
-            svg.g(
-              { transform: Transforms.rotateBack(props.node.bounds) },
-              renderElement(this, child, props)
-            )
-          )
-        )
-      );
+      builder.add(renderChildren(this, props.node, props));
     }
   };
 }
