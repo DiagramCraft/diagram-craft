@@ -100,6 +100,8 @@ export interface LayoutNode {
   /** Child nodes that participate in this node's layout */
   children: LayoutNode[];
 
+  layoutHasBeenApplied?: boolean;
+
   /** Layout instructions when this node acts as a container (undefined if no container instructions) */
   containerInstructions: ContainerLayoutInstructions | undefined;
 
@@ -191,7 +193,7 @@ const applyLayoutTreeRecursive = (
   // Convert relative bounds to absolute bounds
   let absoluteBounds: Box;
 
-  if (parentBounds) {
+  if (parentBounds && layout.layoutHasBeenApplied) {
     // When the parent is rotated, we need to rotate the child's relative position
     // by the parent's rotation before adding it to the parent's absolute position
     // All rotations are around the center of the shape, so we rotate
@@ -209,6 +211,18 @@ const applyLayoutTreeRecursive = (
     absoluteBounds = {
       x: parentBounds.x + rotatedPosition.x,
       y: parentBounds.y + rotatedPosition.y,
+      w: layout.bounds.w,
+      h: layout.bounds.h,
+      r: parentBounds.r + layout.bounds.r
+    };
+  } else if (parentBounds) {
+    // This is supposed to handle the case when there are children, but there's
+    // no active layout - in that case, rotation does not need recalculation
+
+    // TODO: Handle this is a better way?
+    absoluteBounds = {
+      x: parentBounds.x + layout.bounds.x,
+      y: parentBounds.y + layout.bounds.y,
       w: layout.bounds.w,
       h: layout.bounds.h,
       r: parentBounds.r + layout.bounds.r

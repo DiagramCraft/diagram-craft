@@ -239,11 +239,15 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     prevBounds: Box,
     uow: UnitOfWork
   ): void {
-    const isTranslated = newBounds.x !== prevBounds.x || newBounds.y !== prevBounds.y;
-    if (isTranslated && !this.hasFlag(NodeFlags.ChildrenTransformTranslate)) return;
-
     const isRotated = newBounds.r !== prevBounds.r;
     if (isRotated && !this.hasFlag(NodeFlags.ChildrenTransformRotate)) return;
+
+    /**
+     * Rotation might include translation to handle rotation around specific
+     * points - we allow this, even is not allowing translations
+     */
+    const isTranslated = newBounds.x !== prevBounds.x || newBounds.y !== prevBounds.y;
+    if (isTranslated && !isRotated && !this.hasFlag(NodeFlags.ChildrenTransformTranslate)) return;
 
     const layout = node.renderProps.layout.container.enabled;
 
