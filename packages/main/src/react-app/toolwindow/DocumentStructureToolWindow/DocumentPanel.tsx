@@ -10,10 +10,39 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
-import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 
-const DIAGRAM_TYPE = 'application/x-diagram-craft-diagram-instances';
+type Relation = 'before' | 'after';
+
+const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
+
+export const useDiagramReorderDnD = <E extends HTMLElement>(node: Diagram) => {
+  const application = useApplication();
+  const document = useDocument();
+
+  const drag = useDraggable<E>(node.id, MIME_TYPE);
+
+  const dropTarget = useDropTarget<E, typeof MIME_TYPE>(
+    [MIME_TYPE],
+    ev => {
+      const droppedId = mustExist(ev[MIME_TYPE]?.before ?? ev[MIME_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
+
+      // Validate same parent level (covers root and non-root)
+      if (diagramToMove.parent !== node.parent) return;
+
+      const relation: Relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
+
+      application.model.activeDiagram.undoManager.addAndExecute(
+        new DiagramReorderUndoableAction(document, diagramToMove, node, relation)
+      );
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return { eventHandlers: { ...drag.eventHandlers, ...dropTarget.eventHandlers } };
+};
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   return (
@@ -40,12 +69,7 @@ type DocumentsContextMenuProps = {
 
 const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => void }) => {
   return (
-    <div
-      className={'util-action'}
-      onClick={() => {
-        props.onValueChange(props.diagram.id);
-      }}
-    >
+    <div className={'util-action'} onClick={() => props.onValueChange(props.diagram.id)}>
       {props.diagram.name}
     </div>
   );
@@ -56,68 +80,32 @@ const DiagramTreeNodeItem = (props: {
   value: string;
   onValueChange: (v: string) => void;
 }) => {
-  const application = useApplication();
-  const document = useDocument();
-  const { node } = props;
-
-  const drag = useDraggable(node.id, DIAGRAM_TYPE);
-  const dropTarget = useDropTarget(
-    [DIAGRAM_TYPE],
-    ev => {
-      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
-      const diagramToMove = mustExist(document.byId(droppedId));
-
-      // Validate same parent level
-      if (diagramToMove.parent !== node.parent) {
-        return;
-      }
-
-      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
-
-      const undoManager = application.model.activeDiagram.undoManager;
-      const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);
-      undoManager.addAndExecute(action);
-    },
-    { split: () => [0.5, 0, 0.5] }
-  );
+  const dnd = useDiagramReorderDnD(props.node);
 
   return (
-    <Tree.Node key={node.id} isOpen={true} {...drag.eventHandlers} {...dropTarget.eventHandlers}>
+    <Tree.Node key={props.node.id} isOpen={true} {...dnd.eventHandlers}>
       <DocumentsContextMenu
-        diagramId={node.id}
+        diagramId={props.node.id}
         element={
           <Tree.NodeLabel>
-            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+            <DiagramLabel diagram={props.node} onValueChange={props.onValueChange} />
           </Tree.NodeLabel>
         }
       />
-      <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
-      {node.diagrams.length > 0 && (
+      <Tree.NodeCell>{props.value === props.node.id ? 'Active' : ''}</Tree.NodeCell>
+      {props.node.diagrams.length > 0 && (
         <Tree.Children>
-          <DiagramTreeNode diagram={node} onValueChange={props.onValueChange} value={props.value} />
+          {props.node.diagrams.map(child => (
+            <DiagramTreeNodeItem
+              key={child.id}
+              node={child}
+              value={props.value}
+              onValueChange={props.onValueChange}
+            />
+          ))}
         </Tree.Children>
       )}
     </Tree.Node>
-  );
-};
-
-const DiagramTreeNode = (props: {
-  diagram: Diagram;
-  value: string;
-  onValueChange: (v: string) => void;
-}) => {
-  return (
-    <>
-      {props.diagram.diagrams.map(node => (
-        <DiagramTreeNodeItem
-          key={node.id}
-          node={node}
-          value={props.value}
-          onValueChange={props.onValueChange}
-        />
-      ))}
-    </>
   );
 };
 
@@ -126,56 +114,34 @@ const RootDiagramNode = (props: {
   activeDiagramId: string;
   onValueChange: (v: string) => void;
 }) => {
-  const application = useApplication();
-  const document = useDocument();
-  const { node } = props;
-
-  const drag = useDraggable(node.id, DIAGRAM_TYPE);
-  const dropTarget = useDropTarget(
-    [DIAGRAM_TYPE],
-    ev => {
-      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
-      const diagramToMove = mustExist(document.byId(droppedId));
-
-      // Validate same parent level (root diagrams have parent === undefined)
-      if (diagramToMove.parent !== node.parent) {
-        return;
-      }
-
-      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
-
-      const undoManager = application.model.activeDiagram.undoManager;
-      const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);
-      undoManager.addAndExecute(action);
-    },
-    { split: () => [0.5, 0, 0.5] }
-  );
+  const dnd = useDiagramReorderDnD(props.node);
 
   return (
     <Tree.Node
-      key={node.id}
+      key={props.node.id}
       isOpen={true}
-      data-state={props.activeDiagramId === node.id ? 'on' : 'off'}
-      {...drag.eventHandlers}
-      {...dropTarget.eventHandlers}
+      data-state={props.activeDiagramId === props.node.id ? 'on' : 'off'}
+      {...dnd.eventHandlers}
     >
       <DocumentsContextMenu
-        diagramId={node.id}
+        diagramId={props.node.id}
         element={
           <Tree.NodeLabel>
-            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+            <DiagramLabel diagram={props.node} onValueChange={props.onValueChange} />
           </Tree.NodeLabel>
         }
       />
-      <Tree.NodeCell>{props.activeDiagramId === node.id ? 'Active' : ''}</Tree.NodeCell>
-      {node.diagrams.length > 0 && (
+      <Tree.NodeCell>{props.activeDiagramId === props.node.id ? 'Active' : ''}</Tree.NodeCell>
+      {props.node.diagrams.length > 0 && (
         <Tree.Children>
-          <DiagramTreeNode
-            diagram={node}
-            onValueChange={props.onValueChange}
-            value={props.activeDiagramId}
-          />
+          {props.node.diagrams.map(child => (
+            <DiagramTreeNodeItem
+              key={child.id}
+              node={child}
+              value={props.activeDiagramId}
+              onValueChange={props.onValueChange}
+            />
+          ))}
         </Tree.Children>
       )}
     </Tree.Node>

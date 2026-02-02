@@ -1,0 +1,715 @@
+{
+  "diagrams": [
+    {
+      "id": "b4b24c1",
+      "name": "Untitled",
+      "layers": [
+        {
+          "id": "ho2l9xe",
+          "name": "Default",
+          "type": "layer",
+          "layerType": "regular",
+          "elements": [
+            {
+              "id": "a0up11c",
+              "type": "node",
+              "nodeType": "swimlane",
+              "bounds": { "x": 90, "y": 190, "w": 340, "h": 100, "r": 0.4363323129985824 },
+              "anchors": [
+                { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                {
+                  "id": "0_500",
+                  "start": { "x": 0, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_1000",
+                  "start": { "x": 0.5, "y": 1 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "1000_500",
+                  "start": { "x": 1, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_0",
+                  "start": { "x": 0.5, "y": 0 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [
+                {
+                  "id": "deeyz3b",
+                  "type": "node",
+                  "nodeType": "diamond",
+                  "bounds": {
+                    "x": 157.495377037068,
+                    "y": 176.19053906074404,
+                    "w": 60,
+                    "h": 60,
+                    "r": 0.4363323129985824
+                  },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "750_250",
+                      "start": { "x": 0.75, "y": 0.25 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 5.497787143782138,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "750_750",
+                      "start": { "x": 0.75, "y": 0.75 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 0.7853981633974483,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "250_750",
+                      "start": { "x": 0.25, "y": 0.75 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 2.356194490192345,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "250_250",
+                      "start": { "x": 0.25, "y": 0.25 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.9269908169872414,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": {},
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "" }
+                },
+                {
+                  "id": "nfrjjj0",
+                  "type": "node",
+                  "nodeType": "hexagon",
+                  "bounds": {
+                    "x": 285.152284604792,
+                    "y": 249.4201735748085,
+                    "w": 50,
+                    "h": 50,
+                    "r": 0.4363323129985824
+                  },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "500_0",
+                      "start": { "x": 0.5, "y": 0 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 4.71238898038469,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "880_250",
+                      "start": { "x": 0.88, "y": 0.25 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 5.81953769817878,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "880_750",
+                      "start": { "x": 0.88, "y": 0.75 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 0.46364760900080615,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": { "x": 0.5, "y": 1 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948966,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "130_750",
+                      "start": { "x": 0.13, "y": 0.75 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 2.677945044588987,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "130_250",
+                      "start": { "x": 0.13, "y": 0.25 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.6052402625905993,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": {},
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "" }
+                }
+              ],
+              "props": {
+                "style": "default",
+                "fill": { "enabled": true, "color": "var(--canvas-bg)" },
+                "custom": {
+                  "swimlane": {
+                    "title": true,
+                    "fill": false,
+                    "outerBorder": true,
+                    "titleBorder": true,
+                    "horizontalBorder": true,
+                    "orientation": "horizontal"
+                  }
+                }
+              },
+              "metadata": { "style": "default", "textStyle": "default-text-default" },
+              "texts": { "text": "Horizontal Swimlane" }
+            },
+            {
+              "id": "hyexs1g",
+              "type": "node",
+              "nodeType": "group",
+              "bounds": { "x": 220, "y": 600, "w": 160, "h": 160, "r": -0.6981317007977318 },
+              "anchors": [
+                { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                {
+                  "id": "0_500",
+                  "start": { "x": 0, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_1000",
+                  "start": { "x": 0.5, "y": 1 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "1000_500",
+                  "start": { "x": 1, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0,
+                  "isPrimary": true
+                },
+                {
+                  "id": "500_0",
+                  "start": { "x": 0.5, "y": 0 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": -1.5707963267948966,
+                  "isPrimary": true
+                }
+              ],
+              "children": [
+                {
+                  "id": "nny62bz",
+                  "type": "node",
+                  "nodeType": "cylinder",
+                  "bounds": {
+                    "x": 246.3022949970268,
+                    "y": 672.2649615841655,
+                    "w": 100,
+                    "h": 100,
+                    "r": -0.6981317007977318
+                  },
+                  "anchors": [
+                    {
+                      "id": "1",
+                      "start": { "x": 0.5, "y": 0 },
+                      "type": "point",
+                      "isPrimary": true,
+                      "normal": -1.5707963267948966
+                    },
+                    {
+                      "id": "2",
+                      "start": { "x": 1, "y": 0.5 },
+                      "type": "point",
+                      "isPrimary": true,
+                      "normal": 0
+                    },
+                    {
+                      "id": "3",
+                      "start": { "x": 0.5, "y": 1 },
+                      "type": "point",
+                      "isPrimary": true,
+                      "normal": 1.5707963267948966
+                    },
+                    {
+                      "id": "4",
+                      "start": { "x": 0, "y": 0.5 },
+                      "type": "point",
+                      "isPrimary": true,
+                      "normal": 3.141592653589793
+                    },
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" }
+                  ],
+                  "children": [],
+                  "props": {},
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "" }
+                },
+                {
+                  "id": "ykov2iv",
+                  "type": "node",
+                  "nodeType": "trapezoid",
+                  "bounds": {
+                    "x": 253.69770500297315,
+                    "y": 587.7350384158345,
+                    "w": 100,
+                    "h": 100,
+                    "r": -0.6981317007977318
+                  },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "500_0",
+                      "start": { "x": 0.5, "y": 0 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 4.71238898038469,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "980_500",
+                      "start": { "x": 0.98, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 6.233226911457644,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": { "x": 0.5, "y": 1 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948966,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "30_500",
+                      "start": { "x": 0.03, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.191551049311736,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": {},
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "" }
+                }
+              ],
+              "props": {},
+              "metadata": { "style": "default", "textStyle": "default-text-default" },
+              "texts": { "text": "" }
+            },
+            {
+              "id": "25u88f2",
+              "type": "node",
+              "nodeType": "bpmnChoreographyActivity",
+              "bounds": { "x": 90, "y": 405, "w": 100, "h": 90, "r": 0.5235987755982988 },
+              "anchors": [
+                { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                {
+                  "id": "500_0",
+                  "start": { "x": 0.5, "y": 0 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 4.71238898038469,
+                  "isPrimary": true
+                },
+                {
+                  "id": "990_20",
+                  "start": { "x": 0.99, "y": 0.02 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 5.497787143782138,
+                  "isPrimary": false
+                },
+                {
+                  "id": "1000_500",
+                  "start": { "x": 1, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 6.283185307179586,
+                  "isPrimary": true
+                },
+                {
+                  "id": "990_980",
+                  "start": { "x": 0.99, "y": 0.98 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 0.7853981633974483,
+                  "isPrimary": false
+                },
+                {
+                  "id": "500_1000",
+                  "start": { "x": 0.5, "y": 1 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 1.5707963267948966,
+                  "isPrimary": true
+                },
+                {
+                  "id": "10_980",
+                  "start": { "x": 0.01, "y": 0.98 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 2.3561944901923453,
+                  "isPrimary": false
+                },
+                {
+                  "id": "0_500",
+                  "start": { "x": 0, "y": 0.5 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.141592653589793,
+                  "isPrimary": true
+                },
+                {
+                  "id": "10_20",
+                  "start": { "x": 0.01, "y": 0.02 },
+                  "clip": false,
+                  "type": "point",
+                  "normal": 3.9269908169872414,
+                  "isPrimary": false
+                }
+              ],
+              "children": [
+                {
+                  "id": "k6l6jno",
+                  "type": "node",
+                  "nodeType": "bpmnChoreographyActivityParticipant",
+                  "bounds": {
+                    "x": 107.5,
+                    "y": 409.6891108675446,
+                    "w": 100,
+                    "h": 20,
+                    "r": 0.5235987755982988
+                  },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "0_500",
+                      "start": { "x": 0, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.141592653589793,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": { "x": 0.5, "y": 1 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948966,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "1000_500",
+                      "start": { "x": 1, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 0,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_0",
+                      "start": { "x": 0.5, "y": 0 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": -1.5707963267948966,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": { "fill": { "color": "rgba(0, 0, 0, 0.1)" } },
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "Participant 1" }
+                },
+                {
+                  "id": "c1dsjnf",
+                  "type": "node",
+                  "nodeType": "bpmnChoreographyActivityName",
+                  "bounds": { "x": 90, "y": 425, "w": 100, "h": 50, "r": 0.5235987755982988 },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "0_500",
+                      "start": { "x": 0, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.141592653589793,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": { "x": 0.5, "y": 1 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948966,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "1000_500",
+                      "start": { "x": 1, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 0,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_0",
+                      "start": { "x": 0.5, "y": 0 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": -1.5707963267948966,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": { "text": { "bottom": 6 } },
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "Task" }
+                },
+                {
+                  "id": "goufrc6",
+                  "type": "node",
+                  "nodeType": "bpmnChoreographyActivityParticipant",
+                  "bounds": {
+                    "x": 72.5,
+                    "y": 470.3108891324554,
+                    "w": 100,
+                    "h": 20,
+                    "r": 0.5235987755982988
+                  },
+                  "anchors": [
+                    { "id": "c", "start": { "x": 0.5, "y": 0.5 }, "clip": true, "type": "center" },
+                    {
+                      "id": "0_500",
+                      "start": { "x": 0, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 3.141592653589793,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_1000",
+                      "start": { "x": 0.5, "y": 1 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 1.5707963267948966,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "1000_500",
+                      "start": { "x": 1, "y": 0.5 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": 0,
+                      "isPrimary": true
+                    },
+                    {
+                      "id": "500_0",
+                      "start": { "x": 0.5, "y": 0 },
+                      "clip": false,
+                      "type": "point",
+                      "normal": -1.5707963267948966,
+                      "isPrimary": true
+                    }
+                  ],
+                  "children": [],
+                  "props": {
+                    "custom": { "bpmnChoreographyActivityParticipant": { "position": "bottom" } }
+                  },
+                  "metadata": { "style": "default", "textStyle": "default-text-default" },
+                  "texts": { "text": "Participant 2" }
+                }
+              ],
+              "props": {},
+              "metadata": { "style": "default", "textStyle": "default-text-default" },
+              "texts": { "text": "" }
+            }
+          ],
+          "isLocked": false
+        }
+      ],
+      "activeLayerId": "ho2l9xe",
+      "visibleLayers": ["ho2l9xe"],
+      "diagrams": [],
+      "comments": [],
+      "zoom": { "x": -285.5, "y": -37.5, "zoom": 1 },
+      "canvas": { "x": -20, "y": -20, "w": 680, "h": 925, "r": 0 }
+    }
+  ],
+  "attachments": {},
+  "customPalette": [
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000",
+    "#000000"
+  ],
+  "styles": {
+    "edgeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-edge",
+        "name": "Default",
+        "props": { "stroke": { "color": "var(--canvas-fg)" }, "type": "straight" },
+        "type": "edge"
+      }
+    ],
+    "nodeStyles": [
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default",
+        "name": "Default",
+        "props": {
+          "fill": { "color": "var(--canvas-bg2)" },
+          "stroke": { "color": "var(--canvas-fg)" }
+        },
+        "type": "node"
+      },
+      {
+        "_snapshotType": "stylesheet",
+        "id": "default-text",
+        "name": "Text",
+        "props": { "fill": { "enabled": false }, "stroke": { "enabled": false } },
+        "type": "node"
+      }
+    ]
+  },
+  "schemas": [
+    {
+      "id": "default",
+      "name": "Default",
+      "providerId": "default",
+      "fields": [
+        { "id": "name", "name": "Name", "type": "text" },
+        { "id": "notes", "name": "Notes", "type": "longtext" }
+      ]
+    },
+    {
+      "id": "bpmnChoreographyActivityParticipant",
+      "name": "BPMN Choreography Participant",
+      "providerId": "default",
+      "fields": [
+        { "id": "initiating", "name": "Initiating", "type": "boolean" },
+        { "id": "multiple", "name": "Multiple", "type": "boolean" }
+      ]
+    },
+    {
+      "id": "bpmnChoreographyActivity",
+      "name": "BPMN Choreography Activity",
+      "providerId": "default",
+      "fields": [
+        { "id": "name", "name": "Name", "type": "text" },
+        {
+          "id": "type",
+          "name": "Type",
+          "type": "select",
+          "options": [
+            { "value": "task", "label": "Task" },
+            { "value": "sub-choreography", "label": "Sub-Choreography" },
+            { "value": "call", "label": "Call" }
+          ]
+        },
+        {
+          "id": "loopType",
+          "name": "Loop Type",
+          "type": "select",
+          "options": [
+            { "label": "None", "value": "none" },
+            { "label": "Standard", "value": "standard" },
+            { "label": "Sequential", "value": "sequential" },
+            { "label": "Parallel", "value": "parallel" }
+          ]
+        }
+      ]
+    }
+  ],
+  "schemaMetadata": {
+    "default": { "availableForElementLocalData": false, "useDocumentOverrides": false },
+    "bpmnChoreographyActivityParticipant": { "availableForElementLocalData": true },
+    "bpmnChoreographyActivity": { "availableForElementLocalData": true }
+  },
+  "props": {
+    "query": {
+      "history": [
+        { "type": "djql", "label": ".elements[]", "scope": "active-layer", "value": ".elements[]" },
+        {
+          "type": "djql",
+          "label": ".elements[] | select(.nodeType==\"rect\")",
+          "scope": "active-layer",
+          "value": ".elements[]"
+        },
+        {
+          "type": "djql",
+          "label": ".elements[] | select(.edges | length > 0)",
+          "scope": "active-layer",
+          "value": ".elements[] | select(.edges | length > 0)"
+        }
+      ],
+      "saved": []
+    },
+    "stencils": [
+      "bpmn-choreography-task",
+      "default@@trapezoid",
+      "default@@cylinder",
+      "default@@hexagon",
+      "default@@diamond",
+      "default@@horizontal-swimlane"
+    ]
+  },
+  "data": {
+    "providers": [
+      {
+        "id": "default",
+        "providerId": "defaultDataProvider",
+        "data": "{\"schemas\":[{\"id\":\"default\",\"name\":\"Default\",\"providerId\":\"default\",\"fields\":[{\"id\":\"name\",\"name\":\"Name\",\"type\":\"text\"},{\"id\":\"notes\",\"name\":\"Notes\",\"type\":\"longtext\"}]},{\"id\":\"bpmnChoreographyActivityParticipant\",\"name\":\"BPMN Choreography Participant\",\"providerId\":\"default\",\"fields\":[{\"id\":\"initiating\",\"name\":\"Initiating\",\"type\":\"boolean\"},{\"id\":\"multiple\",\"name\":\"Multiple\",\"type\":\"boolean\"}]},{\"id\":\"bpmnChoreographyActivity\",\"name\":\"BPMN Choreography Activity\",\"providerId\":\"default\",\"fields\":[{\"id\":\"name\",\"name\":\"Name\",\"type\":\"text\"},{\"id\":\"type\",\"name\":\"Type\",\"type\":\"select\",\"options\":[{\"value\":\"task\",\"label\":\"Task\"},{\"value\":\"sub-choreography\",\"label\":\"Sub-Choreography\"},{\"value\":\"call\",\"label\":\"Call\"}]},{\"id\":\"loopType\",\"name\":\"Loop Type\",\"type\":\"select\",\"options\":[{\"label\":\"None\",\"value\":\"none\"},{\"label\":\"Standard\",\"value\":\"standard\"},{\"label\":\"Sequential\",\"value\":\"sequential\"},{\"label\":\"Parallel\",\"value\":\"parallel\"}]}]}],\"data\":[]}"
+      }
+    ],
+    "templates": [],
+    "overrides": {}
+  },
+  "activeDiagramId": "b4b24c1",
+  "hash": "8c049ae3add65874"
+}
