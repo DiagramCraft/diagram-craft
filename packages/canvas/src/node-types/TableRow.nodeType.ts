@@ -14,6 +14,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
       [NodeFlags.StyleFill]: false,
       [NodeFlags.ChildrenAllowed]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: false,
+      [NodeFlags.ChildrenSelectParent]: true,
       [NodeFlags.ChildrenManagedByParent]: true
     });
   }

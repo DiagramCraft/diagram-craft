@@ -66,7 +66,7 @@ export abstract class LayoutCapableShapeNodeDefinition
 
     this.setFlags({
       [NodeFlags.ChildrenCanHaveLayout]: true,
-      [NodeFlags.ChildrenSelectParent]: true
+      [NodeFlags.ChildrenSelectParent]: false
     });
   }
 
