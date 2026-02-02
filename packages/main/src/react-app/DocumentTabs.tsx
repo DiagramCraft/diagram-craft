@@ -13,7 +13,7 @@ import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
 import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { mustExist } from '@diagram-craft/utils/assert';
 
-const DIAGRAM_TYPE = 'application/x-diagram-craft-diagram-instances';
+const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -93,18 +93,18 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
   const application = useApplication();
   const { diagram: d, path, document } = props;
 
-  const drag = useDraggable(d.id, DIAGRAM_TYPE);
+  const drag = useDraggable(d.id, MIME_TYPE);
   const dropTarget = useDropTarget(
-    [DIAGRAM_TYPE],
+    [MIME_TYPE],
     ev => {
-      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
+      const droppedId = mustExist(ev[MIME_TYPE]?.before ?? ev[MIME_TYPE]?.after ?? '');
       const diagramToMove = mustExist(document.byId(droppedId));
 
       // Validate same parent level
       if (diagramToMove.parent !== d.parent) return;
 
       // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
+      const relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
 
       const undoManager = application.model.activeDiagram.undoManager;
       const action = new DiagramReorderUndoableAction(document, diagramToMove, d, relation);

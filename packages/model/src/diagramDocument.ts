@@ -204,23 +204,19 @@ export class DiagramDocument
   moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }) {
     // Get all diagrams with the same parent as the reference
     const parentId = ref.diagram.parent;
-    const allDiagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
+    const diagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
 
     // Remove diagram being moved from its current position
-    const remainingDiagrams = allDiagramsInParent.filter(d => d.id !== diagram.id);
+    const list = diagramsInParent.filter(d => d.id !== diagram.id);
 
     // Find the reference diagram's position in the remaining diagrams
-    const idx = remainingDiagrams.indexOf(ref.diagram);
+    const idx = list.indexOf(ref.diagram);
 
     // Calculate insertion point
     const insertIndex = ref.relation === 'before' ? idx : idx + 1;
 
     // Build new order for this parent level
-    const newOrderForParent = [
-      ...remainingDiagrams.slice(0, insertIndex),
-      diagram,
-      ...remainingDiagrams.slice(insertIndex)
-    ];
+    const newOrderForParent = [...list.slice(0, insertIndex), diagram, ...list.slice(insertIndex)];
 
     // Build complete new order by combining diagrams from other parents
     const otherDiagrams = this.#diagrams.values.filter(d => d.parent !== parentId);
