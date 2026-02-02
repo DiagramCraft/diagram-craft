@@ -119,19 +119,20 @@ export class ShapeText extends Component<ShapeTextProps> {
     };
 
     const pos = textProps.position;
+    const w = ((textProps.width ?? 100) / 100) * props.bounds.w;
     const foreignObject = svg.foreignObject(
       {
         class: 'svg-node__fo',
         id: props.id,
         x: (
           props.bounds.x +
-          (pos?.includes('w') ? -props.bounds.w : pos?.includes('e') ? props.bounds.w : 0)
+          (pos?.includes('w') ? -w : pos?.includes('e') ? w : (props.bounds.w - w) / 2)
         ).toString(),
         y: (
           props.bounds.y +
           (pos?.includes('n') ? -props.bounds.h : pos?.includes('s') ? props.bounds.h : 0)
         ).toString(),
-        width: props.bounds.w.toString(),
+        width: w.toString(),
         height: props.bounds.h.toString(),
         style: 'pointer-events: none;'
       },

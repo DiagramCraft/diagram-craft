@@ -142,15 +142,3 @@ export const getIcon = (s: string) => {
   iconCache.set(key, icon);
   return icon;
 };
-
-export const createBelowShapeTextBox = (
-  bounds: Box,
-  verticalOffset: number = 10,
-  horizontalExtension: number = 50,
-  height: number = 10
-): Box => {
-  return Box.fromCorners(
-    _p(bounds.x - horizontalExtension, bounds.y + bounds.h + verticalOffset),
-    _p(bounds.x + bounds.w + horizontalExtension, bounds.y + bounds.h + verticalOffset + height)
-  );
-};

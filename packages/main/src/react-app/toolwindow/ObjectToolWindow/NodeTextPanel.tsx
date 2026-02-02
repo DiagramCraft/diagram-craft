@@ -46,6 +46,7 @@ type FormProps = {
   lineHeight: Property<number>;
   shrink: Property<boolean>;
   position: Property<string>;
+  width: Property<number>;
 };
 
 class FormatProperty extends MultiProperty<string[]> {
@@ -123,7 +124,8 @@ export const NodeTextPanelForm = ({
   valign,
   lineHeight,
   shrink,
-  position
+  position,
+  width
 }: FormProps) => {
   const fonts = $cfg.fonts;
 
@@ -314,7 +316,7 @@ export const NodeTextPanelForm = ({
           <PropertyEditor
             property={position}
             render={props => (
-              <Select.Root {...props} style={{ width: '8rem' }}>
+              <Select.Root {...props} style={{ width: '6rem' }}>
                 <Select.Item value={'c'}>Center</Select.Item>
                 <Select.Item value={'e'}>East</Select.Item>
                 <Select.Item value={'w'}>West</Select.Item>
@@ -325,6 +327,21 @@ export const NodeTextPanelForm = ({
                 <Select.Item value={'se'}>South-East</Select.Item>
                 <Select.Item value={'sw'}>South-West</Select.Item>
               </Select.Root>
+            )}
+          />
+        </div>
+
+        <div className={'cmp-labeled-table__label'}>Width</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={width}
+            render={props => (
+              <NumberInput
+                {...props}
+                defaultUnit={'%'}
+                validUnits={['%']}
+                style={{ width: '3.2rem' }}
+              />
             )}
           />
         </div>
@@ -375,6 +392,7 @@ export const NodeTextPanel = (props: Props) => {
   const right = useNodeProperty($d, 'text.right');
   const shrink = useNodeProperty($d, 'text.shrink');
   const position = useNodeProperty($d, 'text.position');
+  const width = useNodeProperty($d, 'text.width');
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
@@ -397,6 +415,7 @@ export const NodeTextPanel = (props: Props) => {
         lineHeight={lineHeight}
         shrink={shrink}
         position={position as Property<string>}
+        width={width}
       />
     </ToolWindowPanel>
   );

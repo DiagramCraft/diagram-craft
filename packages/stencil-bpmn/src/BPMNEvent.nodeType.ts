@@ -8,7 +8,6 @@ import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import {
-  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -231,13 +230,7 @@ export class BPMNEventNodeDefinition extends ShapeNodeDefinition {
         this.renderIcon(getIcon(crossIcon), props.node, shapeBuilder);
       }
 
-      shapeBuilder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        createBelowShapeTextBox(props.node.bounds)
-      );
+      shapeBuilder.text(this);
     }
 
     protected adjustStyle(

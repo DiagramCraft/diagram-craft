@@ -110,7 +110,7 @@ export const NumberInput = (props: Props) => {
     [props]
   );
 
-  if (origValue !== props.value.toString() && !hasFocus.current && !props.isIndeterminate) {
+  if (origValue !== props.value.toString() && !props.isIndeterminate) {
     setOrigValue(props.value.toString());
     updateCurrentValue();
   }

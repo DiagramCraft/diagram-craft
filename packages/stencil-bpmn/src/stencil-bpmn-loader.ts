@@ -218,7 +218,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     props: () => {
       return {
         text: {
-          valign: 'top'
+          valign: 'top',
+          top: 8,
+          position: 's'
         }
       };
     }
@@ -251,7 +253,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     props: () => {
       return {
         text: {
-          valign: 'top'
+          valign: 'top',
+          top: 8,
+          position: 's'
         }
       };
     }
@@ -284,7 +288,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     props: () => {
       return {
         text: {
-          valign: 'top'
+          valign: 'top',
+          top: 8,
+          position: 's'
         }
       };
     }
@@ -317,7 +323,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     props: () => {
       return {
         text: {
-          valign: 'top'
+          valign: 'top',
+          top: 8,
+          position: 's'
         }
       };
     }
@@ -432,8 +440,14 @@ export const registerBPMNStencils = async (registry: Registry) => {
       w: 40,
       h: 40
     },
-    texts: {
-      text: 'Conversation'
+    props: () => {
+      return {
+        text: {
+          position: 's',
+          valign: 'top',
+          top: 8
+        }
+      };
     }
   });
 
@@ -454,7 +468,8 @@ export const registerBPMNStencils = async (registry: Registry) => {
       },
       text: {
         align: 'left',
-        left: 12
+        left: 24,
+        right: 24
       }
     })
   });

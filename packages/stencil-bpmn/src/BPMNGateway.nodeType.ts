@@ -17,7 +17,6 @@ import {
   xFilledIcon
 } from './icons/icons';
 import {
-  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -97,13 +96,7 @@ export class BPMNGatewayNodeDefinition extends ShapeNodeDefinition {
 
       shapeBuilder.boundaryPath(boundary.all());
 
-      shapeBuilder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        createBelowShapeTextBox(bounds)
-      );
+      shapeBuilder.text(this);
 
       const cx = bounds.x + bounds.w / 2;
       const cy = bounds.y + bounds.h / 2;

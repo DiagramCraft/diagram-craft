@@ -37,6 +37,7 @@ export const NodeTextEditor: Editor = props => {
       right={makeProperty($p, 'text.right', nodeDefaults, onChange)}
       shrink={makeProperty($p, 'text.shrink', nodeDefaults, onChange)}
       position={makeProperty($p, 'text.position', nodeDefaults, onChange) as Property<string>}
+      width={makeProperty($p, 'text.width', nodeDefaults, onChange)}
     />
   );
 };

@@ -9,7 +9,7 @@ import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { squarePlusIcon } from './icons/icons';
-import { createBelowShapeTextBox, getIcon, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
+import { getIcon, renderMarkers } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { ICON_SIZE } from '@diagram-craft/stencil-bpmn/spacing';
 
@@ -61,17 +61,8 @@ export class BPMNConversationNodeDefinition extends ShapeNodeDefinition {
     }
 
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-      const bounds = props.node.bounds;
-
       shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
-
-      shapeBuilder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        createBelowShapeTextBox(bounds)
-      );
+      shapeBuilder.text(this);
 
       const data = this.getData(props.node);
       if (data.type === 'sub-conversation' || data.type === 'call-conversation-collaboration') {
