@@ -85,6 +85,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     this.setFlags({
       [NodeFlags.StyleFill]: false,
       [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenSelectParent]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: false
     });
   }
