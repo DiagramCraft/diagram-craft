@@ -11,8 +11,9 @@ import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { mustExist } from '@diagram-craft/utils/assert';
 
-const DIAGRAM_INSTANCES = 'application/x-diagram-craft-diagram-instances';
+const DIAGRAM_TYPE = 'application/x-diagram-craft-diagram-instances';
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   return (
@@ -59,24 +60,20 @@ const DiagramTreeNodeItem = (props: {
   const document = useDocument();
   const { node } = props;
 
-  const drag = useDraggable(node.id, DIAGRAM_INSTANCES);
+  const drag = useDraggable(node.id, DIAGRAM_TYPE);
   const dropTarget = useDropTarget(
-    [DIAGRAM_INSTANCES],
+    [DIAGRAM_TYPE],
     ev => {
-      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
-      if (!droppedId) return;
-
-      const diagramToMove = document.byId(droppedId);
-      if (!diagramToMove) return;
+      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
 
       // Validate same parent level
       if (diagramToMove.parent !== node.parent) {
-        console.warn('Cannot reorder diagrams across different parent levels');
         return;
       }
 
       // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
 
       const undoManager = application.model.activeDiagram.undoManager;
       const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);
@@ -133,24 +130,20 @@ const RootDiagramNode = (props: {
   const document = useDocument();
   const { node } = props;
 
-  const drag = useDraggable(node.id, DIAGRAM_INSTANCES);
+  const drag = useDraggable(node.id, DIAGRAM_TYPE);
   const dropTarget = useDropTarget(
-    [DIAGRAM_INSTANCES],
+    [DIAGRAM_TYPE],
     ev => {
-      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
-      if (!droppedId) return;
-
-      const diagramToMove = document.byId(droppedId);
-      if (!diagramToMove) return;
+      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
 
       // Validate same parent level (root diagrams have parent === undefined)
       if (diagramToMove.parent !== node.parent) {
-        console.warn('Cannot reorder diagrams across different parent levels');
         return;
       }
 
       // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
 
       const undoManager = application.model.activeDiagram.undoManager;
       const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);

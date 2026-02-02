@@ -197,4 +197,89 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       expect(path[0]).toBe(leafDiagram);
     });
   });
+
+  describe('moveDiagram', () => {
+    it('should reorder root-level diagrams (before/after) and emit diagramChanged for the moved diagram', () => {
+      // Setup
+      const [root1] = backend.syncedDocs();
+      const doc = TestModel.newDocument(root1);
+
+      const a = new TestDiagramBuilder(doc, 'a');
+      const b = new TestDiagramBuilder(doc, 'b');
+      const c = new TestDiagramBuilder(doc, 'c');
+
+      doc.addDiagram(a);
+      doc.addDiagram(b);
+      doc.addDiagram(c);
+
+      const changed: string[] = [];
+      doc.on('diagramChanged', e => changed.push(e.diagram.id));
+
+      // Act: move c before a => [c, a, b]
+      doc.moveDiagram(c, { diagram: a, relation: 'before' });
+
+      // Verify
+      expect(doc.diagrams.map(d => d.id)).toEqual(['c', 'a', 'b']);
+      expect(changed).toEqual(['c']);
+
+      // Act: move a after b => [c, b, a]
+      doc.moveDiagram(a, { diagram: b, relation: 'after' });
+
+      // Verify
+      expect(doc.diagrams.map(d => d.id)).toEqual(['c', 'b', 'a']);
+      expect(changed).toEqual(['c', 'a']);
+    });
+
+    it('should reorder nested diagrams only within their parent', () => {
+      // Setup
+      const [root1] = backend.syncedDocs();
+      const doc = TestModel.newDocument(root1);
+
+      const parent = new TestDiagramBuilder(doc, 'parent');
+      doc.addDiagram(parent);
+
+      const c1 = new TestDiagramBuilder(doc, 'c1');
+      const c2 = new TestDiagramBuilder(doc, 'c2');
+      const c3 = new TestDiagramBuilder(doc, 'c3');
+
+      doc.addDiagram(c1, parent);
+      doc.addDiagram(c2, parent);
+      doc.addDiagram(c3, parent);
+
+      // Sanity
+      expect(parent.diagrams.map(d => d.id)).toEqual(['c1', 'c2', 'c3']);
+
+      // Act: move c1 after c3 => [c2, c3, c1]
+      doc.moveDiagram(c1, { diagram: c3, relation: 'after' });
+
+      // Verify
+      expect(parent.diagrams.map(d => d.id)).toEqual(['c2', 'c3', 'c1']);
+    });
+
+    it('should not change the root diagram ordering when reordering children under a parent', () => {
+      // Setup
+      const [root1] = backend.syncedDocs();
+      const doc = TestModel.newDocument(root1);
+
+      const r1 = new TestDiagramBuilder(doc, 'r1');
+      const parent = new TestDiagramBuilder(doc, 'parent');
+      const r2 = new TestDiagramBuilder(doc, 'r2');
+
+      doc.addDiagram(r1);
+      doc.addDiagram(parent);
+      doc.addDiagram(r2);
+
+      const c1 = new TestDiagramBuilder(doc, 'c1');
+      const c2 = new TestDiagramBuilder(doc, 'c2');
+      doc.addDiagram(c1, parent);
+      doc.addDiagram(c2, parent);
+
+      // Act: reorder children
+      doc.moveDiagram(c2, { diagram: c1, relation: 'before' });
+
+      // Verify: root order unchanged
+      expect(doc.diagrams.map(d => d.id)).toEqual(['r1', 'parent', 'r2']);
+      expect(parent.diagrams.map(d => d.id)).toEqual(['c2', 'c1']);
+    });
+  });
 });

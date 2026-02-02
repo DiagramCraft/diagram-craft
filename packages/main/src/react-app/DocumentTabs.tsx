@@ -11,8 +11,9 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
 import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { mustExist } from '@diagram-craft/utils/assert';
 
-const DIAGRAM_INSTANCES = 'application/x-diagram-craft-diagram-instances';
+const DIAGRAM_TYPE = 'application/x-diagram-craft-diagram-instances';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -92,24 +93,18 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
   const application = useApplication();
   const { diagram: d, path, document } = props;
 
-  const drag = useDraggable(d.id, DIAGRAM_INSTANCES);
+  const drag = useDraggable(d.id, DIAGRAM_TYPE);
   const dropTarget = useDropTarget(
-    [DIAGRAM_INSTANCES],
+    [DIAGRAM_TYPE],
     ev => {
-      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
-      if (!droppedId) return;
-
-      const diagramToMove = document.byId(droppedId);
-      if (!diagramToMove) return;
+      const droppedId = mustExist(ev[DIAGRAM_TYPE]?.before ?? ev[DIAGRAM_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
 
       // Validate same parent level
-      if (diagramToMove.parent !== d.parent) {
-        console.warn('Cannot reorder diagrams across different parent levels');
-        return;
-      }
+      if (diagramToMove.parent !== d.parent) return;
 
       // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+      const relation = ev[DIAGRAM_TYPE]?.before ? 'before' : 'after';
 
       const undoManager = application.model.activeDiagram.undoManager;
       const action = new DiagramReorderUndoableAction(document, diagramToMove, d, relation);

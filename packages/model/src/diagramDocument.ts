@@ -186,7 +186,7 @@ export class DiagramDocument
   }
 
   addDiagram(diagram: Diagram, parent?: Diagram) {
-    this.insertDiagram(diagram, this.diagrams.length, parent);
+    this.insertDiagram(diagram, this.#diagrams.size, parent);
   }
 
   removeDiagram(diagram: Diagram) {
@@ -210,10 +210,10 @@ export class DiagramDocument
     const remainingDiagrams = allDiagramsInParent.filter(d => d.id !== diagram.id);
 
     // Find the reference diagram's position in the remaining diagrams
-    const refIndexInRemaining = remainingDiagrams.indexOf(ref.diagram);
+    const idx = remainingDiagrams.indexOf(ref.diagram);
 
     // Calculate insertion point
-    const insertIndex = ref.relation === 'before' ? refIndexInRemaining : refIndexInRemaining + 1;
+    const insertIndex = ref.relation === 'before' ? idx : idx + 1;
 
     // Build new order for this parent level
     const newOrderForParent = [
