@@ -9,6 +9,40 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
+import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
+import { mustExist } from '@diagram-craft/utils/assert';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+
+type Relation = 'before' | 'after';
+
+const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
+
+export const useDiagramReorderDnD = <E extends HTMLElement>(node: Diagram) => {
+  const application = useApplication();
+  const document = useDocument();
+
+  const drag = useDraggable<E>(node.id, MIME_TYPE);
+
+  const dropTarget = useDropTarget<E, typeof MIME_TYPE>(
+    [MIME_TYPE],
+    ev => {
+      const droppedId = mustExist(ev[MIME_TYPE]?.before ?? ev[MIME_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
+
+      // Validate same parent level (covers root and non-root)
+      if (diagramToMove.parent !== node.parent) return;
+
+      const relation: Relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
+
+      application.model.activeDiagram.undoManager.addAndExecute(
+        new DiagramReorderUndoableAction(document, diagramToMove, node, relation)
+      );
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return { eventHandlers: { ...drag.eventHandlers, ...dropTarget.eventHandlers } };
+};
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   return (
@@ -35,47 +69,82 @@ type DocumentsContextMenuProps = {
 
 const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => void }) => {
   return (
-    <div
-      className={'util-action'}
-      onClick={() => {
-        props.onValueChange(props.diagram.id);
-      }}
-    >
+    <div className={'util-action'} onClick={() => props.onValueChange(props.diagram.id)}>
       {props.diagram.name}
     </div>
   );
 };
 
-const DiagramTreeNode = (props: {
-  diagram: Diagram;
+const DiagramTreeNodeItem = (props: {
+  node: Diagram;
   value: string;
   onValueChange: (v: string) => void;
 }) => {
+  const dnd = useDiagramReorderDnD(props.node);
+
   return (
-    <>
-      {props.diagram.diagrams.map(node => (
-        <Tree.Node key={node.id} isOpen={true}>
-          <DocumentsContextMenu
-            diagramId={node.id}
-            element={
-              <Tree.NodeLabel>
-                <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
-              </Tree.NodeLabel>
-            }
-          />
-          <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
-          {node.diagrams.length > 0 && (
-            <Tree.Children>
-              <DiagramTreeNode
-                diagram={node}
-                onValueChange={props.onValueChange}
-                value={props.value}
-              />
-            </Tree.Children>
-          )}
-        </Tree.Node>
-      ))}
-    </>
+    <Tree.Node key={props.node.id} isOpen={true} {...dnd.eventHandlers}>
+      <DocumentsContextMenu
+        diagramId={props.node.id}
+        element={
+          <Tree.NodeLabel>
+            <DiagramLabel diagram={props.node} onValueChange={props.onValueChange} />
+          </Tree.NodeLabel>
+        }
+      />
+      <Tree.NodeCell>{props.value === props.node.id ? 'Active' : ''}</Tree.NodeCell>
+      {props.node.diagrams.length > 0 && (
+        <Tree.Children>
+          {props.node.diagrams.map(child => (
+            <DiagramTreeNodeItem
+              key={child.id}
+              node={child}
+              value={props.value}
+              onValueChange={props.onValueChange}
+            />
+          ))}
+        </Tree.Children>
+      )}
+    </Tree.Node>
+  );
+};
+
+const RootDiagramNode = (props: {
+  node: Diagram;
+  activeDiagramId: string;
+  onValueChange: (v: string) => void;
+}) => {
+  const dnd = useDiagramReorderDnD(props.node);
+
+  return (
+    <Tree.Node
+      key={props.node.id}
+      isOpen={true}
+      data-state={props.activeDiagramId === props.node.id ? 'on' : 'off'}
+      {...dnd.eventHandlers}
+    >
+      <DocumentsContextMenu
+        diagramId={props.node.id}
+        element={
+          <Tree.NodeLabel>
+            <DiagramLabel diagram={props.node} onValueChange={props.onValueChange} />
+          </Tree.NodeLabel>
+        }
+      />
+      <Tree.NodeCell>{props.activeDiagramId === props.node.id ? 'Active' : ''}</Tree.NodeCell>
+      {props.node.diagrams.length > 0 && (
+        <Tree.Children>
+          {props.node.diagrams.map(child => (
+            <DiagramTreeNodeItem
+              key={child.id}
+              node={child}
+              value={props.activeDiagramId}
+              onValueChange={props.onValueChange}
+            />
+          ))}
+        </Tree.Children>
+      )}
+    </Tree.Node>
   );
 };
 
@@ -100,26 +169,18 @@ export const DocumentPanel = () => {
       title={'Document'}
       style={{ padding: '0.25rem 0' }}
     >
-      <Tree.Root>
-        {document.diagrams.map(node => (
-          <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>
-            <DocumentsContextMenu
-              diagramId={node.id}
-              element={
-                <Tree.NodeLabel>
-                  <DiagramLabel diagram={node} onValueChange={onValueChange} />
-                </Tree.NodeLabel>
-              }
+      <div className="cmp-document-list">
+        <Tree.Root>
+          {document.diagrams.map(node => (
+            <RootDiagramNode
+              key={node.id}
+              node={node}
+              activeDiagramId={diagram.id}
+              onValueChange={onValueChange}
             />
-            <Tree.NodeCell>{diagram.id === node.id ? 'Active' : ''}</Tree.NodeCell>
-            {node.diagrams.length > 0 && (
-              <Tree.Children>
-                <DiagramTreeNode diagram={node} onValueChange={onValueChange} value={diagram.id} />
-              </Tree.Children>
-            )}
-          </Tree.Node>
-        ))}
-      </Tree.Root>
+          ))}
+        </Tree.Root>
+      </div>
     </ToolWindowPanel>
   );
 };

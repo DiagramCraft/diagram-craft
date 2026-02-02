@@ -788,7 +788,7 @@ foreignObject {
   padding: 0;
 }
 
-.cmp-layer-list {
+.cmp-layer-list, .cmp-document-list {
   .cmp-tree__node__label__text {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -908,6 +908,22 @@ foreignObject {
       &[data-active] {
         color: var(--cmp-fg);
         border-bottom: 2px solid var(--accent-chroma);
+      }
+
+      &[draggable="true"] {
+        cursor: grab;
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      &[data-pendingdrop="before"] {
+        border-left: 2px solid var(--cmp-fg);
+      }
+
+      &[data-pendingdrop="after"] {
+        border-right: 2px solid var(--cmp-fg);
       }
     }
   }

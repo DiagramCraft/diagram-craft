@@ -9,6 +9,11 @@ import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { mustExist } from '@diagram-craft/utils/assert';
+
+const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -84,6 +89,66 @@ type DocumentsContextMenuProps = {
   element: ReactElement;
 };
 
+const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDocument }) => {
+  const application = useApplication();
+  const { diagram: d, path, document } = props;
+
+  const drag = useDraggable(d.id, MIME_TYPE);
+  const dropTarget = useDropTarget(
+    [MIME_TYPE],
+    ev => {
+      const droppedId = mustExist(ev[MIME_TYPE]?.before ?? ev[MIME_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
+
+      // Validate same parent level
+      if (diagramToMove.parent !== d.parent) return;
+
+      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
+      const relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
+
+      const undoManager = application.model.activeDiagram.undoManager;
+      const action = new DiagramReorderUndoableAction(document, diagramToMove, d, relation);
+      undoManager.addAndExecute(action);
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return (
+    <BaseUITabs.Tab
+      key={d.id}
+      className="cmp-document-tabs__tab-trigger util-vcenter"
+      value={d.id}
+      id={`tab-${d.id}`}
+      onDoubleClick={() => {
+        const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
+        application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
+      }}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+    >
+      <DocumentsContextMenu
+        rootId={d.id}
+        diagramId={path[0] === d ? path.at(-1)!.id : d.id}
+        element={
+          <div>
+            {d.name}
+
+            {path[0] === d &&
+              path.length > 1 &&
+              path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
+
+            {d.diagrams.length > 0 && (
+              <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
+                <TbFiles />
+              </div>
+            )}
+          </div>
+        }
+      ></DocumentsContextMenu>
+    </BaseUITabs.Tab>
+  );
+};
+
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
   const redraw = useRedraw();
@@ -132,36 +197,7 @@ export const DocumentTabs = (props: Props) => {
           aria-label="Diagrams in document"
         >
           {props.document.diagrams.map(d => (
-            <BaseUITabs.Tab
-              key={d.id}
-              className="cmp-document-tabs__tab-trigger util-vcenter"
-              value={d.id}
-              id={`tab-${d.id}`}
-              onDoubleClick={() => {
-                const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
-                application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
-              }}
-            >
-              <DocumentsContextMenu
-                rootId={d.id}
-                diagramId={path[0] === d ? path.at(-1)!.id : d.id}
-                element={
-                  <div>
-                    {d.name}
-
-                    {path[0] === d &&
-                      path.length > 1 &&
-                      path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
-
-                    {d.diagrams.length > 0 && (
-                      <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
-                        <TbFiles />
-                      </div>
-                    )}
-                  </div>
-                }
-              ></DocumentsContextMenu>
-            </BaseUITabs.Tab>
+            <TabItem key={d.id} diagram={d} path={path} document={props.document} />
           ))}
         </BaseUITabs.List>
       </BaseUITabs.Root>

@@ -186,7 +186,7 @@ export class DiagramDocument
   }
 
   addDiagram(diagram: Diagram, parent?: Diagram) {
-    this.insertDiagram(diagram, this.diagrams.length, parent);
+    this.insertDiagram(diagram, this.#diagrams.size, parent);
   }
 
   removeDiagram(diagram: Diagram) {
@@ -199,6 +199,34 @@ export class DiagramDocument
 
   changeDiagram(diagram: Diagram) {
     this.emit('diagramChanged', { diagram: diagram });
+  }
+
+  moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }) {
+    // Get all diagrams with the same parent as the reference
+    const parentId = ref.diagram.parent;
+    const diagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
+
+    // Remove diagram being moved from its current position
+    const list = diagramsInParent.filter(d => d.id !== diagram.id);
+
+    // Find the reference diagram's position in the remaining diagrams
+    const idx = list.indexOf(ref.diagram);
+
+    // Calculate insertion point
+    const insertIndex = ref.relation === 'before' ? idx : idx + 1;
+
+    // Build new order for this parent level
+    const newOrderForParent = [...list.slice(0, insertIndex), diagram, ...list.slice(insertIndex)];
+
+    // Build complete new order by combining diagrams from other parents
+    const otherDiagrams = this.#diagrams.values.filter(d => d.parent !== parentId);
+    const completeNewOrder = [...otherDiagrams, ...newOrderForParent];
+
+    // Apply the new order
+    this.#diagrams.setOrder(completeNewOrder.map(d => d.id));
+
+    // Emit change event for moved diagram
+    this.emit('diagramChanged', { diagram });
   }
 
   getAttachmentsInUse() {
