@@ -92,33 +92,27 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
   const application = useApplication();
   const { diagram: d, path, document } = props;
 
-  const drag = useDraggable(JSON.stringify([d.id]), DIAGRAM_INSTANCES);
+  const drag = useDraggable(d.id, DIAGRAM_INSTANCES);
   const dropTarget = useDropTarget(
     [DIAGRAM_INSTANCES],
     ev => {
-      const droppedIds: string[] = JSON.parse(
-        (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '[]'
-      );
+      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
+      if (!droppedId) return;
 
-      if (droppedIds.length === 0) return;
+      const diagramToMove = document.byId(droppedId);
+      if (!diagramToMove) return;
 
-      // For diagrams (tabs), the relation mapping is inverted compared to layers:
-      // 'before' zone = insert before in array = 'below' (lower index)
-      // 'after' zone = insert after in array = 'above' (higher index)
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
-
-      const diagramsToMove = droppedIds.map(id => document.byId(id)).filter((d): d is Diagram => d !== undefined);
-      if (diagramsToMove.length === 0) return;
-
-      // Validate all diagrams share the same parent as the target
-      const allSameParent = diagramsToMove.every(diagram => diagram.parent === d.parent);
-      if (!allSameParent) {
+      // Validate same parent level
+      if (diagramToMove.parent !== d.parent) {
         console.warn('Cannot reorder diagrams across different parent levels');
         return;
       }
 
+      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+
       const undoManager = application.model.activeDiagram.undoManager;
-      const action = new DiagramReorderUndoableAction(document, diagramsToMove, d, relation);
+      const action = new DiagramReorderUndoableAction(document, diagramToMove, d, relation);
       undoManager.addAndExecute(action);
     },
     { split: () => [0.5, 0, 0.5] }

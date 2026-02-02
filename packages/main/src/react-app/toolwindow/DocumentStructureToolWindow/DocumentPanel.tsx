@@ -59,32 +59,28 @@ const DiagramTreeNodeItem = (props: {
   const document = useDocument();
   const { node } = props;
 
-  const drag = useDraggable(JSON.stringify([node.id]), DIAGRAM_INSTANCES);
+  const drag = useDraggable(node.id, DIAGRAM_INSTANCES);
   const dropTarget = useDropTarget(
     [DIAGRAM_INSTANCES],
     ev => {
-      const droppedIds: string[] = JSON.parse(
-        ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after ?? '[]'
-      );
+      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
+      if (!droppedId) return;
 
-      if (droppedIds.length === 0) return;
+      const diagramToMove = document.byId(droppedId);
+      if (!diagramToMove) return;
 
-      // For diagrams, the relation mapping is inverted compared to layers:
-      // 'before' zone = insert before in array = 'below' (lower index)
-      // 'after' zone = insert after in array = 'above' (higher index)
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
-
-      // Validate same parent before reordering
-      const droppedDiagrams = droppedIds
-        .map(id => document.byId(id))
-        .filter((d): d is Diagram => d !== undefined);
-      const allSameParent = droppedDiagrams.every(d => d.parent === node.parent);
-
-      if (allSameParent) {
-        const undoManager = application.model.activeDiagram.undoManager;
-        const action = new DiagramReorderUndoableAction(document, droppedDiagrams, node, relation);
-        undoManager.addAndExecute(action);
+      // Validate same parent level
+      if (diagramToMove.parent !== node.parent) {
+        console.warn('Cannot reorder diagrams across different parent levels');
+        return;
       }
+
+      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+
+      const undoManager = application.model.activeDiagram.undoManager;
+      const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);
+      undoManager.addAndExecute(action);
     },
     { split: () => [0.5, 0, 0.5] }
   );
@@ -137,32 +133,28 @@ const RootDiagramNode = (props: {
   const document = useDocument();
   const { node } = props;
 
-  const drag = useDraggable(JSON.stringify([node.id]), DIAGRAM_INSTANCES);
+  const drag = useDraggable(node.id, DIAGRAM_INSTANCES);
   const dropTarget = useDropTarget(
     [DIAGRAM_INSTANCES],
     ev => {
-      const droppedIds: string[] = JSON.parse(
-        ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after ?? '[]'
-      );
+      const droppedId = (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '';
+      if (!droppedId) return;
 
-      if (droppedIds.length === 0) return;
+      const diagramToMove = document.byId(droppedId);
+      if (!diagramToMove) return;
 
-      // For diagrams, the relation mapping is inverted compared to layers:
-      // 'before' zone = insert before in array = 'below' (lower index)
-      // 'after' zone = insert after in array = 'above' (higher index)
-      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
-
-      // Validate same parent before reordering (root diagrams have parent === undefined)
-      const droppedDiagrams = droppedIds
-        .map(id => document.byId(id))
-        .filter((d): d is Diagram => d !== undefined);
-      const allSameParent = droppedDiagrams.every(d => d.parent === node.parent);
-
-      if (allSameParent) {
-        const undoManager = application.model.activeDiagram.undoManager;
-        const action = new DiagramReorderUndoableAction(document, droppedDiagrams, node, relation);
-        undoManager.addAndExecute(action);
+      // Validate same parent level (root diagrams have parent === undefined)
+      if (diagramToMove.parent !== node.parent) {
+        console.warn('Cannot reorder diagrams across different parent levels');
+        return;
       }
+
+      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'before' : 'after';
+
+      const undoManager = application.model.activeDiagram.undoManager;
+      const action = new DiagramReorderUndoableAction(document, diagramToMove, node, relation);
+      undoManager.addAndExecute(action);
     },
     { split: () => [0.5, 0, 0.5] }
   );
