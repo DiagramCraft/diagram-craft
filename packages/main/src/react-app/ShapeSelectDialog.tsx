@@ -56,7 +56,7 @@ const StencilView = (props: {
         showHover={true}
         name={props.stencil.name ?? 'unknown'}
         onMouseDown={props.onClick}
-        scaleStrokes={props.stencil.type !== 'default'}
+        scaleStrokes={props.stencil.type !== 'default' && props.stencil.type !== 'yaml'}
       />
     </div>
   );
