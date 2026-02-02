@@ -4,7 +4,7 @@ import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { ActionMenuItem } from './components/ActionMenuItem';
-import React, { type ReactElement } from 'react';
+import React, { type ReactElement, useRef, useEffect } from 'react';
 import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
@@ -87,14 +87,36 @@ type DocumentsContextMenuProps = {
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
   const redraw = useRedraw();
+  const tabsListRef = useRef<HTMLDivElement>(null);
+  const scrollToTabIdRef = useRef<string | null>(null);
+
   useEventListener(props.document, 'diagramRemoved', redraw);
   useEventListener(props.document, 'diagramChanged', redraw);
-  useEventListener(props.document, 'diagramAdded', redraw);
+  useEventListener(props.document, 'diagramAdded', ({ diagram }) => {
+    const path = props.document.getDiagramPath(diagram);
+    const rootDiagram = path[0];
+    if (rootDiagram) {
+      scrollToTabIdRef.current = rootDiagram.id;
+    }
+    redraw();
+  });
 
   // The selection can be different from the active diagram as the selection
   // is the "root" of the activeDiagram
   const path = application.model.activeDocument.getDiagramPath(application.model.activeDiagram);
   const selection = path[0]?.id;
+
+  useEffect(() => {
+    if (scrollToTabIdRef.current && tabsListRef.current) {
+      const tabElement = tabsListRef.current.querySelector(
+        `#tab-${scrollToTabIdRef.current}`
+      ) as HTMLElement;
+      if (tabElement) {
+        tabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+      scrollToTabIdRef.current = null;
+    }
+  });
 
   return (
     <div className={'cmp-document-tabs'}>
@@ -104,7 +126,11 @@ export const DocumentTabs = (props: Props) => {
           application.model.activeDiagram = props.document.byId(d)!;
         }}
       >
-        <BaseUITabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
+        <BaseUITabs.List
+          ref={tabsListRef}
+          className="cmp-document-tabs__tabs"
+          aria-label="Diagrams in document"
+        >
           {props.document.diagrams.map(d => (
             <BaseUITabs.Tab
               key={d.id}
