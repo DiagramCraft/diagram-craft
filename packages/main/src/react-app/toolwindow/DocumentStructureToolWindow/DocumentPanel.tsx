@@ -9,6 +9,10 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
+import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+
+const DIAGRAM_INSTANCES = 'application/x-diagram-craft-diagram-instances';
 
 const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
   return (
@@ -46,6 +50,65 @@ const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => v
   );
 };
 
+const DiagramTreeNodeItem = (props: {
+  node: Diagram;
+  value: string;
+  onValueChange: (v: string) => void;
+}) => {
+  const application = useApplication();
+  const document = useDocument();
+  const { node } = props;
+
+  const drag = useDraggable(JSON.stringify([node.id]), DIAGRAM_INSTANCES);
+  const dropTarget = useDropTarget(
+    [DIAGRAM_INSTANCES],
+    ev => {
+      const droppedIds: string[] = JSON.parse(
+        ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after ?? '[]'
+      );
+
+      if (droppedIds.length === 0) return;
+
+      // For diagrams, the relation mapping is inverted compared to layers:
+      // 'before' zone = insert before in array = 'below' (lower index)
+      // 'after' zone = insert after in array = 'above' (higher index)
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
+
+      // Validate same parent before reordering
+      const droppedDiagrams = droppedIds
+        .map(id => document.byId(id))
+        .filter((d): d is Diagram => d !== undefined);
+      const allSameParent = droppedDiagrams.every(d => d.parent === node.parent);
+
+      if (allSameParent) {
+        const undoManager = application.model.activeDiagram.undoManager;
+        const action = new DiagramReorderUndoableAction(document, droppedDiagrams, node, relation);
+        undoManager.addAndExecute(action);
+      }
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return (
+    <Tree.Node key={node.id} isOpen={true} {...drag.eventHandlers} {...dropTarget.eventHandlers}>
+      <DocumentsContextMenu
+        diagramId={node.id}
+        element={
+          <Tree.NodeLabel>
+            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+          </Tree.NodeLabel>
+        }
+      />
+      <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
+      {node.diagrams.length > 0 && (
+        <Tree.Children>
+          <DiagramTreeNode diagram={node} onValueChange={props.onValueChange} value={props.value} />
+        </Tree.Children>
+      )}
+    </Tree.Node>
+  );
+};
+
 const DiagramTreeNode = (props: {
   diagram: Diagram;
   value: string;
@@ -54,28 +117,83 @@ const DiagramTreeNode = (props: {
   return (
     <>
       {props.diagram.diagrams.map(node => (
-        <Tree.Node key={node.id} isOpen={true}>
-          <DocumentsContextMenu
-            diagramId={node.id}
-            element={
-              <Tree.NodeLabel>
-                <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
-              </Tree.NodeLabel>
-            }
-          />
-          <Tree.NodeCell>{props.value === node.id ? 'Active' : ''}</Tree.NodeCell>
-          {node.diagrams.length > 0 && (
-            <Tree.Children>
-              <DiagramTreeNode
-                diagram={node}
-                onValueChange={props.onValueChange}
-                value={props.value}
-              />
-            </Tree.Children>
-          )}
-        </Tree.Node>
+        <DiagramTreeNodeItem
+          key={node.id}
+          node={node}
+          value={props.value}
+          onValueChange={props.onValueChange}
+        />
       ))}
     </>
+  );
+};
+
+const RootDiagramNode = (props: {
+  node: Diagram;
+  activeDiagramId: string;
+  onValueChange: (v: string) => void;
+}) => {
+  const application = useApplication();
+  const document = useDocument();
+  const { node } = props;
+
+  const drag = useDraggable(JSON.stringify([node.id]), DIAGRAM_INSTANCES);
+  const dropTarget = useDropTarget(
+    [DIAGRAM_INSTANCES],
+    ev => {
+      const droppedIds: string[] = JSON.parse(
+        ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after ?? '[]'
+      );
+
+      if (droppedIds.length === 0) return;
+
+      // For diagrams, the relation mapping is inverted compared to layers:
+      // 'before' zone = insert before in array = 'below' (lower index)
+      // 'after' zone = insert after in array = 'above' (higher index)
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
+
+      // Validate same parent before reordering (root diagrams have parent === undefined)
+      const droppedDiagrams = droppedIds
+        .map(id => document.byId(id))
+        .filter((d): d is Diagram => d !== undefined);
+      const allSameParent = droppedDiagrams.every(d => d.parent === node.parent);
+
+      if (allSameParent) {
+        const undoManager = application.model.activeDiagram.undoManager;
+        const action = new DiagramReorderUndoableAction(document, droppedDiagrams, node, relation);
+        undoManager.addAndExecute(action);
+      }
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return (
+    <Tree.Node
+      key={node.id}
+      isOpen={true}
+      data-state={props.activeDiagramId === node.id ? 'on' : 'off'}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+    >
+      <DocumentsContextMenu
+        diagramId={node.id}
+        element={
+          <Tree.NodeLabel>
+            <DiagramLabel diagram={node} onValueChange={props.onValueChange} />
+          </Tree.NodeLabel>
+        }
+      />
+      <Tree.NodeCell>{props.activeDiagramId === node.id ? 'Active' : ''}</Tree.NodeCell>
+      {node.diagrams.length > 0 && (
+        <Tree.Children>
+          <DiagramTreeNode
+            diagram={node}
+            onValueChange={props.onValueChange}
+            value={props.activeDiagramId}
+          />
+        </Tree.Children>
+      )}
+    </Tree.Node>
   );
 };
 
@@ -100,26 +218,18 @@ export const DocumentPanel = () => {
       title={'Document'}
       style={{ padding: '0.25rem 0' }}
     >
-      <Tree.Root>
-        {document.diagrams.map(node => (
-          <Tree.Node key={node.id} isOpen={true} data-state={diagram.id === node.id ? 'on' : 'off'}>
-            <DocumentsContextMenu
-              diagramId={node.id}
-              element={
-                <Tree.NodeLabel>
-                  <DiagramLabel diagram={node} onValueChange={onValueChange} />
-                </Tree.NodeLabel>
-              }
+      <div className="cmp-document-list">
+        <Tree.Root>
+          {document.diagrams.map(node => (
+            <RootDiagramNode
+              key={node.id}
+              node={node}
+              activeDiagramId={diagram.id}
+              onValueChange={onValueChange}
             />
-            <Tree.NodeCell>{diagram.id === node.id ? 'Active' : ''}</Tree.NodeCell>
-            {node.diagrams.length > 0 && (
-              <Tree.Children>
-                <DiagramTreeNode diagram={node} onValueChange={onValueChange} value={diagram.id} />
-              </Tree.Children>
-            )}
-          </Tree.Node>
-        ))}
-      </Tree.Root>
+          ))}
+        </Tree.Root>
+      </div>
     </ToolWindowPanel>
   );
 };

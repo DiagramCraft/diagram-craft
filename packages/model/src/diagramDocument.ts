@@ -201,6 +201,50 @@ export class DiagramDocument
     this.emit('diagramChanged', { diagram: diagram });
   }
 
+  moveDiagrams(
+    diagrams: ReadonlyArray<Diagram>,
+    ref: { diagram: Diagram; relation: 'above' | 'below' }
+  ) {
+    // Get all diagrams with the same parent as the reference
+    const parentId = ref.diagram.parent;
+    const allDiagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
+
+    // Build set of IDs being moved
+    const movingIds = new Set(diagrams.map(d => d.id));
+
+    // Remove diagrams being moved from their current positions
+    const remainingDiagrams = allDiagramsInParent.filter(d => !movingIds.has(d.id));
+
+    // Find the reference diagram's position in the remaining diagrams
+    const refIndexInRemaining = remainingDiagrams.indexOf(ref.diagram);
+
+    // Calculate insertion point
+    // For diagrams (unlike layers), 'below' means earlier in array/visual order (lower index)
+    // and 'above' means later in array/visual order (higher index)
+    // 'below' = insert at reference position (before it)
+    // 'above' = insert after reference position
+    const insertIndex = ref.relation === 'below' ? refIndexInRemaining : refIndexInRemaining + 1;
+
+    // Build new order for this parent level
+    const newOrderForParent = [
+      ...remainingDiagrams.slice(0, insertIndex),
+      ...diagrams,
+      ...remainingDiagrams.slice(insertIndex)
+    ];
+
+    // Build complete new order by combining diagrams from other parents
+    const otherDiagrams = this.#diagrams.values.filter(d => d.parent !== parentId);
+    const completeNewOrder = [...otherDiagrams, ...newOrderForParent];
+
+    // Apply the new order
+    this.#diagrams.setOrder(completeNewOrder.map(d => d.id));
+
+    // Emit change events for moved diagrams
+    for (const diagram of diagrams) {
+      this.emit('diagramChanged', { diagram });
+    }
+  }
+
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
   }

@@ -9,6 +9,10 @@ import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+
+const DIAGRAM_INSTANCES = 'application/x-diagram-craft-diagram-instances';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -84,6 +88,78 @@ type DocumentsContextMenuProps = {
   element: ReactElement;
 };
 
+const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDocument }) => {
+  const application = useApplication();
+  const { diagram: d, path, document } = props;
+
+  const drag = useDraggable(JSON.stringify([d.id]), DIAGRAM_INSTANCES);
+  const dropTarget = useDropTarget(
+    [DIAGRAM_INSTANCES],
+    ev => {
+      const droppedIds: string[] = JSON.parse(
+        (ev[DIAGRAM_INSTANCES]?.before ?? ev[DIAGRAM_INSTANCES]?.after) ?? '[]'
+      );
+
+      if (droppedIds.length === 0) return;
+
+      // For diagrams (tabs), the relation mapping is inverted compared to layers:
+      // 'before' zone = insert before in array = 'below' (lower index)
+      // 'after' zone = insert after in array = 'above' (higher index)
+      const relation = ev[DIAGRAM_INSTANCES]?.before ? 'below' : 'above';
+
+      const diagramsToMove = droppedIds.map(id => document.byId(id)).filter((d): d is Diagram => d !== undefined);
+      if (diagramsToMove.length === 0) return;
+
+      // Validate all diagrams share the same parent as the target
+      const allSameParent = diagramsToMove.every(diagram => diagram.parent === d.parent);
+      if (!allSameParent) {
+        console.warn('Cannot reorder diagrams across different parent levels');
+        return;
+      }
+
+      const undoManager = application.model.activeDiagram.undoManager;
+      const action = new DiagramReorderUndoableAction(document, diagramsToMove, d, relation);
+      undoManager.addAndExecute(action);
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return (
+    <BaseUITabs.Tab
+      key={d.id}
+      className="cmp-document-tabs__tab-trigger util-vcenter"
+      value={d.id}
+      id={`tab-${d.id}`}
+      onDoubleClick={() => {
+        const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
+        application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
+      }}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+    >
+      <DocumentsContextMenu
+        rootId={d.id}
+        diagramId={path[0] === d ? path.at(-1)!.id : d.id}
+        element={
+          <div>
+            {d.name}
+
+            {path[0] === d &&
+              path.length > 1 &&
+              path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
+
+            {d.diagrams.length > 0 && (
+              <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
+                <TbFiles />
+              </div>
+            )}
+          </div>
+        }
+      ></DocumentsContextMenu>
+    </BaseUITabs.Tab>
+  );
+};
+
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
   const redraw = useRedraw();
@@ -132,36 +208,7 @@ export const DocumentTabs = (props: Props) => {
           aria-label="Diagrams in document"
         >
           {props.document.diagrams.map(d => (
-            <BaseUITabs.Tab
-              key={d.id}
-              className="cmp-document-tabs__tab-trigger util-vcenter"
-              value={d.id}
-              id={`tab-${d.id}`}
-              onDoubleClick={() => {
-                const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
-                application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
-              }}
-            >
-              <DocumentsContextMenu
-                rootId={d.id}
-                diagramId={path[0] === d ? path.at(-1)!.id : d.id}
-                element={
-                  <div>
-                    {d.name}
-
-                    {path[0] === d &&
-                      path.length > 1 &&
-                      path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
-
-                    {d.diagrams.length > 0 && (
-                      <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
-                        <TbFiles />
-                      </div>
-                    )}
-                  </div>
-                }
-              ></DocumentsContextMenu>
-            </BaseUITabs.Tab>
+            <TabItem key={d.id} diagram={d} path={path} document={props.document} />
           ))}
         </BaseUITabs.List>
       </BaseUITabs.Root>
