@@ -12,7 +12,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { arrowBigRightFilledIcon, arrowBigRightIcon, linesVerticalIcon } from './icons/icons';
 import {
-  createBelowShapeTextBox,
   getIcon,
   Icon,
   RECTANGULAR_SHAPE_ANCHORS,
@@ -112,14 +111,7 @@ export class BPMNDataObjectNodeType extends ShapeNodeDefinition {
         }
       );
 
-      shapeBuilder.text(
-        this,
-        '1',
-        props.node.getText(),
-        props.nodeProps.text,
-        createBelowShapeTextBox(bounds)
-      );
-
+      shapeBuilder.text(this);
       const data = this.getData(props.node);
 
       if (data.collection) {

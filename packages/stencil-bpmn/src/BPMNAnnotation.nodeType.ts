@@ -7,7 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { Box } from '@diagram-craft/geometry/box';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
@@ -48,27 +47,7 @@ export class BPMNAnnotationNodeDefinition extends ShapeNodeDefinition {
   static Shape = class extends BaseNodeComponent<BPMNAnnotationNodeDefinition> {
     buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
       shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
-
-      const bracketPosition = props.nodeProps.custom.bpmnAnnotation?.bracketPosition ?? 'left';
-
-      const textBox =
-        bracketPosition === 'right'
-          ? Box.fromCorners(
-              _p(props.node.bounds.x + 5, props.node.bounds.y + 5),
-              _p(
-                props.node.bounds.x + props.node.bounds.w - 10,
-                props.node.bounds.y + props.node.bounds.h - 5
-              )
-            )
-          : Box.fromCorners(
-              _p(props.node.bounds.x + 10, props.node.bounds.y + 5),
-              _p(
-                props.node.bounds.x + props.node.bounds.w - 5,
-                props.node.bounds.y + props.node.bounds.h - 5
-              )
-            );
-
-      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, textBox);
+      shapeBuilder.text(this);
     }
   };
 

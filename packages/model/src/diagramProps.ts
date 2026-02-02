@@ -235,6 +235,7 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
     wrap?: boolean;
     overflow?: 'hidden' | 'visible';
     position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
+    width?: number;
     shrink?: boolean;
   };
 

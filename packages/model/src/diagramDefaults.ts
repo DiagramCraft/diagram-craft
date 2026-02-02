@@ -346,7 +346,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     wrap: true,
     overflow: 'visible',
     position: 'c',
-    shrink: false
+    shrink: false,
+    width: 100
   },
 
   anchors: {
