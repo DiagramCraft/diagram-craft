@@ -45,6 +45,7 @@ type FormProps = {
   valign: Property<VAlign>;
   lineHeight: Property<number>;
   shrink: Property<boolean>;
+  position: Property<string>;
 };
 
 class FormatProperty extends MultiProperty<string[]> {
@@ -121,7 +122,8 @@ export const NodeTextPanelForm = ({
   align,
   valign,
   lineHeight,
-  shrink
+  shrink,
+  position
 }: FormProps) => {
   const fonts = $cfg.fonts;
 
@@ -307,6 +309,25 @@ export const NodeTextPanelForm = ({
             />
           </div>
         </div>
+        <div className={'cmp-labeled-table__label'}>Position</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={position}
+            render={props => (
+              <Select.Root {...props} style={{ width: '8rem' }}>
+                <Select.Item value={'c'}>Center</Select.Item>
+                <Select.Item value={'e'}>East</Select.Item>
+                <Select.Item value={'w'}>West</Select.Item>
+                <Select.Item value={'n'}>North</Select.Item>
+                <Select.Item value={'s'}>South</Select.Item>
+                <Select.Item value={'ne'}>North-East</Select.Item>
+                <Select.Item value={'nw'}>North-West</Select.Item>
+                <Select.Item value={'se'}>South-East</Select.Item>
+                <Select.Item value={'sw'}>South-West</Select.Item>
+              </Select.Root>
+            )}
+          />
+        </div>
       </div>
 
       <div style={{ marginTop: '0.5rem' }}></div>
@@ -353,6 +374,7 @@ export const NodeTextPanel = (props: Props) => {
   const bottom = useNodeProperty($d, 'text.bottom');
   const right = useNodeProperty($d, 'text.right');
   const shrink = useNodeProperty($d, 'text.shrink');
+  const position = useNodeProperty($d, 'text.position');
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
@@ -374,6 +396,7 @@ export const NodeTextPanel = (props: Props) => {
         valign={valign}
         lineHeight={lineHeight}
         shrink={shrink}
+        position={position as Property<string>}
       />
     </ToolWindowPanel>
   );
