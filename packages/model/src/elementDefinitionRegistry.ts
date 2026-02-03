@@ -676,6 +676,15 @@ export const makeStencilEdge =
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
 
+export const addStencilToSubpackage = (
+  subpackage: string,
+  pkg: StencilPackage,
+  def: NodeDefinition | EdgeDefinition,
+  opts?: Omit<MakeStencilNodeOpts, 'subPackage'>
+) => {
+  return addStencil(pkg, def, { ...opts, subPackage: subpackage });
+};
+
 export const addStencil = (
   pkg: StencilPackage,
   def: NodeDefinition | EdgeDefinition,

@@ -1,5 +1,5 @@
 import {
-  addStencil,
+  addStencilToSubpackage,
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
   Registry,
@@ -17,7 +17,11 @@ import { BPMNChoreographyActivityNodeDefinition } from '@diagram-craft/stencil-b
 import { BPMNChoreographyActivityParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityParticipant.nodeType';
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
-import stencils from './bpmnStencils.yaml';
+import bpmnChoreographyStencils from './bpmn-choreography-stencils.yaml';
+import bpmnChoreographyAdvancedStencils from './bpmn-choreography-advanced-stencils.yaml';
+import bpmnEdgesStencils from './bpmn-edges-stencils.yaml';
+import bpmnCoreStencils from './bpmn-core-stencils.yaml';
+import bpmnCollaborationStencils from './bpmn-collaboration-stencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
@@ -53,16 +57,207 @@ export const registerBPMNStencils = async (registry: Registry) => {
 
     subPackages: [
       { id: 'core', name: 'Core', stencils: [] },
+      { id: 'edges', name: 'Edges', stencils: [] },
       { id: 'collaboration', name: 'Collaboration', stencils: [] },
       { id: 'process', name: 'Process', stencils: [] },
-      { id: 'choreography', name: 'Choreography', stencils: [] }
+      { id: 'choreography', name: 'Choreography', stencils: [] },
+      { id: 'choreography-advanced', name: 'Choreography (Advanced)', stencils: [] }
     ]
   };
 
-  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  /* *********************************************************************** */
+  /* CORE PACKAGE                                                            */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(bpmnCoreStencils).forEach(s => {
+    bpmnStencils.stencils.push(s);
+    bpmnStencils.subPackages!.find(p => p.id === 'core')?.stencils.push(s);
+  });
+
+  addStencilToSubpackage('core', bpmnStencils, new RoundedRectNodeDefinition(), {
+    id: 'bpmn-group',
+    name: 'Group',
+    size: {
+      w: 300,
+      h: 200
+    },
+    texts: {
+      text: 'Group'
+    },
+    props: () => ({
+      stroke: {
+        pattern: 'DASH_DOT',
+        patternSpacing: 50,
+        patternSize: 70
+      },
+      custom: {
+        roundedRect: {
+          radius: 10
+        }
+      },
+      text: {
+        valign: 'top',
+        align: 'right',
+        top: 8,
+        right: 8
+      }
+    })
+  });
+
+  /* *********************************************************************** */
+  /* EDGES PACKAGE                                                           */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(bpmnEdgesStencils).forEach(s => {
+    bpmnStencils.stencils.push(s);
+    bpmnStencils.subPackages!.find(p => p.id === 'edges')?.stencils.push(s);
+  });
+
+  addStencilToSubpackage('edges', bpmnStencils, new BPMNConversationEdgeDefinition(), {
+    id: 'bpmn-conversation-edge',
+    name: 'Conversation Edge',
+    size: {
+      w: 10,
+      h: 10
+    }
+  });
+
+  /* *********************************************************************** */
+  /* COLLABORATION PACKAGE                                                   */
+  /* *********************************************************************** */
+
+  addStencilToSubpackage('collaboration', bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-vertical-lane',
+    name: 'Vertical Lane',
+    size: {
+      w: 100,
+      h: 400
+    },
+    texts: {
+      text: 'Lane'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true
+          }
+        }
+      };
+    }
+  });
+
+  addStencilToSubpackage('collaboration', bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-horizonal-lane',
+    name: 'Horizontal Lane',
+    size: {
+      w: 400,
+      h: 100
+    },
+    texts: {
+      text: 'Lane'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true,
+            orientation: 'horizontal'
+          }
+        }
+      };
+    }
+  });
+
+  addStencilToSubpackage('collaboration', bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-vertical-pool',
+    name: 'Vertical Pool',
+    size: {
+      w: 200,
+      h: 400
+    },
+    texts: {
+      text: 'Pool'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true
+          }
+        },
+        layout: {
+          container: {
+            enabled: true,
+            autoShrink: true,
+            direction: 'horizontal',
+            alignItems: 'stretch'
+          }
+        }
+      };
+    }
+  });
+
+  addStencilToSubpackage('collaboration', bpmnStencils, new BPMNLane(), {
+    id: 'bpmn-horizonal-pool',
+    name: 'Horizontal Pool',
+    size: {
+      w: 400,
+      h: 200
+    },
+    texts: {
+      text: 'Pool'
+    },
+    props: () => {
+      return {
+        custom: {
+          swimlane: {
+            title: true,
+            orientation: 'horizontal'
+          }
+        },
+        layout: {
+          container: {
+            enabled: true,
+            autoShrink: true,
+            direction: 'vertical',
+            alignItems: 'stretch'
+          }
+        }
+      };
+    }
+  });
+
+  addStencilToSubpackage('collaboration', bpmnStencils, new BPMNConversationNodeDefinition(), {
+    id: 'bpmn-conversation',
+    name: 'Conversation',
+    size: {
+      w: 40,
+      h: 40
+    },
+    props: () => {
+      return {
+        text: {
+          position: 's',
+          valign: 'top',
+          top: 8
+        }
+      };
+    }
+  });
+
+  loadStencilsFromYaml(bpmnCollaborationStencils).forEach(s => {
+    bpmnStencils.stencils.push(s);
+    bpmnStencils.subPackages!.find(p => p.id === 'collaboration')?.stencils.push(s);
+  });
+
+  /* *********************************************************************** */
+  /* PROCESS PACKAGE                                                         */
+  /* *********************************************************************** */
+
+  addStencilToSubpackage('process', bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-task',
     name: 'Task',
-    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Task'
@@ -92,10 +287,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencilToSubpackage('process', bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-sub-process',
     name: 'Sub-process',
-    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Sub-process'
@@ -125,10 +319,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencilToSubpackage('process', bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-event-sub-process',
     name: 'Event sub-process',
-    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Event sub-process'
@@ -158,10 +351,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNActivityNodeDefinition(), {
+  addStencilToSubpackage('process', bpmnStencils, new BPMNActivityNodeDefinition(), {
     id: 'bpmn-activity-transaction',
     name: 'Transaction',
-    subPackage: 'process',
     aspectRatio: 1.5,
     texts: {
       text: 'Transaction'
@@ -191,10 +383,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNDataStoreNodeDefinition(), {
+  addStencilToSubpackage('process', bpmnStencils, new BPMNDataStoreNodeDefinition(), {
     id: 'bpmn-data-store',
     name: 'Data Store',
-    subPackage: 'process',
     size: {
       w: 70,
       h: 70
@@ -204,10 +395,9 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+  addStencilToSubpackage('process', bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-object',
     name: 'Data Object',
-    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -225,10 +415,10 @@ export const registerBPMNStencils = async (registry: Registry) => {
       };
     }
   });
-  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+
+  addStencilToSubpackage('process', bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-objects',
     name: 'Data Objects',
-    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -260,10 +450,10 @@ export const registerBPMNStencils = async (registry: Registry) => {
       };
     }
   });
-  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+
+  addStencilToSubpackage('process', bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-input',
     name: 'Data Input',
-    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -295,10 +485,10 @@ export const registerBPMNStencils = async (registry: Registry) => {
       };
     }
   });
-  addStencil(bpmnStencils, new BPMNDataObjectNodeType(), {
+
+  addStencilToSubpackage('process', bpmnStencils, new BPMNDataObjectNodeType(), {
     id: 'bpmn-data-output',
     name: 'Data Output',
-    subPackage: 'process',
     size: {
       w: 35,
       h: 50
@@ -331,345 +521,159 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
-    id: 'bpmn-event-start',
-    name: 'Start Event',
-    subPackage: 'process',
-    size: {
-      w: 30,
-      h: 30
-    },
-    texts: {
-      text: ''
-    },
-    metadata: {
-      data: {
-        data: [
-          {
-            type: 'schema',
-            enabled: true,
-            schema: 'bpmnEvent',
-            data: {
-              eventType: 'start'
-            }
-          }
-        ]
-      }
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
-    id: 'bpmn-event-intermediate',
-    name: 'Intermediate Event',
-    subPackage: 'process',
-    size: {
-      w: 30,
-      h: 30
-    },
-    texts: {
-      text: ''
-    },
-    metadata: {
-      data: {
-        data: [
-          {
-            type: 'schema',
-            enabled: true,
-            schema: 'bpmnEvent',
-            data: {
-              eventType: 'intermediate'
-            }
-          }
-        ]
-      }
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNEventNodeDefinition(), {
-    id: 'bpmn-event-end',
-    name: 'End Event',
-    subPackage: 'process',
-    size: {
-      w: 30,
-      h: 30
-    },
-    texts: {
-      text: ''
-    },
-    metadata: {
-      data: {
-        data: [
-          {
-            type: 'schema',
-            enabled: true,
-            schema: 'bpmnEvent',
-            data: {
-              eventType: 'end'
-            }
-          }
-        ]
-      }
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNGatewayNodeDefinition(), {
-    id: 'bpmn-gateway',
-    name: 'Gateway',
-    subPackage: 'process',
-    size: {
-      w: 30,
-      h: 30
-    },
-    texts: {
-      text: '%name%'
-    },
-    props: () => {
-      return {
-        text: {
-          valign: 'top'
-        }
-      };
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNConversationNodeDefinition(), {
-    id: 'bpmn-conversation',
-    name: 'Conversation',
-    subPackage: 'collaboration',
-    size: {
-      w: 40,
-      h: 40
-    },
-    props: () => {
-      return {
-        text: {
-          position: 's',
-          valign: 'top',
-          top: 8
-        }
-      };
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNAnnotationNodeDefinition(), {
-    id: 'bpmn-annotation',
-    name: 'Annotation',
-    subPackage: 'core',
-    size: {
-      w: 100,
-      h: 40
-    },
-    texts: {
-      text: 'Annotation'
-    },
-    props: () => ({
-      fill: {
-        enabled: false
+  for (const type of ['start', 'intermediate', 'end']) {
+    addStencilToSubpackage('process', bpmnStencils, new BPMNEventNodeDefinition(), {
+      id: `bpmn-event-${type}`,
+      name: `${type[0]!.toUpperCase()}${type.slice(1)} Event`,
+      size: {
+        w: 30,
+        h: 30
       },
-      text: {
-        align: 'left',
-        left: 24,
-        right: 24
-      }
-    })
-  });
-
-  addStencil(bpmnStencils, new RoundedRectNodeDefinition(), {
-    id: 'bpmn-group',
-    name: 'Group',
-    subPackage: 'core',
-    size: {
-      w: 300,
-      h: 200
-    },
-    texts: {
-      text: 'Group'
-    },
-    props: () => ({
-      stroke: {
-        pattern: 'DASH_DOT',
-        patternSpacing: 50,
-        patternSize: 70
+      texts: {
+        text: ''
       },
-      custom: {
-        roundedRect: {
-          radius: 10
+      metadata: {
+        data: {
+          data: [
+            {
+              type: 'schema',
+              enabled: true,
+              schema: 'bpmnEvent',
+              data: {
+                eventType: type
+              }
+            }
+          ]
+        }
+      }
+    });
+  }
+
+  for (const { value, label } of [
+    { value: 'default', label: 'Default' },
+    { value: 'exclusive', label: 'Exclusive' },
+    { value: 'inclusive', label: 'Inclusive' },
+    { value: 'parallel', label: 'Parallel' },
+    { value: 'complex', label: 'Complex' },
+    { value: 'event-based', label: 'Event Based' },
+    {
+      value: 'event-based-start-process-inclusive',
+      label: 'Event Based Start Process Inclusive'
+    }
+  ]) {
+    addStencilToSubpackage('process', bpmnStencils, new BPMNGatewayNodeDefinition(), {
+      id: `bpmn-gateway-${value}`,
+      name: `Gateway ${label}`,
+      size: {
+        w: 30,
+        h: 30
+      },
+      texts: {
+        text: '%name%'
+      },
+      metadata: {
+        data: {
+          data: [
+            {
+              type: 'schema',
+              enabled: true,
+              schema: 'bpmnGateway',
+              data: {
+                type: value
+              }
+            }
+          ]
         }
       },
-      text: {
-        valign: 'top',
-        align: 'right',
-        top: 8,
-        right: 8
+      props: () => {
+        return {
+          text: {
+            valign: 'top'
+          }
+        };
       }
-    })
-  });
+    });
+  }
 
-  addStencil(bpmnStencils, new BPMNChoreographyActivityNodeDefinition(), {
-    id: 'bpmn-choreography',
-    name: 'Choreography',
-    subPackage: 'choreography',
-    size: {
-      w: 100,
-      h: 100
-    }
-  });
+  /* *********************************************************************** */
+  /* CHOREOGRAPHY PACKAGE                                                    */
+  /* *********************************************************************** */
 
-  addStencil(bpmnStencils, new BPMNChoreographyActivityParticipantNodeDefinition(), {
-    id: 'bpmn-choreography-participant',
-    name: 'Choreography Participant',
-    subPackage: 'choreography',
-    size: {
-      w: 100,
-      h: 30
-    },
-    texts: {
-      text: 'Participant'
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNChoreographyActivityNameNodeDefinition(), {
-    id: 'bpmn-choreography-name',
-    name: 'Choreography Activity Name',
-    subPackage: 'choreography',
-    size: {
-      w: 100,
-      h: 30
-    },
-    texts: {
-      text: 'Task'
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNChoreographyEnvelopeNodeDefinition(), {
-    id: 'bpmn-choreography-envelope',
-    name: 'Choreography Envelope',
-    subPackage: 'choreography',
-    size: {
-      w: 40,
-      h: 20
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNLane(), {
-    id: 'bpmn-vertical-lane',
-    name: 'Vertical Lane',
-    subPackage: 'collaboration',
-    size: {
-      w: 100,
-      h: 400
-    },
-    texts: {
-      text: 'Lane'
-    },
-    props: () => {
-      return {
-        custom: {
-          swimlane: {
-            title: true
-          }
-        }
-      };
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNLane(), {
-    id: 'bpmn-horizonal-lane',
-    name: 'Horizontal Lane',
-    subPackage: 'collaboration',
-    size: {
-      w: 400,
-      h: 100
-    },
-    texts: {
-      text: 'Lane'
-    },
-    props: () => {
-      return {
-        custom: {
-          swimlane: {
-            title: true,
-            orientation: 'horizontal'
-          }
-        }
-      };
-    }
-  });
-  addStencil(bpmnStencils, new BPMNLane(), {
-    id: 'bpmn-vertical-pool',
-    name: 'Vertical Pool',
-    subPackage: 'collaboration',
-    size: {
-      w: 200,
-      h: 400
-    },
-    texts: {
-      text: 'Pool'
-    },
-    props: () => {
-      return {
-        custom: {
-          swimlane: {
-            title: true
-          }
-        },
-        layout: {
-          container: {
-            enabled: true,
-            autoShrink: true,
-            direction: 'horizontal',
-            alignItems: 'stretch'
-          }
-        }
-      };
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNLane(), {
-    id: 'bpmn-horizonal-pool',
-    name: 'Horizontal Pool',
-    subPackage: 'collaboration',
-    size: {
-      w: 400,
-      h: 200
-    },
-    texts: {
-      text: 'Pool'
-    },
-    props: () => {
-      return {
-        custom: {
-          swimlane: {
-            title: true,
-            orientation: 'horizontal'
-          }
-        },
-        layout: {
-          container: {
-            enabled: true,
-            autoShrink: true,
-            direction: 'vertical',
-            alignItems: 'stretch'
-          }
-        }
-      };
-    }
-  });
-
-  addStencil(bpmnStencils, new BPMNConversationEdgeDefinition(), {
-    id: 'bpmn-conversation-edge',
-    name: 'Conversation Edge',
-    subPackage: 'collaboration',
-    size: {
-      w: 10,
-      h: 10
-    }
-  });
-
-  loadStencilsFromYaml(stencils).forEach(s => {
+  loadStencilsFromYaml(bpmnChoreographyStencils).forEach(s => {
     bpmnStencils.stencils.push(s);
     bpmnStencils.subPackages!.find(p => p.id === 'choreography')?.stencils.push(s);
   });
+
+  /* *********************************************************************** */
+  /* CHOREOGRAPHY ADVANCED PACKAGE                                           */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(bpmnChoreographyAdvancedStencils).forEach(s => {
+    bpmnStencils.stencils.push(s);
+    bpmnStencils.subPackages!.find(p => p.id === 'choreography-advanced')?.stencils.push(s);
+  });
+
+  addStencilToSubpackage(
+    'choreography-advanced',
+    bpmnStencils,
+    new BPMNChoreographyActivityNodeDefinition(),
+    {
+      id: 'bpmn-choreography',
+      name: 'Choreography',
+      size: {
+        w: 100,
+        h: 100
+      }
+    }
+  );
+
+  addStencilToSubpackage(
+    'choreography-advanced',
+    bpmnStencils,
+    new BPMNChoreographyActivityParticipantNodeDefinition(),
+    {
+      id: 'bpmn-choreography-participant',
+      name: 'Choreography Participant',
+      size: {
+        w: 100,
+        h: 30
+      },
+      texts: {
+        text: 'Participant'
+      }
+    }
+  );
+
+  addStencilToSubpackage(
+    'choreography-advanced',
+    bpmnStencils,
+    new BPMNChoreographyActivityNameNodeDefinition(),
+    {
+      id: 'bpmn-choreography-name',
+      name: 'Choreography Activity Name',
+      size: {
+        w: 100,
+        h: 30
+      },
+      texts: {
+        text: 'Task'
+      }
+    }
+  );
+
+  addStencilToSubpackage(
+    'choreography-advanced',
+    bpmnStencils,
+    new BPMNChoreographyEnvelopeNodeDefinition(),
+    {
+      id: 'bpmn-choreography-envelope',
+      name: 'Choreography Envelope',
+      size: {
+        w: 40,
+        h: 20
+      }
+    }
+  );
 
   registry.stencils.register(bpmnStencils, true);
 };
