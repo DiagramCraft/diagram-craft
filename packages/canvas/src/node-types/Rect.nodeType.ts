@@ -8,8 +8,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Box } from '@diagram-craft/geometry/box';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { _p } from '@diagram-craft/geometry/point';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 
 // NodeProps extension for custom props *****************************************
 
@@ -64,15 +63,10 @@ class RectComponent extends BaseNodeComponent<RectNodeDefinition> {
       const gap = props.nodeProps.custom.rect.doubleBorderGap;
       const innerBounds = Box.grow(props.node.bounds, -gap);
 
-      const innerRect = new PathListBuilder()
-        .withTransform(fromUnitLCS(innerBounds))
-        .moveTo(_p(0, 0))
-        .lineTo(_p(1, 0))
-        .lineTo(_p(1, 1))
-        .lineTo(_p(0, 1))
-        .close();
+      const b = new PathListBuilder();
+      PathBuilderHelper.rect(b, innerBounds);
 
-      shapeBuilder.path(innerRect.getPaths().all(), undefined, {
+      shapeBuilder.path(b.getPaths().all(), undefined, {
         style: { fill: 'none' }
       });
     }

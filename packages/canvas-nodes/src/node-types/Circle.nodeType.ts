@@ -49,6 +49,16 @@ const propDoubleBorderGap = (node: DiagramNode) =>
 
 // NodeDefinition and Shape *****************************************************
 
+const buildCirclePath = (bounds: Box): PathListBuilder => {
+  return new PathListBuilder()
+    .withTransform(fromUnitLCS(bounds))
+    .moveTo(_p(0.5, 0))
+    .arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1)
+    .arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1)
+    .arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1)
+    .arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
+};
+
 export class CircleNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('circle', 'Circle', CircleComponent);
@@ -65,13 +75,7 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const b = new PathListBuilder().withTransform(fromUnitLCS(def.bounds));
-    b.moveTo(_p(0.5, 0));
-    b.arcTo(_p(1, 0.5), 0.5, 0.5, 0, 0, 1);
-    b.arcTo(_p(0.5, 1), 0.5, 0.5, 0, 0, 1);
-    b.arcTo(_p(0, 0.5), 0.5, 0.5, 0, 0, 1);
-    b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
-    return b;
+    return buildCirclePath(def.bounds);
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {
@@ -89,18 +93,8 @@ class CircleComponent extends BaseNodeComponent<CircleNodeDefinition> {
     if (doubleBorder) {
       const gap = props.nodeProps.custom.circle.doubleBorderGap;
       const innerBounds = Box.grow(props.node.bounds, -gap);
-      const cx = innerBounds.x + innerBounds.w / 2;
-      const cy = innerBounds.y + innerBounds.h / 2;
-      const rx = innerBounds.w / 2;
-      const ry = innerBounds.h / 2;
 
-      const innerCircle = new PathListBuilder()
-        .moveTo({ x: cx + rx, y: cy })
-        .arcTo({ x: cx - rx, y: cy }, rx, ry, 0, 0, 0)
-        .arcTo({ x: cx + rx, y: cy }, rx, ry, 0, 0, 0)
-        .close();
-
-      shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
+      shapeBuilder.path(buildCirclePath(innerBounds).getPaths().all(), undefined, {
         style: { fill: 'none' }
       });
     }

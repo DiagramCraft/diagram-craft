@@ -12,7 +12,6 @@ import {
   CustomPropertyDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { Box } from '@diagram-craft/geometry/box';
 
 // NodeProps extension for custom props *****************************************
 
