@@ -55,6 +55,15 @@ export const defaultAppConfig: AppConfig = {
         type: 'basic',
         opts: {
           loader: () =>
+            import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
+              m => m.registerDataModellingStencils
+            )
+        }
+      },
+      {
+        type: 'basic',
+        opts: {
+          loader: () =>
             import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
               m => m.registerUMLStencils
             )
