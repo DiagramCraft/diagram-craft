@@ -105,6 +105,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       <Menu.Separator />
 
       <Menu.SubMenu label={'Debug'}>
+        <ActionMenuItem action={'STENCIL_MAKE_STENCIL'} />
         <ActionMenuItem action={'SELECTION_DUMP'} />
         <ActionMenuItem action={'SELECTION_REDRAW'} />
       </Menu.SubMenu>
