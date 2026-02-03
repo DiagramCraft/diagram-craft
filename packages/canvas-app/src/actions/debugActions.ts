@@ -63,9 +63,9 @@ class MakeStencilSelectionAction extends AbstractAction {
       transformElements(cloned, [new Translation(_p(-bb.x, -bb.y))], uow)
     );
 
-    const root: { stencils: Array<SerializedElement> } = { stencils: [] };
+    const root: { elements: Array<SerializedElement> } = { elements: [] };
     cloned.forEach(e => {
-      root.stencils.push(cleanStencil(serializeDiagramElement(e)));
+      root.elements.push(cleanStencil(serializeDiagramElement(e)));
     });
 
     console.log(toYAML(root));
@@ -74,7 +74,7 @@ class MakeStencilSelectionAction extends AbstractAction {
 
 const cleanStencil = (s: SerializedElement) => {
   if (s.type === 'node') {
-    s.anchors = [];
+    delete s.anchors;
   }
   s.children?.forEach(cleanStencil);
 

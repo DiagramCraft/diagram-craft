@@ -1,0 +1,197 @@
+stencils:
+  - id: 'bpmn-choreography-task'
+    name: Choreography Task
+    node:
+      id: kr70aj9
+      type: node
+      nodeType: bpmnChoreographyActivity
+      bounds:
+        x: 0
+        'y': 0
+        w: 100
+        h: 90
+        r: 0
+      children:
+        - id: ogt6893
+          type: node
+          nodeType: bpmnChoreographyActivityParticipant
+          bounds:
+            x: 0
+            'y': 0
+            w: 100
+            h: 20
+            r: 0
+          props:
+            fill:
+              color: 'rgba(0, 0, 0, 0.1)'
+          texts:
+            text: Participant 1
+        - id: er40je9
+          type: node
+          nodeType: bpmnChoreographyActivityName
+          bounds:
+            x: 0
+            'y': 20
+            w: 100
+            h: 50
+            r: 0
+          props:
+            text:
+              bottom: 6
+          texts:
+            text: Task
+        - id: uqpekzd
+          type: node
+          nodeType: bpmnChoreographyActivityParticipant
+          bounds:
+            x: 0
+            'y': 70
+            w: 100
+            h: 20
+            r: 0
+          props:
+            custom:
+              bpmnChoreographyActivityParticipant:
+                position: bottom
+          texts:
+            text: Participant 2
+      props: { }
+      texts:
+        text: ''
+
+  - id: 'bpmn-choreography-task-with-decorator'
+    name: Choreography Task with Decorator
+    elements:
+      - id: 6eagxb2
+        type: node
+        nodeType: bpmnChoreographyActivity
+        bounds:
+          x: 0
+          y: 60
+          w: 100
+          h: 90
+          r: 0
+          _discriminator:
+        children:
+          - id: krr4xtq
+            type: node
+            nodeType: bpmnChoreographyActivityParticipant
+            bounds:
+              x: 0
+              y: 0
+              w: 100
+              h: 20
+              r: 0
+            props: { }
+            texts:
+              text: Participant
+          - id: 4dfccms
+            type: node
+            nodeType: bpmnChoreographyActivityName
+            bounds:
+              x: 0
+              y: 60
+              w: 100
+              h: 50
+              r: 0
+            props:
+              text:
+                bottom: 6
+            texts:
+              text: Task
+          - id: uilqc6z
+            type: node
+            nodeType: bpmnChoreographyActivityParticipant
+            bounds:
+              x: 0
+              y: 130
+              w: 100
+              h: 20
+              r: 0
+            props:
+              custom:
+                bpmnChoreographyActivityParticipant:
+                  position: bottom
+            texts:
+              text: Participant
+        props: { }
+        texts:
+          text: ""
+      - id: tsbl9cd
+        type: node
+        nodeType: bpmnChoreographyEnvelope
+        bounds:
+          x: 30
+          y: 0
+          w: 40
+          h: 20
+          r: 0
+        props: { }
+        texts:
+          text: ""
+      - id: 3n4zsfd
+        type: node
+        nodeType: bpmnChoreographyEnvelope
+        bounds:
+          x: 30
+          y: 190
+          w: 40
+          h: 20
+          r: 0
+        props: { }
+        texts:
+          text: ""
+      - id: xs07l16
+        type: edge
+        start:
+          anchor: c
+          node:
+            id: krr4xtq
+          position:
+            x: 50
+            y: 120
+          offset:
+            x: 0
+            y: 0
+        end:
+          anchor: 500_1000
+          node:
+            id: tsbl9cd
+          position:
+            x: 50
+            y: 20
+          offset:
+            x: 0
+            y: 0
+        props:
+          stroke:
+            color: var(--canvas-fg)
+            pattern: DOTTED
+            patternSpacing: 50
+          type: straight
+      - id: t47k7br
+        type: edge
+        start:
+          anchor: c
+          node:
+            id: uilqc6z
+          position:
+            x: 50
+            y: 140
+          offset:
+            x: 0
+            y: 0
+        end:
+          anchor: c
+          node:
+            id: 3n4zsfd
+          position:
+            x: 50
+            y: 200
+          offset:
+            x: 0
+            y: 0
+        props:
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50

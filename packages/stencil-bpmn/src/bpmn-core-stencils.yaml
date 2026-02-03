@@ -1,0 +1,83 @@
+stencils:
+  - id: 'bpmn-core-annotation-left'
+    title: 'BPMN Core Annotation Left'
+    elements:
+      - id: zuribv0
+        type: node
+        nodeType: bpmnAnnotation
+        bounds:
+          x: 40
+          y: 0
+          w: 100
+          h: 40
+          r: 0
+        props:
+          fill:
+            enabled: false
+          text:
+            align: left
+            left: 24
+            right: 24
+        texts:
+          text: Annotation
+      - id: py06q1j
+        type: edge
+        start:
+          anchor: "4"
+          node:
+            id: zuribv0
+          position:
+            x: 40
+            y: 20
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 0
+            y: 80
+        props: { }
+
+  - id: 'bpmn-core-annotation-right'
+    title: 'BPMN Core Annotation Right'
+    elements:
+      - id: yzeprk6
+        type: node
+        nodeType: bpmnAnnotation
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 40
+          r: 0
+        children: [ ]
+        props:
+          fill:
+            enabled: false
+          text:
+            align: left
+            left: 24
+            right: 24
+          custom:
+            bpmnAnnotation:
+              bracketPosition: right
+        texts:
+          text: Annotation
+      - id: esebmxy
+        type: edge
+        start:
+          anchor: "4"
+          node:
+            id: yzeprk6
+          position:
+            x: 100
+            y: 20
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 140
+            y: 80
+        props: { }
+
