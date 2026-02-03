@@ -23,6 +23,7 @@ import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Pr
 import { ArrowNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arrow.nodeType';
 import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cylinder.nodeType';
 import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
+import { ArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arc.nodeType';
 import { BlockArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/BlockArc.nodeType';
 import { CloudNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cloud.nodeType';
 import { BlockArrowEdgeDefinition } from '@diagram-craft/canvas-edges/edge-types/BlockArrow.edgeType';
@@ -53,6 +54,7 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
   reg.register(new ArrowNodeDefinition('arrow-right', 'Arrow Right', 0));
   reg.register(new ArrowNodeDefinition('arrow-up', 'Arrow Up', -Math.PI / 2));
+  reg.register(new ArcNodeDefinition());
   reg.register(new BlockArcNodeDefinition());
   reg.register(new CircleNodeDefinition());
   reg.register(new CloudNodeDefinition());
@@ -145,6 +147,7 @@ export const defaultStencilRegistry = () => {
   addStencil(defaults, new CylinderNodeDefinition());
   addStencil(defaults, new CurlyBracketNodeDefinition(), { size: { w: 35, h: 100 } });
   addStencil(defaults, new BlockArcNodeDefinition());
+  addStencil(defaults, new ArcNodeDefinition());
   addStencil(defaults, new CloudNodeDefinition(), { size: { w: 100, h: 70 } });
   addStencil(defaults, new StepNodeDefinition());
   addStencil(defaults, new LineNodeDefinition());

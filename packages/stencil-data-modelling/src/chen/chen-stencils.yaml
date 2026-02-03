@@ -1,0 +1,462 @@
+stencils:
+  - id: 'chen-entity'
+    name: Entity
+    elements:
+      - id: d5buhl3
+        type: node
+        nodeType: rect
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        props:
+          text:
+            textTransform: uppercase
+        texts:
+          text: Entity
+  - id: 'chen-entity-weak'
+    name: Weak Entity
+    elements:
+      - id: qky8cqh
+        type: node
+        nodeType: rect
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        children: [ ]
+        props:
+          text:
+            textTransform: uppercase
+          custom:
+            rect:
+              doubleBorder: true
+        texts:
+          text: Weak Entity
+  - id: 'chen-attribute'
+    name: Attribute
+    elements:
+      - id: hfj0rg7
+        type: node
+        nodeType: circle
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        props: { }
+        texts:
+          text: Attribute
+  - id: 'chen-attribute-identifier'
+    name: Attribute Identifier
+    elements:
+      - id: hfj0rg7
+        type: node
+        nodeType: circle
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        props:
+          text:
+            textDecoration: underline
+        texts:
+          text: Identifier
+  - id: 'chen-attribute-derived'
+    name: Attribute Derived
+    elements:
+      - id: ugfelf4
+        type: node
+        nodeType: circle
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        props:
+          stroke:
+            pattern: DASHED
+        texts:
+          text: Derived
+  - id: 'chen-attribute-multi-valued'
+    name: Attribute Multi-Valued
+    elements:
+      - id: 1mm6x0w
+        type: node
+        nodeType: circle
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 50
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            circle:
+              doubleBorder: true
+        texts:
+          text: Names
+  - id: 'chen-relationship'
+    name: Relationship
+    elements:
+      - id: wnllb3c
+        type: node
+        nodeType: diamond
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 45
+          r: 0
+        props: { }
+        texts:
+          text: Relationship
+  - id: 'chen-relationship-weak'
+    name: Relationship Weak
+    elements:
+      - id: rrzjb28
+        type: node
+        nodeType: diamond
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 45
+          r: 0
+        props:
+          custom:
+            diamond:
+              doubleBorder: true
+        texts:
+          text: Relationship
+  - id: 'chen-subtype'
+    name: Subtype
+    elements:
+      - id: dnh16cj
+        type: node
+        nodeType: triangle
+        bounds:
+          x: 15
+          y: 20
+          w: 30
+          h: 60
+          r: 1.5707963267948966
+        props: { }
+        texts:
+          text: ""
+      - id: nmeq2s8
+        type: edge
+        start:
+          anchor: 0_500
+          node:
+            id: dnh16cj
+          position:
+            x: 30
+            y: 35
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 30
+            y: 0
+        props: { }
+      - id: 1qr17hl
+        type: edge
+        start:
+          anchor: 500_250
+          node:
+            id: dnh16cj
+          position:
+            x: 45
+            y: 50
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 60
+            y: 80
+        props: { }
+      - id: dqiawzf
+        type: edge
+        start:
+          anchor: 500_750
+          node:
+            id: dnh16cj
+          position:
+            x: 15
+            y: 50
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 0
+            y: 80
+        props: { }
+  - id: 'chen-subtype-exclusive'
+    name: Subtype Exclusive
+    elements:
+      - id: su1nzir
+        type: node
+        nodeType: triangle
+        bounds:
+          x: 20
+          y: 20
+          w: 30
+          h: 60
+          r: 1.5707963267948966
+        props: { }
+        texts:
+          text: ""
+      - id: aspipar
+        type: node
+        nodeType: arc
+        bounds:
+          x: 0
+          y: 40
+          w: 70
+          h: 30
+          r: 0
+        props:
+          custom:
+            arc:
+              endAngle: 0
+              startAngle: -180
+          fill:
+            enabled: false
+      - id: flcdgzg
+        type: edge
+        start:
+          anchor: c
+          node:
+            id: su1nzir
+          position:
+            x: 35
+            y: 50
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 35
+            y: 0
+        props: { }
+      - id: 01sytet
+        type: edge
+        start:
+          anchor: c
+          node:
+            id: su1nzir
+          position:
+            x: 35
+            y: 50
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 65
+            y: 80
+        props: { }
+      - id: w1xagj4
+        type: edge
+        start:
+          anchor: c
+          node:
+            id: su1nzir
+          position:
+            x: 35
+            y: 50
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 5
+            y: 80
+        props: { }
+  - id: 'chen-edge'
+    name: Edge
+    elements:
+      - id: wmzdx6j
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0.19212283671799923
+        end:
+          position:
+            x: 80.04491026377156
+            y: 0
+        props: { }
+  - id: 'chen-edge-1-1'
+    name: 1-1 Edge
+    elements:
+      - id: wmzdx6j
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0.19212283671799923
+        end:
+          position:
+            x: 80.04491026377156
+            y: 0
+        labelNodes:
+          - id: b6ngpoh
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.81
+        props: { }
+        children:
+          - id: b6ngpoh
+            type: node
+            nodeType: text
+            bounds:
+              x: 213.2914670498834
+              y: 1144.0365033389764
+              r: 0
+              h: 12
+              w: 23
+            props:
+              text:
+                align: center
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+            texts:
+              text: "(1, 1)"
+  - id: 'chen-edge-0-1'
+    name: 0-1 Edge
+    elements:
+      - id: wmzdx6j
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0.19212283671799923
+        end:
+          position:
+            x: 80.04491026377156
+            y: 0
+        labelNodes:
+          - id: b6ngpoh
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.81
+        props: { }
+        children:
+          - id: b6ngpoh
+            type: node
+            nodeType: text
+            bounds:
+              x: 213.2914670498834
+              y: 1144.0365033389764
+              r: 0
+              h: 12
+              w: 23
+            props:
+              text:
+                align: center
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+            texts:
+              text: "(0, 1)"
+  - id: 'chen-edge-1-M'
+    name: 1-M Edge
+    elements:
+      - id: wmzdx6j
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0.19212283671799923
+        end:
+          position:
+            x: 80.04491026377156
+            y: 0
+        labelNodes:
+          - id: b6ngpoh
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.81
+        props: { }
+        children:
+          - id: b6ngpoh
+            type: node
+            nodeType: text
+            bounds:
+              x: 213.2914670498834
+              y: 1144.0365033389764
+              r: 0
+              h: 12
+              w: 23
+            props:
+              text:
+                align: center
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+            texts:
+              text: "(1, M)"
+  - id: 'chen-edge-0-M'
+    name: 0-M Edge
+    elements:
+      - id: wmzdx6j
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0.19212283671799923
+        end:
+          position:
+            x: 80.04491026377156
+            y: 0
+        labelNodes:
+          - id: b6ngpoh
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.81
+        props: { }
+        children:
+          - id: b6ngpoh
+            type: node
+            nodeType: text
+            bounds:
+              x: 213.2914670498834
+              y: 1144.0365033389764
+              r: 0
+              h: 12
+              w: 23
+            props:
+              text:
+                align: center
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+            texts:
+              text: "(0, M)"

@@ -8,6 +8,46 @@ import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBu
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Anchor } from '@diagram-craft/model/anchor';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { Box } from '@diagram-craft/geometry/box';
+
+// NodeProps extension for custom props *****************************************
+
+type ExtraProps = {
+  doubleBorder?: boolean;
+  doubleBorderGap?: number;
+};
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      circle?: ExtraProps;
+    }
+  }
+}
+
+registerCustomNodeDefaults('circle', {
+  doubleBorder: false,
+  doubleBorderGap: 5
+});
+
+// Custom properties ************************************************************
+
+const propDoubleBorder = (node: DiagramNode) =>
+  CustomProperty.node.boolean(node, 'Double Border', 'custom.circle.doubleBorder');
+
+const propDoubleBorderGap = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Double Border Gap', 'custom.circle.doubleBorderGap', {
+    minValue: 1,
+    maxValue: 50,
+    unit: 'px'
+  });
+
+// NodeDefinition and Shape *****************************************************
 
 export class CircleNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -33,13 +73,38 @@ export class CircleNodeDefinition extends ShapeNodeDefinition {
     b.arcTo(_p(0.5, 0), 0.5, 0.5, 0, 0, 1);
     return b;
   }
+
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [propDoubleBorder(node), propDoubleBorderGap(node)]);
+  }
 }
 
-class CircleComponent extends BaseNodeComponent {
+class CircleComponent extends BaseNodeComponent<CircleNodeDefinition> {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    const boundary = new CircleNodeDefinition().getBoundingPathBuilder(props.node).getPaths();
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
 
     shapeBuilder.boundaryPath(boundary.all());
+
+    const doubleBorder = props.nodeProps.custom.circle.doubleBorder;
+    if (doubleBorder) {
+      const gap = props.nodeProps.custom.circle.doubleBorderGap;
+      const innerBounds = Box.grow(props.node.bounds, -gap);
+      const cx = innerBounds.x + innerBounds.w / 2;
+      const cy = innerBounds.y + innerBounds.h / 2;
+      const rx = innerBounds.w / 2;
+      const ry = innerBounds.h / 2;
+
+      const innerCircle = new PathListBuilder()
+        .moveTo({ x: cx + rx, y: cy })
+        .arcTo({ x: cx - rx, y: cy }, rx, ry, 0, 0, 0)
+        .arcTo({ x: cx + rx, y: cy }, rx, ry, 0, 0, 0)
+        .close();
+
+      shapeBuilder.path(innerCircle.getPaths().all(), undefined, {
+        style: { fill: 'none' }
+      });
+    }
+
     shapeBuilder.text(this);
   }
 }
