@@ -15,12 +15,24 @@ import { AppConfig } from './appConfig';
 import { ElectronIntegration } from './electron';
 import { Autosave } from './react-app/autosave/Autosave';
 import { registerDefaultEffects } from '@diagram-craft/canvas/effects/effects';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import { markdownToHTML } from '@diagram-craft/markdown';
+import { htmlStringToMarkdown } from '@diagram-craft/markdown';
 
 ELECTRON: {
   if (window.electronAPI) {
     ElectronIntegration.init();
   }
 }
+
+ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS = {
+  format: 'Markdown',
+  dialog: {
+    editToStored: (s: string) => markdownToHTML(s),
+    storedToEdit: (s: string) => htmlStringToMarkdown(s),
+    storedToHTML: (s: string) => s
+  }
+};
 
 const elementDefConfig = AppConfig.get().elementDefinitions?.registry ?? [];
 

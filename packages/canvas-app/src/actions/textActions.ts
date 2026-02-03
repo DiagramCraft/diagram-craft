@@ -7,8 +7,8 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { htmlStringToMarkdown, markdownToHTML } from '@diagram-craft/markdown';
 import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 declare global {
   namespace DiagramCraft {
@@ -169,31 +169,36 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
     // Get the current HTML text content
     const currentHtmlText = selectedItem.texts.text ?? '';
 
-    // Convert HTML to Markdown for editing
-    let markdownText = '';
+    const def = selectedItem.getDefinition() as ShapeNodeDefinition;
+    const textHandler = def.getTextHandler(selectedItem);
+
+    // Convert HTML to edit format for editing
+    let structuredText = '';
     try {
-      markdownText = currentHtmlText ? htmlStringToMarkdown(currentHtmlText) : '';
+      structuredText = currentHtmlText ? textHandler.dialog.storedToEdit(currentHtmlText) : '';
     } catch (_error) {
-      markdownText = currentHtmlText;
+      structuredText = currentHtmlText;
     }
 
     this.context.ui.showDialog(
       new StringInputDialogCommand(
         {
-          label: 'Text (Markdown)',
+          label: 'Text',
           title: 'Edit text',
-          description: 'Enter text using Markdown syntax. It will be converted to HTML when saved.',
-          value: markdownText,
+          description: `Enter text${textHandler.format ? ` using ${textHandler.format} syntax` : ''}. It will be converted to HTML when saved.`,
+          value: structuredText,
           saveButtonLabel: 'Save',
           type: 'text'
         },
-        (markdownInput: string) => {
-          // Convert Markdown back to HTML for storage
+        (structuredTextInput: string) => {
+          // Convert edit format back to HTML for storage
           let htmlOutput = '';
           try {
-            htmlOutput = markdownInput ? markdownToHTML(markdownInput) : '';
+            htmlOutput = structuredTextInput
+              ? textHandler.dialog.editToStored(structuredTextInput)
+              : '';
           } catch (_error) {
-            htmlOutput = markdownInput;
+            htmlOutput = structuredTextInput;
           }
 
           UnitOfWork.executeWithUndo(selectedItem.diagram, 'Edit text', uow =>

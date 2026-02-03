@@ -25,8 +25,28 @@ export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
+export type TextHandler = {
+  storedToEdit: (s: string) => string;
+  editToStored: (e: string) => string;
+  storedToHTML: (e: string) => string;
+};
+
+type TextHandlers = {
+  format?: string;
+  dialog: TextHandler;
+  inline?: TextHandler;
+};
+
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   private flags: Record<NodeFlag, boolean> = {};
+
+  public static DEFAULT_TEXT_HANDLERS: TextHandlers = {
+    dialog: {
+      editToStored: (s: string) => s,
+      storedToEdit: (s: string) => s,
+      storedToHTML: (s: string) => s
+    }
+  };
 
   public readonly name: string;
   public readonly type: string;
@@ -89,6 +109,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     const pathBuilder = new PathListBuilder();
     PathBuilderHelper.rect(pathBuilder, node.bounds);
     return pathBuilder;
+  }
+
+  getTextHandler(_node: DiagramNode): TextHandlers {
+    return ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS;
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {
