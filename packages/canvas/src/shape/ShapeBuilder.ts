@@ -22,7 +22,7 @@ import { makeShadowFilter } from '../effects/shadow';
 import { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 import { SVGGBuilder } from './SVGGBuilder';
 import { newid } from '@diagram-craft/utils/id';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
@@ -112,6 +112,7 @@ export class ShapeBuilder {
         cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
           key: `text_${id}_${this.props.element.id}`,
           id: `text_${id}_${this.props.element.id}`,
+          node: this.props.element,
           metadata: this.props.element.dataForTemplate,
           textProps: textProps ?? (this.props.elementProps as NodeProps).text,
           text: text ?? this.props.element.getText(),
@@ -240,8 +241,10 @@ export class ShapeBuilder {
     ) {
       return;
     }
+
+    assert.node(this.props.element);
     return (e?: MouseEvent) => {
-      ShapeText.edit(textId, this.props.element.id);
+      ShapeText.edit(textId, this.props.element as DiagramNode);
       e?.preventDefault?.();
       e?.stopPropagation?.();
     };

@@ -119,6 +119,9 @@ importers:
       '@diagram-craft/geometry':
         specifier: workspace:^
         version: link:../geometry
+      '@diagram-craft/markdown':
+        specifier: workspace:^
+        version: link:../markdown
       '@diagram-craft/model':
         specifier: workspace:^
         version: link:../model
