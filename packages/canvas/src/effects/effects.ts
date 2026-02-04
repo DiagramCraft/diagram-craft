@@ -11,7 +11,7 @@ import { applySketchEffectToArrow, SketchPathRenderer } from './sketch';
 import { RoundingPathRenderer } from './rounding';
 import type { ArrowShape } from '../arrowShapes';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
-import type { PathRenderer } from '../shape/PathRenderer';
+import type { PathRenderer, RenderedStyledPath, StyledPath } from '../shape/PathRenderer';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { DASH_PATTERNS } from '../dashPatterns';
 import * as svg from '../component/vdom-svg';
@@ -127,6 +127,37 @@ export const registerDefaultEffects = () => {
           repeatCount: 'indefinite'
         })
       ];
+    }
+  });
+
+  // Dash offset
+  EffectsRegistry.register({
+    isUsedForNode: () => false,
+    isUsedForEdge: props =>
+      props.effects?.dashOffset !== undefined && props.effects?.dashOffset !== 0,
+    getPathRenderer: () => {
+      class OffsetPathRenderer implements PathRenderer {
+        render(node: DiagramElement, path: StyledPath): RenderedStyledPath[] {
+          const offset = (node as DiagramEdge).renderProps.effects?.dashOffset ?? 20;
+
+          const pathLen = path.path.length();
+
+          const dashLength = (path.style.strokeDasharray ?? '')
+            .split(',')
+            .reduce((a, b) => a + parseInt(b, 10), 0);
+          const offsetLength = Math.min(Math.abs(offset) * dashLength, pathLen / 2);
+          const remainingLength = pathLen - offsetLength;
+
+          const count = Math.floor(offsetLength / dashLength);
+
+          const dashes = `,${path.style.strokeDasharray}`.repeat(count).slice(1);
+          path.style.strokeDasharray =
+            offset > 0 ? `${dashes},${remainingLength},0` : `${remainingLength},0,${dashes}`;
+
+          return [{ path: path.path.asSvgPath(), style: path.style }];
+        }
+      }
+      return new OffsetPathRenderer();
     }
   });
 };

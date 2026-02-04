@@ -420,7 +420,8 @@ const _edgeDefaults: Omit<EdgePropsForRendering, 'custom' | 'shape' | 'indicator
     marchingAnts: false,
     marchingAntsSpeed: 0.25,
     rounding: false,
-    roundingAmount: 10
+    roundingAmount: 10,
+    dashOffset: 0
   },
   spacing: {
     start: 0,

@@ -9,6 +9,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 
 type FormProps = {
   opacity: Property<number>;
@@ -18,6 +19,7 @@ type FormProps = {
   marchingAntsSpeed: Property<number>;
   rounding: Property<boolean>;
   roundingAmount: Property<number>;
+  dashOffset: Property<number>;
 };
 
 export const EdgeEffectsPanelForm = ({
@@ -27,7 +29,8 @@ export const EdgeEffectsPanelForm = ({
   marchingAnts,
   marchingAntsSpeed,
   rounding,
-  roundingAmount
+  roundingAmount,
+  dashOffset
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
@@ -99,6 +102,18 @@ export const EdgeEffectsPanelForm = ({
           </div>
         </div>
       </Collapsible>
+
+      <Collapsible label={'Dash Offset'} defaultOpen={dashOffset.isSet && dashOffset.val !== 0}>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label'}>Offset:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={dashOffset}
+              render={props => <NumberInput {...props} numberOfDecimals={0} min={-10} max={10} />}
+            />
+          </div>
+        </div>
+      </Collapsible>
     </div>
   );
 };
@@ -121,6 +136,8 @@ export const EdgeEffectsPanel = (props: Props) => {
   const rounding = useEdgeProperty($d, 'effects.rounding');
   const roundingAmount = useEdgeProperty($d, 'effects.roundingAmount');
 
+  const dashOffset = useEdgeProperty($d, 'effects.dashOffset');
+
   useEventListener($d.selection, 'change', redraw);
 
   return (
@@ -138,6 +155,7 @@ export const EdgeEffectsPanel = (props: Props) => {
         marchingAntsSpeed={marchingAntsSpeed}
         rounding={rounding}
         roundingAmount={roundingAmount}
+        dashOffset={dashOffset}
       />
     </ToolWindowPanel>
   );

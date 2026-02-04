@@ -20,6 +20,7 @@ export const EdgeEffectsEditor: Editor = props => {
       marchingAntsSpeed={makeProperty($p, 'effects.marchingAntsSpeed', edgeDefaults, onChange)}
       rounding={makeProperty($p, 'effects.rounding', edgeDefaults, onChange)}
       roundingAmount={makeProperty($p, 'effects.roundingAmount', edgeDefaults, onChange)}
+      dashOffset={makeProperty($p, 'effects.dashOffset', edgeDefaults, onChange)}
     />
   );
 };
