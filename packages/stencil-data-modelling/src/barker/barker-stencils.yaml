@@ -55,3 +55,91 @@ stencils:
             textTransform: uppercase
         texts:
           text: Job
+
+  - id: 'barker-edge-zero-or-one'
+    name: Zero or One
+    elements:
+      - id: xg5ch7r
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 120
+            y: 0
+        props:
+          stroke:
+            pattern: DASHED
+            patternSize: 75
+            patternSpacing: 50
+          effects:
+            dashOffset: 5
+
+  - id: 'barker-edge-only-one'
+    name: Only One
+    elements:
+      - id: hke5s6v
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 120.04491026377156
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            pattern: SOLID
+            patternSize: 75
+            patternSpacing: 50
+
+  - id: 'barker-edge-zero-or-more'
+    name: Zero or More
+    elements:
+      - id: 7c27wfq
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 120
+            y: 0
+        props:
+          stroke:
+            pattern: DASHED
+            patternSize: 75
+            patternSpacing: 50
+          effects:
+            dashOffset: 5
+          arrow:
+            end:
+              type: CROWS_FEET
+
+  - id: 'barker-edge-one-or-more'
+    name: One or More
+    elements:
+      - id: r5by8dm
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 120
+            y: 0
+        props:
+          stroke:
+            pattern: SOLID
+            patternSize: 75
+            patternSpacing: 50
+          arrow:
+            end:
+              type: CROWS_FEET
