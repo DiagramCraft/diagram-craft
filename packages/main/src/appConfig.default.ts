@@ -33,7 +33,7 @@ export const defaultAppConfig: AppConfig = {
           )
       },
       {
-        shapes: /^(dataModelling[A-Z][a-zA-Z]+)$/,
+        shapes: /^(dataModelling[A-Z][a-zA-Z0-9]+)$/,
         nodeDefinitionLoader: () =>
           import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
             m => m.registerDataModellingNodes

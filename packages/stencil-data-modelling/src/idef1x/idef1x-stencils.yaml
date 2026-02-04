@@ -1,0 +1,567 @@
+stencils:
+  - id: idef1x-stencil
+    name: Stencil
+    elements:
+      - id: s7rzt4g
+        type: node
+        nodeType: dataModellingIDEF1XEntity
+        bounds:
+          x: 0
+          y: 0
+          w: 120
+          h: 79
+          r: 0
+          _discriminator:
+        children:
+          - id: ihb9lvs
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 0
+              w: 120
+              h: 38
+              r: 0
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                valign: top
+                align: left
+                left: 7
+                top: 7
+                right: 7
+                bottom: 7
+            texts:
+              text: "foreign-key (FK)<div>key</div>"
+          - id: ww1kihb
+            type: node
+            nodeType: line
+            bounds:
+              x: 0
+              y: 76
+              w: 120
+              h: 3
+              r: 0
+            props: { }
+            texts:
+              text: ""
+          - id: 8jmf8bb
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 38
+              w: 120
+              h: 38
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                valign: top
+                align: left
+                left: 7
+                top: 7
+                right: 7
+                bottom: 7
+            texts:
+              text: "attribute 1<div>attribute 2</div>"
+        props:
+          text:
+            position: n
+            textTransform: uppercase
+            align: left
+            bottom: 4
+            valign: bottom
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+          custom:
+            dataModellingIDEF1XEntity:
+              dependant: true
+            dataModellingBarkerEntity:
+              size: 16
+        texts:
+          text: Entity
+  - id: idef1x-discriminator-incomplete
+    name: Discriminator Incomplete
+    elements:
+      - id: 091rxu6
+        type: node
+        nodeType: dataModellingIDEF1XCategoryDiscriminator
+        bounds:
+          x: 0
+          y: 15
+          w: 30
+          h: 30
+          r: 0
+        children: [ ]
+        props: { }
+        texts:
+          text: ""
+      - id: 04p4gas
+        type: edge
+        start:
+          anchor: "1"
+          node:
+            id: 091rxu6
+          position:
+            x: 15
+            y: 15
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 15
+            y: 0
+        props: { }
+        children: [ ]
+      - id: 3vi8p3x
+        type: edge
+        start:
+          position:
+            x: 15
+            y: 60
+        end:
+          anchor: "3"
+          node:
+            id: 091rxu6
+          position:
+            x: 15
+            y: 45
+          offset:
+            x: 0
+            y: 0
+        props:
+          onRemoteChange: { }
+        children: [ ]
+
+  - id: idef1x-discriminator-complete
+    name: Discriminator Complete
+    elements:
+      - id: jzzk1um
+        type: node
+        nodeType: dataModellingIDEF1XCategoryDiscriminator
+        bounds:
+          x: 0
+          y: 15
+          w: 30
+          h: 30
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            dataModellingIDEF1XCategoryDiscriminator:
+              complete: true
+        texts:
+          text: ""
+      - id: 342owpn
+        type: edge
+        start:
+          anchor: "1"
+          node:
+            id: jzzk1um
+          position:
+            x: 15
+            y: 10
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 15
+            y: 0
+        props: { }
+      - id: zqth2ld
+        type: edge
+        start:
+          position:
+            x: 15
+            y: 60
+        end:
+          anchor: "3"
+          node:
+            id: jzzk1um
+          position:
+            x: 15
+            y: 45
+          offset:
+            x: 0
+            y: 0
+        props: { }
+  - id: idef1x-edge-identifying-m2m
+    name: Many to Many
+    elements:
+      - id: 9hkdst1
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252736
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+            start:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+        children: [ ]
+  - id: idef1x-edge-identifying-o2m
+    name: One to Many
+    elements:
+      - id: onp85zs
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252736
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+        children: [ ]
+  - id: idef1x-edge-identifying-o2oz
+    name: One to Zero or One
+    elements:
+      - id: ey2i06g
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252736
+            y: 0
+        labelNodes:
+          - id: anpanwy
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+        children:
+          - id: anpanwy
+            type: node
+            nodeType: text
+            bounds:
+              x: 88.59318177749454
+              y: 723.1092221116742
+              r: 0
+              h: 12
+              w: 6
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: Z
+  - id: idef1x-edge-identifying-o2op
+    name: One to One or More
+    elements:
+      - id: 1307roi
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252736
+            y: 0
+        labelNodes:
+          - id: ui74q86
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+        children:
+          - id: ui74q86
+            type: node
+            nodeType: text
+            bounds:
+              x: 88.09318177749454
+              y: 753.1092221116742
+              r: 0
+              h: 12
+              w: 7
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: P
+  - id: idef1x-edge-identifying-o2o
+    name: One to Exactly n
+    elements:
+      - id: 9wcu3oh
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252736
+            y: 0
+        labelNodes:
+          - id: ba9rlgz
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+        children:
+          - id: ba9rlgz
+            type: node
+            nodeType: text
+            bounds:
+              x: 88.59318177749454
+              y: 783.1092221116742
+              r: 0
+              h: 12
+              w: 6
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: n
+  - id: idef1x-edge-non-identifying-o2m
+    name: One to Many (Non Identifying)
+    elements:
+      - id: o8se3x6
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252734
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        children: [ ]
+  - id: idef1x-edge-non-identifying-o2oz
+    name: One to Zero or One (Non Identifying)
+    elements:
+      - id: dpgmi21
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252734
+            y: 0
+        labelNodes:
+          - id: anpanwy
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        children:
+          - id: anpanwy
+            type: node
+            nodeType: text
+            bounds:
+              x: 210.62727289002186
+              y: 723.1092221116742
+              r: 0
+              h: 12
+              w: 6
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: Z
+  - id: idef1x-edge-non-identifying-o2op
+    name: One to One or More (Non Identifying)
+    elements:
+      - id: nj2i9qj
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252734
+            y: 0
+        labelNodes:
+          - id: ui74q86
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        children:
+          - id: ui74q86
+            type: node
+            nodeType: text
+            bounds:
+              x: 208.09318177749452
+              y: 753.1092221116742
+              r: 0
+              h: 12
+              w: 7
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: P
+  - id: idef1x-edge-non-identifying-o2o
+    name: One to Exactly n (Non Identifying)
+    elements:
+      - id: 74zgavw
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 1.113472360407286
+        end:
+          position:
+            x: 92.03409111252739
+            y: 0
+        labelNodes:
+          - id: ba9rlgz
+            type: horizontal
+            offset:
+              x: 0
+              y: -10
+            timeOffset: 0.8
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_FILLED
+          fill:
+            color: var(--canvas-fg)
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        children:
+          - id: ba9rlgz
+            type: node
+            nodeType: text
+            bounds:
+              x: 208.59318177749452
+              y: 783.1092221116742
+              r: 0
+              h: 12
+              w: 6
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+            texts:
+              text: n
