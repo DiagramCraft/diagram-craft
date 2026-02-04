@@ -31,6 +31,17 @@ export const defaultAppConfig: AppConfig = {
           import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
             m => m.registerUMLShapes
           )
+      },
+      {
+        shapes: /^(dataModelling[A-Z][a-zA-Z]+)$/,
+        nodeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
+            m => m.registerDataModellingNodes
+          ),
+        edgeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
+            m => m.registerDataModellingEdges
+          )
       }
     ]
   },

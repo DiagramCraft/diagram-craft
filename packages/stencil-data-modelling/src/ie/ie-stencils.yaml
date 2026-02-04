@@ -1,0 +1,154 @@
+stencils:
+  - id: 'ie-stencil'
+    name: Stencil
+    elements:
+      - id: 9tu57ur
+        type: node
+        nodeType: boxContainer
+        bounds:
+          x: 0
+          y: 0
+          w: 130
+          h: 80
+          r: 0
+          _discriminator:
+        children:
+          - id: sdejd3j
+            type: node
+            nodeType: dataModellingIeEntityText
+            bounds:
+              x: 0
+              y: 20
+              w: 130
+              h: 60
+              r: 0
+            children: [ ]
+            props:
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+              text:
+                valign: top
+                align: left
+                fontSize: 10
+                lineHeight: 1
+                left: 6
+                right: 6
+                top: 4
+                bottom: 4
+              capabilities:
+                adjustSizeBasedOnText: true
+            texts:
+              text: "employee_id &lt;pi&gt; &lt;M&gt;\nfirst_name\nlast_name &lt;M&gt;\nemail &lt;ai&gt; &lt;M&gt;<br>"
+            tags:
+        props:
+          custom:
+            boxContainer:
+              size: 20
+          text:
+            textTransform: uppercase
+            top: 4
+            bottom: 4
+          layout:
+            container:
+              enabled: true
+              autoShrink: true
+              alignItems: stretch
+              direction: vertical
+        texts:
+          text: Employee
+
+  - id: 'ie-edge-zero-or-one'
+    name: Edge Zero or One
+    elements:
+      - id: zigjha0
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 79
+            y: 1
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BALL_OFFSET
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+  - id: 'ie-edge-one'
+    name: Edge Exactly One
+    elements:
+      - id: zigjha1
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 79
+            y: 1
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: BAR
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+
+  - id: 'ie-edge-zero-or-more'
+    name: Edge Zero or More
+    elements:
+      - id: zigjha3
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 79
+            y: 1
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: CROWS_FEET_BALL
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+  - id: 'ie-edge-one-or-more'
+    name: Edge One or More
+    elements:
+      - id: zigjha4
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 79
+            y: 1
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: CROWS_FEET_BAR
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:

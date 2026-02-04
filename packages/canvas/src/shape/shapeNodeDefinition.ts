@@ -31,7 +31,7 @@ export type TextHandler = {
   storedToHTML: (e: string) => string;
 };
 
-type TextHandlers = {
+export type TextHandlers = {
   format?: string;
   dialog: TextHandler;
   inline?: TextHandler;
