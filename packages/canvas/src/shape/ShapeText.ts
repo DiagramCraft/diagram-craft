@@ -5,7 +5,7 @@ import { rawHTML, VNode } from '../component/vdom';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly } from '@diagram-craft/utils/types';
-import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
+import { hasBlockElements, HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
 import { applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
@@ -61,7 +61,7 @@ const storedToHTML = (
   metadata: DeepReadonly<FlatObject>
 ) => {
   const html = handler ? handler.storedToHTML(s) : s;
-  return stripOuterPTags(applyTemplate(html, metadata, true));
+  return stripOuterPTags(applyTemplate(html, metadata, !hasBlockElements(html)));
 };
 
 export class ShapeText extends Component<ShapeTextProps> {
