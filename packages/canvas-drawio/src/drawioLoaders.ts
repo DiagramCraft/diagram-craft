@@ -1,18 +1,12 @@
 import { FileLoader } from '@diagram-craft/canvas-app/loaders';
 import { drawioReader } from './drawioReader';
-import {
-  NodeDefinitionRegistry,
-  type StencilLoader
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { type StencilLoader } from '@diagram-craft/model/elementDefinitionRegistry';
 import { loadDrawioStencils } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
-      drawioManual: {
-        callback: () => Promise<(def: NodeDefinitionRegistry) => Promise<void>>;
-      };
       drawioXml: {
         name: string;
         url: string;
@@ -23,16 +17,7 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioManual: StencilLoader<'drawioManual'> = async (
-  nodeDefinitions,
-  opts
-) => {
-  await (
-    await opts.callback()
-  )(nodeDefinitions);
-};
-
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDefinitions, opts) => {
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (registry, opts) => {
   const { name, url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
 
@@ -41,13 +26,13 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (nodeDef
     return;
   }
 
-  const stencilRegistry = nodeDefinitions.stencilRegistry;
-  stencilRegistry.register({
+  registry.stencils.register({
     id: name,
     name: name,
-    stencils: drawioStencils.map(toRegularStencil)
+    stencils: drawioStencils.map(toRegularStencil),
+    type: 'drawioXml'
   });
-  stencilRegistry.activate(name);
+  registry.stencils.activate(name);
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

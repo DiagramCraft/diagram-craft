@@ -6,6 +6,8 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
+import { $tStr } from '@diagram-craft/utils/localize';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const diagramActions = (application: Application) => ({
   DIAGRAM_ADD: new DiagramAddAction(application),
@@ -20,6 +22,8 @@ declare global {
 }
 
 class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application> {
+  name = $tStr('action.DIAGRAM_ADD.name', 'Add Diagram');
+
   execute(props: { parentId?: string }): void {
     const document = this.context.model.activeDocument;
     const diagram = this.context.model.activeDiagram;
@@ -58,7 +62,9 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
   }
 }
 
-class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
+export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Application> {
+  name = $tStr('action.DIAGRAM_REMOVE.name', 'Remove Diagram');
+
   execute(props: { diagramId?: string }): void {
     assert.present(props.diagramId);
 
@@ -75,6 +81,8 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
     const undoManager = diagramToFallbackTo.undoManager;
 
     const parent = document.getDiagramPath(diagram).at(-2);
+    const peerDiagrams = parent ? parent.diagrams : document.diagrams;
+    const originalIndex = peerDiagrams.indexOf(diagram);
 
     this.context.ui.showDialog(
       new MessageDialogCommand(
@@ -85,14 +93,13 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
           cancelLabel: 'No'
         },
         () => {
-          // TODO: Retain index
           undoManager.addAndExecute(
             makeUndoableAction('Delete diagram', {
               redo: () => {
                 this.context.model.activeDiagram = diagramToFallbackTo;
                 document.removeDiagram(diagram);
               },
-              undo: () => document.addDiagram(diagram, parent)
+              undo: () => document.insertDiagram(diagram, originalIndex, parent)
             })
           );
         }
@@ -102,6 +109,8 @@ class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, Applica
 }
 
 class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Application> {
+  name = $tStr('action.DIAGRAM_RENAME.name', 'Rename Diagram');
+
   execute({ diagramId }: { diagramId?: string }): void {
     precondition.is.present(diagramId);
 
@@ -109,31 +118,19 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
     const diagram = document.byId(diagramId);
     assert.present(diagram);
 
-    const undoManager = this.context.model.activeDiagram.undoManager;
-
     this.context.ui.showDialog(
       new StringInputDialogCommand(
         {
           title: 'Rename diagram',
           description: 'Enter a new name for the diagram.',
           saveButtonLabel: 'Rename',
-          value: diagram.name
+          value: diagram.name,
+          selectOnOpen: true
         },
         async name => {
-          const oldName = diagram.name;
-
-          undoManager.addAndExecute(
-            makeUndoableAction('Rename diagram', {
-              redo: () => {
-                diagram.name = name;
-                document.changeDiagram(diagram);
-              },
-              undo: () => {
-                diagram.name = oldName;
-                document.changeDiagram(diagram);
-              }
-            })
-          );
+          UnitOfWork.executeWithUndo(diagram, 'Rename diagram', uow => {
+            diagram.setName(name, uow);
+          });
         }
       )
     );

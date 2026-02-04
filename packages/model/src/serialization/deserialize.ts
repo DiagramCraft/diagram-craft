@@ -29,7 +29,7 @@ import type { DataManager } from '../diagramDocumentData';
 import { ElementLookup } from '../elementLookup';
 import { ElementFactory } from '../elementFactory';
 import { DelegatingDiagramNode } from '../delegatingDiagramNode';
-import type { DiagramElement } from '../diagramElement';
+import { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
 
@@ -60,16 +60,13 @@ const deserializeEndpoint = (
 
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
-  diagram: Diagram,
   layer: RegularLayer | ModificationLayer,
+  uow: UnitOfWork,
   nodeLookup?: ElementLookup<DiagramNode>,
-  edgeLookup?: ElementLookup<DiagramEdge>,
-  uow?: UnitOfWork
+  edgeLookup?: ElementLookup<DiagramEdge>
 ) => {
   nodeLookup ??= new ElementLookup<DiagramNode>();
   edgeLookup ??= new ElementLookup<DiagramEdge>();
-  uow ??= new UnitOfWork(diagram, false, true);
-
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
@@ -130,18 +127,18 @@ export const deserializeDiagramElements = (
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(start.anchor, edge);
+        startNode._addEdge(start.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
-        startNode._addEdge(undefined, edge);
+        startNode._addEdge(undefined, edge, uow);
       }
 
       if (isSerializedEndpointAnchor(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(end.anchor, edge);
+        endNode._addEdge(end.anchor, edge, uow);
       } else if (isSerializedEndpointPointInNode(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
-        endNode._addEdge(undefined, edge);
+        endNode._addEdge(undefined, edge, uow);
       }
 
       edgeLookup.set(e.id, edge);
@@ -152,21 +149,24 @@ export const deserializeDiagramElements = (
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
-      el.setChildren(c.children?.map(c2 => nodeLookup.get(c2.id)!) ?? [], uow);
+      el.setChildren(
+        c.children?.map(c2 => (nodeLookup.get(c2.id) ?? edgeLookup.get(c2.id))!) ?? [],
+        uow
+      );
 
       if (c.parent) {
         const resolvedParent = nodeLookup.get(c.parent.id) ?? edgeLookup.get(c.parent.id);
         el._setParent(resolvedParent);
       }
-    }
 
-    if (n.type === 'edge') {
-      const edge = edgeLookup.get(n.id)!;
-      if (n.labelNodes && n.labelNodes.length > 0) {
-        edge.setLabelNodes(
-          n.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
-          uow
-        );
+      if (c.type === 'edge') {
+        const edge = edgeLookup.get(c.id)!;
+        if (c.labelNodes && c.labelNodes.length > 0) {
+          edge.setLabelNodes(
+            c.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
+            uow
+          );
+        }
       }
     }
   }
@@ -189,14 +189,20 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.hash = document.hash;
   }
 
+  const dest = await deserializeDiagrams(doc, diagrams, diagramFactory);
+
   doc.root.transact(() => {
     doc.customPalette.setColors(document.customPalette);
 
     for (const edgeStyle of document.styles.edgeStyles) {
-      doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(edgeStyle.id, deserializeStylesheet(edgeStyle, doc.styles), uow)
+      );
     }
     for (const nodeStyle of document.styles.nodeStyles) {
-      doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles));
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles), uow)
+      );
     }
 
     for (const schema of document.schemas) {
@@ -210,7 +216,6 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       doc.data.setSchemaMetadata(schema.id, metadata);
     }
 
-    const dest = deserializeDiagrams(doc, diagrams, diagramFactory);
     dest.forEach(d => doc.addDiagram(d));
 
     // Populate document tags from all element tags
@@ -290,12 +295,14 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       await doc.attachments.addAttachment(new Blob([buf]));
     }
   }
+
+  doc.activeDiagramId = document.activeDiagramId ?? doc.diagrams[0]?.id;
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>
   Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory);
 
-const deserializeDiagrams = <T extends Diagram>(
+const deserializeDiagrams = async <T extends Diagram>(
   doc: DiagramDocument,
   diagrams: ReadonlyArray<SerializedDiagram>,
   diagramFactory: DiagramFactory<T>
@@ -306,9 +313,36 @@ const deserializeDiagrams = <T extends Diagram>(
     const edgeLookup = new ElementLookup<DiagramEdge>();
 
     const newDiagram = diagramFactory($d, doc);
-    newDiagram.bounds = $d.canvas;
+    UnitOfWork.executeSilently(newDiagram, uow => newDiagram.setBounds($d.canvas, uow));
 
-    const uow = new UnitOfWork(newDiagram);
+    // First ensure all node types are loaded
+    const loaded = new Set<string>();
+    for (const d of diagrams) {
+      for (const l of d.layers) {
+        if (l.layerType === 'regular') {
+          for (const e of l.elements) {
+            if (e.type === 'node') {
+              for (const c of unfoldGroup(e)) {
+                if (c.type === 'node') {
+                  if (!loaded.has(c.nodeType) && !doc.registry.nodes.hasRegistration(c.nodeType)) {
+                    loaded.add(c.nodeType);
+                    await doc.registry.nodes.load(c.nodeType);
+                  }
+                }
+              }
+            } else if (e.type === 'edge') {
+              const edgeType = e.props.shape;
+              if (!edgeType) continue;
+
+              if (!loaded.has(edgeType) && !doc.registry.edges.hasRegistration(edgeType)) {
+                loaded.add(edgeType);
+                await doc.registry.edges.load(edgeType);
+              }
+            }
+          }
+        }
+      }
+    }
 
     // This needs to be done in multiple steps as later steps depend on earlier ones:
     //
@@ -317,149 +351,151 @@ const deserializeDiagrams = <T extends Diagram>(
     //  3. Load all modifications
 
     // Create layers
-    for (const l of $d.layers) {
-      switch (l.layerType) {
-        case 'regular':
-        case 'basic': {
-          const layer = new RegularLayer(l.id, l.name, [], newDiagram);
-          if (l.isLocked) layer.locked = true;
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        case 'reference': {
-          const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
-            diagramId: l.diagramId,
-            layerId: l.layerId
-          });
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        case 'rule': {
-          const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules);
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        case 'modification': {
-          const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
-          if (l.isLocked) layer.locked = true;
-          newDiagram.layers.add(layer, UnitOfWork.immediate(newDiagram));
-          break;
-        }
-        default:
-          throw new VerifyNotReached();
-      }
-    }
-
-    // Fill layers with elements
-    for (const l of $d.layers) {
-      if (l.layerType === 'regular' || l.layerType === 'basic') {
-        const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
-        assert.present(layer);
-
-        const elements = deserializeDiagramElements(
-          l.elements,
-          newDiagram,
-          layer,
-          nodeLookup,
-          edgeLookup
-        );
-        layer.setElements(elements, uow);
-
-        // Need to invalidate and clear cache, as this may have been
-        // populate with partial data during the adding of elements
-        layer.elements.forEach(e => {
-          e.clearCache();
-          e.invalidate(uow);
-        });
-      }
-    }
-
-    // Load modifications
-    for (const l of $d.layers) {
-      if (l.layerType !== 'modification') continue;
-
-      const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
-      for (const modification of l.modifications) {
-        if (modification.element) {
-          let element: DiagramElement | undefined;
-
-          if (modification.element.type === 'delegating-node') {
-            element = new DelegatingDiagramNode(
-              modification.element.id,
-              nodeLookup.get(modification.id)!,
-              layer,
-              {
-                bounds: Box.isEqual(
-                  modification.element.bounds,
-                  nodeLookup.get(modification.id)!.bounds
-                )
-                  ? undefined
-                  : modification.element.bounds,
-                props: modification.element.props,
-                metadata: modification.element.metadata,
-                texts: modification.element.texts
-              }
-            );
-            nodeLookup.set(modification.element.id, element as DiagramNode);
-          } else if (modification.element.type === 'delegating-edge') {
-            element = new DelegatingDiagramEdge(
-              modification.element.id,
-              edgeLookup.get(modification.id)!,
-              layer,
-              {
-                props: modification.element.props,
-                metadata: modification.element.metadata,
-                start: deserializeEndpoint(modification.element.start, nodeLookup),
-                end: deserializeEndpoint(modification.element.end, nodeLookup),
-                waypoints: modification.element.waypoints
-              }
-            );
-            edgeLookup.set(modification.element.id, element as DiagramEdge);
-          } else {
+    UnitOfWork.executeSilently(newDiagram, uow => {
+      for (const l of $d.layers) {
+        switch (l.layerType) {
+          case 'regular':
+          case 'basic': {
+            const layer = new RegularLayer(l.id, l.name, [], newDiagram);
+            newDiagram.layers.add(layer, uow);
+            if (l.isLocked) layer.setLocked(true, uow);
+            break;
+          }
+          case 'reference': {
+            const layer = new ReferenceLayer(l.id, l.name, newDiagram, {
+              diagramId: l.diagramId,
+              layerId: l.layerId
+            });
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          case 'rule': {
+            const layer = new RuleLayer(l.id, l.name, newDiagram, l.rules);
+            newDiagram.layers.add(layer, uow);
+            break;
+          }
+          case 'modification': {
+            const layer = new ModificationLayer(l.id, l.name, newDiagram, []);
+            newDiagram.layers.add(layer, uow);
+            if (l.isLocked) layer.setLocked(true, uow);
+            break;
+          }
+          default:
             throw new VerifyNotReached();
-          }
-
-          assert.present(element);
-
-          if (modification.type === 'add') {
-            layer.modifyAdd(modification.id, element, uow);
-          } else if (modification.type === 'change') {
-            layer.modifyChange(modification.id, element, uow);
-          }
-        } else if (modification.type === 'remove') {
-          layer.modifyRemove(modification.id, uow);
         }
       }
-    }
 
-    if ($d.activeLayerId) {
-      const l = newDiagram.layers.byId($d.activeLayerId);
-      if (l) {
-        newDiagram.layers.active = l;
-      }
-    }
+      // Fill layers with elements
+      for (const l of $d.layers) {
+        if (l.layerType === 'regular' || l.layerType === 'basic') {
+          const layer = newDiagram.layers.byId(l.id) as RegularLayer | undefined;
+          assert.present(layer);
 
-    if ($d.visibleLayers) {
-      for (const layer of newDiagram.layers.all) {
-        if (!$d.visibleLayers.includes(layer.id)) {
-          newDiagram.layers.toggleVisibility(layer);
+          const elements = deserializeDiagramElements(
+            l.elements,
+            layer,
+            uow,
+            nodeLookup,
+            edgeLookup
+          );
+
+          layer.setElements(elements, uow);
+
+          // Need to invalidate and clear cache, as this may have been
+          // populate with partial data during the adding of elements
+          layer.elements.forEach(e => {
+            e.clearCache();
+            e.invalidate('full', uow);
+          });
         }
       }
-    }
 
-    if ($d.zoom) {
-      newDiagram.viewBox.zoom($d.zoom.zoom);
-      newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
-    }
+      // Load modifications
+      for (const l of $d.layers) {
+        if (l.layerType !== 'modification') continue;
 
-    if ($d.guides && $d.guides.length > 0) {
-      for (const guide of $d.guides) {
-        newDiagram.addGuide(guide);
+        const layer = newDiagram.layers.byId(l.id) as ModificationLayer;
+        for (const modification of l.modifications) {
+          if (modification.element) {
+            let element: DiagramElement | undefined;
+
+            if (modification.element.type === 'delegating-node') {
+              element = new DelegatingDiagramNode(
+                modification.element.id,
+                nodeLookup.get(modification.id)!,
+                layer,
+                {
+                  bounds: Box.isEqual(
+                    modification.element.bounds,
+                    nodeLookup.get(modification.id)!.bounds
+                  )
+                    ? undefined
+                    : modification.element.bounds,
+                  props: modification.element.props,
+                  metadata: modification.element.metadata,
+                  texts: modification.element.texts
+                }
+              );
+              nodeLookup.set(modification.element.id, element as DiagramNode);
+            } else if (modification.element.type === 'delegating-edge') {
+              element = new DelegatingDiagramEdge(
+                modification.element.id,
+                edgeLookup.get(modification.id)!,
+                layer,
+                {
+                  props: modification.element.props,
+                  metadata: modification.element.metadata,
+                  start: deserializeEndpoint(modification.element.start, nodeLookup),
+                  end: deserializeEndpoint(modification.element.end, nodeLookup),
+                  waypoints: modification.element.waypoints
+                }
+              );
+              edgeLookup.set(modification.element.id, element as DiagramEdge);
+            } else {
+              throw new VerifyNotReached();
+            }
+
+            assert.present(element);
+
+            if (modification.type === 'add') {
+              layer.modifyAdd(modification.id, element, uow);
+            } else if (modification.type === 'change') {
+              layer.modifyChange(modification.id, element, uow);
+            }
+          } else if (modification.type === 'remove') {
+            layer.modifyRemove(modification.id, uow);
+          }
+        }
       }
-    }
 
-    dest.push(newDiagram);
-    uow.commit();
+      if ($d.activeLayerId) {
+        const l = newDiagram.layers.byId($d.activeLayerId);
+        if (l) {
+          newDiagram.layers.active = l;
+        }
+      }
+
+      if ($d.visibleLayers) {
+        for (const layer of newDiagram.layers.all) {
+          if (!$d.visibleLayers.includes(layer.id)) {
+            newDiagram.layers.toggleVisibility(layer);
+          }
+        }
+      }
+
+      if ($d.zoom) {
+        newDiagram.viewBox.zoom($d.zoom.zoom);
+        newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });
+      }
+
+      if ($d.guides && $d.guides.length > 0) {
+        for (const guide of $d.guides) {
+          newDiagram.addGuide(guide);
+        }
+      }
+
+      dest.push(newDiagram);
+    });
 
     if ($d.comments) {
       for (const serializedComment of $d.comments) {
@@ -476,7 +512,7 @@ const deserializeDiagrams = <T extends Diagram>(
       }
     }
 
-    deserializeDiagrams(doc, $d.diagrams, diagramFactory).forEach(d =>
+    (await deserializeDiagrams(doc, $d.diagrams, diagramFactory)).forEach(d =>
       doc.addDiagram(d, newDiagram)
     );
   }

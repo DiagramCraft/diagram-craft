@@ -82,7 +82,7 @@ type ElementEffectProps = {
   roundingAmount?: number;
 };
 
-export interface ElementProps {
+export interface ElementProps extends DiagramCraft.ElementPropsExtensions {
   hidden?: boolean;
 
   stroke?: {
@@ -145,7 +145,7 @@ export interface ElementProps {
   indicators?: Record<string, Indicator>;
 }
 
-export interface EdgeProps extends ElementProps {
+export interface EdgeProps extends ElementProps, DiagramCraft.EdgePropsExtensions {
   type?: EdgeType;
   shape?: string;
 
@@ -179,7 +179,7 @@ export interface EdgeProps extends ElementProps {
 export interface CustomEdgeProps extends DiagramCraft.CustomEdgePropsExtensions {}
 export interface CustomNodeProps extends DiagramCraft.CustomNodePropsExtensions {}
 
-export interface NodeProps extends ElementProps {
+export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtensions {
   action?: {
     type: 'url' | 'diagram' | 'layer' | 'none';
     url?: string;
@@ -192,7 +192,7 @@ export interface NodeProps extends ElementProps {
     };
     movable?: boolean;
     rotatable?: boolean;
-    textGrow?: boolean;
+    adjustSizeBasedOnText?: boolean;
     editable?: boolean;
     deletable?: boolean;
     inheritStyle?: boolean;
@@ -235,6 +235,8 @@ export interface NodeProps extends ElementProps {
     wrap?: boolean;
     overflow?: 'hidden' | 'visible';
     position?: 'c' | 'e' | 'w' | 'n' | 's' | 'ne' | 'nw' | 'se' | 'sw';
+    width?: number;
+    shrink?: boolean;
   };
 
   anchors?: {
@@ -288,6 +290,9 @@ declare global {
     interface DiagramPropsExtensions {}
     interface CustomNodePropsExtensions {}
     interface CustomEdgePropsExtensions {}
+    interface ElementPropsExtensions {}
+    interface NodePropsExtensions {}
+    interface EdgePropsExtensions {}
   }
 }
 

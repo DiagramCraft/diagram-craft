@@ -317,3 +317,640 @@ stencils:
           title: false
         text:
           text: ''
+  - id: 'horizontal-swimlane'
+    name: Horizontal Swimlane
+    node:
+      id: ul33oi4
+      type: node
+      nodeType: swimlane
+      bounds:
+        x: 0
+        'y': 0
+        w: 200
+        h: 100
+        r: 0
+      anchors:
+        - id: c
+          start:
+            x: 0.5
+            'y': 0.5
+          clip: true
+          type: center
+        - id: '500_0'
+          start:
+            x: 0.5
+            'y': 0
+          clip: false
+          type: point
+          normal: 4.71238898038469
+          isPrimary: true
+        - id: '1000_500'
+          start:
+            x: 1
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 6.283185307179586
+          isPrimary: true
+        - id: '500_1000'
+          start:
+            x: 0.5
+            'y': 1
+          clip: false
+          type: point
+          normal: 1.5707963267948966
+          isPrimary: true
+        - id: '0_500'
+          start:
+            x: 0
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 3.141592653589793
+          isPrimary: true
+      children: [ ]
+      props:
+        style: default
+        fill:
+          enabled: true
+          color: var(--canvas-bg)
+        custom:
+          swimlane:
+            title: true
+            fill: false
+            outerBorder: true
+            titleBorder: true
+            horizontalBorder: true
+            orientation: horizontal
+      texts:
+        text: Horizontal Swimlane
+
+  - id: 'vertical-swimlane'
+    name: Vertical Swimlane
+    node:
+      id: bto378l
+      type: node
+      nodeType: swimlane
+      bounds:
+        x: 0
+        'y': 0
+        w: 100
+        h: 200
+        r: 0
+      anchors:
+        - id: c
+          start:
+            x: 0.5
+            'y': 0.5
+          clip: true
+          type: center
+        - id: '500_0'
+          start:
+            x: 0.5
+            'y': 0
+          clip: false
+          type: point
+          normal: 4.71238898038469
+          isPrimary: true
+        - id: '1000_500'
+          start:
+            x: 1
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 6.283185307179586
+          isPrimary: true
+        - id: '500_1000'
+          start:
+            x: 0.5
+            'y': 1
+          clip: false
+          type: point
+          normal: 1.5707963267948966
+          isPrimary: true
+        - id: '0_500'
+          start:
+            x: 0
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 3.141592653589793
+          isPrimary: true
+      children: [ ]
+      props:
+        custom:
+          swimlane:
+            title: true
+            fill: false
+            outerBorder: true
+            titleBorder: true
+            horizontalBorder: true
+            orientation: vertical
+      texts:
+        text: Vertical Swimlane
+
+  - id: 'horizontal-pool'
+    name: Horizontal Pool
+    node:
+      id: zvrswev
+      type: node
+      nodeType: swimlane
+      bounds:
+        x: 0
+        'y': 5.684341886080802e-14
+        w: 300
+        h: 329.99999999999994
+        r: 0
+      anchors:
+        - id: c
+          start:
+            x: 0.5
+            'y': 0.5
+          clip: true
+          type: center
+        - id: '500_0'
+          start:
+            x: 0.5
+            'y': 0
+          clip: false
+          type: point
+          normal: 4.71238898038469
+          isPrimary: true
+        - id: '1000_500'
+          start:
+            x: 1
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 6.283185307179586
+          isPrimary: true
+        - id: '500_1000'
+          start:
+            x: 0.5
+            'y': 1
+          clip: false
+          type: point
+          normal: 1.5707963267948966
+          isPrimary: true
+        - id: '0_500'
+          start:
+            x: 0
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 3.141592653589793
+          isPrimary: true
+      children:
+        - id: jzyhxej
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 0
+            'y': 30.000000000000057
+            w: 300
+            h: 99.99999999999997
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: horizontal
+            text:
+              left: 0
+              right: 6
+          texts:
+            text: Swimlane 1
+        - id: kbrhtdn
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 0
+            'y': 130.00000000000003
+            w: 300
+            h: 99.99999999999997
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: horizontal
+          texts:
+            text: Swimlane 2
+        - id: spfod70
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 0
+            'y': 230
+            w: 300
+            h: 99.99999999999997
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: horizontal
+          texts:
+            text: Swimlane 2
+      props:
+        layout:
+          container:
+            enabled: true
+            direction: vertical
+            alignItems: stretch
+        custom:
+          swimlane:
+            title: true
+            fill: false
+            outerBorder: true
+            titleBorder: true
+            horizontalBorder: true
+            orientation: vertical
+        text:
+          bold: true
+      texts:
+        text: Pool
+
+  - id: 'vertical-pool'
+    name: Vertical Pool
+    node:
+      id: 3eqn1aj
+      type: node
+      nodeType: swimlane
+      bounds:
+        x: 0
+        'y': 0
+        w: 300
+        h: 329.99999999999994
+        r: 0
+      anchors:
+        - id: c
+          start:
+            x: 0.5
+            'y': 0.5
+          clip: true
+          type: center
+        - id: '500_0'
+          start:
+            x: 0.5
+            'y': 0
+          clip: false
+          type: point
+          normal: 4.71238898038469
+          isPrimary: true
+        - id: '1000_500'
+          start:
+            x: 1
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 6.283185307179586
+          isPrimary: true
+        - id: '500_1000'
+          start:
+            x: 0.5
+            'y': 1
+          clip: false
+          type: point
+          normal: 1.5707963267948966
+          isPrimary: true
+        - id: '0_500'
+          start:
+            x: 0
+            'y': 0.5
+          clip: false
+          type: point
+          normal: 3.141592653589793
+          isPrimary: true
+      children:
+        - id: kmznj26
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 0
+            'y': 30
+            w: 100
+            h: 299.99999999999994
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: vertical
+          texts:
+            text: Vertical Swimlane
+        - id: crss9j4
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 100
+            'y': 30
+            w: 100
+            h: 299.99999999999994
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: vertical
+          texts:
+            text: Vertical Swimlane
+        - id: stab18z
+          type: node
+          nodeType: swimlane
+          bounds:
+            x: 200
+            'y': 30
+            w: 100
+            h: 299.99999999999994
+            r: 0
+          anchors:
+            - id: c
+              start:
+                x: 0.5
+                'y': 0.5
+              clip: true
+              type: center
+            - id: '500_0'
+              start:
+                x: 0.5
+                'y': 0
+              clip: false
+              type: point
+              normal: 4.71238898038469
+              isPrimary: true
+            - id: '1000_500'
+              start:
+                x: 1
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 6.283185307179586
+              isPrimary: true
+            - id: '500_1000'
+              start:
+                x: 0.5
+                'y': 1
+              clip: false
+              type: point
+              normal: 1.5707963267948966
+              isPrimary: true
+            - id: '0_500'
+              start:
+                x: 0
+                'y': 0.5
+              clip: false
+              type: point
+              normal: 3.141592653589793
+              isPrimary: true
+          children: [ ]
+          props:
+            custom:
+              swimlane:
+                title: true
+                fill: false
+                outerBorder: true
+                titleBorder: true
+                horizontalBorder: true
+                orientation: vertical
+          texts:
+            text: Vertical Swimlane
+      props:
+        layout:
+          container:
+            enabled: true
+            direction: horizontal
+            alignItems: stretch
+        custom:
+          swimlane:
+            title: true
+            fill: false
+            outerBorder: true
+            titleBorder: true
+            horizontalBorder: true
+            orientation: vertical
+        text:
+          bold: true
+      texts:
+        text: Pool
+

@@ -1,18 +1,21 @@
-import { _test, type DiagramBounds, createResizeToFitAction } from './diagramBounds';
+import { _test, type DiagramBounds } from './diagramBounds';
 import { describe, expect, it } from 'vitest';
 import { Box } from '@diagram-craft/geometry/box';
 import { TestModel } from './test-support/testModel';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('ResizeCanvasUndoableAction', () => {
   it('correctly undoes the canvas resize', () => {
     const diagram = TestModel.newDiagram();
     const beforeCanvas = { x: 0, y: 0, w: 100, h: 100 };
     const afterCanvas = { x: 0, y: 0, w: 200, h: 200 };
-    diagram.bounds = afterCanvas;
+    UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(beforeCanvas, uow));
 
-    const action = new _test.ResizeDiagramBoundsUndoableAction(diagram, beforeCanvas, afterCanvas);
-    action.undo();
+    // Act
+    UnitOfWork.executeWithUndo(diagram, 'Resize', uow => diagram.setBounds(afterCanvas, uow));
+    diagram.undoManager.undo();
 
+    // Verify
     expect(diagram.bounds).toEqual(beforeCanvas);
   });
 
@@ -20,11 +23,14 @@ describe('ResizeCanvasUndoableAction', () => {
     const diagram = TestModel.newDiagram();
     const beforeCanvas = { x: 0, y: 0, w: 100, h: 100 };
     const afterCanvas = { x: 0, y: 0, w: 200, h: 200 };
-    diagram.bounds = beforeCanvas;
+    UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(beforeCanvas, uow));
 
-    const action = new _test.ResizeDiagramBoundsUndoableAction(diagram, beforeCanvas, afterCanvas);
-    action.redo();
+    // Act
+    UnitOfWork.executeWithUndo(diagram, 'Resize', uow => diagram.setBounds(afterCanvas, uow));
+    diagram.undoManager.undo();
+    diagram.undoManager.redo();
 
+    // Verify
     expect(diagram.bounds).toEqual(afterCanvas);
   });
 });
@@ -76,27 +82,5 @@ describe('resizeCanvas', () => {
 
     const result = _test.resizeDiagramBounds(orig, bbox);
     expect(result).toEqual({ x: -50, y: -50, w: 500, h: 500 });
-  });
-});
-
-describe('createResizeCanvasActionToFit', () => {
-  it('returns undefined if the canvas does not need resizing', () => {
-    const diagram = TestModel.newDiagram();
-    diagram.bounds = { x: 100, y: 100, w: 200, h: 200 };
-
-    const bbox: Box = { x: 150, y: 150, w: 100, h: 100, r: 0 };
-    const result = createResizeToFitAction(diagram, bbox);
-
-    expect(result).toBeUndefined();
-  });
-
-  it('returns a ResizeCanvasUndoableAction if the canvas needs resizing', () => {
-    const diagram = TestModel.newDiagram();
-    diagram.bounds = { x: 100, y: 100, w: 200, h: 200 };
-
-    const bbox: Box = { x: 50, y: 50, w: 300, h: 300, r: 0 };
-    const result = createResizeToFitAction(diagram, bbox);
-
-    expect(result).toBeInstanceOf(_test.ResizeDiagramBoundsUndoableAction);
   });
 });

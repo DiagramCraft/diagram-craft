@@ -1,5 +1,6 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { UserState } from '../../UserState';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -12,6 +13,8 @@ export const toggleRulerActions = (context: ActionContext) => ({
 });
 
 export class ToggleRulerAction extends AbstractToggleAction {
+  name = $tStr('action.TOGGLE_RULER.name', 'Ruler');
+
   getStateCriteria() {
     return ActionCriteria.EventTriggered(UserState.get(), 'change', () => {
       return UserState.get().showRulers ?? true;

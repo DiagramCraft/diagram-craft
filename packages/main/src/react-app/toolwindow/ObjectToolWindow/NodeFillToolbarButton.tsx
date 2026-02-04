@@ -4,6 +4,7 @@ import { useNodeProperty } from '../../hooks/useProperty';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { useDiagram } from '../../../application';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 // TODO: Make this disable if selection includes edges
 export const NodeFillToolbarButton = () => {
@@ -11,26 +12,30 @@ export const NodeFillToolbarButton = () => {
 
   const fill = useNodeProperty(diagram, 'fill.color');
 
-  const disabled = diagram.selection.nodes.every(n => !n.getDefinition().supports('fill'));
+  const disabled = diagram.selection.nodes.every(
+    n => !n.getDefinition().hasFlag(NodeFlags.StyleFill)
+  );
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button disabled={disabled}>
-          <TbPaint />
-          <div
-            style={{
-              marginLeft: '5px',
-              width: '30px',
-              height: '12px',
-              backgroundColor: disabled ? 'var(--cmp-fg-disabled)' : fill.val,
-              marginRight: '3px',
-              border: `1px solid ${disabled ? 'var(--cmp-fg-disabled)' : 'var(--panel-fg)'}`,
-              borderRadius: '3px'
-            }}
-          ></div>
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button disabled={disabled}>
+            <TbPaint />
+            <div
+              style={{
+                marginLeft: '5px',
+                width: '30px',
+                height: '12px',
+                backgroundColor: disabled ? 'var(--cmp-fg-disabled)' : fill.val,
+                marginRight: '3px',
+                border: `1px solid ${disabled ? 'var(--cmp-fg-disabled)' : 'var(--panel-fg)'}`,
+                borderRadius: '3px'
+              }}
+            ></div>
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <NodeFillPanel mode={'panel'} />
       </Popover.Content>

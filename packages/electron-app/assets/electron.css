@@ -11,7 +11,7 @@
   }
 }
 
-#main-menu {
+#menu ._menu-button {
   > * {
     display: none !important;
   }
@@ -22,7 +22,16 @@
 }
 
 #menu {
-  .cmp-toolbar__button[data-state='on'] {
+  padding-top: 2px;
+
+  ._tools {
+    .cmp-toolbar__button[data-pressed] {
+      background-color: #4F4F4F !important;
+      color: #F3F3F3 !important;
+    }
+  }
+
+  .cmp-toolbar__button[data-pressed] {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
   }
@@ -30,11 +39,11 @@
   .cmp-toolbar__button:hover, .cmp-toolbar__button:focus {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
+    box-shadow: none !important;
   }
 
-  .cmp-toolbar__button:focus, .cmp-toolbar__button[data-focus="true"] {
-    box-shadow: none !important;
-    color: #F3F3F3 !important;
+  .cmp-toolbar__button:focus:not(:hover) {
+    background-color: transparent !important;
   }
 
   .cmp-toolbar__separator {
@@ -42,7 +51,7 @@
   }
 }
 
-body.fullscreen #main-menu {
+body.fullscreen #menu ._menu-button {
   display: none;
 }
 

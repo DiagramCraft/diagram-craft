@@ -48,16 +48,17 @@ type CacheKeys = 'name' | 'props.forEditing' | 'props.forRendering' | string;
 
 export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge';
 
+export type InvalidationScope = 'full' | 'quick';
+
 export interface DiagramElement {
-  trackableType: 'element';
+  _trackableType: 'element';
 
   readonly id: string;
   readonly type: ElementType;
 
   getAttachmentsInUse(): Array<string>;
 
-  invalidate(uow: UnitOfWork): void;
-  detach(uow: UnitOfWork): void;
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void;
 
@@ -78,8 +79,6 @@ export interface DiagramElement {
 
   snapshot(): Snapshot;
   restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void): void;
 
   readonly crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
@@ -108,17 +107,25 @@ export interface DiagramElement {
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ): void;
   removeChild(child: DiagramElement, uow: UnitOfWork): void;
 
   comments: ReadonlyArray<Comment>;
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
+  _onDetach(uow: UnitOfWork): void;
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
+  ): void;
 }
 
 export abstract class AbstractDiagramElement
   implements DiagramElement, AttachmentConsumer, Releasable
 {
-  readonly trackableType = 'element';
+  readonly _trackableType = 'element';
 
   // Transient properties
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
@@ -169,7 +176,7 @@ export abstract class AbstractDiagramElement
           this._diagram.register(e);
 
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.addElement(e);
+          uow.addElement(e, this, this.children.length - 1);
           uow.updateElement(this);
         },
         onRemoteChange: e => {
@@ -179,7 +186,7 @@ export abstract class AbstractDiagramElement
         },
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(this._diagram);
-          uow.removeElement(e);
+          uow.removeElement(e, this, this.children.indexOf(e));
           uow.updateElement(this);
         },
         onInit: e => this._diagram.register(e)
@@ -202,7 +209,7 @@ export abstract class AbstractDiagramElement
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      this.invalidate(UnitOfWork.immediate(this._diagram));
+      UnitOfWork.executeSilently(this._diagram, uow => this.invalidate('full', uow));
       this._diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -212,8 +219,8 @@ export abstract class AbstractDiagramElement
 
   abstract getAttachmentsInUse(): Array<string>;
 
-  abstract invalidate(uow: UnitOfWork): void;
-  abstract detach(uow: UnitOfWork): void;
+  abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -238,12 +245,6 @@ export abstract class AbstractDiagramElement
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void = () => {}) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
 
   get crdt() {
     return this._crdt;
@@ -306,12 +307,12 @@ export abstract class AbstractDiagramElement
   }
 
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
-    this.clearCache();
+    uow.executeUpdate(this, () => {
+      const metadata = this._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      this._metadata.set(metadata);
+      this.clearCache();
+    });
   }
 
   /* Tags ******************************************************************************************************** */
@@ -321,17 +322,17 @@ export abstract class AbstractDiagramElement
   }
 
   setTags(tags: ReadonlyArray<string>, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
-    this._crdt.get().set('tags', uniqueTags);
+    uow.executeUpdate(this, () => {
+      const uniqueTags = Array.from(new Set(tags.map(t => t.trim()).filter(t => t)));
+      this._crdt.get().set('tags', uniqueTags);
 
-    // Add all element tags to the document tags collection
-    uniqueTags.forEach(tag => {
-      this.diagram.document.tags.add(tag);
+      // Add all element tags to the document tags collection
+      uniqueTags.forEach(tag => {
+        this.diagram.document.tags.add(tag);
+      });
+
+      this.clearCache();
     });
-
-    uow.updateElement(this);
-    this.clearCache();
   }
 
   /* Cache *************************************************************************************************** */
@@ -354,108 +355,142 @@ export abstract class AbstractDiagramElement
   }
 
   setChildren(children: ReadonlyArray<DiagramElement>, uow: UnitOfWork) {
-    uow.snapshot(this);
+    const ids = children.map(e => e.id);
+    const added = children.filter(e => !this._children.has(e.id));
+    const removed = this._children.values.filter(e => ids.indexOf(e.id) < 0);
 
-    const oldChildren = this._children.values;
+    for (const e of added) this.addChild(e, uow);
+    for (const e of removed) this.removeChild(e, uow);
 
-    children.forEach(c => c.detachCRDT(() => {}));
-    this._children.set(children.map(e => [e.id, e]));
-
-    this._children.values.forEach(c => {
-      uow.snapshot(c);
-      c._setParent(this);
-      this.diagram.register(c);
-    });
-
-    // TODO: We should update nodeLookup and edgeLookup here
-    oldChildren
-      .filter(c => !children.includes(c))
-      .forEach(c => {
-        uow.removeElement(c);
-        c._setParent(undefined);
-      });
-
-    this._children.values.forEach(c => {
-      uow.updateElement(c);
-    });
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => this._children.setOrder(ids));
   }
 
   addChild(
     child: DiagramElement,
     uow: UnitOfWork,
-    relation?: { ref: DiagramElement; type: 'after' | 'before' }
+    position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
     assert.true(child.diagram === this.diagram);
+    // Can't add multiple times'
     assert.false(this._children.has(child.id));
+    // Can't add yourself as a child
+    assert.false(child.id === this.id);
+    // Can't add top-level elements as children
+    assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
 
-    uow.snapshot(this);
-    uow.snapshot(child);
-
-    // TODO: Check so the same not can't be added multiple times
-
-    if (relation) {
-      const children = this._children;
-      const index = children.getIndex(relation.ref.id);
-      if (relation.type === 'after') {
-        this._children.set(
-          [...children.values.slice(0, index + 1), child, ...children.values.slice(index + 1)].map(
-            e => [e.id, e]
-          )
-        );
+    if (position) {
+      if (typeof position === 'number') {
+        uow.executeAdd(child, this, position, () => {
+          this._children.insert(child.id, child, position);
+        });
       } else {
-        this._children.set(
-          [...children.values.slice(0, index), child, ...children.values.slice(index)].map(e => [
-            e.id,
-            e
-          ])
-        );
+        const index = this._children.getIndex(position.ref.id);
+        const effectiveIndex = position.type === 'after' ? index + 1 : index;
+        uow.executeAdd(child, this, effectiveIndex, () => {
+          this._children.insert(child.id, child, effectiveIndex);
+        });
       }
     } else {
-      this._children.add(child.id, child);
+      uow.executeAdd(child, this, this.children.length, () => {
+        this._children.add(child.id, child);
+      });
     }
-    child._setParent(this);
 
-    this.diagram.register(child);
-
-    uow.updateElement(this);
-    uow.updateElement(child);
+    child._onAttach(this.layer, this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
-    uow.snapshot(this);
-    uow.snapshot(child);
-
-    this._children.remove(child.id);
-    child._setParent(undefined);
-
-    // TODO: We should clear nodeLookup and edgeLookup here
-
-    uow.updateElement(this);
-    uow.removeElement(child);
+    uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
+      child._detachAndRemove(uow, () => this._children.remove(child.id));
+    });
   }
 
   get comments() {
     return this.diagram.commentManager.getAll().filter(c => c.element?.id === this.id);
   }
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
+    const clone = this._crdt.get().clone();
+    callback?.();
+    this._crdt.set(clone);
+
+    this._onDetach(uow);
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
+  ) {
+    this._setLayer(layer, this.diagram);
+    if (parent._trackableType === 'element') {
+      this._setParent(parent as DiagramElement);
+    }
+
+    this.diagram.register(this);
+
+    for (const child of this.children) {
+      child._onAttach(layer, this, uow);
+    }
+  }
 }
 
-export const getDiagramElementPath = (element: DiagramElement): DiagramElement[] => {
-  const dest: DiagramElement[] = [];
-  let current: DiagramElement | undefined = element.parent;
-  while (current !== undefined) {
-    dest.push(current);
-    current = current.parent;
+/**
+ * Retrieves the specified element and its ancestors in a hierarchical structure.
+ *
+ * This function starts with the provided element and traverses upward through
+ * its parent elements, collecting all ancestors in the process.
+ *
+ * @param el  The starting element from which to gather ancestors.
+ * @returns   An array containing the starting element and all its ancestors,
+ *            ordered from the starting element to the root ancestor.
+ */
+export const getElementAndAncestors = (el: DiagramElement) => {
+  const ancestors: DiagramElement[] = [el];
+  let parent = el.parent;
+  while (parent) {
+    ancestors.push(parent);
+    parent = parent.parent;
   }
-  return dest;
+  return ancestors;
+};
+
+export const getAncestors = (element: DiagramElement): DiagramElement[] => {
+  return getElementAndAncestors(element).slice(1);
 };
 
 export const getTopMostNode = (element: DiagramElement): DiagramElement => {
   if (element.parent === undefined) return element;
-  const path = getDiagramElementPath(element);
+  const path = getAncestors(element);
   return path.length > 0 ? path[path.length - 1]! : element;
+};
+
+/**
+ * Finds the closest common ancestor between two diagram elements.
+ *
+ * @param {DiagramElement} element1 - The first diagram element.
+ * @param {DiagramElement} element2 - The second diagram element.
+ * @returns {DiagramElement | undefined} The common ancestor of the two elements,
+ * or undefined if no common ancestor exists.
+ */
+export const findCommonAncestor = (
+  element1: DiagramElement,
+  element2: DiagramElement
+): DiagramElement | undefined => {
+  const path1 = getAncestors(element1);
+  const path2 = getAncestors(element2);
+
+  const ancestors1 = new Set(path1);
+
+  for (const ancestor of path2) {
+    if (ancestors1.has(ancestor)) {
+      return ancestor;
+    }
+  }
+
+  return undefined;
 };
 
 export const transformElements = (
@@ -469,9 +504,9 @@ export const transformElements = (
 
   // We do this in a separate loop to as nodes might move which will
   // affect the start and end location of connected edges
-  for (const el of elements) {
+  /*for (const el of elements) {
     uow.updateElement(el);
-  }
+  }*/
 };
 
 export const bindElementListeners = (diagram: Diagram, releasables: Releasables) => {

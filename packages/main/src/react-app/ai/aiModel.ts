@@ -15,14 +15,8 @@ import {
   SimplifiedNode,
   type SimplifiedNodeType
 } from './aiDiagramTypes';
-import {
-  commitWithUndo,
-  ElementAddUndoableAction,
-  ElementDeleteUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import type { DeepWriteable } from '@diagram-craft/utils/types';
 
@@ -42,28 +36,28 @@ export class AIModel {
    * and adds them to the diagram
    */
   applyChange(simplified: SimplifiedDiagram): void {
-    switch (simplified.action) {
-      case 'create':
-      case 'add':
-        this.diagram.undoManager.addAndExecute(this.handleCreateOrAdd(simplified));
-        break;
-      case 'modify': {
-        const uow = new UnitOfWork(this.diagram, true);
-        this.handleModify(simplified, uow);
-        commitWithUndo(uow, 'AI Changes');
-        break;
+    UnitOfWork.executeWithUndo(this.diagram, 'AI Changes', uow => {
+      switch (simplified.action) {
+        case 'create':
+        case 'add':
+          this.handleCreateOrAdd(simplified, uow);
+          break;
+        case 'modify': {
+          this.handleModify(simplified, uow);
+          break;
+        }
+        case 'replace':
+          this.handleReplace(simplified, uow);
+          break;
+        case 'remove':
+        case 'delete':
+          this.handleRemove(simplified, uow);
+          break;
       }
-      case 'replace':
-        this.diagram.undoManager.addAndExecute(this.handleReplace(simplified));
-        break;
-      case 'remove':
-      case 'delete':
-        this.diagram.undoManager.addAndExecute(this.handleRemove(simplified));
-        break;
-    }
+    });
   }
 
-  private handleCreateOrAdd(simplified: SimplifiedDiagram) {
+  private handleCreateOrAdd(simplified: SimplifiedDiagram, uow: UnitOfWork) {
     const nodes = simplified.nodes ?? [];
     const edges = simplified.edges ?? [];
 
@@ -87,7 +81,7 @@ export class AIModel {
       if (e) elements.push(e);
     }
 
-    return new ElementAddUndoableAction(elements, this.diagram, this.layer, 'AI Additions');
+    elements.forEach(e => this.layer.addElement(e, uow));
   }
 
   private handleModify(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
@@ -101,21 +95,19 @@ export class AIModel {
     }
   }
 
-  private handleRemove(simplified: SimplifiedDiagram) {
+  private handleRemove(simplified: SimplifiedDiagram, uow: UnitOfWork): void {
     const elements: DiagramElement[] = [];
     for (const id of simplified.removeIds ?? []) {
       const element = this.diagram.lookup(id);
       if (element) elements.push(element);
     }
 
-    return new ElementDeleteUndoableAction(this.diagram, this.layer, elements, true, 'AI Removals');
+    elements.forEach(e => this.layer.removeElement(e, uow));
   }
 
-  private handleReplace(simplified: SimplifiedDiagram) {
-    return new CompoundUndoableAction([
-      new ElementDeleteUndoableAction(this.diagram, this.layer, [...this.layer.elements], true),
-      this.handleCreateOrAdd(simplified)
-    ]);
+  private handleReplace(simplified: SimplifiedDiagram, uow: UnitOfWork) {
+    this.layer.elements.forEach(e => this.layer.removeElement(e, uow));
+    this.handleCreateOrAdd(simplified, uow);
   }
 
   private needsAutoLayout(nodes: SimplifiedNode[]): boolean {

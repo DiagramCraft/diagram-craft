@@ -285,4 +285,109 @@ describe('FlatObjectMapProxy', () => {
       });
     });
   });
+
+  describe('deleteProperty', () => {
+    test('deletes simple property', () => {
+      const map = new Map<string, string | number>([
+        ['user.name', 'John'],
+        ['user.age', 30]
+      ]);
+      const proxy = FlatObjectMapProxy.create<{
+        user: { name?: string; age?: number };
+      }>(DynamicValue.of(map));
+
+      delete proxy.user.name;
+
+      expect(map.has('user.name')).toBe(false);
+      expect(map.get('user.age')).toBe(30);
+    });
+
+    test('deletes nested object with all children', () => {
+      const map = new Map([
+        ['user.name', 'John'],
+        ['user.address.city', 'NYC'],
+        ['user.address.zip', '10001']
+      ]);
+      const proxy = FlatObjectMapProxy.create<{
+        user?: { name: string; address: { city: string; zip: string } };
+      }>(DynamicValue.of(map));
+
+      delete proxy.user;
+
+      expect(map.has('user.name')).toBe(false);
+      expect(map.has('user.address.city')).toBe(false);
+      expect(map.has('user.address.zip')).toBe(false);
+      expect(map.size).toBe(0);
+    });
+
+    test('deletes intermediate nested property', () => {
+      const map = new Map([
+        ['user.name', 'John'],
+        ['user.address.city', 'NYC'],
+        ['user.address.zip', '10001']
+      ]);
+      const proxy = FlatObjectMapProxy.create<{
+        user: { name?: string; address?: { city: string; zip: string } };
+      }>(DynamicValue.of(map));
+
+      delete proxy.user.address;
+
+      expect(map.get('user.name')).toBe('John');
+      expect(map.has('user.address.city')).toBe(false);
+      expect(map.has('user.address.zip')).toBe(false);
+      expect(map.size).toBe(1);
+    });
+
+    test('deletes array element', () => {
+      const map = new Map([
+        ['items.0', 'first'],
+        ['items.1', 'second'],
+        ['items.2', 'third']
+      ]);
+      const proxy = FlatObjectMapProxy.create<{ items: (string | undefined)[] }>(
+        DynamicValue.of(map)
+      );
+
+      delete proxy.items[1];
+
+      expect(map.get('items.0')).toBe('first');
+      expect(map.has('items.1')).toBe(false);
+      expect(map.get('items.2')).toBe('third');
+    });
+
+    test('deletes property that does not exist', () => {
+      const map = new Map([['user.name', 'John']]);
+      const proxy = FlatObjectMapProxy.create<{
+        user: { name: string; age?: number };
+      }>(DynamicValue.of(map));
+
+      const result = delete proxy.user.age;
+
+      expect(result).toBe(true);
+      expect(map.size).toBe(1);
+    });
+
+    test('deletes deeply nested property with siblings', () => {
+      const map = new Map([
+        ['user.profile.name', 'John'],
+        ['user.profile.age', '30'],
+        ['user.settings.theme', 'dark'],
+        ['user.settings.language', 'en']
+      ]);
+      const proxy = FlatObjectMapProxy.create<{
+        user: {
+          profile?: { name: string; age: string };
+          settings?: { theme: string; language: string };
+        };
+      }>(DynamicValue.of(map));
+
+      delete proxy.user.profile;
+
+      expect(map.has('user.profile.name')).toBe(false);
+      expect(map.has('user.profile.age')).toBe(false);
+      expect(map.get('user.settings.theme')).toBe('dark');
+      expect(map.get('user.settings.language')).toBe('en');
+      expect(map.size).toBe(2);
+    });
+  });
 });

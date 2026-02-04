@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -21,7 +21,7 @@ const registerStencil = (
 
 export const registerSalesforceShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/salesforce.xml',
+    '$STENCIL_ROOT/stencils/salesforce.xml',
     'Salesforce',
     '#005073',
     '#005073'

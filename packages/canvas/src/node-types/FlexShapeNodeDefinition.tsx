@@ -1,22 +1,20 @@
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { NodeCapability } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlag, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode, NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import { Point } from '@diagram-craft/geometry/point';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { Modifiers } from '../dragDropManager';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
-import { renderElement } from '../components/renderElement';
+import { renderChildren, renderElement } from '../components/renderElement';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
@@ -79,6 +77,12 @@ export class FlexShapeNodeDefinition<
     private readonly config: FlexShapeNodeDefinitionConfig<B>
   ) {
     super(type, name, FlexShapeNodeDefinition.Shape);
+
+    this.setFlags({
+      [NodeFlags.ChildrenCanConvertToContainer]: false,
+      [NodeFlags.ChildrenTransformScaleX]: false,
+      [NodeFlags.ChildrenTransformScaleY]: false
+    });
   }
 
   static Shape = class extends BaseNodeComponent<FlexShapeNodeDefinition> {
@@ -190,37 +194,14 @@ export class FlexShapeNodeDefinition<
       }
 
       if (this.def.config.isGroup) {
-        builder.add(
-          svg.g(
-            {},
-            ...props.node.children.map(child =>
-              svg.g(
-                { transform: Transforms.rotateBack(props.node.bounds) },
-                renderElement(this, child, props)
-              )
-            )
-          )
-        );
+        builder.add(renderChildren(this, props.node, props));
       }
     }
   };
 
-  onTransform(
-    transforms: ReadonlyArray<Transform>,
-    node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
-    uow: UnitOfWork
-  ) {
-    if (transforms.find(t => t instanceof Scale)) return;
-    for (const child of node.children) {
-      child.transform(transforms, uow, true);
-    }
-  }
-
-  supports(capability: NodeCapability): boolean {
-    if (capability === 'children') return this.config.isGroup;
-    return super.supports(capability);
+  hasFlag(flag: NodeFlag): boolean {
+    if (flag === NodeFlags.ChildrenAllowed) return this.config.isGroup;
+    return super.hasFlag(flag);
   }
 
   onDrop(

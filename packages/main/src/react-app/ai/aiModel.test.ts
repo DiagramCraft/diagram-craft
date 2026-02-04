@@ -1,13 +1,10 @@
-import { describe, test, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { AIModel } from './aiModel';
 import { SimplifiedDiagram } from './aiDiagramTypes';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
-import {
-  defaultNodeRegistry,
-  defaultEdgeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 
 describe('AIModel', () => {
@@ -15,11 +12,7 @@ describe('AIModel', () => {
   let aiModel: AIModel;
 
   beforeEach(() => {
-    // Use the default registries with all node types registered
-    const nodeRegistry = defaultNodeRegistry();
-    const edgeRegistry = defaultEdgeRegistry();
-
-    document = new DiagramDocument(nodeRegistry, edgeRegistry);
+    document = new DiagramDocument(defaultRegistry());
     const { diagram } = DocumentBuilder.empty(newid(), 'Test Diagram', document);
     aiModel = new AIModel(diagram);
   });

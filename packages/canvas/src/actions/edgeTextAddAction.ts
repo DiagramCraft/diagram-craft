@@ -7,6 +7,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -24,6 +25,8 @@ type EdgeTextAddActionArg = {
 };
 
 export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
+  name = $tStr('action.EDGE_TEXT_ADD.name', 'Add text');
+
   getCriteria(context: ActionContext) {
     return ActionCriteria.EventTriggered(
       context.model.activeDiagram,
@@ -77,7 +80,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
 
     // Setting focus must be done after the element has been successfully rendered
     setTimeout(() => {
-      this.context.model.activeDiagram.document.nodeDefinitions.get('text').requestFocus(textNode);
+      this.context.model.activeDiagram.document.registry.nodes.get('text').requestFocus(textNode);
     }, 10);
   }
 }

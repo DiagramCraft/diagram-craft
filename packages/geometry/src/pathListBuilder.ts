@@ -37,7 +37,7 @@
  * @module
  */
 
-import { Point } from './point';
+import { _p, Point } from './point';
 import { Box } from './box';
 import { Path } from './path';
 import {
@@ -50,6 +50,7 @@ import { Transform, TransformFactory } from './transform';
 import { parseSvgPath } from './svgPathUtils';
 import { PathList } from './pathList';
 import { Lazy } from '@diagram-craft/utils/lazy';
+import { isObj } from '@diagram-craft/utils/object';
 
 /**
  * Represents a raw cubic Bézier curve segment in an SVG path.
@@ -206,14 +207,19 @@ export class PathListBuilder {
   /**
    * Creates a PathListBuilder by parsing an SVG path string.
    *
-   * Supports standard SVG path commands: M (move), L (line), C (cubic curve),
-   * Q (quadratic curve), T (smooth curve), and A (arc).
+   * Supports standard SVG path commands: M/m (move), L/l (line), H/h (horizontal line),
+   * V/v (vertical line), C/c (cubic curve), S/s (smooth cubic curve), Q/q (quadratic curve),
+   * T/t (smooth quadratic curve), A/a (arc), and Z/z (close path).
+   * Uppercase commands use absolute coordinates, lowercase use relative coordinates.
    *
    * @param path The SVG path string to parse
    * @returns A new PathListBuilder instance
    */
   static fromString(path: string) {
     const d = new PathListBuilder();
+    let currentPos: Point = { x: 0, y: 0 };
+    let lastCP: Point | undefined;
+    let lastCommand: string | undefined;
 
     parseSvgPath(path).forEach(p => {
       const [t, ...params] = p;
@@ -221,26 +227,113 @@ export class PathListBuilder {
 
       switch (t) {
         case 'M':
-          d.moveTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.moveTo(currentPos);
+          break;
+        case 'm':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.moveTo(currentPos);
           break;
         case 'L':
-          d.lineTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.lineTo(currentPos);
+          break;
+        case 'l':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.lineTo(currentPos);
+          break;
+        case 'H':
+          currentPos = { x: pn[0]!, y: currentPos.y };
+          d.lineTo(currentPos);
+          break;
+        case 'h':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y };
+          d.lineTo(currentPos);
+          break;
+        case 'V':
+          currentPos = { x: currentPos.x, y: pn[0]! };
+          d.lineTo(currentPos);
+          break;
+        case 'v':
+          currentPos = { x: currentPos.x, y: currentPos.y + pn[0]! };
+          d.lineTo(currentPos);
           break;
         case 'C':
-          d.cubicTo({ x: pn[4]!, y: pn[5]! }, { x: pn[0]!, y: pn[1]! }, { x: pn[2]!, y: pn[3]! });
+          lastCP = { x: pn[2]!, y: pn[3]! };
+          currentPos = { x: pn[4]!, y: pn[5]! };
+          d.cubicTo(currentPos, { x: pn[0]!, y: pn[1]! }, lastCP);
           break;
+        case 'c':
+          lastCP = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
+          d.cubicTo(
+            { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! },
+            { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! },
+            lastCP
+          );
+          currentPos = { x: currentPos.x + pn[4]!, y: currentPos.y + pn[5]! };
+          break;
+        case 'S': {
+          // Calculate reflected control point
+          const p1 =
+            lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
+              ? { x: 2 * currentPos.x - lastCP!.x, y: 2 * currentPos.y - lastCP!.y }
+              : currentPos;
+          lastCP = { x: pn[0]!, y: pn[1]! };
+          currentPos = { x: pn[2]!, y: pn[3]! };
+          d.cubicTo(currentPos, p1, lastCP);
+          break;
+        }
+        case 's': {
+          // Calculate reflected control point
+          const p1 =
+            lastCommand === 'C' || lastCommand === 'c' || lastCommand === 'S' || lastCommand === 's'
+              ? { x: 2 * currentPos.x - lastCP!.x, y: 2 * currentPos.y - lastCP!.y }
+              : currentPos;
+          lastCP = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          currentPos = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
+          d.cubicTo(currentPos, p1, lastCP);
+          break;
+        }
         case 'Q':
-          d.quadTo({ x: pn[2]!, y: pn[3]! }, { x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[2]!, y: pn[3]! };
+          d.quadTo(currentPos, { x: pn[0]!, y: pn[1]! });
+          break;
+        case 'q':
+          d.quadTo(
+            { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! },
+            { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! }
+          );
+          currentPos = { x: currentPos.x + pn[2]!, y: currentPos.y + pn[3]! };
           break;
         case 'T':
-          d.curveTo({ x: pn[0]!, y: pn[1]! });
+          currentPos = { x: pn[0]!, y: pn[1]! };
+          d.curveTo(currentPos);
+          break;
+        case 't':
+          currentPos = { x: currentPos.x + pn[0]!, y: currentPos.y + pn[1]! };
+          d.curveTo(currentPos);
           break;
         case 'A':
-          d.arcTo({ x: pn[5]!, y: pn[6]! }, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          currentPos = { x: pn[5]!, y: pn[6]! };
+          d.arcTo(currentPos, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          break;
+        case 'a':
+          currentPos = { x: currentPos.x + pn[5]!, y: currentPos.y + pn[6]! };
+          d.arcTo(currentPos, pn[0]!, pn[1]!, pn[2], pn[3] as 0 | 1, pn[4] as 0 | 1);
+          break;
+        case 'Z':
+        case 'z':
+          d.close();
+          if (d.active.start) {
+            currentPos = d.active.start;
+          }
           break;
         default:
           throw new VerifyNotReached(`command ${t} not supported: ${path}`);
       }
+
+      // Track the last command for smooth curve commands
+      lastCommand = t;
     });
 
     return d;
@@ -290,9 +383,11 @@ export class PathListBuilder {
    * @param p The point to move to
    * @returns This builder (for chaining)
    */
-  moveTo(p: Point) {
+  moveTo(p: Point): PathListBuilder;
+  moveTo(x: number, y: number): PathListBuilder;
+  moveTo(a: unknown, b?: unknown): PathListBuilder {
     if (this.active.start) this.newSegment();
-    this.active.start = p;
+    this.active.start = isObj(a) ? (a as Point) : _p(a as number, b as number);
     this.pathCache.clear();
     return this;
   }
@@ -303,9 +398,15 @@ export class PathListBuilder {
    * @param p The endpoint of the line
    * @returns This builder (for chaining)
    */
-  lineTo(p: Point) {
+  lineTo(p: Point): PathListBuilder;
+  lineTo(x: number, y: number): PathListBuilder;
+  lineTo(a: unknown, b?: unknown): PathListBuilder {
     precondition.is.present(this.active.start);
-    this.active.instructions.push(['L', p.x, p.y]);
+    if (isObj(a)) {
+      this.active.instructions.push(['L', (a as Point).x, (a as Point).y]);
+    } else {
+      this.active.instructions.push(['L', a as number, b as number]);
+    }
     this.pathCache.clear();
     return this;
   }
@@ -619,9 +720,9 @@ export const PathBuilderHelper = {
    */
   rect: (b: PathListBuilder, box: Box) => {
     b.moveTo(Point.of(box.x, box.y));
-    b.lineTo(Point.of(box.x + box.w, box.y));
-    b.lineTo(Point.of(box.x + box.w, box.y + box.h));
     b.lineTo(Point.of(box.x, box.y + box.h));
+    b.lineTo(Point.of(box.x + box.w, box.y + box.h));
+    b.lineTo(Point.of(box.x + box.w, box.y));
     b.close();
   }
 };

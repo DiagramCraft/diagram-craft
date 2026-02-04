@@ -1,13 +1,19 @@
-import * as Tabs from '@radix-ui/react-tabs';
+import { Tabs as BaseUITabs } from '@base-ui-components/react/tabs';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
-import { TbCheck, TbFiles, TbPlus } from 'react-icons/tb';
+import { TbFiles, TbPlus } from 'react-icons/tb';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import * as ContextMenu from '@radix-ui/react-context-menu';
-import { ActionContextMenuItem } from './components/ActionContextMenuItem';
-import React, { ReactNode } from 'react';
+import { ActionMenuItem } from './components/ActionMenuItem';
+import React, { type ReactElement, useRef, useEffect } from 'react';
 import { useApplication } from '../application';
 import { Diagram } from '@diagram-craft/model/diagram';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
+import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { mustExist } from '@diagram-craft/utils/assert';
+
+const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
 
 const DiagramList = (props: {
   list: readonly Diagram[];
@@ -19,19 +25,10 @@ const DiagramList = (props: {
       {props.list.map(diagram => {
         return (
           <React.Fragment key={diagram.id}>
-            <ContextMenu.RadioItem
-              className="cmp-context-menu__item"
-              onSelect={() => {
-                props.onChange(diagram.id);
-              }}
-              value={diagram.id}
-            >
-              <ContextMenu.ItemIndicator className={'cmp-context-menu__item-indicator'}>
-                <TbCheck />
-              </ContextMenu.ItemIndicator>
+            <Menu.RadioItem onClick={() => props.onChange(diagram.id)} value={diagram.id}>
               <span style={{ width: `${props.level * 10}px`, display: 'inline-block' }} />
               {diagram.name}
-            </ContextMenu.RadioItem>
+            </Menu.RadioItem>
             <DiagramList
               list={diagram.diagrams}
               level={props.level + 1}
@@ -54,43 +51,34 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
 
   return (
     <ContextMenu.Root>
-      <ContextMenu.Trigger asChild={true}>{props.children}</ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="cmp-context-menu">
-          <ActionContextMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
-            Rename...
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{}}>
-            Add
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
-            Add subpage
-          </ActionContextMenuItem>
-          <ActionContextMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
-            Delete
-          </ActionContextMenuItem>
-          {diagram.diagrams.length > 0 && (
-            <>
-              <ContextMenu.Separator className="cmp-context-menu__separator" />
+      <ContextMenu.Trigger element={props.element} />
+      <ContextMenu.Menu>
+        <ActionMenuItem action={'DIAGRAM_RENAME'} arg={{ diagramId: props.diagramId }}>
+          Rename...
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{}}>
+          Add
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_ADD'} arg={{ parentId: props.diagramId }}>
+          Add subpage
+        </ActionMenuItem>
+        <ActionMenuItem action={'DIAGRAM_REMOVE'} arg={{ diagramId: props.diagramId }}>
+          Delete
+        </ActionMenuItem>
+        {diagram.diagrams.length > 0 && (
+          <>
+            <Menu.Separator />
 
-              <ContextMenu.RadioGroup value={props.diagramId}>
-                <ContextMenu.RadioItem
-                  className="cmp-context-menu__item"
-                  onSelect={() => change(props.rootId)}
-                  value={props.rootId}
-                >
-                  <ContextMenu.ItemIndicator className={'cmp-context-menu__item-indicator'}>
-                    <TbCheck />
-                  </ContextMenu.ItemIndicator>
-                  {diagram.name}
-                </ContextMenu.RadioItem>
+            <Menu.RadioGroup value={props.diagramId}>
+              <Menu.RadioItem onClick={() => change(props.rootId)} value={props.rootId}>
+                {diagram.name}
+              </Menu.RadioItem>
 
-                <DiagramList level={1} list={diagram.diagrams} onChange={change} />
-              </ContextMenu.RadioGroup>
-            </>
-          )}
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
+              <DiagramList level={1} list={diagram.diagrams} onChange={change} />
+            </Menu.RadioGroup>
+          </>
+        )}
+      </ContextMenu.Menu>
     </ContextMenu.Root>
   );
 };
@@ -98,59 +86,121 @@ const DocumentsContextMenu = (props: DocumentsContextMenuProps) => {
 type DocumentsContextMenuProps = {
   diagramId: string;
   rootId: string;
-  children: ReactNode;
+  element: ReactElement;
+};
+
+const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDocument }) => {
+  const application = useApplication();
+  const { diagram: d, path, document } = props;
+
+  const drag = useDraggable(d.id, MIME_TYPE);
+  const dropTarget = useDropTarget(
+    [MIME_TYPE],
+    ev => {
+      const droppedId = mustExist(ev[MIME_TYPE]?.before ?? ev[MIME_TYPE]?.after ?? '');
+      const diagramToMove = mustExist(document.byId(droppedId));
+
+      // Validate same parent level
+      if (diagramToMove.parent !== d.parent) return;
+
+      // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
+      const relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
+
+      const undoManager = application.model.activeDiagram.undoManager;
+      const action = new DiagramReorderUndoableAction(document, diagramToMove, d, relation);
+      undoManager.addAndExecute(action);
+    },
+    { split: () => [0.5, 0, 0.5] }
+  );
+
+  return (
+    <BaseUITabs.Tab
+      key={d.id}
+      className="cmp-document-tabs__tab-trigger util-vcenter"
+      value={d.id}
+      id={`tab-${d.id}`}
+      onDoubleClick={() => {
+        const diagramId = path[0] === d ? path.at(-1)!.id : d.id;
+        application.actions['DIAGRAM_RENAME']?.execute({ diagramId });
+      }}
+      {...drag.eventHandlers}
+      {...dropTarget.eventHandlers}
+    >
+      <DocumentsContextMenu
+        rootId={d.id}
+        diagramId={path[0] === d ? path.at(-1)!.id : d.id}
+        element={
+          <div>
+            {d.name}
+
+            {path[0] === d &&
+              path.length > 1 &&
+              path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
+
+            {d.diagrams.length > 0 && (
+              <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
+                <TbFiles />
+              </div>
+            )}
+          </div>
+        }
+      ></DocumentsContextMenu>
+    </BaseUITabs.Tab>
+  );
 };
 
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
   const redraw = useRedraw();
+  const tabsListRef = useRef<HTMLDivElement>(null);
+  const scrollToTabIdRef = useRef<string | null>(null);
+
   useEventListener(props.document, 'diagramRemoved', redraw);
   useEventListener(props.document, 'diagramChanged', redraw);
-  useEventListener(props.document, 'diagramAdded', redraw);
+  useEventListener(props.document, 'diagramAdded', ({ diagram }) => {
+    const path = props.document.getDiagramPath(diagram);
+    const rootDiagram = path[0];
+    if (rootDiagram) {
+      scrollToTabIdRef.current = rootDiagram.id;
+    }
+    redraw();
+  });
 
   // The selection can be different from the active diagram as the selection
   // is the "root" of the activeDiagram
   const path = application.model.activeDocument.getDiagramPath(application.model.activeDiagram);
   const selection = path[0]?.id;
 
+  useEffect(() => {
+    if (scrollToTabIdRef.current && tabsListRef.current) {
+      const tabElement = tabsListRef.current.querySelector(
+        `#tab-${scrollToTabIdRef.current}`
+      ) as HTMLElement;
+      if (tabElement) {
+        tabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+      scrollToTabIdRef.current = null;
+    }
+  });
+
   return (
     <div className={'cmp-document-tabs'}>
-      <Tabs.Root
+      <BaseUITabs.Root
         value={selection}
         onValueChange={d => {
           application.model.activeDiagram = props.document.byId(d)!;
         }}
       >
-        <Tabs.List className="cmp-document-tabs__tabs" aria-label="Diagrams in document">
+        <BaseUITabs.List
+          ref={tabsListRef}
+          className="cmp-document-tabs__tabs"
+          aria-label="Diagrams in document"
+        >
           {props.document.diagrams.map(d => (
-            <Tabs.Trigger
-              key={d.id}
-              className="cmp-document-tabs__tab-trigger util-vcenter"
-              value={d.id}
-              id={`tab-${d.id}`}
-            >
-              <DocumentsContextMenu
-                rootId={d.id}
-                diagramId={path[0] === d ? path.at(-1)!.id : d.id}
-              >
-                <div>
-                  {d.name}
-
-                  {path[0] === d &&
-                    path.length > 1 &&
-                    path.slice(1).map((e, k) => <span key={k}>&nbsp;&gt;&nbsp;{e.name}</span>)}
-
-                  {d.diagrams.length > 0 && (
-                    <div style={{ marginLeft: '0.35rem', marginTop: '0.1rem' }}>
-                      <TbFiles />
-                    </div>
-                  )}
-                </div>
-              </DocumentsContextMenu>
-            </Tabs.Trigger>
+            <TabItem key={d.id} diagram={d} path={path} document={props.document} />
           ))}
-        </Tabs.List>
-      </Tabs.Root>
+        </BaseUITabs.List>
+      </BaseUITabs.Root>
       <button
         className={'cmp-document-tabs__add'}
         type="button"

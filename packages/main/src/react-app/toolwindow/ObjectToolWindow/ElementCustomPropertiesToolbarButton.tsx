@@ -33,7 +33,7 @@ export const ElementCustomPropertiesToolbarButton = () => {
 
   let disabled = false;
 
-  const def = diagram.document.nodeDefinitions.get(node.nodeType);
+  const def = diagram.document.registry.nodes.get(node.nodeType);
   const customProperties = def.getCustomPropertyDefinitions(node);
   if (Object.keys(customProperties).length === 0) {
     disabled = true;
@@ -41,11 +41,13 @@ export const ElementCustomPropertiesToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button disabled={disabled}>
-          <TbSettings />
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button disabled={disabled}>
+            <TbSettings />
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <ElementCustomPropertiesPanel mode={'panel'} />
       </Popover.Content>

@@ -1,4 +1,5 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -7,14 +8,23 @@ declare global {
 }
 
 export const selectAllActions = (context: ActionContext) => ({
-  SELECT_ALL: new SelectAllAction('all', context),
-  SELECT_ALL_NODES: new SelectAllAction('nodes', context),
-  SELECT_ALL_EDGES: new SelectAllAction('edges', context)
+  SELECT_ALL: new SelectAllAction('all', $tStr('action.SELECT_ALL.name', 'Select All'), context),
+  SELECT_ALL_NODES: new SelectAllAction(
+    'nodes',
+    $tStr('action.SELECT_ALL_NODES.name', 'Select All Nodes'),
+    context
+  ),
+  SELECT_ALL_EDGES: new SelectAllAction(
+    'edges',
+    $tStr('action.SELECT_ALL_EDGES.name', 'Select All Edges'),
+    context
+  )
 });
 
 export class SelectAllAction extends AbstractAction {
   constructor(
     private readonly mode: 'all' | 'nodes' | 'edges' = 'all',
+    public readonly name: TranslatedString,
     context: ActionContext
   ) {
     super(context);

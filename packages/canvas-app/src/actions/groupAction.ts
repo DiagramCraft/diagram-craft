@@ -1,15 +1,17 @@
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Box } from '@diagram-craft/geometry/box';
-import { UndoableAction } from '@diagram-craft/model/undoManager';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -22,93 +24,14 @@ declare global {
   }
 }
 
-class UndoableGroupAction implements UndoableAction {
-  #elements: ReadonlyArray<DiagramElement> | undefined = undefined;
-  #group: DiagramNode | undefined = undefined;
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly type: 'group' | 'ungroup'
-  ) {}
-
-  get description() {
-    return this.type === 'group' ? 'Group' : 'Ungroup';
-  }
-
-  redo(uow: UnitOfWork): void {
-    if (this.type === 'group') {
-      this.group(uow);
-    } else {
-      this.ungroup(uow);
-    }
-  }
-
-  undo(uow: UnitOfWork): void {
-    if (this.type === 'group') {
-      this.ungroup(uow);
-    } else {
-      this.group(uow);
-    }
-  }
-
-  private group(uow: UnitOfWork) {
-    if (this.#elements === undefined) {
-      this.#elements = this.diagram.selection.elements.toSorted((a, b) => {
-        return this.diagram.layers.isAbove(a, b) ? 1 : -1;
-      });
-    }
-
-    this.#elements.forEach(e => {
-      assertRegularLayer(e.layer);
-      e.layer.removeElement(e, uow);
-    });
-
-    const layer = this.diagram.activeLayer;
-    assertRegularLayer(layer);
-
-    this.#group = ElementFactory.node(
-      newid(),
-      'group',
-      Box.boundingBox(this.#elements.map(e => e.bounds)),
-      layer,
-      {},
-      {}
-    );
-    this.#group.setChildren([...this.#elements], uow);
-
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.activeLayer.addElement(this.#group, uow);
-
-    this.diagram.selection.setElements([this.#group]);
-  }
-
-  private ungroup(uow: UnitOfWork) {
-    if (this.#group === undefined) {
-      this.#group = this.diagram.selection.elements[0] as DiagramNode;
-    }
-
-    const children = this.#group.children;
-
-    this.#group.children.forEach(e => {
-      assertRegularLayer(e.layer);
-      e.layer.removeElement(e, uow);
-    });
-
-    assertRegularLayer(this.#group.layer);
-    this.#group.layer.removeElement(this.#group, uow);
-    this.#elements = this.#group.children;
-
-    children.forEach(e => {
-      this.#group?.removeChild(e, uow);
-      assertRegularLayer(this.diagram.activeLayer);
-      this.diagram.activeLayer.addElement(e, uow);
-    });
-
-    this.diagram.selection.setElements(children);
-  }
-}
+const NAME_MAP: Record<'group' | 'ungroup', TranslatedString> = {
+  group: $tStr('action.GROUP_GROUP.name', 'Group'),
+  ungroup: $tStr('action.GROUP_UNGROUP.name', 'Ungroup')
+};
 
 export class GroupAction extends AbstractSelectionAction {
+  name: TranslatedString;
+
   constructor(
     private readonly type: 'group' | 'ungroup',
     context: ActionContext
@@ -119,6 +42,7 @@ export class GroupAction extends AbstractSelectionAction {
       ElementType.Both,
       ['regular']
     );
+    this.name = NAME_MAP[type];
   }
 
   getCriteria(context: ActionContext) {
@@ -148,8 +72,62 @@ export class GroupAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    this.context.model.activeDiagram.undoManager.addAndExecute(
-      new UndoableGroupAction(this.context.model.activeDiagram, this.type)
-    );
+    const diagram = this.context.model.activeDiagram;
+
+    const activeLayer = diagram.activeLayer;
+    assertRegularLayer(activeLayer);
+
+    const elements = diagram.selection.elements;
+
+    if (this.type === 'ungroup') {
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Ungroup', uow => {
+        const group = elements[0] as DiagramNode;
+        assertRegularLayer(group.layer);
+
+        const children = group.children;
+
+        children.forEach(e => {
+          e.parent?.removeChild(e, uow);
+          activeLayer.addElement(e, uow);
+        });
+        group.layer.removeElement(group, uow);
+
+        uow.select(diagram, children);
+      });
+    } else {
+      // Check 1: All elements must have the same parent
+      const firstParent = elements[0]!.parent;
+      const allHaveSameParent = elements.every(e => e.parent === firstParent);
+      if (!allHaveSameParent) return;
+
+      // Check 2: No element can be a label node
+      const hasLabelNode = diagram.selection.nodes.some(n => n.isLabelNode());
+      if (hasLabelNode) return;
+
+      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
+        const elements = diagram.selection.elements.toSorted((a, b) => {
+          return diagram.layers.isAbove(a, b) ? 1 : -1;
+        });
+
+        const group = ElementFactory.node(
+          newid(),
+          'group',
+          Box.boundingBox(elements.map(e => e.bounds)),
+          activeLayer,
+          {},
+          {}
+        );
+        activeLayer.addElement(group, uow);
+
+        elements.forEach(e => {
+          assertRegularLayer(e.layer);
+          if (e.layer.elements.includes(e)) e.layer.removeElement(e, uow);
+        });
+
+        group.setChildren([...elements], uow);
+
+        uow.select(diagram, [group]);
+      });
+    }
   }
 }

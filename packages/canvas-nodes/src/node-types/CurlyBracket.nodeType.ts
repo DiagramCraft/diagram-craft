@@ -7,8 +7,11 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Box } from '@diagram-craft/geometry/box';
@@ -32,27 +35,13 @@ registerCustomNodeDefaults('curlyBracket', { size: 50 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.curlyBracket.size,
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.curlyBracket.size', {
     maxValue: 50,
     unit: '%',
-    isSet: node.storedProps.custom?.curlyBracket?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('curlyBracket', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('curlyBracket', props => (props.size = round(value)), uow);
-    }
-  }
-};
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -61,8 +50,10 @@ const RADIUS = 10;
 export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('curlyBracket', 'CurlyBracket', CurlyBracketNodeDefinition.Shape);
-    this.capabilities.fill = false;
-    this.capabilities['anchors-configurable'] = false;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.AnchorsConfigurable]: false
+    });
   }
 
   static Shape = class extends BaseNodeComponent<CurlyBracketNodeDefinition> {
@@ -73,8 +64,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
 
       const bounds = props.node.bounds;
       shapeBuilder.controlPoint(Box.fromOffset(bounds, _p(sizePct, 0.5)), ({ x }, uow) => {
-        const distance = Math.max(0, x - bounds.x);
-        Size.set((distance / bounds.w) * 100, props.node, uow);
+        propSize(props.node).set((Math.max(0, x - bounds.x) / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.curlyBracket.size}%`;
       });
     }
@@ -107,7 +97,7 @@ export class CurlyBracketNodeDefinition extends ShapeNodeDefinition {
       .lineTo(_p(1, 0));
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

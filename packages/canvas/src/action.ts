@@ -2,6 +2,7 @@ import { UndoableAction } from '@diagram-craft/model/undoManager';
 import { Emitter, EventEmitter, EventKey, EventMap } from '@diagram-craft/utils/event';
 import { Point } from '@diagram-craft/geometry/point';
 import { model } from './modelState';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 export type ActionEvents = {
   /**
@@ -32,7 +33,7 @@ export type ActionContext = {
 export interface Action<T = undefined> extends Emitter<ActionEvents> {
   execute: (arg: Partial<T>) => void;
   isEnabled: (arg: Partial<T> | T) => boolean;
-  description?: string;
+  name: TranslatedString;
   availableInCommandPalette: boolean;
 }
 
@@ -76,6 +77,8 @@ export abstract class AbstractAction<T = undefined, C extends ActionContext = Ac
   extends EventEmitter<ActionEvents>
   implements Action<T>
 {
+  abstract name: TranslatedString;
+
   private criteria: Array<ActionCriteria> = [];
   private enabled: boolean = true;
   protected context: C;
@@ -128,6 +131,8 @@ export abstract class AbstractToggleAction<T = undefined, C extends ActionContex
   extends AbstractAction<T, C>
   implements ToggleAction<T>
 {
+  abstract name: TranslatedString;
+
   private stateCriteria: Array<ActionCriteria> = [];
   protected state: boolean = false;
 
@@ -194,5 +199,14 @@ export class ToggleActionUndoableAction<T = undefined> implements UndoableAction
 }
 
 export class NoopAction extends AbstractAction {
+  name = $tStr('action.NOOP.name', 'No-op');
   execute() {}
 }
+
+declare global {
+  namespace DiagramCraft {
+    interface ActionMapExtensions {}
+  }
+}
+
+export interface ActionMap extends DiagramCraft.ActionMapExtensions {}

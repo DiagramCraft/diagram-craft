@@ -1,17 +1,17 @@
-import * as RadixTabs from '@radix-ui/react-tabs';
 import styles from './Tabs.module.css';
 import React, { CSSProperties } from 'react';
+import { Tabs as BaseUITabs } from '@base-ui/react/tabs';
 
 const Root = (props: RootProps) => {
   return (
-    <RadixTabs.Root
+    <BaseUITabs.Root
       className={styles.cmpTabs}
       value={props.value}
       defaultValue={props.defaultValue}
       onValueChange={props.onValueChange}
     >
       {props.children}
-    </RadixTabs.Root>
+    </BaseUITabs.Root>
   );
 };
 
@@ -23,7 +23,7 @@ type RootProps = {
 };
 
 const List = (props: ListProps) => {
-  return <RadixTabs.List className={styles.cmpTabsList}>{props.children}</RadixTabs.List>;
+  return <BaseUITabs.List className={styles.cmpTabsList}>{props.children}</BaseUITabs.List>;
 };
 
 type ListProps = {
@@ -32,13 +32,9 @@ type ListProps = {
 
 const Trigger = (props: TriggerProps) => {
   return (
-    <RadixTabs.Trigger
-      className={styles.cmpTabsTrigger}
-      value={props.value}
-      disabled={props.disabled}
-    >
+    <BaseUITabs.Tab className={styles.cmpTabsTrigger} value={props.value} disabled={props.disabled}>
       {props.children}
-    </RadixTabs.Trigger>
+    </BaseUITabs.Tab>
   );
 };
 
@@ -50,13 +46,13 @@ type TriggerProps = {
 
 const Content = (props: ContentProps) => {
   return (
-    <RadixTabs.Content
+    <BaseUITabs.Panel
       className={styles.cmpTabsContent}
       value={props.value}
       style={props.style ?? {}}
     >
       {props.children}
-    </RadixTabs.Content>
+    </BaseUITabs.Panel>
   );
 };
 

@@ -151,6 +151,8 @@ export class Defaults<T> {
       defaultsToVerify = this.cachedDefaultsObject;
     }
 
+    propsToVerify ??= {};
+
     return DiagramDefaultsPrivate.isSameAsDefaults(propsToVerify, defaultsToVerify);
   }
 
@@ -322,7 +324,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     deletable: true,
     movable: true,
     rotatable: true,
-    textGrow: false,
+    adjustSizeBasedOnText: false,
     inheritStyle: true
   },
 
@@ -343,7 +345,9 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     bottom: 6,
     wrap: true,
     overflow: 'visible',
-    position: 'c'
+    position: 'c',
+    shrink: false,
+    width: 100
   },
 
   anchors: {
@@ -357,6 +361,37 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
   routing: {
     spacing: 0,
     constraint: 'none'
+  },
+
+  layout: {
+    container: {
+      enabled: false,
+      direction: 'horizontal',
+      gap: 0,
+      autoShrink: false,
+      justifyContent: 'start',
+      alignItems: 'preserve',
+      padding: {
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0
+      }
+    },
+    element: {
+      width: {
+        min: 0,
+        max: 100000
+      },
+      height: {
+        min: 0,
+        max: 100000
+      },
+      preserveAspectRatio: false,
+      grow: 0,
+      shrink: 0,
+      isAbsolute: false
+    }
   }
 };
 

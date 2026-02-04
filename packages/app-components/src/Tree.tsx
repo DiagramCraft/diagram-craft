@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  forwardRef,
   JSXElementConstructor,
   ReactElement,
   ReactNode,
@@ -42,7 +43,7 @@ type RootProps = {
   children: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const Node = (props: NodeProps) => {
+const Node = React.forwardRef<HTMLDivElement, NodeProps>((props, ref) => {
   const [open, setOpen] = useState(props.isOpen);
   const ctx = useContext(TreeContext);
 
@@ -53,6 +54,7 @@ const Node = (props: NodeProps) => {
   return (
     <TreeContext.Provider value={{ depth: ctx!.depth + 1, open, setOpen, hasChildren }}>
       <div
+        ref={ref}
         {...PropsUtils.filterDomProperties(props)}
         className={`${styles.cmpTreeNode} ${props.className ?? ''}`}
         data-depth={ctx!.depth}
@@ -71,17 +73,20 @@ const Node = (props: NodeProps) => {
         })}
     </TreeContext.Provider>
   );
-};
+});
 
 type NodeProps = {
   isOpen?: boolean;
   children?: React.ReactNode;
 } & React.HTMLAttributes<HTMLDivElement>;
 
-const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+type NodeLabelProps = { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>;
+
+const NodeLabel = forwardRef<HTMLDivElement, NodeLabelProps>((props, ref) => {
   const ctx = useContext(TreeContext)!;
   return (
     <div
+      ref={ref}
       {...PropsUtils.filterDomProperties(props)}
       className={`${styles.cmpTreeNodeLabel} ${props.className ?? ''}`}
     >
@@ -100,7 +105,7 @@ const NodeLabel = (props: { children: React.ReactNode } & React.HTMLAttributes<H
       {props.children}
     </div>
   );
-};
+});
 
 const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (

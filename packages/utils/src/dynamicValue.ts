@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2025 Magnus Johansson
- * SPDX-License-Identifier: ISC
- */
-
 /**
  * A wrapper class that provides dynamic evaluation of values through a callback function.
  *

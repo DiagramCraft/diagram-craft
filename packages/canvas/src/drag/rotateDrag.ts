@@ -4,7 +4,6 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
@@ -17,7 +16,7 @@ export class RotateDrag extends Drag {
 
   constructor(private readonly diagram: Diagram) {
     super();
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -30,7 +29,15 @@ export class RotateDrag extends Drag {
 
     const center = Box.center(selection.source.boundingBox);
 
-    const targetAngle = Vector.angle(Vector.from(center, event.offset)) + Math.PI / 2 - Math.PI / 4;
+    const handlePosition = { x: before.x + before.w, y: before.y };
+
+    // Calculate the initial angle from center to the handle position
+    const initialAngle = Vector.angle(Vector.from(center, handlePosition));
+
+    // Calculate the current angle from center to the mouse position
+    const currentAngle = Vector.angle(Vector.from(center, event.offset));
+
+    const targetAngle = currentAngle - initialAngle;
 
     const result = snapManager.snapRotate({ ...before, r: targetAngle });
     const adjustedAngle = isFreeDrag(event.modifiers) ? targetAngle : result.adjusted.r;
@@ -62,11 +69,16 @@ export class RotateDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
-      this.uow.stopTracking();
-      commitWithUndo(this.uow, 'Rotate');
+      this.uow.commitWithUndo('Rotate');
+    } else {
+      this.uow.abort();
     }
 
     selection.forceRotation(undefined);
     selection.rebaseline();
+  }
+
+  cancel() {
+    this.uow.abort();
   }
 }

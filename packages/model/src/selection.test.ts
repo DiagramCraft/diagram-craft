@@ -154,7 +154,7 @@ describe('selection', () => {
     selection.setElements([node]);
     expect(selection.isChanged()).toBe(false);
 
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, uow));
     expect(selection.isChanged()).toBe(true);
   });
 
@@ -172,11 +172,11 @@ describe('selection', () => {
   test('getParents()', () => {
     const selection = new Selection(diagram);
     const parent = layer.addNode();
-    const child = layer.addNode();
-    const grandchild = layer.addNode();
+    const child = layer.createNode();
+    const grandchild = layer.createNode();
 
-    parent.addChild(child, UnitOfWork.immediate(diagram));
-    child.addChild(grandchild, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+    UnitOfWork.execute(diagram, uow => child.addChild(grandchild, uow));
 
     selection.setElements([grandchild]);
 
@@ -191,7 +191,7 @@ describe('selection', () => {
     const node = layer.addNode({ bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 } });
 
     selection.setElements([node]);
-    node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 10, h: 10, r: 0 }, uow));
 
     expect(selection.isChanged()).toBe(true);
 
@@ -209,7 +209,7 @@ describe('selection', () => {
     expect(selection.bounds.r).toBe(45);
 
     const boundsBeforeRecalc = selection.bounds;
-    node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => node.setBounds({ x: 20, y: 30, w: 50, h: 60, r: 0 }, uow));
     selection.recalculateBoundingBox();
 
     expect(selection.bounds).toEqual(boundsBeforeRecalc);
@@ -237,7 +237,7 @@ describe('selection', () => {
   test('locked elements', () => {
     const selection = new Selection(diagram);
     const lockedLayer = diagram.newLayer();
-    lockedLayer.locked = true;
+    UnitOfWork.execute(diagram, uow => lockedLayer.setLocked(true, uow));
 
     const node = lockedLayer.addNode();
 

@@ -6,12 +6,12 @@ import { Point } from '@diagram-craft/geometry/point';
 import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Context } from '../context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { createLinkedNode } from '../linkedNode';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;
@@ -26,7 +26,8 @@ export class AnchorHandleDrag extends Drag {
     super();
 
     const diagram = this.node.diagram;
-    assertRegularLayer(diagram.activeLayer);
+    const layer = diagram.activeLayer;
+    assertRegularLayer(layer);
 
     this.edge = ElementFactory.edge(
       newid(),
@@ -37,16 +38,12 @@ export class AnchorHandleDrag extends Drag {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
       [],
-      diagram.activeLayer
+      layer
     );
 
     diagram.undoManager.setMark();
 
-    const uow = new UnitOfWork(diagram);
-    diagram.activeLayer.addElement(this.edge, uow);
-
-    uow.updateElement(this.node);
-    uow.commit();
+    UnitOfWork.executeWithUndo(diagram, 'Add edge', uow => layer.addElement(this.edge, uow));
 
     diagram.selection.setElements([this.edge]);
 
@@ -64,10 +61,7 @@ export class AnchorHandleDrag extends Drag {
     if (isShortDrag) {
       // Undo work to drag new edge
       this.delegate.cancel();
-      UnitOfWork.execute(this.node.diagram, uow => {
-        this.edge.layer.removeElement(this.edge, uow);
-        this.edge.detach(uow);
-      });
+      UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
       diagram.selection.setElements([]);
 
       createLinkedNode(
@@ -79,18 +73,22 @@ export class AnchorHandleDrag extends Drag {
       return;
     }
 
-    assertRegularLayer(this.node.diagram.activeLayer);
-    this.node.diagram.undoManager.add(
-      new ElementAddUndoableAction([this.edge], this.node.diagram, this.node.diagram.activeLayer)
-    );
-
-    // TODO: Need to prevent undoable action from being added twice
     this.delegate.onDragEnd();
+
+    const previousActions = diagram.undoManager.getToMark();
+    diagram.undoManager.setMark();
+    diagram.undoManager.add(new CompoundUndoableAction(previousActions));
 
     // In case we have connected to an existing node, we don't need to show the popup
     if (this.edge.end.isConnected) return;
 
     this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node.id, this.edge.id);
+  }
+
+  cancel() {
+    this.delegate.cancel();
+    UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
+    this.node.diagram.selection.setElements([]);
   }
 
   onDrag(event: DragEvents.DragStart): void {

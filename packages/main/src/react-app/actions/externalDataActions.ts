@@ -2,12 +2,11 @@ import { Application } from '../../application';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import {
   AbstractSelectionAction,
   ElementType,
   MultipleType
-} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import {
   findEntryBySchema,
@@ -24,7 +23,8 @@ import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataManagerUndoableFacade } from '@diagram-craft/model/diagramDocumentDataUndoActions';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
 import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
-import type { NodeProps, EdgeProps } from '@diagram-craft/model/diagramProps';
+import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const externalDataActions = (application: Application) => ({
   EXTERNAL_DATA_UNLINK: new ExternalDataUnlinkAction(application),
@@ -45,6 +45,8 @@ declare global {
 type SchemaArg = { schemaId: string };
 
 export class ExternalDataUnlinkAction extends AbstractSelectionAction<Application, SchemaArg> {
+  name = $tStr('action.EXTERNAL_DATA_UNLINK.name', 'Unlink');
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -63,23 +65,24 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
     const $d = elements[0]!.diagram;
-    const uow = new UnitOfWork($d, true);
 
-    for (const e of elements) {
-      e.updateMetadata(p => {
-        p.data ??= { data: [] };
-        const item = p.data.data!.find(d => d.type === 'external' && d.schema === arg.schemaId);
-        assert.present(item);
-        item.external = undefined;
-        item.type = 'schema';
-      }, uow);
-    }
-
-    commitWithUndo(uow, 'Break external data link');
+    UnitOfWork.executeWithUndo($d, 'Break external data link', uow => {
+      for (const e of elements) {
+        e.updateMetadata(p => {
+          p.data ??= { data: [] };
+          const item = p.data.data!.find(d => d.type === 'external' && d.schema === arg.schemaId);
+          assert.present(item);
+          item.external = undefined;
+          item.type = 'schema';
+        }, uow);
+      }
+    });
   }
 }
 
 export class ExternalDataClear extends AbstractSelectionAction<Application, SchemaArg> {
+  name = $tStr('action.EXTERNAL_DATA_CLEAR.name', 'Unlink & Clear');
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -98,16 +101,14 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
     const $d = elements[0]!.diagram;
-    const uow = new UnitOfWork($d, true);
-
-    for (const e of elements) {
-      e.updateMetadata(p => {
-        p.data!.data ??= [];
-        p.data!.data = p.data!.data.filter(s => s.schema !== arg.schemaId);
-      }, uow);
-    }
-
-    commitWithUndo(uow, 'Break external data link');
+    UnitOfWork.executeWithUndo($d, 'Break external data link', uow => {
+      for (const e of elements) {
+        e.updateMetadata(p => {
+          p.data!.data ??= [];
+          p.data!.data = p.data!.data.filter(s => s.schema !== arg.schemaId);
+        }, uow);
+      }
+    });
   }
 }
 
@@ -116,6 +117,8 @@ export type ExternalDataLinkActionProps = {
 };
 
 export class ExternalDataLinkAction extends AbstractSelectionAction<Application, SchemaArg> {
+  name = $tStr('action.EXTERNAL_DATA_LINK.name', 'Link');
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -166,40 +169,40 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         }
 
         // Link to the data (either newly created or existing)
-        const uow = new UnitOfWork($d, true);
-        $d.selection.elements.forEach(e => {
-          e.updateMetadata(p => {
-            p.data ??= { data: [] };
+        UnitOfWork.executeWithUndo($d, 'Link external data', uow => {
+          $d.selection.elements.forEach(e => {
+            e.updateMetadata(p => {
+              p.data ??= { data: [] };
 
-            let item = p.data.data!.find(d => d.schema === arg.schemaId);
-            const existing = item !== undefined;
-            if (!existing) {
-              item = {
-                schema: arg.schemaId!,
-                type: 'schema',
-                data: {},
-                external: {
-                  uid: uid
-                },
-                enabled: true
+              let item = p.data.data!.find(d => d.schema === arg.schemaId);
+              const existing = item !== undefined;
+              if (!existing) {
+                item = {
+                  schema: arg.schemaId!,
+                  type: 'schema',
+                  data: {},
+                  external: {
+                    uid: uid
+                  },
+                  enabled: true
+                };
+                p.data.data!.push(item);
+              }
+              assert.present(item);
+
+              item.external = {
+                uid: uid
               };
-              p.data.data!.push(item);
-            }
-            assert.present(item);
+              item.type = 'external';
 
-            item.external = {
-              uid: uid
-            };
-            item.type = 'external';
-
-            const [data] = db.getById(db.getSchema(arg.schemaId!), [uid]) as [Data];
-            for (const k of Object.keys(data)) {
-              if (k.startsWith('_')) continue;
-              item.data[k] = data[k];
-            }
-          }, uow);
+              const [data] = db.getById(db.getSchema(arg.schemaId!), [uid]) as [Data];
+              for (const k of Object.keys(data)) {
+                if (k.startsWith('_')) continue;
+                item.data[k] = data[k];
+              }
+            }, uow);
+          });
         });
-        commitWithUndo(uow, 'Link external data');
       },
       props: {
         schema,
@@ -216,6 +219,8 @@ export class ExternalDataMakeTemplateAction extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
+  name = $tStr('action.EXTERNAL_DATA_MAKE_TEMPLATE.name', 'Make template');
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Both);
   }
@@ -266,6 +271,8 @@ export class ExternalDataLinkRemoveTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
+  name = $tStr('action.EXTERNAL_DATA_LINK_REMOVE_TEMPLATE.name', 'Remove Template');
+
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
     const $doc = this.context.model.activeDocument;
@@ -286,6 +293,8 @@ export class ExternalDataLinkRenameTemplate extends AbstractAction<
   { templateId: string },
   Application
 > {
+  name = $tStr('action.EXTERNAL_DATA_LINK_RENAME_TEMPLATE.name', 'Rename Template');
+
   execute(arg: Partial<{ templateId: string }>): void {
     const $d = this.context.model.activeDiagram;
     const $doc = this.context.model.activeDocument;
@@ -323,6 +332,8 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
   Application,
   SchemaArg
 > {
+  name = $tStr('action.EXTERNAL_DATA_LINK_UPDATE_TEMPLATE.name', 'Update template');
+
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }
@@ -407,28 +418,29 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
   ): void {
     // Iterate through all diagrams in the document
     for (const diagram of $doc.diagrams) {
-      const uow = new UnitOfWork(diagram, true);
-      let hasUpdates = false;
+      UnitOfWork.executeWithUndo(diagram, 'Update elements from template', uow => {
+        let hasUpdates = false;
 
-      // Find all elements that use this template
-      for (const element of diagram.visibleElements()) {
-        if (element.metadata.data?.templateId !== templateId) continue;
+        // Find all elements that use this template
+        for (const element of diagram.visibleElements()) {
+          if (element.metadata.data?.templateId !== templateId) continue;
 
-        // Update the element's props based on the template change
-        element.updateProps(props => {
-          // Remove old template props that haven't been customized
-          this.removeOldTemplateProps(props, oldTemplate.props as NodeProps | EdgeProps);
+          // Update the element's props based on the template change
+          element.updateProps(props => {
+            // Remove old template props that haven't been customized
+            this.removeOldTemplateProps(props, oldTemplate.props as NodeProps | EdgeProps);
 
-          // Add new template props (only if not already set)
-          this.addNewTemplateProps(props, newTemplate.props as NodeProps | EdgeProps);
-        }, uow);
+            // Add new template props (only if not already set)
+            this.addNewTemplateProps(props, newTemplate.props as NodeProps | EdgeProps);
+          }, uow);
 
-        hasUpdates = true;
-      }
+          hasUpdates = true;
+        }
 
-      if (hasUpdates) {
-        commitWithUndo(uow, 'Update elements from template');
-      }
+        if (!hasUpdates) {
+          uow.abort();
+        }
+      });
     }
   }
 

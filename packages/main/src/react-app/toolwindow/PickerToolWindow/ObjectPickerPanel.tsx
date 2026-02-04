@@ -1,45 +1,52 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { useEffect, useMemo, useState } from 'react';
+import { Stencil, StencilPackage } from '@diagram-craft/model/elementDefinitionRegistry';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
-const NODE_CACHE = new Map<string, [Stencil, Diagram, DiagramNode, DiagramNode]>();
+type StencilEntry = {
+  stencil: Stencil;
+  stencilDiagram: Diagram;
+  stencilElements: DiagramElement[];
+  canvasElements: DiagramElement[];
+};
 
-const makeDiagramNode = (mainDiagram: Diagram, n: Stencil) => {
+const STENCIL_CACHE = new Map<string, StencilEntry>();
+
+const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   const cacheKey = n.id;
 
-  if (NODE_CACHE.has(cacheKey)) {
-    return NODE_CACHE.get(cacheKey)!;
+  if (STENCIL_CACHE.has(cacheKey)) {
+    return STENCIL_CACHE.get(cacheKey)!;
   }
 
-  const { node: stencilNode, diagram: stencilDiagram } = createThumbnailDiagramForNode(
-    d => n.node(d),
-    mainDiagram.document.definitions
+  const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
+    d => n.elementsForPicker(d),
+    doc.registry,
+    { padding: 5 }
   );
-  stencilDiagram.viewBox.dimensions = {
-    w: stencilNode.bounds.w + 10,
-    h: stencilNode.bounds.h + 10
+
+  const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
+    padding: 5
+  });
+
+  const entry: StencilEntry = {
+    stencil: n,
+    stencilDiagram,
+    stencilElements,
+    canvasElements
   };
-  stencilDiagram.viewBox.offset = { x: -5, y: -5 };
+  STENCIL_CACHE.set(cacheKey, entry);
 
-  const { node: canvasNode, diagram: canvasDiagram } = createThumbnailDiagramForNode(
-    d => n.canvasNode(d),
-    mainDiagram.document.definitions
-  );
-  canvasDiagram.viewBox.dimensions = { w: canvasNode.bounds.w + 10, h: canvasNode.bounds.h + 10 };
-  canvasDiagram.viewBox.offset = { x: -5, y: -5 };
-
-  NODE_CACHE.set(cacheKey, [n, stencilDiagram, stencilNode, canvasNode]);
-
-  return [n, stencilDiagram, stencilNode, canvasNode] as const;
+  return entry;
 };
 
 export const ObjectPickerPanel = (props: Props) => {
@@ -48,11 +55,45 @@ export const ObjectPickerPanel = (props: Props) => {
   const app = useApplication();
   const [loaded, setLoaded] = useState(false);
 
-  const stencils = props.stencils;
-  const diagrams = useMemo(() => {
-    if (!props.isOpen) return [];
-    return stencils.map(n => makeDiagramNode(diagram, n));
-  }, [diagram, stencils, props.isOpen]);
+  const groups = useMemo(() => {
+    const res: Array<{
+      id: string;
+      name: string;
+      isDefault: boolean;
+      stencils: Array<StencilEntry>;
+    }> = [];
+
+    if (!props.isOpen) return res;
+
+    if (props.stencilPackage) {
+      if ((props.stencilPackage.subPackages ?? []).length > 1) {
+        for (const subPackage of props.stencilPackage.subPackages!) {
+          res.push({
+            id: subPackage.id,
+            name: subPackage.name,
+            isDefault: false,
+            stencils: subPackage.stencils!.map(n => makeDiagramNode(diagram.document, n))
+          });
+        }
+      } else {
+        res.push({
+          id: 'default',
+          name: '',
+          isDefault: true,
+          stencils: props.stencilPackage.stencils!.map(n => makeDiagramNode(diagram.document, n))
+        });
+      }
+    } else {
+      res.push({
+        id: 'default',
+        name: '',
+        isDefault: true,
+        stencils: props.stencils!.map(n => makeDiagramNode(diagram.document, n))
+      });
+    }
+
+    return res;
+  }, [diagram.document, props.stencils, props.stencilPackage, props.isOpen]);
 
   useEffect(() => {
     if (props.isOpen) {
@@ -69,35 +110,47 @@ export const ObjectPickerPanel = (props: Props) => {
     >
       {loaded && (
         <div className={'cmp-object-picker'}>
-          {diagrams.map(([stencil, d, node, canvasNode], idx) => (
-            <div
-              key={d.id}
-              style={{ background: 'transparent' }}
-              data-width={d.viewBox.dimensions.w}
-            >
-              <PickerCanvas
-                width={PickerConfig.size}
-                height={PickerConfig.size}
-                diagramWidth={d.viewBox.dimensions.w}
-                diagramHeight={d.viewBox.dimensions.h}
-                diagram={d}
-                showHover={showHover}
-                name={
-                  stencils[idx]!.name ??
-                  diagram.document.nodeDefinitions.get(node.nodeType).name ??
-                  'unknown'
-                }
-                onMouseDown={ev => {
-                  if (!isRegularLayer(diagram.activeLayer)) return;
+          {groups.map(group => (
+            <React.Fragment key={group.id}>
+              {groups.length > 1 && (
+                <div className={'cmp-object-picker__divider'}>
+                  <span>{group.name}</span>
+                </div>
+              )}
+              {group.stencils.map(s => (
+                <div
+                  key={s.stencilDiagram.id}
+                  style={{ background: 'transparent' }}
+                  data-width={s.stencilDiagram.viewBox.dimensions.w}
+                >
+                  <PickerCanvas
+                    width={PickerConfig.size}
+                    height={PickerConfig.size}
+                    diagramWidth={s.stencilDiagram.viewBox.dimensions.w}
+                    diagramHeight={s.stencilDiagram.viewBox.dimensions.h}
+                    diagram={s.stencilDiagram}
+                    showHover={showHover}
+                    name={
+                      s.stencil.name ??
+                      (isNode(s.stencilElements?.[0])
+                        ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType).name
+                        : undefined) ??
+                      'unknown'
+                    }
+                    onMouseDown={ev => {
+                      if (!isRegularLayer(diagram.activeLayer)) return;
 
-                  setShowHover(false);
-                  DRAG_DROP_MANAGER.initiate(
-                    new ObjectPickerDrag(ev, canvasNode, diagram, stencil.id, app),
-                    () => setShowHover(true)
-                  );
-                }}
-              />
-            </div>
+                      setShowHover(false);
+                      DRAG_DROP_MANAGER.initiate(
+                        new ObjectPickerDrag(ev, s.canvasElements, diagram, s.stencil.id, app),
+                        () => setShowHover(true)
+                      );
+                    }}
+                    scaleStrokes={s.stencil.type !== 'default' && s.stencil.type !== 'yaml'}
+                  />
+                </div>
+              ))}
+            </React.Fragment>
           ))}
         </div>
       )}
@@ -108,7 +161,8 @@ export const ObjectPickerPanel = (props: Props) => {
 type Props = {
   id: string;
   title: string;
-  stencils: Stencil[];
+  stencils?: Stencil[];
+  stencilPackage?: StencilPackage;
   isOpen: boolean;
   mode?: ToolWindowPanelMode;
 };

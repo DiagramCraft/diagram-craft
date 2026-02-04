@@ -65,6 +65,10 @@ export const path = (
   >,
   ...children: VNode[]
 ) => {
+  if (attrs.d.includes('NaN')) {
+    console.warn('Invalid path', attrs.d);
+    console.warn(new Error().stack);
+  }
   return s('path', attrs, ...children);
 };
 

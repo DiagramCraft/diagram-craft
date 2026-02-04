@@ -4,7 +4,6 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/ElementCustomPropertiesPanel';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
@@ -30,14 +29,14 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
   );
 
   const edgeTypesWithCustomProps: string[] = [];
-  for (const key of $d.document.edgeDefinitions.list()) {
-    const def = $d.document.edgeDefinitions.get(key);
+  for (const key of $d.document.registry.edges.list()) {
+    const def = $d.document.registry.edges.get(key);
     const customProps = def.getCustomPropertyDefinitions(edge);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       edgeTypesWithCustomProps.push(key);
     }
   }
-  sortBy(edgeTypesWithCustomProps, e => $d.document.edgeDefinitions.get(e).name);
+  sortBy(edgeTypesWithCustomProps, e => $d.document.registry.edges.get(e).name);
 
   const onChange = () => {
     props.onChange();
@@ -59,7 +58,7 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
           {edgeTypesWithCustomProps.map(e => {
             return (
               <Select.Item key={e} value={e}>
-                {$d.document.edgeDefinitions.get(e).name}
+                {$d.document.registry.edges.get(e).name}
               </Select.Item>
             );
           })}
@@ -70,14 +69,12 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
         <div>
           <ElementCustomPropertiesPanelForm
             element={edge}
-            customProperties={$d.document.edgeDefinitions
+            customProperties={$d.document.registry.edges
               .get(type)
               .getCustomPropertyDefinitions(edge)}
-            onChange={(_value: CustomPropertyDefinition) => {
+            onChange={() => {
               return (cb: (uow: UnitOfWork) => void) => {
-                const uow = new UnitOfWork($d, false);
-                cb(uow);
-                uow.abort();
+                UnitOfWork.executeSilently($d, cb);
 
                 $p.custom = edge.storedProps.custom;
                 onChange();

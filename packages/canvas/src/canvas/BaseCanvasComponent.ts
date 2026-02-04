@@ -5,7 +5,7 @@ import {
   createEffect,
   isInComponent
 } from '@diagram-craft/canvas/component/component';
-import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Point } from '@diagram-craft/geometry/point';
@@ -112,7 +112,7 @@ export abstract class BaseCanvasComponent<
 
       if (isEdge(e)) {
         const edge = e;
-        const edgeDef = $d.document.edgeDefinitions.get(edge.renderProps.shape);
+        const edgeDef = $d.document.registry.edges.get(edge.renderProps.shape);
 
         return this.subComponent(
           () => new (edgeDef as ShapeEdgeDefinition).component(edgeDef as ShapeEdgeDefinition),
@@ -143,7 +143,7 @@ export abstract class BaseCanvasComponent<
         );
       } else if (isNode(e)) {
         const node = e;
-        const nodeDef = $d.document.nodeDefinitions.get(node.nodeType);
+        const nodeDef = $d.document.registry.nodes.get(node.nodeType);
 
         return this.subComponent<NodeComponentProps>(
           () => new (nodeDef as ShapeNodeDefinition).component(nodeDef as ShapeNodeDefinition),
@@ -173,7 +173,7 @@ export abstract class BaseCanvasComponent<
           }
         );
       } else {
-        throw new VerifyNotReached();
+        VERIFY_NOT_REACHED();
       }
     });
   }

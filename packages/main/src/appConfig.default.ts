@@ -3,36 +3,77 @@ import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/d
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
+import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import { stencilLoaderBasic } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const random = new Random(Date.now());
 
-const stencilRoot = window.electronAPI
-  ? '$STENCIL_ROOT'
-  : (import.meta.env.VITE_STENCIL_ROOT ?? '');
+if (!window.electronAPI) {
+  FileSystem.loadFromUrl = async (url: string) =>
+    fetch(url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '')).then(r =>
+      r.text()
+    );
+}
 
 export const defaultAppConfig: AppConfig = {
+  elementDefinitions: {
+    registry: [
+      {
+        shapes: /^(bpmn[A-Z][a-zA-Z]+)$/,
+        nodeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNNodes),
+        edgeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNEdges)
+      },
+      {
+        shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+        nodeDefinitionLoader: () =>
+          import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
+            m => m.registerUMLShapes
+          )
+      }
+    ]
+  },
   stencils: {
     loaders: {
-      drawioManual: () =>
-        import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioManual),
+      basic: () => Promise.resolve(stencilLoaderBasic),
 
       drawioXml: () =>
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml)
     },
     registry: [
       {
-        type: 'drawioManual',
-        shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+        type: 'basic',
         opts: {
-          callback: () =>
-            import('@diagram-craft/canvas-drawio/shapes/uml/uml').then(m => m.registerUMLShapes)
+          loader: () =>
+            import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(
+              m => m.registerBPMNStencils
+            )
+        }
+      },
+      {
+        type: 'basic',
+        opts: {
+          loader: () =>
+            import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
+              m => m.registerDataModellingStencils
+            )
+        }
+      },
+      {
+        type: 'basic',
+        opts: {
+          loader: () =>
+            import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
+              m => m.registerUMLStencils
+            )
         }
       },
       {
         type: 'drawioXml',
         opts: {
           name: 'GCP',
-          url: `${stencilRoot}/stencils/gcp2.xml`,
+          url: `$STENCIL_ROOT/stencils/gcp2.xml`,
           foreground: '#3b8df1',
           background: '#3b8df1'
         }
@@ -41,7 +82,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'AWS',
-          url: `${stencilRoot}/stencils/aws3.xml`,
+          url: `$STENCIL_ROOT/stencils/aws3.xml`,
           foreground: '#ff9900',
           background: '#ff9900'
         }
@@ -50,7 +91,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Azure',
-          url: `${stencilRoot}/stencils/azure.xml`,
+          url: `$STENCIL_ROOT/stencils/azure.xml`,
           foreground: '#00abf0',
           background: '#00abf0'
         }
@@ -59,7 +100,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Fluid Power',
-          url: `${stencilRoot}/stencils/fluid_power.xml`,
+          url: `$STENCIL_ROOT/stencils/fluid_power.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-fg)'
         }
@@ -68,7 +109,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'IBM',
-          url: `${stencilRoot}/stencils/ibm.xml`,
+          url: `$STENCIL_ROOT/stencils/ibm.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'transparent'
         }
@@ -77,7 +118,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Web Logos',
-          url: `${stencilRoot}/stencils/weblogos.xml`,
+          url: `$STENCIL_ROOT/stencils/weblogos.xml`,
           foreground: 'blue',
           background: '#ffffff'
         }
@@ -86,7 +127,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Web Icons',
-          url: `${stencilRoot}/stencils/webicons.xml`,
+          url: `$STENCIL_ROOT/stencils/webicons.xml`,
           foreground: 'blue',
           background: '#000000'
         }
@@ -95,7 +136,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'EIP',
-          url: `${stencilRoot}/stencils/eip.xml`,
+          url: `$STENCIL_ROOT/stencils/eip.xml`,
           foreground: 'black',
           background: '#c0f5a9'
         }
@@ -104,7 +145,7 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Arrows',
-          url: `${stencilRoot}/stencils/arrows.xml`,
+          url: `$STENCIL_ROOT/stencils/arrows.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
@@ -113,7 +154,16 @@ export const defaultAppConfig: AppConfig = {
         type: 'drawioXml',
         opts: {
           name: 'Basic',
-          url: `${stencilRoot}/stencils/basic.xml`,
+          url: `$STENCIL_ROOT/stencils/basic.xml`,
+          foreground: 'var(--canvas-fg)',
+          background: 'var(--canvas-bg2)'
+        }
+      },
+      {
+        type: 'drawioXml',
+        opts: {
+          name: 'BPMN',
+          url: `$STENCIL_ROOT/stencils/bpmn.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }

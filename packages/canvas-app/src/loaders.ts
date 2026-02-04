@@ -47,5 +47,5 @@ export const loadFileFromUrl = async (
 
 /** @namespace */
 export const FileSystem = {
-  loadFromUrl: async (url: string) => fetch(url).then(r => r.text())
+  loadFromUrl: async (url: string) => fetch(url.replace('$STENCIL_ROOT', '')).then(r => r.text())
 };

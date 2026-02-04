@@ -8,7 +8,6 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -76,18 +75,17 @@ export class TextTool extends AbstractTool {
 
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.addAndExecute(
-      new ElementAddUndoableAction([this.node], this.diagram, this.diagram.activeLayer, 'Add text')
-    );
 
-    this.diagram.selection.setElements([this.node]);
+    UnitOfWork.executeWithUndo(this.diagram, 'Add text', uow => {
+      layer.addElement(this.node!, uow);
+      uow.select(this.diagram, [this.node!]);
+    });
 
     this.resetTool();
 
     const drag = new ResizeDrag(this.diagram, 'se', this.startPoint);
     drag.on('dragEnd', () => {
-      UnitOfWork.execute(this.diagram, uow => {
+      UnitOfWork.executeWithUndo(this.diagram, 'Resize/move', uow => {
         this.node?.setBounds(
           {
             ...this.node.bounds,
@@ -99,10 +97,12 @@ export class TextTool extends AbstractTool {
       });
 
       // Coalesce the element add and edge endpoint move into one undoable action
-      undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
+      // We know that the first action is the element added and the last is the last bounds
+      const actions = undoManager.getToMark();
+      undoManager.add(new CompoundUndoableAction([actions[0]!, actions.at(-1)!]));
 
       setTimeout(() => {
-        this.diagram.document.nodeDefinitions.get('text').requestFocus(this.node!);
+        this.diagram.document.registry.nodes.get('text').requestFocus(this.node!);
       }, 10);
     });
 

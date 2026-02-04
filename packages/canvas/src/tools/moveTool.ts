@@ -6,9 +6,15 @@ import { MoveDrag } from '../drag/moveDrag';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { getDiagramElementPath, isNode } from '@diagram-craft/model/diagramElement';
-import { assert } from '@diagram-craft/utils/assert';
+import {
+  DiagramElement,
+  getAncestors,
+  getElementAndAncestors,
+  isNode
+} from '@diagram-craft/model/diagramElement';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type DeferredMouseAction = {
   callback: () => void;
@@ -50,27 +56,12 @@ export class MoveTool extends AbstractTool {
       this.diagram.viewBox.toDiagramPoint(point)
     );
 
-    if (isClickOnSelection) {
-      let element = this.diagram.lookup(id);
+    if (isClickOnSelection && !isClickOnBackground) {
+      let element = mustExist(this.diagram.lookup(id));
 
-      // If we click on an element that is part of a group, select the group instead
-      // ... except, when the group is already selected, in which case we allow for "drill-down"
-      // TODO: Is this if-statement really needed - it seems it is better to check isClickOnBackground
-      if (element) {
-        const path = getDiagramElementPath(element);
-        if (path.length > 0) {
-          for (let i = 0; i < path.length; i++) {
-            const parent = path[i];
-            if (isNode(parent) && parent.getDefinition().supports('select')) {
-              if (selection.nodes.includes(parent)) {
-                break;
-              } else {
-                element = parent;
-              }
-            }
-          }
-        }
-      }
+      const selStack = getElementAndAncestors(element).reverse();
+      const selectionIndex = selStack.findLastIndex(e => selection.elements.includes(e));
+      element = selStack[(selectionIndex + 1) % selStack.length]!;
 
       this.deferredMouseAction = {
         callback: () => {
@@ -89,7 +80,7 @@ export class MoveTool extends AbstractTool {
     } else {
       if (!modifiers.shiftKey) selection.clear();
 
-      let element = this.diagram.lookup(id)!;
+      const element = this.diagram.lookup(id)!;
       assert.present(element);
 
       // Ensure you cannot select an additional node if you already have a group selected
@@ -98,24 +89,7 @@ export class MoveTool extends AbstractTool {
         selection.clear();
       }
 
-      // If we click on an element that is part of a group, select the group instead
-      // ... except, when the group is already selected, in which case we allow for "drill-down"
-      const path = getDiagramElementPath(element);
-      if (path.length > 0) {
-        for (let i = 0; i < path.length; i++) {
-          const parent = path[i];
-          if (isNode(parent) && parent.getDefinition().supports('select')) {
-            if (selection.nodes.includes(parent)) {
-              selection.toggle(parent);
-              break;
-            } else {
-              element = parent;
-            }
-          }
-        }
-      }
-
-      selection.toggle(element);
+      selection.toggle(this.getSelectionStack(element)[0]!);
     }
 
     const isMoveable = selection.nodes.every(p => p.renderProps.capabilities.movable !== false);
@@ -129,6 +103,22 @@ export class MoveTool extends AbstractTool {
         )
       );
     }
+  }
+
+  private getSelectionStack(element: DiagramElement) {
+    const elementSelectionStack: DiagramElement[] = [element];
+
+    const ancestors = getAncestors(element);
+    for (let i = 0; i < ancestors.length; i++) {
+      const parent = ancestors[i]!;
+      if (isNode(parent) && parent.getDefinition().hasFlag(NodeFlags.ChildrenSelectParent)) {
+        elementSelectionStack.push(parent);
+      } else {
+        break;
+      }
+    }
+    elementSelectionStack.reverse();
+    return elementSelectionStack;
   }
 
   onMouseUp(_point: Point, _modifiers: Modifiers, target: EventTarget) {

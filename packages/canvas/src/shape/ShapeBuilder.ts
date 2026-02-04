@@ -22,15 +22,12 @@ import { makeShadowFilter } from '../effects/shadow';
 import { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diagramNode';
 import { SVGGBuilder } from './SVGGBuilder';
 import { newid } from '@diagram-craft/utils/id';
-import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
 const defaultOnChange = (element: DiagramNode) => (text: string) => {
-  const uow = new UnitOfWork(element.diagram, true);
-  element.setText(text, uow);
-  commitWithUndo(uow, 'Change text');
+  UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow => element.setText(text, uow));
 };
 
 type ShapeBuilderProps = {
@@ -109,14 +106,17 @@ export class ShapeBuilder {
     onSizeChange?: (size: Extent) => void
   ) {
     if (isNode(this.props.element)) {
+      const parentBounds = this.props.element.bounds;
+      const effectiveBounds = { ...(bounds ?? parentBounds) };
       this.nodes.push(
         cmp.subComponent<ShapeTextProps>($cmp(ShapeText), {
           key: `text_${id}_${this.props.element.id}`,
           id: `text_${id}_${this.props.element.id}`,
+          node: this.props.element,
           metadata: this.props.element.dataForTemplate,
           textProps: textProps ?? (this.props.elementProps as NodeProps).text,
           text: text ?? this.props.element.getText(),
-          bounds: bounds ?? this.props.element.bounds,
+          bounds: { ...effectiveBounds, r: effectiveBounds.r - parentBounds.r },
           onMouseDown: this.props.onMouseDown,
           onChange: defaultOnChange(this.props.element),
           onSizeChange: onSizeChange,
@@ -241,8 +241,10 @@ export class ShapeBuilder {
     ) {
       return;
     }
+
+    assert.node(this.props.element);
     return (e?: MouseEvent) => {
-      ShapeText.edit(textId, this.props.element.id);
+      ShapeText.edit(textId, this.props.element as DiagramNode);
       e?.preventDefault?.();
       e?.stopPropagation?.();
     };

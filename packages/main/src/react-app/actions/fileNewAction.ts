@@ -2,6 +2,7 @@ import { AbstractAction } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
 import { assert } from '@diagram-craft/utils/assert';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const fileNewActions = (application: Application) => ({
   FILE_NEW: new FileNewAction(application)
@@ -14,6 +15,8 @@ declare global {
 }
 
 class FileNewAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.FILE_NEW.name', 'New File');
+
   execute(): void {
     const margin = 30;
 

@@ -10,7 +10,6 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 
@@ -54,35 +53,16 @@ export class StarNodeDefinition extends ShapeNodeDefinition {
     return pathBuilder;
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'numberOfSides',
-        type: 'number',
-        label: 'Sides',
-        value: def.renderProps.custom.star.numberOfSides,
-        isSet: def.storedProps.custom?.star?.numberOfSides !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          def.updateCustomProps('star', props => (props.numberOfSides = value), uow);
-        }
-      },
-      {
-        id: 'innerRadius',
-        type: 'number',
-        label: 'Radius',
-        value: round(def.renderProps.custom.star.innerRadius * 100),
+  getCustomPropertyDefinitions(def: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(def, 'Sides', 'custom.star.numberOfSides'),
+      p.number(def, 'Radius', 'custom.star.innerRadius', {
+        get: () => round(def.renderProps.custom.star.innerRadius * 100),
         maxValue: 100,
         unit: '%',
-        isSet: def.storedProps.custom?.star?.innerRadius !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          if (value === undefined) {
-            def.updateCustomProps('star', props => (props.innerRadius = undefined), uow);
-          } else {
-            def.updateCustomProps('star', props => (props.innerRadius = value / 100), uow);
-          }
-        }
-      }
-    ];
+        format: v => v / 100
+      })
+    ]);
   }
 }
 

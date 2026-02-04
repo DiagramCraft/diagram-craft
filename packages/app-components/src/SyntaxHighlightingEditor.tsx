@@ -1,13 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
+import textAreaStyles from './TextArea.module.css';
 import { assert } from '@diagram-craft/utils/assert';
 import { Browser } from '@diagram-craft/utils/browser';
+import { TbArrowsDiagonal } from 'react-icons/tb';
+import { Dialog } from './Dialog';
 
-export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Props>(
+export namespace SyntaxHighlightingEditor {
+  export type Ref = {
+    setValue: (value: string) => void;
+    getValue: () => string;
+  };
+}
+
+export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEditor.Ref, Props>(
   (props, ref) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; message: string } | null>(null);
     const [internalValue, setInternalValue] = useState(props.defaultValue ?? '');
+    const [maximized, setMaximized] = useState(false);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const codeElementRef = useRef<HTMLElement>(null);
@@ -17,6 +28,11 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
     // Determine if component is controlled or uncontrolled
     const isControlled = props.value !== undefined;
     const value = isControlled ? (props.value ?? '') : internalValue;
+
+    useImperativeHandle(ref, () => ({
+      getValue: () => value,
+      setValue: value => setInternalValue(value)
+    }));
 
     // Calculate min-height for browsers that don't support attr() in calc()
     useEffect(() => {
@@ -120,7 +136,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
       }
     );
 
-    return (
+    const inner = (
       <div
         ref={containerRef}
         className={`${styles.cmpSyntaxHighlightingEditor} ${props.className ?? ''}`}
@@ -129,7 +145,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
         data-rows={props.rows ?? 10}
       >
         <textarea
-          ref={ref ?? textareaRef}
+          ref={textareaRef}
           spellCheck={false}
           disabled={props.disabled}
           onKeyDown={onKeydown}
@@ -164,8 +180,39 @@ export const SyntaxHighlightingEditor = React.forwardRef<HTMLTextAreaElement, Pr
             {tooltip.message}
           </div>
         )}
+
+        {!maximized && (
+          <button
+            onClick={() => setMaximized(true)}
+            type={'button'}
+            className={textAreaStyles.cmpTextAreaResize}
+          >
+            <TbArrowsDiagonal />
+          </button>
+        )}
       </div>
     );
+
+    if (maximized) {
+      return (
+        <Dialog
+          className={textAreaStyles.cmpTextAreaMaxDialog}
+          title=""
+          open={true}
+          buttons={[
+            {
+              type: 'cancel',
+              label: 'Ok',
+              onClick: () => setMaximized(false)
+            }
+          ]}
+          onClose={() => setMaximized(false)}
+        >
+          {inner}
+        </Dialog>
+      );
+    }
+    return <div>{inner}</div>;
   }
 );
 

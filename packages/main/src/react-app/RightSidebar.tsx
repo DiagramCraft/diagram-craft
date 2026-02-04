@@ -3,6 +3,7 @@ import {
   TbDatabaseEdit,
   TbHelpSquare,
   TbInfoCircle,
+  TbListDetails,
   TbMessageCircle,
   TbPalette
 } from 'react-icons/tb';
@@ -10,8 +11,10 @@ import { ObjectToolWindow } from './toolwindow/ObjectToolWindow/ObjectToolWindow
 import { ObjectInfoToolWindow } from './toolwindow/ObjectInfoToolWindow/ObjectInfoToolWindow';
 import { ObjectDataToolWindow } from './toolwindow/ObjectDataToolWindow/ObjectDataToolWindow';
 import { CommentsToolWindow } from './toolwindow/CommentsToolWindow/CommentsToolWindow';
+import { StyleOverviewToolWindow } from './toolwindow/StyleOverviewToolWindow/StyleOverviewToolWindow';
 import { ActionToggleButton } from './toolbar/ActionToggleButton';
 import { CommentsToolWindowBadge } from './toolwindow/CommentsToolWindow/CommentsToolWindowBadge';
+import { ActionTooltip } from './components/ActionTooltip';
 
 export const RightSidebar = () => {
   return (
@@ -25,17 +28,27 @@ export const RightSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPalette}>
+      <SideBarPage icon={TbPalette} tooltip={<ActionTooltip action={'SIDEBAR_STYLE'} />}>
         <ObjectToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbInfoCircle}>
+      <SideBarPage icon={TbInfoCircle} tooltip={<ActionTooltip action={'SIDEBAR_INFO'} />}>
         <ObjectInfoToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbDatabaseEdit}>
+      <SideBarPage icon={TbDatabaseEdit} tooltip={<ActionTooltip action={'SIDEBAR_DATA'} />}>
         <ObjectDataToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbMessageCircle} extra={<CommentsToolWindowBadge />}>
+      <SideBarPage
+        icon={TbMessageCircle}
+        extra={<CommentsToolWindowBadge />}
+        tooltip={<ActionTooltip action={'SIDEBAR_COMMENT'} />}
+      >
         <CommentsToolWindow />
+      </SideBarPage>
+      <SideBarPage
+        icon={TbListDetails}
+        tooltip={<ActionTooltip action={'SIDEBAR_STYLE_OVERVIEW'} />}
+      >
+        <StyleOverviewToolWindow />
       </SideBarPage>
     </SideBar>
   );

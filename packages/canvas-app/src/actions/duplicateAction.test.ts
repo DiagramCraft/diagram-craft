@@ -127,7 +127,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -180,7 +180,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       // Select only one node and the edge
       diagram.selection.setElements([node1, connectedEdge]);
@@ -223,7 +223,7 @@ describe('DuplicateAction', () => {
         [],
         layer
       );
-      layer.addElement(connectedEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
 
@@ -280,6 +280,106 @@ describe('DuplicateAction', () => {
 
       expect(duplicatedNode.bounds.x).toBe(node.bounds.x + OFFSET);
       expect(duplicatedNode.bounds.y).toBe(node.bounds.y + OFFSET);
+    });
+  });
+
+  describe('parent preservation', () => {
+    test('should preserve parent when all selected elements have the same parent', () => {
+      const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
+
+      // Set parent for both children
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
+
+      expect(child1.parent).toBe(parent);
+      expect(child2.parent).toBe(parent);
+      expect(parent.children).toHaveLength(2);
+
+      // Select both children and duplicate
+      diagram.selection.setElements([child1, child2]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      // Parent should now have 4 children (2 original + 2 duplicated)
+      expect(parent.children).toHaveLength(4);
+
+      // Find duplicated nodes (they should be in parent's children)
+      const duplicatedNodes = parent.children.filter(
+        c => isNode(c) && c.id !== child1.id && c.id !== child2.id
+      );
+
+      expect(duplicatedNodes).toHaveLength(2);
+
+      // Both duplicated nodes should have the same parent
+      expect(duplicatedNodes[0]!.parent).toBe(parent);
+      expect(duplicatedNodes[1]!.parent).toBe(parent);
+    });
+
+    test('should not set parent when selected elements have different parents', () => {
+      const parent1 = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const parent2 = layer.addNode({ bounds: { x: 600, y: 0, w: 500, h: 500, r: 0 } });
+      const child1 = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const child2 = layer.createNode({ bounds: { x: 610, y: 10, w: 50, h: 50, r: 0 } });
+
+      // Set different parents
+      UnitOfWork.execute(diagram, uow => {
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      expect(child1.parent).toBe(parent1);
+      expect(child2.parent).toBe(parent2);
+
+      // Select both children and duplicate
+      diagram.selection.setElements([child1, child2]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      // Find duplicated nodes
+      const duplicatedNodes = layer.elements
+        .filter(isNode)
+        .filter(
+          n =>
+            n.id !== parent1.id && n.id !== parent2.id && n.id !== child1.id && n.id !== child2.id
+        );
+
+      expect(duplicatedNodes).toHaveLength(2);
+
+      // Duplicated nodes should not have a parent
+      expect(duplicatedNodes[0]!.parent).toBeUndefined();
+      expect(duplicatedNodes[1]!.parent).toBeUndefined();
+    });
+
+    test('should not set parent when some selected elements have no parent', () => {
+      const parent = layer.addNode({ bounds: { x: 0, y: 0, w: 500, h: 500, r: 0 } });
+      const child = layer.createNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
+      const orphan = layer.addNode({ bounds: { x: 600, y: 10, w: 50, h: 50, r: 0 } });
+
+      // Set parent only for child
+      UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+
+      expect(child.parent).toBe(parent);
+      expect(orphan.parent).toBeUndefined();
+
+      // Select both child and orphan and duplicate
+      diagram.selection.setElements([child, orphan]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      // Find duplicated nodes
+      const duplicatedNodes = layer.elements
+        .filter(isNode)
+        .filter(n => n.id !== parent.id && n.id !== child.id && n.id !== orphan.id);
+
+      expect(duplicatedNodes).toHaveLength(2);
+
+      // Duplicated nodes should not have a parent (because they don't all have the same parent)
+      expect(duplicatedNodes[0]!.parent).toBeUndefined();
+      expect(duplicatedNodes[1]!.parent).toBeUndefined();
     });
   });
 });

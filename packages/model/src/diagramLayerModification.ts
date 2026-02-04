@@ -3,7 +3,7 @@ import type { Diagram } from './diagram';
 import { type DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
-import { getRemoteUnitOfWork, type LayerSnapshot, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DiagramEdge, type DiagramEdgeCRDT } from './diagramEdge';
 import type { Adjustment } from './diagramLayerRuleTypes';
@@ -13,6 +13,7 @@ import { DelegatingDiagramNode } from './delegatingDiagramNode';
 import { DelegatingDiagramEdge } from './delegatingDiagramEdge';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 registerElementFactory(
   'delegating-node',
@@ -103,7 +104,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
           if (e.type === ModificationType.Add) {
-            uow.addElement(e.element!);
+            uow.addElement(e.element!, this, this.#modifications.size - 1);
             this.processElementForAdd(e.element!);
           } else if (e.type === ModificationType.Change || e.type === ModificationType.Remove) {
             if (e.element) uow.updateElement(e.element);
@@ -119,7 +120,7 @@ export class ModificationLayer extends Layer<ModificationLayer> {
         onRemoteRemove: e => {
           const uow = getRemoteUnitOfWork(diagram);
           if (e.type === ModificationType.Add) {
-            uow.removeElement(e.element!);
+            uow.removeElement(e.element!, this, this.#modifications.size - 1);
           } else if (e.type === ModificationType.Change || e.type === ModificationType.Remove) {
             if (e.element) uow.updateElement(e.element);
             if (e.type === ModificationType.Remove) uow.updateElement(diagram.lookup(e.id)!);
@@ -140,19 +141,19 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       }
     );
 
-    const uow = new UnitOfWork(diagram);
-    for (const m of modifications) {
-      if (m.type === ModificationType.Add) {
-        assert.present(m.element);
-        this.modifyAdd(m.id, m.element, uow);
-      } else if (m.type === ModificationType.Remove) {
-        this.modifyRemove(m.id, uow);
-      } else if (m.type === ModificationType.Change) {
-        assert.present(m.element);
-        this.modifyChange(m.id, m.element, uow);
+    UnitOfWork.executeSilently(diagram, uow => {
+      for (const m of modifications) {
+        if (m.type === ModificationType.Add) {
+          assert.present(m.element);
+          this.modifyAdd(m.id, m.element, uow);
+        } else if (m.type === ModificationType.Remove) {
+          this.modifyRemove(m.id, uow);
+        } else if (m.type === ModificationType.Change) {
+          assert.present(m.element);
+          this.modifyChange(m.id, m.element, uow);
+        }
       }
-    }
-    uow.abort();
+    });
   }
 
   resolve() {
@@ -171,52 +172,49 @@ export class ModificationLayer extends Layer<ModificationLayer> {
 
   removeElement(el: DiagramElement, uow: UnitOfWork) {
     this.modifyRemove(el.id, uow);
+    uow.removeElement(el, this, this.#modifications.size - 1);
   }
 
   modifyRemove(id: string, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#modifications.add(id, { id, type: ModificationType.Remove });
+    uow.executeUpdate(this, () => {
+      this.#modifications.add(id, { id, type: ModificationType.Remove });
+    });
   }
 
   modifyAdd(id: string, el: DiagramElement, uow: UnitOfWork) {
     assert.true(el instanceof DelegatingDiagramNode || el instanceof DelegatingDiagramEdge);
 
-    uow.snapshot(this);
-    this.#modifications.add(id, { id, type: ModificationType.Add, element: el });
+    uow.executeUpdate(this, () => {
+      this.#modifications.add(id, { id, type: ModificationType.Add, element: el });
 
-    this.processElementForAdd(el);
+      this.processElementForAdd(el);
 
-    uow.addElement(el);
-    uow.updateElement(this);
+      uow.addElement(el, this, this.#modifications.size - 1);
+    });
   }
 
   modifyChange(id: string, el: DiagramElement, uow: UnitOfWork) {
     assert.true(el instanceof DelegatingDiagramNode || el instanceof DelegatingDiagramEdge);
 
-    uow.snapshot(this);
-    this.#modifications.add(id, { id, type: ModificationType.Change, element: el });
+    uow.executeUpdate(this, () => {
+      this.#modifications.add(id, { id, type: ModificationType.Change, element: el });
 
-    this.processElementForAdd(el);
-
-    uow.addElement(el);
-    uow.updateElement(this);
+      this.processElementForAdd(el);
+    });
   }
 
   clearModification(id: string, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      const m = mustExist(this.#modifications.get(id));
+      this.#modifications.remove(id);
 
-    const m = mustExist(this.#modifications.get(id));
-    this.#modifications.remove(id);
-
-    if (m.type === ModificationType.Add) {
-      uow.snapshot(m.element!);
-      uow.removeElement(m.element!);
-    } else if (m.type === ModificationType.Change || m.type === ModificationType.Remove) {
-      const el = this.diagram.lookup(id)!;
-      uow.snapshot(el);
-      uow.updateElement(el);
-    }
-    uow.updateElement(this);
+      if (m.type === ModificationType.Add) {
+        uow.removeElement(m.element!, this, this.#modifications.size - 1);
+      } else if (m.type === ModificationType.Change || m.type === ModificationType.Remove) {
+        const el = this.diagram.lookup(id)!;
+        uow.updateElement(el);
+      }
+    });
   }
 
   getModification(id: string): Modification | undefined {

@@ -7,7 +7,7 @@ import {
   ToggleAction
 } from './action';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
 
 type Alt = 'A-' | '';
 type Control = 'C-' | '';
@@ -24,6 +24,8 @@ type KeyCode =
   | 'ArrowRight'
   | 'ArrowUp'
   | 'ArrowDown'
+  | 'BracketLeft'
+  | 'BracketRight'
   | `Digit${number}`;
 
 type KeyBinding = `${Alt}${Control}${Meta}${Shift}${KeyCode}` | KeyCode;
@@ -153,5 +155,9 @@ export const formatKeyBinding = (
     .replace(ALT, formattingConfig[ALT])
     .replace(CTRL, formattingConfig[CTRL])
     .replace(META, formattingConfig[META])
-    .replace(SHIFT, formattingConfig[SHIFT]);
+    .replace(SHIFT, formattingConfig[SHIFT])
+    .replace('BracketRight', ']')
+    .replace('BracketLeft', '[')
+    .replace('ArrowUp', '↑')
+    .replace('ArrowDown', '↓');
 };

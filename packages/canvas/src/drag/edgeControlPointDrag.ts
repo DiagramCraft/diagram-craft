@@ -3,7 +3,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ControlPoints, DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
@@ -21,7 +20,7 @@ export class EdgeControlPointDrag extends Drag {
     private readonly context: Context
   ) {
     super();
-    this.uow = new UnitOfWork(this.edge.diagram, true);
+    this.uow = UnitOfWork.begin(this.edge.diagram);
 
     this.context.help.push(
       'EdgeControlPointDrag',
@@ -61,8 +60,12 @@ export class EdgeControlPointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    commitWithUndo(this.uow, 'Move Control point');
+    this.uow.commitWithUndo('Move Control Point');
 
     this.context.help.pop('EdgeControlPointDrag');
+  }
+
+  cancel() {
+    this.uow.abort();
   }
 }

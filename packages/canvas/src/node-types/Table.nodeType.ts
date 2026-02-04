@@ -10,11 +10,13 @@ import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transf
 import { Box } from '@diagram-craft/geometry/box';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
-import { renderElement } from '../components/renderElement';
+import { renderChildren } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
 
 declare global {
@@ -80,8 +82,12 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('table', 'Table', TableComponent);
 
-    this.capabilities.fill = false;
-    this.capabilities.children = true;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenSelectParent]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: false
+    });
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -186,48 +192,23 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     // Only trigger parent.onChildChanged in case this node has indeed changed
     if (node.parent && !Box.isEqual(node.bounds, boundsBefore)) {
       assert.true(isNode(node.parent));
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${node.parent.id}`, () => {
         const parentDef = (node.parent! as DiagramNode).getDefinition();
         parentDef.onChildChanged(node.parent! as DiagramNode, uow);
       });
     }
   }
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [
-      {
-        id: 'gap',
-        type: 'number',
-        label: 'Padding',
-        value: node.renderProps.custom.table.gap,
-        unit: 'px',
-        isSet: node.storedProps.custom?.table?.gap !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.gap = value), uow);
-        }
-      },
-      {
-        id: 'title',
-        type: 'boolean',
-        label: 'Title',
-        value: node.renderProps.custom.table.title,
-        isSet: node.storedProps.custom?.table?.title !== undefined,
-        onChange: (value: boolean | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.title = value), uow);
-        }
-      },
-      {
-        id: 'titleSize',
-        type: 'number',
-        label: 'Title Size',
-        unit: 'px',
-        value: node.renderProps.custom.table.titleSize,
-        isSet: node.storedProps.custom?.table?.titleSize !== undefined,
-        onChange: (value: number | undefined, uow: UnitOfWork) => {
-          node.updateCustomProps('table', props => (props.titleSize = value), uow);
-        }
-      }
-    ];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(p => [
+      p.number(node, 'Padding', 'custom.table.gap', {
+        unit: 'px'
+      }),
+      p.boolean(node, 'Title', 'custom.table.title'),
+      p.number(node, 'Title Size', 'custom.table.titleSize', {
+        unit: 'px'
+      })
+    ]);
   }
 }
 
@@ -255,14 +236,7 @@ class TableComponent extends BaseNodeComponent {
       })
     );
 
-    props.node.children.forEach(child => {
-      builder.add(
-        svg.g(
-          { transform: Transforms.rotateBack(props.node.bounds) },
-          renderElement(this, child, props)
-        )
-      );
-    });
+    builder.add(renderChildren(this, props.node, props));
 
     const gap = props.nodeProps.custom.table.gap;
 

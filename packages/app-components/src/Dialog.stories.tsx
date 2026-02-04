@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Dialog } from './Dialog';
-import { fn } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { Dialog, DialogContextProvider } from './Dialog';
 import { PortalContextProvider } from './PortalContext';
 
 const meta = {
@@ -19,9 +18,11 @@ type Story = StoryObj<typeof meta>;
 const renderLight = function Component(args: Story['args']) {
   return (
     <div className={'light-theme'}>
-      <PortalContextProvider>
-        <Dialog {...args}>{args.children}</Dialog>
-      </PortalContextProvider>
+      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+        <PortalContextProvider>
+          <Dialog {...args}>{args.children}</Dialog>
+        </PortalContextProvider>
+      </DialogContextProvider>
     </div>
   );
 };
@@ -29,9 +30,11 @@ const renderLight = function Component(args: Story['args']) {
 const renderDark = function Component(args: Story['args']) {
   return (
     <div className={'dark-theme'}>
-      <PortalContextProvider>
-        <Dialog {...args}>{args.children}</Dialog>
-      </PortalContextProvider>
+      <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
+        <PortalContextProvider>
+          <Dialog {...args}>{args.children}</Dialog>
+        </PortalContextProvider>
+      </DialogContextProvider>
     </div>
   );
 };
@@ -42,11 +45,11 @@ export const Light: Story = {
     open: true,
     children: [<div key={1}>Lorem ipsum dolor sit amet</div>],
     title: 'Sample dialog',
-    onClose: fn(),
+    onClose: () => {},
     buttons: [
-      { label: 'Delete', type: 'danger', onClick: fn() },
-      { label: 'Cancel', type: 'cancel', onClick: fn() },
-      { label: 'Ok', type: 'default', onClick: fn() }
+      { label: 'Delete', type: 'danger', onClick: () => {} },
+      { label: 'Cancel', type: 'cancel', onClick: () => {} },
+      { label: 'Ok', type: 'default', onClick: () => {} }
     ]
   }
 };
@@ -57,11 +60,11 @@ export const Dark: Story = {
     open: true,
     children: [<div key={1}>Lorem ipsum dolor sit amet</div>],
     title: 'Sample dialog',
-    onClose: fn(),
+    onClose: () => {},
     buttons: [
-      { label: 'Delete', type: 'danger', onClick: fn() },
-      { label: 'Cancel', type: 'cancel', onClick: fn() },
-      { label: 'Ok', type: 'default', onClick: fn() }
+      { label: 'Delete', type: 'danger', onClick: () => {} },
+      { label: 'Cancel', type: 'cancel', onClick: () => {} },
+      { label: 'Ok', type: 'default', onClick: () => {} }
     ]
   }
 };

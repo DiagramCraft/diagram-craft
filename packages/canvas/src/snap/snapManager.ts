@@ -17,6 +17,7 @@ import { groupBy, largest, smallest } from '@diagram-craft/utils/array';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import type { EmptyObject } from '@diagram-craft/utils/types';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 /**
  * Configuration properties for the SnapManager
@@ -88,12 +89,14 @@ export const DEFAULT_SNAP_CONFIG: SnapManagerConfig = {
 
 export const getSnapConfig = (diagram: Diagram): SnapManagerConfig => {
   if (diagram.props.snap === undefined) {
-    diagram.updateProps(p => {
-      p.snap ??= DEFAULT_SNAP_CONFIG;
-      p.snap.magnetTypes ??= DEFAULT_SNAP_CONFIG.magnetTypes;
-      p.snap.enabled ??= DEFAULT_SNAP_CONFIG.enabled;
-      p.snap.threshold ??= DEFAULT_SNAP_CONFIG.threshold;
-    });
+    UnitOfWork.executeSilently(diagram, uow =>
+      diagram.updateProps(p => {
+        p.snap ??= DEFAULT_SNAP_CONFIG;
+        p.snap.magnetTypes ??= DEFAULT_SNAP_CONFIG.magnetTypes;
+        p.snap.enabled ??= DEFAULT_SNAP_CONFIG.enabled;
+        p.snap.threshold ??= DEFAULT_SNAP_CONFIG.threshold;
+      }, uow)
+    );
   }
   return diagram.props.snap!;
 };

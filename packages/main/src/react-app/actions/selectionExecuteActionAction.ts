@@ -3,12 +3,13 @@ import {
   AbstractSelectionAction,
   ElementType,
   MultipleType
-} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { isEmptyString } from '@diagram-craft/utils/strings';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -21,6 +22,8 @@ export const selectionExecuteActionActions = (context: Application) => ({
 });
 
 export class SelectionExecuteAction extends AbstractSelectionAction<Application, { id?: string }> {
+  name = $tStr('action.SELECTION_EXECUTE_ACTION.name', 'Act');
+
   constructor(context: Application) {
     super(context, MultipleType.SingleOnly, ElementType.Node);
   }

@@ -1,10 +1,11 @@
 import { Layer } from './diagramLayer';
 import type { LayerCRDT } from './diagramLayer';
 import type { Diagram } from './diagram';
-import { LayerSnapshot, UnitOfWork } from './unitOfWork';
+import { UnitOfWork } from './unitOfWork';
 import { RuleLayer } from './diagramLayerRule';
 import { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { RegularLayer } from './diagramLayerRegular';
+import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
 type LayerReference = {
   layerId: string;
@@ -19,6 +20,7 @@ export class ReferenceLayer<
   T extends RegularLayer | RuleLayer = RegularLayer | RuleLayer
 > extends Layer<T> {
   #reference: LayerReference;
+  #cache: T | undefined;
 
   constructor(
     id: string,
@@ -44,12 +46,13 @@ export class ReferenceLayer<
     return `${l.diagram.name} / ${l.name}`;
   }
 
-  // TODO: Do we need to cache this
   resolve(): T | undefined {
-    const layer = this.diagram.document
-      .byId(this.reference.diagramId)
-      ?.layers.byId(this.reference.layerId);
-    return layer as unknown as T;
+    if (!this.#cache) {
+      this.#cache = this.diagram.document
+        .byId(this.reference.diagramId)
+        ?.layers.byId(this.reference.layerId) as T | undefined;
+    }
+    return this.#cache;
   }
 
   restore(snapshot: RegularLayerSnapshot, uow: UnitOfWork) {

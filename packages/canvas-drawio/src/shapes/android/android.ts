@@ -6,9 +6,9 @@ import {
 } from '../../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import type { ShapeParser } from '../../drawioReader';
+import type { ShapeParser } from '../../drawioShapeParserRegistry';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
-import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../../node-types/DrawioShape.nodeType';
 import { Spinner2NodeDefinition } from './spinner2.nodeType';
 import { AndroidRectNodeDefinition } from './androidRect.nodeType';
 import { AndroidProgressBarDefinition } from './androidProgressBar.nodeType';
@@ -81,7 +81,7 @@ export const registerAndroidShapes = async (
   shapeParsers: Record<string, ShapeParser>
 ) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/android/android.xml',
+    '$STENCIL_ROOT/stencils/android/android.xml',
     'Android',
     '#00BEF2',
     'white'

@@ -44,7 +44,7 @@ export class MarqueeDrag extends Drag {
     precondition.is.present(this.context.marquee);
 
     const pending: DiagramElement[] = [];
-    for (const e of diagram.visibleElements()) {
+    for (const e of diagram.allElements()) {
       if (e.isLocked()) continue;
       if (Box.contains(this.context.marquee.bounds, e.bounds)) {
         pending.push(e);
@@ -52,4 +52,6 @@ export class MarqueeDrag extends Drag {
     }
     this.context.marquee.pendingElements = pending;
   }
+
+  cancel() {}
 }

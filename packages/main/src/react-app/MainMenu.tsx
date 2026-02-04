@@ -1,20 +1,17 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbChevronRight, TbMenu2 } from 'react-icons/tb';
-import { ActionDropdownMenuItem } from './components/ActionDropdownMenuItem';
+import { TbMenu2 } from 'react-icons/tb';
 import { urlToName } from '@diagram-craft/utils/url';
-import { ToggleActionDropdownMenuItem } from './components/ToggleActionDropdownMenuItem';
 import { Application, useApplication } from '../application';
 import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import type { UserState } from '../UserState';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { ActionMenuItem } from './components/ActionMenuItem';
+import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
-const renderMenuItem = (
-  item: MenuEntry,
-  application: Application,
-  userState: UserState
-): JSX.Element => {
+const renderMenuItem = (item: MenuEntry, application: Application, userState: UserState) => {
   if (item.type === 'separator') {
-    return <DropdownMenu.Separator key={item.label} className="cmp-context-menu__separator" />;
+    return <Menu.Separator key={item.label} />;
   }
 
   if (item.type === 'submenu' || item.type === 'recent') {
@@ -35,49 +32,34 @@ const renderMenuItem = (
     }
 
     return (
-      <DropdownMenu.Sub key={item.label}>
-        <DropdownMenu.SubTrigger className="cmp-context-menu__sub-trigger" disabled={isDisabled}>
-          {item.label}
-          <div className="cmp-context-menu__right-slot">
-            <TbChevronRight />
-          </div>
-        </DropdownMenu.SubTrigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-            {submenuItems.map(subItem => {
-              if (item.label === 'Open Recent...') {
-                return (
-                  <DropdownMenu.Item
-                    key={subItem.action}
-                    className="cmp-context-menu__item"
-                    onSelect={() => application.file.loadDocument(subItem.action!)}
-                  >
-                    {subItem.label}
-                  </DropdownMenu.Item>
-                );
-              }
-              return renderMenuItem(subItem, application, userState);
-            })}
-          </DropdownMenu.SubContent>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Sub>
+      <Menu.SubMenu key={item.label} label={item.label} disabled={isDisabled}>
+        {submenuItems.map(subItem => {
+          if (item.label === 'Open Recent...') {
+            return (
+              <Menu.Item
+                key={subItem.action}
+                onClick={() => application.file.loadDocument(subItem.action!)}
+              >
+                {subItem.label}
+              </Menu.Item>
+            );
+          }
+          return renderMenuItem(subItem, application, userState);
+        })}
+      </Menu.SubMenu>
     );
   }
 
   if (item.type === 'toggle' && item.action) {
     return (
-      <ToggleActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
+      <ActionToggleMenuItem key={item.label} action={item.action} arg={{}}>
         {item.label}
-      </ToggleActionDropdownMenuItem>
+      </ActionToggleMenuItem>
     );
   }
 
   if (item.action) {
-    return (
-      <ActionDropdownMenuItem key={item.label} action={item.action} arg={{}}>
-        {item.label}
-      </ActionDropdownMenuItem>
-    );
+    return <ActionMenuItem key={item.label} action={item.action} arg={{}} />;
   }
 
   return <div key={item.label}>{item.label}</div>;
@@ -88,19 +70,18 @@ export const MainMenu = () => {
   const userState = application.userState;
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button className={'_menu-button'} id={'main-menu'} type="button">
-          <TbMenu2 size={'24px'} />
-        </button>
-      </DropdownMenu.Trigger>
+    <MenuButton.Root>
+      <MenuButton.Trigger
+        element={
+          <button type={'button'} className={'_menu-button'}>
+            <TbMenu2 size={'24px'} />
+          </button>
+        }
+      />
 
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" sideOffset={2} align={'start'}>
-          {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
-          <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+      <MenuButton.Menu>
+        {mainMenuStructure.map(item => renderMenuItem(item, application, userState))}
+      </MenuButton.Menu>
+    </MenuButton.Root>
   );
 };

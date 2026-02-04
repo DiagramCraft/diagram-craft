@@ -4,7 +4,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { UnitOfWork } from './unitOfWork';
 import { ElementFactory } from './elementFactory';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { transformElements } from './diagramElement';
+import { findCommonAncestor, getElementAndAncestors, transformElements } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
@@ -22,7 +22,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.id).toBe('id1');
       if (doc2) expect(layer1_2!.elements[0]!.id).toBe('id1');
@@ -39,7 +39,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.type).toBe('node');
       if (doc2) expect(layer1_2!.elements[0]!.type).toBe('node');
@@ -103,10 +103,20 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.updateMetadata(m => (m.style = 'lorem'), UnitOfWork.immediate(d1));
+      UnitOfWork.executeWithUndo(d1, 'Metadata', uow =>
+        element.updateMetadata(m => (m.style = 'lorem'), uow)
+      );
 
+      expect(element.metadata.style).toBe('lorem');
+      if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
+
+      d1.undoManager.undo();
+      expect(element.metadata.style).not.toBe('lorem');
+      if (doc2) expect(layer1_2!.elements[0]!.metadata.style).not.toStrictEqual('lorem');
+
+      d1.undoManager.redo();
       expect(element.metadata.style).toBe('lorem');
       if (doc2) expect(layer1_2!.elements[0]!.metadata.style).toStrictEqual('lorem');
     });
@@ -122,7 +132,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const changeEvent2 = vi.fn();
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       d1.on('elementChange', changeEvent1);
       doc2?.diagrams[0]!.on('elementChange', changeEvent2);
@@ -144,7 +154,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       expect(element.tags).toEqual([]);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual([]);
@@ -159,9 +169,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['important', 'draft'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['important', 'draft'], uow));
 
       expect(element.tags).toEqual(['important', 'draft']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['important', 'draft']);
@@ -178,37 +188,22 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1'], uow));
+
+      UnitOfWork.executeWithUndo(d1, 'Set tags', uow => element.setTags(['tag1', 'tag2'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
-    });
 
-    it('should replace existing tags', () => {
-      const [root1, root2] = backend.syncedDocs();
+      d1.undoManager.undo();
+      expect(element.tags).toEqual(['tag1']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1']);
 
-      const doc2 = root2 ? TestModel.newDocument(root2) : undefined;
-
-      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
-      const layer1_2 = doc2?.diagrams[0]!.layers.all[0] as RegularLayer;
-
-      const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
-
-      element.setTags(['old1', 'old2'], UnitOfWork.immediate(d1));
-      element.setTags(['new1', 'new2'], UnitOfWork.immediate(d1));
-
-      expect(element.tags).toEqual(['new1', 'new2']);
-      expect(element.tags).not.toContain('old1');
-      expect(element.tags).not.toContain('old2');
-
-      if (doc2) {
-        expect(layer1_2!.elements[0]!.tags).toEqual(['new1', 'new2']);
-        expect(layer1_2!.elements[0]!.tags).not.toContain('old1');
-        expect(layer1_2!.elements[0]!.tags).not.toContain('old2');
-      }
+      d1.undoManager.redo();
+      expect(element.tags).toEqual(['tag1', 'tag2']);
+      if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);
     });
 
     it('should trim whitespace from tags', () => {
@@ -217,9 +212,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['  tag1  ', '\ttag2\n', 'tag3'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -230,9 +225,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', '', '   ', 'tag2', '\t\n'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
     });
@@ -243,9 +238,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2', 'tag1', 'tag3'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2', 'tag3']);
     });
@@ -258,9 +253,9 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      element.setTags(['element-tag1', 'element-tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['element-tag1', 'element-tag2'], uow));
 
       expect(d1.document.tags.has('element-tag1')).toBe(true);
       expect(d1.document.tags.has('element-tag2')).toBe(true);
@@ -281,14 +276,14 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       // Put something in cache
       element.cache.set('name', 'test-value');
       expect(element.cache.get('name')).toBe('test-value');
 
       // Setting tags should clear the cache
-      element.setTags(['test-tag'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['test-tag'], uow));
 
       expect(element.cache.get('name')).toBeUndefined();
     });
@@ -299,15 +294,135 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
 
       const element = ElementFactory.emptyNode('id1', layer1);
-      layer1.addElement(element, UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
       // First set some tags
-      element.setTags(['tag1', 'tag2'], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags(['tag1', 'tag2'], uow));
       expect(element.tags).toEqual(['tag1', 'tag2']);
 
       // Then clear them
-      element.setTags([], UnitOfWork.immediate(d1));
+      UnitOfWork.execute(d1, uow => element.setTags([], uow));
       expect(element.tags).toEqual([]);
+    });
+  });
+
+  describe('findCommonAncestor', () => {
+    it('should return direct parent when both elements share same parent', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent = ElementFactory.emptyNode('parent', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent, uow);
+        parent.addChild(child1, uow);
+        parent.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBe(parent);
+    });
+
+    it('should return grandparent when elements have different parents', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const grandparent = ElementFactory.emptyNode('grandparent', layer1);
+      const parent1 = ElementFactory.emptyNode('parent1', layer1);
+      const parent2 = ElementFactory.emptyNode('parent2', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(grandparent, uow);
+        grandparent.addChild(parent1, uow);
+        grandparent.addChild(parent2, uow);
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBe(grandparent);
+    });
+
+    it('should return undefined when no common ancestor exists', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent1 = ElementFactory.emptyNode('parent1', layer1);
+      const parent2 = ElementFactory.emptyNode('parent2', layer1);
+      const child1 = ElementFactory.emptyNode('child1', layer1);
+      const child2 = ElementFactory.emptyNode('child2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent1, uow);
+        layer1.addElement(parent2, uow);
+        parent1.addChild(child1, uow);
+        parent2.addChild(child2, uow);
+      });
+
+      const lca = findCommonAncestor(child1, child2);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should return undefined when one element is ancestor of another', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const parent = ElementFactory.emptyNode('parent', layer1);
+      const child = ElementFactory.emptyNode('child', layer1);
+      const grandchild = ElementFactory.emptyNode('grandchild', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(parent, uow);
+        parent.addChild(child, uow);
+        child.addChild(grandchild, uow);
+      });
+
+      const lca = findCommonAncestor(parent, grandchild);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should return undefined when both elements are at layer level', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const node1 = ElementFactory.emptyNode('node1', layer1);
+      const node2 = ElementFactory.emptyNode('node2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(node1, uow);
+        layer1.addElement(node2, uow);
+      });
+
+      const lca = findCommonAncestor(node1, node2);
+      expect(lca).toBeUndefined();
+    });
+
+    it('should find common ancestor in deep nesting', () => {
+      const [root1] = backend.syncedDocs();
+      const { diagram: d1, layer: layer1 } = TestModel.newDiagramWithLayer({ root: root1 });
+
+      const root = ElementFactory.emptyNode('root', layer1);
+      const a = ElementFactory.emptyNode('a', layer1);
+      const b = ElementFactory.emptyNode('b', layer1);
+      const c = ElementFactory.emptyNode('c', layer1);
+      const node1 = ElementFactory.emptyNode('node1', layer1);
+      const node2 = ElementFactory.emptyNode('node2', layer1);
+
+      UnitOfWork.execute(d1, uow => {
+        layer1.addElement(root, uow);
+        root.addChild(a, uow);
+        a.addChild(b, uow);
+        b.addChild(node1, uow);
+        root.addChild(c, uow);
+        c.addChild(node2, uow);
+      });
+
+      const lca = findCommonAncestor(node1, node2);
+      expect(lca).toBe(root);
     });
   });
 });
@@ -319,39 +434,75 @@ describe('transformElements', () => {
     const diagram = TestModel.newDiagram();
     diagram.newLayer();
 
-    const uow = new UnitOfWork(diagram);
+    UnitOfWork.execute(diagram, uow => {
+      const layer = diagram.activeLayer;
+      assertRegularLayer(layer);
 
-    const layer = diagram.activeLayer;
-    assertRegularLayer(layer);
+      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
+      layer.addElement(node1, uow);
 
-    const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
-    layer.addElement(node1, uow);
+      const node2 = ElementFactory.node(
+        '2',
+        'rect',
+        {
+          x: 100,
+          y: 100,
+          w: 100,
+          h: 100,
+          r: 0
+        },
+        layer,
+        {},
+        {}
+      );
+      layer.addElement(node2, uow);
 
-    const node2 = ElementFactory.node(
-      '2',
-      'rect',
-      {
-        x: 100,
-        y: 100,
-        w: 100,
-        h: 100,
-        r: 0
-      },
-      layer,
-      {},
-      {}
-    );
-    layer.addElement(node2, uow);
+      const nodes = [node1, node2];
 
-    const nodes = [node1, node2];
+      const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
+      const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
 
-    const before = { x: 0, y: 0, w: 200, h: 200, r: 0 };
-    const after = { x: 0, y: 0, w: 200, h: 200, r: Math.PI / 2 };
+      transformElements(nodes, TransformFactory.fromTo(before, after), uow);
 
-    transformElements(nodes, TransformFactory.fromTo(before, after), uow);
-    uow.commit();
+      expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
+      expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+    });
+  });
+});
 
-    expect(node1.bounds).toStrictEqual({ x: 100, y: 0, w: 100, h: 100, r: Math.PI / 2 });
-    expect(node2.bounds).toStrictEqual({ x: 0, y: 100, w: 100, h: 100, r: Math.PI / 2 });
+describe('getElementAndAncestors', () => {
+  it('should return element and its ancestors in order', () => {
+    // Setup
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    const grandparent = layer.addNode({ id: 'grandparent' });
+    const parent = layer.createNode({ id: 'parent' });
+    const child = layer.createNode({ id: 'child' });
+
+    UnitOfWork.execute(diagram, uow => {
+      grandparent.addChild(parent, uow);
+      parent.addChild(child, uow);
+    });
+
+    // Act
+    const result = getElementAndAncestors(child);
+
+    // Verify
+    expect(result).toHaveLength(3);
+    expect(result[0]).toBe(child);
+    expect(result[1]).toBe(parent);
+    expect(result[2]).toBe(grandparent);
+  });
+
+  it('should return only the element when it has no parent', () => {
+    // Setup
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'node-1' });
+
+    // Act
+    const result = getElementAndAncestors(node);
+
+    // Verify
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(node);
   });
 });

@@ -16,17 +16,25 @@ export const StringInputDialog = (props: Props) => {
   useEffect(() => {
     if (!props.open) return;
     setTimeout(() => {
-      inputRef.current?.focus();
-      areaRef.current?.focus();
+      if (inputRef.current) {
+        inputRef.current.focus();
+        if (props.selectOnOpen) {
+          inputRef.current.select();
+        }
+      }
+      if (areaRef.current) {
+        areaRef.current.focus();
+        if (props.selectOnOpen) {
+          areaRef.current.select();
+        }
+      }
     }, 100);
   });
   return (
     <Dialog
       title={props.title ?? 'Rename'}
       open={props.open}
-      onClose={() => {
-        props.onCancel?.();
-      }}
+      onClose={() => props.onCancel?.()}
       buttons={[
         {
           label: props.saveButtonLabel ?? 'Ok',
@@ -52,8 +60,12 @@ export const StringInputDialog = (props: Props) => {
           size={40}
           value={props.value ?? ''}
           onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              props.onOk?.(inputRef.current!.value);
+            }
             // TODO: Why is this needed?
-            e.stopPropagation();
+            //e.stopPropagation();
           }}
         />
       )}
@@ -63,9 +75,9 @@ export const StringInputDialog = (props: Props) => {
           cols={40}
           rows={10}
           value={props.value ?? ''}
-          onKeyDown={e => {
+          onKeyDown={_e => {
             // TODO: Why is this needed?
-            e.stopPropagation();
+            //e.stopPropagation();
           }}
         />
       )}

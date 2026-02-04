@@ -8,6 +8,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/utils": "workspace:^"
   },
   "keywords": [],

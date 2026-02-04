@@ -9,14 +9,14 @@ import {
 } from './diagramNode';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
-import { DiagramNodeSnapshot, getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import type { NodeDefinition } from './elementDefinitionRegistry';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { DiagramElement, type DiagramElementCRDT, InvalidationScope } from './diagramElement';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from './anchor';
@@ -27,6 +27,7 @@ import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import type { LabelNode } from './labelNode';
 import type { CustomNodeProps, ElementMetadata, NodeProps } from './diagramProps';
+import { DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 
 export type DelegatingDiagramNodeCRDT = DiagramElementCRDT & {
   bounds: Box;
@@ -67,7 +68,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<NodeProps>(propsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -94,7 +95,7 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     );
 
     this.#localTexts = new CRDTObject<NodeTexts>(textsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -108,9 +109,11 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
 
     if (opts?.props) this.#localProps.set(opts?.props as NodeProps);
     // TODO: Fix this
-    this.updateProps(p => {
-      p.hidden = false;
-    }, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.executeSilently(this.diagram, uow =>
+      this.updateProps(p => {
+        p.hidden = false;
+      }, uow)
+    );
 
     if (opts?.metadata) this._metadata.set(opts?.metadata);
   }
@@ -141,11 +144,11 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   updateProps(callback: (props: NodeProps) => void, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const props = this.#localProps.getClone() as NodeProps;
-    callback(props);
-    this.#localProps.set(props);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const props = this.#localProps.getClone() as NodeProps;
+      callback(props);
+      this.#localProps.set(props);
+    });
     this.clearCache();
   }
 
@@ -180,10 +183,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   setBounds(bounds: Box, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localBounds.set(bounds);
-    this.#hasLocalBounds.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localBounds.set(bounds);
+      this.#hasLocalBounds.set(true);
+    });
   }
 
   /* Text with override *************************************************************************************** */
@@ -202,12 +205,12 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
   }
 
   setText(text: string, uow: UnitOfWork, id?: string): void {
-    uow.snapshot(this);
-    const texts = this.#localTexts.getClone() as NodeTexts;
-    const key = id ?? 'text';
-    texts[key] = text;
-    this.#localTexts.set(texts);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const texts = this.#localTexts.getClone() as NodeTexts;
+      const key = id ?? 'text';
+      texts[key] = text;
+      this.#localTexts.set(texts);
+    });
     this.clearCache();
   }
 
@@ -247,12 +250,12 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate.convertToPath(uow);
   }
 
-  _removeEdge(anchor: string | undefined, edge: DiagramEdge): void {
-    this.delegate._removeEdge(anchor, edge);
+  _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._removeEdge(anchor, edge, uow);
   }
 
-  _addEdge(anchor: string | undefined, edge: DiagramEdge): void {
-    this.delegate._addEdge(anchor, edge);
+  _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._addEdge(anchor, edge, uow);
   }
 
   _getAnchorPosition(anchor: string): Point {
@@ -307,12 +310,16 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     return this.delegate.getAttachmentsInUse();
   }
 
-  invalidate(uow: UnitOfWork): void {
-    this.delegate.invalidate(uow);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void {
+    this.delegate.invalidate(scope, uow);
   }
 
-  detach(uow: UnitOfWork): void {
-    this.delegate.detach(uow);
+  _onDetach(uow: UnitOfWork): void {
+    this.delegate._onDetach(uow);
+  }
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
+    this.delegate._detachAndRemove(uow, callback);
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {

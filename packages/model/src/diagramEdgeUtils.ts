@@ -11,6 +11,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Diagram } from './diagram';
 import { VERIFY_NOT_REACHED, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { getCollapsedAncestor } from '@diagram-craft/model/collapsible';
 
 type ArrowShape = {
   height: number;
@@ -62,14 +63,18 @@ const intersectWithNode = (
   path: Path,
   diagram: Diagram
 ): PointOnPath => {
-  const clip =
-    endpoint instanceof AnchorEndpoint ? endpoint.node.getAnchor(endpoint.anchorId).clip : true;
-  const nodeDefinition = diagram.document.nodeDefinitions.get(endpoint.node.nodeType);
+  const collapsedAncestor = getCollapsedAncestor(endpoint.node);
+  const node = collapsedAncestor ?? endpoint.node;
+  const nodeDefinition = diagram.document.registry.nodes.get(node.nodeType);
 
   const endIntersections = nodeDefinition
-    .getBoundingPath(endpoint.node)
+    .getBoundingPath(node)
     .all()
     .flatMap(p => path.intersections(p));
+
+  const clip =
+    collapsedAncestor ||
+    (endpoint instanceof AnchorEndpoint ? endpoint.node.getAnchor(endpoint.anchorId).clip : true);
 
   if (clip) {
     // TODO: Handle multiple intersections

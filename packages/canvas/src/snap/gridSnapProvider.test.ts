@@ -5,15 +5,18 @@ import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
 import type { MatchingMagnetPair } from './snapManager';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('GridSnapProvider', () => {
   describe('constructor and grid size', () => {
     test('should use diagram grid size when available', () => {
       // Setup
       const diagram = TestModel.newDiagram();
-      diagram.updateProps(p => {
-        p.grid = { size: 25, enabled: true };
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(p => {
+          p.grid = { size: 25, enabled: true };
+        }, uow)
+      );
       const provider = new GridSnapProvider(diagram);
 
       // Test by examining generated magnets
@@ -40,9 +43,11 @@ describe('GridSnapProvider', () => {
     test('magnet axis', () => {
       // Setup
       const diagram = TestModel.newDiagram();
-      diagram.updateProps(p => {
-        p.grid = { size: 10, enabled: true };
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(p => {
+          p.grid = { size: 10, enabled: true };
+        }, uow)
+      );
       const provider = new GridSnapProvider(diagram);
       const box = { x: 15, y: 25, w: 20, h: 20, r: 0 };
 
@@ -59,9 +64,11 @@ describe('GridSnapProvider', () => {
     test('should generate grid magnets around a simple box', () => {
       // Setup
       const diagram = TestModel.newDiagram();
-      diagram.updateProps(p => {
-        p.grid = { size: 10, enabled: true };
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(p => {
+          p.grid = { size: 10, enabled: true };
+        }, uow)
+      );
       const provider = new GridSnapProvider(diagram);
 
       // Box from (15, 25) to (35, 45) - spans grid lines at 10, 20, 30, 40
@@ -88,9 +95,11 @@ describe('GridSnapProvider', () => {
     test('should handle box aligned with grid', () => {
       // Setup
       const diagram = TestModel.newDiagram();
-      diagram.updateProps(p => {
-        p.grid = { size: 10, enabled: true };
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(p => {
+          p.grid = { size: 10, enabled: true };
+        }, uow)
+      );
       const provider = new GridSnapProvider(diagram);
 
       // Box perfectly aligned with grid
@@ -112,9 +121,11 @@ describe('GridSnapProvider', () => {
     test('should handle small box within single grid cell', () => {
       // Setup
       const diagram = TestModel.newDiagram();
-      diagram.updateProps(p => {
-        p.grid = { size: 20, enabled: true };
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(p => {
+          p.grid = { size: 20, enabled: true };
+        }, uow)
+      );
       const provider = new GridSnapProvider(diagram);
 
       // Small box within grid cell (5, 5) to (15, 10)

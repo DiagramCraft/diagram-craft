@@ -3,14 +3,7 @@ import {
   AbstractToggleAction,
   ToggleActionUndoableAction
 } from '@diagram-craft/canvas/action';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
-import {
-  commitWithUndo,
-  ElementDeleteUndoableAction,
-  SnapshotUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -21,16 +14,33 @@ import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialog
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),
   LAYER_TOGGLE_VISIBILITY: new LayerToggleVisibilityAction(application),
   LAYER_TOGGLE_LOCK: new LayerToggleLockedAction(application),
   LAYER_RENAME: new LayerRenameAction(application),
-  LAYER_ADD: new LayerAddAction('regular', application),
-  LAYER_ADD_REFERENCE: new LayerAddAction('reference', application),
-  LAYER_ADD_RULE: new LayerAddAction('rule', application),
-  LAYER_ADD_MODIFICATION: new LayerAddAction('modification', application),
+  LAYER_ADD: new LayerAddAction(
+    'regular',
+    $tStr('action.LAYER_ADD.name', 'New Layer'),
+    application
+  ),
+  LAYER_ADD_REFERENCE: new LayerAddAction(
+    'reference',
+    $tStr('action.LAYER_ADD_REFERENCE.name', 'New Reference Layer'),
+    application
+  ),
+  LAYER_ADD_RULE: new LayerAddAction(
+    'rule',
+    $tStr('action.LAYER_ADD_RULE.name', 'New Rule Layer'),
+    application
+  ),
+  LAYER_ADD_MODIFICATION: new LayerAddAction(
+    'modification',
+    $tStr('action.LAYER_ADD_MODIFICATION.name', 'New Modification Layer'),
+    application
+  ),
   LAYER_SELECTION_MOVE: new LayerSelectionMoveAction(application),
   LAYER_SELECTION_MOVE_NEW: new LayerSelectionMoveNewAction(application)
 });
@@ -44,6 +54,8 @@ declare global {
 type LayerActionArg = { id?: string };
 
 export class LayerDeleteAction extends AbstractAction<LayerActionArg, Application> {
+  name = $tStr('action.LAYER_DELETE_LAYER.name', 'Delete Layer');
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -52,35 +64,15 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     precondition.is.present(id);
 
     const performDelete = (layer: Layer) => {
-      const uow = new UnitOfWork(this.context.model.activeDiagram, true);
+      const diagram = this.context.model.activeDiagram;
+      UnitOfWork.executeWithUndo(diagram, 'Delete layer', uow => {
+        for (const ref of layer.getInboundReferences()) {
+          ref.diagram.layers.remove(ref, uow);
+        }
 
-      for (const ref of layer.getInboundReferences()) {
-        ref.diagram.layers.remove(ref, uow);
-      }
-
-      this.context.model.activeDiagram.layers.remove(layer, uow);
-
-      const snapshots = uow.commit();
-      this.context.model.activeDiagram.undoManager.add(
-        new CompoundUndoableAction([
-          new SnapshotUndoableAction(
-            'Delete layer',
-            this.context.model.activeDiagram,
-            snapshots.onlyUpdated()
-          ),
-          ...(layer instanceof RegularLayer
-            ? [
-                new ElementDeleteUndoableAction(
-                  this.context.model.activeDiagram,
-                  layer,
-                  layer.elements,
-                  false
-                )
-              ]
-            : []),
-          new LayerDeleteUndoableAction(this.context.model.activeDiagram, layer)
-        ])
-      );
+        diagram.layers.remove(layer, uow);
+      });
+      diagram.layers.active = diagram.layers.visible[0]!;
     };
 
     // TODO: This should be a confirm dialog
@@ -127,24 +119,9 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
   }
 }
 
-class LayerDeleteUndoableAction implements UndoableAction {
-  description = 'Delete layer';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly layer: Layer
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.layers.add(this.layer, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.layers.remove(this.layer, uow);
-  }
-}
-
 export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActionArg> {
+  name = $tStr('action.LAYER_TOGGLE_VISIBILITY.name', 'Toggle Layer Visibility');
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -174,6 +151,8 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
 }
 
 export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg> {
+  name = $tStr('action.LAYER_TOGGLE_LOCK.name', 'Toggle Layer Locked');
+
   isEnabled({ id }: LayerActionArg): boolean {
     const diagram = this.context.model.activeDiagram;
     return (
@@ -198,12 +177,15 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    layer.locked = !layer.isLocked();
-    diagram.undoManager.add(new ToggleActionUndoableAction('Toggle layer locked', this, { id }));
+    UnitOfWork.executeWithUndo(diagram, 'Toggle layer locked', uow => {
+      layer.setLocked(!layer.isLocked(), uow);
+    });
   }
 }
 
 export class LayerRenameAction extends AbstractAction<LayerActionArg, Application> {
+  name = $tStr('action.LAYER_RENAME.name', 'Rename Layer');
+
   isEnabled({ id }: LayerActionArg): boolean {
     return id !== undefined && this.context.model.activeDiagram.layers.byId(id) !== undefined;
   }
@@ -223,9 +205,9 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
           value: layer.name
         },
         async name => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          layer.setName(name, uow);
-          commitWithUndo(uow, `Rename layer`);
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Rename layer', uow => {
+            layer.setName(name, uow);
+          });
         }
       )
     );
@@ -235,6 +217,7 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
 export class LayerAddAction extends AbstractAction<undefined, Application> {
   constructor(
     private readonly type: LayerType,
+    public readonly name: TranslatedString,
     context: Application
   ) {
     super(context);
@@ -245,23 +228,16 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
       this.context.ui.showDialog(
         new ReferenceLayerDialogCommand(async ({ diagramId, layerId, name }) => {
           const diagram = this.context.model.activeDiagram;
-          const uow = new UnitOfWork(diagram, true);
 
-          const layer = new ReferenceLayer(
-            newid(),
-            typeof name === 'string' ? name : 'New Layer',
-            diagram,
-            { diagramId, layerId }
-          );
-          diagram.layers.add(layer, uow);
-
-          const snapshots = uow.commit();
-          diagram.undoManager.add(
-            new CompoundUndoableAction([
-              new LayerAddUndoableAction(diagram, layer),
-              new SnapshotUndoableAction('Add layer', diagram, snapshots)
-            ])
-          );
+          UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+            const layer = new ReferenceLayer(
+              newid(),
+              typeof name === 'string' ? name : 'New Layer',
+              diagram,
+              { diagramId, layerId }
+            );
+            diagram.layers.add(layer, uow);
+          });
         })
       );
     } else {
@@ -280,33 +256,31 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
           },
           async name => {
             const diagram = this.context.model.activeDiagram;
-            const uow = new UnitOfWork(diagram, true);
 
-            const layer =
-              this.type === 'rule'
-                ? new RuleLayer(newid(), typeof name === 'string' ? name : 'New Layer', diagram, [])
-                : this.type === 'modification'
-                  ? new ModificationLayer(
+            UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+              const layer =
+                this.type === 'rule'
+                  ? new RuleLayer(
                       newid(),
                       typeof name === 'string' ? name : 'New Layer',
                       diagram,
                       []
                     )
-                  : new RegularLayer(
-                      newid(),
-                      typeof name === 'string' ? name : 'New Layer',
-                      [],
-                      diagram
-                    );
-            diagram.layers.add(layer, uow);
-
-            const snapshots = uow.commit();
-            diagram.undoManager.add(
-              new CompoundUndoableAction([
-                new LayerAddUndoableAction(diagram, layer),
-                new SnapshotUndoableAction('Add layer', diagram, snapshots)
-              ])
-            );
+                  : this.type === 'modification'
+                    ? new ModificationLayer(
+                        newid(),
+                        typeof name === 'string' ? name : 'New Layer',
+                        diagram,
+                        []
+                      )
+                    : new RegularLayer(
+                        newid(),
+                        typeof name === 'string' ? name : 'New Layer',
+                        [],
+                        diagram
+                      );
+              diagram.layers.add(layer, uow);
+            });
           }
         )
       );
@@ -314,54 +288,34 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
   }
 }
 
-class LayerAddUndoableAction implements UndoableAction {
-  description = 'Add layer';
-
-  constructor(
-    private readonly diagram: Diagram,
-    private readonly layer: Layer
-  ) {}
-
-  undo(uow: UnitOfWork) {
-    this.diagram.layers.remove(this.layer, uow);
-  }
-
-  redo(uow: UnitOfWork) {
-    this.diagram.layers.add(this.layer, uow);
-  }
-}
-
 export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
+  name = $tStr('action.LAYER_SELECTION_MOVE.name', 'Move to Layer');
+
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
     const diagram = this.context.model.activeDiagram;
-    const uow = new UnitOfWork(diagram, true);
-
     const layer = diagram.layers.byId(id)!;
     assert.present(layer);
 
-    diagram.moveElement(diagram.selection.elements, uow, layer);
-    commitWithUndo(uow, `Move to layer ${layer.name}`);
+    UnitOfWork.executeWithUndo(diagram, `Move to layer ${layer.name}`, uow => {
+      diagram.moveElement(diagram.selection.elements, uow, layer);
+    });
   }
 }
 
 export class LayerSelectionMoveNewAction extends AbstractAction {
+  name = $tStr('action.LAYER_SELECTION_MOVE_NEW.name', 'Create new layer');
+
   execute(): void {
     const diagram = this.context.model.activeDiagram;
-    const uow = new UnitOfWork(diagram, true);
 
-    const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
-    diagram.layers.add(layer, uow);
+    UnitOfWork.executeWithUndo(diagram, 'Move to new layer', uow => {
+      const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
+      diagram.layers.add(layer, uow);
 
-    diagram.moveElement(diagram.selection.elements, uow, layer);
-
-    const snapshots = uow.commit();
-    uow.diagram.undoManager.add(
-      new CompoundUndoableAction([
-        new LayerAddUndoableAction(uow.diagram, layer),
-        new SnapshotUndoableAction('Move to new layer', uow.diagram, snapshots)
-      ])
-    );
+      diagram.moveElement(diagram.selection.elements, uow, layer);
+      uow.select(diagram, diagram.selection.elements);
+    });
   }
 }

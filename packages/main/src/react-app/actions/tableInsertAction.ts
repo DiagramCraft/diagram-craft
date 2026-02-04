@@ -1,12 +1,11 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -19,6 +18,8 @@ declare global {
 }
 
 class TableInsertAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.TABLE_INSERT.name', 'Insert Table');
+
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram.layers,
@@ -42,58 +43,48 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         const colWidth = 100;
         const rowHeight = 40;
 
-        const uow = new UnitOfWork($d, false);
+        UnitOfWork.executeWithUndo($d, 'Add table', uow => {
+          const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
-        const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
+          // Center the table in the current viewport
+          const vb = $d.viewBox;
+          bounds.x = vb.offset.x + (vb.dimensions.w - bounds.w) / 2;
+          bounds.y = vb.offset.y + (vb.dimensions.h - bounds.h) / 2;
 
-        // Center the table in the current viewport
-        const vb = $d.viewBox;
-        bounds.x = vb.offset.x + (vb.dimensions.w - bounds.w) / 2;
-        bounds.y = vb.offset.y + (vb.dimensions.h - bounds.h) / 2;
+          const table = ElementFactory.node(newid(), 'table', bounds, layer, {}, {});
+          layer.addElement(table, uow);
 
-        const elements: DiagramElement[] = [];
-
-        const table = ElementFactory.node(newid(), 'table', bounds, layer, {}, {});
-        elements.push(table);
-
-        for (let r = 0; r < height; r++) {
-          const row = ElementFactory.node(
-            newid(),
-            'tableRow',
-            { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-            layer,
-            {},
-            {}
-          );
-          table.addChild(row, uow);
-          elements.push(row);
-
-          for (let c = 0; c < width; c++) {
-            const cell = ElementFactory.node(
+          for (let r = 0; r < height; r++) {
+            const row = ElementFactory.node(
               newid(),
-              'text',
-              { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
+              'tableRow',
+              { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
               layer,
-              {
-                fill: {
-                  enabled: true
-                },
-                text: {
-                  bold: r === 0
-                }
-              },
+              {},
               {}
             );
-            row.addChild(cell, uow);
-            elements.push(cell);
-          }
-        }
+            table.addChild(row, uow);
 
-        uow.commit();
-        assertRegularLayer($d.activeLayer);
-        $d.undoManager.addAndExecute(
-          new ElementAddUndoableAction(elements, $d, $d.activeLayer, 'Add table')
-        );
+            for (let c = 0; c < width; c++) {
+              const cell = ElementFactory.node(
+                newid(),
+                'text',
+                { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
+                layer,
+                {
+                  fill: {
+                    enabled: true
+                  },
+                  text: {
+                    bold: r === 0
+                  }
+                },
+                {}
+              );
+              row.addChild(cell, uow);
+            }
+          }
+        });
       })
     );
   }

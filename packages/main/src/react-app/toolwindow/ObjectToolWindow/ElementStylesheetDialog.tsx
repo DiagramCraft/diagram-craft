@@ -1,5 +1,5 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { Editor } from '../../components/RuleEditorDialog/editors';
+import { Editor, EDGE_EDITORS, NODE_EDITORS } from '../../components/RuleEditorDialog/editors';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { useEffect, useState } from 'react';
 import { StylesheetType } from '@diagram-craft/model/diagramStyles';
@@ -7,6 +7,26 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+
+export const STYLESHEET_EDITORS = {
+  text: [{ name: 'Text', editor: NodeTextEditor }],
+  node: [
+    { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
+    { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
+    { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
+    { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
+    { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
+    { name: 'Advanced', editor: NODE_EDITORS['advanced'].editor },
+    { name: 'Action', editor: NODE_EDITORS['action'].editor }
+  ],
+  edge: [
+    { name: 'Line', editor: EDGE_EDITORS['edgeLine'].editor },
+    { name: 'Shadow', editor: EDGE_EDITORS['shadow'].editor },
+    { name: 'Effects', editor: EDGE_EDITORS['edgeEffects'].editor },
+    { name: 'Custom', editor: EDGE_EDITORS['edgeCustom'].editor }
+  ]
+};
 
 export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();

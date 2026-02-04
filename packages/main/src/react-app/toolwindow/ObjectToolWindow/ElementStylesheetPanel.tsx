@@ -1,14 +1,10 @@
 import {
-  AddStylesheetUndoableAction,
-  DeleteStylesheetUndoableAction,
   getCommonProps,
   isSelectionDirty,
   Stylesheet,
   StylesheetType
 } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo, SnapshotUndoableAction } from '@diagram-craft/model/diagramUndoActions';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -16,36 +12,16 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { TbDots } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { useApplication, useDiagram } from '../../../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
-import { ElementStylesheetDialog } from './ElementStylesheetDialog';
-import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+import { ElementStylesheetDialog, STYLESHEET_EDITORS } from './ElementStylesheetDialog';
 import { useState } from 'react';
-import { EDGE_EDITORS, NODE_EDITORS } from '../../components/RuleEditorDialog/editors';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
-
-const EDITORS = {
-  text: [{ name: 'Text', editor: NodeTextEditor }],
-  node: [
-    { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
-    { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
-    { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
-    { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
-    { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
-    { name: 'Advanced', editor: NODE_EDITORS['advanced'].editor },
-    { name: 'Action', editor: NODE_EDITORS['action'].editor }
-  ],
-  edge: [
-    { name: 'Line', editor: EDGE_EDITORS['edgeLine'].editor },
-    { name: 'Shadow', editor: EDGE_EDITORS['shadow'].editor },
-    { name: 'Effects', editor: EDGE_EDITORS['edgeEffects'].editor },
-    { name: 'Custom', editor: EDGE_EDITORS['edgeCustom'].editor }
-  ]
-};
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -102,12 +78,12 @@ export const ElementStylesheetPanel = (props: Props) => {
               value={$s.val}
               isIndeterminate={$s.hasMultipleValues}
               onChange={v => {
-                const uow = new UnitOfWork($d, true);
-                $d.selection.elements.forEach(n => {
-                  $d.document.styles.setStylesheet(n, v!, uow, true);
+                UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
+                  $d.selection.elements.forEach(n => {
+                    $d.document.styles.setStylesheet(n, v!, uow, true);
+                  });
+                  $s.set(v);
                 });
-                $s.set(v);
-                commitWithUndo(uow, 'Change stylesheet');
               }}
             >
               {styleList.map(e => (
@@ -116,78 +92,68 @@ export const ElementStylesheetPanel = (props: Props) => {
                 </Select.Item>
               ))}
             </Select.Root>
-            <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button type="button" className={'cmp-button'}>
-                  <TbDots />
-                </button>
-              </DropdownMenu.Trigger>
+            <MenuButton.Root>
+              <MenuButton.Trigger>
+                <TbDots />
+              </MenuButton.Trigger>
 
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content className="cmp-context-menu" sideOffset={5}>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      const uow = new UnitOfWork($d, true);
+              <MenuButton.Menu>
+                <Menu.Item
+                  onClick={() => {
+                    UnitOfWork.executeWithUndo($d, 'Reapply style', uow => {
                       $d.selection.elements.forEach(n => {
                         $d.document.styles.setStylesheet(n, $s.val, uow, true);
                       });
-                      commitWithUndo(uow, 'Reapply style');
-                    }}
-                  >
-                    Reset
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                      const uow = new UnitOfWork($d, true);
+                    });
+                  }}
+                >
+                  Reset
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+                    UnitOfWork.executeWithUndo($d, 'Redefine style', uow => {
                       const stylesheet = $d.document.styles.get($s.val);
                       if (stylesheet) {
                         const commonProps = getCommonProps(
                           $d.selection.elements.map(e => e.editProps)
                         ) as NodeProps & EdgeProps;
-                        stylesheet.setProps(
-                          isText ? { text: commonProps.text } : commonProps,
-                          $d.document.styles,
-                          uow
-                        );
+                        stylesheet.setProps(isText ? { text: commonProps.text } : commonProps, uow);
                         $d.document.styles.reapplyStylesheet(stylesheet, uow);
                       }
-                      commitWithUndo(uow, 'Redefine style');
-                    }}
-                  >
-                    Save
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new StringInputDialogCommand(
-                          {
-                            label: 'Name',
-                            title: 'New style',
-                            saveButtonLabel: 'Create',
-                            value: ''
-                          },
-                          v => {
-                            const id = newid();
-                            const commonProps = getCommonProps(
-                              $d.selection.elements.map(e => e.editProps)
-                            ) as NodeProps & EdgeProps;
-                            const s = Stylesheet.fromSnapshot(
-                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
-                              {
-                                id,
-                                name: v,
-                                props: {
-                                  ...(isText ? { text: commonProps.text } : commonProps)
-                                }
-                              },
-                              $d.document.styles.crdt.factory
-                            );
-                            const uow = new UnitOfWork($d, true);
+                    });
+                  }}
+                >
+                  Save
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    application.ui.showDialog(
+                      new StringInputDialogCommand(
+                        {
+                          label: 'Name',
+                          title: 'New style',
+                          saveButtonLabel: 'Create',
+                          value: ''
+                        },
+                        v => {
+                          const id = newid();
+                          const commonProps = getCommonProps(
+                            $d.selection.elements.map(e => e.editProps)
+                          ) as NodeProps & EdgeProps;
+                          const s = Stylesheet.fromSnapshot(
+                            isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
+                            {
+                              id,
+                              name: v,
+                              props: {
+                                ...(isText ? { text: commonProps.text } : commonProps)
+                              }
+                            },
+                            $d.document.styles.crdt.factory
+                          );
 
+                          UnitOfWork.executeWithUndo($d, 'Add style', uow => {
                             $d.document.styles.addStylesheet(s.id, s, uow);
                             $d.document.styles.setStylesheet(
                               $d.selection.elements[0]!,
@@ -195,93 +161,72 @@ export const ElementStylesheetPanel = (props: Props) => {
                               uow,
                               true
                             );
-
-                            const snapshots = uow.commit();
-                            uow.diagram.undoManager.add(
-                              new CompoundUndoableAction([
-                                new AddStylesheetUndoableAction(uow.diagram, s),
-                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                              ])
-                            );
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Save As...
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new MessageDialogCommand(
-                          {
-                            title: 'Confirm delete',
-                            message: 'Are you sure you want to delete this style?',
-                            okLabel: 'Yes',
-                            okType: 'danger',
-                            cancelLabel: 'No'
-                          },
-                          () => {
-                            const uow = new UnitOfWork($d, true);
-
-                            const s = $d.document.styles.get($s.val)!;
+                          });
+                        }
+                      )
+                    );
+                  }}
+                >
+                  Save As...
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    application.ui.showDialog(
+                      new MessageDialogCommand(
+                        {
+                          title: 'Confirm delete',
+                          message: 'Are you sure you want to delete this style?',
+                          okLabel: 'Yes',
+                          okType: 'danger',
+                          cancelLabel: 'No'
+                        },
+                        () => {
+                          UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
                             $d.document.styles.deleteStylesheet($s.val, uow);
-
-                            const snapshots = uow.commit();
-                            uow.diagram.undoManager.add(
-                              new CompoundUndoableAction([
-                                new DeleteStylesheetUndoableAction(uow.diagram, s),
-                                new SnapshotUndoableAction('Delete style', uow.diagram, snapshots)
-                              ])
-                            );
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Delete
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      const style = $d.document.styles.get($s.val);
-                      setDialogProps({
-                        props: style?.props ?? {},
-                        style: style!
-                      });
-                    }}
-                  >
-                    Modify
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    className="cmp-context-menu__item"
-                    onSelect={() => {
-                      application.ui.showDialog(
-                        new StringInputDialogCommand(
-                          {
-                            label: 'Name',
-                            title: 'Rename style',
-                            description: 'Enter a new name for the style.',
-                            saveButtonLabel: 'Rename',
-                            value: $d.document.styles.get($s.val)?.name ?? ''
-                          },
-                          v => {
-                            const uow = new UnitOfWork($d, true);
+                          });
+                        }
+                      )
+                    );
+                  }}
+                >
+                  Delete
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    const style = $d.document.styles.get($s.val);
+                    setDialogProps({
+                      props: style?.props ?? {},
+                      style: style!
+                    });
+                  }}
+                >
+                  Modify
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    application.ui.showDialog(
+                      new StringInputDialogCommand(
+                        {
+                          label: 'Name',
+                          title: 'Rename style',
+                          description: 'Enter a new name for the style.',
+                          saveButtonLabel: 'Rename',
+                          value: $d.document.styles.get($s.val)?.name ?? ''
+                        },
+                        v => {
+                          UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
                             const stylesheet = $d.document.styles.get($s.val)!;
-                            stylesheet.setName(v, $d.document.styles, uow);
-                            commitWithUndo(uow, 'Rename style');
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Rename
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Arrow className="cmp-context-menu__arrow" />
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
+                            stylesheet.setName(v, uow);
+                          });
+                        }
+                      )
+                    );
+                  }}
+                >
+                  Rename
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
           </div>
         </div>
       </ToolWindowPanel>
@@ -294,18 +239,16 @@ export const ElementStylesheetPanel = (props: Props) => {
           onSave={e => {
             const style = dialogProps.style;
 
-            const uow = new UnitOfWork($d, true);
             const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
-              stylesheet.setProps(e, $d.document.styles, uow);
-              commitWithUndo(uow, 'Modify style');
-            } else {
-              uow.abort();
+              UnitOfWork.executeWithUndo($d, 'Modify style', uow => {
+                stylesheet.setProps(e, uow);
+              });
             }
 
             setDialogProps(undefined);
           }}
-          editors={EDITORS[dialogProps.style.type]}
+          editors={STYLESHEET_EDITORS[dialogProps.style.type]}
         />
       )}
     </>

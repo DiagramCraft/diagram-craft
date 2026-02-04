@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
-import { StylesheetSnapshot, UnitOfWork } from './unitOfWork';
+import { UnitOfWork } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/testModel';
 import { NoOpCRDTFactory } from '@diagram-craft/collaboration/noopCrdt';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import type { NodeProps } from './diagramProps';
+import { standardTestModel } from '@diagram-craft/model/test-support/collaborationModelTestUtils';
 
 describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('from', () => {
@@ -28,31 +29,43 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('setProps', () => {
     it('should set new props', () => {
       // Setup
-      const [root1, root2] = backend.syncedDocs();
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const type = 'node';
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
+
       const id = '123';
-      const name = 'Test stylesheet';
       const initialProps = { fill: { color: 'blue' } };
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
-
       const stylesheet = Stylesheet.fromSnapshot(
-        type,
-        { id, name, props: initialProps },
+        'node',
+        { id, name: 'Test', props: initialProps },
         styles1.crdt.factory
       );
-      styles1.addStylesheet(id, stylesheet);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, stylesheet, uow));
 
       // Act
       const newProps = { fill: { color: 'red' } };
-      stylesheet.setProps(newProps, styles1, UnitOfWork.immediate(null!));
+      UnitOfWork.executeWithUndo(diagram1, 'Set props', uow => stylesheet.setProps(newProps, uow));
 
       // Verify
       expect(stylesheet.props).toEqual(newProps);
       if (styles2) {
-        expect(styles2.getNodeStyle('123')!.props!.fill!.color).toEqual('red');
+        expect(styles2.getNodeStyle(id)!.props!.fill!.color).toEqual('red');
+      }
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(stylesheet.props).toEqual(initialProps);
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)!.props!.fill!.color).toEqual('blue');
+      }
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(stylesheet.props).toEqual(newProps);
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)!.props!.fill!.color).toEqual('red');
       }
     });
   });
@@ -60,70 +73,38 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
   describe('setName', () => {
     it('should set a new name', () => {
       // Setup
-      const [root1, root2] = backend.syncedDocs();
+      // Setup
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const type = 'node';
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
+
       const id = '123';
       const name = 'Old Name';
       const newName = 'New Name';
-      const props = { fill: { color: 'blue' } };
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, styles1.crdt.factory);
-      styles1.addStylesheet(id, stylesheet);
-
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+      const stylesheet = Stylesheet.fromSnapshot(
+        'node',
+        { id, name: name, props: { fill: { color: 'blue' } } },
+        styles1.crdt.factory
+      );
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, stylesheet, uow));
 
       // Act
-      stylesheet.setName(newName, styles1, UnitOfWork.immediate(null!));
+      UnitOfWork.executeWithUndo(diagram1, 'Set name', uow => stylesheet.setName(newName, uow));
 
       expect(stylesheet.name).toBe(newName);
-      if (styles2) {
-        expect(styles2.getNodeStyle('123')!.name).toBe(newName);
-      }
-    });
-  });
+      if (styles2) expect(styles2.getNodeStyle(id)!.name).toBe(newName);
 
-  describe('snapshot', () => {
-    it('should return a valid snapshot', () => {
-      const type = 'node';
-      const id = '123';
-      const name = 'Snapshot Test';
-      const props = { fill: { color: 'blue' } };
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(stylesheet.name).toBe(name);
+      if (styles2) expect(styles2.getNodeStyle(id)!.name).toBe(name);
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
-      const snapshot = stylesheet.snapshot();
-
-      expect(snapshot).toEqual({
-        _snapshotType: 'stylesheet',
-        id,
-        name,
-        props: { fill: { color: 'blue' } },
-        type
-      });
-    });
-  });
-
-  describe('restore', () => {
-    it('should restore from snapshot', () => {
-      const type = 'node';
-      const id = '123';
-      const name = 'Initial Name';
-      const props = { fill: { color: 'blue' } };
-      const snapshot = {
-        _snapshotType: 'stylesheet',
-        id,
-        name: 'Restored Name',
-        props: { fill: { color: 'red' } },
-        type
-      } satisfies StylesheetSnapshot;
-
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
-
-      stylesheet.restore(snapshot, UnitOfWork.immediate(null!));
-
-      expect(stylesheet.name).toBe('Restored Name');
-      expect(stylesheet.props).toEqual({ fill: { color: 'red' } });
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(stylesheet.name).toBe(newName);
+      if (styles2) expect(styles2.getNodeStyle(id)!.name).toBe(newName);
     });
   });
 });
@@ -222,156 +203,86 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
   });
 
   describe('activeNodeStylesheet', () => {
-    it('should not be synced', () => {
-      const [root1, root2] = backend.syncedDocs();
+    it('should set, but not sync active stylesheet', () => {
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
 
-      if (root2) {
-        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
-
+      if (styles2) {
+        const id = 'custom';
         const customNodeStyle = Stylesheet.fromSnapshot(
           'node',
           {
-            id: 'custom',
+            id,
             name: 'Custom',
             props: {}
           },
           styles1.crdt.factory
         );
-        styles1.addStylesheet('custom', customNodeStyle);
+        UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
         styles1.activeNodeStylesheet = customNodeStyle;
 
-        expect(styles1.activeNodeStylesheet.id).toBe(customNodeStyle.id);
-        expect(styles2.activeNodeStylesheet.id).toBe(styles2.nodeStyles[0]!.id);
+        expect(styles1.activeNodeStylesheet.id).toBe(id);
+        expect(styles2.activeNodeStylesheet.id).not.toBe(id);
       }
-    });
-
-    it('should return the active node stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const activeNodeStyle = styles.activeNodeStylesheet;
-      expect(activeNodeStyle.type).toBe('node');
-      expect(activeNodeStyle.id).toBe(styles.nodeStyles[0]!.id);
-    });
-
-    it('should set the active node stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const customNodeStyle = Stylesheet.fromSnapshot(
-        'node',
-        {
-          id: 'custom-node',
-          name: 'Custom Node',
-          props: {}
-        },
-        styles.crdt.factory
-      );
-      styles.addStylesheet('custom-node', customNodeStyle);
-
-      styles.activeNodeStylesheet = customNodeStyle;
-      expect(styles.activeNodeStylesheet.id).toBe('custom-node');
     });
   });
 
   describe('activeEdgeStylesheet', () => {
-    it('should not be synced', () => {
-      const [root1, root2] = backend.syncedDocs();
+    it('should set, but not sync active stylesheet', () => {
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      if (root2) {
-        const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
 
-        const customEdgeStyle = Stylesheet.fromSnapshot(
+      if (styles2) {
+        const id = 'custom';
+        const customNodeStyle = Stylesheet.fromSnapshot(
           'edge',
           {
-            id: 'custom-edge',
-            name: 'Custom Edge',
-            props: {}
-          },
-          styles1.crdt.factory
-        );
-        styles1.addStylesheet('custom-edge', customEdgeStyle);
-
-        styles1.activeEdgeStylesheet = customEdgeStyle;
-
-        expect(styles1.activeEdgeStylesheet.id).toBe(customEdgeStyle.id);
-        expect(styles2.activeEdgeStylesheet.id).toBe(styles2.edgeStyles[0]!.id);
-      }
-    });
-
-    it('should return the active edge stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const activeEdgeStyle = styles.activeEdgeStylesheet;
-      expect(activeEdgeStyle.type).toBe('edge');
-      expect(activeEdgeStyle.id).toBe(styles.edgeStyles[0]!.id);
-    });
-
-    it('should set the active edge stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const customEdgeStyle = Stylesheet.fromSnapshot(
-        'edge',
-        {
-          id: 'custom-edge',
-          name: 'Custom Edge',
-          props: {}
-        },
-        styles.crdt.factory
-      );
-      styles.addStylesheet('custom-edge', customEdgeStyle);
-
-      styles.activeEdgeStylesheet = customEdgeStyle;
-      expect(styles.activeEdgeStylesheet.id).toBe('custom-edge');
-    });
-  });
-
-  describe('activeTextStylesheet', () => {
-    it('should not be synced', () => {
-      const [root1, root2] = backend.syncedDocs();
-
-      if (root2) {
-        const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-        const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
-
-        const customTextStyle = Stylesheet.fromSnapshot(
-          'text',
-          {
-            id: 'custom',
+            id,
             name: 'Custom',
             props: {}
           },
           styles1.crdt.factory
         );
-        styles1.addStylesheet('custom', customTextStyle);
+        UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
-        styles1.activeTextStylesheet = customTextStyle;
+        styles1.activeEdgeStylesheet = customNodeStyle;
 
-        expect(styles1.activeTextStylesheet.id).toBe(customTextStyle.id);
-        expect(styles2.activeTextStylesheet.id).toBe(styles2.textStyles[0]!.id);
+        expect(styles1.activeEdgeStylesheet.id).toBe(id);
+        expect(styles2.activeEdgeStylesheet.id).not.toBe(id);
       }
     });
+  });
 
-    it('should return the active text stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const activeTextStyle = styles.activeTextStylesheet;
-      expect(activeTextStyle.type).toBe('text');
-      expect(activeTextStyle.id).toBe(styles.textStyles[0]!.id);
-    });
+  describe('activeTextStylesheet', () => {
+    it('should set, but not sync active stylesheet', () => {
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-    it('should set the active text stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
-      const customTextStyle = Stylesheet.fromSnapshot(
-        'text',
-        {
-          id: 'custom-text',
-          name: 'Custom Text',
-          props: {}
-        },
-        styles.crdt.factory
-      );
-      styles.addStylesheet('custom-text', customTextStyle);
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
 
-      styles.activeTextStylesheet = customTextStyle;
-      expect(styles.activeTextStylesheet.id).toBe('custom-text');
+      if (styles2) {
+        const id = 'custom';
+        const customNodeStyle = Stylesheet.fromSnapshot(
+          'text',
+          {
+            id,
+            name: 'Custom',
+            props: {}
+          },
+          styles1.crdt.factory
+        );
+        UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
+
+        styles1.activeTextStylesheet = customNodeStyle;
+
+        expect(styles1.activeTextStylesheet.id).toBe(id);
+        expect(styles2.activeTextStylesheet.id).not.toBe(id);
+      }
     });
   });
 
@@ -444,41 +355,62 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
 
   describe('addStylesheet', () => {
     it('should add a new node stylesheet', () => {
-      // Setup
-      const [root1, root2] = backend.syncedDocs();
+      const id = 'custom-node';
+      const name = 'Custom Node';
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+      // Setup
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
 
       // Act
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
         {
-          id: 'custom-node',
-          name: 'Custom Node',
+          id,
+          name: name,
           props: {}
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('custom-node', customNodeStyle);
+      UnitOfWork.executeWithUndo(diagram1, 'add', uow =>
+        styles1.addStylesheet(id, customNodeStyle, uow)
+      );
 
       // Verify
-      const retrievedStyle = styles1.getNodeStyle('custom-node');
+      const retrievedStyle = styles1.getNodeStyle(id);
       expect(retrievedStyle).toBeDefined();
-      expect(retrievedStyle?.id).toBe('custom-node');
-      expect(retrievedStyle?.name).toBe('Custom Node');
+      expect(retrievedStyle?.id).toBe(id);
+      expect(retrievedStyle?.name).toBe(name);
       expect(retrievedStyle?.type).toBe('node');
       if (styles2) {
-        const retrievedStyle2 = styles2.getNodeStyle('custom-node');
+        const retrievedStyle2 = styles2.getNodeStyle(id);
         expect(retrievedStyle2).toBeDefined();
-        expect(retrievedStyle2?.id).toBe('custom-node');
-        expect(retrievedStyle2?.name).toBe('Custom Node');
+        expect(retrievedStyle2?.id).toBe(id);
+        expect(retrievedStyle2?.name).toBe(name);
         expect(retrievedStyle2?.type).toBe('node');
+      }
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(styles1.getNodeStyle(id)).toBeUndefined();
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)).toBeUndefined();
+      }
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(styles1.getNodeStyle(id)).toBeDefined();
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)).toBeDefined();
       }
     });
 
     it('should add a new edge stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+
+      const styles1 = doc1.styles;
 
       const customEdgeStyle = Stylesheet.fromSnapshot(
         'edge',
@@ -487,11 +419,13 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Edge',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-edge', customEdgeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('custom-edge', customEdgeStyle, uow)
+      );
 
-      const retrievedStyle = styles.getEdgeStyle('custom-edge');
+      const retrievedStyle = styles1.getEdgeStyle('custom-edge');
       expect(retrievedStyle).toBeDefined();
       expect(retrievedStyle?.id).toBe('custom-edge');
       expect(retrievedStyle?.name).toBe('Custom Edge');
@@ -499,7 +433,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should add a new text stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+
+      const styles1 = doc1.styles;
 
       const customTextStyle = Stylesheet.fromSnapshot(
         'text',
@@ -508,11 +444,13 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Text',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-text', customTextStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('custom-text', customTextStyle, uow)
+      );
 
-      const retrievedStyle = styles.getTextStyle('custom-text');
+      const retrievedStyle = styles1.getTextStyle('custom-text');
       expect(retrievedStyle).toBeDefined();
       expect(retrievedStyle?.id).toBe('custom-text');
       expect(retrievedStyle?.name).toBe('Custom Text');
@@ -520,49 +458,69 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should set the active stylesheet when adding a new stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const id = 'custom-node';
+      const name = 'Custom Node';
+
+      const { diagram1, doc1 } = standardTestModel(backend);
+
+      const styles1 = doc1.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
         {
-          id: 'custom-node',
-          name: 'Custom Node',
+          id: id,
+          name: name,
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-node', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
-      expect(styles.activeNodeStylesheet.id).toBe('custom-node');
+      expect(styles1.activeNodeStylesheet.id).toBe(id);
     });
   });
 
   describe('deleteStylesheet', () => {
     it('should delete a custom stylesheet', () => {
       // Setup
-      const [root1, root2] = backend.syncedDocs();
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = root2 ? new DiagramStyles(root2, TestModel.newDocument(), true) : undefined;
+      const styles1 = doc1.styles;
+      const styles2 = doc2 ? doc2.styles : undefined;
 
+      const id = 'custom-node';
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
         {
-          id: 'custom-node',
+          id: id,
           name: 'Custom Node',
           props: {}
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('custom-node', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
       // Act
-      styles1.deleteStylesheet('custom-node', UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.executeWithUndo(diagram1, 'delete', uow => styles1.deleteStylesheet(id, uow));
 
       // Verify
-      expect(styles1.getNodeStyle('custom-node')).toBeUndefined();
+      expect(styles1.getNodeStyle(id)).toBeUndefined();
       if (styles2) {
-        expect(styles2.getNodeStyle('custom-node')).toBeUndefined();
+        expect(styles2.getNodeStyle(id)).toBeUndefined();
+      }
+
+      // Act & Verify
+      diagram1.undoManager.undo();
+      expect(styles1.getNodeStyle(id)).toBeDefined();
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)).toBeDefined();
+      }
+
+      // Act & Verify
+      diagram1.undoManager.redo();
+      expect(styles1.getNodeStyle(id)).toBeUndefined();
+      if (styles2) {
+        expect(styles2.getNodeStyle(id)).toBeUndefined();
       }
     });
 
@@ -573,14 +531,18 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Try to delete the default node stylesheet
-      styles.deleteStylesheet(defaultNodeStyleId, UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.execute(TestModel.newDiagram(), uow =>
+        styles.deleteStylesheet(defaultNodeStyleId, uow)
+      );
 
       // Verify it was not deleted
       expect(styles.getNodeStyle(defaultNodeStyleId)).toBeDefined();
     });
 
     it('should update active stylesheet when deleting the active stylesheet', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+
+      const styles1 = doc1.styles;
 
       // Add two custom stylesheets
       const customNodeStyle1 = Stylesheet.fromSnapshot(
@@ -590,7 +552,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node 1',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
       const customNodeStyle2 = Stylesheet.fromSnapshot(
         'node',
@@ -599,19 +561,21 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node 2',
           props: {}
         },
-        styles.crdt.factory
+        styles1.crdt.factory
       );
-      styles.addStylesheet('custom-node-1', customNodeStyle1);
-      styles.addStylesheet('custom-node-2', customNodeStyle2);
+      UnitOfWork.execute(diagram1, uow => {
+        styles1.addStylesheet('custom-node-1', customNodeStyle1, uow);
+        styles1.addStylesheet('custom-node-2', customNodeStyle2, uow);
+      });
 
       // Verify custom-node-2 is active
-      expect(styles.activeNodeStylesheet.id).toBe('custom-node-2');
+      expect(styles1.activeNodeStylesheet.id).toBe('custom-node-2');
 
       // Delete custom-node-2
-      styles.deleteStylesheet('custom-node-2', UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.execute(diagram1, uow => styles1.deleteStylesheet('custom-node-2', uow));
 
       // Verify active stylesheet is updated
-      expect(styles.activeNodeStylesheet.id).not.toBe('custom-node-2');
+      expect(styles1.activeNodeStylesheet.id).not.toBe('custom-node-2');
     });
   });
 
@@ -627,11 +591,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultNodeStyleId = styles.nodeStyles[0]!.id;
 
       // Set a stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UnitOfWork.execute(TestModel.newDiagram(), uow =>
+        styles.setStylesheet(element as any, defaultNodeStyleId, uow, true)
       );
 
       expect(element.metadata.style).toBe(defaultNodeStyleId);
@@ -648,11 +609,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const defaultTextStyleId = styles.textStyles[0]!.id;
 
       // Set a text stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultTextStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UnitOfWork.execute(TestModel.newDiagram(), uow =>
+        styles.setStylesheet(element as any, defaultTextStyleId, uow, true)
       );
 
       expect(element.metadata.textStyle).toBe(defaultTextStyleId);
@@ -678,14 +636,11 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles.crdt.factory
       );
-      styles.addStylesheet('custom-node', customNodeStyle);
+      UnitOfWork.execute(diagram, uow => styles.addStylesheet('custom-node', customNodeStyle, uow));
 
       // Set the default node stylesheet on the element
-      styles.setStylesheet(
-        element as any,
-        defaultNodeStyleId,
-        UnitOfWork.immediate(document.diagrams[0]!),
-        true
+      UnitOfWork.execute(diagram, uow =>
+        styles.setStylesheet(element as any, defaultNodeStyleId, uow, true)
       );
 
       // Verify the active node stylesheet was updated
@@ -695,11 +650,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
 
   describe('events', () => {
     it('should emit stylesheetAdded event when a node stylesheet is added remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const addedStylesheets: Array<Stylesheet<any>> = [];
       styles2.on('stylesheetAdded', ({ stylesheet }) => {
@@ -715,7 +671,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('remote-node', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('remote-node', customNodeStyle, uow)
+      );
 
       expect(addedStylesheets).toHaveLength(1);
       expect(addedStylesheets[0]!.id).toBe('remote-node');
@@ -724,11 +682,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetAdded event when an edge stylesheet is added remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const addedStylesheets: Array<Stylesheet<any>> = [];
       styles2.on('stylesheetAdded', ({ stylesheet }) => {
@@ -744,7 +703,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('remote-edge', customEdgeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('remote-edge', customEdgeStyle, uow)
+      );
 
       expect(addedStylesheets).toHaveLength(1);
       expect(addedStylesheets[0]!.id).toBe('remote-edge');
@@ -753,11 +714,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetAdded event when a text stylesheet is added remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const addedStylesheets: Array<Stylesheet<any>> = [];
       styles2.on('stylesheetAdded', ({ stylesheet }) => {
@@ -773,7 +735,9 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('remote-text', customTextStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('remote-text', customTextStyle, uow)
+      );
 
       expect(addedStylesheets).toHaveLength(1);
       expect(addedStylesheets[0]!.id).toBe('remote-text');
@@ -782,11 +746,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetUpdated event when a stylesheet is updated remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -797,14 +762,18 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('update-test', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('update-test', customNodeStyle, uow)
+      );
 
       const updatedStylesheets: Array<Stylesheet<any>> = [];
       styles2.on('stylesheetUpdated', ({ stylesheet }) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setProps({ fill: { color: 'red' } }, styles1, UnitOfWork.immediate(null!));
+      UnitOfWork.execute(TestModel.newDiagram(), uow =>
+        customNodeStyle.setProps({ fill: { color: 'red' } }, uow)
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('update-test');
@@ -812,11 +781,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetUpdated event when a stylesheet name is updated remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -827,14 +797,14 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('name-test', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('name-test', customNodeStyle, uow));
 
       const updatedStylesheets: Array<Stylesheet<any>> = [];
       styles2.on('stylesheetUpdated', ({ stylesheet }) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setName('New Name', styles1, UnitOfWork.immediate(null!));
+      UnitOfWork.execute(TestModel.newDiagram(), uow => customNodeStyle.setName('New Name', uow));
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('name-test');
@@ -842,11 +812,12 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetRemoved event when a stylesheet is deleted remotely', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -857,21 +828,26 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('delete-test', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles1.addStylesheet('delete-test', customNodeStyle, uow)
+      );
 
       const removedStylesheets: Array<string> = [];
       styles2.on('stylesheetRemoved', ({ stylesheet }) => {
         removedStylesheets.push(stylesheet);
       });
 
-      styles1.deleteStylesheet('delete-test', UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.execute(TestModel.newDiagram(), uow =>
+        styles1.deleteStylesheet('delete-test', uow)
+      );
 
       expect(removedStylesheets).toHaveLength(1);
       expect(removedStylesheets[0]!).toBe('delete-test');
     });
 
     it('should emit stylesheetAdded event for local additions', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+      const styles = doc1.styles;
 
       const addedStylesheets: Array<Stylesheet<any>> = [];
       styles.on('stylesheetAdded', ({ stylesheet }) => {
@@ -887,14 +863,15 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles.crdt.factory
       );
-      styles.addStylesheet('local-node', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow => styles.addStylesheet('local-node', customNodeStyle, uow));
 
       expect(addedStylesheets).toHaveLength(1);
       expect(addedStylesheets[0]!.id).toBe('local-node');
     });
 
     it('should emit stylesheetUpdated event for local updates', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+      const styles = doc1.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -905,14 +882,18 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles.crdt.factory
       );
-      styles.addStylesheet('local-update', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles.addStylesheet('local-update', customNodeStyle, uow)
+      );
 
       const updatedStylesheets: Array<Stylesheet<any>> = [];
       styles.on('stylesheetUpdated', ({ stylesheet }) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setProps({ fill: { color: 'red' } }, styles, UnitOfWork.immediate(null!));
+      UnitOfWork.execute(diagram1, uow =>
+        customNodeStyle.setProps({ fill: { color: 'red' } }, uow)
+      );
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('local-update');
@@ -920,7 +901,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetUpdated event for local name changes', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+      const styles = doc1.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -931,14 +913,14 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles.crdt.factory
       );
-      styles.addStylesheet('local-name', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow => styles.addStylesheet('local-name', customNodeStyle, uow));
 
       const updatedStylesheets: Array<Stylesheet<any>> = [];
       styles.on('stylesheetUpdated', ({ stylesheet }) => {
         updatedStylesheets.push(stylesheet);
       });
 
-      customNodeStyle.setName('New Name', styles, UnitOfWork.immediate(null!));
+      UnitOfWork.execute(diagram1, uow => customNodeStyle.setName('New Name', uow));
 
       expect(updatedStylesheets).toHaveLength(1);
       expect(updatedStylesheets[0]!.id).toBe('local-name');
@@ -946,7 +928,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
     });
 
     it('should emit stylesheetRemoved event for local deletions', () => {
-      const styles = new DiagramStyles(root, document, true);
+      const { diagram1, doc1 } = standardTestModel(backend);
+      const styles = doc1.styles;
 
       const customNodeStyle = Stylesheet.fromSnapshot(
         'node',
@@ -957,25 +940,28 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         },
         styles.crdt.factory
       );
-      styles.addStylesheet('local-delete', customNodeStyle);
+      UnitOfWork.execute(diagram1, uow =>
+        styles.addStylesheet('local-delete', customNodeStyle, uow)
+      );
 
       const removedStylesheets: Array<string> = [];
       styles.on('stylesheetRemoved', ({ stylesheet }) => {
         removedStylesheets.push(stylesheet);
       });
 
-      styles.deleteStylesheet('local-delete', UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.execute(diagram1, uow => styles.deleteStylesheet('local-delete', uow));
 
       expect(removedStylesheets).toHaveLength(1);
       expect(removedStylesheets[0]!).toBe('local-delete');
     });
 
     it('should emit multiple events when multiple remote changes occur', () => {
-      const [root1, root2] = backend.syncedDocs();
-      if (!root2) return;
+      const { diagram1, doc1, doc2 } = standardTestModel(backend);
 
-      const styles1 = new DiagramStyles(root1, TestModel.newDocument(), true);
-      const styles2 = new DiagramStyles(root2, TestModel.newDocument(), true);
+      if (!doc2) return;
+
+      const styles1 = doc1.styles;
+      const styles2 = doc2.styles;
 
       const events: Array<{ type: string; id: string }> = [];
       styles2.on('stylesheetAdded', ({ stylesheet }) => {
@@ -993,18 +979,19 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         { id: 'multi-1', name: 'Multi 1', props: {} },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('multi-1', style1);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('multi-1', style1, uow));
 
       const style2 = Stylesheet.fromSnapshot(
         'edge',
         { id: 'multi-2', name: 'Multi 2', props: {} },
         styles1.crdt.factory
       );
-      styles1.addStylesheet('multi-2', style2);
+      UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('multi-2', style2, uow));
 
-      style1.setName('Updated Multi 1', styles1, UnitOfWork.immediate(null!));
-
-      styles1.deleteStylesheet('multi-2', UnitOfWork.immediate(document.diagrams[0]!));
+      UnitOfWork.execute(TestModel.newDiagram(), uow => {
+        style1.setName('Updated Multi 1', uow);
+        styles1.deleteStylesheet('multi-2', uow);
+      });
 
       expect(events).toHaveLength(4);
       expect(events).toEqual([

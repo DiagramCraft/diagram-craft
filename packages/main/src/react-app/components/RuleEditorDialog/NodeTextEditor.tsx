@@ -5,6 +5,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
 import { makeProperty } from './utils';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { Property } from '@diagram-craft/model/property';
 
 export const NodeTextEditor: Editor = props => {
   const $p = props.props as NodeProps;
@@ -34,6 +35,9 @@ export const NodeTextEditor: Editor = props => {
       left={makeProperty($p, 'text.left', nodeDefaults, onChange)}
       bottom={makeProperty($p, 'text.bottom', nodeDefaults, onChange)}
       right={makeProperty($p, 'text.right', nodeDefaults, onChange)}
+      shrink={makeProperty($p, 'text.shrink', nodeDefaults, onChange)}
+      position={makeProperty($p, 'text.position', nodeDefaults, onChange) as Property<string>}
+      width={makeProperty($p, 'text.width', nodeDefaults, onChange)}
     />
   );
 };

@@ -6,10 +6,28 @@ import { useDiagram } from '../application';
 import { UserState } from '../UserState';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { GuideCreateDrag } from '@diagram-craft/canvas/drag/guideDrag';
+import { round } from '@diagram-craft/utils/math';
 
 type Tick = {
   pos: number;
   lbl: string;
+  value: number;
+};
+
+const roundTicks = (ticks: Tick[]) => {
+  const min = ticks.at(0)?.pos;
+  const max = ticks.at(-1)?.pos;
+  if (min === undefined || max === undefined) return;
+
+  const delta = max - min;
+  const stepSize = delta / ticks.length;
+
+  // Calculate decimals needed: if stepSize is 0.1, we need 1 decimal; if 0.01, we need 2, etc.
+  const numberOfDecimals = stepSize >= 1 ? 0 : Math.max(0, Math.ceil(-Math.log10(stepSize)));
+
+  for (let i = 0; i < ticks.length; i++) {
+    ticks[i]!.lbl = round(ticks[i]!.value, numberOfDecimals).toString();
+  }
 };
 
 export const Ruler = ({ orientation }: Props) => {
@@ -93,9 +111,10 @@ export const Ruler = ({ orientation }: Props) => {
   if (orientation === 'horizontal') {
     if (diagram.viewBox.isInitialized()) {
       for (let x = diagram.bounds.x; x <= diagram.bounds.x + diagram.bounds.w; x += 10) {
-        ticks.push({ pos: toScreenX(x), lbl: x.toString() });
+        ticks.push({ pos: toScreenX(x), lbl: x.toString(), value: x });
       }
     }
+    roundTicks(ticks);
 
     return (
       <div id={'ruler-h'} className={'cmp-ruler dark-theme'}>
@@ -127,9 +146,10 @@ export const Ruler = ({ orientation }: Props) => {
   } else {
     if (diagram.viewBox.isInitialized()) {
       for (let y = diagram.bounds.y; y <= diagram.bounds.y + diagram.bounds.h; y += 10) {
-        ticks.push({ pos: toScreenY(y), lbl: y.toString() });
+        ticks.push({ pos: toScreenY(y), lbl: y.toString(), value: y });
       }
     }
+    roundTicks(ticks);
 
     return (
       <div id={'ruler-v'} className={'cmp-ruler dark-theme'}>

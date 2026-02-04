@@ -1,15 +1,21 @@
 import { AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from './application';
 import { ToolType } from '@diagram-craft/canvas/tool';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 
 export const toolActions = (context: Application) => ({
-  TOOL_MOVE: new ToolAction('move', context),
-  TOOL_TEXT: new ToolAction('text', context),
-  TOOL_EDGE: new ToolAction('edge', context),
-  TOOL_NODE: new ToolAction('node', context),
-  TOOL_PEN: new ToolAction('pen', context),
-  TOOL_FREEHAND: new ToolAction('freehand', context),
-  TOOL_RECT: new ToolAction('rect', context)
+  TOOL_MOVE: new ToolAction('move', $tStr('action.TOOL_MOVE.name', 'Move Tool'), context),
+  TOOL_TEXT: new ToolAction('text', $tStr('action.TOOL_TEXT.name', 'Text Tool'), context),
+  TOOL_EDGE: new ToolAction('edge', $tStr('action.TOOL_EDGE.name', 'Edge Tool'), context),
+  TOOL_NODE: new ToolAction('node', $tStr('action.TOOL_NODE.name', 'Node Tool'), context),
+  TOOL_PEN: new ToolAction('pen', $tStr('action.TOOL_PEN.name', 'Pen Tool'), context),
+  TOOL_FREEHAND: new ToolAction(
+    'freehand',
+    $tStr('action.TOOL_FREEHAND.name', 'Freehand Tool'),
+    context
+  ),
+  TOOL_RECT: new ToolAction('rect', $tStr('action.TOOL_RECT.name', 'Rectangle Tool'), context),
+  TOOL_ZOOM: new ToolAction('zoom', $tStr('action.TOOL_ZOOM.name', 'Zoom Tool'), context)
 });
 
 declare global {
@@ -21,6 +27,7 @@ declare global {
 export class ToolAction extends AbstractToggleAction<undefined, Application> {
   constructor(
     private readonly tool: ToolType,
+    public readonly name: TranslatedString,
     context: Application
   ) {
     super(context);

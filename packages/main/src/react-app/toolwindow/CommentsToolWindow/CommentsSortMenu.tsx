@@ -1,6 +1,7 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbArrowsSort, TbCheck, TbChevronRight } from 'react-icons/tb';
+import { TbArrowsSort } from 'react-icons/tb';
 import type { GroupBy, SortBy } from './utils';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 type CommentsSortMenuProps = {
   sortBy: SortBy;
@@ -20,118 +21,49 @@ export const CommentsSortMenu = ({
   onHideResolvedChange
 }: CommentsSortMenuProps) => {
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <a className={'cmp-button cmp-button--icon-only'}>
-          <TbArrowsSort />
-        </a>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" align={'end'}>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="cmp-context-menu__item">
-              Sort by Date
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                <DropdownMenu.CheckboxItem
-                  className="cmp-context-menu__item"
-                  checked={sortBy === 'date-desc'}
-                  onCheckedChange={checked => checked && onSortChange('date-desc')}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-indicator"
-                    forceMount={true}
-                  >
-                    <TbCheck />
-                  </DropdownMenu.ItemIndicator>
-                  Newest First
-                </DropdownMenu.CheckboxItem>
-                <DropdownMenu.CheckboxItem
-                  className="cmp-context-menu__item"
-                  checked={sortBy === 'date-asc'}
-                  onCheckedChange={checked => checked && onSortChange('date-asc')}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-indicator"
-                    forceMount={true}
-                  >
-                    <TbCheck />
-                  </DropdownMenu.ItemIndicator>
-                  Oldest First
-                </DropdownMenu.CheckboxItem>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="cmp-context-menu__item">
-              Group by
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                <DropdownMenu.CheckboxItem
-                  className="cmp-context-menu__item"
-                  checked={groupBy === 'none'}
-                  onCheckedChange={checked => checked && onGroupChange('none')}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-indicator"
-                    forceMount={true}
-                  >
-                    <TbCheck />
-                  </DropdownMenu.ItemIndicator>
-                  None
-                </DropdownMenu.CheckboxItem>
-                <DropdownMenu.CheckboxItem
-                  className="cmp-context-menu__item"
-                  checked={groupBy === 'element'}
-                  onCheckedChange={checked => checked && onGroupChange('element')}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-indicator"
-                    forceMount={true}
-                  >
-                    <TbCheck />
-                  </DropdownMenu.ItemIndicator>
-                  Element
-                </DropdownMenu.CheckboxItem>
-                <DropdownMenu.CheckboxItem
-                  className="cmp-context-menu__item"
-                  checked={groupBy === 'author'}
-                  onCheckedChange={checked => checked && onGroupChange('author')}
-                >
-                  <DropdownMenu.ItemIndicator
-                    className="cmp-context-menu__item-indicator"
-                    forceMount={true}
-                  >
-                    <TbCheck />
-                  </DropdownMenu.ItemIndicator>
-                  Author
-                </DropdownMenu.CheckboxItem>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.CheckboxItem
-            className="cmp-context-menu__item"
-            checked={hideResolved}
-            onCheckedChange={onHideResolvedChange}
+    <MenuButton.Root>
+      <MenuButton.Trigger className={'cmp-button cmp-button--icon-only'}>
+        <TbArrowsSort />
+      </MenuButton.Trigger>
+      <MenuButton.Menu>
+        <Menu.SubMenu label={'Sort by Date'}>
+          <Menu.CheckboxItem
+            checked={sortBy === 'date-desc'}
+            onCheckedChange={checked => checked && onSortChange('date-desc')}
           >
-            <DropdownMenu.ItemIndicator
-              className="cmp-context-menu__item-indicator"
-              forceMount={true}
-            >
-              <TbCheck />
-            </DropdownMenu.ItemIndicator>
-            Hide Resolved
-          </DropdownMenu.CheckboxItem>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+            Newest First
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            checked={sortBy === 'date-asc'}
+            onCheckedChange={checked => checked && onSortChange('date-asc')}
+          >
+            Oldest First
+          </Menu.CheckboxItem>
+        </Menu.SubMenu>
+        <Menu.SubMenu label={'Group by'}>
+          <Menu.CheckboxItem
+            checked={groupBy === 'none'}
+            onCheckedChange={checked => checked && onGroupChange('none')}
+          >
+            None
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            checked={groupBy === 'element'}
+            onCheckedChange={checked => checked && onGroupChange('element')}
+          >
+            Element
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            checked={groupBy === 'author'}
+            onCheckedChange={checked => checked && onGroupChange('author')}
+          >
+            Author
+          </Menu.CheckboxItem>
+        </Menu.SubMenu>
+        <Menu.CheckboxItem checked={hideResolved} onCheckedChange={onHideResolvedChange}>
+          Hide Resolved
+        </Menu.CheckboxItem>
+      </MenuButton.Menu>
+    </MenuButton.Root>
   );
 };

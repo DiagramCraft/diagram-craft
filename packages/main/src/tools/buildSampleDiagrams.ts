@@ -1,7 +1,8 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import {
   defaultEdgeRegistry,
-  defaultNodeRegistry
+  defaultNodeRegistry,
+  defaultRegistry
 } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -14,8 +15,11 @@ import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/uml';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
+import {
+  NodeDefinitionRegistry,
+  StencilRegistry
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -23,6 +27,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { getTypedKeys } from '@diagram-craft/utils/object';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];
@@ -55,7 +60,7 @@ const writeArrow = (
     },
     []
   );
-  layer.addElement(n, UnitOfWork.immediate(diagram));
+  UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
@@ -82,7 +87,7 @@ const writeArrow = (
         [],
         layer
       );
-      layer.addElement(edge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
     }
   }
 
@@ -106,7 +111,7 @@ const writeArrow = (
       {},
       { text: '' }
     );
-    layer.addElement(n, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
     const edge = ElementFactory.edge(
       newid(),
@@ -130,14 +135,14 @@ const writeArrow = (
       [],
       layer
     );
-    layer.addElement(edge, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
 
-    layer.stackModify([n], 10, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => layer.stackModify([n], 10, uow));
   }
 };
 
 const arrowsTestFile = async () => {
-  const document = new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry());
+  const document = new DiagramDocument(defaultRegistry());
 
   const { diagram, layer } = DocumentBuilder.empty('arrows', 'Arrows', document);
 
@@ -149,12 +154,17 @@ const arrowsTestFile = async () => {
     //if (y > 2000) break;
   }
 
-  diagram.bounds = {
-    x: 0,
-    y: 0,
-    w: 1000,
-    h: y + 200
-  };
+  UnitOfWork.executeSilently(diagram, uow =>
+    diagram.setBounds(
+      {
+        x: 0,
+        y: 0,
+        w: 1000,
+        h: y + 200
+      },
+      uow
+    )
+  );
 
   fs.writeFileSync(
     path.join(__dirname, '..', '..', 'public', 'sample', 'arrows.json'),
@@ -273,7 +283,7 @@ const SHAPES_DEFS = [
           [],
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
@@ -294,7 +304,7 @@ const SHAPES_DEFS = [
           [],
           n.layer
         );
-        n.layer.addElement(e, UnitOfWork.immediate(n.diagram));
+        UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       }
     });
     return 'rotated-primary-anchors';
@@ -358,7 +368,7 @@ const SHAPES_DEFS = [
 
 const writeShape = (
   shape: string,
-  factory: (diagram: Diagram) => DiagramNode,
+  factory: (diagram: Diagram) => { elements: DiagramElement[] },
   y: number,
   layer: RegularLayer,
   diagram: Diagram,
@@ -387,63 +397,67 @@ const writeShape = (
     },
     []
   );
-  layer.addElement(n, UnitOfWork.immediate(diagram));
+  UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 70;
   let maxX = startX;
   let x = startX;
 
-  const uow = new UnitOfWork(diagram);
+  UnitOfWork.execute(diagram, uow => {
+    for (let i = 0; i < SHAPES_DEFS.length; i++) {
+      const def = SHAPES_DEFS[i]!;
+      const els = factory(diagram).elements;
+      if (els.length !== 1) throw new Error('Expected single element');
 
-  for (let i = 0; i < SHAPES_DEFS.length; i++) {
-    const def = SHAPES_DEFS[i]!;
-    const n = factory(diagram).duplicate(undefined, `${shape}-${i}`);
-    n.transform([new Scale(dimensions.w / n.bounds.w, dimensions.h / n.bounds.h)], uow);
-    n.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
-    const name = def(n, uow);
-    n.invalidateAnchors(uow);
-    layer.addElement(n, uow);
+      const el = els[0]!.duplicate(undefined, `${shape}-${i}`);
+      if (!isNode(el)) throw new Error('Expected node');
 
-    const label = ElementFactory.node(
-      `${shape}-${i}-label`,
-      'text',
-      {
-        x: x,
-        y: y - 45,
-        w: 300,
-        h: 20,
-        r: 0
-      },
-      layer,
-      {
-        text: {
-          align: 'left'
-        }
-      },
-      {},
-      {
-        text: name
-      },
-      []
-    );
-    layer.addElement(label, uow);
+      el.transform([new Scale(dimensions.w / el.bounds.w, dimensions.h / el.bounds.h)], uow);
+      el.setBounds({ x: x, y: y, ...dimensions, r: 0 }, uow);
+      const name = def(el, uow);
+      el.invalidateAnchors(uow);
+      layer.addElement(el, uow);
 
-    x += xDiff;
-    maxX = Math.max(maxX, x);
+      const label = ElementFactory.node(
+        `${shape}-${i}-label`,
+        'text',
+        {
+          x: x,
+          y: y - 45,
+          w: 300,
+          h: 20,
+          r: 0
+        },
+        layer,
+        {
+          text: {
+            align: 'left'
+          }
+        },
+        {},
+        {
+          text: name
+        },
+        []
+      );
+      layer.addElement(label, uow);
 
-    if (i % shapesPerLine === shapesPerLine - 1) {
-      x = startX;
-      y += yDiff;
+      x += xDiff;
+      maxX = Math.max(maxX, x);
+
+      if (i % shapesPerLine === shapesPerLine - 1) {
+        x = startX;
+        y += yDiff;
+      }
     }
-  }
-
-  uow.commit();
+  });
 
   return { x: maxX, y: y + 150 };
 };
 
 const shapesTestFile = async (
   nodeDefinitions: NodeDefinitionRegistry,
+  stencils: StencilRegistry,
   pkg: string,
   file: string,
   opts: ShapeOpts = {
@@ -454,45 +468,66 @@ const shapesTestFile = async (
     shapesPerLine: Number.MAX_SAFE_INTEGER
   }
 ) => {
-  const document = new DiagramDocument(nodeDefinitions, defaultEdgeRegistry());
+  const document = new DiagramDocument({
+    nodes: nodeDefinitions,
+    edges: defaultEdgeRegistry(),
+    stencils
+  });
 
   const { diagram, layer } = DocumentBuilder.empty('shapes', 'Shapes', document);
 
   if (pkg.startsWith('pkg:')) {
     let y = 10;
 
-    for (const stencil of nodeDefinitions.stencilRegistry.get(pkg.slice(4)).stencils) {
+    for (const stencil of stencils.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
-      writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
+      writeShape(stencil.name ?? stencil.id, stencil.elementsForPicker, y, layer, diagram, opts);
       y += opts.yDiff;
     }
 
-    diagram.bounds = {
-      x: 0,
-      y: 0,
-      w: 2100,
-      h: y + opts.yDiff
-    };
+    UnitOfWork.executeSilently(diagram, uow =>
+      diagram.setBounds(
+        {
+          x: 0,
+          y: 0,
+          w: 2100,
+          h: y + opts.yDiff
+        },
+        uow
+      )
+    );
   } else {
     const [, p, shape] = safeSplit(pkg, ':', 3);
 
     let x = 0;
     let y = 10;
-    for (const stencil of nodeDefinitions.stencilRegistry.get(p).stencils) {
+    for (const stencil of stencils.get(p).stencils) {
       if (stencil.id === shape) {
-        const ret = writeShape(stencil.name ?? stencil.id, stencil.node, y, layer, diagram, opts);
+        const ret = writeShape(
+          stencil.name ?? stencil.id,
+          stencil.elementsForPicker,
+          y,
+          layer,
+          diagram,
+          opts
+        );
         x = ret.x;
         y = ret.y;
         break;
       }
     }
 
-    diagram.bounds = {
-      x: 0,
-      y: 0,
-      w: x + 20,
-      h: y + opts.yDiff
-    };
+    UnitOfWork.executeSilently(diagram, uow =>
+      diagram.setBounds(
+        {
+          x: 0,
+          y: 0,
+          w: x + 20,
+          h: y + opts.yDiff
+        },
+        uow
+      )
+    );
   }
 
   fs.writeFileSync(
@@ -501,14 +536,15 @@ const shapesTestFile = async (
   );
 };
 
+const registry = new StencilRegistry();
 const nodeDefinitions = defaultNodeRegistry();
 await registerUMLShapes(nodeDefinitions);
 
 arrowsTestFile();
-shapesTestFile(nodeDefinitions, 'pkg:default', 'shapes.json');
-shapesTestFile(nodeDefinitions, 'pkg:arrow', 'shapes-arrow.json');
-shapesTestFile(nodeDefinitions, 'pkg:uml', 'shapes-uml.json');
-shapesTestFile(nodeDefinitions, 'shape:default:table', 'shape-default-table.json', {
+shapesTestFile(nodeDefinitions, registry, 'pkg:default', 'shapes.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:arrow', 'shapes-arrow.json');
+shapesTestFile(nodeDefinitions, registry, 'pkg:uml', 'shapes-uml.json');
+shapesTestFile(nodeDefinitions, registry, 'shape:default:table', 'shape-default-table.json', {
   xDiff: 300,
   yDiff: 250,
   startX: 50,

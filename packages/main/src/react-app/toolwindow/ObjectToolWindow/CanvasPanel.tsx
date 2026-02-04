@@ -9,6 +9,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const DEFAULTS = nodeDefaults.applyDefaults({}).fill!;
 
@@ -59,7 +60,7 @@ export const CanvasPanel = (props: Props) => {
   const gradientType = useDiagramProperty($d, 'background.gradient.type', 'linear');
 
   const updateBounds = (newBounds: Box) => {
-    $d.bounds = newBounds;
+    UnitOfWork.executeWithUndo($d, 'Set bounds', uow => $d.setBounds(newBounds, uow));
   };
 
   return (

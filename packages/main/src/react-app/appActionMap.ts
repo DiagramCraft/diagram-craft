@@ -2,7 +2,7 @@ import { toggleDarkModeActions } from './actions/toggleDarkMode';
 import { zoomActions } from './actions/zoomAction';
 import { sidebarActions } from './actions/SidebarAction';
 import { ActionMapFactory, KeyMap } from '@diagram-craft/canvas/keyMap';
-import { defaultCanvasActions, defaultMacKeymap } from '@diagram-craft/canvas-app/defaultActions';
+import { canvasAppActions, defaultMacKeymap } from '@diagram-craft/canvas-app/canvasAppActions';
 import { toggleHelpActions } from './actions/toggleHelp';
 import { fileNewActions } from './actions/fileNewAction';
 import { fileOpenActions } from './actions/fileOpenAction';
@@ -20,14 +20,21 @@ import { selectionExecuteActionActions } from './actions/selectionExecuteActionA
 import { diagramActions } from './actions/diagramActions';
 import { geometryActions } from './actions/geometryActions';
 import { toggleRulerActions } from './actions/toggleRulerAction';
+import { toggleContainerBorderActions } from './actions/toggleContainerBorderAction';
 import { commentActions } from './actions/commentActions';
 import { commandPaletteActions } from './actions/commandPaletteAction';
 import { modelCenterActions } from './actions/modelCenterAction';
 import { selectionAddToModificationLayerActions } from './actions/selectionAddToModificationLayerAction';
+import { layoutTreeActions } from './actions/layoutTreeAction';
+import { layoutForceDirectedActions } from './actions/layoutForceDirectedAction';
+import { layoutLayeredActions } from './actions/layoutLayeredAction';
+import { layoutOrthogonalActions } from './actions/layoutOrthogonalAction';
+import { layoutSeriesParallelActions } from './actions/layoutSeriesParallelAction';
+import { autoAlignActions } from './actions/autoAlignAction';
 
 export const defaultAppActions: ActionMapFactory<Application> = application => ({
   ...toolActions(application),
-  ...defaultCanvasActions(application),
+  ...canvasAppActions(application),
   ...toggleHelpActions(application),
   ...toggleDarkModeActions(application),
   ...previewActions(application),
@@ -46,29 +53,40 @@ export const defaultAppActions: ActionMapFactory<Application> = application => (
   ...diagramActions(application),
   ...geometryActions(application),
   ...toggleRulerActions(application),
+  ...toggleContainerBorderActions(application),
   ...commentActions(application),
   ...commandPaletteActions(application),
   ...modelCenterActions(application),
-  ...selectionAddToModificationLayerActions(application)
+  ...selectionAddToModificationLayerActions(application),
+  ...layoutTreeActions(application),
+  ...layoutForceDirectedActions(application),
+  ...layoutLayeredActions(application),
+  ...layoutOrthogonalActions(application),
+  ...layoutSeriesParallelActions(application),
+  ...autoAlignActions(application)
 });
 
 export const defaultMacAppKeymap: KeyMap = {
   ...defaultMacKeymap,
 
   'M-Digit1': 'TOOL_MOVE',
-  'M-Digit4': 'TOOL_TEXT',
+  'M-Digit2': 'TOOL_RECT',
   'M-Digit3': 'TOOL_EDGE',
+  'M-Digit4': 'TOOL_TEXT',
+  'M-Digit5': 'TOOL_FREEHAND',
   'M-Digit6': 'TOOL_PEN',
   'M-Digit7': 'TOOL_NODE',
 
-  'A-Digit1': 'SIDEBAR_SHAPES',
-  'A-Digit2': 'SIDEBAR_LAYERS',
-  'A-Digit3': 'SIDEBAR_SELECT',
-  'A-Digit4': 'SIDEBAR_DOCUMENT',
-  'A-Digit5': 'SIDEBAR_HISTORY',
-  'A-Digit6': 'SIDEBAR_STYLE',
-  'A-Digit7': 'SIDEBAR_INFO',
-  'A-Digit8': 'SIDEBAR_DATA',
+  'A-Digit1': 'SIDEBAR_OBJECTS',
+  'A-Digit2': 'SIDEBAR_STRUCTURE',
+  'A-Digit3': 'SIDEBAR_HISTORY',
+  'A-Digit4': 'SIDEBAR_SEARCH',
+  'A-Digit5': 'SIDEBAR_DIAGRAM_CODE',
+  'A-Digit6': 'SIDEBAR_AI',
+  'A-Digit7': 'SIDEBAR_STYLE',
+  'A-Digit8': 'SIDEBAR_INFO',
+  'A-Digit9': 'SIDEBAR_DATA',
+  'A-Digit0': 'SIDEBAR_COMMENT',
 
   'M-KeyS': 'FILE_SAVE',
   'M-S-KeyS': 'FILE_SAVE_AS',
@@ -81,5 +99,13 @@ export const defaultMacAppKeymap: KeyMap = {
   'M-Digit0': 'ZOOM_FIT',
 
   'M-Slash': 'TOGGLE_HELP',
-  'M-S-KeyR': 'TOGGLE_RULER'
+  'M-S-KeyR': 'TOGGLE_RULER',
+
+  // Selection Operations
+  'A-ArrowUp': 'SELECTION_SELECT_GROW',
+  'A-ArrowDown': 'SELECTION_SELECT_SHRINK',
+
+  // Preview and Center
+  'M-S-KeyP': 'PREVIEW',
+  'M-S-KeyM': 'MODEL_CENTER'
 };

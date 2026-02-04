@@ -1,5 +1,9 @@
 import { Direction } from '@diagram-craft/geometry/direction';
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
@@ -7,17 +11,58 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Vector } from '@diagram-craft/geometry/vector';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const createNavigateNodeActions = (context: ActionContext) => {
   return {
-    NAVIGATE_NODE_E: new NavigateNodeAction(context, 'e'),
-    NAVIGATE_NODE_W: new NavigateNodeAction(context, 'w'),
-    NAVIGATE_NODE_N: new NavigateNodeAction(context, 'n'),
-    NAVIGATE_NODE_S: new NavigateNodeAction(context, 's'),
-    NAVIGATE_NODE_EXTEND_E: new NavigateNodeAction(context, 'e', true),
-    NAVIGATE_NODE_EXTEND_W: new NavigateNodeAction(context, 'w', true),
-    NAVIGATE_NODE_EXTEND_N: new NavigateNodeAction(context, 'n', true),
-    NAVIGATE_NODE_EXTEND_S: new NavigateNodeAction(context, 's', true)
+    NAVIGATE_NODE_E: new NavigateNodeAction(
+      context,
+      'e',
+      false,
+      $tStr('action.NAVIGATE_NODE_E.name', 'Navigate East')
+    ),
+    NAVIGATE_NODE_W: new NavigateNodeAction(
+      context,
+      'w',
+      false,
+      $tStr('action.NAVIGATE_NODE_W.name', 'Navigate West')
+    ),
+    NAVIGATE_NODE_N: new NavigateNodeAction(
+      context,
+      'n',
+      false,
+      $tStr('action.NAVIGATE_NODE_N.name', 'Navigate North')
+    ),
+    NAVIGATE_NODE_S: new NavigateNodeAction(
+      context,
+      's',
+      false,
+      $tStr('action.NAVIGATE_NODE_S.name', 'Navigate South')
+    ),
+    NAVIGATE_NODE_EXTEND_E: new NavigateNodeAction(
+      context,
+      'e',
+      true,
+      $tStr('action.NAVIGATE_NODE_EXTEND_E.name', 'Navigate East (Extend Selection)')
+    ),
+    NAVIGATE_NODE_EXTEND_W: new NavigateNodeAction(
+      context,
+      'w',
+      true,
+      $tStr('action.NAVIGATE_NODE_EXTEND_W.name', 'Navigate West (Extend Selection)')
+    ),
+    NAVIGATE_NODE_EXTEND_N: new NavigateNodeAction(
+      context,
+      'n',
+      true,
+      $tStr('action.NAVIGATE_NODE_EXTEND_N.name', 'Navigate North (Extend Selection)')
+    ),
+    NAVIGATE_NODE_EXTEND_S: new NavigateNodeAction(
+      context,
+      's',
+      true,
+      $tStr('action.NAVIGATE_NODE_EXTEND_S.name', 'Navigate South (Extend Selection)')
+    )
   };
 };
 
@@ -31,7 +76,8 @@ export class NavigateNodeAction extends AbstractSelectionAction {
   constructor(
     context: ActionContext,
     protected readonly direction: Direction,
-    protected readonly extendSelection: boolean = false
+    protected readonly extendSelection: boolean,
+    public readonly name: TranslatedString
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node, ['regular']);
   }

@@ -9,10 +9,11 @@ import {
   AbstractDiagramElement,
   DiagramElement,
   type DiagramElementCRDT,
+  InvalidationScope,
   isEdge,
   isNode
 } from './diagramElement';
-import { DiagramEdgeSnapshot, getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -20,6 +21,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
+import { getCollapsedAncestor } from './collapsible';
 import { DefaultStyles, edgeDefaults } from './diagramDefaults';
 import { buildEdgePath } from './edgePathBuilder';
 import {
@@ -57,6 +59,12 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { CustomEdgeProps, EdgeProps, ElementMetadata } from './diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
+import {
+  DiagramEdgeSnapshot,
+  DiagramElementChildUOWAdapter,
+  DiagramElementUOWAdapter
+} from '@diagram-craft/model/diagramElement.uow';
 
 const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
   endpoint instanceof ConnectedEndpoint;
@@ -182,12 +190,11 @@ export interface DiagramEdge extends DiagramElement {
   flip(uow: UnitOfWork): void;
 
   _recalculateIntersections(uow: UnitOfWork, propagate: boolean): void;
+
+  _transformWaypoints(transforms: ReadonlyArray<Transform>): void;
 }
 
-export class SimpleDiagramEdge
-  extends AbstractDiagramElement
-  implements DiagramEdge, UOWTrackable<DiagramEdgeSnapshot>
-{
+export class SimpleDiagramEdge extends AbstractDiagramElement implements DiagramEdge, UOWTrackable {
   // Transient properties
   #intersections: Intersection[] = [];
 
@@ -278,16 +285,22 @@ export class SimpleDiagramEdge
     metadata.style ??= DefaultStyles.edge.default;
     edge._metadata.set(metadata);
 
-    if (start instanceof ConnectedEndpoint)
-      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, edge);
-    if (end instanceof ConnectedEndpoint)
-      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge);
+    UnitOfWork.executeSilently(layer.diagram, uow => {
+      if (start instanceof ConnectedEndpoint)
+        start.node._addEdge(
+          start instanceof AnchorEndpoint ? start.anchorId : undefined,
+          edge,
+          uow
+        );
+      if (end instanceof ConnectedEndpoint)
+        end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, edge, uow);
+    });
 
     return edge;
   }
 
   getDefinition(): EdgeDefinition {
-    return this.diagram.document.edgeDefinitions.get(this.renderProps.shape);
+    return this.diagram.document.registry.edges.get(this.renderProps.shape);
   }
 
   /* Props *************************************************************************************************** */
@@ -397,28 +410,26 @@ export class SimpleDiagramEdge
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      const oldType = this.#props.get().type;
+      this.#props.update(callback);
 
-    const oldType = this.#props.get().type;
-    this.#props.update(callback);
-
-    if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
-      for (let i = 0; i < this.waypoints.length; i++) {
-        const wp = this.waypoints[i]!;
-        if (!wp.controlPoints) {
-          this.replaceWaypoint(
-            i,
-            {
-              ...wp,
-              controlPoints: this.inferControlPoints(i)
-            },
-            uow
-          );
+      if (this.#props.get().type === 'bezier' && oldType !== 'bezier') {
+        for (let i = 0; i < this.waypoints.length; i++) {
+          const wp = this.waypoints[i]!;
+          if (!wp.controlPoints) {
+            this.replaceWaypoint(
+              i,
+              {
+                ...wp,
+                controlPoints: this.inferControlPoints(i)
+              },
+              uow
+            );
+          }
         }
       }
-    }
-
-    uow.updateElement(this);
+    });
 
     this.clearCache();
   }
@@ -500,55 +511,42 @@ export class SimpleDiagramEdge
   }
 
   setBounds(b: Box, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      const delta = Point.subtract(b, this.bounds);
 
-    const delta = Point.subtract(b, this.bounds);
-
-    if (!isConnected(this.start)) {
-      this.#start.set(
-        new FreeEndpoint({
-          x: this.start.position.x + delta.x,
-          y: this.start.position.y + delta.y
-        })
-      );
-      uow.updateElement(this);
-    }
-    if (!isConnected(this.end)) {
-      this.#end.set(
-        new FreeEndpoint({
-          x: this.end.position.x + delta.x,
-          y: this.end.position.y + delta.y
-        })
-      );
-      uow.updateElement(this);
-    }
+      if (delta.x !== 0 || delta.y !== 0) {
+        if (!isConnected(this.start)) {
+          this.#start.set(new FreeEndpoint(Point.add(this.start.position, delta)));
+        }
+        if (!isConnected(this.end)) {
+          this.#end.set(new FreeEndpoint(Point.add(this.end.position, delta)));
+        }
+      }
+    });
   }
 
   /* Endpoints ********************************************************************************************** */
 
   setStart(start: Endpoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      if (isConnected(this.start)) {
+        (this.start as ConnectedEndpoint).node._removeEdge(
+          this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
+          this,
+          uow
+        );
+      }
 
-    if (isConnected(this.start)) {
-      uow.snapshot(this.start.node);
+      if (isConnected(start)) {
+        start.node._addEdge(
+          start instanceof AnchorEndpoint ? start.anchorId : undefined,
+          this,
+          uow
+        );
+      }
 
-      this.start.node._removeEdge(
-        this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
-        this
-      );
-      uow.updateElement(this.start.node);
-    }
-
-    if (isConnected(start)) {
-      uow.snapshot(start.node);
-
-      start.node._addEdge(start instanceof AnchorEndpoint ? start.anchorId : undefined, this);
-      uow.updateElement(start.node);
-    }
-
-    this.#start.set(start);
-
-    uow.updateElement(this);
+      this.#start.set(start);
+    });
   }
 
   get start() {
@@ -556,28 +554,21 @@ export class SimpleDiagramEdge
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      if (isConnected(this.end)) {
+        (this.end as ConnectedEndpoint).node._removeEdge(
+          this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
+          this,
+          uow
+        );
+      }
 
-    if (isConnected(this.end)) {
-      uow.snapshot(this.end.node);
+      if (isConnected(end)) {
+        end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this, uow);
+      }
 
-      this.end.node._removeEdge(
-        this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
-        this
-      );
-      uow.updateElement(this.end.node);
-    }
-
-    if (isConnected(end)) {
-      uow.snapshot(end.node);
-
-      end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this);
-      uow.updateElement(end.node);
-    }
-
-    this.#end.set(end);
-
-    uow.updateElement(this);
+      this.#end.set(end);
+    });
   }
 
   get end() {
@@ -599,11 +590,11 @@ export class SimpleDiagramEdge
     this.syncLabelNodesBasedOnChildren(uow);
   }
 
-  addChild(child: DiagramElement, uow: UnitOfWork) {
+  addChild(child: DiagramElement, uow: UnitOfWork, position?: number) {
     // Note: we don't support edges to be children of edges
     assert.true(isNode(child));
 
-    super.addChild(child, uow);
+    super.addChild(child, uow, position);
     this.syncLabelNodesBasedOnChildren(uow);
   }
 
@@ -616,76 +607,66 @@ export class SimpleDiagramEdge
   }
 
   private syncLabelNodesBasedOnChildren(uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      // Find all children with corresponding label node
+      const existingLabelNodes = this.#labelNodes.values.filter(ln =>
+        this.children.find(c => c.id === ln.node().id)
+      );
 
-    // Find all children with corresponding label node
-    const existingLabelNodes = this.#labelNodes.values.filter(ln =>
-      this.children.find(c => c.id === ln.node().id)
-    );
+      const newLabelNodes: ResolvedLabelNode[] = [];
+      for (const c of this.children) {
+        assert.node(c);
 
-    const newLabelNodes: ResolvedLabelNode[] = [];
-    for (const c of this.children) {
-      assert.node(c);
-
-      if (!existingLabelNodes.find(ln => ln.node() === c)) {
-        newLabelNodes.push({
-          id: c.id,
-          node: () => c,
-          type: 'perpendicular',
-          offset: {
-            x: 0,
-            y: 0
-          },
-          timeOffset: 0
-        });
+        if (!existingLabelNodes.find(ln => ln.node() === c)) {
+          newLabelNodes.push({
+            id: c.id,
+            node: () => c,
+            type: 'perpendicular',
+            offset: {
+              x: 0,
+              y: 0
+            },
+            timeOffset: 0
+          });
+        }
       }
-    }
 
-    this.#labelNodes.set([...existingLabelNodes, ...newLabelNodes].map(n => [n.id, n]));
-    uow.updateElement(this);
+      this.#labelNodes.set([...existingLabelNodes, ...newLabelNodes].map(n => [n.id, n]));
+    });
 
     this.labelNodeConsistencyInvariant();
   }
 
   private syncChildrenBasedOnLabelNodes(uow: UnitOfWork) {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      this.#labelNodes.values.forEach(ln => {
+        const node = ln.node();
+        const layer = node.layer;
+        if (layer.type === 'regular') {
+          assertRegularLayer(layer);
+          const inLayerElements = layer.elements.find(e => e === node);
+          if (inLayerElements) {
+            layer.removeElement(node, uow);
+          }
 
-    this.#labelNodes.values.forEach(ln => {
-      const node = ln.node();
-      const layer = node.layer;
-      if (layer.type === 'regular') {
-        assertRegularLayer(layer);
-        const inLayerElements = layer.elements.find(e => e === node);
-        if (inLayerElements) {
-          layer.removeElement(node, uow);
+          if (!this.children.find(c => c.id === node.id)) {
+            super.addChild(node, uow);
+          }
+
+          assert.true(node.parent === this);
+
+          layer.diagram.register(node);
+        } else {
+          assert.fail('Label nodes should be part of regular layer');
         }
+      });
 
-        if (!this.children.find(c => c.id === node.id)) {
-          super.addChild(node, uow);
+      for (const c of this.children) {
+        if (!this.#labelNodes.values.find(ln => ln.node() === c)) {
+          this.removeChild(c, uow);
         }
-
-        assert.true(node.parent === this);
-
-        const inDiagram =
-          layer.diagram.nodeLookup.has(node.id) || layer.diagram.edgeLookup.has(node.id);
-        if (!inDiagram) {
-          layer.addElement(node, uow);
-        }
-      } else {
-        assert.fail('Label nodes should be part of regular layer');
       }
-
-      uow.snapshot(node);
-      uow.updateElement(node);
     });
-
-    for (const c of this.children) {
-      if (!this.#labelNodes.values.find(ln => ln.node() === c)) {
-        this.removeChild(c, uow);
-      }
-    }
-
-    uow.updateElement(this);
 
     this.labelNodeConsistencyInvariant();
   }
@@ -696,15 +677,11 @@ export class SimpleDiagramEdge
   }
 
   addLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
-    uow.snapshot(this);
-
     this.setLabelNodes([...this.labelNodes, labelNode], uow);
   }
 
   removeLabelNode(labelNode: ResolvedLabelNode, uow: UnitOfWork) {
     assert.true(!!this.labelNodes.find(n => labelNode.id === n.id));
-
-    uow.snapshot(this);
 
     this.setLabelNodes(
       this.labelNodes.filter(ln => ln.id !== labelNode.id),
@@ -753,76 +730,72 @@ export class SimpleDiagramEdge
   }
 
   addWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
+    return uow.executeUpdate(this, () => {
+      const path = this.path();
+      const projection = path.projectPoint(waypoint.point);
 
-    const path = this.path();
-    const projection = path.projectPoint(waypoint.point);
+      if (this.#props.get().type === 'bezier' && !waypoint.controlPoints) {
+        const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
+        const [p1, p2] = path.split(offset);
 
-    if (this.#props.get().type === 'bezier' && !waypoint.controlPoints) {
-      const offset = PointOnPath.toTimeOffset({ point: waypoint.point }, path);
-      const [p1, p2] = path.split(offset);
-
-      const segments: CubicSegment[] = [];
-      for (const s of [...p1.segments, ...p2.segments]) {
-        if (s instanceof CubicSegment) {
-          segments.push(s);
-        } else if (s instanceof LineSegment) {
-          segments.push(CubicSegment.fromLine(s));
-        }
-      }
-      const newWaypoints: Waypoint[] = [];
-
-      for (let i = 0; i < segments.length - 1; i++) {
-        const segment = segments[i]!;
-        newWaypoints.push({
-          point: segment.end,
-          controlPoints: {
-            cp1: Point.subtract(segment.p2, segment.end),
-            cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
+        const segments: CubicSegment[] = [];
+        for (const s of [...p1.segments, ...p2.segments]) {
+          if (s instanceof CubicSegment) {
+            segments.push(s);
+          } else if (s instanceof LineSegment) {
+            segments.push(CubicSegment.fromLine(s));
           }
+        }
+        const newWaypoints: Waypoint[] = [];
+
+        for (let i = 0; i < segments.length - 1; i++) {
+          const segment = segments[i]!;
+          newWaypoints.push({
+            point: segment.end,
+            controlPoints: {
+              cp1: Point.subtract(segment.p2, segment.end),
+              cp2: Point.subtract(segments[i + 1]!.p1, segment.end)
+            }
+          });
+        }
+
+        this.#waypoints.set(newWaypoints);
+
+        return offset.segment;
+      } else {
+        const wpDistances = this.waypoints.map(p => {
+          return {
+            pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
+            ...p
+          };
         });
+
+        const newWaypoint = { ...waypoint, pathD: projection.pathD };
+        this.#waypoints.set(
+          [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
+        );
+
+        return this.waypoints.indexOf(newWaypoint);
       }
-
-      this.#waypoints.set(newWaypoints);
-
-      uow.updateElement(this);
-
-      return offset.segment;
-    } else {
-      const wpDistances = this.waypoints.map(p => {
-        return {
-          pathD: PointOnPath.toTimeOffset({ point: p.point }, path).pathD,
-          ...p
-        };
-      });
-
-      const newWaypoint = { ...waypoint, pathD: projection.pathD };
-      this.#waypoints.set(
-        [...wpDistances, newWaypoint].sort((a, b) => a.pathD - b.pathD) as Array<Waypoint>
-      );
-
-      uow.updateElement(this);
-
-      return this.waypoints.indexOf(newWaypoint);
-    }
+    });
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.filter(w => w !== waypoint));
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#waypoints.set(this.waypoints.filter(w => w !== waypoint));
+    });
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#waypoints.set(this.waypoints.map(w => (w === waypoint ? { ...w, point } : w)));
+    });
   }
 
   replaceWaypoint(idx: number, waypoint: Waypoint, uow: UnitOfWork) {
-    uow.snapshot(this);
-    this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#waypoints.set(this.waypoints.map((w, i) => (i === idx ? waypoint : w)));
+    });
   }
 
   /* Snapshot ************************************************************************************************ */
@@ -842,7 +815,8 @@ export class SimpleDiagramEdge
         type: ln.type,
         offset: ln.offset,
         timeOffset: ln.timeOffset
-      }))
+      })),
+      tags: [...this.tags]
     };
   }
 
@@ -865,41 +839,41 @@ export class SimpleDiagramEdge
 
     this.syncChildrenBasedOnLabelNodes(uow);
 
+    this.setTags(snapshot.tags ?? [], uow);
+
     uow.updateElement(this);
     this.clearCache();
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
-    const uow = new UnitOfWork(this.diagram);
+    return UnitOfWork.executeSilently(this.diagram, uow => {
+      const edge = SimpleDiagramEdge._create(
+        id ?? newid(),
+        this.start,
+        this.end,
+        deepClone(this.#props) as EdgeProps,
+        deepClone(this.metadata),
+        deepClone(this.waypoints) as Array<Waypoint>,
+        this.layer
+      );
 
-    const edge = SimpleDiagramEdge._create(
-      id ?? newid(),
-      this.start,
-      this.end,
-      deepClone(this.#props) as EdgeProps,
-      deepClone(this.metadata),
-      deepClone(this.waypoints) as Array<Waypoint>,
-      this.layer
-    );
+      ctx?.targetElementsInGroup.set(this.id, edge);
 
-    ctx?.targetElementsInGroup.set(this.id, edge);
+      // Clone any label nodes
+      const newLabelNodes: ResolvedLabelNode[] = [];
+      for (let i = 0; i < edge.labelNodes.length; i++) {
+        const l = edge.labelNodes[i]!;
 
-    // Clone any label nodes
-    const newLabelNodes: ResolvedLabelNode[] = [];
-    for (let i = 0; i < edge.labelNodes.length; i++) {
-      const l = edge.labelNodes[i]!;
+        const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
+        newLabelNodes.push({
+          ...l,
+          node: () => newNode
+        });
+      }
+      edge.setLabelNodes(newLabelNodes, uow);
 
-      const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
-      newLabelNodes.push({
-        ...l,
-        node: () => newNode
-      });
-    }
-    edge.setLabelNodes(newLabelNodes, uow);
-
-    uow.abort();
-
-    return edge;
+      return edge;
+    });
   }
 
   /* ***** ***** ******************************************************************************************** */
@@ -908,6 +882,7 @@ export class SimpleDiagramEdge
     return this.layer.isLocked();
   }
 
+  // TODO: Should this really be in DiagramEdge??
   path(): Path {
     // TODO: We should be able to cache this, and then invalidate it when the edge changes (see invalidate())
 
@@ -936,6 +911,21 @@ export class SimpleDiagramEdge
    */
   private _getNormalDirection(endpoint: Endpoint) {
     if (isConnected(endpoint)) {
+      // Check if the node is inside a collapsed container
+      const collapsedAncestor = getCollapsedAncestor(endpoint.node);
+
+      if (collapsedAncestor) {
+        // When collapsed, calculate normal based on the collapsed container's boundary
+        const boundingPath = collapsedAncestor.getDefinition().getBoundingPath(collapsedAncestor);
+
+        const paths = boundingPath.all();
+
+        const t = boundingPath.projectPoint(endpoint.position);
+        const tangent = paths[t.pathIdx]!.tangentAt(t.offset);
+
+        return Direction.fromVector(Vector.tangentToNormal(tangent));
+      }
+
       if (endpoint instanceof AnchorEndpoint && endpoint.getAnchor().normal !== undefined) {
         return Direction.fromAngle(endpoint.getAnchor().normal! + endpoint.node.bounds.r, true);
       }
@@ -962,10 +952,13 @@ export class SimpleDiagramEdge
   }
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork): void {
-    uow.snapshot(this);
+    uow.executeUpdate(this, () => {
+      this.setBounds(Transform.box(this.bounds, ...transforms), uow);
+      this._transformWaypoints(transforms);
+    });
+  }
 
-    this.setBounds(Transform.box(this.bounds, ...transforms), uow);
-
+  _transformWaypoints(transforms: ReadonlyArray<Transform>) {
     this.#waypoints.set(
       this.waypoints.map(w => {
         const absoluteControlPoints = Object.values(w.controlPoints ?? {}).map(cp =>
@@ -990,8 +983,6 @@ export class SimpleDiagramEdge
         };
       })
     );
-
-    uow.updateElement(this);
   }
 
   get intersections() {
@@ -999,8 +990,6 @@ export class SimpleDiagramEdge
   }
 
   flip(uow: UnitOfWork) {
-    uow.snapshot(this);
-
     const start = this.#start.getNonNull();
     const end = this.#end.getNonNull();
 
@@ -1020,38 +1009,42 @@ export class SimpleDiagramEdge
    * Note, that whilst an edge can be part of a group, a change to the edge will not
    * impact the state and/or bounds of the parent group/container
    */
-  invalidate(uow: UnitOfWork) {
-    uow.snapshot(this);
-
+  invalidate(scope: InvalidationScope, uow: UnitOfWork) {
     // Ensure we don't get into an infinite loop
-    if (uow.hasBeenInvalidated(this)) return;
-    uow.beginInvalidation(this);
+    uow.metadata.invalidated ??= new Set();
+    if (uow.metadata.invalidated.has(this)) return;
+    uow.metadata.invalidated.add(this);
 
     this.adjustLabelNodePosition(uow);
-    this._recalculateIntersections(uow, true);
+    if (scope === 'full') {
+      this._recalculateIntersections(uow, true);
+    }
   }
 
-  detach(uow: UnitOfWork) {
+  _onDetach(uow: UnitOfWork) {
     // Update any parent
     if (this.parent) {
-      this.parent.removeChild(this, uow);
+      if (this.parent.children.includes(this)) this.parent.removeChild(this, uow);
+      this._setParent(undefined);
     }
 
     // All label nodes must be detached
     for (const l of this.labelNodes) {
-      l.node().detach(uow);
+      l.node()._onDetach(uow);
     }
 
     if (isConnected(this.start)) {
       this.start.node._removeEdge(
         this.start instanceof AnchorEndpoint ? this.start.anchorId : undefined,
-        this
+        this,
+        uow
       );
     }
     if (isConnected(this.end)) {
       this.end.node._removeEdge(
         this.end instanceof AnchorEndpoint ? this.end.anchorId : undefined,
-        this
+        this,
+        uow
       );
     }
 
@@ -1072,8 +1065,6 @@ export class SimpleDiagramEdge
     const intersections: Intersection[] = [];
     for (const edge of this.diagram.visibleElements()) {
       if (!isEdge(edge)) continue;
-
-      uow.snapshot(edge);
 
       if (edge === this) {
         currentEdgeHasBeenSeen = true;
@@ -1180,3 +1171,6 @@ export class SimpleDiagramEdge
     return [];
   }
 }
+
+UOWRegistry.adapters['element'] = new DiagramElementUOWAdapter();
+UOWRegistry.childAdapters['element-element'] = new DiagramElementChildUOWAdapter();

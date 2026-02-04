@@ -6,11 +6,11 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -27,7 +27,7 @@ export class ResizeDrag extends Drag {
     private offset: Point
   ) {
     super();
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
     this.originalBounds = this.diagram.selection.bounds;
   }
 
@@ -161,8 +161,9 @@ export class ResizeDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
-      this.uow.stopTracking();
-      commitWithUndo(this.uow, 'Resize');
+      growBoundsForSelection(this.diagram, this.uow);
+
+      this.uow.commitWithUndo('Resize');
     } else {
       this.uow.abort();
     }
@@ -204,5 +205,9 @@ export class ResizeDrag extends Drag {
     newBounds.h = globalTarget.h;
     newBounds.x = globalTarget.x;
     newBounds.y = globalTarget.y;
+  }
+
+  cancel() {
+    this.uow.abort();
   }
 }

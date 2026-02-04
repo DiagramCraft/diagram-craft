@@ -64,43 +64,6 @@ describe.each(Backends.all())('RecentStencils [%s]', (_name, backend) => {
 });
 
 describe.each(Backends.all())('Query [%s]', (_name, backend) => {
-  it('should initialize history with default values', () => {
-    // Setup
-    const { doc1, doc2 } = standardTestModel(backend);
-
-    // Verify
-    expect(doc1.props.query.history).toEqual([
-      {
-        label: '.elements[]',
-        scope: 'active-layer',
-        type: 'djql',
-        value: '.elements[]'
-      },
-      {
-        label: '.elements[] | select(.edges | length > 0)',
-        scope: 'active-layer',
-        type: 'djql',
-        value: '.elements[] | select(.edges | length > 0)'
-      }
-    ]);
-    if (doc2) {
-      expect(doc2.props.query.history).toEqual([
-        {
-          label: '.elements[]',
-          scope: 'active-layer',
-          type: 'djql',
-          value: '.elements[]'
-        },
-        {
-          label: '.elements[] | select(.edges | length > 0)',
-          scope: 'active-layer',
-          type: 'djql',
-          value: '.elements[] | select(.edges | length > 0)'
-        }
-      ]);
-    }
-  });
-
   it('should add a new entry to history', () => {
     // Setup
     const { doc1, doc2 } = standardTestModel(backend);
@@ -118,26 +81,6 @@ describe.each(Backends.all())('Query [%s]', (_name, backend) => {
     expect(doc1.props.query.history[0]).toEqual(newEntry);
     if (doc2) {
       expect(doc2.props.query.history[0]).toEqual(newEntry);
-    }
-  });
-
-  it('should remove duplicate entries in history', () => {
-    // Setup
-    const { doc1, doc2 } = standardTestModel(backend);
-
-    // Act
-    const newEntry: QueryEntry = {
-      scope: 'active-layer',
-      type: 'djql',
-      label: '.elements[]',
-      value: '.elements[]'
-    };
-    doc1.props.query.addHistory(newEntry.type, newEntry.label, newEntry.scope, newEntry.value);
-
-    // Verify
-    expect(doc1.props.query.history.length).toBe(2);
-    if (doc2) {
-      expect(doc2.props.query.history.length).toBe(2);
     }
   });
 

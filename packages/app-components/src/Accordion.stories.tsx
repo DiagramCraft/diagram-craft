@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Accordion } from './Accordion';
-import { useArgs } from '@storybook/preview-api';
+import { useArgs } from 'storybook/preview-api';
 
 const meta = {
   title: 'Components/Accordion',
@@ -20,10 +20,9 @@ type Story = StoryObj<typeof meta>;
 const render = function Component(args: Story['args']) {
   const [, setArgs] = useArgs();
 
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
   const onValueChange = (value: any) => {
     args.onValueChange?.(value);
-    setArgs({ value: value });
+    setArgs((a: any) => ({ ...a, value: value }));
   };
 
   return (
@@ -60,7 +59,7 @@ export const Primary: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: CHILDREN
   }
 };
@@ -69,7 +68,7 @@ export const Disabled: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: CHILDREN,
     disabled: true
   }
@@ -79,7 +78,7 @@ export const ItemFocus: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: [
       <Accordion.Item key={1} value={'lorem'}>
         <Accordion.ItemHeader data-focus={true}>Lorem</Accordion.ItemHeader>
@@ -94,7 +93,7 @@ export const ItemHover: Story = {
   render,
   args: {
     type: 'single',
-    value: 'lorem',
+    defaultValue: 'lorem',
     children: [
       <Accordion.Item key={1} value={'lorem'}>
         <Accordion.ItemHeader data-hover={true}>Lorem</Accordion.ItemHeader>
@@ -102,5 +101,14 @@ export const ItemHover: Story = {
       </Accordion.Item>,
       ...CHILDREN.slice(1)
     ]
+  }
+};
+
+export const Multiple: Story = {
+  render,
+  args: {
+    type: 'multiple',
+    defaultValue: ['lorem', 'dolor'],
+    children: CHILDREN
   }
 };

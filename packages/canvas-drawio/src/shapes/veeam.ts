@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -21,7 +21,7 @@ const registerStencil = (
 
 export const registerVeeamShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/veeam/veeam2.xml',
+    '$STENCIL_ROOT/stencils/veeam/veeam2.xml',
     'Veeam',
     'black',
     'white'

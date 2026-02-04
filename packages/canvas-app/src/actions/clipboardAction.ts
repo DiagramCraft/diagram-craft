@@ -1,4 +1,8 @@
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import {
   AbstractAction,
   ActionContext,
@@ -16,6 +20,7 @@ import {
 } from '../clipboardPasteHandlers';
 import { ELEMENTS_CONTENT_TYPE } from '../clipboardConstants';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -39,6 +44,7 @@ const PASTE_HANDLERS = {
 };
 
 export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
+  name = $tStr('action.CLIPBOARD_PASTE.name', 'Paste');
   layer: RegularLayer | undefined;
 
   getCriteria(context: ActionContext) {
@@ -73,11 +79,17 @@ export class ClipboardPasteAction extends AbstractAction<BaseActionArgs> {
 }
 
 export class ClipboardCopyAction extends AbstractSelectionAction {
+  name: TranslatedString;
+
   constructor(
     private readonly mode: 'copy' | 'cut',
     context: ActionContext
   ) {
     super(context, MultipleType.Both, ElementType.Both, ['regular']);
+    this.name =
+      mode === 'copy'
+        ? $tStr('action.CLIPBOARD_COPY.name', 'Copy')
+        : $tStr('action.CLIPBOARD_CUT.name', 'Cut');
   }
 
   execute(): void {

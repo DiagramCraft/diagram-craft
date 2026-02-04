@@ -1,8 +1,8 @@
 import { DiagramNode, NodeTexts } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import type { DiagramElement } from './diagramElement';
+import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { Point } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -16,54 +16,310 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
-import type { ElementMetadata, NodeProps } from './diagramProps';
+import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 
-export type NodeCapability =
-  | 'children'
-  | 'fill'
-  | 'rounding'
-  | 'select'
-  | 'connect-to-boundary'
-  | 'anchors-configurable';
+export type NodeFlag = string & { __brand: 'nodeFlag' };
 
-// TODO: Make make this into an interface in the global namespace we can extend
-export type CustomPropertyDefinition = {
+export const makeNodeFlag = (flag: string): NodeFlag => flag as NodeFlag;
+
+/**
+ * Node flags that control various node behaviors and features.
+ *
+ * These flags are used throughout the canvas system to conditionally enable/disable
+ * features, render UI panels, and control node behavior.
+ */
+export const NodeFlags = {
+  /**
+   * Whether a node can have fill properties (colors, gradients, patterns).
+   *
+   * When disabled, fill is set to 'none' in rendering, sketch fill effects are skipped,
+   * and the fill panel is hidden in the UI.
+   * Default: true
+   *
+   * @example
+   * Disabled by: CurlyBracket, Table, TableRow
+   */
+  StyleFill: makeNodeFlag('style.fill'),
+
+  /**
+   * Whether corner rounding effects can be applied to the node's path.
+   *
+   * When disabled, the rounding effects panel is hidden.
+   * Default: true
+   */
+  StyleRounding: makeNodeFlag('style.rounding'),
+
+  /**
+   * Whether edges can connect to any point on the node's boundary (not just predefined anchors).
+   *
+   * When disabled, only edge anchors are used for connections. The implementation uses
+   * a 5px preference threshold for anchor points.
+   * Default: true
+   *
+   * @example
+   * Disabled by: UmlLifeline
+   * @see packages/model/src/anchor.ts:241-258
+   */
+  AnchorsBoundary: makeNodeFlag('anchors.boundary'),
+
+  /**
+   * Whether the anchor strategy can be changed.
+   *
+   * Allows configuration of anchor strategies: shape-defaults, per-edge, per-path,
+   * north-south, east-west, directions, custom, none.
+   * When disabled, the anchors configuration panel is hidden.
+   * Default: true
+   *
+   * @example
+   * Disabled by: CurlyBracket, UmlLifeline, UmlDestroy
+   */
+  AnchorsConfigurable: makeNodeFlag('anchors.configurable'),
+
+  /**
+   * Whether a node can contain child elements.
+   *
+   * When enabled, the node appears as expandable in the layer panel and supports nesting.
+   * Default: false
+   *
+   * @example
+   * Group, Table, TableRow, layout containers
+   */
+  ChildrenAllowed: makeNodeFlag('children.allowed'),
+
+  /**
+   * Whether a node can serve as a container in layout operations.
+   *
+   * Used to filter available shapes when changing selection to container types.
+   * Different from 'children' - affects layout system eligibility rather than parent-child relationships.
+   * Default: true
+   *
+   * @example
+   * Disabled by: Table, TableRow, FlexShapeNodeDefinition (when not a group)
+   */
+  ChildrenCanConvertToContainer: makeNodeFlag('children.can-convert-to-container'),
+
+  /**
+   * Whether a node supports the auto-layout system.
+   *
+   * Enables group layout, container padding, and layout tree traversal for nested containers.
+   * When enabled, the layout controls panel becomes available.
+   * Default: false
+   *
+   * @example
+   * Enabled by: LayoutCapableShapeNodeDefinition subclasses (except BPMNChoreographyActivity)
+   */
+  ChildrenCanHaveLayout: makeNodeFlag('children.can-have-layout'),
+
+  /**
+   * Whether a node can be toggled between expanded and collapsed states.
+   *
+   * When enabled, a collapse/expand toggle button is rendered and children can be hidden.
+   * Default: false
+   *
+   * @example
+   * Enabled by: LayoutCapableShapeNodeDefinition subclasses
+   * @see packages/canvas/src/shape/collapsible.ts:27, 130
+   */
+  ChildrenCollapsible: makeNodeFlag('children.collapsible'),
+
+  /**
+   * Whether clicking a child selects the parent instead (group selection behavior).
+   *
+   * When enabled:
+   * - First click on child selects parent
+   * - Second click "drills down" to select child
+   *
+   * Default: false
+   *
+   * @example
+   * Enabled by: Group, BPMNChoreographyActivity
+   * @see packages/canvas/src/tools/moveTool.ts:103-116
+   */
+  ChildrenSelectParent: makeNodeFlag('children.select-parent'),
+
+  /**
+   * Whether the parent exclusively manages child lifecycle (prevents independent deletion).
+   *
+   * When enabled, children cannot be deleted independently.
+   * Default: false
+   *
+   * @example
+   * Enabled by: TableRow (table cells managed by table structure)
+   * @see packages/canvas-app/src/actions/selectionDeleteAction.ts:45
+   */
+  ChildrenManagedByParent: makeNodeFlag('children.managed-by-parent'),
+
+  ChildrenTransformRotate: makeNodeFlag('children.transform-rotate'),
+  ChildrenTransformScaleX: makeNodeFlag('children.transform-scale-x'),
+  ChildrenTransformScaleY: makeNodeFlag('children.transform-scale-y'),
+  ChildrenTransformTranslate: makeNodeFlag('children.transform-translate')
+};
+
+// biome-ignore lint/suspicious/noExplicitAny: convenient
+export interface CustomPropertyType<T = any> {
   id: string;
+  type: string;
   label: string;
+
   isSet: boolean;
-} & (
-  | {
-      type: 'number';
-      value: number;
-      minValue?: number;
-      maxValue?: number;
-      step?: number;
-      unit?: string;
-      onChange: (value: number | undefined, uow: UnitOfWork) => void;
+  get: () => T;
+  set: (value: T | undefined, uow: UnitOfWork) => void;
+}
+
+export interface NumberCustomPropertyType extends CustomPropertyType<number> {
+  type: 'number';
+  minValue?: number;
+  maxValue?: number;
+  step?: number;
+  unit?: string;
+}
+
+export interface SelectCustomPropertyType extends CustomPropertyType<string> {
+  type: 'select';
+  options: ReadonlyArray<{ value: string; label: string }>;
+}
+
+export interface BooleanCustomPropertyType extends CustomPropertyType<boolean> {
+  type: 'boolean';
+}
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomPropertyTypes {
+      number: NumberCustomPropertyType;
+      select: SelectCustomPropertyType;
+      boolean: BooleanCustomPropertyType;
     }
-  | {
-      type: 'select';
-      value: string;
-      options: ReadonlyArray<{ value: string; label: string }>;
-      onChange: (value: string | undefined, uow: UnitOfWork) => void;
-    }
-  | {
-      type: 'boolean';
-      value: boolean;
-      onChange: (value: boolean | undefined, uow: UnitOfWork) => void;
-    }
-);
+  }
+}
+
+type CommonCustomPropertyOpts<T> = {
+  validate?: (value: T) => boolean;
+  format?: (value: T) => T;
+};
+
+const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
+  return {
+    number: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<NumberCustomPropertyType & CommonCustomPropertyOpts<number>>
+    ): NumberCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'number',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as number,
+        set: (value: number | undefined, uow: UnitOfWork) => {
+          if (value !== undefined && opts?.validate && !opts.validate(value)) return;
+          if (value !== undefined && opts?.format) value = opts.format(value);
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    boolean: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<BooleanCustomPropertyType>
+    ): BooleanCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'boolean',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as boolean,
+        set: (value: boolean | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    select: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      options: ReadonlyArray<{ value: string; label: string }>,
+      opts?: Partial<SelectCustomPropertyType>
+    ): SelectCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'select',
+        label,
+        options,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as string,
+        set: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
+      };
+    },
+
+    delimiter: (label: string) => ({ type: 'delimiter', label })
+  };
+};
+
+export const CustomProperty = {
+  node: makeCustomPropertyHelper<DiagramNode, NodeProps>(),
+  edge: makeCustomPropertyHelper<DiagramEdge, EdgeProps>()
+};
+
+export type CustomPropertyDefinitionEntry =
+  | DiagramCraft.CustomPropertyTypes[keyof DiagramCraft.CustomPropertyTypes]
+  | { type: 'delimiter'; label: string };
+
+export class CustomPropertyDefinition {
+  private readonly arr: Array<CustomPropertyDefinitionEntry>;
+
+  /**
+   * This indicates schemas that cannot be removed from the nodes
+   * and that will be displayed in a more prominent way.
+   */
+  dataSchemas: DataSchema[] = [];
+
+  constructor(
+    fn?: (
+      p: (typeof CustomProperty)['node']
+    ) => Array<CustomPropertyDefinitionEntry | CustomPropertyDefinition>
+  ) {
+    this.arr =
+      fn?.(CustomProperty.node).flatMap(e =>
+        e instanceof CustomPropertyDefinition ? e.entries : e
+      ) ?? [];
+  }
+
+  get entries() {
+    return this.arr;
+  }
+}
 
 export const asProperty = (
-  customProp: CustomPropertyDefinition,
+  customProp: CustomPropertyType,
   change: (cb: (uow: UnitOfWork) => void) => void
 ): Property<unknown> => {
+  if (!('get' in customProp) || !('set' in customProp)) throw new Error();
   return {
-    val: customProp.value,
+    val: customProp.get(),
     set: (v: unknown) => {
       change(uow => {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
-        customProp.onChange(v as any, uow);
+        customProp.set(v as any, uow);
       });
     },
     hasMultipleValues: false,
@@ -75,8 +331,9 @@ export interface NodeDefinition {
   type: string;
   name: string;
 
-  supports(capability: NodeCapability): boolean;
-  getCustomPropertyDefinitions(node: DiagramNode): ReadonlyArray<CustomPropertyDefinition>;
+  hasFlag(flag: NodeFlag): boolean;
+
+  getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 
   getBoundingPath(node: DiagramNode): PathList;
 
@@ -84,6 +341,7 @@ export interface NodeDefinition {
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
+
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
@@ -91,14 +349,18 @@ export interface NodeDefinition {
     previousBounds: Box,
     uow: UnitOfWork
   ): void;
-  onDrop(
+
+  onDrop?: (
     coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     operation: string
-  ): void;
+  ) => void;
+
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void;
+
+  onAdd(node: DiagramNode, diagram: Diagram, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }
@@ -111,188 +373,20 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// TODO: Rename this to NodeTypeLoader
 declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {}
   }
 }
 
-export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
-
-export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  nodeDefinition: NodeDefinitionRegistry,
-  opts: StencilLoaderOpts[T]
-) => Promise<void>;
-
-export const stencilLoaderRegistry: Partial<{
-  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
-}> = {};
-
-type PreregistrationEntry<K extends keyof StencilLoaderOpts> = {
-  type: K;
-  shapes: RegExp;
-  opts: StencilLoaderOpts[K];
-};
-
-export class NodeDefinitionRegistry {
-  private nodes = new Map<string, NodeDefinition>();
-  private preRegistrations: Array<PreregistrationEntry<keyof StencilLoaderOpts>> = [];
-
-  public stencilRegistry = new StencilRegistry();
-
-  preregister<K extends keyof StencilLoaderOpts>(
-    shapes: RegExp,
-    type: K,
-    opts: StencilLoaderOpts[K]
-  ) {
-    this.preRegistrations.push({ shapes, type, opts });
-  }
-
-  list() {
-    return this.nodes.keys();
-  }
-
-  async load(s: string): Promise<boolean> {
-    if (this.hasRegistration(s)) return true;
-
-    const idx = this.preRegistrations.findIndex(a => a.shapes.test(s));
-    if (idx === -1) return false;
-
-    const entry = this.preRegistrations[idx]!;
-    //this.preRegistrations.splice(idx, 1);
-
-    const loader = stencilLoaderRegistry[entry.type];
-    assert.present(loader, `Stencil loader ${entry.type} not found`);
-
-    const l = await loader();
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    await l(this, entry.opts as any);
-
-    return true;
-  }
-
-  register(node: NodeDefinition) {
-    this.nodes.set(node.type, node);
-    return node;
-  }
-
-  get(type: string): NodeDefinition {
-    const r = this.nodes.get(type);
-
-    if (!r) {
-      missing.add(type);
-      console.warn(`Cannot find shape '${type}'`);
-      return this.nodes.get('rect')!;
-    }
-
-    assert.present(r, `Not found: ${type}`);
-    return r;
-  }
-
-  hasRegistration(type: string) {
-    return this.nodes.has(type);
-  }
-}
-
-export class EdgeDefinitionRegistry {
-  private edges = new Map<string, EdgeDefinition>();
-
-  #defaultValue: EdgeDefinition | undefined = undefined;
-
-  set defaultValue(value: EdgeDefinition | undefined) {
-    this.#defaultValue = value;
-  }
-
-  list() {
-    return this.edges.keys();
-  }
-
-  register(edge: EdgeDefinition) {
-    this.edges.set(edge.type, edge);
-  }
-
-  get(type: string): EdgeDefinition {
-    const r = this.edges.get(type) ?? this.#defaultValue;
-    assert.present(r);
-    return r;
-  }
-}
-
-export type Definitions = {
-  nodeDefinitions: NodeDefinitionRegistry;
-  edgeDefinitions: EdgeDefinitionRegistry;
-};
-
-const isNodeDefinition = (type: string | NodeDefinition): type is NodeDefinition =>
-  typeof type !== 'string';
-
-export type MakeStencilNodeOpts = {
-  id?: string;
-  name?: string;
-  aspectRatio?: number;
-  size?: { w: number; h: number };
-  props?: MakeStencilNodeOptsProps;
-  metadata?: ElementMetadata;
-  texts?: NodeTexts;
-};
-
-export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps>;
-
-export const makeStencilNode =
-  (type: string | NodeDefinition, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) =>
-  ($d: Diagram) => {
-    const typeId = isNodeDefinition(type) ? type.type : type;
-
-    const layer = $d.activeLayer;
-    assertRegularLayer(layer);
-
-    const n = ElementFactory.node(
-      newid(),
-      typeId,
-      Box.applyAspectRatio(
-        { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
-        opts?.aspectRatio ?? 1
-      ),
-      layer,
-      opts?.props?.(t) ?? {},
-      opts?.metadata ?? {},
-      opts?.texts
-    );
-
-    const size = { w: 100, h: 100 };
-
-    n.setBounds(
-      Box.applyAspectRatio(
-        { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
-        opts?.aspectRatio ?? 1
-      ),
-      UnitOfWork.immediate($d)
-    );
-
-    return n;
-  };
-
-export const registerStencil = (
-  reg: NodeDefinitionRegistry,
-  pkg: StencilPackage,
-  def: NodeDefinition,
-  opts?: MakeStencilNodeOpts
-) => {
-  reg.register(def);
-  pkg.stencils.push({
-    id: opts?.id ?? def.type,
-    name: opts?.name ?? def.name,
-    node: makeStencilNode(def, 'picker', opts),
-    canvasNode: makeStencilNode(def, 'canvas', opts)
-  });
-};
+export type StencilElements = { bounds: Box; elements: DiagramElement[] };
 
 export type Stencil = {
   id: string;
   name?: string;
-  node: (diagram: Diagram) => DiagramNode;
-  canvasNode: (diagram: Diagram) => DiagramNode;
+  elementsForPicker: (diagram: Diagram) => StencilElements;
+  elementsForCanvas: (diagram: Diagram) => StencilElements;
+  type: 'default' | string;
 };
 
 export type StencilPackage = {
@@ -300,6 +394,13 @@ export type StencilPackage = {
   name: string;
   group?: string;
   stencils: Array<Stencil>;
+  type: 'default' | string;
+
+  subPackages?: Array<{
+    id: string;
+    name: string;
+    stencils: Array<Stencil>;
+  }>;
 };
 
 export type StencilEvents = {
@@ -336,9 +437,15 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   }
 
   getStencil(id: string) {
-    assert.true(id.includes(DELIMITER), 'Invalid id');
-    const [pkgId] = safeSplit(id, DELIMITER, 2);
-    return this.get(pkgId).stencils.find(s => s.id === id);
+    if (id.includes(DELIMITER)) {
+      const [pkgId] = safeSplit(id, DELIMITER, 2);
+      return this.get(pkgId).stencils.find(s => s.id === id);
+    } else {
+      return this.stencils
+        .values()
+        .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(p => p.stencils) ?? [])])
+        .find(s => s.id === id);
+    }
   }
 
   get(id: string): StencilPackage {
@@ -373,3 +480,236 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     return results;
   }
 }
+
+export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
+
+export type StencilLoader<T extends keyof StencilLoaderOpts> = (
+  registry: Registry,
+  opts: StencilLoaderOpts[T]
+) => Promise<void>;
+
+export const stencilLoaderRegistry: Partial<{
+  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
+}> = {};
+
+export type NodeDefinitionLoader = (nodes: NodeDefinitionRegistry) => Promise<void>;
+export type EdgeDefinitionLoader = (edges: EdgeDefinitionRegistry) => Promise<void>;
+
+export type LazyElementLoaderEntry = {
+  shapes: RegExp;
+  nodeDefinitionLoader?: () => Promise<NodeDefinitionLoader>;
+  edgeDefinitionLoader?: () => Promise<EdgeDefinitionLoader>;
+};
+
+declare global {
+  namespace DiagramCraft {
+    interface StencilLoaderOptsExtensions {
+      basic: {
+        loader: () => Promise<(registry: Registry) => Promise<void>>;
+      };
+    }
+  }
+}
+
+export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
+  await (
+    await opts.loader()
+  )(registry);
+};
+
+export class NodeDefinitionRegistry {
+  private nodes = new Map<string, NodeDefinition>();
+
+  constructor(private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []) {}
+
+  list() {
+    return this.nodes.keys();
+  }
+
+  async load(s: string): Promise<boolean> {
+    if (this.hasRegistration(s)) return true;
+
+    const idx = this.lazyNodeLoaders.findIndex(a => a.shapes.test(s));
+    if (idx === -1) return false;
+
+    const entry = this.lazyNodeLoaders[idx]!;
+    assert.present(entry.nodeDefinitionLoader, `No node definition loader for ${s}`);
+
+    const loader = await entry.nodeDefinitionLoader();
+    await loader(this);
+
+    return true;
+  }
+
+  register(node: NodeDefinition) {
+    this.nodes.set(node.type, node);
+    return node;
+  }
+
+  get(type: string): NodeDefinition {
+    const r = this.nodes.get(type);
+
+    if (!r) {
+      missing.add(type);
+      console.warn(`Cannot find shape '${type}'`, new Error().stack);
+      return this.nodes.get('rect')!;
+    }
+
+    assert.present(r, `Not found: ${type}`);
+    return r;
+  }
+
+  hasRegistration(type: string) {
+    return this.nodes.has(type);
+  }
+}
+
+export class EdgeDefinitionRegistry {
+  private edges = new Map<string, EdgeDefinition>();
+
+  constructor(
+    private readonly defaultValue: EdgeDefinition,
+    private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []
+  ) {}
+
+  list() {
+    return this.edges.keys();
+  }
+
+  async load(s: string): Promise<boolean> {
+    if (this.hasRegistration(s)) return true;
+
+    const idx = this.lazyNodeLoaders.findIndex(a => a.shapes.test(s));
+    if (idx === -1) return false;
+
+    const entry = this.lazyNodeLoaders[idx]!;
+    assert.present(entry.edgeDefinitionLoader, `No edge definition loader for ${s}`);
+
+    const loader = await entry.edgeDefinitionLoader();
+    await loader(this);
+
+    return true;
+  }
+
+  register(edge: EdgeDefinition) {
+    this.edges.set(edge.type, edge);
+  }
+
+  get(type: string): EdgeDefinition {
+    const r = this.edges.get(type) ?? this.defaultValue;
+    assert.present(r);
+    return r;
+  }
+
+  hasRegistration(type: string) {
+    return this.edges.has(type);
+  }
+}
+
+export type Registry = {
+  nodes: NodeDefinitionRegistry;
+  edges: EdgeDefinitionRegistry;
+  stencils: StencilRegistry;
+};
+
+export type MakeStencilNodeOpts = {
+  id?: string;
+  name?: string;
+  aspectRatio?: number;
+  size?: { w: number; h: number };
+  props?: MakeStencilNodeOptsProps;
+  metadata?: ElementMetadata;
+  texts?: NodeTexts;
+  subPackage?: string;
+};
+
+export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps | EdgeProps>;
+
+export const makeStencilNode =
+  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
+    UnitOfWork.execute($d, uow => {
+      const layer = $d.activeLayer;
+      assertRegularLayer(layer);
+
+      const n = ElementFactory.node(
+        newid(),
+        typeId,
+        Box.applyAspectRatio(
+          { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
+          opts?.aspectRatio ?? 1
+        ),
+        layer,
+        (opts?.props?.(t) ?? {}) as NodeProps,
+        opts?.metadata ?? {},
+        opts?.texts
+      );
+
+      const size = { w: 100, h: 100 };
+
+      n.setBounds(
+        Box.applyAspectRatio(
+          { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
+          opts?.aspectRatio ?? 1
+        ),
+        uow
+      );
+
+      return { bounds: n.bounds, elements: [n] };
+    });
+
+export const makeStencilEdge =
+  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
+    UnitOfWork.execute($d, _uow => {
+      const layer = $d.activeLayer;
+      assertRegularLayer(layer);
+
+      const e = ElementFactory.edge(
+        newid(),
+        new FreeEndpoint(_p(0, 50)),
+        new FreeEndpoint(_p(100, 50)),
+        { ...(opts?.props?.(t) ?? {}), shape: typeId } as EdgeProps,
+        opts?.metadata ?? {},
+        [],
+        layer
+      );
+
+      return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
+    });
+
+export const addStencilToSubpackage = (
+  subpackage: string,
+  pkg: StencilPackage,
+  def: NodeDefinition | EdgeDefinition,
+  opts?: Omit<MakeStencilNodeOpts, 'subPackage'>
+) => {
+  return addStencil(pkg, def, { ...opts, subPackage: subpackage });
+};
+
+export const addStencil = (
+  pkg: StencilPackage,
+  def: NodeDefinition | EdgeDefinition,
+  opts?: MakeStencilNodeOpts
+) => {
+  if ((pkg.subPackages ?? []).length > 0) {
+    assert.true(!!opts?.subPackage);
+  }
+
+  const isNodeDef = 'getBoundingPath' in def;
+  const stencil = {
+    id: opts?.id ?? def.type,
+    name: opts?.name ?? def.name,
+    elementsForPicker: isNodeDef
+      ? makeStencilNode(def.type, 'picker', opts)
+      : makeStencilEdge(def.type, 'picker', opts),
+    elementsForCanvas: isNodeDef
+      ? makeStencilNode(def.type, 'canvas', opts)
+      : makeStencilEdge(def.type, 'canvas', opts),
+    type: pkg.type
+  };
+
+  if (opts?.subPackage) {
+    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
+  } else {
+    pkg.stencils.push(stencil);
+  }
+};

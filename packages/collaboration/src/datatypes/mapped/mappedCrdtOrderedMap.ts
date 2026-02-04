@@ -117,18 +117,8 @@ export class MappedCRDTOrderedMap<
     }
   }
 
-  setIndex(key: string, toIndex: number) {
-    for (const [k, v] of this.#current.entries()) {
-      if (k === key) {
-        v.set('index', toIndex);
-      } else if (v.get('index')! >= toIndex) {
-        v.set('index', v.get('index')! + 1);
-      }
-    }
-  }
-
   getIndex(key: string) {
-    return this.#current.get(key)?.get('index') ?? -1;
+    return this.#entries.findIndex(e => e[0] === key);
   }
 
   add(key: string, t: T) {
@@ -140,6 +130,29 @@ export class MappedCRDTOrderedMap<
     entry.set('index', this.#entries.length);
     entry.set('value', this.mapper.toCRDT(t));
     this.#current.set(key, entry);
+  }
+
+  insert(key: string, t: T, position: number) {
+    assert.false(this.#current.has(key));
+    assert.true(
+      position >= 0 && position <= this.#entries.length,
+      `Invalid position ${position} for insert, length ${this.#entries.length}`
+    );
+
+    this.#entries.splice(position, 0, [key, t]);
+
+    this.#current.transact(() => {
+      // Create and insert the new entry
+      const entry = this.#current.factory.makeMap<WrapperType>();
+      entry.set('index', position);
+      entry.set('value', this.mapper.toCRDT(t));
+      this.#current.set(key, entry);
+
+      for (const [k, v] of this.#current.entries()) {
+        const pos = this.#entries.findIndex(e => e[0] === k);
+        if (v.get('index') !== pos) v.set('index', pos);
+      }
+    });
   }
 
   update(key: string, t: T) {
@@ -185,6 +198,13 @@ export class MappedCRDTOrderedMap<
         }
       }
     });
+
+    this.#entries = Array.from(this.#current.entries())
+      .toSorted(([, v1], [, v2]) => v1.get('index')! - v2.get('index')!)
+      .map(([k, v]) => {
+        const existing = this.#entries.find(e => e[0] === k);
+        return [k, existing?.[1] ?? this.mapper.fromCRDT(v.get('value')!)];
+      });
   }
 
   private populateFromCRDT(e?: { key: string; value: CRDTMap<WrapperType<C>> }) {

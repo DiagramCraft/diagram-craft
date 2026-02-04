@@ -3,17 +3,20 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
-import * as svg from '../component/vdom-svg';
-import { Transforms } from '../component/vdom-svg';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { renderElement } from '../components/renderElement';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 
 export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('tableRow', 'Table Row', TableRowComponent);
-    this.capabilities.fill = false;
-    this.capabilities.select = false;
-    this.capabilities.children = true;
+    this.setFlags({
+      [NodeFlags.StyleFill]: false,
+      [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: false,
+      [NodeFlags.ChildrenSelectParent]: true,
+      [NodeFlags.ChildrenManagedByParent]: true
+    });
   }
 
   layoutChildren(_node: DiagramNode, _uow: UnitOfWork) {
@@ -25,7 +28,7 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
     // as the row itself does not have any layout or rendering logic
     const parent = node.parent;
     if (parent && isNode(parent)) {
-      uow.registerOnCommitCallback('onChildChanged', parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${parent.id}`, () => {
         const parentDef = parent.getDefinition();
         parentDef.onChildChanged(parent, uow);
       });
@@ -36,13 +39,6 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
 class TableRowComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     builder.noBoundaryNeeded();
-    props.node.children.forEach(child => {
-      builder.add(
-        svg.g(
-          { transform: Transforms.rotateBack(props.node.bounds) },
-          renderElement(this, child, props)
-        )
-      );
-    });
+    builder.add(renderChildren(this, props.node, props));
   }
 }

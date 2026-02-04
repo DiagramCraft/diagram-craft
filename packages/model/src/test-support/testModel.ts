@@ -1,19 +1,18 @@
 import { DiagramDocument } from '../diagramDocument';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { Diagram } from '../diagram';
 import { UnitOfWork } from '../unitOfWork';
 import { RegularLayer } from '../diagramLayerRegular';
 import { Box } from '@diagram-craft/geometry/box';
-import { SimpleDiagramNode } from '../diagramNode';
+import { type DiagramNode, SimpleDiagramNode } from '../diagramNode';
 import { ResolvedLabelNode } from '../diagramEdge';
-import { FreeEndpoint } from '../endpoint';
+import { AnchorEndpoint, FreeEndpoint } from '../endpoint';
 import { newid } from '@diagram-craft/utils/id';
 import { assertRegularLayer } from '../diagramLayerUtils';
 import { ElementFactory } from '../elementFactory';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import { Point } from '@diagram-craft/geometry/point';
+import type { NodeProps } from '../diagramProps';
 
 export class TestModel {
   static newDiagram(root?: CRDTRoot) {
@@ -24,7 +23,7 @@ export class TestModel {
   }
 
   static newDocument(root?: CRDTRoot) {
-    return new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry(), false, root);
+    return new DiagramDocument(defaultRegistry(), false, root);
   }
 
   static newDiagramWithLayer(opts?: { root?: CRDTRoot; nodes?: Array<NodeCreateOptions> }) {
@@ -46,13 +45,19 @@ export class TestDiagramBuilder extends Diagram {
 
   newLayer(id?: string) {
     const layer = new TestLayerBuilder(id ?? (this.layers.all.length + 1).toString(), this);
-    this.layers.add(layer, UnitOfWork.immediate(this));
+    UnitOfWork.execute(this, uow => this.layers.add(layer, uow));
     return layer;
   }
 }
 
-export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box };
-export type EdgeCreateOptions = { id?: string };
+export type NodeCreateOptions = { id?: string; type?: string; bounds?: Box; props?: NodeProps };
+export type EdgeCreateOptions = {
+  id?: string;
+  startNodeId?: string;
+  endNodeId?: string;
+  startAnchor?: string;
+  endAnchor?: string;
+};
 
 export class TestLayerBuilder extends RegularLayer {
   constructor(id: string, diagram: Diagram) {
@@ -61,7 +66,7 @@ export class TestLayerBuilder extends RegularLayer {
 
   addNode(options?: NodeCreateOptions) {
     const node = this.createNode(options);
-    this.addElement(node, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.executeSilently(this.diagram, uow => this.addElement(node, uow));
     return node;
   }
 
@@ -76,34 +81,38 @@ export class TestLayerBuilder extends RegularLayer {
         h: 10,
         r: 0
       },
-      this.diagram
+      this.diagram,
+      options?.props
     );
   }
 
   addEdge(options?: EdgeCreateOptions) {
     const edge = this.createEdge(options);
-    this.addElement(edge, UnitOfWork.immediate(this.diagram));
+    UnitOfWork.execute(this.diagram, uow => this.addElement(edge, uow));
     return edge;
   }
 
   createEdge(options?: EdgeCreateOptions) {
-    return ElementFactory.edge(
-      options?.id ?? newid(),
-      new FreeEndpoint({ x: 0, y: 0 }),
-      new FreeEndpoint({ x: 100, y: 100 }),
-      {},
-      {},
-      [],
-      this
-    );
+    const startNode = options?.startNodeId ? this.diagram.lookup(options.startNodeId) : undefined;
+    const endNode = options?.endNodeId ? this.diagram.lookup(options.endNodeId) : undefined;
+
+    const start = startNode
+      ? new AnchorEndpoint(startNode as DiagramNode, options?.startAnchor ?? 'c', Point.ORIGIN)
+      : new FreeEndpoint({ x: 0, y: 0 });
+
+    const end = endNode
+      ? new AnchorEndpoint(endNode as DiagramNode, options?.endAnchor ?? 'c', Point.ORIGIN)
+      : new FreeEndpoint({ x: 100, y: 100 });
+
+    return ElementFactory.edge(options?.id ?? newid(), start, end, {}, {}, [], this);
   }
 }
 
 export class TestDiagramNodeBuilder extends SimpleDiagramNode {
-  constructor(id: string, type: string, bounds: Box, diagram: Diagram) {
+  constructor(id: string, type: string, bounds: Box, diagram: Diagram, props?: NodeProps) {
     super(id, diagram.activeLayer as RegularLayer);
     assertRegularLayer(this.layer);
-    SimpleDiagramNode.initializeNode(this, type, bounds, {}, {});
+    this._initializeNode(type, bounds, props ?? {}, {});
   }
 
   asLabelNode(): ResolvedLabelNode {

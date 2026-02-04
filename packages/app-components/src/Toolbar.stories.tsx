@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Toolbar } from './Toolbar';
 import {
@@ -41,7 +41,7 @@ export const Primary: Story = {
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
-      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7}>
+      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7} onChange={() => {}}>
         <Toolbar.ToggleItem value={'underline'}>
           <TbUnderline />
         </Toolbar.ToggleItem>
@@ -70,7 +70,7 @@ export const Focus: Story = {
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
-      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7}>
+      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7} onChange={() => {}}>
         <Toolbar.ToggleItem value={'underline'} data-focus={'true'}>
           <TbUnderline />
         </Toolbar.ToggleItem>
@@ -99,7 +99,7 @@ export const Hover: Story = {
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
-      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7}>
+      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7} onChange={() => {}}>
         <Toolbar.ToggleItem value={'underline'} data-hover={'true'}>
           <TbUnderline />
         </Toolbar.ToggleItem>
@@ -128,7 +128,7 @@ export const Disabled: Story = {
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
-      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7}>
+      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7} onChange={() => {}}>
         <Toolbar.ToggleItem value={'underline'} disabled={true}>
           <TbUnderline />
         </Toolbar.ToggleItem>
@@ -155,7 +155,7 @@ export const Large: Story = {
         <TbBasketCog size={'17.5px'} />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
-      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7}>
+      <Toolbar.ToggleGroup type={'single'} value="strikethrough" key={7} onChange={() => {}}>
         <Toolbar.ToggleItem value={'underline'} disabled={true}>
           <TbUnderline size={'17.5px'} />
         </Toolbar.ToggleItem>

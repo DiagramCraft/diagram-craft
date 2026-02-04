@@ -1,7 +1,7 @@
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge } from './diagramEdge';
-import { DiagramElement, isEdge, isNode } from './diagramElement';
+import { DiagramElement, getAncestors, isEdge, isNode } from './diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
 import { debounceMicrotask } from '@diagram-craft/utils/debounce';
@@ -73,6 +73,14 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
       this.recalculateBoundingBox();
     });
     this.#releasables.add(diagram.on('elementChange', recalculateBoundingBox));
+    this.#releasables.add(
+      diagram.on('elementRemove', ev => {
+        if (this.diagram.lookup(ev.element.id) !== undefined) return;
+        if (this.#elements.includes(ev.element)) {
+          this.setElements(this.#elements.filter(e => e !== ev.element));
+        }
+      })
+    );
   }
 
   release(): void {
@@ -190,14 +198,21 @@ export class Selection extends EventEmitter<SelectionEvents> implements Releasab
     );
   }
 
-  setElements(elements: ReadonlyArray<DiagramElement>, rebaseline = true) {
-    if (elements.some(e => e.isLocked())) return;
+  setElementIds(elements: string[]) {
+    this.setElements(elements.map(e => this.diagram.lookup(e)));
+  }
+
+  setElements(elements: ReadonlyArray<DiagramElement | undefined>, rebaseline = true) {
+    if (elements.some(e => e?.isLocked())) return;
     this.#forcedRotation = false;
 
     const oldElements = [...this.#elements];
-    this.#elements = elements;
+    this.#elements = elements
+      .filter(e => e !== undefined)
+      // Ensure we cannot select children in case one of their ancestors is selected
+      .filter(e => !getAncestors(e).some(p => elements.includes(p)));
 
-    elements.forEach(e => {
+    this.#elements.forEach(e => {
       if (oldElements.includes(e)) return;
       this.emit('add', { element: e });
     });

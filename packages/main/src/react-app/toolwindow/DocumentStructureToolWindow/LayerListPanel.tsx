@@ -26,7 +26,6 @@ import { LayerContextMenu } from './LayerContextMenu';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
@@ -42,6 +41,7 @@ import {
   type Modification,
   ModificationLayer
 } from '@diagram-craft/model/diagramLayerModification';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -65,15 +65,15 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
   return (
     <span
       style={{ cursor: props.layer.type === 'reference' ? 'inherit' : 'pointer' }}
-      onClick={
-        props.layer.type === 'reference'
-          ? undefined
-          : e => {
-              props.layer.locked = !props.layer.isLocked();
-              e.preventDefault();
-              e.stopPropagation();
-            }
-      }
+      onClick={e => {
+        if (props.layer.type === 'reference') return;
+
+        UnitOfWork.executeWithUndo(props.diagram, 'Toggle lock', uow => {
+          props.layer.setLocked(!props.layer.isLocked(), uow);
+        });
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
       {props.layer.isLocked() ? <TbLock /> : <TbLockOff />}
     </span>
@@ -88,34 +88,33 @@ const LayerEntry = (props: { layer: Layer }) => {
   const dropTarget = useDropTarget(
     [LAYER_INSTANCES, ELEMENT_INSTANCES],
     ev => {
-      const uow = new UnitOfWork(diagram, true);
-      if (ev[ELEMENT_INSTANCES]) {
-        diagram.moveElement(
-          JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
-          uow,
-          layer
-        );
-      } else if (ev[LAYER_INSTANCES]) {
-        let relation: 'above' | 'below' = 'below';
-        const instances: string[] = [];
-        if (ev[LAYER_INSTANCES].before) {
-          instances.push(...JSON.parse(ev[LAYER_INSTANCES].before));
-          relation = 'above';
-        } else if (ev[LAYER_INSTANCES].after) {
-          instances.push(...JSON.parse(ev[LAYER_INSTANCES].after));
-          relation = 'below';
-        } else {
-          VERIFY_NOT_REACHED();
+      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+        if (ev[ELEMENT_INSTANCES]) {
+          diagram.moveElement(
+            JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
+            uow,
+            layer
+          );
+        } else if (ev[LAYER_INSTANCES]) {
+          let relation: 'above' | 'below' = 'below';
+          const instances: string[] = [];
+          if (ev[LAYER_INSTANCES].before) {
+            instances.push(...JSON.parse(ev[LAYER_INSTANCES].before));
+            relation = 'above';
+          } else if (ev[LAYER_INSTANCES].after) {
+            instances.push(...JSON.parse(ev[LAYER_INSTANCES].after));
+            relation = 'below';
+          } else {
+            VERIFY_NOT_REACHED();
+          }
+
+          diagram.layers.move(
+            instances.map((id: string) => diagram.layers.byId(id)!),
+            uow,
+            { relation, layer: layer }
+          );
         }
-
-        diagram.layers.move(
-          instances.map((id: string) => diagram.layers.byId(id)!),
-          uow,
-          { relation, layer: layer }
-        );
-      }
-
-      commitWithUndo(uow, 'Change stack');
+      });
     },
     {
       split: m => (m === LAYER_INSTANCES ? [0.5, 0, 0.5] : [0, 1, 0])
@@ -123,97 +122,100 @@ const LayerEntry = (props: { layer: Layer }) => {
   );
 
   return (
-    <LayerContextMenu layer={layer}>
-      <Tree.Node
-        key={layer.id}
-        isOpen={true}
-        className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
-        {...drag.eventHandlers}
-        {...dropTarget.eventHandlers}
-        onClick={() => {
-          diagram.layers.active = layer;
-        }}
-      >
-        <Tree.NodeLabel>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.1rem'
-            }}
-          >
-            {layer.type === 'reference' ? <TbLink /> : undefined}
-            {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
-            {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
-            {layer.name}
-          </div>
-        </Tree.NodeLabel>
-        <Tree.NodeCell className="cmp-tree__node__action">
-          {layer.type !== 'reference' && layer.type !== 'rule' ? (
-            <LockToggle layer={layer} diagram={diagram} />
-          ) : (
-            ''
-          )}
-          <VisibilityToggle layer={layer} diagram={diagram} />
-        </Tree.NodeCell>
-        {!(layer instanceof ReferenceLayer) && (
-          <Tree.Children>
-            {layer instanceof RegularLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.elements.toReversed().map(e => (
-                  <ElementEntry key={e.id} element={e} />
-                ))}
-              </div>
-            )}
-            {layer instanceof RuleLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.rules.toReversed().map(e => (
-                  <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
-                ))}
-              </div>
-            )}
-            {layer instanceof ModificationLayer && (
-              <div style={{ display: 'contents' }}>
-                {layer.modifications.length === 0 ? (
-                  <Tree.Node>
-                    <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
-                      No modifications
-                    </Tree.NodeLabel>
-                  </Tree.Node>
-                ) : (
-                  layer.modifications
-                    .toReversed()
-                    .map(m => (
-                      <ModificationEntry
-                        key={m.id}
-                        diagram={diagram}
-                        modification={m}
-                        layer={layer as ModificationLayer}
-                      />
-                    ))
-                )}
-              </div>
-            )}
-            {!(layer instanceof RegularLayer) &&
-              !(layer instanceof RuleLayer) &&
-              !(layer instanceof ModificationLayer) && (
-                <div style={{ color: 'red' }}>Not implemented yet</div>
-              )}
-          </Tree.Children>
-        )}
-        {layer instanceof ReferenceLayer && (
-          <Tree.Children>
-            <div style={{ display: 'contents' }}>
-              <Tree.Node>
-                <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
-                  <TbArrowNarrowRight /> {layer.referenceName()}
-                </Tree.NodeLabel>
-              </Tree.Node>
+    <LayerContextMenu
+      layer={layer}
+      element={
+        <Tree.Node
+          key={layer.id}
+          isOpen={true}
+          className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
+          {...drag.eventHandlers}
+          {...dropTarget.eventHandlers}
+          onClick={() => {
+            diagram.layers.active = layer;
+          }}
+        >
+          <Tree.NodeLabel>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.1rem'
+              }}
+            >
+              {layer.type === 'reference' ? <TbLink /> : undefined}
+              {layer.resolveForced().type === 'rule' ? <TbAdjustments /> : undefined}
+              {layer.type === 'modification' ? <TbLayersSelectedBottom /> : undefined}
+              {layer.name}
             </div>
-          </Tree.Children>
-        )}
-      </Tree.Node>
-    </LayerContextMenu>
+          </Tree.NodeLabel>
+          <Tree.NodeCell className="cmp-tree__node__action">
+            {layer.type !== 'reference' && layer.type !== 'rule' ? (
+              <LockToggle layer={layer} diagram={diagram} />
+            ) : (
+              ''
+            )}
+            <VisibilityToggle layer={layer} diagram={diagram} />
+          </Tree.NodeCell>
+          {!(layer instanceof ReferenceLayer) && (
+            <Tree.Children>
+              {layer instanceof RegularLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.elements.toReversed().map(e => (
+                    <ElementEntry key={e.id} element={e} />
+                  ))}
+                </div>
+              )}
+              {layer instanceof RuleLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.rules.toReversed().map(e => (
+                    <RuleEntry key={e.id} diagram={diagram} rule={e} layer={layer} />
+                  ))}
+                </div>
+              )}
+              {layer instanceof ModificationLayer && (
+                <div style={{ display: 'contents' }}>
+                  {layer.modifications.length === 0 ? (
+                    <Tree.Node>
+                      <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                        No modifications
+                      </Tree.NodeLabel>
+                    </Tree.Node>
+                  ) : (
+                    layer.modifications
+                      .toReversed()
+                      .map(m => (
+                        <ModificationEntry
+                          key={m.id}
+                          diagram={diagram}
+                          modification={m}
+                          layer={layer as ModificationLayer}
+                        />
+                      ))
+                  )}
+                </div>
+              )}
+              {!(layer instanceof RegularLayer) &&
+                !(layer instanceof RuleLayer) &&
+                !(layer instanceof ModificationLayer) && (
+                  <div style={{ color: 'red' }}>Not implemented yet</div>
+                )}
+            </Tree.Children>
+          )}
+          {layer instanceof ReferenceLayer && (
+            <Tree.Children>
+              <div style={{ display: 'contents' }}>
+                <Tree.Node>
+                  <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
+                    <TbArrowNarrowRight /> {layer.referenceName()}
+                  </Tree.NodeLabel>
+                </Tree.Node>
+              </div>
+            </Tree.Children>
+          )}
+        </Tree.Node>
+      }
+    />
   );
 };
 
@@ -226,40 +228,44 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
   const icon = <TbFilterCog />;
 
   return (
-    <RuleContextMenu layer={props.layer} rule={props.rule}>
-      <Tree.Node
-        key={e.id}
-        onClick={() => {
-          const keys = [...props.layer.runRule(props.rule).keys()];
-          for (const key of keys) {
-            addHighlight(props.diagram.lookup(key)!, 'search-match');
-          }
-          setTimeout(() => {
+    <RuleContextMenu
+      layer={props.layer}
+      rule={props.rule}
+      element={
+        <Tree.Node
+          key={e.id}
+          onClick={() => {
+            const keys = [...props.layer.runRule(props.rule).keys()];
             for (const key of keys) {
-              removeHighlight(props.diagram.lookup(key), 'search-match');
+              addHighlight(props.diagram.lookup(key)!, 'search-match');
             }
-          }, 1000);
-        }}
-      >
-        <Tree.NodeLabel>
-          {icon} &nbsp;{shorten(e.name, 25)}
-        </Tree.NodeLabel>
-        <Tree.NodeCell className="cmp-tree__node__action">
-          <span
-            style={{ cursor: 'pointer' }}
-            onClick={e => {
-              actions['RULE_LAYER_EDIT']!.execute({
-                id: `${props.layer.id}:${props.rule.id}`
-              });
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <TbPencil />
-          </span>
-        </Tree.NodeCell>
-      </Tree.Node>
-    </RuleContextMenu>
+            setTimeout(() => {
+              for (const key of keys) {
+                removeHighlight(props.diagram.lookup(key), 'search-match');
+              }
+            }, 1000);
+          }}
+        >
+          <Tree.NodeLabel>
+            {icon} &nbsp;{shorten(e.name, 25)}
+          </Tree.NodeLabel>
+          <Tree.NodeCell className="cmp-tree__node__action">
+            <span
+              style={{ cursor: 'pointer' }}
+              onClick={e => {
+                actions['RULE_LAYER_EDIT']!.execute({
+                  id: `${props.layer.id}:${props.rule.id}`
+                });
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <TbPencil />
+            </span>
+          </Tree.NodeCell>
+        </Tree.Node>
+      }
+    />
   );
 };
 
@@ -315,9 +321,9 @@ const ModificationEntry = (props: {
         <span
           style={{ cursor: 'pointer' }}
           onClick={e => {
-            const uow = new UnitOfWork(props.diagram, true);
-            props.layer.clearModification(m.id, uow);
-            commitWithUndo(uow, 'Clear modification');
+            UnitOfWork.executeWithUndo(props.diagram, 'Clear modification', uow => {
+              props.layer.clearModification(m.id, uow);
+            });
             e.preventDefault();
             e.stopPropagation();
           }}
@@ -334,7 +340,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   const e = props.element;
 
   const childrenAllowed =
-    isNode(e) && diagram.document.nodeDefinitions.get(e.nodeType).supports('children');
+    isNode(e) && diagram.document.registry.nodes.get(e.nodeType).hasFlag(NodeFlags.ChildrenAllowed);
 
   const drag = useDraggable(JSON.stringify([e.id]), ELEMENT_INSTANCES);
   const dropTarget = useDropTarget(
@@ -355,18 +361,17 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         VERIFY_NOT_REACHED();
       }
 
-      const uow = new UnitOfWork(diagram, true);
-      diagram.moveElement(
-        instances.map((id: string) => diagram.lookup(id)!),
-        uow,
-        e.layer,
-        {
-          relation,
-          element: e
-        }
-      );
-
-      commitWithUndo(uow, 'Change stack');
+      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+        diagram.moveElement(
+          instances.map((id: string) => diagram.lookup(id)!),
+          uow,
+          e.layer,
+          {
+            relation,
+            element: e
+          }
+        );
+      });
     },
     {
       split: () => (childrenAllowed ? [0.25, 0.5, 0.25] : [0.5, 0, 0.5])
@@ -475,9 +480,7 @@ export const LayerListPanel = () => {
           <LayerEntry key={l.id} layer={l} />
         ))}
       </Tree.Root>
-      <LayerContextMenu>
-        <div style={{ height: '100%' }}></div>
-      </LayerContextMenu>
+      <LayerContextMenu element={<div style={{ height: '100%' }}></div>} />
     </ToolWindowPanel>
   );
 };

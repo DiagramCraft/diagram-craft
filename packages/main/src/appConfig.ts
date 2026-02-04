@@ -1,7 +1,8 @@
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
-import type {
+import {
+  LazyElementLoaderEntry,
   StencilLoaderOpts,
   stencilLoaderRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -92,6 +93,10 @@ export type AppConfig = {
       }
   );
 
+  elementDefinitions: {
+    registry: ElementDefinitionRegistryConfig;
+  };
+
   /**
    * Configuration for diagram stencils (shapes and templates).
    */
@@ -136,11 +141,14 @@ export type AppConfig = {
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
-  shapes?: RegExp;
   opts: StencilLoaderOpts[K];
 };
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
+
+type ElementDefinitionRegistryConfigEntry = LazyElementLoaderEntry;
+
+export type ElementDefinitionRegistryConfig = Array<ElementDefinitionRegistryConfigEntry>;
 
 let CONFIG_IN_USE: AppConfig | undefined;
 

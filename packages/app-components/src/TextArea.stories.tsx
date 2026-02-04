@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TextArea } from './TextArea';
-import { fn } from '@storybook/test';
 import { themeDecorator } from '../.storybook/common';
 
 const meta = {
@@ -20,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     value: 'Lorem',
-    onChange: fn(),
+    onChange: () => {},
     // @ts-ignore
     rows: 5
   }
@@ -29,7 +28,7 @@ export const Primary: Story = {
 export const Focus: Story = {
   args: {
     'value': 'Lorem',
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-focus': true,
     // @ts-ignore
@@ -40,7 +39,7 @@ export const Focus: Story = {
 export const Error: Story = {
   args: {
     'value': 'Lorem',
-    'onChange': fn(),
+    'onChange': () => {},
     // @ts-ignore
     'data-error': true,
     // @ts-ignore
@@ -51,7 +50,7 @@ export const Error: Story = {
 export const WithDefaultValue: Story = {
   args: {
     value: 'Lorem',
-    onChange: fn(),
+    onChange: () => {},
     state: 'unset',
     // @ts-ignore
     rows: 5
@@ -61,7 +60,7 @@ export const WithDefaultValue: Story = {
 export const Indeterminate: Story = {
   args: {
     value: 'Lorem ipsum',
-    onChange: fn(),
+    onChange: () => {},
     isIndeterminate: true,
     disabled: true,
     // @ts-ignore
@@ -72,7 +71,7 @@ export const Indeterminate: Story = {
 export const Disabled: Story = {
   args: {
     value: 'Lorem',
-    onChange: fn(),
+    onChange: () => {},
     disabled: true,
     // @ts-ignore
     rows: 5

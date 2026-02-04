@@ -1,21 +1,66 @@
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { assert } from '@diagram-craft/utils/assert';
-import { AbstractSelectionAction, ElementType, MultipleType } from './abstractSelectionAction';
+import {
+  AbstractSelectionAction,
+  ElementType,
+  MultipleType
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { createLinkedNode } from '@diagram-craft/canvas/linkedNode';
+import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const createLinkedNodeActions = (context: ActionContext) => {
   return {
-    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(context, 'e'),
-    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(context, 'w'),
-    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction(context, 'n'),
-    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction(context, 's'),
-    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction(context, 'e', true),
-    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction(context, 'w', true),
-    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction(context, 'n', true),
-    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction(context, 's', true)
+    CREATE_LINKED_NODE_E: new CreateLinkedNodeAction(
+      context,
+      'e',
+      false,
+      $tStr('action.CREATE_LINKED_NODE_E.name', 'Create Linked Node East')
+    ),
+    CREATE_LINKED_NODE_W: new CreateLinkedNodeAction(
+      context,
+      'w',
+      false,
+      $tStr('action.CREATE_LINKED_NODE_W.name', 'Create Linked Node West')
+    ),
+    CREATE_LINKED_NODE_N: new CreateLinkedNodeAction(
+      context,
+      'n',
+      false,
+      $tStr('action.CREATE_LINKED_NODE_N.name', 'Create Linked Node North')
+    ),
+    CREATE_LINKED_NODE_S: new CreateLinkedNodeAction(
+      context,
+      's',
+      false,
+      $tStr('action.CREATE_LINKED_NODE_S.name', 'Create Linked Node South')
+    ),
+    CREATE_LINKED_NODE_KEEP_E: new CreateLinkedNodeAction(
+      context,
+      'e',
+      true,
+      $tStr('action.CREATE_LINKED_NODE_KEEP_E.name', 'Create Linked Node East (Keep Selection)')
+    ),
+    CREATE_LINKED_NODE_KEEP_W: new CreateLinkedNodeAction(
+      context,
+      'w',
+      true,
+      $tStr('action.CREATE_LINKED_NODE_KEEP_W.name', 'Create Linked Node West (Keep Selection)')
+    ),
+    CREATE_LINKED_NODE_KEEP_N: new CreateLinkedNodeAction(
+      context,
+      'n',
+      true,
+      $tStr('action.CREATE_LINKED_NODE_KEEP_N.name', 'Create Linked Node North (Keep Selection)')
+    ),
+    CREATE_LINKED_NODE_KEEP_S: new CreateLinkedNodeAction(
+      context,
+      's',
+      true,
+      $tStr('action.CREATE_LINKED_NODE_KEEP_S.name', 'Create Linked Node South (Keep Selection)')
+    )
   };
 };
 
@@ -29,7 +74,8 @@ export class CreateLinkedNodeAction extends AbstractSelectionAction {
   constructor(
     context: ActionContext,
     protected readonly direction: Direction,
-    protected readonly keepSelection: boolean = false
+    protected readonly keepSelection: boolean,
+    public readonly name: TranslatedString
   ) {
     super(context, MultipleType.SingleOnly, ElementType.Node, ['regular']);
   }

@@ -4,7 +4,6 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { ElementCustomPropertiesPanelForm } from '../../toolwindow/ObjectToolWindow/ElementCustomPropertiesPanel';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { sortBy } from '@diagram-craft/utils/array';
 import { useDiagram } from '../../../application';
@@ -31,14 +30,14 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   );
 
   const nodeTypesWithCustomProps: string[] = [];
-  for (const key of $d.document.nodeDefinitions.list()) {
-    const def = $d.document.nodeDefinitions.get(key);
+  for (const key of $d.document.registry.nodes.list()) {
+    const def = $d.document.registry.nodes.get(key);
     const customProps = def.getCustomPropertyDefinitions(node);
-    if (customProps.length > 0) {
+    if (customProps.entries.length > 0) {
       nodeTypesWithCustomProps.push(key);
     }
   }
-  sortBy(nodeTypesWithCustomProps, e => $d.document.nodeDefinitions.get(e).name);
+  sortBy(nodeTypesWithCustomProps, e => $d.document.registry.nodes.get(e).name);
 
   const onChange = () => {
     props.onChange();
@@ -60,7 +59,7 @@ export const NodeCustomPropertiesEditor: Editor = props => {
           {nodeTypesWithCustomProps.map(e => {
             return (
               <Select.Item key={e} value={e}>
-                {$d.document.nodeDefinitions.get(e).name}
+                {$d.document.registry.nodes.get(e).name}
               </Select.Item>
             );
           })}
@@ -71,14 +70,12 @@ export const NodeCustomPropertiesEditor: Editor = props => {
         <div>
           <ElementCustomPropertiesPanelForm
             element={node}
-            customProperties={$d.document.nodeDefinitions
+            customProperties={$d.document.registry.nodes
               .get(type)
               .getCustomPropertyDefinitions(node)}
-            onChange={(_value: CustomPropertyDefinition) => {
+            onChange={() => {
               return (cb: (uow: UnitOfWork) => void) => {
-                const uow = new UnitOfWork($d, false);
-                cb(uow);
-                uow.abort();
+                UnitOfWork.executeSilently($d, cb);
 
                 $p.custom = node.storedProps.custom;
                 onChange();

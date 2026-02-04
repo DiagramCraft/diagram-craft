@@ -6,12 +6,12 @@ import {
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
-import type { ShapeParser } from '../drawioReader';
+import type { ShapeParser } from '../drawioShapeParserRegistry';
 import { DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { FlexShapeNodeDefinition } from '@diagram-craft/canvas/node-types/FlexShapeNodeDefinition';
 import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 import { StyleManager } from '../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -115,7 +115,12 @@ export const registerAWS4Shapes = async (
   r: NodeDefinitionRegistry,
   shapeParsers: Record<string, ShapeParser>
 ) => {
-  const stencils = await loadDrawioStencils('/stencils/aws4.xml', 'AWS4', '#005073', '#005073');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/aws4.xml',
+    'AWS4',
+    '#005073',
+    '#005073'
+  );
 
   shapeParsers['mxgraph.aws4.resourceIcon'] = parseAWS4Shapes;
   shapeParsers['mxgraph.aws4.group'] = parseAWS4Shapes;

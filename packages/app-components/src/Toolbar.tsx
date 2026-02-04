@@ -1,18 +1,19 @@
-import * as RadixToolbar from '@radix-ui/react-toolbar';
 import React from 'react';
 import styles from './Toolbar.module.css';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
+import { Toolbar as BaseUIToolbar } from '@base-ui/react/toolbar';
+import { ToggleButtonGroup } from './ToggleButtonGroup';
 
 const Root = (props: RootProps) => {
   return (
-    <RadixToolbar.Root
+    <BaseUIToolbar.Root
       id={props.id}
       data-direction={props.direction}
       className={styles.cmpToolbar}
       data-size={props.size ?? 'default'}
     >
       {props.children}
-    </RadixToolbar.Root>
+    </BaseUIToolbar.Root>
   );
 };
 
@@ -25,13 +26,13 @@ type RootProps = {
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwardedRef) => {
   return (
-    <RadixToolbar.Button
+    <BaseUIToolbar.Button
       {...PropsUtils.filter(props, 'isOverflow')}
       className={`${styles.cmpToolbarButton} ${props.isOverflow ? styles.cmpToolbarButtonMore : ''} ${props.className ?? ''}`}
       ref={forwardedRef}
     >
       {props.children}
-    </RadixToolbar.Button>
+    </BaseUIToolbar.Button>
   );
 });
 
@@ -42,14 +43,14 @@ type ButtonProps = {
 
 const ToggleItem = React.forwardRef<HTMLButtonElement, ToggleItemProps>((props, forwardedRef) => {
   return (
-    <RadixToolbar.ToggleItem
+    <ToggleButtonGroup.Item
       {...props}
-      className={`${styles.cmpToolbarButton} ${styles.cmpToolbarToggleItem}`}
+      className={styles.cmpToolbarButton}
       value={props.value}
       ref={forwardedRef}
     >
       {props.children}
-    </RadixToolbar.ToggleItem>
+    </ToggleButtonGroup.Item>
   );
 });
 
@@ -61,26 +62,28 @@ type ToggleItemProps = {
 const ToggleGroup = (props: ToggleGroupProps) => {
   return (
     // @ts-expect-error
-    <RadixToolbar.ToggleGroup type={props.type} value={props.value}>
+    <ToggleButtonGroup.Root type={props.type} value={props.value} onChange={props.onChange}>
       {props.children}
-    </RadixToolbar.ToggleGroup>
+    </ToggleButtonGroup.Root>
   );
 };
 
 type ToggleGroupProps =
   | {
       type: 'single';
-      value?: string;
+      value: string;
       children: React.ReactNode;
+      onChange: (s: string | undefined) => void;
     }
   | {
       type: 'multiple';
-      value?: string[];
+      value: string[];
       children: React.ReactNode;
+      onChange: (s: string[] | undefined) => void;
     };
 
 const Separator = (props: SeparatorProps) => {
-  return <RadixToolbar.Separator {...props} className={styles.cmpToolbarSeparator} />;
+  return <BaseUIToolbar.Separator {...props} className={styles.cmpToolbarSeparator} />;
 };
 
 type SeparatorProps = React.HTMLAttributes<HTMLDivElement>;

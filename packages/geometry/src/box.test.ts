@@ -294,4 +294,110 @@ describe('Box', () => {
       expect(Box.midpoint(box1, box2)).toStrictEqual({ x: 10, y: 10 });
     });
   });
+
+  describe('fromString', () => {
+    test('fromString converts string to box', () => {
+      const s = '1,2,3,4,5';
+      expect(Box.fromString(s)).toStrictEqual({ x: 1, y: 2, w: 3, h: 4, r: 5 });
+    });
+  });
+
+  describe('toString', () => {
+    test('toString converts box to string', () => {
+      const box = { x: 1, y: 2, w: 3, h: 4, r: 5 };
+      expect(Box.toString(box)).toBe('1,2,3,4,5');
+    });
+  });
+
+  describe('projectPointToBoundary', () => {
+    test('projects point inside box to closest boundary point - top edge', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 50, y: 20 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 50, y: 0 });
+    });
+
+    test('projects point inside box to closest boundary point - bottom edge', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 50, y: 80 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 50, y: 100 });
+    });
+
+    test('projects point inside box to closest boundary point - left edge', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 20, y: 50 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 0, y: 50 });
+    });
+
+    test('projects point inside box to closest boundary point - right edge', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 80, y: 50 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 100, y: 50 });
+    });
+
+    test('projects point at center to boundary', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 50, y: 50 };
+      const result = Box.projectPointToBoundary(point, box);
+      // Should project to one of the edges, exact edge depends on implementation
+      expect(result.x === 0 || result.x === 100 || result.y === 0 || result.y === 100).toBe(true);
+    });
+
+    test('projects point outside box to closest boundary point', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 150, y: 50 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 100, y: 50 });
+    });
+
+    test('projects point to corner when equidistant from two edges', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 10, y: 10 };
+      const result = Box.projectPointToBoundary(point, box);
+      // Should be closest to either top or left edge
+      expect(result.x === 0 || result.y === 0).toBe(true);
+    });
+
+    test('handles rotated box', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: Math.PI / 4 };
+      const point = { x: 50, y: 50 };
+      const result = Box.projectPointToBoundary(point, box);
+      // Just verify it returns a valid point
+      expect(result).toBeDefined();
+      expect(typeof result.x).toBe('number');
+      expect(typeof result.y).toBe('number');
+    });
+
+    test('handles box with offset position', () => {
+      const box = { x: 100, y: 100, w: 50, h: 50, r: 0 };
+      const point = { x: 125, y: 110 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 125, y: 100 });
+    });
+
+    test('point already on boundary returns same point', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 50, y: 0 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toStrictEqual({ x: 50, y: 0 });
+    });
+
+    test('handles very small box', () => {
+      const box = { x: 0, y: 0, w: 1, h: 1, r: 0 };
+      const point = { x: 0.5, y: 0.5 };
+      const result = Box.projectPointToBoundary(point, box);
+      expect(result).toBeDefined();
+    });
+
+    test('projects to nearest edge when point is close to corner', () => {
+      const box = { x: 0, y: 0, w: 100, h: 100, r: 0 };
+      const point = { x: 5, y: 15 };
+      const result = Box.projectPointToBoundary(point, box);
+      // Should project to left edge since it's closer (5 pixels) than top edge (15 pixels)
+      expect(result).toStrictEqual({ x: 0, y: 15 });
+    });
+  });
 });

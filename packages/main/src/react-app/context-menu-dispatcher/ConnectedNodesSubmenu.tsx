@@ -1,5 +1,4 @@
-import * as ContextMenu from '@radix-ui/react-context-menu';
-import { TbChevronRight, TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
+import { TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
 import { useDiagram } from '../../application';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
@@ -7,11 +6,11 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 type ConnectionItem = {
   id: string;
@@ -188,26 +187,22 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     activeLayer
   );
 
-  // Add both node and edge to the diagram
-  const uow = UnitOfWork.immediate(diagram);
-  activeLayer.addElement(newNode, uow);
-  activeLayer.addElement(newEdge, uow);
+  UnitOfWork.executeWithUndo(diagram, 'Create node for data entry', uow => {
+    activeLayer.addElement(newNode, uow);
+    activeLayer.addElement(newEdge, uow);
 
-  // Apply active styles
-  newNode.updateMetadata(meta => {
-    meta.style = diagram.document.styles.activeNodeStylesheet.id;
-    meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
-  }, uow);
+    // Apply active styles
+    newNode.updateMetadata(meta => {
+      meta.style = diagram.document.styles.activeNodeStylesheet.id;
+      meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+    }, uow);
 
-  newEdge.updateMetadata(meta => {
-    meta.style = diagram.document.styles.activeEdgeStylesheet.id;
-  }, uow);
+    newEdge.updateMetadata(meta => {
+      meta.style = diagram.document.styles.activeEdgeStylesheet.id;
+    }, uow);
 
-  diagram.undoManager.addAndExecute(
-    new ElementAddUndoableAction([newNode, newEdge], diagram, activeLayer)
-  );
-
-  diagram.selection.setElements([newNode]);
+    uow.select(diagram, [newNode, newEdge]);
+  });
 };
 
 // Helper function to get the appropriate icon for each connection type
@@ -228,102 +223,54 @@ export const ConnectedNodesSubmenu = () => {
   const diagram = useDiagram();
 
   const connectedItems = getConnectedItems(diagram);
+  const sel = diagram.selection;
 
   return (
-    <ContextMenu.Sub>
-      <ContextMenu.SubTrigger
-        className="cmp-context-menu__sub-trigger"
-        disabled={connectedItems.length === 0}
-      >
-        Connected Items
-        <div className="cmp-context-menu__right-slot">
-          <TbChevronRight />
-        </div>
-      </ContextMenu.SubTrigger>
-      <ContextMenu.Portal>
-        <ContextMenu.SubContent className="cmp-context-menu" sideOffset={2} alignOffset={-5}>
-          {connectedItems.length === 0 ? (
-            <ContextMenu.Item className="cmp-context-menu__item" disabled>
-              No connected items
-            </ContextMenu.Item>
-          ) : (
-            connectedItems.map(item => {
-              // Create display name with type indicator
-              const displayName =
-                item.type === 'data' ? `${item.name} (${item.schemaName})` : item.name;
+    <Menu.SubMenu label={'Connected Items'}>
+      {connectedItems.length === 0 ? (
+        <Menu.Item disabled>No connected items</Menu.Item>
+      ) : (
+        connectedItems.map(item => {
+          // Create display name with type indicator
+          const displayName =
+            item.type === 'data' ? `${item.name} (${item.schemaName})` : item.name;
 
-              // Get the appropriate icon component
-              const IconComponent = getConnectionIcon(item);
+          // Get the appropriate icon component
+          const IconComponent = getConnectionIcon(item);
 
-              return (
-                <ContextMenu.Sub key={item.id}>
-                  <ContextMenu.SubTrigger className="cmp-context-menu__sub-trigger">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                      <IconComponent style={{ fontSize: '0.9em', color: 'var(--cmp-fg-dim)' }} />
-                      <div>{displayName}</div>
-                    </div>
-                    <div className="cmp-context-menu__right-slot">
-                      <TbChevronRight />
-                    </div>
-                  </ContextMenu.SubTrigger>
-                  <ContextMenu.Portal>
-                    <ContextMenu.SubContent
-                      className="cmp-context-menu"
-                      sideOffset={2}
-                      alignOffset={-5}
-                    >
-                      {/* Data-specific actions */}
-                      {(item.type === 'data' || item.type === 'both') && item.data && (
-                        <>
-                          <ContextMenu.Item className="cmp-context-menu__item" disabled>
-                            Data Entry ({item.schemaName})
-                          </ContextMenu.Item>
+          return (
+            <Menu.SubMenu key={item.id} label={displayName} leftSlot={<IconComponent />}>
+              {/* Data-specific actions */}
+              {(item.type === 'data' || item.type === 'both') && item.data && (
+                <>
+                  <Menu.Item disabled>Data Entry ({item.schemaName})</Menu.Item>
 
-                          {item.type === 'data' && (
-                            <>
-                              <ContextMenu.Separator className="cmp-context-menu__separator" />
-                              <ContextMenu.Item
-                                className="cmp-context-menu__item"
-                                onClick={() => {
-                                  createNodeForData(item.data!, item.schemaName!, diagram);
-                                }}
-                              >
-                                Create Node
-                              </ContextMenu.Item>
-                            </>
-                          )}
-                        </>
-                      )}
+                  {item.type === 'data' && (
+                    <>
+                      <Menu.Separator />
+                      <Menu.Item
+                        onClick={() => createNodeForData(item.data!, item.schemaName!, diagram)}
+                      >
+                        Create Node
+                      </Menu.Item>
+                    </>
+                  )}
+                </>
+              )}
 
-                      {/* Node-specific actions */}
-                      {(item.type === 'node' || item.type === 'both') && item.node && (
-                        <>
-                          <ContextMenu.Item
-                            className="cmp-context-menu__item"
-                            onClick={() => {
-                              diagram.selection.setElements([item.node!]);
-                            }}
-                          >
-                            Select Node
-                          </ContextMenu.Item>
-                          <ContextMenu.Item
-                            className="cmp-context-menu__item"
-                            onClick={() => {
-                              diagram.selection.toggle(item.node!);
-                            }}
-                          >
-                            Add Node to Selection
-                          </ContextMenu.Item>
-                        </>
-                      )}
-                    </ContextMenu.SubContent>
-                  </ContextMenu.Portal>
-                </ContextMenu.Sub>
-              );
-            })
-          )}
-        </ContextMenu.SubContent>
-      </ContextMenu.Portal>
-    </ContextMenu.Sub>
+              {/* Node-specific actions */}
+              {(item.type === 'node' || item.type === 'both') && item.node && (
+                <>
+                  <Menu.Item onClick={() => sel.setElements([item.node!])}>Select Node</Menu.Item>
+                  <Menu.Item onClick={() => diagram.selection.toggle(item.node!)}>
+                    Add Node to Selection
+                  </Menu.Item>
+                </>
+              )}
+            </Menu.SubMenu>
+          );
+        })
+      )}
+    </Menu.SubMenu>
   );
 };

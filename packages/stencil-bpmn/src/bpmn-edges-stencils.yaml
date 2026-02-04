@@ -1,0 +1,287 @@
+stencils:
+  - id: 'bpmn-edge-sequence'
+    name: Sequence Flow
+    elements:
+      - id: fn2phzx
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_FILLED
+          fill:
+            color: black
+
+  - id: 'bpmn-edge-sequence-conditional'
+    name: Sequence Flow Conditional
+    elements:
+      - id: 1zp8rrc
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_FILLED
+            start:
+              type: DIAMOND_THIN_OUTLINE
+          fill:
+            color: black
+
+  - id: 'bpmn-edge-sequence-default'
+    name: Sequence Flow Default
+    elements:
+      - id: nvmhp4q
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_FILLED
+            start:
+              type: SLASH
+          fill:
+            color: black
+
+  - id: 'bpmn-edge-message'
+    name: Message Flow
+    elements:
+      - id: rtcdltq
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_OUTLINE
+            start:
+              type: BALL_OUTLINE
+              size: 50
+          stroke:
+            pattern: DASHED
+
+  - id: 'bpmn-edge-initiating-message-with-decorator'
+    name: Initiating Message Flow with Decorator
+    elements:
+      - id: bq84hxw
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 160
+            y: 0
+        labelNodes:
+          - id: ye1fgu7
+            type: horizontal
+            offset:
+              x: 0
+              y: 0
+            timeOffset: 0.5
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_OUTLINE
+            start:
+              type: BALL_OUTLINE
+              size: 50
+          stroke:
+            pattern: DASHED
+        children:
+          - id: ye1fgu7
+            type: node
+            nodeType: bpmnChoreographyEnvelope
+            bounds:
+              x: 500
+              y: 950
+              w: 40
+              h: 20
+              r: 0
+            props: { }
+
+  - id: 'bpmn-edge-non-initiating-message-with-decorator'
+    name: Non-Initiating Message Flow with Decorator
+    elements:
+      - id: bq84hxw
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 160
+            y: 0
+        labelNodes:
+          - id: ye1fgu7
+            type: horizontal
+            offset:
+              x: 0
+              y: 0
+            timeOffset: 0.5
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_THIN_OUTLINE
+            start:
+              type: BALL_OUTLINE
+              size: 50
+          stroke:
+            pattern: DASHED
+        children:
+          - id: ye1fgu7
+            type: node
+            nodeType: bpmnChoreographyEnvelope
+            bounds:
+              x: 500
+              y: 950
+              w: 40
+              h: 20
+              r: 0
+            children: [ ]
+            props:
+              fill:
+                color: '#f0f0f0'
+
+
+  - id: 'bpmn-edge-association'
+    name: Association
+    elements:
+      - id: al4opuq
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50
+
+  - id: 'bpmn-edge-association-directional'
+    name: Association Directional
+    elements:
+      - id: say6i9t
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+              size: 75
+            start:
+              type: NONE
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50
+
+  - id: 'bpmn-edge-association-bidirectional'
+    name: Association Bidirectional
+    elements:
+      - id: a1cpbv9
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+              size: 75
+            start:
+              type: SQUARE_STICK_ARROW
+              size: 75
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50
+
+
+  - id: 'bpmn-edge-data-association'
+    name: Data Association
+    elements:
+      - id: al4opuq
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50
+
+  - id: 'bpmn-edge-data-association-directional'
+    name: Data Association Directional
+    elements:
+      - id: say6i9t
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+              size: 75
+            start:
+              type: NONE
+          stroke:
+            pattern: DOTTED
+            patternSpacing: 50

@@ -7,10 +7,13 @@ import { Box } from '@diagram-craft/geometry/box';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { HTMLParser, stripTags } from '@diagram-craft/utils/html';
 import { hash64 } from '@diagram-craft/utils/hash';
-import { applyLineBreaks, applyTemplate } from '@diagram-craft/utils/template';
+import { applyTemplate } from '@diagram-craft/utils/template';
 import { HTMLToSvgTransformer, SvgTextHelper } from './svgTextUtils';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import type { FlatObject } from '@diagram-craft/utils/flatObject';
+import { Angle } from '@diagram-craft/geometry/angle';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { ShapeNodeDefinition, TextHandler } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const VALIGN_TO_FLEX_JUSTIFY = {
   top: 'flex-start',
@@ -22,6 +25,7 @@ const withPx = (n?: number) => (n ? `${n}px` : undefined);
 
 export type ShapeTextProps = {
   id: string;
+  node: DiagramNode;
   metadata: DeepReadonly<FlatObject> | undefined;
   textProps: NodeProps['text'];
   text: string;
@@ -43,13 +47,29 @@ const requiresForeignObject = (s: string) => {
   return s.includes('<table') || s.includes('<hr');
 };
 
-const RAW_TEXT_DATA_ATTR = 'raw';
+const storedToEdit = (handler: TextHandler | undefined, s: string) => {
+  return handler ? handler.storedToEdit(s) : s;
+};
+
+const editToStored = (handler: TextHandler | undefined, s: string) => {
+  return (handler ? handler.editToStored(s) : s) ?? '';
+};
+
+const storedToHTML = (
+  handler: TextHandler | undefined,
+  s: string,
+  metadata: DeepReadonly<FlatObject>
+) => {
+  const html = handler ? handler.storedToHTML(s) : s;
+  return stripOuterPTags(applyTemplate(html, metadata, true));
+};
 
 export class ShapeText extends Component<ShapeTextProps> {
   private width: number = 0;
   private height: number = 0;
 
-  static edit(textId: string, elementId: string) {
+  static edit(textId: string, element: DiagramNode) {
+    const elementId = element.id;
     const domId = `text_${textId}_${elementId}`;
 
     const editable = getTextElement(domId);
@@ -58,9 +78,15 @@ export class ShapeText extends Component<ShapeTextProps> {
       return;
     }
 
-    editable.innerHTML = editable.dataset[RAW_TEXT_DATA_ATTR]!;
+    const def = element.getDefinition() as ShapeNodeDefinition;
+    const textHandlers = def.getTextHandler(element);
 
-    editable.contentEditable = 'true';
+    editable.innerHTML = storedToEdit(
+      textHandlers.inline,
+      element.texts[textId === '1' ? 'text' : textId] ?? ''
+    );
+
+    editable.contentEditable = textHandlers.inline ? 'plaintext-only' : 'true';
     editable.style.pointerEvents = 'auto';
     editable.onmousedown = (e: MouseEvent) => {
       if (editable.contentEditable === 'true') {
@@ -117,20 +143,24 @@ export class ShapeText extends Component<ShapeTextProps> {
       props.onSizeChange?.({ w, h });
     };
 
+    const def = props.node.getDefinition() as ShapeNodeDefinition;
+    const handler = def.getTextHandler(props.node).inline;
+
     const pos = textProps.position;
+    const w = ((textProps.width ?? 100) / 100) * props.bounds.w;
     const foreignObject = svg.foreignObject(
       {
         class: 'svg-node__fo',
         id: props.id,
         x: (
           props.bounds.x +
-          (pos?.includes('w') ? -props.bounds.w : pos?.includes('e') ? props.bounds.w : 0)
+          (pos?.includes('w') ? -w : pos?.includes('e') ? w : (props.bounds.w - w) / 2)
         ).toString(),
         y: (
           props.bounds.y +
           (pos?.includes('n') ? -props.bounds.h : pos?.includes('s') ? props.bounds.h : 0)
         ).toString(),
-        width: props.bounds.w.toString(),
+        width: w.toString(),
         height: props.bounds.h.toString(),
         style: 'pointer-events: none;'
       },
@@ -144,7 +174,6 @@ export class ShapeText extends Component<ShapeTextProps> {
             {
               class: 'svg-node__text',
               style: styleString,
-              [`data-${RAW_TEXT_DATA_ATTR}`]: applyLineBreaks(props.text),
               on: {
                 paste: (e: ClipboardEvent) => {
                   const data = e.clipboardData!.getData('text/html');
@@ -155,7 +184,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 keydown: (e: KeyboardEvent) => {
                   const target = e.target as HTMLElement;
                   if (e.key === 'Escape') {
-                    target.innerHTML = applyLineBreaks(target.dataset[RAW_TEXT_DATA_ATTR]);
+                    target.innerHTML = storedToHTML(handler, props.text, metadata);
                     target.blur();
                   } else if (e.key === 'Enter' && e.metaKey) {
                     target.blur();
@@ -168,10 +197,10 @@ export class ShapeText extends Component<ShapeTextProps> {
                   target.contentEditable = 'false';
                   target.style.pointerEvents = 'none';
 
-                  target.dataset[RAW_TEXT_DATA_ATTR] = target.innerHTML;
-                  props.onChange(target.innerHTML);
+                  const newValue = editToStored(handler, target.innerHTML);
+                  props.onChange(newValue);
 
-                  target.innerHTML = applyTemplate(target.innerHTML, metadata, true);
+                  target.innerHTML = storedToHTML(handler, newValue, metadata);
 
                   updateBounds(target.offsetWidth, target.offsetHeight);
                 }
@@ -191,7 +220,7 @@ export class ShapeText extends Component<ShapeTextProps> {
                 }
               }
             },
-            [rawHTML(applyTemplate(props.text, metadata, true))]
+            [rawHTML(storedToHTML(handler, props.text, metadata))]
           )
         ]
       )
@@ -199,7 +228,15 @@ export class ShapeText extends Component<ShapeTextProps> {
 
     const mode = requiresForeignObject(props.text ?? '') ? 'foreignObject' : 'foreignObject';
     if (mode === 'foreignObject') {
-      return foreignObject;
+      return svg.g(
+        {
+          transform:
+            props.bounds.r === 0
+              ? ''
+              : `rotate(${Angle.toDeg(props.bounds.r)} ${Box.center(props.bounds).x} ${Box.center(props.bounds).y})`
+        },
+        foreignObject
+      );
     }
 
     foreignObject.data.class = 'svg-node__fo svg-node__fo--with-text';
@@ -253,3 +290,16 @@ export class ShapeText extends Component<ShapeTextProps> {
     );
   }
 }
+
+const stripOuterPTags = (text: string) => {
+  if (text.startsWith('<p>') && text.endsWith('</p>')) {
+    // Extract the content between the outer <p> and </p>
+    const content = text.slice(3, -4);
+
+    // Only strip if there are no more <p> tags in the content
+    if (!content.includes('<p>')) {
+      return content;
+    }
+  }
+  return text;
+};

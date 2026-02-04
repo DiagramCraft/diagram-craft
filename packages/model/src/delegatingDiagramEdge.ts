@@ -19,7 +19,7 @@ import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { Path } from '@diagram-craft/geometry/path';
 import { Transform } from '@diagram-craft/geometry/transform';
 import type { DuplicationContext } from './diagramNode';
-import { DiagramElement } from './diagramElement';
+import { DiagramElement, InvalidationScope } from './diagramElement';
 import { SerializedEdge, SerializedEndpoint } from './serialization/serializedTypes';
 import type { PropertyInfo } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
@@ -77,7 +77,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     );
 
     this.#localProps = new CRDTObject<EdgeProps>(propsMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -169,11 +169,11 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   updateProps(callback: (props: EdgeProps) => void, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const props = this.#localProps.getClone() as EdgeProps;
-    callback(props);
-    this.#localProps.set(props);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const props = this.#localProps.getClone() as EdgeProps;
+      callback(props);
+      this.#localProps.set(props);
+    });
     this.clearCache();
   }
 
@@ -232,10 +232,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   setStart(start: Endpoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localStart.set(start);
-    this.#hasLocalStart.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localStart.set(start);
+      this.#hasLocalStart.set(true);
+    });
     this.clearCache();
   }
 
@@ -248,10 +248,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   setEnd(end: Endpoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    this.#localEnd.set(end);
-    this.#hasLocalEnd.set(true);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      this.#localEnd.set(end);
+      this.#hasLocalEnd.set(true);
+    });
     this.clearCache();
   }
 
@@ -289,45 +289,46 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
   }
 
   replaceWaypoint(i: number, wp: Waypoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = [...this.waypoints];
-    currentWaypoints[i] = wp;
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = [...this.waypoints];
+      currentWaypoints[i] = wp;
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 
   addWaypoint(wp: Waypoint, uow: UnitOfWork): number {
-    uow.snapshot(this);
     const currentWaypoints = [...this.waypoints];
-    currentWaypoints.push(wp);
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
 
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      currentWaypoints.push(wp);
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
+
     this.clearCache();
     return currentWaypoints.length - 1;
   }
 
   removeWaypoint(waypoint: Waypoint, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = this.waypoints.filter(wp => wp !== waypoint);
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 
   moveWaypoint(waypoint: Waypoint, point: Point, uow: UnitOfWork): void {
-    uow.snapshot(this);
-    const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
-    this.#localWaypoints.set(currentWaypoints);
-    this.#hasLocalWaypoints.set(true);
+    uow.executeUpdate(this, () => {
+      const currentWaypoints = this.waypoints.map(wp => (wp === waypoint ? { ...wp, point } : wp));
+      this.#localWaypoints.set(currentWaypoints);
+      this.#hasLocalWaypoints.set(true);
+    });
 
-    uow.updateElement(this);
     this.clearCache();
   }
 
@@ -351,12 +352,16 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return this.delegate.getAttachmentsInUse();
   }
 
-  invalidate(uow: UnitOfWork): void {
-    this.delegate.invalidate(uow);
+  invalidate(scope: InvalidationScope, uow: UnitOfWork): void {
+    this.delegate.invalidate(scope, uow);
   }
 
-  detach(uow: UnitOfWork): void {
-    this.delegate.detach(uow);
+  _onDetach(uow: UnitOfWork): void {
+    this.delegate._onDetach(uow);
+  }
+
+  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
+    this.delegate._detachAndRemove(uow, callback);
   }
 
   duplicate(ctx?: DuplicationContext, id?: string): DiagramElement {
@@ -365,6 +370,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild?: boolean): void {
     this.delegate.transform(transforms, uow, isChild);
+  }
+
+  _transformWaypoints(transforms: ReadonlyArray<Transform>): void {
+    this.delegate._transformWaypoints(transforms);
   }
 
   snapshot() {

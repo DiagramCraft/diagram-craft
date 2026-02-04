@@ -14,7 +14,7 @@ import type { Diagram } from '../diagram';
 
 const createModificationLayer = (diagram: TestDiagramBuilder) => {
   const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
-  diagram.layers.add(modLayer, UnitOfWork.immediate(diagram));
+  UnitOfWork.execute(diagram, uow => diagram.layers.add(modLayer, uow));
   return modLayer;
 };
 
@@ -34,11 +34,11 @@ describe('deserializeDiagramDocument', () => {
 
       const node = layer.addNode({ id: 'node-1' });
       const nodeTags = ['ui', 'component', 'button'];
-      node.setTags(nodeTags, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => node.setTags(nodeTags, uow));
 
       const edge = layer.addEdge({ id: 'edge-1' });
       const edgeTags = ['flow', 'data', 'critical'];
-      edge.setTags(edgeTags, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => edge.setTags(edgeTags, uow));
 
       originalDoc.addDiagram(diagram);
 
@@ -71,18 +71,18 @@ describe('deserializeDiagramDocument', () => {
       const diagram1 = new TestDiagramBuilder(originalDoc, 'diagram1');
       const layer1 = diagram1.newLayer();
       const node1 = layer1.addNode();
-      node1.setTags(['ui', 'button', 'primary'], UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => node1.setTags(['ui', 'button', 'primary'], uow));
 
       const edge1 = layer1.addEdge();
-      edge1.setTags(['flow', 'data'], UnitOfWork.immediate(diagram1));
+      UnitOfWork.execute(diagram1, uow => edge1.setTags(['flow', 'data'], uow));
 
       const diagram2 = new TestDiagramBuilder(originalDoc, 'diagram2');
       const layer2 = diagram2.newLayer();
       const node2 = layer2.addNode();
-      node2.setTags(['api', 'service', 'primary'], UnitOfWork.immediate(diagram2)); // 'primary' overlaps
+      UnitOfWork.execute(diagram2, uow => node2.setTags(['api', 'service', 'primary'], uow)); // 'primary' overlaps
 
       const edge2 = layer2.addEdge();
-      edge2.setTags(['network', 'http'], UnitOfWork.immediate(diagram2));
+      UnitOfWork.execute(diagram2, uow => edge2.setTags(['network', 'http'], uow));
 
       originalDoc.addDiagram(diagram1);
       originalDoc.addDiagram(diagram2);
@@ -151,12 +151,12 @@ describe('deserializeDiagramDocument', () => {
       const parentDiagram = new TestDiagramBuilder(originalDoc, 'parent');
       const parentLayer = parentDiagram.newLayer();
       const parentNode = parentLayer.addNode();
-      parentNode.setTags(['parent', 'container'], UnitOfWork.immediate(parentDiagram));
+      UnitOfWork.execute(parentDiagram, uow => parentNode.setTags(['parent', 'container'], uow));
 
       const childDiagram = new TestDiagramBuilder(originalDoc, 'child');
       const childLayer = childDiagram.newLayer();
       const childNode = childLayer.addNode();
-      childNode.setTags(['child', 'detail'], UnitOfWork.immediate(childDiagram));
+      UnitOfWork.execute(childDiagram, uow => childNode.setTags(['child', 'detail'], uow));
 
       originalDoc.addDiagram(parentDiagram);
       originalDoc.addDiagram(childDiagram, parentDiagram);
@@ -454,35 +454,35 @@ describe('deserializeDiagramDocument', () => {
       // Create a regular layer with base elements
       const regularLayer = diagram.newLayer();
       const baseNodeForAdd = regularLayer.addNode({ id: 'base-node' });
-      baseNodeForAdd.setTags(['base', 'original'], UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => baseNodeForAdd.setTags(['base', 'original'], uow));
 
       const nodeToRemove = regularLayer.addNode({ id: 'node-to-remove' });
-      nodeToRemove.setTags(['temp'], UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => nodeToRemove.setTags(['temp'], uow));
 
       const nodeToChange = regularLayer.addNode({ id: 'node-to-change' });
-      nodeToChange.setTags(['original'], UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => nodeToChange.setTags(['original'], uow));
 
       // Create a modification layer
       const modLayer = createModificationLayer(diagram);
 
       // Add modification
       const delegatingNode1 = new DelegatingDiagramNode('delegating-1', baseNodeForAdd, modLayer);
-      delegatingNode1.setBounds(
-        { x: 15, y: 15, h: 25, w: 50, r: 0.5 },
-        UnitOfWork.immediate(diagram)
+      UnitOfWork.execute(diagram, uow =>
+        delegatingNode1.setBounds({ x: 15, y: 15, h: 25, w: 50, r: 0.5 }, uow)
       );
-      modLayer.modifyAdd('base-node', delegatingNode1, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => modLayer.modifyAdd('base-node', delegatingNode1, uow));
 
       // Remove modification
-      modLayer.modifyRemove('node-to-remove', UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => modLayer.modifyRemove('node-to-remove', uow));
 
       // Change modification
       const delegatingNode2 = new DelegatingDiagramNode('delegating-2', nodeToChange, modLayer);
-      delegatingNode2.setBounds(
-        { x: 5, y: 10, w: 15, h: 20, r: 0.25 },
-        UnitOfWork.immediate(diagram)
+      UnitOfWork.execute(diagram, uow =>
+        delegatingNode2.setBounds({ x: 5, y: 10, w: 15, h: 20, r: 0.25 }, uow)
       );
-      modLayer.modifyChange('node-to-change', delegatingNode2, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow =>
+        modLayer.modifyChange('node-to-change', delegatingNode2, uow)
+      );
 
       originalDoc.addDiagram(diagram);
 
@@ -538,26 +538,26 @@ describe('deserializeDiagramDocument', () => {
 
       // Setup for delegating node
       const baseNode = regularLayer.addNode({ id: 'base-node' });
-      baseNode.updateProps(props => {
-        props.fill = { color: 'red' };
-        props.stroke = { color: 'blue' };
-      }, UnitOfWork.immediate(diagram));
-      baseNode.setText('Base Text', UnitOfWork.immediate(diagram));
-      baseNode.updateMetadata(metadata => {
-        metadata.name = 'Base Name';
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => {
+        baseNode.updateProps(props => {
+          props.fill = { color: 'red' };
+          props.stroke = { color: 'blue' };
+        }, uow);
+        baseNode.setText('Base Text', uow);
+        baseNode.updateMetadata(metadata => (metadata.name = 'Base Name'), uow);
+      });
 
       // Setup for delegating edge
       const node1 = regularLayer.addNode({ id: 'node-1' });
       const node2 = regularLayer.addNode({ id: 'node-2' });
       const baseEdge = regularLayer.addEdge({ id: 'base-edge' });
-      baseEdge.updateProps(props => {
-        props.stroke = { color: 'red', width: 2 };
-        props.arrow = { end: { type: 'BAR', size: 10 } };
-      }, UnitOfWork.immediate(diagram));
-      baseEdge.updateMetadata(metadata => {
-        metadata.name = 'Base Edge';
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => {
+        baseEdge.updateProps(props => {
+          props.stroke = { color: 'red', width: 2 };
+          props.arrow = { end: { type: 'BAR', size: 10 } };
+        }, uow);
+        baseEdge.updateMetadata(metadata => (metadata.name = 'Base Edge'), uow);
+      });
 
       // Create a modification layer
       const modLayer = createModificationLayer(diagram);
@@ -578,7 +578,7 @@ describe('deserializeDiagramDocument', () => {
           }
         }
       });
-      modLayer.modifyChange('base-node', delegatingNode, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => modLayer.modifyChange('base-node', delegatingNode, uow));
 
       // Create delegating edge with all overrides
       const newStart = new AnchorEndpoint(node1, 'anchor1', { x: 0.2, y: 0.3 });
@@ -602,7 +602,7 @@ describe('deserializeDiagramDocument', () => {
         }
       });
 
-      modLayer.modifyChange('base-edge', delegatingEdge, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => modLayer.modifyChange('base-edge', delegatingEdge, uow));
 
       originalDoc.addDiagram(diagram);
 

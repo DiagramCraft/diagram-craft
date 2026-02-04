@@ -1,31 +1,57 @@
 import type { BaseNodeComponent } from '../components/BaseNodeComponent';
-import { PathListBuilder, PathBuilderHelper } from '@diagram-craft/geometry/pathListBuilder';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   CustomPropertyDefinition,
-  NodeCapability,
-  NodeDefinition
+  NodeDefinition,
+  NodeFlag,
+  NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { round } from '@diagram-craft/utils/math';
 import { Anchor, AnchorStrategy, BoundaryDirection } from '@diagram-craft/model/anchor';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
+import type { Component } from '../component/component';
+import type { ActionMap } from '../action';
+import { Diagram } from '@diagram-craft/model/diagram';
+import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
-type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
+export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
 };
 
+export type TextHandler = {
+  storedToEdit: (s: string) => string;
+  editToStored: (e: string) => string;
+  storedToHTML: (e: string) => string;
+};
+
+type TextHandlers = {
+  format?: string;
+  dialog: TextHandler;
+  inline?: TextHandler;
+};
+
 export abstract class ShapeNodeDefinition implements NodeDefinition {
-  protected capabilities: Record<NodeCapability, boolean>;
+  private flags: Record<NodeFlag, boolean> = {};
+
+  public static DEFAULT_TEXT_HANDLERS: TextHandlers = {
+    dialog: {
+      editToStored: (s: string) => s,
+      storedToEdit: (s: string) => s,
+      storedToHTML: (s: string) => s
+    }
+  };
 
   public readonly name: string;
   public readonly type: string;
   public readonly component: NodeShapeConstructor<this>;
+  public readonly overlayComponent?: { new (): Component<{ node: DiagramNode }> };
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   protected constructor(type: string, component: NodeShapeConstructor<any>);
@@ -47,24 +73,46 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       throw new VerifyNotReached();
     }
 
-    this.capabilities = {
-      'fill': true,
-      'select': true,
-      'children': false,
-      'connect-to-boundary': true,
-      'anchors-configurable': true,
-      'rounding': true
-    };
+    this.setFlags({
+      [NodeFlags.StyleFill]: true,
+      [NodeFlags.StyleRounding]: true,
+      [NodeFlags.AnchorsBoundary]: true,
+      [NodeFlags.AnchorsConfigurable]: true,
+      [NodeFlags.ChildrenCanConvertToContainer]: true,
+      [NodeFlags.ChildrenCanHaveLayout]: false,
+      [NodeFlags.ChildrenCollapsible]: false,
+      [NodeFlags.ChildrenAllowed]: false,
+      [NodeFlags.ChildrenSelectParent]: false,
+      [NodeFlags.ChildrenManagedByParent]: false,
+      [NodeFlags.ChildrenTransformRotate]: true,
+      [NodeFlags.ChildrenTransformScaleX]: true,
+      [NodeFlags.ChildrenTransformScaleY]: true,
+      [NodeFlags.ChildrenTransformTranslate]: true
+    });
   }
 
-  supports(capability: NodeCapability): boolean {
-    return this.capabilities[capability];
+  protected setFlags(flags: Record<NodeFlag, boolean>) {
+    this.flags = { ...this.flags, ...flags };
+  }
+
+  onAdd(node: DiagramNode, _diagram: Diagram, _uow: UnitOfWork) {
+    for (const schema of this.getCustomPropertyDefinitions(node).dataSchemas) {
+      this.ensureSchema(node.diagram, schema.id, schema);
+    }
+  }
+
+  hasFlag(flag: NodeFlag): boolean {
+    return this.flags[flag] ?? false;
   }
 
   getBoundingPathBuilder(node: DiagramNode) {
     const pathBuilder = new PathListBuilder();
     PathBuilderHelper.rect(pathBuilder, node.bounds);
     return pathBuilder;
+  }
+
+  getTextHandler(_node: DiagramNode): TextHandlers {
+    return ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS;
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {
@@ -76,7 +124,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getAnchors(node: DiagramNode) {
-    const anchorStrategy = node.getDefinition().supports('anchors-configurable')
+    const anchorStrategy = node.getDefinition().hasFlag(NodeFlags.AnchorsConfigurable)
       ? (node.renderProps.anchors.type ?? 'shape-defaults')
       : 'shape-defaults';
 
@@ -111,13 +159,25 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     } else if (anchorStrategy === 'north-south') {
       return [
         { id: '1', start: Point.of(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-        { id: '2', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+        {
+          id: '2',
+          start: Point.of(0.5, 0),
+          type: 'point',
+          isPrimary: true,
+          normal: -Math.PI / 2
+        },
         { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
       ] satisfies Anchor[];
     } else if (anchorStrategy === 'east-west') {
       return [
         { id: '3', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
-        { id: '4', start: Point.of(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+        {
+          id: '4',
+          start: Point.of(0, 0.5),
+          type: 'point',
+          isPrimary: true,
+          normal: Math.PI
+        },
         { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
       ] satisfies Anchor[];
     } else if (anchorStrategy === 'directions') {
@@ -150,8 +210,12 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
-  getCustomPropertyDefinitions(_node: DiagramNode): ReadonlyArray<CustomPropertyDefinition> {
-    return [];
+  getCustomPropertyDefinitions(_node: DiagramNode): CustomPropertyDefinition {
+    return new CustomPropertyDefinition(() => []);
+  }
+
+  getShapeActions(_node: DiagramNode): ReadonlyArray<keyof ActionMap> {
+    return ['SELECTION_CHANGE_SHAPE', 'SELECTION_CHANGE_TO_CONTAINER'];
   }
 
   requestFocus(node: DiagramNode, selectAll = true): void {
@@ -178,14 +242,12 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
-    if (uow.changeType === 'interactive') return;
-
     const boundsBefore = node.bounds;
 
     this.layoutChildren(node, uow);
 
     if (node.parent && isNode(node.parent) && !Box.isEqual(node.bounds, boundsBefore)) {
-      uow.registerOnCommitCallback('onChildChanged', node.parent, () => {
+      uow.on('before', 'commit', `onChildChanged/${node.parent.id}`, () => {
         assert.node(node.parent!);
 
         const parentDef = node.parent.getDefinition();
@@ -197,25 +259,37 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   onTransform(
     transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
-    _newBounds: Box,
-    _previousBounds: Box,
+    newBounds: Box,
+    prevBounds: Box,
     uow: UnitOfWork
   ): void {
+    const isRotated = newBounds.r !== prevBounds.r;
+    if (isRotated && !this.hasFlag(NodeFlags.ChildrenTransformRotate)) return;
+
+    /**
+     * Rotation might include translation to handle rotation around specific
+     * points - we allow this, even is not allowing translations
+     */
+    const isTranslated = newBounds.x !== prevBounds.x || newBounds.y !== prevBounds.y;
+    if (isTranslated && !isRotated && !this.hasFlag(NodeFlags.ChildrenTransformTranslate)) return;
+
+    const layout = node.renderProps.layout.container.enabled;
+
+    const isScaledX = newBounds.w !== prevBounds.w;
+    if (isScaledX && !this.hasFlag(NodeFlags.ChildrenTransformScaleX) && !layout) {
+      return;
+    }
+
+    const isScaledY = newBounds.h !== prevBounds.h;
+    if (isScaledY && !this.hasFlag(NodeFlags.ChildrenTransformScaleY) && !layout) {
+      return;
+    }
+
     for (const child of node.children) {
       child.transform(transforms, uow, true);
     }
 
     this.layoutChildren(node, uow);
-  }
-
-  onDrop(
-    _coord: Point,
-    _node: DiagramNode,
-    _elements: ReadonlyArray<DiagramElement>,
-    _uow: UnitOfWork,
-    _operation: string
-  ) {
-    // Do nothing
   }
 
   onPropUpdate(node: DiagramNode, uow: UnitOfWork): void {
@@ -230,6 +304,20 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
           def.layoutChildren(child, uow);
         }
       }
+    }
+  }
+
+  protected ensureSchema(diagram: Diagram, schemaName: string, schemaDef: DataSchema) {
+    const data = diagram.document.data;
+    if (!data.db.findSchemaByName(schemaName)) {
+      data.db.addSchema(schemaDef, 'default').then(() => {
+        data.setSchemaMetadata(schemaName, {
+          availableForElementLocalData: true
+        });
+      });
+    } else {
+      // This is only for debugging purposes
+      data.db.updateSchema(schemaDef);
     }
   }
 }

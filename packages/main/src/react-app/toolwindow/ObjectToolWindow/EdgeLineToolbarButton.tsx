@@ -15,32 +15,34 @@ export const EdgeLineToolbarButton = () => {
 
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Toolbar.Button>
-          <div
-            style={{
-              marginLeft: '5px',
-              width: '75px',
-              height: '12px',
-              backgroundColor: 'var(--canvas-bg)',
-              marginRight: '3px',
-              paddingTop: '2px',
-              border: '1px solid var(--base-fg-more-dim)',
-              borderRadius: '3px'
-            }}
-          >
-            <ArrowPreview
-              fg={fillColor.val}
-              bg={'var(--canvas-bg)'}
-              color={strokeColor.val}
-              width={65}
-              type={arrowStart.val}
-              start={ARROW_SHAPES[arrowStart.val as ArrowType]?.(0.75, 1)}
-              end={ARROW_SHAPES[arrowEnd.val as ArrowType]?.(0.75, 1)}
-            />
-          </div>
-        </Toolbar.Button>
-      </Popover.Trigger>
+      <Popover.Trigger
+        element={
+          <Toolbar.Button>
+            <div
+              style={{
+                marginLeft: '5px',
+                width: '75px',
+                height: '12px',
+                backgroundColor: 'var(--canvas-bg)',
+                marginRight: '3px',
+                paddingTop: '2px',
+                border: '1px solid var(--base-fg-more-dim)',
+                borderRadius: '3px'
+              }}
+            >
+              <ArrowPreview
+                fg={fillColor.val}
+                bg={'var(--canvas-bg)'}
+                color={strokeColor.val}
+                width={65}
+                type={arrowStart.val}
+                start={ARROW_SHAPES[arrowStart.val as ArrowType]?.(0.75, 1)}
+                end={ARROW_SHAPES[arrowEnd.val as ArrowType]?.(0.75, 1)}
+              />
+            </div>
+          </Toolbar.Button>
+        }
+      />
       <Popover.Content sideOffset={5}>
         <EdgeLinePanel mode={'panel'} />
       </Popover.Content>

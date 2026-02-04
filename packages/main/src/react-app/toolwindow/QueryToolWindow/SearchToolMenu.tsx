@@ -1,5 +1,4 @@
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { TbChevronRight, TbDots } from 'react-icons/tb';
+import { TbDots } from 'react-icons/tb';
 import type { QueryType } from '@diagram-craft/model/documentProps';
 import { useApplication, useDocument } from '../../../application';
 import { useCallback, useState } from 'react';
@@ -8,14 +7,15 @@ import { RuleEditorDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { useToolWindowControls } from '../ToolWindow';
 import { useQueryToolWindowContext } from './QueryToolWindowContext';
 import { ElementSearchClause } from '@diagram-craft/model/diagramElementSearch';
-import { convertSimpleSearchToDJQL, convertAdvancedSearchToDJQL } from './djqlConverter';
+import { convertAdvancedSearchToDJQL, convertSimpleSearchToDJQL } from './djqlConverter';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ManageSavedSearchesDialog } from './ManageSavedSearchesDialog';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
 
 type SearchToolMenuProps = {
   type: QueryType;
@@ -118,11 +118,11 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     application.ui.showDialog(
       new RuleEditorDialogCommand({ rule: rule }, (editedRule: AdjustmentRule) => {
         const diagram = application.model.activeDiagram;
-        const uow = new UnitOfWork(diagram, true);
 
-        const ruleLayer = new RuleLayer(newid(), editedRule.name, diagram, [editedRule]);
-        diagram.layers.add(ruleLayer, uow);
-        commitWithUndo(uow, 'Create rule layer');
+        UnitOfWork.executeWithUndo(diagram, 'Create rule layer', uow => {
+          const ruleLayer = new RuleLayer(newid(), editedRule.name, diagram, [editedRule]);
+          diagram.layers.add(ruleLayer, uow);
+        });
       })
     );
   }, [createRuleClausesFromSearch, props.getLabel, application]);
@@ -150,89 +150,38 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
   }, [props, document, setDjqlQuery, switchTab]);
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <a className={'cmp-button cmp-button--icon-only'}>
-          <TbDots />
-        </a>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="cmp-context-menu" align={'start'}>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger
-              className="cmp-context-menu__item"
-              disabled={history.length === 0}
-            >
-              Recent Searches
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                {history.map(({ scope, value, label }) => (
-                  <DropdownMenu.Item
-                    key={value}
-                    className="cmp-context-menu__item"
-                    onClick={() => props.onQuerySelect(scope, value)}
-                  >
-                    {label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger
-              className="cmp-context-menu__item"
-              disabled={saved.length === 0}
-            >
-              Saved Searches
-              <div className="cmp-context-menu__right-slot">
-                <TbChevronRight />
-              </div>
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent className="cmp-context-menu">
-                {saved.map(({ scope, value, label }) => (
-                  <DropdownMenu.Item
-                    key={value}
-                    className="cmp-context-menu__item"
-                    onClick={() => props.onQuerySelect(scope, value)}
-                  >
-                    {label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-          <DropdownMenu.Item className="cmp-context-menu__item" onClick={saveSearch}>
-            Save Search
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="cmp-context-menu__item"
-            onClick={() => setIsManageDialogOpen(true)}
-          >
-            Manage Saved Searches
-          </DropdownMenu.Item>
-          <DropdownMenu.Separator className="cmp-context-menu__separator" />
-          {props.type !== 'djql' && (
-            <DropdownMenu.Item className="cmp-context-menu__item" onClick={convertToDJQL}>
-              Convert to DJQL
-            </DropdownMenu.Item>
-          )}
-          <DropdownMenu.Item className="cmp-context-menu__item" onClick={createRuleLayer}>
-            Create Rule Layer
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+    <MenuButton.Root>
+      <MenuButton.Trigger type={'icon-only'}>
+        <TbDots />
+      </MenuButton.Trigger>
+      <MenuButton.Menu>
+        <Menu.SubMenu disabled={history.length === 0} label={'Recent Searches'}>
+          {history.map(({ scope, value, label }) => (
+            <Menu.Item key={value} onClick={() => props.onQuerySelect(scope, value)}>
+              {label}
+            </Menu.Item>
+          ))}
+        </Menu.SubMenu>
+        <Menu.Separator />
+        <Menu.SubMenu label={'Saved Searches'} disabled={saved.length === 0}>
+          {saved.map(({ scope, value, label }) => (
+            <Menu.Item key={value} onClick={() => props.onQuerySelect(scope, value)}>
+              {label}
+            </Menu.Item>
+          ))}
+        </Menu.SubMenu>
+        <Menu.Item onClick={saveSearch}>Save Search</Menu.Item>
+        <Menu.Item onClick={() => setIsManageDialogOpen(true)}>Manage Saved Searches</Menu.Item>
+        <Menu.Separator />
+        {props.type !== 'djql' && <Menu.Item onClick={convertToDJQL}>Convert to DJQL</Menu.Item>}
+        <Menu.Item onClick={createRuleLayer}>Create Rule Layer</Menu.Item>
+      </MenuButton.Menu>
 
       <ManageSavedSearchesDialog
         open={isManageDialogOpen}
         onClose={() => setIsManageDialogOpen(false)}
         initialSearchType={props.type}
       />
-    </DropdownMenu.Root>
+    </MenuButton.Root>
   );
 };

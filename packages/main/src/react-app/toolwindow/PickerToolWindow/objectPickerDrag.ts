@@ -1,12 +1,10 @@
 import { AbstractMoveDrag } from '@diagram-craft/canvas/drag/moveDrag';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
@@ -15,7 +13,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 enum State {
@@ -32,7 +30,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
   constructor(
     event: MouseEvent,
-    readonly source: DiagramNode,
+    readonly source: DiagramElement[],
     readonly diagram: Diagram,
     readonly stencilId: string | undefined,
     context: Context
@@ -70,19 +68,17 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.diagram.undoManager.combine(() => {
-      if (this.#state === State.INSIDE) {
-        this.diagram.undoManager.addAndExecute(
-          new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer)
-        );
-      }
-
-      super.onDragEnd();
-    });
+    super.onDragEnd();
 
     if (this.stencilId) {
       this.diagram.document.props.recentStencils.register(this.stencilId);
     }
+  }
+
+  cancel() {
+    this.diagram.selection.clear();
+    this.diagram.selection.setElements(this.#originalSelectionState);
+    this.removeElement();
   }
 
   onDragEnter(event: DragEvents.DragEnter) {
@@ -150,17 +146,19 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const scale = clamp(this.diagram.viewBox.zoomLevel, 0.3, 3);
 
-    const { diagram: dest } = createThumbnailDiagramForNode(
-      () => this.source.duplicate(),
-      this.diagram.document.definitions
+    const { diagram: dest } = createThumbnail(
+      (_d, l, uow) => cloneElements(this.source, l, uow),
+      this.diagram.document.registry
     );
+
+    const bounds = Box.boundingBox(this.source.map(e => e.bounds));
 
     const props = {
       id: `canvas-drag-image-${dest.id}`,
       context: this.context,
       diagram: dest,
-      width: this.source.bounds.w / scale,
-      height: this.source.bounds.h / scale
+      width: bounds.w / scale,
+      height: bounds.h / scale
     };
 
     const canvas = new StaticCanvasComponent(props);
@@ -169,10 +167,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const $canvasEl = $canvasVdomNode.el!;
     $canvasEl.style.background = 'transparent';
-    $canvasEl.setAttribute(
-      'viewBox',
-      `-2 -2 ${this.source.bounds.w + 4} ${this.source.bounds.h + 4}`
-    );
+    $canvasEl.setAttribute('viewBox', `-2 -2 ${bounds.w + 4} ${bounds.h + 4}`);
 
     this.#dragImage = document.createElement('div');
     setPosition(this.#dragImage, point);
@@ -189,50 +184,46 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
   }
 
   private addElement(point: Point) {
-    const sourceLayer = this.source.diagram.activeLayer;
+    const sourceDiagram = this.source[0]!.diagram;
+    const sourceLayer = sourceDiagram.activeLayer;
     assertRegularLayer(sourceLayer);
 
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this.#elements = cloneElements(
-      sourceLayer.elements,
-      activeLayer,
-      UnitOfWork.immediate(this.diagram)
-    );
+    this.#elements = cloneElements(sourceLayer.elements, activeLayer);
 
+    const sourceBounds = Box.boundingBox(this.source.map(e => e.bounds));
     const bounds = Box.boundingBox(this.#elements.map(e => e.bounds));
 
-    const scaleX = this.source.bounds.w / bounds.w;
-    const scaleY = this.source.bounds.h / bounds.h;
-    assignNewBounds(
-      this.#elements,
-      point,
-      Point.of(scaleX, scaleY),
-      UnitOfWork.immediate(this.diagram)
-    );
+    const scaleX = sourceBounds.w / bounds.w;
 
-    const uow = UnitOfWork.immediate(this.diagram);
-    this.#elements.forEach(e => {
-      activeLayer.addElement(e, UnitOfWork.immediate(this.diagram));
-      if (isNode(e)) {
-        e.updateMetadata(meta => {
-          if (meta.style === DefaultStyles.node.default) {
-            meta.style = this.diagram.document.styles.activeNodeStylesheet.id;
-          }
-          if (meta.textStyle === DefaultStyles.text.default) {
-            meta.textStyle = this.diagram.document.styles.activeTextStylesheet.id;
-          }
-        }, uow);
-      } else if (isEdge(e)) {
-        e.updateMetadata(
-          meta => (meta.style = this.diagram.document.styles.activeEdgeStylesheet.id),
-          uow
-        );
-      }
+    // Prevent NaN for zero-heigh edges
+    const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
+
+    this.#elements.forEach(e => activeLayer.addElement(e, this.uow));
+
+    UnitOfWork.execute(this.diagram, uow => {
+      assignNewBounds(this.#elements, point, Point.of(scaleX, scaleY), uow);
+
+      this.#elements.forEach(e => {
+        if (isNode(e)) {
+          e.updateMetadata(meta => {
+            if (meta.style === DefaultStyles.node.default) {
+              meta.style = this.diagram.document.styles.activeNodeStylesheet.id;
+            }
+            if (meta.textStyle === DefaultStyles.text.default) {
+              meta.textStyle = this.diagram.document.styles.activeTextStylesheet.id;
+            }
+          }, uow);
+        } else if (isEdge(e)) {
+          e.updateMetadata(
+            meta => (meta.style = this.diagram.document.styles.activeEdgeStylesheet.id),
+            uow
+          );
+        }
+      });
     });
-
-    new ElementAddUndoableAction(this.#elements, this.diagram, activeLayer).redo();
 
     this.diagram.selection.clear();
     this.diagram.selection.setElements(this.#elements);

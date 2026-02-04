@@ -9,18 +9,13 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { Angle } from '@diagram-craft/geometry/angle';
 import {
   DiagramElement,
+  getElementAndAncestors,
   isEdge,
   isNode,
   transformElements
 } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
-import { createResizeToFitAction } from '@diagram-craft/model/diagramBounds';
-import {
-  ElementAddUndoableAction,
-  SnapshotUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { largest } from '@diagram-craft/utils/array';
@@ -32,17 +27,22 @@ import {
 import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    CanvasDomHelper.elementElement(e)!.style.pointerEvents = '';
+    const $el = CanvasDomHelper.elementElement(e)!;
+    if (!$el) continue;
+    $el.style.pointerEvents = '';
     if (isNode(e)) enablePointerEvents(e.children);
   }
 };
 
 const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
-    CanvasDomHelper.elementElement(e)!.style.pointerEvents = 'none';
+    const $el = CanvasDomHelper.elementElement(e)!;
+    if (!$el) continue;
+    $el.style.pointerEvents = 'none';
     if (isNode(e)) disablePointerEvents(e.children);
   }
 };
@@ -70,18 +70,19 @@ export abstract class AbstractMoveDrag extends Drag {
     super();
 
     precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
-    this.uow = new UnitOfWork(this.diagram, true);
+    this.uow = UnitOfWork.begin(this.diagram);
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
     if (!id) return;
 
     const selection = this.diagram.selection;
-    if (selection.type !== 'single-node') return;
 
     const hover = this.diagram.lookup(id);
 
-    this.clearHighlight();
+    if (hover !== this.#currentElement) {
+      this.clearHighlight();
+    }
 
     // Need to filter any edges that are connected to the current selection
     if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.edges.includes(hover))) {
@@ -182,41 +183,28 @@ export abstract class AbstractMoveDrag extends Drag {
     this.clearHighlight();
     enablePointerEvents(selection.elements);
 
-    const snapshots = this.uow.commit();
-
     if (selection.isChanged()) {
-      const compoundUndoAction = new CompoundUndoableAction();
-
-      const resizeCanvasAction = createResizeToFitAction(
-        this.diagram,
-        Box.boundingBox(
-          selection.nodes.map(e => e.bounds),
-          true
-        )
-      );
-      if (resizeCanvasAction) {
-        resizeCanvasAction.redo();
-        compoundUndoAction.addAction(resizeCanvasAction);
-      }
-
-      const addedElements = snapshots.onlyAdded().keys;
-      if (addedElements.length > 0) {
-        assertRegularLayer(this.diagram.activeLayer);
-        compoundUndoAction.addAction(
-          new ElementAddUndoableAction(
-            addedElements.map(e => this.diagram.lookup(e)!),
-            this.diagram,
-            this.diagram.activeLayer
-          )
-        );
-      }
+      growBoundsForSelection(this.diagram, this.uow);
 
       // This means we are dropping onto an element
       if (this.#currentElement) {
         const p = Point.add(selection.bounds, this.offset);
         const el = this.#currentElement;
         if (isNode(el)) {
-          el.getDefinition().onDrop(p, el, selection.elements, this.uow, 'default');
+          for (const e of getElementAndAncestors(el)) {
+            if (!isNode(e)) continue;
+
+            const pDef = e.getDefinition();
+            if (!pDef.onDrop) continue;
+
+            this.uow.select(this.diagram, selection.elements);
+
+            const elementsToMove = selection.elements.filter(el => el.parent !== e);
+            if (elementsToMove.length > 0) {
+              pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+            }
+            break;
+          }
         } else if (isEdge(el)) {
           const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
           el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
@@ -224,9 +212,14 @@ export abstract class AbstractMoveDrag extends Drag {
           VERIFY_NOT_REACHED();
         }
 
+        // TODO: Change to use capabilities - or perhaps onDragOut
         // Move elements out of a container
       } else if (
-        selection.elements.every(e => isNode(e.parent) && e.parent?.nodeType === 'container')
+        selection.elements.every(
+          e =>
+            isNode(e.parent) &&
+            (e.parent?.nodeType === 'container' || e.parent?.nodeType === 'swimlane')
+        )
       ) {
         this.diagram.moveElement(
           selection.elements,
@@ -241,14 +234,10 @@ export abstract class AbstractMoveDrag extends Drag {
         );
       }
 
-      compoundUndoAction.addAction(
-        new SnapshotUndoableAction('Move', this.diagram, snapshots.onlyUpdated())
-      );
-
-      if (compoundUndoAction.hasActions()) this.diagram.undoManager.add(compoundUndoAction);
+      this.uow.commitWithUndo('Move');
+    } else {
+      this.uow.commit();
     }
-
-    this.uow.commit();
     selection.rebaseline();
   }
 
@@ -280,12 +269,21 @@ export abstract class AbstractMoveDrag extends Drag {
 
   private clearHighlight() {
     if (!this.#currentElement) return;
-    removeHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+
+    getElementAndAncestors(this.#currentElement).forEach(el =>
+      removeHighlight(el, Highlights.NODE__DROP_TARGET)
+    );
   }
 
   private setHighlight() {
     if (!this.#currentElement) return;
-    addHighlight(this.#currentElement, Highlights.NODE__DROP_TARGET);
+
+    for (const a of getElementAndAncestors(this.#currentElement)) {
+      if (isNode(a) && a.getDefinition().onDrop) {
+        addHighlight(a, Highlights.NODE__DROP_TARGET);
+        break;
+      }
+    }
   }
 
   private getLastState(max: number) {
@@ -347,6 +345,10 @@ export class MoveDrag extends AbstractMoveDrag {
     super.onDragEnd();
     this.#hasDuplicatedSelection = false;
     this.context.help.pop('MoveDrag');
+  }
+
+  cancel() {
+    this.uow.abort();
   }
 
   private duplicate() {

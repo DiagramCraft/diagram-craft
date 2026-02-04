@@ -1,4 +1,11 @@
-import { TbArrowsExchange2, TbBold, TbItalic, TbRuler, TbUnderline } from 'react-icons/tb';
+import {
+  TbArrowsExchange2,
+  TbBold,
+  TbItalic,
+  TbRuler,
+  TbUnderline,
+  TbBorderOuter
+} from 'react-icons/tb';
 import { ActionToolbarButton } from './ActionToolbarButton';
 import { useEventListener } from '../hooks/useEventListener';
 import { useCallback, useEffect, useState } from 'react';
@@ -11,7 +18,9 @@ import { NodeFillToolbarButton } from '../toolwindow/ObjectToolWindow/NodeFillTo
 import { NodeStrokeToolbarButton } from '../toolwindow/ObjectToolWindow/NodeStrokeToolbarButton';
 import { EdgeLineToolbarButton } from '../toolwindow/ObjectToolWindow/EdgeLineToolbarButton';
 import { ElementShadowToolbarButton } from '../toolwindow/ObjectToolWindow/ElementShadowToolbarButton';
-import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
+import {
+  ElementCustomPropertiesToolbarButton
+} from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
 import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
 import { CanvasGuidesToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGuidesToolbarButton';
@@ -52,116 +61,74 @@ export const ContextSpecificToolbar = () => {
     <Toolbar.Root>
       {isTextSelection && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
 
-          <ElementTextFontToolbarButton />
-          <ElementTextFontSizeToolbarButton />
+          <ElementTextFontToolbarButton/>
+          <ElementTextFontSizeToolbarButton/>
 
-          <Toolbar.Separator style={{ marginRight: '-5px', backgroundColor: 'transparent' }} />
+          <Toolbar.Separator style={{ marginRight: '-5px', backgroundColor: 'transparent' }}/>
 
           <ActionToggleButton action={'TEXT_BOLD'}>
-            <TbBold />
+            <TbBold/>
           </ActionToggleButton>
           <ActionToggleButton action={'TEXT_ITALIC'}>
-            <TbItalic />
+            <TbItalic/>
           </ActionToggleButton>
           <ActionToggleButton action={'TEXT_UNDERLINE'}>
-            <TbUnderline />
+            <TbUnderline/>
           </ActionToggleButton>
-          <ElementTextToolbarButton />
+          <ElementTextToolbarButton/>
         </>
       )}
 
       {!isTextSelection && (isNodeSelection || isMixedSelection) && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
 
-          <NodeFillToolbarButton />
-          <NodeStrokeToolbarButton />
+          <NodeFillToolbarButton/>
+          <NodeStrokeToolbarButton/>
         </>
       )}
 
       {isEdgeSelection && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
 
-          <EdgeLineToolbarButton />
+          <EdgeLineToolbarButton/>
           <ActionToolbarButton action={'EDGE_FLIP'}>
-            <TbArrowsExchange2 />
+            <TbArrowsExchange2/>
           </ActionToolbarButton>
-          <ElementShadowToolbarButton />
+          <ElementShadowToolbarButton/>
         </>
       )}
 
       {isNodeSelection && !isTextSelection && (
         <>
-          <ElementTextToolbarButton />
-          <ElementShadowToolbarButton />
-          <ElementCustomPropertiesToolbarButton />
+          <ElementTextToolbarButton/>
+          <ElementShadowToolbarButton/>
+          <ElementCustomPropertiesToolbarButton/>
         </>
       )}
 
-      {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator />}
+      {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator/>}
 
-      {/*selectionType !== 'empty' && selectionType !== undefined && (
-        <>
-          <ActionToolbarButton action={'ALIGN_TOP'}>
-            <TbLayoutAlignTop />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_BOTTOM'}>
-            <TbLayoutAlignBottom />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_LEFT'}>
-            <TbLayoutAlignLeft />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_RIGHT'}>
-            <TbLayoutAlignRight />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_CENTER_VERTICAL'}>
-            <TbLayoutAlignCenter />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'ALIGN_CENTER_HORIZONTAL'}>
-            <TbLayoutAlignMiddle />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'DISTRIBUTE_VERTICAL'}>
-            <TbLayoutDistributeHorizontal />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'DISTRIBUTE_HORIZONTAL'}>
-            <TbLayoutDistributeVertical />
-          </ActionToolbarButton>
+      <CanvasGridToolbarButton/>
 
-          <Toolbar.Separator />
+      <CanvasGuidesToolbarButton/>
 
-          <ActionToolbarButton action={'SELECTION_RESTACK_BOTTOM'}>
-            <TbStackBack />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_TOP'}>
-            <TbStackFront />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_UP'}>
-            <TbStackPop />
-          </ActionToolbarButton>
-          <ActionToolbarButton action={'SELECTION_RESTACK_DOWN'}>
-            <TbStackPush />
-          </ActionToolbarButton>
-
-          <Toolbar.Separator />
-        </>
-      )*/}
-
-      <CanvasGridToolbarButton />
-
-      <CanvasGuidesToolbarButton />
-
-      <CanvasSnapToolbarButton />
+      <CanvasSnapToolbarButton/>
 
       <ActionToggleButton action={'TOGGLE_RULER'}>
-        <TbRuler />
+        <TbRuler/>
       </ActionToggleButton>
 
-      <Toolbar.Separator />
+      <ActionToggleButton action={'TOGGLE_CONTAINER_BORDER'}>
+        <TbBorderOuter/>
+      </ActionToggleButton>
 
-      <CommentToolbarButton />
+      <Toolbar.Separator/>
+
+      <CommentToolbarButton/>
     </Toolbar.Root>
   );
 };

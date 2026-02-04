@@ -1,5 +1,5 @@
-import { StylesheetSnapshot } from './unitOfWork';
 import { DefaultStyles } from './diagramDefaults';
+import { StylesheetSnapshot } from '@diagram-craft/model/diagramStyles.uow';
 
 export const DEFAULT_NODE_STYLES: Record<
   string,

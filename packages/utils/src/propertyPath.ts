@@ -114,4 +114,45 @@ export class DynamicAccessor<T> {
     }
     current[parts[parts.length - 1]!] = value;
   }
+
+  /**
+   * Returns all valid paths in an object.
+   *
+   * @param obj - The object to get paths from.
+   * @returns An array of all valid property paths in the object.
+   *
+   * @example
+   * const accessor = new DynamicAccessor<MyType>();
+   * const paths = accessor.paths({ text: { size: 13, bold: true }, size: { width: 17 } });
+   * // Returns: ['text.size', 'text.bold', 'size.width', 'text', 'size']
+   */
+  paths(obj: T): PropPath<T>[] {
+    const result: PropPath<T>[] = [];
+
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    const traverse = (current: any, prefix: string) => {
+      if (current === null || current === undefined) return;
+
+      // Check if current value is a plain object (not array, date, etc.)
+      if (typeof current === 'object' && !Array.isArray(current) && !(current instanceof Date)) {
+        const keys = Object.keys(current);
+
+        for (const key of keys) {
+          const path = prefix ? `${prefix}.${key}` : key;
+          result.push(path as PropPath<T>);
+          traverse(current[key], path);
+        }
+      }
+    };
+
+    traverse(obj, '');
+
+    // Sort by depth (shallow first) and then alphabetically
+    return result.sort((a, b) => {
+      const depthA = a.split('.').length;
+      const depthB = b.split('.').length;
+      if (depthA !== depthB) return depthA - depthB;
+      return a.localeCompare(b);
+    });
+  }
 }

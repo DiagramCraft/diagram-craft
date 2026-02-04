@@ -8,6 +8,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { cloneAsWriteable } from '@diagram-craft/utils/object';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 const NOTCH = 8;
 
@@ -18,7 +19,7 @@ const getNotch = (def: DiagramNode) => {
 export class GCPDoubleRectNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('mxgraph.gcp2.doubleRect', 'GCP Double Rect', GCPDoubleRectNodeDefinition.Shape);
-    this.capabilities.rounding = false;
+    this.setFlags({ [NodeFlags.StyleRounding]: false });
   }
 
   getBoundingPathBuilder(def: DiagramNode) {

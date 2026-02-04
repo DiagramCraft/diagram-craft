@@ -1,24 +1,24 @@
-import * as RadixToggleGroup from '@radix-ui/react-toggle-group';
 import React from 'react';
 import { extractDataAttributes, extractMouseEvents } from './utils';
 import styles from './ToggleButtonGroup.module.css';
+import { Toggle as BaseUIToggle } from '@base-ui/react/toggle';
+import { ToggleGroup as BaseUIToggleGroup } from '@base-ui/react/toggle-group';
 
 const Root = (props: RootProps) => {
   return (
-    /* @ts-expect-error */
-    <RadixToggleGroup.Root
+    <BaseUIToggleGroup
       className={styles.cmpToggleButtonGroup}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       aria-label={props['aria-label']}
-      type={props.type}
-      value={props.value}
-      onValueChange={props.onChange}
+      multiple={props.type === 'multiple'}
+      value={props.type === 'single' ? [props.value] : props.value}
+      onValueChange={v => props.onChange(props.type === 'single' ? v[0] : v)}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
       {...extractMouseEvents(props)}
     >
       {props.children}
-    </RadixToggleGroup.Root>
+    </BaseUIToggleGroup>
   );
 };
 
@@ -42,24 +42,26 @@ type RootProps = {
     }
 );
 
-const Item = (props: ItemProps) => {
+const Item = React.forwardRef<HTMLButtonElement, ItemProps>((props: ItemProps, ref) => {
   return (
-    <RadixToggleGroup.Item
-      className={styles.cmpToggleButtonGroupItem}
+    <BaseUIToggle
+      {...props}
+      ref={ref}
+      className={props.className ?? styles.cmpToggleButtonGroupItem}
       value={props.value}
       disabled={props.disabled}
-      {...extractDataAttributes(props)}
     >
       {props.children}
-    </RadixToggleGroup.Item>
+    </BaseUIToggle>
   );
-};
+});
 
 type ItemProps = {
   value: string;
   disabled?: boolean;
   children: React.ReactNode;
-};
+  ref?: React.Ref<HTMLButtonElement>;
+} & React.HTMLAttributes<HTMLButtonElement>;
 
 export const ToggleButtonGroup = {
   Root,

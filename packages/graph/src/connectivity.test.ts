@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { getConnectedComponent } from './connectivity';
+import { getConnectedComponent, getConnectedComponents } from './connectivity';
 import { SimpleGraph } from './graph';
 
 describe('Connectivity algorithms', () => {
@@ -216,6 +216,112 @@ describe('Connectivity algorithms', () => {
       expect(edgeIds).toContain('AB');
       expect(edgeIds).toContain('BC');
       expect(edgeIds).toContain('CA');
+    });
+  });
+
+  describe('getConnectedComponents', () => {
+    test('returns all components when no vertex filter provided', () => {
+      const graph = new SimpleGraph();
+      // Component 1: A-B
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+
+      // Component 2: C-D
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addVertex({ id: 'D', data: undefined });
+      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 1, data: undefined });
+
+      // Isolated vertex
+      graph.addVertex({ id: 'E', data: undefined });
+
+      const components = getConnectedComponents(graph);
+
+      expect(components).toHaveLength(3);
+
+      // Find components by checking vertex IDs
+      const comp1 = components.find(c => c.vertices.some(v => v.id === 'A'));
+      const comp2 = components.find(c => c.vertices.some(v => v.id === 'C'));
+      const comp3 = components.find(c => c.vertices.some(v => v.id === 'E'));
+
+      expect(comp1?.vertices.map(v => v.id).sort()).toEqual(['A', 'B']);
+      expect(comp2?.vertices.map(v => v.id).sort()).toEqual(['C', 'D']);
+      expect(comp3?.vertices.map(v => v.id)).toEqual(['E']);
+    });
+
+    test('returns only components containing specified vertices', () => {
+      const graph = new SimpleGraph();
+      // Component 1: A-B
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+
+      // Component 2: C-D
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addVertex({ id: 'D', data: undefined });
+      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 1, data: undefined });
+
+      // Component 3: E-F
+      graph.addVertex({ id: 'E', data: undefined });
+      graph.addVertex({ id: 'F', data: undefined });
+      graph.addEdge({ id: 'EF', from: 'E', to: 'F', weight: 1, data: undefined });
+
+      // Request only components containing B and D
+      const components = getConnectedComponents(graph, new Set(['B', 'D']));
+
+      expect(components).toHaveLength(2);
+
+      const comp1 = components.find(c => c.vertices.some(v => v.id === 'A'));
+      const comp2 = components.find(c => c.vertices.some(v => v.id === 'C'));
+
+      expect(comp1?.vertices.map(v => v.id).sort()).toEqual(['A', 'B']);
+      expect(comp2?.vertices.map(v => v.id).sort()).toEqual(['C', 'D']);
+    });
+
+    test('returns full components even when only one vertex is specified', () => {
+      const graph = new SimpleGraph();
+      // Large component: A-B-C-D
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addVertex({ id: 'D', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
+      graph.addEdge({ id: 'CD', from: 'C', to: 'D', weight: 1, data: undefined });
+
+      // Request component containing only B
+      const components = getConnectedComponents(graph, new Set(['B']));
+
+      expect(components).toHaveLength(1);
+      expect(components[0]?.vertices.map(v => v.id).sort()).toEqual(['A', 'B', 'C', 'D']);
+      expect(components[0]?.edges).toHaveLength(3);
+    });
+
+    test('avoids duplicate components when multiple vertices from same component specified', () => {
+      const graph = new SimpleGraph();
+      // Single component: A-B-C
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+      graph.addVertex({ id: 'C', data: undefined });
+      graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
+      graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
+
+      // Request with multiple vertices from the same component
+      const components = getConnectedComponents(graph, new Set(['A', 'B', 'C']));
+
+      // Should return only one component, not three
+      expect(components).toHaveLength(1);
+      expect(components[0]?.vertices.map(v => v.id).sort()).toEqual(['A', 'B', 'C']);
+    });
+
+    test('returns empty array when specified vertices do not exist', () => {
+      const graph = new SimpleGraph();
+      graph.addVertex({ id: 'A', data: undefined });
+      graph.addVertex({ id: 'B', data: undefined });
+
+      const components = getConnectedComponents(graph, new Set(['X', 'Y', 'Z']));
+
+      expect(components).toHaveLength(0);
     });
   });
 });

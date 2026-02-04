@@ -1,6 +1,5 @@
 import './App.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import * as ContextMenu from '@radix-ui/react-context-menu';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
@@ -83,6 +82,15 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { Autosave } from './react-app/autosave/Autosave';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
+import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
+import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dialog';
+import { AutoAlignActionDialog } from './react-app/actions/autoAlignAction.dialog';
+import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
+import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
+import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
+import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -116,9 +124,15 @@ export type DiagramRef = {
   url: string;
 };
 
-const updateApplicationModel = ($d: Diagram, app: Application, callback: ProgressCallback) => {
-  app.model.setActiveDocument($d.document, app.userState.awarenessState, callback);
-  app.model.activeDiagram = $d;
+const updateApplicationModel = (
+  doc: DiagramDocument,
+  app: Application,
+  callback: ProgressCallback
+) => {
+  app.model.setActiveDocument(doc, app.userState.awarenessState, callback);
+  app.model.activeDiagram =
+    [...doc.diagramIterator({ nest: true })].find(d => d.id === doc.activeDiagramId)! ??
+    doc.diagrams[0];
 
   if (!app.ready) {
     const keyMap = defaultMacAppKeymap;
@@ -232,7 +246,7 @@ export const App = (props: {
       doc.url = url;
 
       assert.arrayNotEmpty(doc.diagrams);
-      updateApplicationModel(doc.diagrams[0], application.current, progressCallback);
+      updateApplicationModel(doc, application.current, progressCallback);
 
       Autosave.get().clear();
       setDirty(false);
@@ -252,13 +266,12 @@ export const App = (props: {
         progressCallback
       );
       const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
-      diagram.layers.add(
-        new RegularLayer(newid(), 'Default', [], diagram),
-        UnitOfWork.immediate(diagram)
+      UnitOfWork.execute(diagram, uow =>
+        diagram.layers.add(new RegularLayer(newid(), 'Default', [], diagram), uow)
       );
       doc.addDiagram(diagram);
 
-      updateApplicationModel(diagram, application.current, progressCallback);
+      updateApplicationModel(diagram.document, application.current, progressCallback);
 
       Autosave.get().clear();
       setDirty(false);
@@ -273,7 +286,7 @@ export const App = (props: {
 
   useOnChange(props.doc, () => {
     assert.arrayNotEmpty(props.doc.diagrams);
-    updateApplicationModel(props.doc.diagrams[0], application.current, progressCallback);
+    updateApplicationModel(props.doc, application.current, progressCallback);
   });
 
   const [dirty, setDirty] = useState(false);
@@ -283,6 +296,19 @@ export const App = (props: {
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const openDialogCount = useRef(0);
+
+  const handleDialogShow = useCallback(() => {
+    openDialogCount.current++;
+    application.current.actionState.set('disabled');
+  }, []);
+
+  const handleDialogHide = useCallback(() => {
+    openDialogCount.current--;
+    if (openDialogCount.current === 0) {
+      application.current.actionState.set('enabled');
+    }
+  }, []);
 
   useEffect(() => {
     if (props.url) userState.current.addRecentFile(props.url);
@@ -300,7 +326,7 @@ export const App = (props: {
   //       Can be tested if ruler indicators work at startup immediately or not
   // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(() => {
-    redraw();
+    //redraw();
   }, [svgRef.current, redraw]);
 
   const $d = application.current.model.activeDiagram;
@@ -340,277 +366,353 @@ export const App = (props: {
 
   useEffect(() => bindDocumentDragAndDrop());
 
+  usePanOnDrag($d, userState.current!);
+
   return (
     <PortalContextProvider>
-      <ApplicationContext.Provider value={{ application: application.current }}>
-        {progress === undefined ||
-          (progress?.status !== 'complete' && (
-            <FullScreenProgress
-              message={progress?.message ?? ''}
-              isError={progress?.status === 'error'}
-            />
-          ))}
+      <DialogContextProvider onDialogShow={handleDialogShow} onDialogHide={handleDialogHide}>
+        <ApplicationContext.Provider value={{ application: application.current }}>
+          {progress === undefined ||
+            (progress?.status !== 'complete' && (
+              <FullScreenProgress
+                message={progress?.message ?? ''}
+                isError={progress?.status === 'error'}
+              />
+            ))}
 
-        <ConfigurationContext.Provider
-          value={{
-            palette: {
-              primary: defaultPalette
-            },
-            fonts: {
-              'Times': 'Times',
-              'Arial': 'Arial',
-              'Sans Serif': 'sans-serif',
-              'Helvetica': 'Helvetica',
-              'Verdana': 'Verdana',
-              'Courier': 'Courier',
-              'Comic Sans': 'Comic Sans MS',
-              'Impact': 'Impact',
-              'Tahoma': 'Tahoma',
-              'Trebuchet': 'Trebuchet MS',
-              'Georgia': 'Georgia'
-            }
-          }}
-        >
-          {/* Dialogs */}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'fileOpen') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <FileDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'fileSaveAs') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <FileDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'imageInsert') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <ImageInsertDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'tableInsert') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <TableInsertDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'newReferenceLayer') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <ReferenceLayerDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'stringInput') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <StringInputDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'ruleEditor') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <RuleEditorDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'message') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <MessageDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'json') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <JSONDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'externalDataLink') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <ExternalDataLinkDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'modelCenter') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <ModelCenterDialog
-                  open={true}
-                  onClose={() => item.dialog.onCancel?.()}
-                  defaultTab={item.dialog.props?.defaultTab}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'shapeSelect') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <ShapeSelectDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'selectTemplate') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <SelectTemplateDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'comment') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <CommentDialog
-                  open={true}
-                  {...item.dialog.props}
-                  onOk={item.dialog.onOk}
-                  onCancel={item.dialog.onCancel}
-                />
-              </div>
-            );
-          })}
-          {dialogStack.map(item => {
-            if (item.dialog.id !== 'commandPalette') return null;
-            return (
-              <div key={item.id} style={{ zIndex: item.zIndex }}>
-                <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()} />
-              </div>
-            );
-          })}
+          <ConfigurationContext.Provider
+            value={{
+              palette: {
+                primary: defaultPalette
+              },
+              fonts: {
+                'Times': 'Times',
+                'Arial': 'Arial',
+                'Sans Serif': 'sans-serif',
+                'Helvetica': 'Helvetica',
+                'Verdana': 'Verdana',
+                'Courier': 'Courier',
+                'Comic Sans': 'Comic Sans MS',
+                'Impact': 'Impact',
+                'Tahoma': 'Tahoma',
+                'Trebuchet': 'Trebuchet MS',
+                'Georgia': 'Georgia'
+              }
+            }}
+          >
+            {/* Dialogs */}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'fileOpen') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <FileDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'fileSaveAs') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <FileDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'imageInsert') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <ImageInsertDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'tableInsert') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <TableInsertDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'newReferenceLayer') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <ReferenceLayerDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'stringInput') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <StringInputDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'ruleEditor') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <RuleEditorDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'message') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <MessageDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'json') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <JSONDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'externalDataLink') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <ExternalDataLinkDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'modelCenter') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <ModelCenterDialog
+                    open={true}
+                    onClose={() => item.dialog.onCancel?.()}
+                    defaultTab={item.dialog.props?.defaultTab}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'shapeSelect') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <ShapeSelectDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'selectTemplate') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <SelectTemplateDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'comment') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <CommentDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'commandPalette') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()} />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutTree') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutTreeActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolAutoAlign') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <AutoAlignActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutForceDirected') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutForceDirectedActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutLayered') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutLayeredActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutOrthogonal') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutOrthogonalActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'toolLayoutSeriesParallel') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <LayoutSeriesParallelActionDialog
+                    onChange={d => item.dialog.props.onChange(d)}
+                    onApply={d => item.dialog.onOk?.(d)}
+                    onCancel={() => item.dialog.onCancel?.()}
+                  />
+                </div>
+              );
+            })}
 
-          <div id="app" className={'dark-theme'}>
-            <div id="menu">
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <MainMenu />
-                <MainToolbar />
-              </div>
-              <DocumentName dirty={dirty} />
-              <div style={{ display: 'flex', marginLeft: 'auto' }}>
-                <AwarenessToolbar />
-                <AuxToolbar />
-              </div>
-            </div>
-
-            <div id="window-area">
-              <div id="toolbar">
-                <ContextSpecificToolbar />
+            <div id="app" className={'dark-theme'}>
+              <div id="menu">
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <MainMenu />
+                  <MainToolbar />
+                </div>
+                <DocumentName dirty={dirty} />
+                <div style={{ display: 'flex', marginLeft: 'auto' }}>
+                  <AwarenessToolbar />
+                  <AuxToolbar />
+                </div>
               </div>
 
-              <LeftSidebar />
-              <RightSidebar />
+              <div id="window-area">
+                <div id="toolbar">
+                  <ContextSpecificToolbar />
+                </div>
 
-              <div id="canvas-area">
-                <ErrorBoundary>
-                  <ContextMenu.Root>
-                    <ContextMenu.Trigger asChild={true}>
-                      <EditableCanvas
-                        id={CanvasDomHelper.diagramId($d)}
-                        ref={svgRef}
-                        diagram={$d}
-                        /* Note: this uid here to force redraw in case the diagram is reloaded */
-                        key={$d.uid}
-                        actionMap={actionMap}
-                        tools={tools}
-                        keyMap={application.current.keyMap}
-                        offset={
-                          (userState.current.panelLeft ?? -1) >= 0
-                            ? {
-                                x: 250, // Corresponding to left panel width
-                                y: 0
-                              }
-                            : Point.ORIGIN
+                <LeftSidebar />
+                <RightSidebar />
+
+                <div id="canvas-area">
+                  <ErrorBoundary>
+                    <ContextMenu.Root>
+                      <ContextMenu.Trigger
+                        element={
+                          <EditableCanvas
+                            id={CanvasDomHelper.diagramId($d)}
+                            ref={svgRef}
+                            diagram={$d}
+                            /* Note: this uid here to force redraw in case the diagram is reloaded */
+                            key={$d.uid}
+                            actionMap={actionMap}
+                            tools={tools}
+                            keyMap={application.current.keyMap}
+                            offset={
+                              (userState.current.panelLeft ?? -1) >= 0
+                                ? {
+                                    x: 250, // Corresponding to left panel width
+                                    y: 0
+                                  }
+                                : Point.ORIGIN
+                            }
+                            onDrop={canvasDropHandler($d)}
+                            onDragOver={canvasDragOverHandler($d)}
+                            context={application.current}
+                          />
                         }
-                        onDrop={canvasDropHandler($d)}
-                        onDragOver={canvasDragOverHandler($d)}
-                        context={application.current}
                       />
-                    </ContextMenu.Trigger>
-                    <ContextMenu.Portal>
-                      <ContextMenu.Content className="cmp-context-menu">
+                      <ContextMenu.Menu>
                         <ContextMenuDispatcher
                           state={contextMenuTarget}
                           createContextMenu={state => {
@@ -629,35 +731,35 @@ export const App = (props: {
                             }
                           }}
                         />
-                      </ContextMenu.Content>
-                    </ContextMenu.Portal>
-                  </ContextMenu.Root>
-                </ErrorBoundary>
+                      </ContextMenu.Menu>
+                    </ContextMenu.Root>
+                  </ErrorBoundary>
 
-                <Ruler orientation={'horizontal'} />
-                <Ruler orientation={'vertical'} />
-                <CanvasOutline />
-                <CanvasTooltip />
+                  <Ruler orientation={'horizontal'} />
+                  <Ruler orientation={'vertical'} />
+                  <CanvasOutline />
+                  <CanvasTooltip />
 
-                <NodeTypePopup
-                  {...popoverState}
-                  onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
-                />
+                  <NodeTypePopup
+                    {...popoverState}
+                    onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+                  />
+                </div>
+
+                <div id="tabs">
+                  <DocumentTabs document={doc} />
+
+                  <LayerIndicator />
+                </div>
               </div>
 
-              <div id="tabs">
-                <DocumentTabs document={doc} />
-
-                <LayerIndicator />
-              </div>
+              <HelpMessage helpState={helpState.current} />
             </div>
 
-            <HelpMessage helpState={helpState.current} />
-          </div>
-
-          {preview && <Preview onClose={() => setPreview(false)} />}
-        </ConfigurationContext.Provider>
-      </ApplicationContext.Provider>
+            {preview && <Preview onClose={() => setPreview(false)} />}
+          </ConfigurationContext.Provider>
+        </ApplicationContext.Provider>
+      </DialogContextProvider>
     </PortalContextProvider>
   );
 };

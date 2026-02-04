@@ -2,21 +2,21 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useApplication, useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
-import React, { ChangeEvent, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEventListener } from '../../hooks/useEventListener';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { assert } from '@diagram-craft/utils/assert';
 import { unique } from '@diagram-craft/utils/array';
 import { TbFilter, TbFilterOff, TbLink, TbLinkOff, TbPencil } from 'react-icons/tb';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { EditItemDialog } from '../../components/EditItemDialog';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/externalDataHelpers';
+import { isNode } from '@diagram-craft/model/diagramElement';
+import { DataFields } from './DataFields';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -34,46 +34,17 @@ export const ExtendedDataTab = () => {
   useEventListener($d, 'diagramChange', redraw);
   useEventListener($d, 'elementBatchChange', redraw);
 
-  const changeCallback = useCallback(
-    (
-      type: 'data' | 'custom',
-      schema: string,
-      id: string,
-      ev: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => {
-      const uow = new UnitOfWork($d, true);
-
-      switch (type) {
-        case 'data':
-          $d.selection.elements.forEach(e => {
-            e.updateMetadata(p => {
-              p.data ??= {};
-              p.data.data ??= [];
-              let s = p.data.data.find(e => e.schema === schema);
-              if (!s) {
-                s = { schema, type: 'schema', data: {}, enabled: true };
-                p.data.data.push(s);
-              } else if (!s.enabled) {
-                s.enabled = true;
-              }
-              s.data ??= {};
-              s.data[id] = (ev.target as HTMLInputElement).value;
-            }, uow);
-          });
-          break;
-        case 'custom':
-          $d.selection.elements.forEach(e => {
-            e.updateMetadata(p => {
-              p.data ??= {};
-              p.data.customData ??= {};
-              p.data.customData[id] = (ev.target as HTMLInputElement).value;
-            }, uow);
-          });
-          break;
-        default:
-          VERIFY_NOT_REACHED();
-      }
-      commitWithUndo(uow, 'Update data');
+  const changeCustomCallback = useCallback(
+    (id: string, v: string | undefined) => {
+      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
+        $d.selection.elements.forEach(e => {
+          e.updateMetadata(p => {
+            p.data ??= {};
+            p.data.customData ??= {};
+            p.data.customData[id] = v;
+          }, uow);
+        });
+      });
     },
     [$d]
   );
@@ -92,19 +63,20 @@ export const ExtendedDataTab = () => {
     (schema: string) => {
       $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
-        const uow = new UnitOfWork($d, true);
         if (!entry) {
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.data ??= [];
-            p.data.data.push({ enabled: true, schema, type: 'schema', data: {} });
-          }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          UnitOfWork.executeWithUndo($d, 'Add schema to selection', uow => {
+            e.updateMetadata(p => {
+              p.data ??= {};
+              p.data.data ??= [];
+              p.data.data.push({ enabled: true, schema, type: 'schema', data: {} });
+            }, uow);
+          });
         } else if (!entry.enabled) {
-          e.updateMetadata(p => {
-            p.data!.data!.find(s => s.schema === schema)!.enabled = true;
-          }, uow);
-          commitWithUndo(uow, 'Add schema to selection');
+          UnitOfWork.executeWithUndo($d, 'Add schema to selection', uow => {
+            e.updateMetadata(p => {
+              p.data!.data!.find(s => s.schema === schema)!.enabled = true;
+            }, uow);
+          });
         }
       });
     },
@@ -116,13 +88,13 @@ export const ExtendedDataTab = () => {
       $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
         if (entry) {
-          const uow = new UnitOfWork($d, true);
-          e.updateMetadata(p => {
-            p.data ??= {};
-            p.data.data ??= [];
-            p.data.data = p.data.data.filter(s => s.schema !== schema);
-          }, uow);
-          commitWithUndo(uow, 'Remove schema from selection');
+          UnitOfWork.executeWithUndo($d, 'Remove schema from selection', uow => {
+            e.updateMetadata(p => {
+              p.data ??= {};
+              p.data.data ??= [];
+              p.data.data = p.data.data.filter(s => s.schema !== schema);
+            }, uow);
+          });
         }
       });
     },
@@ -175,18 +147,24 @@ export const ExtendedDataTab = () => {
 
   if ($d.selection.elements.length !== 1) return null;
 
+  const mustHaveSchemas = new Set<string>();
+  $d.selection.elements
+    .filter(isNode)
+    .flatMap(e => e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas)
+    .forEach(s => mustHaveSchemas.add(s.id));
+
   return (
     <>
+      <ToolWindow.TabActions>
+        <a
+          className={'cmp-button cmp-button--icon-only'}
+          style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
+          onClick={() => setEditMode(v => !v)}
+        >
+          {editMode ? <TbFilterOff /> : <TbFilter />}
+        </a>
+      </ToolWindow.TabActions>
       <ToolWindow.TabContent>
-        <ToolWindow.TabActions>
-          <a
-            className={'cmp-button cmp-button--icon-only'}
-            style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
-            onClick={() => setEditMode(v => !v)}
-          >
-            {editMode ? <TbFilterOff /> : <TbFilter />}
-          </a>
-        </ToolWindow.TabActions>
         <ToolWindowPanel
           id={'extended'}
           title={'Extended data'}
@@ -218,6 +196,7 @@ export const ExtendedDataTab = () => {
                           <input
                             className="cmp-accordion__enabled"
                             type={'checkbox'}
+                            disabled={isSchemaEnabled && mustHaveSchemas.has(schema.id)}
                             checked={isSchemaEnabled}
                             onChange={e => {
                               const isChecked = e.target.checked;
@@ -315,43 +294,7 @@ export const ExtendedDataTab = () => {
                     </Accordion.ItemHeader>
                     <Accordion.ItemContent forceMount={true}>
                       <div className={'cmp-labeled-table'}>
-                        {schema.fields.map(f => {
-                          const v = unique(
-                            $d.selection.elements.map(e => {
-                              const d = findEntryBySchema(e, schema.id);
-                              try {
-                                return d?.data?.[f.id] ?? '';
-                              } catch (_e) {
-                                return '';
-                              }
-                            })
-                          );
-
-                          return (
-                            <React.Fragment key={f.id}>
-                              <div className={'cmp-labeled-table__label util-a-top-center'}>
-                                {f.name}:
-                              </div>
-                              <div className={'cmp-labeled-table__value'}>
-                                {f.type === 'text' && (
-                                  <TextInput
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={(_, e) => changeCallback('data', schema.id, f.id, e)}
-                                  />
-                                )}
-                                {f.type === 'longtext' && (
-                                  <TextArea
-                                    style={{ height: '40px' }}
-                                    value={v.length > 1 ? '***' : (v[0]?.toString() ?? '')}
-                                    disabled={isExternal}
-                                    onChange={(_, e) => changeCallback('data', schema.id, f.id, e)}
-                                  />
-                                )}
-                              </div>
-                            </React.Fragment>
-                          );
-                        })}
+                        <DataFields schema={schema} disabled={isExternal} />
                       </div>
                     </Accordion.ItemContent>
                   </Accordion.Item>
@@ -378,7 +321,7 @@ export const ExtendedDataTab = () => {
                               value={v[0] ?? ''}
                               isIndeterminate={v.length > 1}
                               style={{ height: '40px' }}
-                              onChange={(_, e) => changeCallback('custom', '', k, e)}
+                              onChange={v => changeCustomCallback(k, v)}
                             />
                           </div>
                         </React.Fragment>

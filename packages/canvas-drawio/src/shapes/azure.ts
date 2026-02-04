@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -20,7 +20,12 @@ const registerStencil = (
 };
 
 export const registerAzureShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/azure.xml', 'Azure', '#00BEF2', 'white');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/azure.xml',
+    'Azure',
+    '#00BEF2',
+    'white'
+  );
 
   registerStencil(r, 'Access Control', stencils);
   registerStencil(r, 'Automation', stencils);

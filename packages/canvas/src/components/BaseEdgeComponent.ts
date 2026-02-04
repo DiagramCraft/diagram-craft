@@ -25,7 +25,7 @@ import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Zoom } from './zoom';
 import { renderElement } from './renderElement';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
-import type { EdgeCapability } from '@diagram-craft/model/edgeDefinition';
+import { EdgeFlag, EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
 
@@ -125,12 +125,15 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
             on: {
               mousedown: (e: MouseEvent) => {
                 if (e.button !== 0) return;
-                const uow = new UnitOfWork($d);
-                const idx = props.element.addWaypoint(
-                  { point: $d.viewBox.toDiagramPoint(EventHelper.point(e)) },
-                  uow
-                );
-                uow.commit();
+
+                // TODO: This waypoint will not be undone
+
+                const idx = UnitOfWork.execute($d, uow => {
+                  return props.element.addWaypoint(
+                    { point: $d.viewBox.toDiagramPoint(EventHelper.point(e)) },
+                    uow
+                  );
+                });
 
                 DRAG_DROP_MANAGER.initiate(new EdgeWaypointDrag(props.element, idx, props.context));
                 e.stopPropagation();
@@ -249,7 +252,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
         id: CanvasDomHelper.edgeId(props.element),
         class: `${props.isReadOnly ? 'svg-readonly' : ''} ${getHighlights(props.element)
           .map(h => `svg-edge--highlight-${h}`)
-          .join(' ')}`,
+          .join(' ')} svg-edge-container`,
         on: {
           ...(!props.isReadOnly && props.onMouseDown ? { mousedown: onMouseDown } : {}),
           ...(!props.isReadOnly && props.onDoubleClick
@@ -310,7 +313,7 @@ export class SimpleEdgeDefinition extends ShapeEdgeDefinition {
     }
   };
 
-  supports(capability: EdgeCapability): boolean {
-    return !['fill'].includes(capability);
+  hasFlag(flag: EdgeFlag): boolean {
+    return ![EdgeFlags.StyleFill].includes(flag);
   }
 }

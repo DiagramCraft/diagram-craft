@@ -90,11 +90,11 @@ export const PresentationMode = (props: Props) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [_updateCounter, setUpdateCounter] = useState(0);
 
-  const doc1 = new DiagramDocument(doc.nodeDefinitions, doc.edgeDefinitions, false, doc.root);
+  const doc1 = new DiagramDocument(doc.registry, false, doc.root);
   const [activeDiagram1, setActiveDiagram1] = useState(doc1.diagrams[0]!);
   const [player1] = useState(() => new StoryPlayer(doc1, setActiveDiagram1));
 
-  const doc2 = new DiagramDocument(doc.nodeDefinitions, doc.edgeDefinitions, false, doc.root);
+  const doc2 = new DiagramDocument(doc.registry, false, doc.root);
   const [activeDiagram2, setActiveDiagram2] = useState(doc2.diagrams[0]!);
   const [player2] = useState(() => new StoryPlayer(doc2, setActiveDiagram2));
 
@@ -207,7 +207,7 @@ export const PresentationMode = (props: Props) => {
           <div className={styles.presentationHeaderDescription}>{currentStep.description}</div>
         </div>
       )}
-      <div className={`${styles.presentationCanvas}  light-theme`}>
+      <div className={`${styles.presentationCanvas} light-theme`}>
         <Canvas<InteractiveCanvasComponent, InteractiveCanvasProps>
           id={`presentation-canvas-other-canvas`}
           key={`presentation-canvas-other-${activeDiagram2.id}`}

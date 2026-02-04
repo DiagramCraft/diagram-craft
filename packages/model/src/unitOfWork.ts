@@ -1,363 +1,606 @@
-import type { DiagramElement } from './diagramElement';
-import { assert } from '@diagram-craft/utils/assert';
-import { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
-import type { Stylesheet, StylesheetType } from './diagramStyles';
-import type { Layer, LayerType } from './diagramLayer';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { Diagram } from './diagram';
-import type { AdjustmentRule } from './diagramLayerRuleTypes';
-import type { LayerManager } from './diagramLayerManager';
 import { newid } from '@diagram-craft/utils/id';
-import type { ModificationCRDT } from './diagramLayerModification';
-import type { EdgeProps, NodeProps } from './diagramProps';
-
-type ActionCallback = () => void;
-
-type ChangeType = 'interactive' | 'non-interactive';
+import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
+import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
+import { MultiMap } from '@diagram-craft/utils/multimap';
+import { isDebug } from '@diagram-craft/utils/debug';
+import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
   let uow = remoteUnitOfWorkRegistry.get(diagram.id);
   if (!uow) {
-    uow = new UnitOfWork(diagram, false, false, true);
+    uow = UnitOfWork.remote(diagram);
     remoteUnitOfWorkRegistry.set(diagram.id, uow);
-    uow.registerOnCommitCallback('remoteCleanup', undefined, () => {
-      remoteUnitOfWorkRegistry.delete(diagram.id);
-    });
+    uow.on('before', 'commit', 'remoteCleanup', () => remoteUnitOfWorkRegistry.delete(diagram.id));
   }
   return uow;
 };
 
-export type LayersSnapshot = {
-  _snapshotType: 'layers';
-  layers: string[];
-};
+export interface Snapshot {
+  _snapshotType: string;
+}
 
-export type LayerSnapshot = {
-  _snapshotType: 'layer';
-  name: string;
-  locked: boolean;
-  elements: string[];
-  type: LayerType;
-  rules?: AdjustmentRule[];
-  modifications?: Array<Pick<ModificationCRDT, 'id' | 'type'> & { elementId?: string }>;
-};
+const NULL_SNAPSHOT: Snapshot = { _snapshotType: 'dummy' };
 
-export type DiagramNodeSnapshot = Omit<SerializedNode, 'children'> & {
-  _snapshotType: 'node';
-  parentId?: string;
-  children: string[];
-};
+export interface UOWTrackable {
+  _trackableType: string;
+}
 
-export type DiagramEdgeSnapshot = SerializedEdge & {
-  _snapshotType: 'edge';
-};
+export type NotificationPhase = 'commit' | 'notify';
 
-export type StylesheetSnapshot = {
-  id: string;
-  name: string;
-  props: NodeProps | EdgeProps;
-  type: StylesheetType;
-  _snapshotType: 'stylesheet';
-};
+export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
+  id(element: E): string;
 
-type Snapshot = { _snapshotType: string } & (
-  | LayersSnapshot
-  | LayerSnapshot
-  | DiagramNodeSnapshot
-  | DiagramEdgeSnapshot
-  | StylesheetSnapshot
+  update: (diagram: Diagram, elementId: string, snapshot: S, uow: UnitOfWork) => void;
+
+  onNotify?: (elements: Array<UOWOperation>, phase: NotificationPhase, uow: UnitOfWork) => void;
+  onBeforeCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+  onAfterCommit?: (elements: Array<UOWOperation>, uow: UnitOfWork) => void;
+
+  snapshot: (element: E) => S;
+  restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
+}
+
+export interface UOWChildAdapter<S extends Snapshot> {
+  add: (d: Diagram, pId: string, cId: string, cS: S, idx: number, uow: UnitOfWork) => void;
+  remove: (d: Diagram, pId: string, cId: string, uow: UnitOfWork) => void;
+}
+
+const registry = new FinalizationRegistry((v: string) => {
+  // No warnings for throwaways
+  if (v.startsWith('true;')) return;
+  if (process.env.NODE_ENV === 'development') console.error('Failed uow cleanup', v.substring(5));
+});
+
+declare global {
+  namespace DiagramCraft {
+    interface UnitOfWorkMetadata {
+      nonDirty?: boolean;
+    }
+  }
+}
+
+export type UOWOperation = { notified?: boolean } & (
+  | {
+      type: 'add';
+      target: { object: UOWTrackable; id: string; type: string };
+      parent: { id: string; type: string };
+      idx: number;
+      afterSnapshot: Snapshot;
+    }
+  | {
+      type: 'remove';
+      target: { object: UOWTrackable; id: string; type: string };
+
+      idx: number;
+      parent: { id: string; type: string };
+      beforeSnapshot: Snapshot;
+    }
+  | {
+      type: 'update';
+      target: { object: UOWTrackable; id: string; type: string };
+
+      beforeSnapshot: Snapshot;
+      afterSnapshot: Snapshot;
+    }
 );
 
-export interface UOWTrackable<T extends Snapshot> {
-  id: string;
-  invalidate(uow: UnitOfWork): void;
-  snapshot(): T;
-  restore(snapshot: T, uow: UnitOfWork): void;
-}
+type UOWEventMap = Map<string, Map<string, (uow: UnitOfWork) => void>>;
 
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-type Trackable = (DiagramElement | Layer | LayerManager | Stylesheet<any>) & UOWTrackable<Snapshot>;
-
-export class ElementsSnapshot {
-  constructor(readonly snapshots: Map<string, undefined | Snapshot>) {}
-
-  onlyUpdated() {
-    return new ElementsSnapshot(
-      new Map([...this.snapshots.entries()].filter(([, v]) => v !== undefined))
-    );
+/**
+ * Begin tracking an operation on an element within the UnitOfWork.
+ * Only for debugging
+ */
+const beginOperation = (uow: UnitOfWork, type: UOWOperation['type'], element: UOWTrackable) => {
+  // biome-ignore lint/suspicious/noExplicitAny: debugging only
+  let s = (uow.metadata as any).__operations as Set<string>;
+  if (!s) {
+    s = new Set();
+    // biome-ignore lint/suspicious/noExplicitAny: debugging only
+    (uow.metadata as any).__operations = s;
   }
 
-  onlyAdded() {
-    return new ElementsSnapshot(
-      new Map([...this.snapshots.entries()].filter(([, v]) => v === undefined))
-    );
-  }
+  const adapter = UOWRegistry.getAdapter(element._trackableType);
+  const key = `${type}-${element._trackableType}-${adapter.id(element)}`;
+  if (s.has(key)) assert.fail(`Duplicate nested operation: ${key}`);
 
-  get keys() {
-    return [...this.snapshots.keys()];
-  }
+  s!.add(`${type}-${element._trackableType}`);
+};
 
-  get(key: string) {
-    return this.snapshots.get(key);
-  }
+/**
+ * End tracking an operation on an element within the UnitOfWork.
+ * Only for debugging
+ */
+const endOperation = (uow: UnitOfWork, type: UOWOperation['type'], element: UOWTrackable) => {
+  // biome-ignore lint/suspicious/noExplicitAny: debugging only
+  const s = (uow.metadata as any).__operations as Set<string>;
+  if (!s) return;
 
-  retakeSnapshot(diagram: Diagram) {
-    const dest = new Map<string, undefined | Snapshot>();
-    for (const k of this.snapshots.keys()) {
-      if (this.snapshots.get(k)?._snapshotType === 'layer') {
-        const layer = diagram.layers.byId(k);
-        if (!layer) continue;
-        dest.set(k, layer.snapshot());
-      } else if (this.snapshots.get(k)?._snapshotType === 'stylesheet') {
-        dest.set(k, diagram.document.styles.get(k)!.snapshot());
-      } else {
-        const element = diagram.lookup(k);
-        if (!element) continue;
-        dest.set(k, element.snapshot());
-      }
+  const adapter = UOWRegistry.getAdapter(element._trackableType);
+  const key = `${type}-${element._trackableType}-${adapter.id(element)}`;
+  s.delete(key);
+};
+
+const consolidateOperations = (allOperations: UOWOperation[]) => {
+  // Collect all update operations by ID
+  const updatesByIdMap = new MultiMap<string, UOWOperation & { type: 'update' }>();
+  allOperations
+    .filter(op => op.type === 'update')
+    .forEach(op => updatesByIdMap.add(op.target.id, op));
+
+  const dest: Array<UOWOperation> = [];
+  const processedIds = new Set<string>();
+  allOperations.forEach(op => {
+    if (op.type === 'update') {
+      if (processedIds.has(op.target.id)) return;
+      processedIds.add(op.target.id);
+
+      const updates = updatesByIdMap.get(op.target.id) ?? [op];
+
+      dest.push({
+        ...op,
+        beforeSnapshot: updates[0]!.beforeSnapshot,
+        afterSnapshot: updates.at(-1)!.afterSnapshot
+      });
+    } else {
+      dest.push(op);
     }
-    return new ElementsSnapshot(dest);
-  }
-}
-
-const registry =
-  process.env.NODE_ENV === 'development'
-    ? new FinalizationRegistry((v: string) => {
-        // No warnings for throwaways
-        if (v.startsWith('true;')) return;
-        console.error('Failed uow cleanup', v.substring(5));
-      })
-    : {
-        register: () => {},
-        unregister: () => {}
-      };
+  });
+  return dest;
+};
 
 export class UnitOfWork {
   uid = newid();
 
-  #elementsToUpdate = new Map<string, Trackable>();
-  #elementsToRemove = new Map<string, Trackable>();
-  #elementsToAdd = new Map<string, Trackable>();
+  state: 'pending' | 'committed' | 'aborted' = 'pending';
+  metadata: DiagramCraft.UnitOfWorkMetadata = {};
 
-  #invalidatedElements = new Set<Trackable>();
+  #operations: Array<UOWOperation> = [];
+  #updates = new Set<string>();
+  #undoableActions: Array<UndoableAction> = [];
+  #callbacks: UOWEventMap = new Map<string, Map<string, (uow: UnitOfWork) => void>>();
 
-  #shouldUpdateDiagram = false;
-
-  #snapshots = new Map<string, undefined | Snapshot>();
-
-  #onCommitCallbacks = new Map<string, ActionCallback>();
-
-  changeType: ChangeType = 'non-interactive';
-
-  constructor(
+  private constructor(
     readonly diagram: Diagram,
     public trackChanges: boolean = false,
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
-    registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+    if (!isThrowaway) {
+      registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+    }
   }
 
-  static immediate(diagram: Diagram) {
-    return new UnitOfWork(diagram, false, true);
+  static remote(diagram: Diagram) {
+    return new UnitOfWork(diagram, false, false, true);
   }
 
-  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T, silent = false): T {
+  static begin(diagram: Diagram) {
+    return new UnitOfWork(diagram, true);
+  }
+
+  static execute<T>(diagram: Diagram, cb: (uow: UnitOfWork) => T): T {
     const uow = new UnitOfWork(diagram);
-    const result = cb(uow);
-    uow.commit(silent);
-    return result;
-  }
-
-  snapshot(element: Trackable) {
-    if (!this.trackChanges) return;
-    if (this.#snapshots.has(element.id)) return;
-
-    this.#snapshots.set(element.id, element.snapshot());
-  }
-
-  hasBeenInvalidated(element: Trackable) {
-    return this.#invalidatedElements.has(element);
-  }
-
-  beginInvalidation(element: Trackable) {
-    this.#invalidatedElements.add(element);
-  }
-
-  contains(element: Trackable, type?: 'update' | 'remove') {
-    if (type === 'update') {
-      return this.#elementsToUpdate.has(element.id);
-    } else if (type === 'remove') {
-      return this.#elementsToRemove.has(element.id);
-    } else {
-      return this.#elementsToUpdate.has(element.id) || this.#elementsToRemove.has(element.id);
+    try {
+      return cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commit();
     }
   }
 
-  updateElement(element: Trackable) {
-    assert.true(
-      !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before updating element'
-    );
-    this.#elementsToUpdate.set(element.id, element);
-  }
-
-  removeElement(element: Trackable) {
-    assert.true(
-      !this.trackChanges || this.#snapshots.has(element.id),
-      'Must create snapshot before updating element'
-    );
-    this.#elementsToRemove.set(element.id, element);
-  }
-
-  addElement(element: Trackable) {
-    if (this.trackChanges && !this.#snapshots.has(element.id)) {
-      this.#snapshots.set(element.id, undefined);
+  static executeSilently<T>(diagram: Diagram | undefined, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram!, false, true);
+    try {
+      return cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.abort();
     }
-    this.#elementsToAdd.set(element.id, element);
   }
 
-  /**
-   * Register a callback to be executed after the commit phase. It's coalesced
-   * so that only one callback is executed per element/operation per commit phase.
-   */
-  registerOnCommitCallback(name: string, element: Trackable | undefined, cb: ActionCallback) {
-    if (this.isThrowaway) {
+  static async executeAsync<T>(diagram: Diagram, cb: (uow: UnitOfWork) => Promise<T>): Promise<T> {
+    const uow = new UnitOfWork(diagram);
+    try {
+      return await cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commit();
+    }
+  }
+
+  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
+    const uow = new UnitOfWork(diagram, true);
+    try {
+      return cb(uow);
+    } finally {
+      if (uow.state === 'pending') uow.commitWithUndo(label);
+    }
+  }
+
+  add(action: UndoableAction) {
+    this.#undoableActions.push(action);
+  }
+
+  private snapshot(element: UOWTrackable) {
+    if (!this.trackChanges) return NULL_SNAPSHOT;
+
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    return adapter.snapshot(element);
+  }
+
+  contains(element: UOWTrackable, type?: 'update' | 'remove' | 'add') {
+    return this.#operations.some(
+      e => (e.target.object === element && type === undefined) || e.type === type
+    );
+  }
+
+  executeUpdate<T>(element: UOWTrackable, cb: () => T): T {
+    DEBUG: {
+      beginOperation(this, 'update', element);
+    }
+    try {
+      const snapshot = this.snapshot(element);
+
+      const res = cb();
+      this.updateElement(element, snapshot);
+
+      return res;
+    } finally {
+      DEBUG: {
+        endOperation(this, 'update', element);
+      }
+    }
+  }
+
+  executeRemove<T>(element: UOWTrackable, parent: UOWTrackable, idx: number, cb: () => T) {
+    assert.true(idx >= 0);
+
+    DEBUG: {
+      beginOperation(this, 'remove', element);
+    }
+
+    try {
+      this.removeElement(element, parent, idx);
       return cb();
+    } finally {
+      DEBUG: {
+        endOperation(this, 'remove', element);
+      }
+    }
+  }
+
+  executeAdd<T>(
+    element: ArrayOrSingle<UOWTrackable>,
+    parent: UOWTrackable,
+    idx: number,
+    cb: () => T
+  ) {
+    assert.true(idx >= 0);
+
+    DEBUG: {
+      (Array.isArray(element) ? element : [element]).forEach(e => beginOperation(this, 'add', e));
     }
 
-    const id = name + (element?.id ?? '');
-    if (this.#onCommitCallbacks.has(id)) return;
+    try {
+      const res = cb();
+      this.addElement(element, parent, idx);
+      return res;
+    } finally {
+      DEBUG: {
+        (Array.isArray(element) ? element : [element]).forEach(e => endOperation(this, 'add', e));
+      }
+    }
+  }
 
-    // Note, a Map retains insertion order, so this ensure actions are
-    // executed in the order they are added
-    this.#onCommitCallbacks.set(id, cb);
+  updateElement(element: UOWTrackable, snapshot?: Snapshot) {
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const id = adapter.id(element);
+
+    assert.true(
+      !this.trackChanges || snapshot !== undefined,
+      'Must create snapshot before updating element'
+    );
+
+    this.#updates.add(id);
+
+    this.#operations.push({
+      type: 'update',
+      target: { object: element, id, type: element._trackableType },
+      beforeSnapshot: snapshot ?? NULL_SNAPSHOT,
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
+    });
+  }
+
+  removeElement(element: UOWTrackable, parent: UOWTrackable, idx: number) {
+    if (Array.isArray(element)) {
+      element.forEach(e => this.removeElement(e, parent, idx));
+      return;
+    }
+
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+    this.#operations.push({
+      type: 'remove',
+      target: { id: adapter.id(element), object: element, type: element._trackableType },
+      idx: idx,
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      beforeSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
+    });
+  }
+
+  addElement(element: ArrayOrSingle<UOWTrackable>, parent: UOWTrackable, idx: number) {
+    if (Array.isArray(element)) {
+      element.forEach((e, i) => this.addElement(e, parent, idx + i));
+      return;
+    }
+
+    const adapter = UOWRegistry.getAdapter(element._trackableType);
+    const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+    const id = adapter.id(element);
+
+    // Determine out-of-order updates
+    const updatesToBeReordered: Array<UOWOperation> = [];
+    if (this.#updates.has(id) && this.trackChanges) {
+      let removingUpdates = true;
+      const newOperations: Array<UOWOperation> = [];
+      for (let i = this.#operations.length - 1; i >= 0; i--) {
+        const e = this.#operations[i]!;
+
+        if (removingUpdates && e.target.id === id) {
+          if (e.type === 'update') {
+            updatesToBeReordered.push(e);
+            continue;
+          }
+
+          removingUpdates = false;
+        }
+
+        newOperations.push(e);
+      }
+
+      if (updatesToBeReordered.length > 0) {
+        console.warn('Out-of-order updates detected');
+        console.log(new Error().stack);
+        this.#operations = newOperations;
+      }
+    }
+
+    this.#operations.push({
+      type: 'add',
+      target: { id, object: element, type: element._trackableType },
+      idx: idx,
+      parent: { id: parentAdapter.id(parent), type: parent._trackableType },
+      afterSnapshot: this.trackChanges ? adapter.snapshot(element) : NULL_SNAPSHOT
+    });
+
+    if (updatesToBeReordered.length > 0) {
+      this.#operations.push(...updatesToBeReordered);
+    }
+  }
+
+  select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {
+    const beforeIds = diagram.selection.elements.map(e => e.id);
+    const afterIds = after.map(e => (typeof e === 'string' ? e : e.id));
+    diagram.selection.setElementIds(afterIds);
+    this.on('after', 'redo', newid(), () => diagram.selection.setElementIds(afterIds));
+    this.on('after', 'undo', newid(), () => diagram.selection.setElementIds(beforeIds));
+  }
+
+  on(
+    when: 'after' | 'before',
+    event: 'undo' | 'redo' | 'commit',
+    id: string,
+    callback: (uow: UnitOfWork) => void
+  ) {
+    if (this.isThrowaway) {
+      if (event === 'commit') callback(this);
+      return;
+    }
+
+    const eventKey = `${when}-${event}`;
+    if (!this.#callbacks.has(eventKey)) this.#callbacks.set(eventKey, new Map());
+    this.#callbacks.get(eventKey)!.set(id, callback);
   }
 
   notify() {
-    this.changeType = 'interactive';
-
-    this.processEvents();
-
-    this.#invalidatedElements.clear();
-
-    return this.#snapshots;
+    for (const [k, ops] of groupBy(
+      this.#operations.filter(op => op.notified !== true),
+      op => op.target.type
+    )) {
+      UOWRegistry.getAdapter(k).onNotify?.(ops, 'notify', this);
+      ops.forEach(op => (op.notified = true));
+    }
   }
 
-  commit(silent = false) {
-    this.changeType = 'non-interactive';
+  commit() {
+    this.state = 'committed';
 
-    // Note, onCommitCallbacks must run before elements events are emitted
-    this.processOnCommitCallbacks();
-    this.processEvents(silent);
+    this.emitEvent('before-commit');
 
-    if (this.#shouldUpdateDiagram) {
-      this.diagram.emit('diagramChange', { diagram: this.diagram });
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+      UOWRegistry.getAdapter(k).onBeforeCommit?.(ops, this);
     }
 
-    registry.unregister(this);
+    for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
+      UOWRegistry.getAdapter(k).onNotify?.(ops, 'commit', this);
+      UOWRegistry.getAdapter(k).onAfterCommit?.(ops, this);
+    }
 
-    return new ElementsSnapshot(this.#snapshots);
+    this.emitEvent('after-commit');
+
+    registry.unregister(this);
+  }
+
+  commitWithUndo(msg: string) {
+    this.commit();
+
+    if (this.#undoableActions.length > 0) {
+      const action = new CompoundUndoableAction(this.#undoableActions, msg);
+      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
+      this.diagram.undoManager.add(action);
+    } else if (this.#operations.length === 0) {
+      return;
+    } else {
+      this.diagram.undoManager.add(
+        new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks)
+      );
+    }
   }
 
   abort() {
     registry.unregister(this);
+    this.state = 'aborted';
   }
 
-  private processEvents(silent = false) {
-    // At this point, any elements have been added and or removed
-    if (!this.isRemote) {
-      this.#elementsToRemove.forEach(e => e.invalidate(this));
-      this.#elementsToUpdate.forEach(e => e.invalidate(this));
-      this.#elementsToAdd.forEach(e => e.invalidate(this));
-    }
+  private emitEvent(key: string) {
+    const eventCallbacks = this.#callbacks.get(key);
+    if (eventCallbacks === undefined) return;
 
-    const handle = (s: 'add' | 'remove' | 'update') => (e: Trackable) => {
-      if (e.trackableType === 'layerManager') {
-        this.diagram.layers.emit('layerStructureChange', {});
-      } else if (e.trackableType === 'layer') {
-        switch (s) {
-          case 'add':
-            this.diagram.layers.emit('layerAdded', { layer: e as Layer });
-            break;
-          case 'update':
-            this.diagram.layers.emit('layerUpdated', { layer: e as Layer });
-            break;
-          case 'remove':
-            this.diagram.layers.emit('layerRemoved', { layer: e as Layer });
-            break;
-        }
-      } else if (e.trackableType === 'stylesheet') {
-        switch (s) {
-          case 'add':
-            this.diagram.document.styles.emit('stylesheetAdded', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'update':
-            this.diagram.document.styles.emit('stylesheetUpdated', {
-              stylesheet: e as Stylesheet<StylesheetType>
-            });
-            break;
-          case 'remove':
-            this.diagram.document.styles.emit('stylesheetRemoved', {
-              stylesheet: e.id
-            });
-            break;
-        }
-      } else {
-        switch (s) {
-          case 'add':
-            this.diagram.emit('elementAdd', { element: e as DiagramElement });
-            break;
-          case 'update':
-            this.diagram.emit('elementChange', { element: e as DiagramElement, silent });
-            break;
-          case 'remove':
-            this.diagram.emit('elementRemove', { element: e as DiagramElement });
-            break;
-        }
+    let emitCount: number;
+    do {
+      emitCount = 0;
+      for (const [key, callback] of eventCallbacks.entries()) {
+        callback(this);
+        eventCallbacks.delete(key);
+        emitCount++;
       }
-    };
+    } while (emitCount > 0);
+  }
+}
 
-    // TODO: Need to think about the order here a bit better to optimize the number of events
-    //       ... can be only CHANGE, ADD, REMOVE, ADD_CHANGE
-    this.#elementsToRemove.forEach(handle('remove'));
-    this.#elementsToUpdate.forEach(handle('update'));
-    this.#elementsToAdd.forEach(handle('add'));
+export class UOWRegistry {
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static adapters: Record<string, UOWAdapter<any, any>> = {};
+  // biome-ignore lint/suspicious/noExplicitAny: Need any in this case
+  static childAdapters: Record<string, UOWChildAdapter<any>> = {};
 
-    this.diagram.emit('elementBatchChange', {
-      removed: [...this.#elementsToRemove.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[],
-      updated: [...this.#elementsToUpdate.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[],
-      added: [...this.#elementsToAdd.values()].filter(
-        e => e.trackableType === 'element'
-      ) as DiagramElement[]
-    });
-
-    this.#elementsToUpdate.clear();
-    this.#elementsToRemove.clear();
-    this.#elementsToAdd.clear();
+  static getAdapter(trackableType: string): UOWAdapter<Snapshot, UOWTrackable> {
+    return mustExist(UOWRegistry.adapters[trackableType]);
   }
 
-  private processOnCommitCallbacks() {
-    while (this.#onCommitCallbacks.size > 0) {
-      this.#onCommitCallbacks.forEach((callback, key) => {
-        this.#onCommitCallbacks.delete(key);
-        callback();
-      });
+  static getChildAdapter(parent: string, child: string): UOWChildAdapter<Snapshot> {
+    return mustExist(UOWRegistry.childAdapters[`${parent}-${child}`]);
+  }
+}
+
+class UOWUndoableAction implements UndoableAction {
+  timestamp?: Date;
+
+  constructor(
+    public readonly description: string,
+    private readonly diagram: Diagram,
+    private ops: Array<UOWOperation>,
+    private eventMap: UOWEventMap
+  ) {
+    this.ops = consolidateOperations(this.ops);
+  }
+
+  undo(uow: UnitOfWork) {
+    if (isDebug()) {
+      console.log('------------------------------------');
+      console.log('Undoing', this.description);
     }
+    this.emitEvent(this.eventMap, 'before-undo', uow);
+
+    for (const op of this.ops.toReversed()) {
+      const adapter = UOWRegistry.getAdapter(op.target.type);
+      switch (op.type) {
+        case 'remove': {
+          if (isDebug()) {
+            console.log(
+              `Adding child ${op.target.type}/${op.target.id} to parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
+            );
+          }
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.beforeSnapshot, op.idx, uow);
+          break;
+        }
+        case 'add': {
+          if (isDebug()) {
+            console.log(
+              `Removing child ${op.target.type}/${op.target.id} from parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
+            );
+          }
+          const adapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          adapter.remove(this.diagram, op.parent.id, op.target.id, uow);
+          break;
+        }
+        case 'update':
+          if (isDebug()) console.log(`Updating ${op.target.type}/${op.target.id}`);
+          adapter.update(this.diagram, op.target.id, op.beforeSnapshot, uow);
+          break;
+      }
+    }
+
+    this.emitEvent(this.eventMap, 'after-undo', uow);
   }
 
-  stopTracking() {
-    this.trackChanges = false;
+  redo(uow: UnitOfWork) {
+    if (isDebug()) {
+      console.log('------------------------------------');
+      console.log('Redoing', this.description);
+    }
+    this.emitEvent(this.eventMap, 'before-redo', uow);
+
+    for (const op of this.ops) {
+      const adapter = UOWRegistry.getAdapter(op.target.type);
+      switch (op.type) {
+        case 'add': {
+          if (isDebug()) {
+            console.log(
+              `Adding child ${op.target.type}/${op.target.id} to parent ${op.parent.type}/${op.parent.id} at idx ${op.idx}`
+            );
+          }
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.add(this.diagram, op.parent.id, op.target.id, op.afterSnapshot, op.idx, uow);
+          break;
+        }
+        case 'remove': {
+          if (isDebug()) {
+            console.log(
+              `Removing child ${op.target.type}/${op.target.id} from parent ${op.parent.type}/${op.parent.id} at idx$ {op.idx}`
+            );
+          }
+          const cAdapter = UOWRegistry.getChildAdapter(op.parent.type, op.target.type);
+          cAdapter.remove(this.diagram, op.parent.id, op.target.id, uow);
+          break;
+        }
+        case 'update':
+          if (isDebug()) console.log(`Updating ${op.target.type}/${op.target.id}`);
+          adapter.update(this.diagram, op.target.id, op.afterSnapshot, uow);
+          break;
+      }
+    }
+
+    this.emitEvent(this.eventMap, 'after-redo', uow);
   }
 
-  updateDiagram() {
-    this.#shouldUpdateDiagram = true;
+  merge(next: UndoableAction): boolean {
+    if (!(next instanceof UOWUndoableAction)) return false;
+
+    if (
+      next.description === this.description &&
+      hasSameElements(
+        next.ops.map(o => o.target.id),
+        this.ops.map(o => o.target.id)
+      ) &&
+      Date.now() - this.timestamp!.getTime() < 2000
+    ) {
+      this.ops = consolidateOperations([...this.ops, ...next.ops]);
+      this.timestamp = new Date();
+      return true;
+    }
+
+    return false;
+  }
+
+  private emitEvent(map: UOWEventMap, key: string, uow: UnitOfWork) {
+    const eventCallbacks = map.get(key);
+    if (eventCallbacks === undefined) return;
+
+    for (const callback of eventCallbacks.values()) {
+      callback(uow);
+    }
   }
 }

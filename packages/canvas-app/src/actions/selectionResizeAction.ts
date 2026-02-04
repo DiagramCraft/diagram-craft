@@ -1,10 +1,10 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
+import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Point } from '@diagram-craft/geometry/point';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { transformElements } from '@diagram-craft/model/diagramElement';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -34,6 +34,8 @@ export const selectionResizeActions = (context: ActionContext) => {
 };
 
 export class SelectionResizeAction extends AbstractSelectionAction {
+  name = $tStr('action.SELECTION_RESIZE.name', 'Resize Selection');
+
   constructor(
     protected readonly offset: () => Point,
     context: ActionContext
@@ -53,13 +55,13 @@ export class SelectionResizeAction extends AbstractSelectionAction {
       r: 0
     };
 
-    const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-    transformElements(
-      this.context.model.activeDiagram.selection.elements,
-      TransformFactory.fromTo($sel.bounds, newBox),
-      uow
-    );
-    commitWithUndo(uow, 'Resized');
+    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Resize', uow => {
+      transformElements(
+        this.context.model.activeDiagram.selection.elements,
+        TransformFactory.fromTo($sel.bounds, newBox),
+        uow
+      );
+    });
 
     this.emit('actionTriggered', {});
   }

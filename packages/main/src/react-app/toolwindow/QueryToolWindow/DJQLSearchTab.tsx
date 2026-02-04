@@ -60,7 +60,7 @@ export const DJQLSearchTab = () => {
   const redraw = useRedraw();
   const diagram = useDiagram();
   const { djqlQuery, djqlScope, setDjqlQuery } = useQueryToolWindowContext();
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const ref = useRef<SyntaxHighlightingEditor.Ref>(null);
   const downloadRef = useRef<HTMLAnchorElement>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [downloadLink, setDownloadLink] = useState('');
@@ -113,156 +113,162 @@ export const DJQLSearchTab = () => {
   };
 
   return (
-    <ToolWindow.TabContent>
+    <>
       <ToolWindow.TabActions>
         <SearchToolMenu
           type={'djql'}
           onQuerySelect={(scope, query) => {
             setDjqlQuery(query, scope);
-            ref.current!.value = query;
+            ref.current!.setValue(query);
           }}
-          getQuery={() => ref.current!.value}
-          getLabel={() => ref.current!.value}
+          getQuery={() => ref.current!.getValue()}
+          getLabel={() => ref.current!.getValue()}
           getScope={() => djqlScope}
         />
       </ToolWindow.TabActions>
-      <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
-        <ToolWindowPanel mode={'headless'} id={'query'} title={'Query'}>
-          <div
-            style={{
-              marginBottom: '0.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <Select.Root
-              onChange={s => setDjqlQuery(djqlQuery, s ?? 'active-layer')}
-              value={djqlScope}
-            >
-              <Select.Item value={'active-layer'}>Active Layer</Select.Item>
-              <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
-              <Select.Item value={'active-document'}>Active Document</Select.Item>
-              <Select.Item value={'selection'}>Selection</Select.Item>
-            </Select.Root>
-          </div>
-
-          <SyntaxHighlightingEditor
-            ref={ref}
-            defaultValue={djqlQuery}
-            style={{ minHeight: '100px' }}
-            highlighter={jsonHighlighter}
-          />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'end',
-              marginTop: '0.5rem',
-              gap: '0.5rem'
-            }}
-          >
-            <Button
-              type={'secondary'}
-              onClick={() => {
-                setExpanded([]);
+      <ToolWindow.TabContent>
+        <Accordion.Root type="multiple" defaultValue={['query', 'response']}>
+          <ToolWindowPanel mode={'headless'} id={'query'} title={'Query'}>
+            <div
+              style={{
+                marginBottom: '0.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}
             >
-              Save as...
-            </Button>
-            <Button type={'secondary'} onClick={() => exportToFile()}>
-              Export
-            </Button>
-            <a
-              style={{ display: 'none' }}
-              download={'export.json'}
-              href={downloadLink}
-              ref={downloadRef}
-            >
-              -
-            </a>
-            <Button
-              onClick={() => {
-                if (ref.current?.value === djqlQuery) {
-                  redraw();
-                } else {
-                  setQueryIdx(0);
-                  setQueryInput({});
-                  setExpanded([]);
-                  setDjqlQuery(ref.current?.value ?? '', djqlScope);
-                }
+              <Select.Root
+                onChange={s => setDjqlQuery(djqlQuery, s ?? 'active-layer')}
+                value={djqlScope}
+              >
+                <Select.Item value={'active-layer'}>Active Layer</Select.Item>
+                <Select.Item value={'active-diagram'}>Active Diagram</Select.Item>
+                <Select.Item value={'active-document'}>Active Document</Select.Item>
+                <Select.Item value={'selection'}>Selection</Select.Item>
+              </Select.Root>
+            </div>
+
+            <SyntaxHighlightingEditor
+              ref={ref}
+              defaultValue={djqlQuery}
+              style={{ minHeight: '100px' }}
+              highlighter={jsonHighlighter}
+            />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'end',
+                marginTop: '0.5rem',
+                gap: '0.5rem'
               }}
             >
-              Run
-            </Button>
-          </div>
-        </ToolWindowPanel>
-
-        <ToolWindowPanel mode={'accordion'} id={'response'} title={'Query Response'}>
-          <div className={'cmp-query-response'}>
-            {!!error && <div className={'cmp-error'}>{error}</div>}
-            {res?.map((e, idx) => (
-              <div
-                key={idx}
-                className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
-                style={{
-                  cursor: 'pointer'
-                }}
+              <Button
+                type={'secondary'}
                 onClick={() => {
-                  if (expanded.includes(idx)) {
-                    setExpanded(expanded.filter(e => e !== idx));
+                  setExpanded([]);
+                }}
+              >
+                Save as...
+              </Button>
+              <Button type={'secondary'} onClick={() => exportToFile()}>
+                Export
+              </Button>
+              <a
+                style={{ display: 'none' }}
+                download={'export.json'}
+                href={downloadLink}
+                ref={downloadRef}
+              >
+                -
+              </a>
+              <Button
+                onClick={() => {
+                  if (ref.current?.getValue() === djqlQuery) {
+                    redraw();
                   } else {
-                    setExpanded([...expanded, idx]);
-                  }
-                }}
-                onMouseEnter={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (e.type && e.id) {
-                    const el = diagram.lookup(e.id);
-                    if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
+                    setQueryIdx(0);
+                    setQueryInput({});
+                    setExpanded([]);
+                    setDjqlQuery(ref.current?.getValue() ?? '', djqlScope);
                   }
                 }}
               >
-                {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
-                {expanded.includes(idx) && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '0.5rem',
-                      top: '0.125rem',
-                      display: 'flex',
-                      gap: '0.25rem'
-                    }}
-                  >
-                    <Button type={'icon-only'}>
-                      <TbArrowDownRight />
-                    </Button>
-                    <Button
-                      type={'icon-only'}
-                      onClick={ev => {
-                        navigator.clipboard.writeText(
-                          JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
-                        );
-                        ev.preventDefault();
-                        ev.stopPropagation();
+                Run
+              </Button>
+            </div>
+          </ToolWindowPanel>
+
+          <ToolWindowPanel
+            mode={'accordion'}
+            id={'response'}
+            title={`Query Response ${res ? `(${res.length} hits)` : 0}`}
+          >
+            <div className={'cmp-query-response'}>
+              {!!error && <div className={'cmp-error'}>{error}</div>}
+              {res?.map((e, idx) => (
+                <div
+                  key={idx}
+                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (expanded.includes(idx)) {
+                      setExpanded(expanded.filter(e => e !== idx));
+                    } else {
+                      setExpanded([...expanded, idx]);
+                    }
+                  }}
+                  onMouseEnter={() => {
+                    if (e.type && e.id) {
+                      const el = diagram.lookup(e.id);
+                      if (el) addHighlight(el, Highlights.NODE__HIGHLIGHT);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (e.type && e.id) {
+                      const el = diagram.lookup(e.id);
+                      if (el) removeHighlight(el, Highlights.NODE__HIGHLIGHT);
+                    }
+                  }}
+                >
+                  {expanded.includes(idx) ? <TbChevronDown /> : <TbChevronRight />}
+                  {expanded.includes(idx) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        top: '0.125rem',
+                        display: 'flex',
+                        gap: '0.25rem'
                       }}
                     >
-                      <TbClipboardCopy />
-                    </Button>
-                  </div>
-                )}
-                <pre key={idx}>
-                  {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
-                </pre>
-              </div>
-            ))}
-          </div>
-        </ToolWindowPanel>
-      </Accordion.Root>
-    </ToolWindow.TabContent>
+                      <Button type={'icon-only'}>
+                        <TbArrowDownRight />
+                      </Button>
+                      <Button
+                        type={'icon-only'}
+                        onClick={ev => {
+                          navigator.clipboard.writeText(
+                            JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)
+                          );
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                        }}
+                      >
+                        <TbClipboardCopy />
+                      </Button>
+                    </div>
+                  )}
+                  <pre key={idx}>
+                    {JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </ToolWindowPanel>
+        </Accordion.Root>
+      </ToolWindow.TabContent>
+    </>
   );
 };

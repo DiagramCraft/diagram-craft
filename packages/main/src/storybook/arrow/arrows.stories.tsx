@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ARROW_SHAPES, type ArrowShape } from '@diagram-craft/canvas/arrowShapes';
 
 const ArrowShapePreview = (props: { name: string; shape: ArrowShape }) => (

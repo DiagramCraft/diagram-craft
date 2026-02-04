@@ -47,7 +47,7 @@ describe.each(Backends.all())('StyleCopyAction [%s]', (_name, backend) => {
       // Select the node and copy its style
       model.diagram1.selection.setElements([node1]);
       const copyAction = new StyleCopyAction(mkContext(model.diagram1));
-      copyAction.execute();
+      copyAction.execute({});
 
       // Create a new node with different styles
       const node2 = model.layer1.addNode();
@@ -62,7 +62,7 @@ describe.each(Backends.all())('StyleCopyAction [%s]', (_name, backend) => {
       // Select node2 and paste the style
       model.diagram1.selection.setElements([node2]);
       const pasteAction = new StylePasteAction(mkContext(model.diagram1));
-      pasteAction.execute();
+      pasteAction.execute({});
 
       // Verify the style was pasted
       expect(node2.storedProps.stroke?.color).toBe('red');

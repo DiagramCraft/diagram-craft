@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { _p, Point } from '@diagram-craft/geometry/point';
@@ -29,18 +29,16 @@ const OrthogonalRoutingTest = (props: { start: any; end: any; numberOfWayPoints:
   const node1 = layer.addNode({ bounds: node1Bounds });
   const node2 = layer.addNode({ bounds: node2Bounds });
   const edge = layer.addEdge();
-  edge.setStart(
-    new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
+  UnitOfWork.execute(diagram, uow =>
+    edge.setStart(new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'), uow)
   );
-  edge.setEnd(
-    new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
+  UnitOfWork.execute(diagram, uow =>
+    edge.setEnd(new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'), uow)
   );
   if (props.numberOfWayPoints > 0)
-    edge.addWaypoint({ point: _p(150, 300) }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => edge.addWaypoint({ point: _p(150, 300) }, uow));
   if (props.numberOfWayPoints > 1)
-    edge.addWaypoint({ point: _p(550, 200) }, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => edge.addWaypoint({ point: _p(550, 200) }, uow));
 
   const graph = new _test.PathfindingSegmentProvider(edge).constructGraph(
     Box.center(node1.bounds),

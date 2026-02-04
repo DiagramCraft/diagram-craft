@@ -3,6 +3,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context),
@@ -99,6 +100,8 @@ const prepareSvgForExport = async (context: ActionContext) => {
 };
 
 class ExportImageAction extends AbstractAction {
+  name = $tStr('action.FILE_EXPORT_IMAGE.name', 'Export as Image');
+
   execute(): void {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
@@ -146,6 +149,8 @@ class ExportImageAction extends AbstractAction {
 }
 
 class ExportSVGAction extends AbstractAction {
+  name = $tStr('action.FILE_EXPORT_SVG.name', 'Export as SVG');
+
   execute(): void {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);

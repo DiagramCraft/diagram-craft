@@ -29,12 +29,14 @@ export class CompoundUndoableAction implements UndoableAction {
   private readonly actions: UndoableAction[];
 
   name: string | undefined;
+  readonly #description: string | undefined;
 
-  constructor(actions?: UndoableAction[]) {
+  constructor(actions?: UndoableAction[], description?: string) {
     this.actions = actions ?? [];
+    this.#description = description;
   }
 
-  addAction(action: UndoableAction | undefined) {
+  add(action: UndoableAction | undefined) {
     if (!action) {
       console.warn('No undoable action provided');
       return;
@@ -43,7 +45,7 @@ export class CompoundUndoableAction implements UndoableAction {
   }
 
   get description() {
-    return this.actions.map(a => a.description).join(', ');
+    return this.#description ?? this.actions.map(a => a.description).join(', ');
   }
 
   undo(uow: UnitOfWork) {
@@ -101,6 +103,16 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     return actions;
   }
 
+  undoToMark() {
+    while (this.undoableActions.at(-1) !== this.mark) {
+      this.undo();
+    }
+  }
+
+  clearRedo() {
+    this.redoableActions = [];
+  }
+
   combine(callback: () => void) {
     const top = this.undoableActions.at(-1);
     callback();
@@ -134,9 +146,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   addAndExecute(action: UndoableAction) {
     this.add(action);
 
-    const uow = new UnitOfWork(this.diagram);
-    action.redo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
 
     this.emit('execute', { action, type: 'redo' });
   }
@@ -150,9 +160,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     this.redoableActions.push(action);
     this.prune();
 
-    const uow = new UnitOfWork(this.diagram);
-    action.undo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.undo(uow));
 
     this.emit('execute', { action: action, type: 'undo' });
   }
@@ -166,9 +174,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
     this.undoableActions.push(action);
     this.prune();
 
-    const uow = new UnitOfWork(this.diagram);
-    action.redo(uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
 
     this.emit('execute', { action: action, type: 'undo' });
   }

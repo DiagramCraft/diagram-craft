@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 
 const registerStencil = (
   reg: NodeDefinitionRegistry,
@@ -21,7 +21,7 @@ const registerStencil = (
 };
 
 export const registerOfficeServersShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/office/servers.xml', 'Azure');
+  const stencils = await loadDrawioStencils('$STENCIL_ROOT/stencils/office/servers.xml', 'Azure');
 
   registerStencil(r, 'servers', '3rd Party Mail Server', stencils);
   registerStencil(r, 'servers', 'Active Directory Federation Services Proxy', stencils);
@@ -104,7 +104,7 @@ export const registerOfficeServersShapes = async (r: NodeDefinitionRegistry) => 
 
 export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/security.xml',
+    '$STENCIL_ROOT/stencils/office/security.xml',
     'Azure',
     'black',
     'white'
@@ -150,7 +150,7 @@ export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) =>
 
 export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/devices.xml',
+    '$STENCIL_ROOT/stencils/office/devices.xml',
     'Azure',
     'black',
     'white'
@@ -208,7 +208,7 @@ export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => 
 
 export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/communications.xml',
+    '$STENCIL_ROOT/stencils/office/communications.xml',
     'Azure',
     'white',
     'green'
@@ -287,7 +287,7 @@ export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegist
 
 export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/clouds.xml',
+    '$STENCIL_ROOT/stencils/office/clouds.xml',
     'Azure',
     'black',
     'white'
@@ -309,7 +309,7 @@ export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
 
 export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/services.xml',
+    '$STENCIL_ROOT/stencils/office/services.xml',
     'Azure',
     'black',
     'white'
@@ -345,7 +345,7 @@ export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) =>
 
 export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/users.xml',
+    '$STENCIL_ROOT/stencils/office/users.xml',
     'Azure',
     'black',
     'white'
@@ -385,7 +385,7 @@ export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
 
 export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/sites.xml',
+    '$STENCIL_ROOT/stencils/office/sites.xml',
     'Azure',
     'black',
     'white'
@@ -412,7 +412,7 @@ export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
 
 export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/databases.xml',
+    '$STENCIL_ROOT/stencils/office/databases.xml',
     'Azure',
     'black',
     'white'
@@ -446,7 +446,7 @@ export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) =
 
 export const registerOfficeConceptShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
-    '/stencils/office/concepts.xml',
+    '$STENCIL_ROOT/stencils/office/concepts.xml',
     'Azure',
     'black',
     'white'

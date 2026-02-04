@@ -2,27 +2,31 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { useState } from 'react';
 import type { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { PickerCanvas } from './PickerCanvas';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useDocument } from '../application';
-import type { Definitions } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { assert } from '@diagram-craft/utils/assert';
 
-const TEMPLATE_CACHE = new Map<string, DiagramNode>();
+const TEMPLATE_CACHE = new Map<string, DiagramElement>();
 
-const makeTemplatePreview = (template: DataTemplate, definitions: Definitions): DiagramNode => {
+const makeTemplatePreview = (template: DataTemplate, definitions: Registry): DiagramElement => {
   if (TEMPLATE_CACHE.has(template.id)) {
     return TEMPLATE_CACHE.get(template.id)!;
   }
 
   const tpl = deepClone(template.template);
-  const { node, diagram } = createThumbnailDiagramForNode(
-    (diagram, layer) => deserializeDiagramElements([tpl], diagram, layer)[0] as DiagramNode,
+  const { elements, diagram } = createThumbnail(
+    (_diagram, layer, uow) => deserializeDiagramElements([tpl], layer, uow),
     definitions
   );
-  node.setBounds({ ...node.bounds, x: 0, y: 0 }, UnitOfWork.immediate(node.diagram));
+  assert.arrayWithExactlyOneElement(elements);
+  const [node] = elements;
+
+  UnitOfWork.execute(node.diagram, uow => node.setBounds({ ...node.bounds, x: 0, y: 0 }, uow));
 
   diagram.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };
@@ -72,7 +76,7 @@ export const SelectTemplateDialog = (props: Props) => {
           }}
         >
           {props.templates.map(template => {
-            const node = makeTemplatePreview(template, document.definitions);
+            const node = makeTemplatePreview(template, document.registry);
             const isSelected = selectedTemplate === template.id;
             return (
               <div

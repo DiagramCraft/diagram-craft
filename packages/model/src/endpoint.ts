@@ -9,6 +9,21 @@ import { Box } from '@diagram-craft/geometry/box';
 import { isSerializedEndpointFree, isSerializedEndpointPointInNode } from './serialization/utils';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementLookup } from './elementLookup';
+import {
+  getCollapsedAncestor,
+  getBoundsRelativeToCollapsedAncestor,
+  getAnchorPositionForBounds,
+  getPositionInBoundsForBox
+} from './collapsible';
+
+/**
+ * Calculates an offset vector with optional rotation.
+ * Converts normalized offset to absolute offset based on bounds dimensions.
+ */
+const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point => {
+  const v = isRelative ? { x: offset.x * bounds.w, y: offset.y * bounds.h } : offset;
+  return Point.rotateAround(v, bounds.r, Point.ORIGIN);
+};
 
 export interface Endpoint {
   readonly position: Point;
@@ -16,9 +31,9 @@ export interface Endpoint {
   readonly isConnected: boolean;
 }
 
-export abstract class ConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
-  implements Endpoint
-{
+export abstract class ConnectedEndpoint<
+  T extends SerializedEndpoint = SerializedEndpoint
+> implements Endpoint {
   protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
 
   get node(): DiagramNode {
@@ -91,12 +106,19 @@ export class AnchorEndpoint
     return anchor;
   }
 
-  get position() {
+  get position(): Point {
+    const collapsedAncestor = getCollapsedAncestor(this.node);
+
+    if (collapsedAncestor) {
+      const bounds = getBoundsRelativeToCollapsedAncestor(this.node);
+      const ref = getAnchorPositionForBounds(this.node, this.anchorId, bounds);
+      const rotatedOffset = calculateOffset(this.offset, bounds, true);
+      return Point.add(ref, rotatedOffset);
+    }
+
     const bounds = this.node.bounds;
     const ref = this.node._getAnchorPosition(this.anchorId);
-
-    const v = { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
-    const rotatedOffset = Point.rotateAround(v, bounds.r, Point.ORIGIN);
+    const rotatedOffset = calculateOffset(this.offset, bounds, true);
 
     return Point.add(ref, rotatedOffset);
   }
@@ -145,7 +167,27 @@ export class PointInNodeEndpoint
     );
   }
 
-  get position() {
+  get position(): Point {
+    const collapsedAncestor = getCollapsedAncestor(this.node);
+
+    if (collapsedAncestor) {
+      const bounds = getBoundsRelativeToCollapsedAncestor(this.node);
+      const ref = this.ref ? getPositionInBoundsForBox(this.node, this.ref, bounds) : bounds;
+
+      const v =
+        this.offsetType === 'absolute'
+          ? this.offset
+          : { x: this.offset.x * bounds.w, y: this.offset.y * bounds.h };
+      const p = Point.add(ref, v);
+
+      const pointInCollapsed =
+        !this.ref && this.offsetType !== 'absolute'
+          ? Point.rotateAround(p, bounds.r, Box.center(bounds))
+          : p;
+
+      return Box.projectPointToBoundary(pointInCollapsed, collapsedAncestor.bounds);
+    }
+
     const bounds = this.node.bounds;
     const ref = this.ref ? this.node._getPositionInBounds(this.ref) : bounds;
 

@@ -9,7 +9,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useMemo } from 'react';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { getAnchorPosition } from '@diagram-craft/model/anchor';
 import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -22,6 +22,8 @@ import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
+import { assert } from '@diagram-craft/utils/assert';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -43,22 +45,27 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
   const previewDiagram = useMemo(() => {
     if (!selectedNode) return null;
 
-    const { diagram: thumbnailDiagram, node: duplicatedNode } = createThumbnailDiagramForNode(
-      (d, layer) => {
-        const serializedNode = serializeDiagramElement(selectedNode);
-        const uow = UnitOfWork.immediate(d);
+    const {
+      diagram: thumbnailDiagram,
+      elements: [duplicatedNode]
+    } = createThumbnail((d, layer) => {
+      const serializedNode = serializeDiagramElement(selectedNode);
 
-        return deserializeDiagramElements(
-          [serializedNode],
+      return [
+        UnitOfWork.execute(
           d,
-          layer,
-          new ElementLookup<DiagramNode>(),
-          new ElementLookup<DiagramEdge>(),
-          uow
-        )[0] as DiagramNode;
-      },
-      diagram.document.definitions
-    );
+          uow =>
+            deserializeDiagramElements(
+              [serializedNode],
+              layer,
+              uow,
+              new ElementLookup<DiagramNode>(),
+              new ElementLookup<DiagramEdge>()
+            )[0] as DiagramNode
+        )
+      ];
+    }, diagram.document.registry);
+    assert.present(duplicatedNode);
 
     const padding = 10;
     thumbnailDiagram.viewBox.dimensions = {
@@ -71,7 +78,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
     };
 
     return thumbnailDiagram;
-  }, [selectedNode, diagram.document.definitions]);
+  }, [selectedNode, diagram.document.registry]);
 
   if (!selectedNode || !previewDiagram) return null;
 
@@ -282,7 +289,7 @@ export const ElementAnchorsPanel = (props: Props) => {
 
   const disabled =
     !diagram.selection.isNodesOnly() ||
-    diagram.selection.nodes.some(e => !e.getDefinition().supports('anchors-configurable'));
+    diagram.selection.nodes.some(e => !e.getDefinition().hasFlag(NodeFlags.AnchorsConfigurable));
 
   return (
     <ToolWindowPanel
@@ -349,11 +356,11 @@ export const ElementAnchorsPanel = (props: Props) => {
             disabled={disabled}
             diagram={diagram}
             onChange={() => {
-              const uow = new UnitOfWork(diagram, false);
-              diagram.selection.nodes.forEach(node => {
-                node.invalidateAnchors(uow);
+              UnitOfWork.execute(diagram, uow => {
+                diagram.selection.nodes.forEach(node => {
+                  node.invalidateAnchors(uow);
+                });
               });
-              uow.commit();
             }}
           />
         )}

@@ -34,7 +34,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       doc2?.on?.('diagramChanged', documentDiagramChange[1]!);
 
       // Act
-      doc1.diagrams[0]!.name = 'new';
+      UnitOfWork.executeSilently(doc1.diagrams[0]!, uow => doc1.diagrams[0]!.setName('new', uow));
 
       // Verify
       expect(doc1.diagrams[0]!.name).toBe('new');
@@ -73,10 +73,12 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = doc1.diagrams[0]!;
 
       // Act
-      diagram.updateProps(props => {
-        props.grid ??= {};
-        props.grid.enabled = false;
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(props => {
+          props.grid ??= {};
+          props.grid.enabled = false;
+        }, uow)
+      );
 
       // Verify
       expect(diagram.props).toEqual({ grid: { enabled: false } });
@@ -89,10 +91,12 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       }
 
       // Act
-      diagram.updateProps(props => {
-        props.grid ??= {};
-        props.grid.enabled = true;
-      });
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.updateProps(props => {
+          props.grid ??= {};
+          props.grid.enabled = true;
+        }, uow)
+      );
 
       // Verify
       expect(diagram.props).toEqual({
@@ -128,7 +132,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
 
       // Act
       const diagram = doc1.diagrams[0]!;
-      diagram.bounds = { x: 100, y: 100, w: 110, h: 100 };
+      UnitOfWork.executeSilently(diagram, uow =>
+        diagram.setBounds({ x: 100, y: 100, w: 110, h: 100 }, uow)
+      );
 
       // Verify
       expect(diagram.bounds).toEqual({ x: 100, y: 100, w: 110, h: 100 });
@@ -147,17 +153,18 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = TestModel.newDiagram();
 
       const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
-      diagram.layers.add(layer1, new UnitOfWork(diagram));
-
       const layer2 = new RegularLayer(newid(), 'Layer 2', [], diagram);
-      diagram.layers.add(layer2, new UnitOfWork(diagram));
 
-      const uow = new UnitOfWork(diagram);
       const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
       const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
-      layer1.addElement(node1, uow);
-      layer2.addElement(node2, uow);
-      uow.commit();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.layers.add(layer1, uow);
+        diagram.layers.add(layer2, uow);
+
+        layer1.addElement(node1, uow);
+        layer2.addElement(node2, uow);
+      });
 
       expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
       diagram.layers.toggleVisibility(layer1);
@@ -267,6 +274,421 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
         expect(remoteGuide?.color).toBe('green');
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
       }
+    });
+  });
+
+  describe('moveElement', () => {
+    it('should move element to a different layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer2 = diagram.newLayer();
+      const node = layer.addNode();
+      const nodeId = node.id;
+      const layer1Id = layer.id;
+      const layer2Id = layer2.id;
+
+      // Helper to get fresh node reference
+      const getNode = () => diagram.nodeLookup.get(nodeId)!;
+
+      // Verify initial state
+      expect(layer.elements).toContain(node);
+      expect(layer2.elements).not.toContain(node);
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram, 'Move element', uow => {
+        diagram.moveElement([node], uow, layer2);
+      });
+
+      // Verify
+      expect(layer.elements.map(e => e.id)).not.toContain(nodeId);
+      expect(layer2.elements.map(e => e.id)).toContain(nodeId);
+      expect(getNode().layer.id).toBe(layer2Id);
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        nodeId
+      );
+      expect(
+        (diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)
+      ).not.toContain(nodeId);
+      expect(getNode().layer.id).toBe(layer1Id);
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo
+      expect(
+        (diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)
+      ).not.toContain(nodeId);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        nodeId
+      );
+      expect(getNode().layer.id).toBe(layer2Id);
+    });
+
+    it('should move multiple elements to a different layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer2 = diagram.newLayer();
+      const node1 = layer.addNode();
+      const node2 = layer.addNode();
+      const node1Id = node1.id;
+      const node2Id = node2.id;
+      const layer1Id = layer.id;
+      const layer2Id = layer2.id;
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram, 'Move multiple elements', uow => {
+        diagram.moveElement([node1, node2], uow, layer2);
+      });
+
+      // Verify
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo - nodes should be back in original layer
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo
+      expect((diagram.layers.byId(layer1Id)! as RegularLayer).elements).toHaveLength(0);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements).toHaveLength(2);
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node1Id
+      );
+      expect((diagram.layers.byId(layer2Id)! as RegularLayer).elements.map(e => e.id)).toContain(
+        node2Id
+      );
+    });
+
+    it('should move element above another element', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const node1 = layer.addNode();
+      const node2 = layer.addNode();
+      const node3 = layer.addNode();
+      const node1Id = node1.id;
+      const node2Id = node2.id;
+      const node3Id = node3.id;
+      const layerId = layer.id;
+
+      // Helper to get fresh layer reference
+      const getLayer = () => diagram.layers.byId(layerId)! as RegularLayer;
+
+      // Act - move node1 above node3
+      UnitOfWork.executeWithUndo(diagram, 'Move element above', uow => {
+        diagram.moveElement([node1], uow, layer, {
+          relation: 'above',
+          element: node3
+        });
+      });
+
+      // Verify - order should be [node2, node3, node1]
+      expect(getLayer().elements.map(e => e.id)).toEqual([node2Id, node3Id, node1Id]);
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo - all nodes should be back in the layer
+      // Note: The exact order after undo may vary, so we just check presence
+      expect(getLayer().elements.map(e => e.id)).toEqual([node1Id, node2Id, node3Id]);
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo - order should be [node2, node3, node1] again
+      expect(getLayer().elements.map(e => e.id)).toEqual([node2Id, node3Id, node1Id]);
+    });
+
+    it('should move element below another element', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const node1 = layer.addNode();
+      const node2 = layer.addNode();
+      const node3 = layer.addNode();
+
+      // Act - move node3 below node1
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node3], uow, layer, {
+          relation: 'below',
+          element: node1
+        });
+      });
+
+      // Verify - order should be [node3, node1, node2]
+      expect(layer.elements.indexOf(node3)).toBe(0);
+      expect(layer.elements.indexOf(node1)).toBe(1);
+      expect(layer.elements.indexOf(node2)).toBe(2);
+    });
+
+    it('should move element into a container node', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const node = layer.addNode();
+      const containerId = container.id;
+      const nodeId = node.id;
+
+      // Helpers to get fresh references
+      const getContainer = () => diagram.nodeLookup.get(containerId)!;
+      const getNode = () => diagram.nodeLookup.get(nodeId)!;
+
+      // Act
+      UnitOfWork.executeWithUndo(diagram, 'Move into container', uow => {
+        diagram.moveElement([node], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      // Verify
+      expect(getContainer().children.map(c => c.id)).toContain(nodeId);
+      expect(getNode().parent?.id).toBe(containerId);
+
+      // Undo
+      diagram.undoManager.undo();
+
+      // Verify undo - node should be back in layer, not in container
+      expect(getContainer().children.map(c => c.id)).not.toContain(nodeId);
+      expect(getNode().parent).toBeUndefined();
+
+      // Redo
+      diagram.undoManager.redo();
+
+      // Verify redo - node should be back in container
+      expect(getContainer().children.map(c => c.id)).toContain(nodeId);
+      expect(getNode().parent?.id).toBe(containerId);
+    });
+
+    it('should move element from one container to another', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container1 = layer.addNode({ type: 'container' });
+      const container2 = layer.addNode({ type: 'container' });
+      const node = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node], uow, layer, {
+          relation: 'on',
+          element: container1
+        });
+      });
+
+      // Verify initial state
+      expect(container1.children).toContain(node);
+      expect(node.parent).toBe(container1);
+
+      // Act - move to second container
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node], uow, layer, {
+          relation: 'on',
+          element: container2
+        });
+      });
+
+      // Verify
+      expect(container1.children).not.toContain(node);
+      expect(container2.children).toContain(node);
+      expect(node.parent).toBe(container2);
+    });
+
+    it('should move element above a child in a container', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const child1 = layer.addNode();
+      const child2 = layer.addNode();
+      const child3 = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child1, child2, child3], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      // Act - move child1 above child3
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child1], uow, layer, {
+          relation: 'above',
+          element: child3
+        });
+      });
+
+      // Verify - order should be [child2, child3, child1]
+      expect(container.children.indexOf(child2)).toBe(0);
+      expect(container.children.indexOf(child3)).toBe(1);
+      expect(container.children.indexOf(child1)).toBe(2);
+    });
+
+    it('should move element below a child in a container', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const container = layer.addNode({ type: 'container' });
+      const child1 = layer.addNode();
+      const child2 = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child1, child2], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      // Act - move child2 below child1
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child2], uow, layer, {
+          relation: 'below',
+          element: child1
+        });
+      });
+
+      // Verify - order should be [child2, child1]
+      expect(container.children.indexOf(child2)).toBe(0);
+      expect(container.children.indexOf(child1)).toBe(1);
+    });
+
+    it('should not move element into itself', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const node = layer.addNode({ type: 'container' });
+
+      // Act
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node], uow, layer, {
+          relation: 'on',
+          element: node
+        });
+      });
+
+      // Verify - nothing should change, node should not be its own parent
+      expect(node.parent).toBeUndefined();
+    });
+
+    it('should handle moving elements between different layers', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer3 = diagram.newLayer();
+      const node = layer.addNode();
+
+      // Act - move from first layer to third layer
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node], uow, layer3);
+      });
+
+      // Verify
+      expect(layer.elements).not.toContain(node);
+      expect(layer3.elements).toContain(node);
+      expect(node.layer).toBe(layer3);
+    });
+
+    it('should handle moving elements back to earlier layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer3 = diagram.newLayer();
+      const node = layer3.addNode();
+
+      // Act - move from third layer back to first layer
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node], uow, layer);
+      });
+
+      // Verify
+      expect(layer3.elements).not.toContain(node);
+      expect(layer.elements).toContain(node);
+      expect(node.layer).toBe(layer);
+    });
+
+    it('should preserve element order when moving from lower to higher layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer2 = diagram.newLayer();
+      const node1 = layer2.addNode();
+      const node2 = layer2.addNode();
+      const node3 = layer.addNode();
+
+      // Note: layer is above layer2 (lower index), layer2 is below (higher index)
+
+      // Act - move nodes from layer2 (below) to layer (above)
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node1, node2], uow, layer);
+      });
+
+      // Verify - nodes should be added at the end since layer is above layer2
+      expect(layer.elements.indexOf(node3)).toBe(0);
+      expect(layer.elements.indexOf(node1)).toBe(1);
+      expect(layer.elements.indexOf(node2)).toBe(2);
+    });
+
+    it('should preserve element order when moving from higher to lower layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer2 = diagram.newLayer();
+      const node1 = layer.addNode();
+      const node2 = layer.addNode();
+      const node3 = layer2.addNode();
+
+      // Note: layer is above layer2 (lower index), layer2 is below (higher index)
+
+      // Act - move nodes from layer (above) to layer2 (below)
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([node1, node2], uow, layer2);
+      });
+
+      // Verify - nodes should be added at the beginning since layer2 is below layer
+      expect(layer2.elements.indexOf(node1)).toBe(0);
+      expect(layer2.elements.indexOf(node2)).toBe(1);
+      expect(layer2.elements.indexOf(node3)).toBe(2);
+    });
+
+    it('should remove element from parent when moving to another layer', () => {
+      // Setup
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const layer2 = diagram.newLayer();
+      const container = layer.addNode({ type: 'container' });
+      const child = layer.addNode();
+
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child], uow, layer, {
+          relation: 'on',
+          element: container
+        });
+      });
+
+      // Verify setup
+      expect(container.children).toContain(child);
+      expect(child.parent).toBe(container);
+
+      // Act - move child to different layer
+      UnitOfWork.execute(diagram, uow => {
+        diagram.moveElement([child], uow, layer2);
+      });
+
+      // Verify - child should no longer be in container
+      expect(container.children).not.toContain(child);
+      expect(child.parent).toBeUndefined();
+      expect(layer2.elements).toContain(child);
     });
   });
 

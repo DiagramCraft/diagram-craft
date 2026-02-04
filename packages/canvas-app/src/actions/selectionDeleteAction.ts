@@ -1,8 +1,11 @@
-import { AbstractSelectionAction } from './abstractSelectionAction';
-import { ElementDeleteUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr } from '@diagram-craft/utils/localize';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -15,6 +18,8 @@ export const selectionDeleteActions = (context: ActionContext) => ({
 });
 
 export class SelectionDeleteAction extends AbstractSelectionAction {
+  name = $tStr('action.SELECTION_DELETE.name', 'Delete');
+
   constructor(context: ActionContext) {
     super(context, 'both');
   }
@@ -31,23 +36,27 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    if (this.context.model.activeDiagram.selection.isEmpty()) return;
+    const diagram = this.context.model.activeDiagram;
+    if (diagram.selection.isEmpty()) return;
 
-    const deletableElements = this.context.model.activeDiagram.selection.elements.filter(e => {
+    const deletableElements = diagram.selection.elements.filter(e => {
+      const parent = e.parent;
+      if (parent && isNode(parent)) {
+        const parentDef = parent.getDefinition();
+        if (parentDef.hasFlag(NodeFlags.ChildrenManagedByParent)) return false;
+      }
+
       return !(isNode(e) && e.renderProps.capabilities.deletable === false);
     });
 
     if (deletableElements.length === 0) return;
 
-    assertRegularLayer(this.context.model.activeDiagram.activeLayer);
-    this.context.model.activeDiagram.undoManager.addAndExecute(
-      new ElementDeleteUndoableAction(
-        this.context.model.activeDiagram,
-        this.context.model.activeDiagram.activeLayer,
-        deletableElements,
-        true
-      )
-    );
+    assertRegularLayer(diagram.activeLayer);
+
+    UnitOfWork.executeWithUndo(diagram, 'Delete selection', uow => {
+      deleteElements(deletableElements, uow);
+      uow.select(diagram, []);
+    });
 
     this.emit('actionTriggered', {});
   }

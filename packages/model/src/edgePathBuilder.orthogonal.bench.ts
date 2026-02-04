@@ -32,14 +32,10 @@ for (let i = 0; i < 100; i++) {
   const node2 = layer.addNode({ bounds: randomBounds() });
   const edge = layer.addEdge();
   edges.push(edge);
-  edge.setStart(
-    new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
-  );
-  edge.setEnd(
-    new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'),
-    UnitOfWork.immediate(diagram)
-  );
+  UnitOfWork.execute(diagram, uow => {
+    edge.setStart(new PointInNodeEndpoint(node1, _p(0.5, 0.5), _p(0, 0), 'absolute'), uow);
+    edge.setEnd(new PointInNodeEndpoint(node2, _p(0.5, 0.5), _p(0, 0), 'absolute'), uow);
+  });
 }
 
 describe('orthogonal routing', () => {

@@ -3,7 +3,7 @@ import styles from './Button.module.css';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { DataAttributes } from './utils';
 
-export const Button = React.forwardRef<HTMLButtonElement, Props>((props, forwardedRef) => {
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwardedRef) => {
   return (
     // @ts-expect-error
     <button
@@ -16,7 +16,11 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>((props, forward
   );
 });
 
-type Props = {
+export namespace Button {
+  export type Props = ButtonProps;
+}
+
+type ButtonProps = {
   children: React.ReactNode;
   disabled?: boolean;
   type?: 'primary' | 'secondary' | 'danger' | 'icon-only';

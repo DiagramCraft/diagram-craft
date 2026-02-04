@@ -3,7 +3,6 @@ import { type TestDiagramBuilder, TestLayerBuilder, TestModel } from './testMode
 import type { DiagramDocument } from '../diagramDocument';
 import type { Diagram } from '../diagram';
 import type { RegularLayer } from '../diagramLayerRegular';
-import { UnitOfWork } from '../unitOfWork';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { Backend } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
@@ -24,7 +23,6 @@ export type StandardTestModel = {
   elementAdd: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
   elementRemove: [ReturnType<typeof vi.fn>, ReturnType<typeof vi.fn>];
   reset: () => void;
-  uow: UnitOfWork;
 };
 
 export const standardTestModel = (backend: Backend): StandardTestModel => {
@@ -65,7 +63,6 @@ export const standardTestModel = (backend: Backend): StandardTestModel => {
     elementChange,
     elementAdd,
     elementRemove,
-    uow: UnitOfWork.immediate(diagram1),
     reset: () => {
       resetListeners(elementRemove);
       resetListeners(elementChange);

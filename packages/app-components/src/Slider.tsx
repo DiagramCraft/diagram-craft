@@ -1,29 +1,30 @@
-import * as ReactSlider from '@radix-ui/react-slider';
 import { NumberInput } from './NumberInput';
 import styles from './Slider.module.css';
 import { extractDataAttributes, extractMouseEvents } from './utils';
+import { Slider as BaseUISlider } from '@base-ui/react/slider';
 
 export const Slider = (props: Props) => {
   return (
     <div className={styles.cmpSlider} {...extractMouseEvents(props)}>
-      <ReactSlider.Root
-        className={styles.cmpSliderSlider}
-        defaultValue={[props.value]}
-        value={[props.value]}
+      <BaseUISlider.Root
+        defaultValue={props.value}
+        value={props.value}
         min={props.min ?? 0}
         max={props.max ?? 100}
         step={props.step ?? 1}
         disabled={props.disabled || props.isIndeterminate}
-        onValueChange={v => props.onChange(v[0])}
+        onValueChange={v => props.onChange(v)}
       >
-        <ReactSlider.Track className={styles.cmpSliderTrack}>
-          <ReactSlider.Range className={styles.cmpSliderRange} />
-        </ReactSlider.Track>
-        <ReactSlider.Thumb
-          className={styles.cmpSliderThumb}
-          {...extractDataAttributes(props, ['thumb-hover', 'thumb-focus'])}
-        />
-      </ReactSlider.Root>
+        <BaseUISlider.Control className={styles.cmpSliderSlider}>
+          <BaseUISlider.Track className={styles.cmpSliderTrack}>
+            <BaseUISlider.Indicator className={styles.cmpSliderRange} />
+            <BaseUISlider.Thumb
+              className={styles.cmpSliderThumb}
+              {...extractDataAttributes(props, ['thumb-hover', 'thumb-focus'])}
+            />
+          </BaseUISlider.Track>
+        </BaseUISlider.Control>
+      </BaseUISlider.Root>
 
       <NumberInput
         defaultUnit={props.unit ?? '%'}

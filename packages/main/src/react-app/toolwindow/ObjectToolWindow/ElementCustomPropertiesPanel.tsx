@@ -4,10 +4,10 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import {
   asProperty,
   CustomPropertyDefinition,
+  CustomPropertyType,
   NodeDefinition
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { VerifyNotReached } from '@diagram-craft/utils/assert';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -18,76 +18,125 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
+import { DataFields } from '../ObjectDataToolWindow/DataFields';
+
+const CustomPropertyList = (props: {
+  customProperties: CustomPropertyDefinition;
+  onChange: (value: CustomPropertyType) => (cb: (uow: UnitOfWork) => void) => void;
+}) => {
+  return Object.entries(props.customProperties.entries).map(([key, value]) => {
+    if (value.type === 'delimiter') {
+      return (
+        <React.Fragment key={key}>
+          <dt style={{ marginTop: '0.5rem' }}>
+            <b>{value.label}:</b>
+          </dt>
+          <dd></dd>
+        </React.Fragment>
+      );
+    } else {
+      const prop = asProperty(value, props.onChange(value));
+
+      if (value.type === 'number') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
+              <PropertyEditor<any>
+                property={prop}
+                render={props => (
+                  <NumberInput
+                    {...props}
+                    defaultUnit={value.unit ?? ''}
+                    validUnits={value.unit ? [value.unit] : []}
+                    min={value.minValue ?? 0}
+                    max={value.maxValue ?? 100}
+                    step={value.step ?? 1}
+                    style={{ width: '50px' }}
+                  />
+                )}
+              />
+            </dd>
+          </React.Fragment>
+        );
+      } else if (value.type === 'boolean') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
+              <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
+            </dd>
+          </React.Fragment>
+        );
+      } else if (value.type === 'select') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              <PropertyEditor
+                property={prop as Property<string>}
+                render={props => (
+                  <Select.Root {...props}>
+                    {value.options.map(o => (
+                      <Select.Item key={o.value} value={o.value}>
+                        {o.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                )}
+              />
+            </dd>
+          </React.Fragment>
+        );
+      }
+    }
+  });
+};
 
 export const ElementCustomPropertiesPanelForm = ({
   customProperties,
   onChange
 }: {
   element: DiagramElement;
-  customProperties: readonly CustomPropertyDefinition[];
-  onChange: (value: CustomPropertyDefinition) => (cb: (uow: UnitOfWork) => void) => void;
+  customProperties: CustomPropertyDefinition;
+  onChange: (value: CustomPropertyType) => (cb: (uow: UnitOfWork) => void) => void;
 }) => {
   return (
-    <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
-      {Object.entries(customProperties).map(([key, value]) => {
-        const prop = asProperty(value, onChange(value));
+    <>
+      {customProperties.dataSchemas.length === 0 && (
+        <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
+          <CustomPropertyList customProperties={customProperties} onChange={onChange} />
+        </div>
+      )}
+      {customProperties.dataSchemas.length > 0 && (
+        <>
+          {customProperties.entries.length > 0 && (
+            <>
+              <div style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem' }}>Style:</div>
 
-        if (value.type === 'number') {
-          return (
-            <React.Fragment key={key}>
-              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-              <div className={'cmp-labeled-table__value'}>
-                {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
-                <PropertyEditor<any>
-                  property={prop}
-                  render={props => (
-                    <NumberInput
-                      {...props}
-                      defaultUnit={value.unit ?? ''}
-                      validUnits={value.unit ? [value.unit] : []}
-                      min={value.minValue ?? 0}
-                      max={value.maxValue ?? 100}
-                      step={value.step ?? 1}
-                      style={{ width: '50px' }}
-                    />
-                  )}
-                />
+              <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+                <CustomPropertyList customProperties={customProperties} onChange={onChange} />
+              </div>
+            </>
+          )}
+
+          {customProperties.dataSchemas.map(schema => (
+            <React.Fragment key={schema.id}>
+              <div
+                style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem', marginTop: '1rem' }}
+              >
+                Data:
+              </div>
+              <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+                <DataFields key={schema.id} schema={schema} />
               </div>
             </React.Fragment>
-          );
-        } else if (value.type === 'boolean') {
-          return (
-            <React.Fragment key={key}>
-              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-              <div className={'cmp-labeled-table__value'}>
-                {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
-                <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
-              </div>
-            </React.Fragment>
-          );
-        } else if (value.type === 'select') {
-          return (
-            <React.Fragment key={key}>
-              <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-              <div className={'cmp-labeled-table__value'}>
-                <PropertyEditor
-                  property={prop as Property<string>}
-                  render={props => (
-                    <Select.Root {...props}>
-                      {value.options.map(o => (
-                        <Select.Item key={o.value} value={o.value}>
-                          {o.label}
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  )}
-                />
-              </div>
-            </React.Fragment>
-          );
-        }
-      })}
-    </div>
+          ))}
+        </>
+      )}
+    </>
   );
 };
 
@@ -124,7 +173,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   }
 
   let def: EdgeDefinition | NodeDefinition;
-  let customProperties: ReadonlyArray<CustomPropertyDefinition>;
+  let customProperties: CustomPropertyDefinition;
 
   if (isNode(element)) {
     def = element.getDefinition();
@@ -136,14 +185,12 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
     throw new VerifyNotReached();
   }
 
-  if (Object.keys(customProperties).length === 0) {
+  if (customProperties.entries.length === 0 && customProperties.dataSchemas.length === 0) {
     return <div></div>;
   }
 
-  const onChange = (value: CustomPropertyDefinition) => (cb: (uow: UnitOfWork) => void) => {
-    const uow = new UnitOfWork(diagram, true);
-    cb(uow);
-    commitWithUndo(uow, `Change ${value.label}`);
+  const onChange = (value: CustomPropertyType) => (cb: (uow: UnitOfWork) => void) => {
+    UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
   };
 
   return (

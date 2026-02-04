@@ -1,5 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { ToggleButton } from './ToggleButton';
 import { TbBold } from 'react-icons/tb';
@@ -21,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     value: false,
-    onChange: fn(),
+    onChange: () => {},
     children: [<TbBold />]
   }
 };
@@ -29,7 +28,7 @@ export const Primary: Story = {
 export const Selected: Story = {
   args: {
     value: true,
-    onChange: fn(),
+    onChange: () => {},
     children: [<TbBold />]
   }
 };
@@ -37,7 +36,7 @@ export const Selected: Story = {
 export const Focus: Story = {
   args: {
     'value': true,
-    'onChange': fn(),
+    'onChange': () => {},
     'children': [<TbBold />],
     // @ts-ignore
     'data-focus': true
@@ -47,7 +46,7 @@ export const Focus: Story = {
 export const Hover: Story = {
   args: {
     'value': true,
-    'onChange': fn(),
+    'onChange': () => {},
     'children': [<TbBold />],
     // @ts-ignore
     'data-hover': true
@@ -57,7 +56,7 @@ export const Hover: Story = {
 export const Disabled: Story = {
   args: {
     value: true,
-    onChange: fn(),
+    onChange: () => {},
     children: [<TbBold />],
     disabled: true
   }

@@ -4,12 +4,13 @@ import { useDiagram, useDocument } from '../application';
 import { PickerCanvas } from './PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { assert } from '@diagram-craft/utils/assert';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { createThumbnailDiagramForNode } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { Box } from '@diagram-craft/geometry/box';
+import { isEdge } from '@diagram-craft/model/diagramElement';
 
 const SIZE = 35;
 
@@ -24,14 +25,12 @@ const getDiagram = (props: {
     return NODE_CACHE.get(props.stencil.id)!;
   }
 
-  const { diagram, node } = createThumbnailDiagramForNode(
-    d => props.stencil.node(d),
-    props.document.definitions
+  const { diagram, elements } = createThumbnail(
+    d => props.stencil.elementsForCanvas(d),
+    props.document.registry
   );
-  diagram.viewBox.dimensions = {
-    w: node.bounds.w + 10,
-    h: node.bounds.h + 10
-  };
+  const bbox = Box.boundingBox(elements.map(e => e.bounds));
+  diagram.viewBox.dimensions = { w: bbox.w + 10, h: bbox.h + 10 };
   diagram.viewBox.offset = { x: -5, y: -5 };
 
   NODE_CACHE.set(props.stencil.id, diagram);
@@ -57,6 +56,7 @@ const StencilView = (props: {
         showHover={true}
         name={props.stencil.name ?? 'unknown'}
         onMouseDown={props.onClick}
+        scaleStrokes={props.stencil.type !== 'default' && props.stencil.type !== 'yaml'}
       />
     </div>
   );
@@ -66,13 +66,26 @@ export const ShapeSelectDialog = (props: Props) => {
   const document = useDocument();
   const diagram = useDiagram();
   const ref = useRef<HTMLInputElement>(null);
-  const stencilRegistry = diagram.document.nodeDefinitions.stencilRegistry;
+  const stencilRegistry = diagram.document.registry.stencils;
 
   const [search, setSearch] = useState('');
 
   if (!props.open) return <div></div>;
 
-  const recentStencils = document.props.recentStencils.stencils;
+  const recentStencils = document.props.recentStencils.stencils.filter(s => {
+    const stencil = stencilRegistry.getStencil(s)!;
+    if (!stencil) return false;
+
+    const { diagram: $d } = createStencilDiagram(document.registry);
+
+    const elements = stencil.elementsForPicker($d).elements;
+
+    if (props.excludeMultiElementStencils && elements.length > 1) return false;
+
+    if (elements.length === 1 && !props.includeEdges && isEdge(elements[0])) return false;
+
+    return true;
+  });
   return (
     <Dialog
       open={props.open}
@@ -91,8 +104,8 @@ export const ShapeSelectDialog = (props: Props) => {
             style={{ maxWidth: '30rem' }}
           >
             {recentStencils.map(stencilId => {
-              const stencil = stencilRegistry.getStencil(stencilId)!;
-              assert.present(stencil, `Stencil ${stencilId} not found`);
+              const stencil = stencilRegistry.getStencil(stencilId);
+              if (!stencil) return null;
 
               return (
                 <StencilView
@@ -149,4 +162,6 @@ type Props = {
   onOk: (stencilId: string) => void;
   onCancel?: () => void;
   title: string;
+  excludeMultiElementStencils?: boolean;
+  includeEdges?: boolean;
 };

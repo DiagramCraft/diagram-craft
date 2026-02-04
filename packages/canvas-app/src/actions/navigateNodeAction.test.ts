@@ -7,6 +7,7 @@ import {
   TestModel,
   TestLayerBuilder
 } from '@diagram-craft/model/test-support/testModel';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 const context: ActionContext = { model };
 
@@ -28,7 +29,7 @@ describe('NavigateNodeAction', () => {
     diagram.selection.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action
-    const action = new NavigateNodeAction(context, 'e');
+    const action = new NavigateNodeAction(context, 'e', false, $tStr('', ''));
     action.execute();
 
     // Verify: Should select node2 (the closest node to the east)
@@ -43,7 +44,7 @@ describe('NavigateNodeAction', () => {
     diagram.selection.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action with extend selection
-    const action = new NavigateNodeAction(context, 'e', true);
+    const action = new NavigateNodeAction(context, 'e', true, $tStr('', ''));
     action.execute();
 
     // Verify: Should have both nodes selected
@@ -62,7 +63,7 @@ describe('NavigateNodeAction', () => {
     diagram.selection.setElements([layer.elements[0]!]);
 
     // Act: Execute the navigate east action (but there's no node to the east)
-    const action = new NavigateNodeAction(context, 'e');
+    const action = new NavigateNodeAction(context, 'e', false, $tStr('', ''));
     action.execute();
 
     // Verify: Should still have only the original node selected
@@ -83,7 +84,7 @@ describe('NavigateNodeAction', () => {
     expect(diagram.selection.nodes.at(-1)!.id).toBe('node2');
 
     // Act: Navigate east - should navigate from node2 (most recent) to node3
-    const action = new NavigateNodeAction(context, 'e');
+    const action = new NavigateNodeAction(context, 'e', false, $tStr('', ''));
     action.execute();
 
     // Verify: Should select only node3 (since extendSelection is false)
@@ -104,7 +105,7 @@ describe('NavigateNodeAction', () => {
     diagram.selection.setElements([layer.elements[0]!]);
 
     // Act: Navigate east - should skip the label node and go to node3
-    const action = new NavigateNodeAction(context, 'e');
+    const action = new NavigateNodeAction(context, 'e', false, $tStr('', ''));
     action.execute();
 
     // Verify: Should select node3, skipping the label node

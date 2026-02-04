@@ -1,7 +1,6 @@
 import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { Context } from '../context';
 
 export class GenericPathControlPointDrag extends Drag {
@@ -14,7 +13,7 @@ export class GenericPathControlPointDrag extends Drag {
     private readonly context: Context
   ) {
     super();
-    this.uow = new UnitOfWork(this.editablePath.node.diagram, true);
+    this.uow = UnitOfWork.begin(this.editablePath.node.diagram);
 
     this.context.help.push(
       'GenericPathControlPointDrag',
@@ -38,8 +37,12 @@ export class GenericPathControlPointDrag extends Drag {
 
   onDragEnd(): void {
     this.editablePath.commitToNode(this.uow);
-    commitWithUndo(this.uow, 'Edit path');
+    this.uow.commitWithUndo('Edit path');
 
     this.context.help.pop('GenericPathControlPointDrag');
+  }
+
+  cancel() {
+    this.uow.abort();
   }
 }

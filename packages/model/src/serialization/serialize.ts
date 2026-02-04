@@ -52,7 +52,8 @@ export const serializeDiagramDocument = async (
       templates: document.data.templates.all,
       overrides: serializeOverrides(document.data.db)
     },
-    ...(stories.length > 0 && { stories })
+    ...(stories.length > 0 && { stories }),
+    activeDiagramId: document.activeDiagramId
   };
 
   // Generate hash based on the serialized JSON (excluding any existing hash)

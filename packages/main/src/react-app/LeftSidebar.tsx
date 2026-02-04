@@ -18,6 +18,7 @@ import { AIToolWindow } from './toolwindow/AIToolWindow/AIToolWindow';
 import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 import { TextToolWindow } from './toolwindow/TextToolWindow/TextToolWindow';
 import { AppConfig } from '../appConfig';
+import { ActionTooltip } from './components/ActionTooltip';
 
 export const LeftSidebar = () => {
   return (
@@ -31,26 +32,32 @@ export const LeftSidebar = () => {
         </SideBarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPentagonPlus}>
+      <SideBarPage icon={TbPentagonPlus} tooltip={<ActionTooltip action={'SIDEBAR_OBJECTS'} />}>
         <PickerToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbStack}>
+      <SideBarPage icon={TbStack} tooltip={<ActionTooltip action={'SIDEBAR_STRUCTURE'} />}>
         <DocumentStructureToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbHistory}>
+      <SideBarPage icon={TbHistory} tooltip={<ActionTooltip action={'SIDEBAR_HISTORY'} />}>
         <HistoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbSearch}>
+      <SideBarPage icon={TbSearch} tooltip={<ActionTooltip action={'SIDEBAR_SEARCH'} />}>
         <QueryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbPresentation}>
+      <SideBarPage
+        icon={TbPresentation}
+        tooltip={<ActionTooltip action={'SIDEBAR_STORY_PLAYER'} />}
+      >
         <StoryToolWindow />
       </SideBarPage>
-      <SideBarPage icon={TbCodeAsterisk}>
+      <SideBarPage
+        icon={TbCodeAsterisk}
+        tooltip={<ActionTooltip action={'SIDEBAR_DIAGRAM_CODE'} />}
+      >
         <TextToolWindow />
       </SideBarPage>
       {AppConfig.get().ai.provider !== 'none' && (
-        <SideBarPage icon={TbSparkles}>
+        <SideBarPage icon={TbSparkles} tooltip={<ActionTooltip action={'SIDEBAR_AI'} />}>
           <AIToolWindow />
         </SideBarPage>
       )}

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { themeDecorator } from '../.storybook/common';
 import { Popover } from './Popover';
 import { Button } from './Button';
@@ -30,9 +30,7 @@ export const Primary: Story = {
   args: {
     open: true,
     children: [
-      <Popover.Trigger key={1}>
-        <Button>Click</Button>
-      </Popover.Trigger>,
+      <Popover.Trigger key={1} element={<Button>Click</Button>} />,
       <Popover.Content key={2}>
         <h2>Title</h2>Some content
       </Popover.Content>

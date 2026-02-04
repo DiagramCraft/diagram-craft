@@ -3,13 +3,13 @@ import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { Selection } from './selection';
 import { UndoManager } from './undoManager';
-import { UnitOfWork } from './unitOfWork';
+import { UnitOfWork, UOWRegistry } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { AttachmentConsumer } from './attachment';
 import { newid } from '@diagram-craft/utils/id';
 import { LayerManager, LayerManagerCRDT } from './diagramLayerManager';
@@ -28,6 +28,7 @@ import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
 import type { DiagramProps } from './diagramProps';
 import { Releasables, type Releasable } from '@diagram-craft/utils/releasable';
+import { DiagramUOWAdapter } from '@diagram-craft/model/diagram.uow';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -82,7 +83,7 @@ export const DocumentBuilder = {
   empty: (id: string, name: string, document: DiagramDocument) => {
     const diagram = new Diagram(id, name, document);
     const layer = new RegularLayer('default', 'Default', [], diagram);
-    diagram.layers.add(layer, UnitOfWork.immediate(diagram));
+    UnitOfWork.execute(diagram, uow => diagram.layers.add(layer, uow));
     return { diagram, layer };
   }
 };
@@ -100,6 +101,8 @@ export type DiagramCRDT = {
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, Releasable {
+  _trackableType = 'diagram';
+
   // Transient properties
   #document: DiagramDocument | undefined;
   #spatialIndex: SpatialIndex | undefined;
@@ -113,7 +116,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #name: CRDTProp<DiagramCRDT, 'name'>;
   readonly #id: CRDTProp<DiagramCRDT, 'id'>;
   readonly #parent: CRDTProp<DiagramCRDT, 'parent'>;
-  readonly _: CRDTProp<DiagramCRDT, 'canvas'>;
+  readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
 
@@ -162,7 +165,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       y: 0
     };
 
-    this._ = new CRDTProp(this._crdt, 'canvas', {
+    this.#canvas = new CRDTProp(this._crdt, 'canvas', {
       onRemoteChange: () => this.emitDiagramChange('content'),
       initialValue: initialCanvas
     });
@@ -201,11 +204,12 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
       );
       // Only trigger invalidation in case the value has changed to true
       if (this.hasEdgesWithLineHops && this.hasEdgesWithLineHops !== old) {
-        if (!(this.activeLayer instanceof RegularLayer)) return;
+        const layer = this.activeLayer;
+        if (!(layer instanceof RegularLayer)) return;
 
-        const uow = new UnitOfWork(this);
-        this.activeLayer.elements.filter(isEdge).forEach(e => e.invalidate(uow));
-        uow.commit();
+        UnitOfWork.execute(this, uow =>
+          layer.elements.filter(isEdge).forEach(e => e.invalidate('full', uow))
+        );
       }
     };
     this.#releasables.add(
@@ -246,18 +250,29 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return this.#name.getNonNull();
   }
 
-  set name(n: string) {
-    this.#name.set(n);
-    this.emitDiagramChange('metadata');
+  setName(n: string, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#name.set(n);
+      this.emitDiagramChange('metadata');
+    });
   }
 
   get props() {
     return this.#props.get();
   }
 
-  updateProps(callback: (props: DiagramProps) => void) {
-    this.#props.update(callback);
-    this.emitDiagramChange('content');
+  updateProps(callback: (props: DiagramProps) => void, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#props.update(callback);
+      this.emitDiagramChange('content');
+    });
+  }
+
+  _setProps(props: DiagramProps, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#props.set(props);
+      this.emitDiagramChange('content');
+    });
   }
 
   get parent() {
@@ -333,23 +348,26 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   }
 
   get bounds() {
-    return this._.getNonNull();
+    return this.#canvas.getNonNull();
   }
 
-  set bounds(b: DiagramBounds) {
-    this._.set(b);
-    this.emitDiagramChange('content');
+  setBounds(b: DiagramBounds, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#canvas.set(b);
+      this.emitDiagramChange('content');
+    });
   }
 
   // TODO: Check layer level events are emitted
   moveElement(
-    elements: ReadonlyArray<DiagramElement>,
+    elementsToMove: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
     layer: Layer,
     ref?: { relation: 'above' | 'below' | 'on'; element: DiagramElement }
   ) {
-    elements.forEach(e => uow.snapshot(e));
+    const elements = [...elementsToMove];
 
+    assertRegularLayer(layer);
     const elementLayers = elements.map(e => {
       assertRegularLayer(e.layer);
       return e.layer;
@@ -362,81 +380,68 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     // Cannot move an element into itself, so abort if this is the case
     if (elements.some(e => e === ref?.element)) return;
 
-    // Remove from existing layers
-    const sourceLayers = new Set(elementLayers);
-    for (const l of sourceLayers) {
-      uow.snapshot(l);
-      l.setElements(
-        l.elements.filter(e => !elements.includes(e)),
-        uow
-      );
-    }
-
-    // Remove from groups
-    // TODO: Can optimize by grouping by parent - probably not worth it
-    for (const el of elements) {
+    const removeChild = (el: DiagramElement) => {
       if (el.parent) {
-        uow.snapshot(el.parent);
-        el.parent.removeChild(el, uow);
+        el.parent?.removeChild(el, uow);
+      } else {
+        el.layer.removeElement(el, uow);
       }
+    };
+
+    // Remove elements from their current position
+    // First we remove edges and then nodes
+    for (const el of elements) {
+      if (isEdge(el)) removeChild(el);
+    }
+    for (const el of elements) {
+      if (isNode(el)) removeChild(el);
     }
 
-    uow.snapshot(layer);
+    const moveIntoLayer = ref === undefined;
+    const moveIntoGroup = isNode(ref?.element) && ref?.element.parent;
+    const moveIntoLayerPosition = !moveIntoLayer && !moveIntoGroup;
 
-    // Move into the new layer
-    if (ref === undefined) {
-      assert.true(layer instanceof RegularLayer);
-      if (layer.isAbove(topMostLayer)) {
-        (layer as RegularLayer).setElements(
-          [...(layer as RegularLayer).elements, ...elements],
-          uow
-        );
-      } else {
-        (layer as RegularLayer).setElements(
-          [...elements, ...(layer as RegularLayer).elements],
-          uow
-        );
-      }
-    } else if (isNode(ref.element) && ref.element.parent) {
-      const parent = ref.element.parent;
-      uow.snapshot(parent);
-      uow.snapshot(ref.element);
+    const elementOrder = (els: readonly DiagramElement[], idx: number) =>
+      ref?.relation === 'above'
+        ? els.toSpliced(idx + 1, 0, ...elements)
+        : els.toSpliced(idx, 0, ...elements);
 
+    if (moveIntoLayer) {
+      const newElementOrder = layer.isAbove(topMostLayer)
+        ? [...layer.elements, ...elements]
+        : [...elements, ...layer.elements];
+      layer.setElements(newElementOrder, uow);
+    } else if (moveIntoGroup) {
+      const parent = mustExist(ref.element.parent);
       const idx = parent.children.indexOf(ref.element);
-      if (ref.relation === 'above') {
-        parent.setChildren(parent.children.toSpliced(idx + 1, 0, ...elements), uow);
-      } else if (ref.relation === 'below') {
-        parent.setChildren(parent.children.toSpliced(idx, 0, ...elements), uow);
-      } else {
-        ref.element.setChildren([...ref.element.children, ...elements], uow);
+
+      switch (ref.relation) {
+        case 'above':
+        case 'below':
+          parent.setChildren(elementOrder(parent.children, idx), uow);
+          break;
+        case 'on':
+          ref.element.setChildren([...ref.element.children, ...elements], uow);
+          break;
+      }
+    } else if (moveIntoLayerPosition) {
+      assert.true(ref.element.layer === layer);
+
+      const idx = layer.elements.indexOf(ref.element);
+      switch (ref.relation) {
+        case 'above':
+        case 'below':
+          layer.setElements(elementOrder(layer.elements, idx), uow);
+          break;
+        case 'on':
+          if (isNode(ref.element)) {
+            ref.element.setChildren([...ref.element.children, ...elements], uow);
+          }
+          break;
       }
     } else {
-      assert.true(ref.element.layer === layer);
-      uow.snapshot(ref.element);
-
-      assert.true(layer instanceof RegularLayer);
-      const idx = (layer as RegularLayer).elements.indexOf(ref.element);
-      if (ref.relation === 'above') {
-        (layer as RegularLayer).setElements(
-          (layer as RegularLayer).elements.toSpliced(idx + 1, 0, ...elements),
-          uow
-        );
-      } else if (ref.relation === 'below') {
-        (layer as RegularLayer).setElements(
-          (layer as RegularLayer).elements.toSpliced(idx, 0, ...elements),
-          uow
-        );
-      } else if (isNode(ref.element)) {
-        ref.element.setChildren([...ref.element.children, ...elements], uow);
-      }
+      VERIFY_NOT_REACHED();
     }
-
-    // Assign new layer
-    assert.true(layer instanceof RegularLayer);
-    elements.forEach(e => (layer as RegularLayer).addElement(e, uow));
-
-    // TODO: Not clear if this is needed or not
-    uow.updateDiagram();
   }
 
   getAttachmentsInUse() {
@@ -474,3 +479,5 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     }
   }
 }
+
+UOWRegistry.adapters['diagram'] = new DiagramUOWAdapter();

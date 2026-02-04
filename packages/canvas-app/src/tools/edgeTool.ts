@@ -8,7 +8,6 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import {
   addHighlight,
@@ -84,12 +83,11 @@ export class EdgeTool extends AbstractTool {
       layer
     );
 
-    assertRegularLayer(this.diagram.activeLayer);
-    undoManager.addAndExecute(
-      new ElementAddUndoableAction([this.edge], this.diagram, this.diagram.activeLayer, 'Add edge')
-    );
+    UnitOfWork.executeWithUndo(this.diagram, 'Add edge', uow => {
+      layer.addElement(this.edge!, uow);
+      uow.select(this.diagram, [this.edge!]);
+    });
 
-    this.diagram.selection.setElements([this.edge]);
     this.resetTool();
 
     const drag = new EdgeToolEdgeEndpointMoveDrag(this.diagram, this.edge, 'end', this.context);

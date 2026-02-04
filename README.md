@@ -68,7 +68,7 @@ Diagram Craft is organized as a monorepo using pnpm workspaces. The project is d
 **Application:**
 
 - `main`: Main React application (UI, toolbars, panels)
-- `app-components`: Reusable UI components built on Radix UI
+- `app-components`: Reusable UI components built on Base UI
 - `markdown`: Markdown parsing and rendering utilities
 
 **Desktop:**

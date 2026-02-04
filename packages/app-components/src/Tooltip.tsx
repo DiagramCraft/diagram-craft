@@ -1,6 +1,6 @@
-import * as RadixTooltip from '@radix-ui/react-tooltip';
-import React from 'react';
+import React, { type ReactElement } from 'react';
 import styles from './Tooltip.module.css';
+import { Tooltip as BaseUITooltip } from '@base-ui/react/tooltip';
 
 let hidePopupRuleId: number[] = [];
 
@@ -19,21 +19,23 @@ export const disablePropertyEditorTooltip = () => {
 
 export const Tooltip = (props: Props) => {
   return (
-    <RadixTooltip.Provider>
-      <RadixTooltip.Root>
-        <RadixTooltip.Trigger asChild>{props.children}</RadixTooltip.Trigger>
-        <RadixTooltip.Portal>
-          <RadixTooltip.Content className={styles.cmpTooltip} sideOffset={5} side={'bottom'}>
-            {props.message}
-            <RadixTooltip.Arrow className={styles.cmpTooltipArrow} />
-          </RadixTooltip.Content>
-        </RadixTooltip.Portal>
-      </RadixTooltip.Root>
-    </RadixTooltip.Provider>
+    <BaseUITooltip.Provider>
+      <BaseUITooltip.Root>
+        <BaseUITooltip.Trigger render={props.element} />
+        <BaseUITooltip.Portal>
+          <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
+            <BaseUITooltip.Popup className={styles.cmpTooltip}>
+              {props.message}
+              <BaseUITooltip.Arrow className={styles.cmpTooltipArrow} />
+            </BaseUITooltip.Popup>
+          </BaseUITooltip.Positioner>
+        </BaseUITooltip.Portal>
+      </BaseUITooltip.Root>
+    </BaseUITooltip.Provider>
   );
 };
 
 type Props = {
-  message: string;
-  children: React.ReactNode;
+  message: React.ReactNode;
+  element: ReactElement;
 };

@@ -1,5 +1,5 @@
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { CanvasState } from '../canvas/EditableCanvasComponent';
+import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { Component, Observable, onEvent } from '../component/component';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
@@ -151,7 +151,9 @@ export class AnchorHandlesComponent extends Component<Props> {
               if (diagram.activeLayer.type !== 'regular') return;
 
               DRAG_DROP_MANAGER.initiate(
-                new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context)
+                new AnchorHandleDrag(node, a.id, EventHelper.point(e), props.context),
+                () => {},
+                true
               );
               this.setState(undefined, 'background');
               e.preventDefault();

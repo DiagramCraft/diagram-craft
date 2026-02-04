@@ -2,23 +2,19 @@ import {
   AbstractSelectionAction,
   ElementType,
   MultipleType
-} from '@diagram-craft/canvas-app/actions/abstractSelectionAction';
+} from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import {
-  commitWithUndo,
-  ElementAddUndoableAction,
-  ElementDeleteUndoableAction
-} from '@diagram-craft/model/diagramUndoActions';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -28,18 +24,41 @@ declare global {
 
 export const geometryActions = (context: Application) => ({
   SELECTION_GEOMETRY_CONVERT_TO_CURVES: new SelectionGeometryConvertToCurves(context),
-  SELECTION_GEOMETRY_BOOLEAN_UNION: new SelectionBooleanOperation(context, 'A union B'),
-  SELECTION_GEOMETRY_BOOLEAN_A_NOT_B: new SelectionBooleanOperation(context, 'A not B'),
-  SELECTION_GEOMETRY_BOOLEAN_B_NOT_A: new SelectionBooleanOperation(context, 'B not A'),
+  SELECTION_GEOMETRY_BOOLEAN_UNION: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_UNION.name', 'Union'),
+    'A union B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_A_NOT_B: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_A_NOT_B.name', 'Subtract'),
+    'A not B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_B_NOT_A: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_B_NOT_A.name', 'Subtract (B not A)'),
+    'B not A'
+  ),
   SELECTION_GEOMETRY_BOOLEAN_INTERSECTION: new SelectionBooleanOperation(
     context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Intersect'),
     'A intersection B'
   ),
-  SELECTION_GEOMETRY_BOOLEAN_XOR: new SelectionBooleanOperation(context, 'A xor B'),
-  SELECTION_GEOMETRY_BOOLEAN_DIVIDE: new SelectionBooleanOperation(context, 'A divide B')
+  SELECTION_GEOMETRY_BOOLEAN_XOR: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Exclusive Or'),
+    'A xor B'
+  ),
+  SELECTION_GEOMETRY_BOOLEAN_DIVIDE: new SelectionBooleanOperation(
+    context,
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Divide'),
+    'A divide B'
+  )
 });
 
 class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Application> {
+  name = $tStr('action.SELECTION_GEOMETRY_CONVERT_TO_CURVES.name', 'Convert to curves');
+
   constructor(context: Application) {
     super(context, MultipleType.Both, ElementType.Node);
   }
@@ -58,11 +77,11 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
           cancelLabel: 'Cancel'
         },
         () => {
-          const uow = new UnitOfWork(this.context.model.activeDiagram, true);
-          for (const el of nodes) {
-            el.convertToPath(uow);
-          }
-          commitWithUndo(uow, 'Convert to path');
+          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Convert to path', uow => {
+            for (const el of nodes) {
+              el.convertToPath(uow);
+            }
+          });
         }
       )
     );
@@ -72,6 +91,7 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
 class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
   constructor(
     context: Application,
+    public readonly name: TranslatedString,
     private type: BooleanOperation
   ) {
     super(context, MultipleType.Both, ElementType.Node);
@@ -126,12 +146,21 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
       );
     });
 
-    diagram.undoManager.addAndExecute(
-      new CompoundUndoableAction([
-        new ElementDeleteUndoableAction(diagram, diagram.activeLayer as RegularLayer, nodes, true),
-        new ElementAddUndoableAction(newNodes, diagram, diagram.activeLayer as RegularLayer)
-      ])
-    );
+    UnitOfWork.executeWithUndo(diagram, 'Boolean operation', uow => {
+      const activeLayer = diagram.activeLayer;
+      assertRegularLayer(activeLayer);
+
+      nodes.forEach(n => {
+        const layer = n.layer;
+        assertRegularLayer(layer);
+        layer.removeElement(n, uow);
+      });
+
+      newNodes.forEach(n => activeLayer.addElement(n, uow));
+
+      uow.select(diagram, newNodes);
+    });
+
     diagram.selection.setElements(newNodes);
   }
 }

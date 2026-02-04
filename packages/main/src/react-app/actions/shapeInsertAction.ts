@@ -3,8 +3,9 @@ import { Application } from '../../application';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { assert } from '@diagram-craft/utils/assert';
-import { commitWithUndo } from '@diagram-craft/model/diagramUndoActions';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { $tStr } from '@diagram-craft/utils/localize';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -17,6 +18,8 @@ declare global {
 }
 
 class ShapeInsertAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.SHAPE_INSERT.name', 'Insert Shape');
+
   getCriteria(application: Application) {
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram.layers,
@@ -34,44 +37,43 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
         const diagram = this.context.model.activeDiagram;
         const document = this.context.model.activeDocument;
 
-        const stencil = document.nodeDefinitions.stencilRegistry.getStencil(stencilId);
+        const stencil = document.registry.stencils.getStencil(stencilId);
 
         assert.present(stencil);
-        assertRegularLayer(diagram.activeLayer);
+        const layer = diagram.activeLayer;
+        assertRegularLayer(layer);
 
         const v = diagram.viewBox;
 
-        const uow = new UnitOfWork(diagram, true);
+        const { bounds, elements } = stencil.elementsForPicker(diagram);
+        const newElements = cloneElements(elements, layer as RegularLayer);
 
-        const node = cloneElements(
-          [stencil.node(diagram)],
-          diagram.activeLayer,
-          UnitOfWork.immediate(diagram)
-        )[0]!;
+        UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+          for (const node of newElements) {
+            layer.addElement(node, uow);
 
-        assignNewBounds(
-          [node],
-          {
-            x: v.offset.x + (v.dimensions.w - node.bounds.w) / 2,
-            y: v.offset.y + (v.dimensions.h - node.bounds.h) / 2
-          },
+            node.updateMetadata(meta => {
+              meta.style = document.styles.activeNodeStylesheet.id;
+              meta.textStyle = document.styles.activeTextStylesheet.id;
+            }, uow);
+          }
 
-          // TODO: Adjust scale so it always fits into the window
-          { x: 1, y: 1 },
-          uow
-        );
-        node.updateMetadata(meta => {
-          meta.style = document.styles.activeNodeStylesheet.id;
-          meta.textStyle = document.styles.activeTextStylesheet.id;
-        }, uow);
+          assignNewBounds(
+            newElements,
+            {
+              x: v.offset.x + (v.dimensions.w - bounds.w) / 2,
+              y: v.offset.y + (v.dimensions.h - bounds.h) / 2
+            },
 
-        diagram.activeLayer.addElement(node, uow);
-
-        commitWithUndo(uow, 'Add element');
+            // TODO: Adjust scale so it always fits into the window
+            { x: 1, y: 1 },
+            uow
+          );
+        });
 
         diagram.document.props.recentStencils.register(stencil.id);
 
-        diagram.selection.toggle(node);
+        diagram.selection.setElements(newElements);
       },
       onCancel: () => {},
       props: {

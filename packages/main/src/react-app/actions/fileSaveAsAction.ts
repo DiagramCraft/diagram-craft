@@ -4,6 +4,7 @@ import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
 import { FileDialog } from '../FileDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 export const fileSaveAsActions = (application: Application) =>
   AppConfig.get().filesystem.provider === 'none'
@@ -21,8 +22,12 @@ declare global {
 }
 
 class FileSaveAsAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.FILE_SAVE_AS.name', 'Save As...');
+
   async execute(): Promise<void> {
-    const currentFilename = this.context.model.activeDocument.url?.split('/').pop()!;
+    const currentFilename = this.context.model.activeDocument.url
+      ? this.context.model.activeDocument.url.split('/').pop()!
+      : 'diagram.json';
 
     this.context.ui.showDialog(
       FileDialog.createSaveAs(

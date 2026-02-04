@@ -3,9 +3,8 @@ import { DiagramStyles } from './diagramStyles';
 import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './diagram';
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { EdgeDefinitionRegistry, NodeDefinitionRegistry } from './elementDefinitionRegistry';
-import { isNode } from './diagramElement';
-import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
+import { Registry } from './elementDefinitionRegistry';
+import { getRemoteUnitOfWork } from './unitOfWork';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
@@ -69,10 +68,10 @@ export class DiagramDocument
   url: string | undefined;
   hash: string | undefined;
   readonly #releasables = new Releasables();
+  activeDiagramId: string | undefined;
 
   constructor(
-    readonly nodeDefinitions: NodeDefinitionRegistry,
-    readonly edgeDefinitions: EdgeDefinitionRegistry,
+    readonly registry: Registry,
     isStencil?: boolean,
     crdtRoot?: CRDTRoot
   ) {
@@ -130,13 +129,6 @@ export class DiagramDocument
     CollaborationConfig.Backend.disconnect(callback);
   }
 
-  get definitions() {
-    return {
-      nodeDefinitions: this.nodeDefinitions,
-      edgeDefinitions: this.edgeDefinitions
-    };
-  }
-
   // Exposed for query purposes
   get elements() {
     return this.diagrams.flatMap(d => d.elements);
@@ -178,25 +170,23 @@ export class DiagramDocument
     return dest;
   }
 
-  addDiagram(diagram: Diagram, parent?: Diagram) {
+  insertDiagram(diagram: Diagram, position: number, parent?: Diagram) {
     precondition.is.false(!!this.byId(diagram.id));
 
     diagram._parent = parent?.id;
     diagram._document = this;
 
-    // TODO: This should be removed
-    //const existing = this.#diagrams.get(diagram.id);
-    //if (existing) {
-    //existing.merge(diagram);
-    //} else {
-    this.#diagrams.add(diagram.id, diagram);
-    //}
+    this.#diagrams.insert(diagram.id, diagram, position);
 
     this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), {
       id: diagram.id
     });
 
     this.emit('diagramAdded', { diagram: diagram });
+  }
+
+  addDiagram(diagram: Diagram, parent?: Diagram) {
+    this.insertDiagram(diagram, this.#diagrams.size, parent);
   }
 
   removeDiagram(diagram: Diagram) {
@@ -211,6 +201,34 @@ export class DiagramDocument
     this.emit('diagramChanged', { diagram: diagram });
   }
 
+  moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }) {
+    // Get all diagrams with the same parent as the reference
+    const parentId = ref.diagram.parent;
+    const diagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
+
+    // Remove diagram being moved from its current position
+    const list = diagramsInParent.filter(d => d.id !== diagram.id);
+
+    // Find the reference diagram's position in the remaining diagrams
+    const idx = list.indexOf(ref.diagram);
+
+    // Calculate insertion point
+    const insertIndex = ref.relation === 'before' ? idx : idx + 1;
+
+    // Build new order for this parent level
+    const newOrderForParent = [...list.slice(0, insertIndex), diagram, ...list.slice(insertIndex)];
+
+    // Build complete new order by combining diagrams from other parents
+    const otherDiagrams = this.#diagrams.values.filter(d => d.parent !== parentId);
+    const completeNewOrder = [...otherDiagrams, ...newOrderForParent];
+
+    // Apply the new order
+    this.#diagrams.setOrder(completeNewOrder.map(d => d.id));
+
+    // Emit change event for moved diagram
+    this.emit('diagramChanged', { diagram });
+  }
+
   getAttachmentsInUse() {
     return [...this.diagramIterator({ nest: true }).flatMap(e => e.getAttachmentsInUse())];
   }
@@ -218,25 +236,37 @@ export class DiagramDocument
   // TODO: We should probably move this into the diagram loaders and/or deserialization
   //       This way, warnings as anchors are determined during deserialization are triggered
   async load() {
-    const loadedTypes = new Set<string>();
+    return;
+    /*    const loadedTypes = new Set<string>();
     for (const diagram of this.diagramIterator({ nest: true })) {
-      const uow = UnitOfWork.immediate(diagram);
-      for (const element of diagram.allElements()) {
-        if (isNode(element)) {
-          const s = element.nodeType;
-          if (!this.nodeDefinitions.hasRegistration(s)) {
-            if (!(await this.nodeDefinitions.load(s))) {
-              console.warn(`Node definition ${s} not loaded`);
-            } else {
+      await UnitOfWork.executeAsync(diagram, async uow => {
+        for (const element of diagram.allElements()) {
+          if (isNode(element)) {
+            const s = element.nodeType;
+            if (!this.registry.nodes.hasRegistration(s)) {
+              const existingNodeDefinitions = new Set([...this.registry.nodes.list()]);
+
+              if (!(await this.registry.nodes.load(s))) {
+                console.warn(`Node definition ${s} not loaded`);
+              } else {
+                for (const nd of this.registry.nodes.list()) {
+                  if (!existingNodeDefinitions.has(nd)) {
+                    console.log('Loaded', nd);
+                    loadedTypes.add(nd);
+                  }
+                }
+
+                element.invalidate(uow);
+                element.invalidateAnchors(uow);
+              }
+            } else if (loadedTypes.has(s)) {
               element.invalidate(uow);
-              loadedTypes.add(s);
+              element.invalidateAnchors(uow);
             }
-          } else if (loadedTypes.has(s)) {
-            element.invalidate(uow);
           }
         }
-      }
-    }
+      });
+    }*/
   }
 }
 

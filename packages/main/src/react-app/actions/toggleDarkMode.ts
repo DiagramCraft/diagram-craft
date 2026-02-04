@@ -1,4 +1,5 @@
 import { AbstractToggleAction, ActionContext } from '@diagram-craft/canvas/action';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 declare global {
   namespace DiagramCraft {
@@ -11,6 +12,8 @@ export const toggleDarkModeActions = (context: ActionContext) => ({
 });
 
 export class ToggleDarkModeAction extends AbstractToggleAction {
+  name = $tStr('action.TOGGLE_DARK_MODE.name', 'Toggle Dark Mode');
+
   constructor(context: ActionContext) {
     super(context);
     setTimeout(() => {

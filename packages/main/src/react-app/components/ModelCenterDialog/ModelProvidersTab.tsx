@@ -19,6 +19,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TbPencil, TbPlus, TbTrash, TbRefresh } from 'react-icons/tb';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import styles from './ModelProvidersTab.module.css';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
 
 type ProviderSettingsProps<T extends DataProvider> = {
   provider: T;
@@ -365,55 +366,53 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
   };
 
   return (
-    <div className={styles.modelProvidersTabOverlay}>
-      <div className={styles.modelProvidersTabDialog}>
-        <div className={styles.modelProvidersTabDialogHeader}>
-          <h3>{props.isNew ? 'Add Provider' : 'Edit Provider'}</h3>
+    <Dialog
+      title={props.isNew ? 'Add Provider' : 'Edit Provider'}
+      open={props.open}
+      onClose={props.onCancel}
+      buttons={[
+        {
+          label: props.isNew ? 'Add' : 'Save',
+          type: 'default',
+          onClick: handleSave
+        },
+        {
+          label: 'Cancel',
+          type: 'cancel',
+          onClick: props.onCancel
+        }
+      ]}
+    >
+      <div className={styles.modelProvidersTabDialogContent}>
+        <div className={styles.modelProvidersTabProviderGroup}>
+          <label className={styles.modelProvidersTabProviderLabel}>Provider name:</label>
+          <TextInput
+            value={id}
+            onChange={v => {
+              setId(v ?? '');
+              setEdited(true);
+            }}
+            disabled={!props.isNew}
+          />
+          {isIdTaken && (
+            <div className={styles.modelProvidersTabErrorMessage}>This name is already taken</div>
+          )}
+          {edited && id.trim() === '' && (
+            <div className={styles.modelProvidersTabErrorMessage}>Provider name is required</div>
+          )}
         </div>
 
-        <div className={styles.modelProvidersTabDialogContent}>
-          <div className={styles.modelProvidersTabProviderGroup}>
-            <label className={styles.modelProvidersTabProviderLabel}>Provider name:</label>
-            <TextInput
-              value={id}
-              onChange={v => {
-                setId(v ?? '');
-                setEdited(true);
-              }}
-              disabled={!props.isNew}
-            />
-            {isIdTaken && (
-              <div className={styles.modelProvidersTabErrorMessage}>This name is already taken</div>
-            )}
-            {edited && id.trim() === '' && (
-              <div className={styles.modelProvidersTabErrorMessage}>Provider name is required</div>
-            )}
-          </div>
-
-          <div className={styles.modelProvidersTabProviderGroup}>
-            <label className={styles.modelProvidersTabProviderLabel}>Provider Type:</label>
-            <Select.Root
-              value={selectedProviderId}
-              onChange={v => v && handleProviderTypeChange(v)}
-            >
-              <Select.Item value={UrlDataProviderId}>URL</Select.Item>
-              <Select.Item value={RestDataProviderId}>REST API</Select.Item>
-            </Select.Root>
-          </div>
-
-          {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
-          {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
+        <div className={styles.modelProvidersTabProviderGroup}>
+          <label className={styles.modelProvidersTabProviderLabel}>Provider Type:</label>
+          <Select.Root value={selectedProviderId} onChange={v => v && handleProviderTypeChange(v)}>
+            <Select.Item value={UrlDataProviderId}>URL</Select.Item>
+            <Select.Item value={RestDataProviderId}>REST API</Select.Item>
+          </Select.Root>
         </div>
 
-        <div className={styles.modelProvidersTabDialogActions}>
-          <Button type="secondary" onClick={props.onCancel}>
-            Cancel
-          </Button>
-          <Button type="primary" onClick={handleSave} disabled={!isIdValid}>
-            {props.isNew ? 'Add' : 'Save'}
-          </Button>
-        </div>
+        {provider instanceof UrlDataProvider && <UrlDataProviderSettings provider={provider} />}
+        {provider instanceof RESTDataProvider && <RESTDataProviderSettings provider={provider} />}
       </div>
-    </div>
+    </Dialog>
   );
 };

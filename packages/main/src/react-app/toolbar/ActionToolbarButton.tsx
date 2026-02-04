@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useEventListener } from '../hooks/useEventListener';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { useApplication } from '../../application';
-import type { ActionMap } from '@diagram-craft/canvas/actions/action';
+import type { ActionMap } from '@diagram-craft/canvas/action';
+import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import { ActionTooltip } from '../components/ActionTooltip';
+import type { ActionName } from '@diagram-craft/canvas/keyMap';
 
 export function ActionToolbarButton<
   K extends keyof ActionMap,
@@ -26,16 +28,19 @@ export function ActionToolbarButton<
   }, [enabled, action]);
 
   return (
-    <Tooltip message={props.action as string}>
-      <Toolbar.Button
-        disabled={!enabled}
-        onClick={() => {
-          actionMap[props.action]!.execute(props.arg ?? {});
-        }}
-      >
-        {props.children}
-      </Toolbar.Button>
-    </Tooltip>
+    <Tooltip
+      message={<ActionTooltip action={props.action as ActionName} />}
+      element={
+        <Toolbar.Button
+          disabled={!enabled}
+          onClick={() => {
+            actionMap[props.action]!.execute(props.arg ?? {});
+          }}
+        >
+          {props.children}
+        </Toolbar.Button>
+      }
+    />
   );
 }
 

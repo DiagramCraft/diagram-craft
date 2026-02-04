@@ -33,37 +33,39 @@ import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 const makeDataListener =
   (document: DiagramDocument, mode: 'update' | 'delete') => (data: { data: Data[] }) => {
     for (const d of document.diagramIterator({ nest: true })) {
-      const uow = new UnitOfWork(d);
-      for (const e of d.allElements()) {
-        const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
-        if (externalData.length === 0) continue;
+      UnitOfWork.execute(d, uow => {
+        for (const e of d.allElements()) {
+          const externalData = e.metadata.data?.data?.filter(d => d.type === 'external') ?? [];
+          if (externalData.length === 0) continue;
 
-        for (const dt of data.data) {
-          const predicate = (e: ElementDataEntry) => e.external?.uid === dt._uid;
+          for (const dt of data.data) {
+            const predicate = (e: ElementDataEntry) => e.external?.uid === dt._uid;
 
-          const existing = externalData.find(predicate);
-          if (!existing) continue;
+            const existing = externalData.find(predicate);
+            if (!existing) continue;
 
-          if (mode === 'update') {
-            if (deepEquals<unknown>(existing, dt)) continue;
+            if (mode === 'update') {
+              if (deepEquals<unknown>(existing, dt)) continue;
 
-            e.updateMetadata(cb => {
-              cb.data!.data!.find(predicate)!.data = dt;
-            }, uow);
-          } else {
-            e.updateMetadata(cb => {
-              cb.data ??= {};
-              cb.data.data = cb.data.data?.filter(dt => !predicate(dt));
-            }, uow);
+              e.updateMetadata(cb => {
+                cb.data!.data!.find(predicate)!.data = dt;
+              }, uow);
+            } else {
+              e.updateMetadata(cb => {
+                cb.data ??= {};
+                cb.data.data = cb.data.data?.filter(dt => !predicate(dt));
+              }, uow);
+            }
           }
         }
-      }
-      uow.commit();
+      });
     }
   };
 
 const makeDeleteSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {
-  document.data._schemas.removeAndClearUsage(s, UnitOfWork.immediate(document.diagrams[0]!));
+  UnitOfWork.executeSilently(document.diagrams[0]!, uow =>
+    document.data._schemas.removeAndClearUsage(s, uow)
+  );
 };
 
 const makeUpdateSchemaListener = (document: DiagramDocument) => (s: DataSchema) => {

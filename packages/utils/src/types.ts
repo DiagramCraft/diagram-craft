@@ -135,3 +135,12 @@ export type NOrMoreElementArray<
  * @template K - The keys to make required
  */
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+/**
+ * Represents a value that can be either a single instance of type T or an array of type T.
+ *
+ * @template T - The type of the elements
+ */
+export type ArrayOrSingle<T> = T | Array<T>;
+
+export type ArrayOrROArray<T> = Array<T> | ReadonlyArray<T>;

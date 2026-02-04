@@ -12,7 +12,6 @@ type StringKey =
   | 'fontColor'
   | 'fillColor'
   | 'shape'
-  | 'fontStyle'
   | 'gradientColor'
   | 'gradientDirection'
   | 'strokeColor'
@@ -72,6 +71,7 @@ type BooleanKey =
 type NumKey =
   | '_imageMargin'
   | 'textOpacity'
+  | 'fontStyle'
   | 'arcSize'
   | 'exitX'
   | 'exitY'
@@ -109,7 +109,8 @@ type NumKey =
   | 'indicatorHeight'
   | 'perimeterSpacing'
   | 'sourcePerimeterSpacing'
-  | 'targetPerimeterSpacing';
+  | 'targetPerimeterSpacing'
+  | 'container';
 
 type AllKeys = StringKey | BooleanKey | NumKey;
 

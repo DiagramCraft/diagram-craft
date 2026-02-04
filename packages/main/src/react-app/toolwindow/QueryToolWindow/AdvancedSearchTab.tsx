@@ -266,7 +266,7 @@ export const AdvancedSearchTab = () => {
   };
 
   return (
-    <ToolWindow.TabContent>
+    <>
       <ToolWindow.TabActions>
         <SearchToolMenu
           type={'advanced'}
@@ -279,57 +279,62 @@ export const AdvancedSearchTab = () => {
           }}
         />
       </ToolWindow.TabActions>
-      <Accordion.Root type="multiple" defaultValue={['advanced-search-criteria', 'search-results']}>
-        <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
-          <div className={styles.advancedSearch__container}>
-            <div className={styles.advancedSearch__header}>
-              <ToggleButtonGroup.Root
-                type="single"
-                value={type}
-                onChange={value => {
-                  if (value) setType(value as 'edge' | 'node');
-                }}
+      <ToolWindow.TabContent>
+        <Accordion.Root
+          type="multiple"
+          defaultValue={['advanced-search-criteria', 'search-results']}
+        >
+          <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
+            <div className={styles.advancedSearch__container}>
+              <div className={styles.advancedSearch__header}>
+                <ToggleButtonGroup.Root
+                  type="single"
+                  value={type}
+                  onChange={value => {
+                    if (value) setType(value as 'edge' | 'node');
+                  }}
+                >
+                  <ToggleButtonGroup.Item value="node">Nodes</ToggleButtonGroup.Item>
+                  <ToggleButtonGroup.Item value="edge">Edges</ToggleButtonGroup.Item>
+                </ToggleButtonGroup.Root>
+
+                <Select.Root
+                  value={scope}
+                  onChange={value => setScope((value ?? 'active-diagram') as SearchScope)}
+                >
+                  <Select.Item value="active-layer">Active Layer</Select.Item>
+                  <Select.Item value="active-diagram">Active Diagram</Select.Item>
+                  <Select.Item value="active-document">Active Document</Select.Item>
+                </Select.Root>
+              </div>
+
+              <div className={styles.advancedSearch__criteria}>
+                <AdvancedSearchClauseList
+                  clauses={clauses}
+                  onChange={setClauses}
+                  subClauses={false}
+                  type={type}
+                />
+              </div>
+
+              <Button
+                type="primary"
+                onClick={executeSearch}
+                className={styles.advancedSearch__searchButton}
               >
-                <ToggleButtonGroup.Item value="node">Nodes</ToggleButtonGroup.Item>
-                <ToggleButtonGroup.Item value="edge">Edges</ToggleButtonGroup.Item>
-              </ToggleButtonGroup.Root>
-
-              <Select.Root
-                value={scope}
-                onChange={value => setScope((value ?? 'active-diagram') as SearchScope)}
-              >
-                <Select.Item value="active-layer">Active Layer</Select.Item>
-                <Select.Item value="active-diagram">Active Diagram</Select.Item>
-                <Select.Item value="active-document">Active Document</Select.Item>
-              </Select.Root>
+                <TbSearch />
+                Search
+              </Button>
             </div>
+          </ToolWindowPanel>
 
-            <div className={styles.advancedSearch__criteria}>
-              <AdvancedSearchClauseList
-                clauses={clauses}
-                onChange={setClauses}
-                subClauses={false}
-                type={type}
-              />
-            </div>
-
-            <Button
-              type="primary"
-              onClick={executeSearch}
-              className={styles.advancedSearch__searchButton}
-            >
-              <TbSearch />
-              Search
-            </Button>
-          </div>
-        </ToolWindowPanel>
-
-        <SearchResultsPanel
-          results={results}
-          searchText={`Found ${results.length} elements`}
-          onElementClick={handleElementClick}
-        />
-      </Accordion.Root>
-    </ToolWindow.TabContent>
+          <SearchResultsPanel
+            results={results}
+            searchText={`Found ${results.length} elements`}
+            onElementClick={handleElementClick}
+          />
+        </Accordion.Root>
+      </ToolWindow.TabContent>
+    </>
   );
 };

@@ -176,21 +176,12 @@ describe('ExternalDataLinkUpdateTemplate', () => {
 
       const templateId = newid();
 
-      node1.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node2.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node1.updateProps(p => {
-        p.text = { color: '#ff0000', fontSize: 12 };
-      }, UnitOfWork.immediate(diagram));
-
-      node2.updateProps(p => {
-        p.text = { color: '#ff0000', fontSize: 12 };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => {
+        node1.updateMetadata(m => (m.data = { templateId }), uow);
+        node2.updateMetadata(m => (m.data = { templateId }), uow);
+        node1.updateProps(p => (p.text = { color: '#ff0000', fontSize: 12 }), uow);
+        node2.updateProps(p => (p.text = { color: '#ff0000', fontSize: 12 }), uow);
+      });
 
       const oldTemplate = {
         ...serializeDiagramElement(node1),
@@ -224,13 +215,10 @@ describe('ExternalDataLinkUpdateTemplate', () => {
       const node1 = layer.addNode();
       const templateId = newid();
 
-      node1.updateMetadata(m => {
-        m.data = { templateId };
-      }, UnitOfWork.immediate(diagram));
-
-      node1.updateProps(p => {
-        p.text = { fontSize: 12, italic: true };
-      }, UnitOfWork.immediate(diagram));
+      UnitOfWork.execute(diagram, uow => {
+        node1.updateMetadata(m => (m.data = { templateId }), uow);
+        node1.updateProps(p => (p.text = { fontSize: 12, italic: true }), uow);
+      });
 
       const oldTemplate = {
         ...serializeDiagramElement(node1),

@@ -3,7 +3,8 @@ import {
   type DiagramElementCRDT,
   type ElementPropsForEditing,
   type ElementPropsForRendering,
-  type ElementType
+  type ElementType,
+  InvalidationScope
 } from './diagramElement';
 import { type RegularLayer } from './diagramLayerRegular';
 import type { ModificationLayer } from './diagramLayerModification';
@@ -25,7 +26,7 @@ import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diag
 type Snapshot = any;
 
 export abstract class DelegatingDiagramElement implements DiagramElement {
-  readonly trackableType = 'element';
+  readonly _trackableType = 'element';
 
   protected readonly delegate: DiagramElement;
 
@@ -56,7 +57,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     );
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
-      this.invalidate(UnitOfWork.immediate(this.diagram));
+      UnitOfWork.executeSilently(this.diagram, uow => this.invalidate('full', uow));
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
@@ -100,23 +101,26 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     };
   }
 
-  get metadataCloned(): ElementMetadata {
-    const merged = this.metadata;
-    return JSON.parse(JSON.stringify(merged));
-  }
-
   updateMetadata(callback: (props: ElementMetadata) => void, uow: UnitOfWork) {
-    uow.snapshot(this);
-    const metadata = this._metadata.getClone() as ElementMetadata;
-    callback(metadata);
-    this._metadata.set(metadata);
-    uow.updateElement(this);
+    uow.executeUpdate(this, () => {
+      const metadata = this._metadata.getClone() as ElementMetadata;
+      callback(metadata);
+      this._metadata.set(metadata);
+    });
     this.clearCache();
   }
 
   _setLayer(layer: RegularLayer | ModificationLayer, diagram: Diagram) {
     this._layer = layer;
     this._diagram = diagram;
+  }
+
+  _onAttach(
+    layer: RegularLayer | ModificationLayer,
+    parent: DiagramElement | RegularLayer | ModificationLayer,
+    uow: UnitOfWork
+  ) {
+    this.delegate._onAttach(layer, parent, uow);
   }
 
   get crdt() {
@@ -145,8 +149,9 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract getAttachmentsInUse(): Array<string>;
 
-  abstract invalidate(uow: UnitOfWork): void;
-  abstract detach(uow: UnitOfWork): void;
+  abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork): void;
+  abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -171,12 +176,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract snapshot(): Snapshot;
   abstract restore(snapshot: Snapshot, uow: UnitOfWork): void;
-
-  detachCRDT(callback: () => void) {
-    const clone = this._crdt.get().clone();
-    callback();
-    this._crdt.set(clone);
-  }
 
   /* Delegated methods ********************************************************************************** */
 

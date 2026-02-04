@@ -10,7 +10,7 @@ export const fileHandlers: IpcHandlers = {
       const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openFile'],
         filters: [
-          { name: 'Diagram Files', extensions: ['dcd'] },
+          { name: 'Diagram Files', extensions: ['dcd', 'drawio'] },
           { name: 'All Files', extensions: ['*'] }
         ]
       });

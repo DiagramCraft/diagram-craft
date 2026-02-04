@@ -7,8 +7,10 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import {
+  CustomProperty,
+  CustomPropertyDefinition
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { round } from '@diagram-craft/utils/math';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { withAdjustedProperties } from '@diagram-craft/model/diagramProps';
@@ -31,27 +33,13 @@ registerCustomNodeDefaults('process', { size: 10 });
 
 // Custom properties ************************************************************
 
-const Size = {
-  definition: (node: DiagramNode): CustomPropertyDefinition => ({
-    id: 'size',
-    label: 'Size',
-    type: 'number',
-    value: node.renderProps.custom.process.size,
+const propSize = (node: DiagramNode) =>
+  CustomProperty.node.number(node, 'Size', 'custom.process.size', {
     maxValue: 50,
     unit: '%',
-    isSet: node.storedProps.custom?.process?.size !== undefined,
-    onChange: (value: number | undefined, uow: UnitOfWork) => Size.set(value, node, uow)
-  }),
-
-  set: (value: number | undefined, node: DiagramNode, uow: UnitOfWork) => {
-    if (value === undefined) {
-      node.updateCustomProps('process', props => (props.size = undefined), uow);
-    } else {
-      if (value >= 50 || value <= 0) return;
-      node.updateCustomProps('process', props => (props.size = round(value)), uow);
-    }
-  }
-};
+    format: round,
+    validate: v => v > 0 && v < 50
+  });
 
 // NodeDefinition and Shape *****************************************************
 
@@ -82,14 +70,13 @@ export class ProcessNodeDefinition extends ShapeNodeDefinition {
 
       // Draw all control points
       shapeBuilder.controlPoint(_p(bounds.x + sizePct * bounds.w, bounds.y), ({ x }, uow) => {
-        const newValue = (Math.max(0, x - bounds.x) / bounds.w) * 100;
-        Size.set(newValue, props.node, uow);
+        propSize(props.node).set((Math.max(0, x - bounds.x) / bounds.w) * 100, uow);
         return `Size: ${props.node.renderProps.custom.process.size}%`;
       });
     }
   };
 
-  getCustomPropertyDefinitions(node: DiagramNode): Array<CustomPropertyDefinition> {
-    return [Size.definition(node)];
+  getCustomPropertyDefinitions(node: DiagramNode) {
+    return new CustomPropertyDefinition(() => [propSize(node)]);
   }
 }

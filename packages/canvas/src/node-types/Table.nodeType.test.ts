@@ -28,46 +28,50 @@ describe('TableHelper', () => {
       bounds: { x: 0, y: 0, w: 200, h: 200, r: 0 }
     });
 
-    const row1 = layer.addNode({
+    const row1 = layer.createNode({
       id: 'row-1',
       type: 'tableRow',
       bounds: { x: 0, y: 0, w: 200, h: 100, r: 0 }
     });
-    const row2 = layer.addNode({
+    const row2 = layer.createNode({
       id: 'row-2',
       type: 'tableRow',
       bounds: { x: 0, y: 100, w: 200, h: 100, r: 0 }
     });
 
-    const cellB = layer.addNode({
+    const cellB = layer.createNode({
       id: 'cell-b',
       type: 'rect',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
-    const cellA = layer.addNode({
+    const cellA = layer.createNode({
       id: 'cell-a',
       type: 'rect',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
 
-    const cellD = layer.addNode({
+    const cellD = layer.createNode({
       id: 'cell-d',
       type: 'rect',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
-    const cellC = layer.addNode({
+    const cellC = layer.createNode({
       id: 'cell-c',
       type: 'rect',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    const uow = UnitOfWork.immediate(diagram);
-    row1.addChild(cellB, uow);
-    row1.addChild(cellA, uow);
-    row2.addChild(cellD, uow);
-    row2.addChild(cellC, uow);
-    table.addChild(row2, uow);
-    table.addChild(row1, uow);
+    // TODO: Why two UnitOfWork
+    UnitOfWork.execute(diagram, uow => {
+      row1.addChild(cellB, uow);
+      row1.addChild(cellA, uow);
+      row2.addChild(cellD, uow);
+      row2.addChild(cellC, uow);
+      table.addChild(row2, uow);
+    });
+    UnitOfWork.execute(diagram, uow => {
+      table.addChild(row1, uow);
+    });
   });
 
   describe('constructor and basic properties', () => {

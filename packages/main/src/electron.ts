@@ -6,6 +6,7 @@ import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import { UserState } from './UserState';
+import { $tStr } from '@diagram-craft/utils/localize';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };
@@ -99,6 +100,8 @@ export const ElectronIntegration = {
 };
 
 class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.FILE_SAVE.name', 'Save');
+
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
@@ -122,12 +125,14 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
+  name = $tStr('action.FILE_SAVE_AS.name', 'Save As...');
+
   getCriteria(application: Application) {
     return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
   }
 
   async execute(): Promise<void> {
-    const url = this.context.model.activeDocument.url;
+    const url = this.context.model.activeDocument.url ?? 'diagram';
     assert.present(url);
 
     serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
@@ -146,6 +151,8 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
 }
 
 class ElectronFileOpenAction extends AbstractAction<unknown, Application> {
+  name = $tStr('action.FILE_OPEN.name', 'Open File...');
+
   execute(): void {
     window.electronAPI?.fileOpen()?.then(async (result: { url: string } | undefined) => {
       if (!result) throw new Error();

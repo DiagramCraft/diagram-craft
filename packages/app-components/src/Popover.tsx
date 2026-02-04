@@ -1,14 +1,14 @@
-import * as RadixPopover from '@radix-ui/react-popover';
 import { TbX } from 'react-icons/tb';
 import React from 'react';
 import { usePortal } from './PortalContext';
 import styles from './Popover.module.css';
+import { Popover as BaseUIPopover } from '@base-ui/react/popover';
 
 const Root = (props: RootProps) => {
   return (
-    <RadixPopover.Root open={props.open} onOpenChange={props.onOpenChange}>
+    <BaseUIPopover.Root open={props.open} onOpenChange={props.onOpenChange}>
       {props.children}
-    </RadixPopover.Root>
+    </BaseUIPopover.Root>
   );
 };
 
@@ -19,56 +19,49 @@ type RootProps = {
 };
 
 const Trigger = (props: TriggerProps) => {
-  return (
-    <RadixPopover.Trigger asChild {...props}>
-      {props.children}
-    </RadixPopover.Trigger>
-  );
+  return <BaseUIPopover.Trigger render={props.element} />;
 };
 
 type TriggerProps = {
-  children: React.ReactNode;
+  element: React.ReactElement;
 };
 
 const Content = React.forwardRef<HTMLDivElement, ContentProps>((props, forwardedRef) => {
   const portal = usePortal();
   return (
-    <RadixPopover.PopoverPortal container={portal}>
-      <RadixPopover.Content
-        className={`${styles.cmpPopover} ${props.className ?? ''}`}
-        sideOffset={props.sideOffset}
-        onOpenAutoFocus={props.onOpenAutoFocus}
-        ref={forwardedRef}
-      >
-        {props.children}
+    <BaseUIPopover.Portal container={portal}>
+      <BaseUIPopover.Positioner sideOffset={(props.sideOffset ?? 0) + 6} anchor={props.anchor}>
+        <BaseUIPopover.Viewport>
+          <BaseUIPopover.Popup
+            className={`${styles.cmpPopover} ${props.className ?? ''}`}
+            ref={forwardedRef}
+            initialFocus={props.focus !== undefined ? props.focus : true}
+          >
+            <BaseUIPopover.Arrow className={styles.cmpPopoverArrow} />
 
-        <RadixPopover.Close className={styles.cmpPopoverClose} aria-label="Close">
-          <TbX />
-        </RadixPopover.Close>
-        <RadixPopover.Arrow className={styles.cmpPopoverArrow} />
-      </RadixPopover.Content>
-    </RadixPopover.PopoverPortal>
+            {props.children}
+
+            <BaseUIPopover.Close className={styles.cmpPopoverClose} aria-label="Close">
+              <TbX />
+            </BaseUIPopover.Close>
+          </BaseUIPopover.Popup>
+        </BaseUIPopover.Viewport>
+      </BaseUIPopover.Positioner>
+    </BaseUIPopover.Portal>
   );
 });
 
 type ContentProps = {
   children: React.ReactNode;
   sideOffset?: number;
-  onOpenAutoFocus?: (e: Event) => void;
   className?: string;
-};
-
-const Anchor = (props: AnchorProps) => {
-  return <RadixPopover.Anchor asChild>{props.children}</RadixPopover.Anchor>;
-};
-
-type AnchorProps = {
-  children: React.ReactNode;
+  focus?: boolean;
+  anchor?: React.RefObject<Element | null>;
 };
 
 export const Popover = {
   Root,
-  Anchor,
+  //Anchor,
   Trigger,
   Content
 };

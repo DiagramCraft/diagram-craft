@@ -3,10 +3,7 @@ import { bench, describe } from 'vitest';
 import { Random } from '@diagram-craft/utils/random';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import {
-  defaultEdgeRegistry,
-  defaultNodeRegistry
-} from '@diagram-craft/canvas-app/defaultRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -26,11 +23,7 @@ const randomBox = () => {
 
 const opts = { time: 2000 };
 
-const { diagram: d } = DocumentBuilder.empty(
-  '1',
-  '1',
-  new DiagramDocument(defaultNodeRegistry(), defaultEdgeRegistry())
-);
+const { diagram: d } = DocumentBuilder.empty('1', '1', new DiagramDocument(defaultRegistry()));
 
 UnitOfWork.execute(d, uow => {
   for (let i = 0; i < 1000; i++) {

@@ -1,13 +1,15 @@
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import React, { useCallback, useRef, useState } from 'react';
-import * as Portal from '@radix-ui/react-portal';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication, useDiagram } from '../application';
 import {
   StaticCanvasComponent,
   StaticCanvasProps
 } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
+import { createPortal } from 'react-dom';
+
+const canvasFactory = () => new StaticCanvasComponent();
 
 export const PickerCanvas = (props: PickerCanvasProps) => {
   const application = useApplication();
@@ -52,11 +54,17 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     <div
       onMouseOver={isRuleLayer ? () => {} : e => onMouseOver(e)}
       onMouseLeave={isRuleLayer ? () => {} : onMouseOut}
-      style={{ filter: isRuleLayer ? 'opacity(0.3)' : 'none' }}
+      style={{
+        'filter': isRuleLayer ? 'opacity(0.3)' : 'none',
+        // @ts-expect-error valid use
+        '--container-outline': '#d5d5d4'
+      }}
+      className={props.scaleStrokes === undefined || props.scaleStrokes ? 'scale-strokes' : ''}
       onPointerDown={isRuleLayer ? () => {} : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
-      {hover && props.showHover && (
-        <Portal.Root>
+      {hover &&
+        props.showHover &&
+        createPortal(
           <div
             style={{
               position: 'absolute',
@@ -88,7 +96,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
               onClick={() => {}}
               diagram={diagram}
               viewbox={props.diagram.viewBox.svgViewboxString}
-              canvasFactory={() => new StaticCanvasComponent()}
+              canvasFactory={canvasFactory}
             />
 
             <div
@@ -101,19 +109,18 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             >
               {props.name}
             </div>
-          </div>
-        </Portal.Root>
-      )}
+          </div>,
+          document.body
+        )}
 
       <Canvas<StaticCanvasComponent, StaticCanvasProps>
         id={`picker-canvas-${props.diagram.id}`}
         context={application}
         width={props.width ?? 40}
         height={props.height ?? 40}
-        onClick={props.onClick}
         diagram={diagram}
         viewbox={`${props.diagram.viewBox.svgViewboxString}`}
-        canvasFactory={() => new StaticCanvasComponent()}
+        canvasFactory={canvasFactory}
       />
     </div>
   );
@@ -123,10 +130,10 @@ type PickerCanvasProps = {
   diagram: Diagram;
   width?: number;
   height?: number;
-  onClick?: (e: MouseEvent) => void;
   diagramWidth?: number;
   diagramHeight?: number;
   showHover?: boolean;
   name?: string;
   onMouseDown?: (e: MouseEvent) => void;
+  scaleStrokes?: boolean;
 };

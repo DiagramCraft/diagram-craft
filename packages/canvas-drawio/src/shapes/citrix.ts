@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../node-types/DrawioShape.nodeType';
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -20,7 +20,7 @@ const registerStencil = (
 };
 
 export const registerCitrixShapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/citrix.xml', 'Citrix');
+  const stencils = await loadDrawioStencils('$STENCIL_ROOT/stencils/citrix.xml', 'Citrix');
 
   registerStencil(r, '1U 2U Server', stencils);
   registerStencil(r, 'Access Card', stencils);

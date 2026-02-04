@@ -5,7 +5,7 @@ import {
   toTypeName
 } from '../../drawioStencilLoader';
 import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { DrawioShapeNodeDefinition } from '../../DrawioShape.nodeType';
+import { DrawioShapeNodeDefinition } from '../../node-types/DrawioShape.nodeType';
 import { GCPDoubleRectNodeDefinition } from './gcpDoubleRect.nodeType';
 
 const registerStencil = (
@@ -21,7 +21,12 @@ const registerStencil = (
 };
 
 export const registerGCP2Shapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils('/stencils/gcp2.xml', 'GCP', '#00BEF2', 'white');
+  const stencils = await loadDrawioStencils(
+    '$STENCIL_ROOT/stencils/gcp2.xml',
+    'GCP',
+    '#00BEF2',
+    'white'
+  );
 
   r.register(new GCPDoubleRectNodeDefinition());
 

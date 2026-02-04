@@ -5,7 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { ElementAddUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
@@ -61,11 +60,7 @@ export class PenTool extends AbstractTool {
       this.start = this.node.bounds;
       this.builder.moveTo(this.node.bounds);
 
-      const uow = new UnitOfWork(this.diagram);
-
-      assertRegularLayer(this.diagram.activeLayer);
-      this.diagram.activeLayer.addElement(this.node, uow);
-      uow.commit();
+      UnitOfWork.execute(this.diagram, uow => layer.addElement(this.node!, uow));
     } else {
       this.addPoint(diagramPoint);
       this.numberOfPoints++;
@@ -95,10 +90,10 @@ export class PenTool extends AbstractTool {
   onKeyDown(e: KeyboardEvent) {
     if (this.node) {
       if (e.key === 'Escape') {
-        const uow = new UnitOfWork(this.diagram);
-        assertRegularLayer(this.node.layer);
-        this.node.layer.removeElement(this.node, uow);
-        uow.commit();
+        UnitOfWork.execute(this.diagram, uow => {
+          assertRegularLayer(this.node!.layer);
+          this.node!.layer.removeElement(this.node!, uow);
+        });
 
         this.resetState();
         return;
@@ -126,10 +121,10 @@ export class PenTool extends AbstractTool {
 
     this.updateNode();
 
-    assertRegularLayer(this.diagram.activeLayer);
-    this.diagram.undoManager.add(
-      new ElementAddUndoableAction([this.node!], this.diagram, this.diagram.activeLayer, 'Add path')
-    );
+    const layer = this.diagram.activeLayer;
+    assertRegularLayer(layer);
+
+    UnitOfWork.executeWithUndo(this.diagram, 'Add path', uow => layer.addElement(this.node!, uow));
   }
 
   onMouseOver(id: string, point: Point, target: EventTarget) {
@@ -159,10 +154,10 @@ export class PenTool extends AbstractTool {
       )
       .singular();
 
-    const uow = new UnitOfWork(this.diagram);
-    this.node!.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
-    this.node!.setBounds(this.builder.bounds(), uow);
-    uow.commit();
+    UnitOfWork.execute(this.diagram, uow => {
+      this.node!.updateCustomProps('genericPath', p => (p.path = path.asSvgPath()), uow);
+      this.node!.setBounds(this.builder!.bounds(), uow);
+    });
   }
 
   private popTempPoints() {
