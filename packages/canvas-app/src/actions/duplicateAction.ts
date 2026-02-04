@@ -12,11 +12,9 @@ import {
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { newid } from '@diagram-craft/utils/id';
-import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { deepClone } from '@diagram-craft/utils/object';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 declare global {
   namespace DiagramCraft {
@@ -109,16 +107,11 @@ export class DuplicateAction extends AbstractSelectionAction {
         const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
         const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
 
-        const newEdge = ElementFactory.edge(
-          newid(),
-          newStart,
-          newEnd,
-          deepClone(originalEdge.storedProps),
-          originalEdge.metadata,
-          [...originalEdge.waypoints],
-          originalEdge.layer
-        );
+        const newEdge = originalEdge.duplicate() as DiagramEdge;
         this.add(newEdge, activeLayer, commonParent, uow);
+
+        newEdge.setStart(newStart, uow);
+        newEdge.setEnd(newEnd, uow);
 
         newEdge.transform([new Translation({ x: OFFSET, y: OFFSET })], uow);
         newElements.push(newEdge);

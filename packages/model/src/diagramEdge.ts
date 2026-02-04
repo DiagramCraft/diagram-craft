@@ -861,8 +861,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
       // Clone any label nodes
       const newLabelNodes: ResolvedLabelNode[] = [];
-      for (let i = 0; i < edge.labelNodes.length; i++) {
-        const l = edge.labelNodes[i]!;
+      for (let i = 0; i < this.labelNodes.length; i++) {
+        const l = this.labelNodes[i]!;
 
         const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
         newLabelNodes.push({
