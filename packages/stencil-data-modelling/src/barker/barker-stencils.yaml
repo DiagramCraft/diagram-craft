@@ -1,0 +1,57 @@
+stencils:
+  - id: 'barker-entity'
+    name: Entity
+    elements:
+      - id: tz1jwvk
+        type: node
+        nodeType: dataModellingBarkerEntity
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 90
+          r: 0
+          _discriminator:
+        children:
+          - id: i450dxw
+            type: node
+            nodeType: dataModellingBarkerEntityText
+            bounds:
+              x: 0
+              y: 18
+              w: 100
+              h: 72
+              r: 0
+            children: [ ]
+            props:
+              text:
+                align: left
+                valign: top
+                top: 6
+                left: 6
+                bottom: 6
+                right: 6
+              fill:
+                enabled: false
+              stroke:
+                enabled: false
+              capabilities:
+                adjustSizeBasedOnText: true
+            texts:
+              text: "# job_id\n* job_title\no min_salary\no max_salary\n"
+        props:
+          custom:
+            boxContainer:
+              size: 18
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              autoShrink: true
+              alignItems: stretch
+          text:
+            top: 6
+            bottom: 0
+            textTransform: uppercase
+        texts:
+          text: Job
