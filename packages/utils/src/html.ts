@@ -25,6 +25,17 @@
  * // Returns: '<div>Hello </div>'
  * ```
  */
+
+/**
+ * Checks if a string contains common block-level HTML tags.
+ *
+ * @param input - The string to check
+ * @returns True if the string appears to contain block-level HTML tags
+ */
+export const hasBlockElements = (input: string): boolean => {
+  return /<\/?(h[1-6]|p|div|table)\b[^>]*>/i.test(input);
+};
+
 export const stripTags = (
   input: string,
   allowed: Array<string> = ['br', 'i', 'u', 'b', 'span', 'div', 'font']

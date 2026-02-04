@@ -23,7 +23,12 @@ export class HTMLToMarkdownConverter {
    * @returns Markdown string representation
    */
   convert(element: Element): string {
-    return this.processElement(element).trim();
+    const result = this.processElement(element).trim();
+    return this.normalizeEmptyLines(result);
+  }
+
+  private normalizeEmptyLines(text: string): string {
+    return text.replace(/\n{3,}/g, '\n\n');
   }
 
   /**
