@@ -37,6 +37,7 @@ export type ArrowType =
   | 'BAR'
   | 'BAR_END'
   | 'BAR_DOUBLE'
+  | 'BALL_OFFSET'
   | 'SHARP_ARROW_FILLED'
   | 'SHARP_ARROW_THIN_FILLED'
   | 'SHARP_ARROW_OUTLINE'
@@ -449,6 +450,19 @@ export const ARROW_SHAPES: Record<ArrowType, ArrowShapeFactory> = {
       `a ${s * 4},${s * 4} 0 1,1 ${s * 8},0`
     ].join('\n'),
     fill: 'fg'
+  }),
+  BALL_OFFSET: s => ({
+    width: s * 35,
+    height: s * 20,
+    anchor: { x: s * 25, y: s * 5 },
+    path: [
+      /* M cx cy m r, 0 a r,r 0 1,1 -(r * 2),0 a r,r 0 1,1  (r * 2),0 */
+      `M ${s * 9},${s * 5}`,
+      `m ${s * 4}, 0`,
+      `a ${s * 4},${s * 4} 0 1,1 -${s * 8},0`,
+      `a ${s * 4},${s * 4} 0 1,1 ${s * 8},0`
+    ].join('\n'),
+    fill: 'bg'
   }),
   BAR_BALL: s => ({
     width: s * 30,
