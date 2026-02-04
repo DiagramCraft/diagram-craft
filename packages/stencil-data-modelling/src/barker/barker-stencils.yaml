@@ -143,3 +143,109 @@ stencils:
           arrow:
             end:
               type: CROWS_FEET
+
+  - id: 'barker-child-typing'
+    name: Child Typing
+    elements:
+      - id: 60mlkpj
+        type: node
+        nodeType: dataModellingBarkerEntity
+        bounds:
+          x: 0
+          y: 0
+          w: 100
+          h: 136
+          r: 0
+          _discriminator:
+        children:
+          - id: wojs6zo
+            type: node
+            nodeType: dataModellingBarkerEntity
+            bounds:
+              x: 6
+              y: 80
+              w: 88
+              h: 50
+              r: 0
+            children: [ ]
+            props:
+              custom:
+                boxContainer:
+                  size: 24
+                dataModellingBarkerEntity:
+                  size: 24
+              layout:
+                container:
+                  direction: vertical
+                  enabled: true
+                  autoShrink: true
+                  alignItems: stretch
+              text:
+                top: 6
+                bottom: 6
+                textTransform: uppercase
+            metadata:
+              style: prpum5e
+              textStyle: default-text-default
+            texts:
+              text: Child
+            tags:
+          - id: 93psbue
+            type: node
+            nodeType: dataModellingBarkerEntity
+            bounds:
+              x: 6
+              y: 24
+              w: 88
+              h: 50
+              r: 0
+            children: [ ]
+            props:
+              custom:
+                boxContainer:
+                  size: 24
+                dataModellingBarkerEntity:
+                  size: 24
+              layout:
+                container:
+                  direction: vertical
+                  enabled: true
+                  autoShrink: true
+                  alignItems: stretch
+              text:
+                top: 6
+                bottom: 6
+                textTransform: uppercase
+            metadata:
+              style: prpum5e
+              textStyle: default-text-default
+            texts:
+              text: Child
+            tags:
+        props:
+          custom:
+            boxContainer:
+              size: 24
+            dataModellingBarkerEntity:
+              size: 24
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              autoShrink: true
+              alignItems: stretch
+              padding:
+                left: 6
+                right: 6
+                bottom: 6
+              gap: 6
+          text:
+            top: 6
+            bottom: 6
+            textTransform: uppercase
+        metadata:
+          style: prpum5e
+          textStyle: default-text-default
+        texts:
+          text: Parent
+        tags:
