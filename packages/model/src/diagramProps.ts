@@ -173,6 +173,8 @@ export interface EdgeProps extends ElementProps, DiagramCraft.EdgePropsExtension
   effects?: ElementEffectProps & {
     marchingAnts?: boolean;
     marchingAntsSpeed?: number;
+
+    dashOffset?: number;
   };
 }
 

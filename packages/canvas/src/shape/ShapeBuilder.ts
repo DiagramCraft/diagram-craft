@@ -204,11 +204,10 @@ export class ShapeBuilder {
     opts.style ??= {};
     opts.className ??= 'svg-edge';
 
-    const style = deepMerge({}, this.props.style, props ? this.makeStyle(props) : {}, opts.style);
+    opts.style = deepMerge({}, this.props.style, props ? this.makeStyle(props) : {}, opts.style);
 
-    const path = this.processPath(props, opts, paths)
-      .map(p => p.path)
-      .join(' ');
+    const processPath = this.processPath(props, opts, paths);
+    const path = processPath.map(p => p.path).join(' ');
 
     this.nodes.push(
       ...[
@@ -221,7 +220,7 @@ export class ShapeBuilder {
         svg.path({
           'class': opts.className,
           'd': path,
-          'style': toInlineCSS(style),
+          'style': toInlineCSS(processPath[0]!.style),
           'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
           'marker-end': endArrow ? `url(#e_${this.props.element.id})` : ''
         })
