@@ -37,6 +37,7 @@ stencils:
                 right: 6
                 top: 4
                 bottom: 4
+                shrink: true
               capabilities:
                 adjustSizeBasedOnText: true
             texts:
