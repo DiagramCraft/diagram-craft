@@ -36,18 +36,6 @@ stencils:
                 bottom: 7
             texts:
               text: "foreign-key (FK)<div>key</div>"
-          - id: ww1kihb
-            type: node
-            nodeType: line
-            bounds:
-              x: 0
-              y: 76
-              w: 120
-              h: 3
-              r: 0
-            props: { }
-            texts:
-              text: ""
           - id: 8jmf8bb
             type: node
             nodeType: text
@@ -74,11 +62,11 @@ stencils:
               text: "attribute 1<div>attribute 2</div>"
         props:
           text:
-            position: n
             textTransform: uppercase
             align: left
             bottom: 4
-            valign: bottom
+            top: 4
+            valign: top
           layout:
             container:
               direction: vertical

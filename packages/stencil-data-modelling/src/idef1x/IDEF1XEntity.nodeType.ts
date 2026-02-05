@@ -11,24 +11,33 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
+import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
+import { VNode } from '@diagram-craft/canvas/component/vdom';
+
+const DEFAULT_TITLE_SIZE = 20;
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       dataModellingIDEF1XEntity?: {
         dependant?: boolean;
+        size?: number;
       };
     }
   }
 }
 
-registerCustomNodeDefaults('dataModellingIDEF1XEntity', { dependant: true });
+registerCustomNodeDefaults('dataModellingIDEF1XEntity', {
+  dependant: true,
+  size: DEFAULT_TITLE_SIZE
+});
 
 export class IDEF1XEntityNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
@@ -46,13 +55,29 @@ export class IDEF1XEntityNodeDefinition extends LayoutCapableShapeNodeDefinition
     });
   }
 
-  getBoundingPathBuilder(node: DiagramNode) {
+  getContainerPadding(node: DiagramNode) {
+    const titleSize = node.renderProps.custom.dataModellingIDEF1XEntity.size ?? DEFAULT_TITLE_SIZE;
+    return { top: titleSize, bottom: 0, right: 0, left: 0 };
+  }
+
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
+    return new CustomPropertyDefinition(p => [
+      p.boolean(def, 'Dependant', 'custom.dataModellingIDEF1XEntity.dependant')
+    ]);
+  }
+}
+
+export class IDEF1XEntityComponent extends BaseNodeComponent<IDEF1XEntityNodeDefinition> {
+  getPathBuilder(node: DiagramNode) {
+    const size = node.renderProps.custom.dataModellingIDEF1XEntity.size ?? DEFAULT_TITLE_SIZE;
+    const bounds = { ...node.bounds, y: node.bounds.y + size, h: node.bounds.h - size };
+
     const radius = node.renderProps.custom.dataModellingIDEF1XEntity.dependant ? 10 : 0;
-    const xr = radius / node.bounds.w;
-    const yr = radius / node.bounds.h;
+    const xr = radius / bounds.w;
+    const yr = radius / bounds.h;
 
     return new PathListBuilder()
-      .withTransform(fromUnitLCS(node.bounds))
+      .withTransform(fromUnitLCS(bounds))
       .moveTo(_p(xr, 0))
       .lineTo(_p(1 - xr, 0))
       .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
@@ -64,26 +89,49 @@ export class IDEF1XEntityNodeDefinition extends LayoutCapableShapeNodeDefinition
       .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
   }
 
-  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(p => [
-      p.boolean(def, 'Dependant', 'custom.dataModellingIDEF1XEntity.dependant')
-    ]);
-  }
-}
-
-export class IDEF1XEntityComponent extends BaseNodeComponent<IDEF1XEntityNodeDefinition> {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const nodeProps = props.nodeProps;
     const bounds = props.node.bounds;
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all(), nodeProps);
+    builder.boundaryPath(boundary.all(), props.nodeProps, '1', {
+      style: {
+        fill: 'transparent',
+        stroke: 'transparent'
+      }
+    });
+
+    builder.path(this.getPathBuilder(props.node).getPaths().all(), nodeProps, {});
+
+    const titleSize = props.nodeProps.custom.dataModellingIDEF1XEntity.size ?? DEFAULT_TITLE_SIZE;
 
     if (this.def.shouldRenderChildren(props.node)) {
-      builder.add(renderChildren(this, props.node, props));
-    }
+      let h = 0;
+      const children: VNode[] = [];
+      for (let i = 0; i < props.node.children.length; i++) {
+        const child = props.node.children[i]!;
+        children.push(
+          svg.g(
+            { transform: Transforms.rotateBack(props.node.bounds) },
+            renderElement(this, child, props)
+          )
+        );
+        h += child.bounds.h;
 
-    const titleSize = 30;
+        if (i < props.node.children.length - 1) {
+          children.push(
+            svg.line({
+              x1: bounds.x,
+              y1: bounds.y + titleSize + h,
+              x2: bounds.x + bounds.w,
+              y2: bounds.y + titleSize + h,
+              stroke: props.nodeProps.stroke.color
+            })
+          );
+        }
+      }
+      builder.add(svg.g({}, ...children));
+    }
 
     builder.text(
       this,
@@ -95,7 +143,7 @@ export class IDEF1XEntityComponent extends BaseNodeComponent<IDEF1XEntityNodeDef
         UnitOfWork.execute(props.node.diagram, uow => {
           uow.metadata.nonDirty = true;
 
-          props.node.updateCustomProps('dataModellingBarkerEntity', p => (p.size = size.h), uow);
+          props.node.updateCustomProps('dataModellingIDEF1XEntity', p => (p.size = size.h), uow);
 
           const parent = props.node.parent;
           if (isNode(parent)) {
