@@ -20,6 +20,8 @@ import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
+import { Vector } from '@diagram-craft/geometry/vector';
+import { Path } from '@diagram-craft/geometry/path';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
@@ -51,25 +53,6 @@ export class EdgeEndpointMoveDrag extends Drag {
   onDragEnter({ id }: DragEvents.DragEnter): void {
     if (id === this.edge.id) return;
     if (!id) return;
-
-    const type = this.type;
-
-    // Make sure we cannot connect to ourselves
-    if (
-      type === 'start' &&
-      this.edge.end instanceof ConnectedEndpoint &&
-      this.edge.end.node.id === id
-    ) {
-      return;
-    }
-
-    if (
-      type === 'end' &&
-      this.edge.start instanceof ConnectedEndpoint &&
-      this.edge.start.node.id === id
-    ) {
-      return;
-    }
 
     this.hoverElement = id;
 
@@ -129,6 +112,15 @@ export class EdgeEndpointMoveDrag extends Drag {
       removeHighlight(this.diagram.lookup(this.hoverElement), Highlights.NODE__EDGE_CONNECT);
     }
 
+    if (
+      this.edge.start instanceof ConnectedEndpoint &&
+      this.edge.end instanceof ConnectedEndpoint &&
+      this.edge.start.node.id === this.edge.end.node.id &&
+      this.edge.waypoints.length === 0
+    ) {
+      this.addLoopEndpoint();
+    }
+
     // Update edge parent based on connected nodes
     this.updateEdgeParent();
 
@@ -137,6 +129,54 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     this.context.help.pop('EdgeEndpointMoveDrag');
     this.emit('dragEnd');
+  }
+
+  private addLoopEndpoint() {
+    if (!(this.edge.start instanceof ConnectedEndpoint)) return;
+    if (!(this.edge.end instanceof ConnectedEndpoint)) return;
+
+    // The idea is to take the midpoint between the two endpoints and create a normal ray and determine
+    // all intersections with the boundary path. We then take points along the normal, with a fixed distance
+    // to the intersection points. We then keep the points that fall outside the shape, and pick
+    // the one closest to the midpoint
+
+    const midpoint = Line.midpoint(Line.of(this.edge.start.position, this.edge.end.position));
+    const normal = Vector.normalize(
+      Vector.tangentToNormal(Vector.from(midpoint, this.edge.start.position))
+    );
+
+    // Extend the normal to be sufficiently long to intersect with all parts of the shape boundary
+    const ray = Line.extend(Line.of(midpoint, Point.add(midpoint, normal)), 100000, 100000);
+
+    const node = this.edge.start.node;
+    const nodeDef = node.getDefinition();
+    const intersections = nodeDef
+      .getBoundingPath(node)
+      .intersections(new Path(ray.from, [['L', ray.to.x, ray.to.y]]));
+
+    const dimension = Math.min(node.bounds.w, node.bounds.h);
+
+    // For all intersections, we follow the ray in both directions
+    let potentialWaypoints: Point[] = [];
+    for (const intersection of intersections) {
+      const p1 = Point.add(intersection, normal);
+      const p2 = Point.subtract(intersection, normal);
+
+      for (const p of [p1, p2]) {
+        potentialWaypoints.push(Line.extend(Line.of(intersection, p), 0, dimension / 2).to);
+      }
+    }
+
+    // Drop all points that are inside the node's bounding box
+    potentialWaypoints = potentialWaypoints.filter(p => !Box.contains(node.bounds, p));
+
+    // Find the closest waypoint to the midpoint - however, ensure it is not too close
+    const closestWaypoint = potentialWaypoints.reduce((prev, curr) => {
+      const d = Point.distance(curr, midpoint);
+      return d > dimension / 3 && d < Point.distance(prev, midpoint) ? curr : prev;
+    }, potentialWaypoints[0]!);
+
+    this.edge.addWaypoint({ point: closestWaypoint }, this.uow);
   }
 
   cancel() {

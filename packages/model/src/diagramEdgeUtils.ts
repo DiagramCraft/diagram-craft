@@ -77,8 +77,15 @@ const intersectWithNode = (
     (endpoint instanceof AnchorEndpoint ? endpoint.node.getAnchor(endpoint.anchorId).clip : true);
 
   if (clip) {
-    // TODO: Handle multiple intersections
-    return endIntersections[0] ?? { point: endpointPosition };
+    // The idea here is to not treat the other end of the path as a valid intersection point,
+    // as this would lead to a 0-length path
+
+    const otherEnd = [path.start, path.end].filter(e => !Point.isEqual(endpointPosition, e))[0];
+    if (!otherEnd) return { point: endpointPosition };
+
+    const validEndIntersections = endIntersections.filter(i => !Point.isEqual(i.point, otherEnd));
+
+    return validEndIntersections[0] ?? { point: endpointPosition };
   } else {
     const closeIntersections = endIntersections.filter(
       i => Point.distance(endpointPosition, i.point) < 1.5 * endpoint.node.renderProps.stroke.width
