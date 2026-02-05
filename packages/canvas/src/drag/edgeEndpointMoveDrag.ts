@@ -85,7 +85,13 @@ export class EdgeEndpointMoveDrag extends Drag {
       if (this.shouldAttachToPoint()) {
         this.attachToPoint(offset);
       } else {
-        this.attachToClosestAnchor(offset);
+        if (!this.modifiers.shiftKey) {
+          const res = this.snapManager.snapPoint(this.point);
+          this.attachToClosestAnchor(res.adjusted);
+          this.point = res.adjusted;
+        } else {
+          this.attachToClosestAnchor(offset);
+        }
       }
     } else {
       if (!this.modifiers.shiftKey) {
