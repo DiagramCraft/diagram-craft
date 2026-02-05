@@ -14,6 +14,7 @@ import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { LineEndIcon } from './icons/LineEndIcon';
 
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
@@ -128,6 +129,21 @@ export const NodeTypePopup = (props: Props) => {
             className={'cmp-object-picker'}
             style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
           >
+            <div
+              style={{
+                background: 'var(--cmp-bg)',
+                width: `calc(${size}px + 0.4rem)`,
+                height: `calc(${size}px + 0.4rem)`,
+                border: '1px solid var(--cmp-fg-dimmed)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 'var(--cmp-radius)'
+              }}
+              onClick={() => props.onClose()}
+            >
+              <LineEndIcon />
+            </div>
             {diagramsAndNodes.map(([stencil, d], idx) => (
               <div key={idx} style={{ background: 'transparent' }}>
                 <PickerCanvas
