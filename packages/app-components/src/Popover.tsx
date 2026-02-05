@@ -35,7 +35,7 @@ const Content = React.forwardRef<HTMLDivElement, ContentProps>((props, forwarded
           <BaseUIPopover.Popup
             className={`${styles.cmpPopover} ${props.className ?? ''}`}
             ref={forwardedRef}
-            initialFocus={props.focus !== undefined ? props.focus : true}
+            initialFocus={props.focus !== undefined ? props.focus : false}
           >
             <BaseUIPopover.Arrow className={styles.cmpPopoverArrow} />
 
@@ -61,7 +61,6 @@ type ContentProps = {
 
 export const Popover = {
   Root,
-  //Anchor,
   Trigger,
   Content
 };

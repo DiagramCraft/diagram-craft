@@ -58,8 +58,10 @@ export class AnchorHandleDrag extends Drag {
       this.delegate.point === undefined ||
       Point.distance(this.delegate.point, diagram.viewBox.toDiagramPoint(this.point)) < 5;
 
+    // This is in case the drag should be registered as a simple click instead
+    // In this case, we want to fall back on createLinkedNode behaviour
     if (isShortDrag) {
-      // Undo work to drag new edge
+      // Undo the "short" edge
       this.delegate.cancel();
       UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
       diagram.selection.setElements([]);
@@ -82,6 +84,7 @@ export class AnchorHandleDrag extends Drag {
     // In case we have connected to an existing node, we don't need to show the popup
     if (this.edge.end.isConnected) return;
 
+    /** @see NodeTypePopup */
     this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node.id, this.edge.id);
   }
 
