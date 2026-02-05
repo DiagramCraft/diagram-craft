@@ -144,7 +144,7 @@ stencils:
           x: 0
           y: 15
           w: 30
-          h: 30
+          h: 35
           r: 0
         children: [ ]
         props:

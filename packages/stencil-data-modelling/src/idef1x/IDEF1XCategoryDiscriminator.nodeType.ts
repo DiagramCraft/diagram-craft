@@ -10,6 +10,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Anchor } from '@diagram-craft/model/anchor';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
 
 declare global {
   namespace DiagramCraft {
@@ -23,6 +25,8 @@ declare global {
 
 registerCustomNodeDefaults('dataModellingIDEF1XCategoryDiscriminator', { complete: false });
 
+const LINE_OFFSET = 5;
+
 export class IDEF1XCategoryDiscriminatorNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super(
@@ -34,43 +38,36 @@ export class IDEF1XCategoryDiscriminatorNodeDefinition extends ShapeNodeDefiniti
 
   getBoundingPathBuilder(node: DiagramNode) {
     const bounds = node.bounds;
-    const complete = node.renderProps.custom.dataModellingIDEF1XCategoryDiscriminator.complete;
-
-    // Circle radius is half the width
     const radius = bounds.w / 2;
 
-    // The circle's vertical space depends on whether complete or not
-    // If complete, we need 5px extra below the tangent for the second line
-    const extraHeight = complete ? 5 : 0;
-    const circleBottom = bounds.h - extraHeight;
-    const centerY = circleBottom - radius;
-
-    // Build circle path centered horizontally, positioned with bottom at circleBottom
+    // Circle is always at the top of the bounds
     return new PathListBuilder()
-      .moveTo(_p(bounds.x + bounds.w, bounds.y + centerY))
-      .arcTo(_p(bounds.x + radius, bounds.y + circleBottom), radius, radius, 0, 0, 1)
-      .arcTo(_p(bounds.x, bounds.y + centerY), radius, radius, 0, 0, 1)
-      .arcTo(_p(bounds.x + radius, bounds.y + centerY - radius), radius, radius, 0, 0, 1)
-      .arcTo(_p(bounds.x + bounds.w, bounds.y + centerY), radius, radius, 0, 0, 1);
+      .moveTo(_p(bounds.x + bounds.w, bounds.y + radius))
+      .arcTo(_p(bounds.x + radius, bounds.y + bounds.w), radius, radius, 0, 0, 1)
+      .arcTo(_p(bounds.x, bounds.y + radius), radius, radius, 0, 0, 1)
+      .arcTo(_p(bounds.x + radius, bounds.y), radius, radius, 0, 0, 1)
+      .arcTo(_p(bounds.x + bounds.w, bounds.y + radius), radius, radius, 0, 0, 1);
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return new CustomPropertyDefinition(p => [
-      p.boolean(def, 'Complete', 'custom.dataModellingIDEF1XCategoryDiscriminator.complete')
+      p.boolean(def, 'Complete', 'custom.dataModellingIDEF1XCategoryDiscriminator.complete', {
+        set: (value: boolean | undefined, uow: UnitOfWork) => {
+          const acc = new DynamicAccessor();
+          def.updateProps(p => {
+            // @ts-expect-error
+            acc.set(p, 'custom.dataModellingIDEF1XCategoryDiscriminator.complete', value);
+          }, uow);
+          def.setBounds({ ...def.bounds, h: def.bounds.h + (value ? 1 : -1) * LINE_OFFSET }, uow);
+        }
+      })
     ]);
   }
 
-  protected getShapeAnchors(node: DiagramNode): Anchor[] {
-    const bounds = node.bounds;
-    const complete = node.renderProps.custom.dataModellingIDEF1XCategoryDiscriminator.complete;
-    const extraHeight = complete ? 5 : 0;
-
-    // Top of circle in normalized coordinates
-    const topY = (bounds.h - extraHeight - bounds.w) / bounds.h;
-
+  protected getShapeAnchors(_node: DiagramNode): Anchor[] {
     return [
       // Top of circle
-      { start: _p(0.5, topY), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
+      { start: _p(0.5, 0), id: '1', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
       // Three evenly spaced anchors at the bottom of the bottom-most line
       { start: _p(0.25, 1), id: '2', type: 'point', isPrimary: true, normal: Math.PI / 2 },
       { start: _p(0.5, 1), id: '3', type: 'point', isPrimary: true, normal: Math.PI / 2 },
@@ -86,26 +83,22 @@ class IDEF1XCategoryDiscriminatorComponent extends BaseNodeComponent<IDEF1XCateg
     const bounds = props.node.bounds;
     const complete = props.nodeProps.custom.dataModellingIDEF1XCategoryDiscriminator.complete;
 
-    // The circle's vertical space depends on whether complete or not
-    const extraHeight = complete ? 5 : 0;
-    const circleBottom = bounds.h - extraHeight;
-
     // Draw the circle as boundary
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     shapeBuilder.boundaryPath(boundary.all());
 
-    // Draw the tangent line at the bottom of the circle (10px wider, 5px on each side)
+    // Tangent line at the bottom of the circle (10px wider, 5px on each side)
     const lineExtension = 5;
-    const tangentY = bounds.y + circleBottom;
+    const tangentY = bounds.y + bounds.w;
     const tangentPath = new PathListBuilder()
       .moveTo(_p(bounds.x - lineExtension, tangentY))
       .lineTo(_p(bounds.x + bounds.w + lineExtension, tangentY));
 
     shapeBuilder.path(tangentPath.getPaths().all());
 
-    // If complete, draw another line 5 pixels below the tangent
+    // If complete, draw another line LINE_OFFSET pixels below the tangent
     if (complete) {
-      const secondLineY = tangentY + 5;
+      const secondLineY = tangentY + LINE_OFFSET;
       const secondLinePath = new PathListBuilder()
         .moveTo(_p(bounds.x - lineExtension, secondLineY))
         .lineTo(_p(bounds.x + bounds.w + lineExtension, secondLineY));
