@@ -8,7 +8,6 @@ import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { unique } from '@diagram-craft/utils/array';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
@@ -412,28 +411,36 @@ const DELIMITER = '@@';
 
 export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, StencilPackage>();
-  private activeStencils = new Set<string>();
+  private loaded = new Set<string>();
+  private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
-  register(pkg: StencilPackage, activate = false) {
+  register(pkg: StencilPackage) {
+    // TODO: Is it required to change ids here?
+    /*
     const stencils = pkg.stencils.map(s => ({
       ...s,
       id: pkg.id + DELIMITER + s.id
     }));
+     */
 
-    if (this.stencils.has(pkg.id)) {
-      this.stencils.get(pkg.id)!.stencils = unique(
-        [...(this.stencils.get(pkg.id)?.stencils ?? []), ...stencils],
-        e => e.id
-      );
-    } else {
-      this.stencils.set(pkg.id, { ...pkg, stencils });
-    }
-
-    if (activate) {
-      this.activeStencils.add(pkg.id);
-    }
+    this.stencils.set(pkg.id, pkg);
+    this.loaded.add(pkg.id);
 
     this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+  }
+
+  preRegister(id: string, name: string, loader: () => Promise<void>) {
+    this.preRegistrations.push({ id, name, loader });
+    this.stencils.set(id, { id, name, stencils: [], type: 'default' });
+    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+  }
+
+  async loadStencilPackage(id: string) {
+    const pr = this.preRegistrations.find(p => p.id === id);
+    if (!pr) return;
+
+    this.preRegistrations.splice(this.preRegistrations.indexOf(pr), 1);
+    await pr.loader();
   }
 
   getStencil(id: string) {
@@ -452,19 +459,15 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     return this.stencils.get(id)!;
   }
 
-  activate(id: string) {
-    this.activeStencils.add(id);
-
-    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+  getStencils() {
+    return [...this.stencils.values()];
   }
 
-  getActiveStencils() {
-    return [...this.activeStencils.values()]
-      .filter(s => this.stencils.has(s))
-      .map(s => this.stencils.get(s)!);
-  }
+  async search(s: string): Promise<Stencil[]> {
+    for (const pkg of this.stencils.values()) {
+      await this.loadStencilPackage(pkg.id);
+    }
 
-  search(s: string): Stencil[] {
     const results: Stencil[] = [];
     for (const pkg of this.stencils.values()) {
       if (pkg.name.toLowerCase().includes(s.toLowerCase())) {

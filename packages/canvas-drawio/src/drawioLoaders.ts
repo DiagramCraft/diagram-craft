@@ -32,7 +32,6 @@ export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (registr
     stencils: drawioStencils.map(toRegularStencil),
     type: 'drawioXml'
   });
-  registry.stencils.activate(name);
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

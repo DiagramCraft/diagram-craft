@@ -131,7 +131,7 @@ export const registerUMLStencils = async (registry: Registry) => {
     aspectRatio: 0.5
   });
 
-  registry.stencils.register(umlStencils, true);
+  registry.stencils.register(umlStencils);
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

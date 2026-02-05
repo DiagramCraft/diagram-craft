@@ -675,5 +675,5 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   );
 
-  registry.stencils.register(bpmnStencils, true);
+  registry.stencils.register(bpmnStencils);
 };

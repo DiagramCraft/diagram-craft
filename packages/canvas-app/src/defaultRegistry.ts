@@ -168,7 +168,7 @@ export const defaultStencilRegistry = () => {
   addStencil(arrows, new BlockArrowEdgeDefinition());
 
   stencilRegistry.register(defaults);
-  stencilRegistry.register(arrows, true);
+  stencilRegistry.register(arrows);
   return stencilRegistry;
 };
 

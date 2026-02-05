@@ -54,7 +54,7 @@ export const registerDataModellingStencils = async (registry: Registry) => {
     dataModellingStencils.subPackages!.find(p => p.id === 'chen')?.stencils.push(s);
   });
 
-  registry.stencils.register(dataModellingStencils, true);
+  registry.stencils.register(dataModellingStencils);
 
   /* *********************************************************************** */
   /* IE PACKAGE                                                              */

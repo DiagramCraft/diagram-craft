@@ -54,6 +54,8 @@ export const defaultAppConfig: AppConfig = {
     },
     registry: [
       {
+        id: 'bpmn2',
+        name: 'BPMN 2.0',
         type: 'basic',
         opts: {
           loader: () =>
@@ -63,6 +65,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'data-modelling',
+        name: 'Data Modelling',
         type: 'basic',
         opts: {
           loader: () =>
@@ -72,6 +76,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'uml',
+        name: 'UML',
         type: 'basic',
         opts: {
           loader: () =>
@@ -81,6 +87,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'GCP',
+        name: 'GCP',
         type: 'drawioXml',
         opts: {
           name: 'GCP',
@@ -90,6 +98,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'AWS',
+        name: 'AWS',
         type: 'drawioXml',
         opts: {
           name: 'AWS',
@@ -99,6 +109,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Azure',
+        name: 'Azure',
         type: 'drawioXml',
         opts: {
           name: 'Azure',
@@ -108,6 +120,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Fluid Power',
+        name: 'Fluid Power',
         type: 'drawioXml',
         opts: {
           name: 'Fluid Power',
@@ -117,6 +131,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'IBM',
+        name: 'IBM',
         type: 'drawioXml',
         opts: {
           name: 'IBM',
@@ -126,6 +142,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Web Logos',
+        name: 'Web Logos',
         type: 'drawioXml',
         opts: {
           name: 'Web Logos',
@@ -135,6 +153,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Web Icons',
+        name: 'Web Icons',
         type: 'drawioXml',
         opts: {
           name: 'Web Icons',
@@ -144,6 +164,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'EIP',
+        name: 'EIP',
         type: 'drawioXml',
         opts: {
           name: 'EIP',
@@ -153,6 +175,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Arrows',
+        name: 'Arrows',
         type: 'drawioXml',
         opts: {
           name: 'Arrows',
@@ -162,6 +186,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'Basic',
+        name: 'Basic',
         type: 'drawioXml',
         opts: {
           name: 'Basic',
@@ -171,6 +197,8 @@ export const defaultAppConfig: AppConfig = {
         }
       },
       {
+        id: 'BPMN',
+        name: 'BPMN',
         type: 'drawioXml',
         opts: {
           name: 'BPMN',

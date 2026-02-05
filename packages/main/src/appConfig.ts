@@ -141,6 +141,8 @@ export type AppConfig = {
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   type: K;
+  id: string;
+  name: string;
   opts: StencilLoaderOpts[K];
 };
 
