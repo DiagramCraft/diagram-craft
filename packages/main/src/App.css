@@ -1223,7 +1223,7 @@ foreignObject {
   stroke: var(--accent-8) !important;*/
 }
 
-.svg-node--highlight-node__edge-connect---edge .svg-node__boundary {
+.svg-node--highlight-node__edge-connect---edge > .svg-node__boundary {
   stroke-width: 2px !important;
   stroke: var(--accent-9) !important;
 }

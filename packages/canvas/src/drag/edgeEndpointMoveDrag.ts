@@ -11,7 +11,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
-import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -22,6 +22,7 @@ import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
@@ -54,9 +55,13 @@ export class EdgeEndpointMoveDrag extends Drag {
     if (id === this.edge.id) return;
     if (!id) return;
 
-    this.hoverElement = id;
+    let el = this.diagram.lookup(id)!;
 
-    const el = this.diagram.lookup(id)!;
+    while (this.isSelectParent(el) && el.parent !== undefined) {
+      el = el.parent;
+    }
+
+    this.hoverElement = el.id;
 
     if (isNode(el)) {
       el.anchors; // This looks like a noop, but it will trigger the anchors to be calculated
@@ -310,5 +315,14 @@ export class EdgeEndpointMoveDrag extends Drag {
 
       targetParent.addChild(this.edge, this.uow);
     }
+  }
+
+  private isSelectParent(el: DiagramElement) {
+    const parent = el.parent;
+    if (!parent) return false;
+    if (!isNode(parent)) return false;
+
+    const def = parent.getDefinition();
+    return def.hasFlag(NodeFlags.ChildrenSelectParent);
   }
 }
