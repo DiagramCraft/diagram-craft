@@ -112,6 +112,8 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     this.preRegistrations.push({ id, name, loader });
     this.stencils.set(id, { id, name, stencils: [], type: 'default' });
     this.emitAsyncWithDebounce('change', { stencilRegistry: this });
+
+    setTimeout(() => this.loadStencilPackage(id), 10_000 + Math.random() * 30_000);
   }
 
   async loadStencilPackage(id: string) {
