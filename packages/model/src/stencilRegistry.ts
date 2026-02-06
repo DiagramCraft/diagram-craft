@@ -93,13 +93,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
   register(id: string, name: string, pkg: StencilPackage) {
-    // TODO: Is it required to change ids here?
-    /*
-    const stencils = pkg.stencils.map(s => ({
-      ...s,
-      id: pkg.id + DELIMITER + s.id
-    }));
-     */
+    pkg.stencils.forEach(s => (s.id = id + DELIMITER + s.id));
+    pkg.subPackages?.forEach(sp =>
+      sp.stencils.forEach(s => (s.id = id + DELIMITER + sp.id + DELIMITER + s.id))
+    );
 
     this.stencils.set(id, {
       id,
