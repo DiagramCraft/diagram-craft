@@ -152,11 +152,7 @@ export const AppLoader = (props: Props) => {
         const stencilLoader = await typeLoader();
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         const pkg = await stencilLoader(doc.registry, def.opts as any);
-        doc.registry.stencils.register({
-          id: def.id,
-          name: def.name,
-          ...pkg
-        });
+        doc.registry.stencils.register(def.id, def.name, pkg);
       });
     }
   }, [props.stencils, doc]);

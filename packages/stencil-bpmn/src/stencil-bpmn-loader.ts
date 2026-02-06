@@ -49,7 +49,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
   await registerBPMNNodes(registry.nodes);
   await registerBPMNEdges(registry.edges);
 
-  const bpmnStencils: Omit<StencilPackage, 'id' | 'name'> = {
+  const bpmnStencils: StencilPackage = {
     stencils: [],
     type: 'default',
 

@@ -55,7 +55,7 @@ export const parseUMLShapes = async (
 export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLShapes(registry.nodes);
 
-  const umlStencils: Omit<StencilPackage, 'id' | 'name'> = { stencils: [], type: 'default' };
+  const umlStencils: StencilPackage = { stencils: [], type: 'default' };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 

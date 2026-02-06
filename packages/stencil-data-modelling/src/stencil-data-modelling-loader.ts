@@ -31,7 +31,7 @@ export const loadDataModellingStencils = async (registry: Registry) => {
   await registerDataModellingNodes(registry.nodes);
   await registerDataModellingEdges(registry.edges);
 
-  const dataModellingStencils: Omit<StencilPackage, 'id' | 'name'> = {
+  const dataModellingStencils: StencilPackage = {
     stencils: [],
     type: 'default',
 

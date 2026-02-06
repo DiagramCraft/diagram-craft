@@ -5,7 +5,7 @@ import { useDiagram } from '../../../application';
 import { UserState } from '../../../UserState';
 import { useCallback, useState } from 'react';
 import type {
-  StencilPackage,
+  RegisteredStencilPackage,
   StencilRegistry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -34,7 +34,7 @@ export const ShapesPickerTab = () => {
   const [loaded, setLoaded] = useState(
     new Set(userState.stencils.filter(s => s.isOpen).map(s => s.id))
   );
-  const [activeStencils, setActiveStencils] = useState<Array<StencilPackage>>(
+  const [activeStencils, setActiveStencils] = useState<Array<RegisteredStencilPackage>>(
     getStencils(stencilRegistry)
   );
 

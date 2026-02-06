@@ -389,8 +389,6 @@ export type Stencil = {
 };
 
 export type StencilPackage = {
-  id: string;
-  name: string;
   group?: string;
   stencils: Array<Stencil>;
   type: 'default' | string;
@@ -402,6 +400,11 @@ export type StencilPackage = {
   }>;
 };
 
+export type RegisteredStencilPackage = {
+  id: string;
+  name: string;
+} & StencilPackage;
+
 export type StencilEvents = {
   /* Stencils registered, activated or deactivated */
   change: { stencilRegistry: StencilRegistry };
@@ -410,11 +413,11 @@ export type StencilEvents = {
 const DELIMITER = '@@';
 
 export class StencilRegistry extends EventEmitter<StencilEvents> {
-  private stencils = new Map<string, StencilPackage>();
+  private stencils = new Map<string, RegisteredStencilPackage>();
   private loaded = new Set<string>();
   private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
-  register(pkg: StencilPackage) {
+  register(id: string, name: string, pkg: StencilPackage) {
     // TODO: Is it required to change ids here?
     /*
     const stencils = pkg.stencils.map(s => ({
@@ -423,8 +426,12 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     }));
      */
 
-    this.stencils.set(pkg.id, pkg);
-    this.loaded.add(pkg.id);
+    this.stencils.set(id, {
+      id,
+      name,
+      ...pkg
+    });
+    this.loaded.add(id);
 
     this.emitAsyncWithDebounce('change', { stencilRegistry: this });
   }
@@ -489,7 +496,7 @@ export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensi
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
   registry: Registry,
   opts: StencilLoaderOpts[T]
-) => Promise<Omit<StencilPackage, 'id' | 'name'>>;
+) => Promise<StencilPackage>;
 
 export const stencilLoaderRegistry: Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
@@ -508,9 +515,7 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       basic: {
-        stencils: () => Promise<
-          (registry: Registry) => Promise<Omit<StencilPackage, 'id' | 'name'>>
-        >;
+        stencils: () => Promise<(registry: Registry) => Promise<StencilPackage>>;
       };
     }
   }
@@ -683,7 +688,7 @@ export const makeStencilEdge =
 
 export const addStencilToSubpackage = (
   subpackage: string,
-  pkg: Omit<StencilPackage, 'id' | 'name'>,
+  pkg: StencilPackage,
   def: NodeDefinition | EdgeDefinition,
   opts?: Omit<MakeStencilNodeOpts, 'subPackage'>
 ) => {
@@ -691,7 +696,7 @@ export const addStencilToSubpackage = (
 };
 
 export const addStencil = (
-  pkg: Omit<StencilPackage, 'id' | 'name'>,
+  pkg: StencilPackage,
   def: NodeDefinition | EdgeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {
