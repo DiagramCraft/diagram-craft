@@ -1,4 +1,4 @@
-import type { AppConfig } from './appConfig';
+import { AppConfig, stencilEntry } from './appConfig';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
@@ -53,7 +53,7 @@ export const defaultAppConfig: AppConfig = {
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.stencilLoaderDrawioXml)
     },
     registry: [
-      {
+      stencilEntry({
         id: 'bpmn2',
         name: 'BPMN 2.0',
         loader: 'basic',
@@ -61,8 +61,8 @@ export const defaultAppConfig: AppConfig = {
           stencils: () =>
             import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.loadBPMNStencils)
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'data-modelling',
         name: 'Data Modelling',
         loader: 'basic',
@@ -72,8 +72,8 @@ export const defaultAppConfig: AppConfig = {
               m => m.loadDataModellingStencils
             )
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'uml',
         name: 'UML',
         loader: 'basic',
@@ -83,8 +83,8 @@ export const defaultAppConfig: AppConfig = {
               m => m.loadUMLStencils
             )
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'GCP',
         name: 'GCP',
         loader: 'drawioXml',
@@ -93,8 +93,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: '#3b8df1',
           background: '#3b8df1'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'AWS',
         name: 'AWS',
         loader: 'drawioXml',
@@ -103,8 +103,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: '#ff9900',
           background: '#ff9900'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Azure',
         name: 'Azure',
         loader: 'drawioXml',
@@ -113,8 +113,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: '#00abf0',
           background: '#00abf0'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Fluid Power',
         name: 'Fluid Power',
         loader: 'drawioXml',
@@ -123,8 +123,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-fg)'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'IBM',
         name: 'IBM',
         loader: 'drawioXml',
@@ -133,8 +133,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'transparent'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Web Logos',
         name: 'Web Logos',
         loader: 'drawioXml',
@@ -143,8 +143,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'blue',
           background: '#ffffff'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Web Icons',
         name: 'Web Icons',
         loader: 'drawioXml',
@@ -153,8 +153,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'blue',
           background: '#000000'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'EIP',
         name: 'EIP',
         loader: 'drawioXml',
@@ -163,8 +163,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'black',
           background: '#c0f5a9'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Arrows',
         name: 'Arrows',
         loader: 'drawioXml',
@@ -173,8 +173,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'Basic',
         name: 'Basic',
         loader: 'drawioXml',
@@ -183,8 +183,8 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
-      },
-      {
+      }),
+      stencilEntry({
         id: 'BPMN',
         name: 'BPMN',
         loader: 'drawioXml',
@@ -193,7 +193,7 @@ export const defaultAppConfig: AppConfig = {
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
         }
-      }
+      })
     ]
   },
   file: {

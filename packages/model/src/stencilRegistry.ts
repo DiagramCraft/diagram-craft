@@ -49,9 +49,11 @@ export type StencilLoader<T extends keyof StencilLoaderOpts> = (
   opts: StencilLoaderOpts[T]
 ) => Promise<StencilPackage>;
 
-export const stencilLoaderRegistry: Partial<{
+export type StencilLoaderRegistry = Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
-}> = {};
+}>;
+
+export const stencilLoaderRegistry: StencilLoaderRegistry = {};
 
 /* Basic Stencil Loader ************************************************************* */
 

@@ -2,7 +2,7 @@ import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Autosave } from './react-app/autosave/Autosave';
 import { LazyElementLoaderEntry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { StencilLoaderOpts, stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
+import { StencilLoaderOpts, StencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 
 /**
  * Main application configuration type that defines all configurable aspects of the application.
@@ -101,7 +101,7 @@ export type AppConfig = {
     /**
      * Registry of stencil loaders that can load stencils from various sources.
      */
-    loaders: typeof stencilLoaderRegistry;
+    loaders: StencilLoaderRegistry;
 
     /**
      * Configuration for the stencil registry, defining which stencils are available
@@ -135,6 +135,10 @@ export type AppConfig = {
     endpoint?: string;
   };
 };
+
+export const stencilEntry = <T extends keyof StencilLoaderOpts>(
+  cfg: StencilRegistryConfigEntry<T>
+) => cfg;
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   loader: K;
