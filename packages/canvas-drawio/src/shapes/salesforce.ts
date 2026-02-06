@@ -22,7 +22,6 @@ const registerStencil = (
 export const registerSalesforceShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/salesforce.xml',
-    'Salesforce',
     '#005073',
     '#005073'
   );

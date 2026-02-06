@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';

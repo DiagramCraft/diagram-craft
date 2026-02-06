@@ -1,8 +1,7 @@
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import chenStencils from './chen/chen-stencils.yaml';
 import ieStencils from './ie/ie-stencils.yaml';
@@ -15,6 +14,7 @@ import { BarkerEntityTextNodeDefinition } from '@diagram-craft/stencil-data-mode
 import { BarkerEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntity.nodeType';
 import { IDEF1XEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XEntity.nodeType';
 import { IDEF1XCategoryDiscriminatorNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XCategoryDiscriminator.nodeType';
+import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new IEEntityTextNodeDefinition());
@@ -27,13 +27,11 @@ export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) 
 
 export const registerDataModellingEdges = async (_edges: EdgeDefinitionRegistry) => {};
 
-export const registerDataModellingStencils = async (registry: Registry) => {
+export const loadDataModellingStencils = async (registry: Registry) => {
   await registerDataModellingNodes(registry.nodes);
   await registerDataModellingEdges(registry.edges);
 
   const dataModellingStencils: StencilPackage = {
-    id: 'data-modelling',
-    name: 'Data Modelling',
     stencils: [],
     type: 'default',
 
@@ -53,8 +51,6 @@ export const registerDataModellingStencils = async (registry: Registry) => {
     dataModellingStencils.stencils.push(s);
     dataModellingStencils.subPackages!.find(p => p.id === 'chen')?.stencils.push(s);
   });
-
-  registry.stencils.register(dataModellingStencils, true);
 
   /* *********************************************************************** */
   /* IE PACKAGE                                                              */
@@ -82,4 +78,6 @@ export const registerDataModellingStencils = async (registry: Registry) => {
     dataModellingStencils.stencils.push(s);
     dataModellingStencils.subPackages!.find(p => p.id === 'idef1x')?.stencils.push(s);
   });
+
+  return dataModellingStencils;
 };

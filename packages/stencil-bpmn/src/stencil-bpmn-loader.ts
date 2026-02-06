@@ -1,9 +1,7 @@
 import {
-  addStencilToSubpackage,
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
@@ -25,6 +23,7 @@ import bpmnCollaborationStencils from './bpmn-collaboration-stencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
+import { addStencilToSubpackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerBPMNNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new BPMNActivityNodeDefinition());
@@ -45,13 +44,11 @@ export const registerBPMNEdges = async (edges: EdgeDefinitionRegistry) => {
   edges.register(new BPMNConversationEdgeDefinition());
 };
 
-export const registerBPMNStencils = async (registry: Registry) => {
+export const loadBPMNStencils = async (registry: Registry) => {
   await registerBPMNNodes(registry.nodes);
   await registerBPMNEdges(registry.edges);
 
   const bpmnStencils: StencilPackage = {
-    id: 'bpmn2',
-    name: 'BPMN 2.0',
     stencils: [],
     type: 'default',
 
@@ -675,5 +672,5 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   );
 
-  registry.stencils.register(bpmnStencils, true);
+  return bpmnStencils;
 };

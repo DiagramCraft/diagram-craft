@@ -12,10 +12,7 @@ import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.node
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  LazyElementLoaderEntry,
-  addStencil,
-  StencilPackage,
-  StencilRegistry
+  LazyElementLoaderEntry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
@@ -41,6 +38,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
+import { addStencil, StencilPackage, StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> = []) => {
   const reg = new NodeDefinitionRegistry(lazyLoaders);
@@ -95,13 +93,11 @@ export const defaultStencilRegistry = () => {
   const stencilRegistry = new StencilRegistry();
 
   const defaults: StencilPackage = {
-    id: 'default',
-    name: 'Default',
     stencils: [],
     type: 'default'
   };
 
-  const arrows: StencilPackage = { id: 'arrow', name: 'Arrow', stencils: [], type: 'default' };
+  const arrows: StencilPackage = { stencils: [], type: 'default' };
 
   addStencil(defaults, new RectNodeDefinition());
   addStencil(defaults, new RoundedRectNodeDefinition(), {
@@ -167,8 +163,8 @@ export const defaultStencilRegistry = () => {
   // Edges
   addStencil(arrows, new BlockArrowEdgeDefinition());
 
-  stencilRegistry.register(defaults);
-  stencilRegistry.register(arrows, true);
+  stencilRegistry.register('default', 'Default', defaults);
+  stencilRegistry.register('arrow', 'Arrow', arrows);
   return stencilRegistry;
 };
 

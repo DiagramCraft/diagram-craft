@@ -1,24 +1,33 @@
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbSearch } from 'react-icons/tb';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { useDocument } from '../../../application';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { ObjectPickerPanel } from './ObjectPickerPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 
 export const PickerSearchPanel = () => {
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
+  const [stencils, setStencils] = useState<Stencil[]>([]);
 
   const document = useDocument();
   const stencilRegistry = document.registry.stencils;
 
-  let stencils: Stencil[] = [];
-  if (!isEmptyString(search)) {
-    stencils = stencilRegistry.search(search);
-  }
+  const doSearch = useCallback(
+    (query: string) => {
+      setSearch(query);
+
+      if (isEmptyString(query)) {
+        setStencils([]);
+      } else {
+        stencilRegistry.search(query).then(setStencils);
+      }
+    },
+    [stencilRegistry]
+  );
 
   return (
     <ToolWindowPanel mode={'headless'} id={'search'} title={'Search'}>
@@ -29,11 +38,11 @@ export const PickerSearchPanel = () => {
           style={{ flexGrow: 1 }}
           onKeyDown={e => {
             if (e.key === 'Enter') {
-              setSearch(e.currentTarget.value);
+              doSearch(e.currentTarget.value);
             } else if (e.key === 'Escape') {
               e.preventDefault();
               e.stopPropagation();
-              setSearch('');
+              doSearch('');
               // Force the TextInput's internal state to clear
               setTimeout(() => {
                 if (ref.current) {
@@ -42,9 +51,7 @@ export const PickerSearchPanel = () => {
               }, 0);
             }
           }}
-          onClear={() => {
-            setSearch('');
-          }}
+          onClear={() => doSearch('')}
         />
         <Button
           onClick={() => {

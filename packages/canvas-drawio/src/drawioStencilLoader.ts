@@ -5,7 +5,6 @@ import type { NodeProps } from '@diagram-craft/model/diagramProps';
 
 export type DrawioStencil = {
   key: string;
-  group: string;
   props: NodeProps;
   dimensions: { w: number; h: number };
 };
@@ -22,7 +21,6 @@ export const toTypeName = (n: string) => {
 
 export const loadDrawioStencils = async (
   url: string,
-  group: string,
   foreground = 'black',
   background = 'white'
 ) => {
@@ -39,7 +37,6 @@ export const loadDrawioStencils = async (
   for (let i = 0; i < $shapes.length; i++) {
     const name = $shapes[i]!.getAttribute('name')!;
     newStencils.push({
-      group: group,
       key: name,
       props: {
         fill: { color: background },

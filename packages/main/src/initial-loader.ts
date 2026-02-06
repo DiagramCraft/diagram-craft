@@ -4,7 +4,7 @@ import { defaultAppConfig } from './appConfig.default';
 import { fileLoaderRegistry } from '@diagram-craft/canvas-app/loaders';
 import { AppConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
-import { stencilLoaderRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { YJSMap, YJSRoot } from '@diagram-craft/collaboration/yjs/yjsCrdt';
 import { YJSWebSocketCollaborationBackend } from '@diagram-craft/collaboration/yjs/yjsWebsocketCollaborationBackend';

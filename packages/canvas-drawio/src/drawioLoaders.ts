@@ -1,6 +1,6 @@
 import { FileLoader } from '@diagram-craft/canvas-app/loaders';
 import { drawioReader } from './drawioReader';
-import { type StencilLoader } from '@diagram-craft/model/elementDefinitionRegistry';
+import { type StencilLoader } from '@diagram-craft/model/stencilRegistry';
 import { loadDrawioStencils } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 
@@ -8,7 +8,6 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       drawioXml: {
-        name: string;
         url: string;
         foreground: string;
         background: string;
@@ -17,22 +16,10 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (registry, opts) => {
-  const { name, url, foreground, background } = opts;
-  const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
-
-  if (drawioStencils.length === 0) {
-    console.warn(`No stencils found for ${name}`);
-    return;
-  }
-
-  registry.stencils.register({
-    id: name,
-    name: name,
-    stencils: drawioStencils.map(toRegularStencil),
-    type: 'drawioXml'
-  });
-  registry.stencils.activate(name);
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (_registry, opts) => {
+  const { url, foreground, background } = opts;
+  const drawioStencils = await loadDrawioStencils(url, foreground, background);
+  return { stencils: drawioStencils.map(toRegularStencil), type: 'drawioXml' };
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

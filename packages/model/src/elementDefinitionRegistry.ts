@@ -8,11 +8,8 @@ import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { unique } from '@diagram-craft/utils/array';
-import { EventEmitter } from '@diagram-craft/utils/event';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import { assertRegularLayer } from './diagramLayerUtils';
-import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
@@ -21,6 +18,7 @@ import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 export type NodeFlag = string & { __brand: 'nodeFlag' };
 
@@ -372,150 +370,14 @@ if (typeof window !== 'undefined') {
     console.log([...missing].join('\n'));
   };
 }
-
-declare global {
-  namespace DiagramCraft {
-    interface StencilLoaderOptsExtensions {}
-  }
-}
-
-export type StencilElements = { bounds: Box; elements: DiagramElement[] };
-
-export type Stencil = {
-  id: string;
-  name?: string;
-  elementsForPicker: (diagram: Diagram) => StencilElements;
-  elementsForCanvas: (diagram: Diagram) => StencilElements;
-  type: 'default' | string;
-};
-
-export type StencilPackage = {
-  id: string;
-  name: string;
-  group?: string;
-  stencils: Array<Stencil>;
-  type: 'default' | string;
-
-  subPackages?: Array<{
-    id: string;
-    name: string;
-    stencils: Array<Stencil>;
-  }>;
-};
-
-export type StencilEvents = {
-  /* Stencils registered, activated or deactivated */
-  change: { stencilRegistry: StencilRegistry };
-};
-
-const DELIMITER = '@@';
-
-export class StencilRegistry extends EventEmitter<StencilEvents> {
-  private stencils = new Map<string, StencilPackage>();
-  private activeStencils = new Set<string>();
-
-  register(pkg: StencilPackage, activate = false) {
-    const stencils = pkg.stencils.map(s => ({
-      ...s,
-      id: pkg.id + DELIMITER + s.id
-    }));
-
-    if (this.stencils.has(pkg.id)) {
-      this.stencils.get(pkg.id)!.stencils = unique(
-        [...(this.stencils.get(pkg.id)?.stencils ?? []), ...stencils],
-        e => e.id
-      );
-    } else {
-      this.stencils.set(pkg.id, { ...pkg, stencils });
-    }
-
-    if (activate) {
-      this.activeStencils.add(pkg.id);
-    }
-
-    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
-  }
-
-  getStencil(id: string) {
-    if (id.includes(DELIMITER)) {
-      const [pkgId] = safeSplit(id, DELIMITER, 2);
-      return this.get(pkgId).stencils.find(s => s.id === id);
-    } else {
-      return this.stencils
-        .values()
-        .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(p => p.stencils) ?? [])])
-        .find(s => s.id === id);
-    }
-  }
-
-  get(id: string): StencilPackage {
-    return this.stencils.get(id)!;
-  }
-
-  activate(id: string) {
-    this.activeStencils.add(id);
-
-    this.emitAsyncWithDebounce('change', { stencilRegistry: this });
-  }
-
-  getActiveStencils() {
-    return [...this.activeStencils.values()]
-      .filter(s => this.stencils.has(s))
-      .map(s => this.stencils.get(s)!);
-  }
-
-  search(s: string): Stencil[] {
-    const results: Stencil[] = [];
-    for (const pkg of this.stencils.values()) {
-      if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
-        results.push(...pkg.stencils);
-      } else {
-        for (const stencil of pkg.stencils) {
-          if (stencil.name?.toLowerCase().includes(s.toLowerCase())) {
-            results.push(stencil);
-          }
-        }
-      }
-    }
-    return results;
-  }
-}
-
-export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensions {}
-
-export type StencilLoader<T extends keyof StencilLoaderOpts> = (
-  registry: Registry,
-  opts: StencilLoaderOpts[T]
-) => Promise<void>;
-
-export const stencilLoaderRegistry: Partial<{
-  [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
-}> = {};
-
-export type NodeDefinitionLoader = (nodes: NodeDefinitionRegistry) => Promise<void>;
-export type EdgeDefinitionLoader = (edges: EdgeDefinitionRegistry) => Promise<void>;
-
 export type LazyElementLoaderEntry = {
   shapes: RegExp;
   nodeDefinitionLoader?: () => Promise<NodeDefinitionLoader>;
   edgeDefinitionLoader?: () => Promise<EdgeDefinitionLoader>;
 };
 
-declare global {
-  namespace DiagramCraft {
-    interface StencilLoaderOptsExtensions {
-      basic: {
-        loader: () => Promise<(registry: Registry) => Promise<void>>;
-      };
-    }
-  }
-}
-
-export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
-  await (
-    await opts.loader()
-  )(registry);
-};
+export type NodeDefinitionLoader = (nodes: NodeDefinitionRegistry) => Promise<void>;
+export type EdgeDefinitionLoader = (edges: EdgeDefinitionRegistry) => Promise<void>;
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
@@ -675,41 +537,3 @@ export const makeStencilEdge =
 
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });
-
-export const addStencilToSubpackage = (
-  subpackage: string,
-  pkg: StencilPackage,
-  def: NodeDefinition | EdgeDefinition,
-  opts?: Omit<MakeStencilNodeOpts, 'subPackage'>
-) => {
-  return addStencil(pkg, def, { ...opts, subPackage: subpackage });
-};
-
-export const addStencil = (
-  pkg: StencilPackage,
-  def: NodeDefinition | EdgeDefinition,
-  opts?: MakeStencilNodeOpts
-) => {
-  if ((pkg.subPackages ?? []).length > 0) {
-    assert.true(!!opts?.subPackage);
-  }
-
-  const isNodeDef = 'getBoundingPath' in def;
-  const stencil = {
-    id: opts?.id ?? def.type,
-    name: opts?.name ?? def.name,
-    elementsForPicker: isNodeDef
-      ? makeStencilNode(def.type, 'picker', opts)
-      : makeStencilEdge(def.type, 'picker', opts),
-    elementsForCanvas: isNodeDef
-      ? makeStencilNode(def.type, 'canvas', opts)
-      : makeStencilEdge(def.type, 'canvas', opts),
-    type: pkg.type
-  };
-
-  if (opts?.subPackage) {
-    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
-  } else {
-    pkg.stencils.push(stencil);
-  }
-};

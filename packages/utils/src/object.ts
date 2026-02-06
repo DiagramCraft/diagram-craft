@@ -101,12 +101,13 @@ export const deepMerge = <T extends Props>(
     if (elm === undefined) continue;
 
     for (const key of Object.keys(elm)) {
-      if (elm[key] === null) continue;
-      if (isObject(elm[key])) {
+      const v = elm[key];
+      if (v === null) continue;
+      if (isObject(v)) {
         result[key] ??= {};
-        deepMerge(result[key], elm[key] as Props);
-      } else if (elm[key] !== undefined) {
-        result[key] = elm[key];
+        deepMerge(result[key], v as Props);
+      } else if (v !== undefined) {
+        result[key] = v;
       }
     }
   }

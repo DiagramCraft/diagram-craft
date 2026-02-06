@@ -1,4 +1,4 @@
-import { Registry, StencilElements } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
@@ -7,6 +7,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Diagram, type DiagramCRDT } from '@diagram-craft/model/diagram';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { Box } from '@diagram-craft/geometry/box';
+import { StencilElements } from '@diagram-craft/model/stencilRegistry';
 
 export const createStencilDiagram = (defs: Registry) => {
   const id = newid();

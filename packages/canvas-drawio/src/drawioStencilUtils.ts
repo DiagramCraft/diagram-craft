@@ -1,4 +1,4 @@
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { assertDrawioShapeNodeDefinition } from './node-types/DrawioShape.nodeType';
 import { newid } from '@diagram-craft/utils/id';

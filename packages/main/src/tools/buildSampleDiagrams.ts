@@ -16,10 +16,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
-import {
-  NodeDefinitionRegistry,
-  StencilRegistry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -28,6 +25,7 @@ import { safeSplit } from '@diagram-craft/utils/safe';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { getTypedKeys } from '@diagram-craft/utils/object';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 const SIZES = [50, 80, 100, 120, 150];
 const WIDTHS = [1, 2, 3, 4, 5];

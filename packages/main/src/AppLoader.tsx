@@ -2,10 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { App, DiagramRef } from './App';
-import {
-  NodeDefinitionRegistry,
-  stencilLoaderRegistry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { loadFileFromUrl } from '@diagram-craft/canvas-app/loaders';
 import { assert } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -17,6 +14,7 @@ import { AppConfig, type StencilRegistryConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
+import { stencilLoaderRegistry } from '@diagram-craft/model/stencilRegistry';
 
 const loadInitialDocument = async (
   diagram: DiagramRef | undefined,
@@ -145,11 +143,15 @@ export const AppLoader = (props: Props) => {
   useEffect(() => {
     if (!doc) return;
     for (const def of props.stencils) {
-      const loader = stencilLoaderRegistry[def.type];
-      assert.present(loader, `Stencil loader ${def.type} not found`);
+      const typeLoader = stencilLoaderRegistry[def.loader];
+      assert.present(typeLoader, `Stencil loader ${def.loader} not found`);
 
-      // biome-ignore lint/suspicious/noExplicitAny: false positive
-      loader().then(loader => loader(doc.registry, def.opts as any));
+      doc.registry.stencils.preRegister(def.id, def.name, async () => {
+        const stencilLoader = await typeLoader();
+        // biome-ignore lint/suspicious/noExplicitAny: false positive
+        const pkg = await stencilLoader(doc.registry, def.opts as any);
+        doc.registry.stencils.register(def.id, def.name, pkg);
+      });
     }
   }, [props.stencils, doc]);
 

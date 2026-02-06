@@ -5,23 +5,25 @@ import { useDiagram } from '../../../application';
 import { UserState } from '../../../UserState';
 import { useCallback, useState } from 'react';
 import type {
-  StencilPackage,
+  RegisteredStencilPackage,
   StencilRegistry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+} from '@diagram-craft/model/stencilRegistry';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindow } from '../ToolWindow';
+import { useRedraw } from '../../hooks/useRedraw';
 
 const SEARCH_KEY = '__search';
 
-const getActiveStencils = (stencilRegistry: StencilRegistry) => {
+const getStencils = (stencilRegistry: StencilRegistry) => {
   return stencilRegistry
-    .getActiveStencils()
+    .getStencils()
     .toSorted((a, b) => a.name.localeCompare(b.name))
     .filter(s => s.id !== 'default');
 };
 
 export const ShapesPickerTab = () => {
   const diagram = useDiagram();
+  const redraw = useRedraw();
   const stencilRegistry = diagram.document.registry.stencils;
 
   const userState = UserState.get();
@@ -32,9 +34,14 @@ export const ShapesPickerTab = () => {
   const [loaded, setLoaded] = useState(
     new Set(userState.stencils.filter(s => s.isOpen).map(s => s.id))
   );
-  const [activeStencils, setActiveStencils] = useState<Array<StencilPackage>>(
-    getActiveStencils(stencilRegistry)
+  const [activeStencils, setActiveStencils] = useState<Array<RegisteredStencilPackage>>(
+    getStencils(stencilRegistry)
   );
+
+  for (const id of open) {
+    if (id === SEARCH_KEY) continue;
+    stencilRegistry.loadStencilPackage(id);
+  }
 
   const setOpenStencils = useCallback(
     (ids: Array<string>) => {
@@ -59,7 +66,8 @@ export const ShapesPickerTab = () => {
   );
 
   useEventListener(stencilRegistry, 'change', () => {
-    setActiveStencils(getActiveStencils(stencilRegistry));
+    setActiveStencils(getStencils(stencilRegistry));
+    redraw();
   });
 
   return (

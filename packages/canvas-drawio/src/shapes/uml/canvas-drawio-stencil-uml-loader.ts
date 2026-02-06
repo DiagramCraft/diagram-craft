@@ -1,9 +1,7 @@
 import {
-  addStencil,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
@@ -26,6 +24,7 @@ import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoad
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
+import { addStencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const parseUMLShapes = async (
   id: string,
@@ -52,10 +51,10 @@ export const parseUMLShapes = async (
   return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
-export const registerUMLStencils = async (registry: Registry) => {
+export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLShapes(registry.nodes);
 
-  const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [], type: 'default' };
+  const umlStencils: StencilPackage = { stencils: [], type: 'default' };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 
@@ -131,7 +130,7 @@ export const registerUMLStencils = async (registry: Registry) => {
     aspectRatio: 0.5
   });
 
-  registry.stencils.register(umlStencils, true);
+  return umlStencils;
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
