@@ -1,6 +1,6 @@
 import { FileLoader } from '@diagram-craft/canvas-app/loaders';
 import { drawioReader } from './drawioReader';
-import { type StencilLoader } from '@diagram-craft/model/elementDefinitionRegistry';
+import { type StencilLoader } from '@diagram-craft/model/stencilRegistry';
 import { loadDrawioStencils } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 

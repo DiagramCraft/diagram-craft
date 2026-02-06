@@ -1,9 +1,7 @@
 import {
-  addStencilToSubpackage,
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { BPMNActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNActivity.nodeType';
 import { BPMNDataObjectNodeType } from '@diagram-craft/stencil-bpmn/BPMNDataObject.nodeType';
@@ -25,6 +23,7 @@ import bpmnCollaborationStencils from './bpmn-collaboration-stencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
+import { addStencilToSubpackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerBPMNNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new BPMNActivityNodeDefinition());

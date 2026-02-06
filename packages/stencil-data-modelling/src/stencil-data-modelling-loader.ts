@@ -1,8 +1,7 @@
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import chenStencils from './chen/chen-stencils.yaml';
 import ieStencils from './ie/ie-stencils.yaml';
@@ -15,6 +14,7 @@ import { BarkerEntityTextNodeDefinition } from '@diagram-craft/stencil-data-mode
 import { BarkerEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntity.nodeType';
 import { IDEF1XEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XEntity.nodeType';
 import { IDEF1XCategoryDiscriminatorNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XCategoryDiscriminator.nodeType';
+import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new IEEntityTextNodeDefinition());

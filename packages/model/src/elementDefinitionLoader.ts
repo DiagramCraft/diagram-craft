@@ -1,4 +1,4 @@
-import type { Stencil } from './elementDefinitionRegistry';
+import type { Stencil } from './stencilRegistry';
 import { type Diagram, DocumentBuilder } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { DiagramDocument } from './diagramDocument';

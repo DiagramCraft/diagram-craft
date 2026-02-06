@@ -6,7 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useRef, useState } from 'react';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Box } from '@diagram-craft/geometry/box';

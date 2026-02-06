@@ -12,10 +12,7 @@ import { GroupNodeDefinition } from '@diagram-craft/canvas/node-types/Group.node
 import {
   EdgeDefinitionRegistry,
   NodeDefinitionRegistry,
-  LazyElementLoaderEntry,
-  addStencil,
-  StencilPackage,
-  StencilRegistry
+  LazyElementLoaderEntry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { HexagonNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Hexagon.nodeType';
 import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Triangle.nodeType';
@@ -41,6 +38,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
+import { addStencil, StencilPackage, StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> = []) => {
   const reg = new NodeDefinitionRegistry(lazyLoaders);

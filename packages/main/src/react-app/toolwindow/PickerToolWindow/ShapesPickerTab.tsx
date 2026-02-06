@@ -7,7 +7,7 @@ import { useCallback, useState } from 'react';
 import type {
   RegisteredStencilPackage,
   StencilRegistry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+} from '@diagram-craft/model/stencilRegistry';
 import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindow } from '../ToolWindow';
 import { useRedraw } from '../../hooks/useRedraw';

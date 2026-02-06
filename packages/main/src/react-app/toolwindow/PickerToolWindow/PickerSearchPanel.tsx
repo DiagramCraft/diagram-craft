@@ -4,7 +4,7 @@ import { TbSearch } from 'react-icons/tb';
 import { useCallback, useRef, useState } from 'react';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { useDocument } from '../../../application';
-import { Stencil } from '@diagram-craft/model/elementDefinitionRegistry';
+import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { ObjectPickerPanel } from './ObjectPickerPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 

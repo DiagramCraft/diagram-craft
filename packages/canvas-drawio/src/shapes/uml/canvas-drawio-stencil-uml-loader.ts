@@ -1,9 +1,7 @@
 import {
-  addStencil,
   MakeStencilNodeOptsProps,
   NodeDefinitionRegistry,
-  Registry,
-  StencilPackage
+  Registry
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
@@ -26,6 +24,7 @@ import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoad
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
+import { addStencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const parseUMLShapes = async (
   id: string,

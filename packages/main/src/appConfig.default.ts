@@ -4,7 +4,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
-import { stencilLoaderBasic } from '@diagram-craft/model/elementDefinitionRegistry';
+import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
 
 const random = new Random(Date.now());
 
