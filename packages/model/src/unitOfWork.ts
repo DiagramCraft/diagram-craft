@@ -169,8 +169,10 @@ export class UnitOfWork {
     public isThrowaway: boolean = false,
     public isRemote: boolean = false
   ) {
-    if (!isThrowaway) {
-      registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+    DEBUG: {
+      if (!isThrowaway) {
+        registry.register(this, `${this.isThrowaway.toString()};${new Error().stack}`, this);
+      }
     }
   }
 
