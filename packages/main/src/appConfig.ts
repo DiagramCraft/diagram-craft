@@ -141,9 +141,9 @@ export const stencilEntry = <T extends keyof StencilLoaderOpts>(
 ) => cfg;
 
 type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
-  loader: K;
   id: string;
   name: string;
+  loader: K;
   opts: StencilLoaderOpts[K];
 };
 

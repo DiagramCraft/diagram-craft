@@ -98,11 +98,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       sp.stencils.forEach(s => (s.id = id + DELIMITER + sp.id + DELIMITER + s.id))
     );
 
-    this.stencils.set(id, {
-      id,
-      name,
-      ...pkg
-    });
+    this.stencils.set(id, { id, name, ...pkg });
     this.loaded.add(id);
 
     this.emitAsyncWithDebounce('change', { stencilRegistry: this });

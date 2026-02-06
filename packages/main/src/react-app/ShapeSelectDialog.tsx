@@ -79,9 +79,7 @@ export const ShapeSelectDialog = (props: Props) => {
       if (isEmptyString(query)) {
         setStencils([]);
       } else {
-        stencilRegistry.search(query).then(results => {
-          setStencils(results);
-        });
+        stencilRegistry.search(query).then(setStencils);
       }
     },
     [stencilRegistry]

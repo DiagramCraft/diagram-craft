@@ -21,7 +21,6 @@ export const toTypeName = (n: string) => {
 
 export const loadDrawioStencils = async (
   url: string,
-  //  group: string,
   foreground = 'black',
   background = 'white'
 ) => {

@@ -23,9 +23,7 @@ export const PickerSearchPanel = () => {
       if (isEmptyString(query)) {
         setStencils([]);
       } else {
-        stencilRegistry.search(query).then(results => {
-          setStencils(results);
-        });
+        stencilRegistry.search(query).then(setStencils);
       }
     },
     [stencilRegistry]

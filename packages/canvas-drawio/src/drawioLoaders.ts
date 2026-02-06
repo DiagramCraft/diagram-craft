@@ -19,11 +19,7 @@ declare global {
 export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (_registry, opts) => {
   const { url, foreground, background } = opts;
   const drawioStencils = await loadDrawioStencils(url, foreground, background);
-
-  return {
-    stencils: drawioStencils.map(toRegularStencil),
-    type: 'drawioXml'
-  };
+  return { stencils: drawioStencils.map(toRegularStencil), type: 'drawioXml' };
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>
