@@ -5,8 +5,9 @@ import { PickerCanvas } from './PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
+import { isEmptyString } from '@diagram-craft/utils/strings';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Box } from '@diagram-craft/geometry/box';
@@ -69,6 +70,22 @@ export const ShapeSelectDialog = (props: Props) => {
   const stencilRegistry = diagram.document.registry.stencils;
 
   const [search, setSearch] = useState('');
+  const [stencils, setStencils] = useState<Stencil[]>([]);
+
+  const doSearch = useCallback(
+    (query: string) => {
+      setSearch(query);
+
+      if (isEmptyString(query)) {
+        setStencils([]);
+      } else {
+        stencilRegistry.search(query).then(results => {
+          setStencils(results);
+        });
+      }
+    },
+    [stencilRegistry]
+  );
 
   if (!props.open) return <div></div>;
 
@@ -126,11 +143,11 @@ export const ShapeSelectDialog = (props: Props) => {
               placeholder={'Search shapes...'}
               onKeyDown={e => {
                 if (e.key !== 'Enter') return;
-                setSearch(ref.current?.value ?? '');
+                doSearch(ref.current?.value ?? '');
               }}
               style={{ flexGrow: 1 }}
             />
-            <Button type={'primary'} onClick={() => setSearch(ref.current?.value ?? '')}>
+            <Button type={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
               Search
             </Button>
           </div>
@@ -139,17 +156,15 @@ export const ShapeSelectDialog = (props: Props) => {
             className={'cmp-object-picker cmp-shape-select-dialog'}
             style={{ maxWidth: '31rem', marginTop: '1rem', maxHeight: '14rem', overflow: 'auto' }}
           >
-            {search !== '' &&
-              stencilRegistry
-                .search(search)
-                .map(stencil => (
-                  <StencilView
-                    key={stencil.id}
-                    stencil={stencil}
-                    document={document}
-                    onClick={() => props.onOk(stencil.id)}
-                  />
-                ))}
+            {!isEmptyString(search) &&
+              stencils.map(stencil => (
+                <StencilView
+                  key={stencil.id}
+                  stencil={stencil}
+                  document={document}
+                  onClick={() => props.onOk(stencil.id)}
+                />
+              ))}
           </div>
         </Tabs.Content>
       </Tabs.Root>

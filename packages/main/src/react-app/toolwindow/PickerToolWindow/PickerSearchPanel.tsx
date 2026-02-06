@@ -53,9 +53,7 @@ export const PickerSearchPanel = () => {
               }, 0);
             }
           }}
-          onClear={() => {
-            doSearch('');
-          }}
+          onClear={() => doSearch('')}
         />
         <Button
           onClick={() => {
