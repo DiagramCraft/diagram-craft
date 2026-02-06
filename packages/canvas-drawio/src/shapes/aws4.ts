@@ -117,7 +117,6 @@ export const registerAWS4Shapes = async (
 ) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/aws4.xml',
-    'AWS4',
     '#005073',
     '#005073'
   );

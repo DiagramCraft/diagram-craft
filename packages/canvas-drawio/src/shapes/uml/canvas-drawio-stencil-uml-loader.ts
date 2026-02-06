@@ -52,10 +52,10 @@ export const parseUMLShapes = async (
   return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
 };
 
-export const registerUMLStencils = async (registry: Registry) => {
+export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLShapes(registry.nodes);
 
-  const umlStencils: StencilPackage = { id: 'uml', name: 'UML', stencils: [], type: 'default' };
+  const umlStencils: Omit<StencilPackage, 'id' | 'name'> = { stencils: [], type: 'default' };
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 
@@ -131,7 +131,7 @@ export const registerUMLStencils = async (registry: Registry) => {
     aspectRatio: 0.5
   });
 
-  registry.stencils.register(umlStencils);
+  return umlStencils;
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {

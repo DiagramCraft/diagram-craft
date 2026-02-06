@@ -145,13 +145,18 @@ export const AppLoader = (props: Props) => {
   useEffect(() => {
     if (!doc) return;
     for (const def of props.stencils) {
-      const typeLoader = stencilLoaderRegistry[def.type];
-      assert.present(typeLoader, `Stencil loader ${def.type} not found`);
+      const typeLoader = stencilLoaderRegistry[def.loader];
+      assert.present(typeLoader, `Stencil loader ${def.loader} not found`);
 
       doc.registry.stencils.preRegister(def.id, def.name, async () => {
         const stencilLoader = await typeLoader();
         // biome-ignore lint/suspicious/noExplicitAny: false positive
-        return stencilLoader(doc.registry, def.opts as any);
+        const pkg = await stencilLoader(doc.registry, def.opts as any);
+        doc.registry.stencils.register({
+          id: def.id,
+          name: def.name,
+          ...pkg
+        });
       });
     }
   }, [props.stencils, doc]);

@@ -489,7 +489,7 @@ export interface StencilLoaderOpts extends DiagramCraft.StencilLoaderOptsExtensi
 export type StencilLoader<T extends keyof StencilLoaderOpts> = (
   registry: Registry,
   opts: StencilLoaderOpts[T]
-) => Promise<void>;
+) => Promise<Omit<StencilPackage, 'id' | 'name'>>;
 
 export const stencilLoaderRegistry: Partial<{
   [K in keyof StencilLoaderOpts]: () => Promise<StencilLoader<K>>;
@@ -508,15 +508,17 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       basic: {
-        loader: () => Promise<(registry: Registry) => Promise<void>>;
+        stencils: () => Promise<
+          (registry: Registry) => Promise<Omit<StencilPackage, 'id' | 'name'>>
+        >;
       };
     }
   }
 }
 
 export const stencilLoaderBasic: StencilLoader<'basic'> = async (registry, opts) => {
-  await (
-    await opts.loader()
+  return await (
+    await opts.stencils()
   )(registry);
 };
 
@@ -681,7 +683,7 @@ export const makeStencilEdge =
 
 export const addStencilToSubpackage = (
   subpackage: string,
-  pkg: StencilPackage,
+  pkg: Omit<StencilPackage, 'id' | 'name'>,
   def: NodeDefinition | EdgeDefinition,
   opts?: Omit<MakeStencilNodeOpts, 'subPackage'>
 ) => {
@@ -689,7 +691,7 @@ export const addStencilToSubpackage = (
 };
 
 export const addStencil = (
-  pkg: StencilPackage,
+  pkg: Omit<StencilPackage, 'id' | 'name'>,
   def: NodeDefinition | EdgeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {

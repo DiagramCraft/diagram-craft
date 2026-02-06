@@ -56,42 +56,39 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'bpmn2',
         name: 'BPMN 2.0',
-        type: 'basic',
+        loader: 'basic',
         opts: {
-          loader: () =>
-            import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(
-              m => m.registerBPMNStencils
-            )
+          stencils: () =>
+            import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.loadBPMNStencils)
         }
       },
       {
         id: 'data-modelling',
         name: 'Data Modelling',
-        type: 'basic',
+        loader: 'basic',
         opts: {
-          loader: () =>
+          stencils: () =>
             import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
-              m => m.registerDataModellingStencils
+              m => m.loadDataModellingStencils
             )
         }
       },
       {
         id: 'uml',
         name: 'UML',
-        type: 'basic',
+        loader: 'basic',
         opts: {
-          loader: () =>
+          stencils: () =>
             import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
-              m => m.registerUMLStencils
+              m => m.loadUMLStencils
             )
         }
       },
       {
         id: 'GCP',
         name: 'GCP',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'GCP',
           url: `$STENCIL_ROOT/stencils/gcp2.xml`,
           foreground: '#3b8df1',
           background: '#3b8df1'
@@ -100,9 +97,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'AWS',
         name: 'AWS',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'AWS',
           url: `$STENCIL_ROOT/stencils/aws3.xml`,
           foreground: '#ff9900',
           background: '#ff9900'
@@ -111,9 +107,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Azure',
         name: 'Azure',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Azure',
           url: `$STENCIL_ROOT/stencils/azure.xml`,
           foreground: '#00abf0',
           background: '#00abf0'
@@ -122,9 +117,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Fluid Power',
         name: 'Fluid Power',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Fluid Power',
           url: `$STENCIL_ROOT/stencils/fluid_power.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-fg)'
@@ -133,9 +127,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'IBM',
         name: 'IBM',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'IBM',
           url: `$STENCIL_ROOT/stencils/ibm.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'transparent'
@@ -144,9 +137,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Web Logos',
         name: 'Web Logos',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Web Logos',
           url: `$STENCIL_ROOT/stencils/weblogos.xml`,
           foreground: 'blue',
           background: '#ffffff'
@@ -155,9 +147,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Web Icons',
         name: 'Web Icons',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Web Icons',
           url: `$STENCIL_ROOT/stencils/webicons.xml`,
           foreground: 'blue',
           background: '#000000'
@@ -166,9 +157,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'EIP',
         name: 'EIP',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'EIP',
           url: `$STENCIL_ROOT/stencils/eip.xml`,
           foreground: 'black',
           background: '#c0f5a9'
@@ -177,9 +167,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Arrows',
         name: 'Arrows',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Arrows',
           url: `$STENCIL_ROOT/stencils/arrows.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
@@ -188,9 +177,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'Basic',
         name: 'Basic',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'Basic',
           url: `$STENCIL_ROOT/stencils/basic.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'
@@ -199,9 +187,8 @@ export const defaultAppConfig: AppConfig = {
       {
         id: 'BPMN',
         name: 'BPMN',
-        type: 'drawioXml',
+        loader: 'drawioXml',
         opts: {
-          name: 'BPMN',
           url: `$STENCIL_ROOT/stencils/bpmn.xml`,
           foreground: 'var(--canvas-fg)',
           background: 'var(--canvas-bg2)'

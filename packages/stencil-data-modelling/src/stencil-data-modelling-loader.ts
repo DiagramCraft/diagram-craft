@@ -27,13 +27,11 @@ export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) 
 
 export const registerDataModellingEdges = async (_edges: EdgeDefinitionRegistry) => {};
 
-export const registerDataModellingStencils = async (registry: Registry) => {
+export const loadDataModellingStencils = async (registry: Registry) => {
   await registerDataModellingNodes(registry.nodes);
   await registerDataModellingEdges(registry.edges);
 
-  const dataModellingStencils: StencilPackage = {
-    id: 'data-modelling',
-    name: 'Data Modelling',
+  const dataModellingStencils: Omit<StencilPackage, 'id' | 'name'> = {
     stencils: [],
     type: 'default',
 
@@ -53,8 +51,6 @@ export const registerDataModellingStencils = async (registry: Registry) => {
     dataModellingStencils.stencils.push(s);
     dataModellingStencils.subPackages!.find(p => p.id === 'chen')?.stencils.push(s);
   });
-
-  registry.stencils.register(dataModellingStencils);
 
   /* *********************************************************************** */
   /* IE PACKAGE                                                              */
@@ -82,4 +78,6 @@ export const registerDataModellingStencils = async (registry: Registry) => {
     dataModellingStencils.stencils.push(s);
     dataModellingStencils.subPackages!.find(p => p.id === 'idef1x')?.stencils.push(s);
   });
+
+  return dataModellingStencils;
 };

@@ -105,7 +105,6 @@ export const registerOfficeServersShapes = async (r: NodeDefinitionRegistry) => 
 export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/security.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -151,7 +150,6 @@ export const registerOfficeSecurityShapes = async (r: NodeDefinitionRegistry) =>
 export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/devices.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -209,7 +207,6 @@ export const registerOfficeDevicesShapes = async (r: NodeDefinitionRegistry) => 
 export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/communications.xml',
-    'Azure',
     'white',
     'green'
   );
@@ -288,7 +285,6 @@ export const registerOfficeCommunicationsShapes = async (r: NodeDefinitionRegist
 export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/clouds.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -310,7 +306,6 @@ export const registerOfficeCloudsShapes = async (r: NodeDefinitionRegistry) => {
 export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/services.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -346,7 +341,6 @@ export const registerOfficeServicesShapes = async (r: NodeDefinitionRegistry) =>
 export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/users.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -386,7 +380,6 @@ export const registerOfficeUsersShapes = async (r: NodeDefinitionRegistry) => {
 export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/sites.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -413,7 +406,6 @@ export const registerOfficeSitesShapes = async (r: NodeDefinitionRegistry) => {
 export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/databases.xml',
-    'Azure',
     'black',
     'white'
   );
@@ -447,7 +439,6 @@ export const registerOfficeDatabasesShapes = async (r: NodeDefinitionRegistry) =
 export const registerOfficeConceptShapes = async (r: NodeDefinitionRegistry) => {
   const stencils = await loadDrawioStencils(
     '$STENCIL_ROOT/stencils/office/concepts.xml',
-    'Azure',
     'black',
     'white'
   );

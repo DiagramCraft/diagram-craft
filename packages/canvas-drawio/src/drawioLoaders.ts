@@ -8,7 +8,6 @@ declare global {
   namespace DiagramCraft {
     interface StencilLoaderOptsExtensions {
       drawioXml: {
-        name: string;
         url: string;
         foreground: string;
         background: string;
@@ -17,21 +16,14 @@ declare global {
   }
 }
 
-export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (registry, opts) => {
-  const { name, url, foreground, background } = opts;
-  const drawioStencils = await loadDrawioStencils(url, name, foreground, background);
+export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (_registry, opts) => {
+  const { url, foreground, background } = opts;
+  const drawioStencils = await loadDrawioStencils(url, foreground, background);
 
-  if (drawioStencils.length === 0) {
-    console.warn(`No stencils found for ${name}`);
-    return;
-  }
-
-  registry.stencils.register({
-    id: name,
-    name: name,
+  return {
     stencils: drawioStencils.map(toRegularStencil),
     type: 'drawioXml'
-  });
+  };
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

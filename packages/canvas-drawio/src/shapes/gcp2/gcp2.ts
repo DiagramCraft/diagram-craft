@@ -21,12 +21,7 @@ const registerStencil = (
 };
 
 export const registerGCP2Shapes = async (r: NodeDefinitionRegistry) => {
-  const stencils = await loadDrawioStencils(
-    '$STENCIL_ROOT/stencils/gcp2.xml',
-    'GCP',
-    '#00BEF2',
-    'white'
-  );
+  const stencils = await loadDrawioStencils('$STENCIL_ROOT/stencils/gcp2.xml', '#00BEF2', 'white');
 
   r.register(new GCPDoubleRectNodeDefinition());
 

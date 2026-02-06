@@ -45,13 +45,11 @@ export const registerBPMNEdges = async (edges: EdgeDefinitionRegistry) => {
   edges.register(new BPMNConversationEdgeDefinition());
 };
 
-export const registerBPMNStencils = async (registry: Registry) => {
+export const loadBPMNStencils = async (registry: Registry) => {
   await registerBPMNNodes(registry.nodes);
   await registerBPMNEdges(registry.edges);
 
-  const bpmnStencils: StencilPackage = {
-    id: 'bpmn2',
-    name: 'BPMN 2.0',
+  const bpmnStencils: Omit<StencilPackage, 'id' | 'name'> = {
     stencils: [],
     type: 'default',
 
@@ -675,5 +673,5 @@ export const registerBPMNStencils = async (registry: Registry) => {
     }
   );
 
-  registry.stencils.register(bpmnStencils);
+  return bpmnStencils;
 };
