@@ -242,6 +242,9 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void {
+    // Check if this node has been removed or not - if so, abort
+    if (node.parent === undefined && !node.layer.elements.includes(node)) return;
+
     const boundsBefore = node.bounds;
 
     this.layoutChildren(node, uow);

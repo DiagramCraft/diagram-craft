@@ -402,6 +402,10 @@ export abstract class AbstractDiagramElement
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
+    for (const c of child.children) {
+      child.removeChild(c, uow);
+    }
+
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
       child._detachAndRemove(uow, () => this._children.remove(child.id));
     });
