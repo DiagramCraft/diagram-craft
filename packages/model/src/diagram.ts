@@ -23,11 +23,11 @@ import { ElementLookup } from './elementLookup';
 import type { CRDTMap, FlatCRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
-import { type DiagramBounds, DEFAULT_CANVAS } from './diagramBounds';
+import { DEFAULT_CANVAS, type DiagramBounds } from './diagramBounds';
 import type { Guide } from './guides';
 import { SpatialIndex } from './spatialIndex';
 import type { DiagramProps } from './diagramProps';
-import { Releasables, type Releasable } from '@diagram-craft/utils/releasable';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { DiagramUOWAdapter } from '@diagram-craft/model/diagram.uow';
 
 export type DiagramIteratorOpts = {

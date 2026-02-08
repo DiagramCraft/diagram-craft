@@ -20,7 +20,7 @@ import {
 } from './endpoint';
 import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
 import { clamp } from '@diagram-craft/utils/math';
 import { Point } from '@diagram-craft/geometry/point';
@@ -338,7 +338,9 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
 
     uow.executeUpdate(this, () => {
       this.#nodeType.set(nodeType);
-      this.setChildren([], uow);
+      for (const child of this.children) {
+        this.removeChild(child, uow);
+      }
     });
 
     this.clearCache();
@@ -708,7 +710,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     this.forceUpdateMetadata(snapshot.metadata);
 
     this.setChildren(
-      snapshot.children.map(c => mustExist(this.diagram.lookup(c))),
+      snapshot.children.filter(c => this.diagram.lookup(c)).map(c => this.diagram.lookup(c)!),
       uow
     );
     const edges = snapshot.edges ?? {};

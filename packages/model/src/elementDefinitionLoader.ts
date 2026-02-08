@@ -26,6 +26,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
           stencil.node ? [stencil.node] : stencil.elements,
           layer,
           uow,
+          undefined,
           new ElementLookup<DiagramNode>(),
           new ElementLookup<DiagramEdge>()
         );

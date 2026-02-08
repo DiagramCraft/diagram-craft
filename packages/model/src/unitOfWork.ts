@@ -455,6 +455,12 @@ export class UnitOfWork {
     this.state = 'aborted';
   }
 
+  _debug() {
+    for (const op of this.#operations) {
+      console.log(op.type, op.target.type, op.target.id);
+    }
+  }
+
   private emitEvent(key: string) {
     const eventCallbacks = this.#callbacks.get(key);
     if (eventCallbacks === undefined) return;
