@@ -13,6 +13,13 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import { ElementLookup } from '@diagram-craft/model/elementLookup';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 
 declare global {
   namespace DiagramCraft {
@@ -51,19 +58,19 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
 
           const elements = stencil.elementsForPicker(diagram).elements;
           assert.arrayWithExactlyOneElement(elements);
-          const node = elements[0]!;
-          if (!isNode(node)) throw new VerifyNotReached();
+          const source = elements[0]!;
+          if (!isNode(source)) throw new VerifyNotReached();
 
           UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
             for (const e of diagram.selection.elements) {
               if (isNode(e)) {
-                e.changeNodeType(node.nodeType, uow);
+                e.changeNodeType(source.nodeType, uow);
 
                 e.updateProps(props => {
                   for (const k of getTypedKeys(props)) {
                     delete props[k];
                   }
-                  const storedProps = deepClone(node.storedProps);
+                  const storedProps = deepClone(source.storedProps);
                   for (const k of getTypedKeys(storedProps)) {
                     // @ts-expect-error
                     props[k] = storedProps[k];
@@ -71,7 +78,30 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
                 }, uow);
 
                 // Add any source children
-                node.children.forEach(c => e.addChild(c.duplicate(), uow));
+                const serialized: Array<SerializedElement> = [];
+                source.children.forEach(c => {
+                  serialized.push(serializeDiagramElement(c));
+                });
+
+                deserializeDiagramElements(
+                  serialized,
+                  e.diagram.activeLayer as RegularLayer,
+                  uow,
+                  e,
+                  new ElementLookup<DiagramNode>(),
+                  new ElementLookup<DiagramEdge>()
+                );
+
+                /**
+                 * Rendering logic assumes all node types remains as-is, when
+                 * changing a node type, we need to force redraw the diagram.
+                 */
+                uow.on('after', 'undo', 'forceRedraw', () => {
+                  diagram.emit('diagramChange');
+                });
+                uow.on('after', 'redo', 'forceRedraw', () => {
+                  diagram.emit('diagramChange');
+                });
               }
             }
           });

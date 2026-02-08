@@ -116,6 +116,7 @@ export const cloneElements = (
       source,
       targetLayer,
       uow,
+      undefined,
       new ElementLookup<DiagramNode>(),
       new ElementLookup<DiagramEdge>()
     );

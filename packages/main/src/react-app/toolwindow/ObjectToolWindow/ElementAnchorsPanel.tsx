@@ -59,6 +59,7 @@ const ShapePreviewWithAnchors = ({ diagram }: { diagram: ReturnType<typeof useDi
               [serializedNode],
               layer,
               uow,
+              undefined,
               new ElementLookup<DiagramNode>(),
               new ElementLookup<DiagramEdge>()
             )[0] as DiagramNode

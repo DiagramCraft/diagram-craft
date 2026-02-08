@@ -45,7 +45,7 @@ const unfoldGroup = (node: SerializedElement) => {
   };
 
   if ((node.children ?? []).length > 0) {
-    return [...recurse(node.children ?? [], node), { ...node }];
+    return [{ ...node }, ...recurse(node.children ?? [], node)];
   } else {
     return [{ ...node }];
   }
@@ -62,6 +62,7 @@ export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   layer: RegularLayer | ModificationLayer,
   uow: UnitOfWork,
+  targetParent?: DiagramElement,
   nodeLookup?: ElementLookup<DiagramNode>,
   edgeLookup?: ElementLookup<DiagramEdge>
 ) => {
@@ -96,7 +97,12 @@ export const deserializeDiagramElements = (
         c.texts,
         c.anchors
       );
-      node.setTags(c.tags ?? [], uow);
+
+      // Need to ensure adds happen before updates
+      if (targetParent && n.id === c.id) targetParent.addChild(node, uow);
+      else if (c.parent) nodeLookup.get(c.parent.id)?.addChild(node, uow);
+
+      if (c.tags && c.tags.length > 0) node.setTags(c.tags ?? [], uow);
       nodeLookup.set(c.id, node);
     }
   }
@@ -123,7 +129,12 @@ export const deserializeDiagramElements = (
         e.waypoints ?? [],
         layer
       );
-      edge.setTags(e.tags ?? [], uow);
+
+      // Need to ensure adds happen before updates
+      if (targetParent && n.id === e.id) targetParent.addChild(edge, uow);
+      else if (e.parent) nodeLookup.get(e.parent.id)?.addChild(edge, uow);
+
+      if (e.tags && e.tags.length > 0) edge.setTags(e.tags ?? [], uow);
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
@@ -149,6 +160,9 @@ export const deserializeDiagramElements = (
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
       const el = c.type === 'node' ? nodeLookup.get(c.id)! : edgeLookup.get(c.id)!;
+
+      // This is here to ensure we have the same order - all elements are added
+      // by the logic above at this point
       el.setChildren(
         c.children?.map(c2 => (nodeLookup.get(c2.id) ?? edgeLookup.get(c2.id))!) ?? [],
         uow
@@ -395,6 +409,7 @@ const deserializeDiagrams = async <T extends Diagram>(
             l.elements,
             layer,
             uow,
+            undefined,
             nodeLookup,
             edgeLookup
           );
