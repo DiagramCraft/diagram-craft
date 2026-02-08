@@ -102,7 +102,7 @@ export const deserializeDiagramElements = (
       if (targetParent && n.id === c.id) targetParent.addChild(node, uow);
       else if (c.parent) nodeLookup.get(c.parent.id)?.addChild(node, uow);
 
-      node.setTags(c.tags ?? [], uow);
+      if (c.tags && c.tags.length > 0) node.setTags(c.tags ?? [], uow);
       nodeLookup.set(c.id, node);
     }
   }
@@ -134,7 +134,7 @@ export const deserializeDiagramElements = (
       if (targetParent && n.id === e.id) targetParent.addChild(edge, uow);
       else if (e.parent) nodeLookup.get(e.parent.id)?.addChild(edge, uow);
 
-      edge.setTags(e.tags ?? [], uow);
+      if (e.tags && e.tags.length > 0) edge.setTags(e.tags ?? [], uow);
 
       if (isSerializedEndpointAnchor(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
