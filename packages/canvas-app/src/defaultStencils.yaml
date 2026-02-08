@@ -31,10 +31,11 @@ stencils:
                 y: 0
                 h: 40
                 r: 0
+              texts:
+                text: Header 1
               props:
                 style: default
                 text:
-                  text: Header 1
                   bold: true
                 stroke:
                   enabled: false
@@ -50,10 +51,11 @@ stencils:
                 y: 0
                 h: 40
                 r: 0
+              texts:
+                text: Header 2
               props:
                 style: default
                 text:
-                  text: Header 2
                   bold: true
                 stroke:
                   enabled: false
@@ -70,10 +72,11 @@ stencils:
                 y: 0
                 h: 40
                 r: 0
+              texts:
+                text: Header 3
               props:
                 style: default
                 text:
-                  text: Header 3
                   bold: true
                 stroke:
                   enabled: false
