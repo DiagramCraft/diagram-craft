@@ -123,6 +123,9 @@ export class HTMLRenderer {
       case 'strong':
         return this.makeTag('strong', this.processNodeArray(astNode.children ?? []));
 
+      case 'small':
+        return this.makeTag('small', this.processNodeArray(astNode.children ?? []));
+
       case 'blockquote':
         return this.makeTag('blockquote', this.processNodeArray(astNode.children ?? []));
 

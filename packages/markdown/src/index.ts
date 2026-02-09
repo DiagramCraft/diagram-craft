@@ -2,7 +2,7 @@ import type { ASTNode, ParserConfiguration, ParserType } from './parser';
 import { Parser } from './parser';
 import { HTMLRenderer } from './html-renderer';
 import { ParagraphHandler } from './handlers';
-import { strictParser } from './strict-parser';
+import { strictParser, extendedParser } from './strict-parser';
 import { HTMLToMarkdownConverter, htmlToMarkdown, htmlStringToMarkdown } from './html-to-markdown';
 import type { HTMLToMarkdownOptions } from './html-to-markdown';
 
@@ -20,6 +20,7 @@ export class MarkdownEngine {
    */
   constructor() {
     this.registerParser('strict', strictParser);
+    this.registerParser('extended', extendedParser);
   }
 
   /**

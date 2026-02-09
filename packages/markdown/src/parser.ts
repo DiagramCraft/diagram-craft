@@ -45,6 +45,10 @@ interface StrongASTNode extends BaseASTNode {
   type: 'strong';
 }
 
+interface SmallASTNode extends BaseASTNode {
+  type: 'small';
+}
+
 interface LineBreakASTNode extends BaseASTNode {
   type: 'line-break';
 }
@@ -92,6 +96,7 @@ export type ASTNode =
   | BlockquoteASTNode
   | EmphasisASTNode
   | StrongASTNode
+  | SmallASTNode
   | LineBreakASTNode
   | HRASTNode
   | ParagraphASTNode

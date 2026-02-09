@@ -28,7 +28,7 @@ ELECTRON: {
 ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS = {
   format: 'Markdown',
   dialog: {
-    editToStored: (s: string) => markdownToHTML(s),
+    editToStored: (s: string) => markdownToHTML(s, 'extended'),
     storedToEdit: (s: string) => htmlStringToMarkdown(s),
     storedToHTML: (s: string) => s
   }
