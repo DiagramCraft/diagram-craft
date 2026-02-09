@@ -59,7 +59,7 @@ export abstract class AbstractMoveDrag extends Drag {
   #keys: string[] = [];
 
   protected dragStarted = false;
-  protected readonly uow: UnitOfWork;
+  protected uow: UnitOfWork;
 
   protected constructor(
     protected readonly diagram: Diagram,
@@ -182,6 +182,8 @@ export abstract class AbstractMoveDrag extends Drag {
 
     this.clearHighlight();
     enablePointerEvents(selection.elements);
+
+    this.uow.compact();
 
     if (selection.isChanged()) {
       growBoundsForSelection(this.diagram, this.uow);

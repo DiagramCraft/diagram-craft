@@ -1,12 +1,21 @@
 import { AbstractMoveDrag } from '@diagram-craft/canvas/drag/moveDrag';
-import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
+import {
+  DiagramElement,
+  isEdge,
+  isNode,
+  transformElements
+} from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
-import { Point } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
 import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
+import {
+  addAllChildren,
+  assignNewBounds,
+  cloneElements
+} from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
@@ -15,6 +24,7 @@ import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { Translation } from '@diagram-craft/geometry/transform';
 
 enum State {
   INSIDE,
@@ -67,6 +77,17 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
+
+    // We abort the current unit of work and re-add the elements back to the diagram
+    // This ensures the uow is streamlined and does not contain a mix of adds and removes
+    const point = this.diagram.selection.bounds;
+    this.removeElement();
+    this.uow.abort();
+
+    this.uow = UnitOfWork.begin(this.diagram);
+
+    this.addElement(_p(0, 0));
+    transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);
 
     super.onDragEnd();
 
@@ -201,7 +222,10 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     // Prevent NaN for zero-heigh edges
     const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
-    this.#elements.forEach(e => activeLayer.addElement(e, this.uow));
+    this.#elements.forEach(e => {
+      activeLayer.addElement(e, this.uow);
+      addAllChildren(e, this.uow);
+    });
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this.#elements, point, Point.of(scaleX, scaleY), uow);

@@ -125,6 +125,14 @@ export const cloneElements = (
   return uow ? cb(uow) : UnitOfWork.executeSilently(targetLayer.diagram, cb);
 };
 
+export const addAllChildren = (el: DiagramElement, uow: UnitOfWork) => {
+  let idx = 0;
+  for (const child of el.children) {
+    uow.executeAdd(child, el, idx++, () => {});
+    addAllChildren(child, uow);
+  }
+};
+
 export const assignNewBounds = (
   elements: readonly DiagramElement[],
   position: Point,
