@@ -8,6 +8,7 @@ import {
   disablePropertyEditorTooltip,
   enablePropertyEditorTooltip
 } from '@diagram-craft/app-components/Tooltip';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]!).map(colNumber =>
@@ -188,6 +189,34 @@ export const ColorPicker = (props: Props) => {
                 }}
               />
             ))}
+
+            {props.special && (
+              <>
+                <h2>Special Colors</h2>
+                <div
+                  style={{
+                    gridColumn: '1/-1',
+                    border: '1px solid var(--cmp-border)',
+                    borderRadius: 'var(--cmp-radius)'
+                  }}
+                >
+                  <Toolbar.Root style={{ padding: '0' }}>
+                    <Toolbar.ToggleGroup
+                      type={'single'}
+                      value={props.value}
+                      onChange={v => setColor(v!)}
+                    >
+                      {Object.entries(props.special ?? {}).map(([key, entry]) => (
+                        <Toolbar.ToggleItem key={key} value={key} style={{ gap: '0.25rem' }}>
+                          <span>{entry.icon}</span>
+                          <span>{entry.label}</span>
+                        </Toolbar.ToggleItem>
+                      ))}
+                    </Toolbar.ToggleGroup>
+                  </Toolbar.Root>
+                </div>
+              </>
+            )}
           </div>
         </Popover.Content>
       </Popover.Root>
@@ -204,6 +233,7 @@ type Props = {
   onChange: (s: string | undefined) => void;
   onChangeCustomPalette: (idx: number, s: string) => void;
   canClearColor?: boolean;
+  special?: Record<string, { label: string; icon: React.ReactNode }>;
   disabled?: boolean;
 };
 

@@ -103,9 +103,11 @@ export class ShapeText extends Component<ShapeTextProps> {
   render(props: ShapeTextProps) {
     const textProps = props.textProps ?? {};
 
+    const color =
+      textProps.color === 'stroke' ? props.node.renderProps.stroke.color : textProps.color;
+
     const style = {
-      // TODO: color is not supported when using text
-      'color': textProps.color ?? 'unset',
+      'color': color ?? 'unset',
       'fill': textProps.color ?? 'unset',
 
       'font-family': textProps.font ?? 'unset',
