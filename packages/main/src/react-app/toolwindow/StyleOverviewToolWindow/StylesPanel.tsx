@@ -1,4 +1,4 @@
-import styles from './StyleOverviewToolWindow.module.css';
+import styles from './StylesPanel.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type {
   StyleCombination,
@@ -35,7 +35,7 @@ type FilterSelectProps = {
 };
 
 const FilterSelect = ({ filterType, onFilterTypeChange }: FilterSelectProps) => (
-  <div className={styles.styleSelect}>
+  <div className={styles.styleOverviewSelect}>
     <Select.Root
       value={filterType}
       onChange={value => onFilterTypeChange(value as StyleFilterType)}
@@ -111,7 +111,7 @@ export const StylesPanel = ({
             return (
               <Accordion.Item key={groupId} value={groupId}>
                 <Accordion.ItemHeader>
-                  <div className={styles.stylesheetName}>
+                  <div className={styles.styleOverviewName}>
                     <span>{group.stylesheet?.name}</span>
                     {group.stylesheet?.type && (
                       <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
@@ -121,7 +121,7 @@ export const StylesPanel = ({
                   </div>
                 </Accordion.ItemHeader>
                 <Accordion.ItemContent>
-                  <div className={styles.styleList}>
+                  <div className={styles.styleOverviewList}>
                     {group.styles.map((style, idx) => {
                       return (
                         <ContextMenu.Root key={`${groupId}-${idx}`}>
@@ -129,10 +129,10 @@ export const StylesPanel = ({
                             element={
                               <div
                                 key={`${groupId}-${idx}`}
-                                className={styles.styleItem}
+                                className={styles.styleOverviewItem}
                                 onClick={() => onStyleClick(style)}
                               >
-                                <div className={styles.stylePreview}>
+                                <div className={styles.styleOverviewPreview}>
                                   <PickerCanvas
                                     width={PickerConfig.size}
                                     height={PickerConfig.size}
@@ -144,11 +144,11 @@ export const StylesPanel = ({
                                     }}
                                   />
                                 </div>
-                                <div className={styles.styleInfo}>
-                                  <div className={styles.styleCount}>
+                                <div className={styles.styleOverviewInfo}>
+                                  <div className={styles.styleOverviewCount}>
                                     {style.elements.length}
                                     {style.differences.length > 0 && (
-                                      <span className={styles.styleDirty}>*</span>
+                                      <span className={styles.styleOverviewDirty}>*</span>
                                     )}
                                   </div>
                                 </div>
@@ -156,7 +156,7 @@ export const StylesPanel = ({
                             }
                             tooltip={
                               style.differences.length > 0 ? (
-                                <div className={styles.styleTooltip}>
+                                <div className={styles.styleOverviewTooltip}>
                                   {style.differences.join('\n')}
                                 </div>
                               ) : null
@@ -208,7 +208,7 @@ export const TextStylesPanel = ({
             return (
               <Accordion.Item key={groupId} value={groupId}>
                 <Accordion.ItemHeader>
-                  <div className={styles.stylesheetName}>
+                  <div className={styles.styleOverviewName}>
                     <span>{group.stylesheet?.name}</span>
                     {group.stylesheet?.type && (
                       <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
@@ -265,7 +265,7 @@ export const TextStylesPanel = ({
                             }
                             tooltip={
                               textStyle.differences.length > 0 ? (
-                                <div className={styles.styleTooltip}>
+                                <div className={styles.styleOverviewTooltip}>
                                   {textStyle.differences.join('\n')}
                                 </div>
                               ) : null

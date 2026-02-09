@@ -71,7 +71,8 @@ const ElementStylesheetItem = ({
               />
             </div>
             <div className={styles.styleInfo}>
-              <div className={styles.styleCount}>{stylesheet.name}</div>
+              <div className={styles.styleName}>{stylesheet.name}</div>
+              {/*<div className={styles.stylePath}>&gt; {stylesheet.name}</div>*/}
             </div>
           </div>
         }
@@ -119,15 +120,15 @@ const TextStylesheetItem = ({
     <ContextMenu.Root>
       <ContextMenu.Trigger
         element={
-          <div className={styles.fontItem} onClick={() => onApply(stylesheet)}>
-            <div className={styles.fontIcon}>
-              <TbLetterCase size={18} />
+          <div className={styles.styleItem} onClick={() => onApply(stylesheet)}>
+            <div className={styles.stylePreview}>
+              <TbLetterCase size={24} />
             </div>
-            <div className={styles.fontDetails}>
-              <div className={styles.fontPreview} style={fontStyle}>
+            <div className={styles.styleInfo}>
+              <div className={styles.styleName} style={fontStyle}>
                 {stylesheet.name}
               </div>
-              <div className={styles.fontCount}>{metaParts.join(', ')}</div>
+              <div className={styles.styleAux}>{metaParts.join(', ')}</div>
             </div>
           </div>
         }
@@ -265,7 +266,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
                   </Accordion.ItemHeader>
                   <Accordion.ItemContent>
                     {group.type === 'text' ? (
-                      <div className={styles.fontList}>
+                      <div className={styles.styleList}>
                         {group.stylesheets.map(stylesheet => (
                           <TextStylesheetItem
                             key={stylesheet.id}

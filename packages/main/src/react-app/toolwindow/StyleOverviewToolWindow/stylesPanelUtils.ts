@@ -15,6 +15,7 @@ import { deepMerge } from '@diagram-craft/utils/object';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { unique } from '@diagram-craft/utils/array';
 import { DynamicAccessor } from '@diagram-craft/utils/propertyPath';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
@@ -101,9 +102,10 @@ export const createPreview = (
   nodeType: string,
   defs: Registry
 ) => {
-  const { diagram, elements } = createThumbnail((_: Diagram, layer: RegularLayer) => {
+  const { diagram, elements } = createThumbnail((diagram: Diagram, layer: RegularLayer) => {
+    const elements: DiagramElement[] = [];
     if (type === 'edge') {
-      return [
+      elements.push(
         ElementFactory.edge(
           newid(),
           new FreeEndpoint({ x: 5, y: 25 }),
@@ -113,9 +115,9 @@ export const createPreview = (
           [],
           layer
         )
-      ];
+      );
     } else {
-      return [
+      elements.push(
         ElementFactory.node(
           newid(),
           nodeType,
@@ -124,8 +126,12 @@ export const createPreview = (
           props as Partial<NodeProps>,
           {}
         )
-      ];
+      );
     }
+
+    UnitOfWork.execute(diagram, uow => elements.forEach(e => layer.addElement(e, uow)));
+
+    return elements;
   }, defs);
 
   // Set viewBox to show the node with padding
