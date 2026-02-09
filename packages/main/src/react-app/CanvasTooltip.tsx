@@ -44,7 +44,7 @@ export const CanvasTooltip = () => {
         hoverTimerRef.current = setTimeout(() => {
           const diagramElement = diagram.lookup(elementId);
           if (diagramElement?.metadata.tooltip) {
-            const htmlContent = markdownToHTML(diagramElement.metadata.tooltip);
+            const htmlContent = markdownToHTML(diagramElement.metadata.tooltip, 'extended');
             setTooltip({
               content: htmlContent,
               x: currentMousePosRef.current.x,

@@ -74,6 +74,8 @@ export class HTMLToMarkdownConverter {
       case 'em':
       case 'i':
         return this.convertEmphasis(el);
+      case 'small':
+        return this.convertSmall(el);
       case 'a':
         return this.convertLink(el);
       case 'img':
@@ -132,6 +134,11 @@ export class HTMLToMarkdownConverter {
   private convertEmphasis(element: Element): string {
     const content = this.processChildren(element);
     return this.options.emphasisDelimiter + content + this.options.emphasisDelimiter;
+  }
+
+  private convertSmall(element: Element): string {
+    const content = this.processChildren(element);
+    return `-# ${content}`;
   }
 
   private convertLink(element: Element): string {

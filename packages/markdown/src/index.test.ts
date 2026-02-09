@@ -52,4 +52,15 @@ describe('Markdown Parser', () => {
     expect(html).toContain('<em>italic</em>');
     expect(html).toContain('<strong>bold</strong>');
   });
+
+  test('should handle small text with extended parser', () => {
+    const html = markdownToHTML('-# small text', 'extended');
+    expect(html).toContain('<small>small text</small>');
+  });
+
+  test('should handle small text with other paragraphs using extended parser', () => {
+    const html = markdownToHTML('Normal text\n\n-# small text', 'extended');
+    expect(html).toContain('<p>Normal text</p>');
+    expect(html).toContain('<small>small text</small>');
+  });
 });

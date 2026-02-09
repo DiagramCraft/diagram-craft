@@ -93,6 +93,24 @@ export class AtxHeaderHandler implements BlockParser {
 }
 
 /**
+ * Handles small text using Discord-style syntax (prefixed with -#).
+ * Example: "-# small text"
+ */
+export class SmallHandler implements BlockParser {
+  parse(parser: Parser, stream: TokenStream, ast: ASTNode[]): boolean {
+    const m = stream.peek().match(/^-#\s+(.+)$/);
+    if (!m) return false;
+
+    ast.push({
+      type: 'small',
+      children: parser.parseInlines(m[1]!, undefined, ['small'])
+    });
+    stream.consume();
+    return true;
+  }
+}
+
+/**
  * Handles blockquote parsing. Blockquotes start with > and can be nested.
  * Consecutive blockquotes are merged into a single blockquote element.
  */

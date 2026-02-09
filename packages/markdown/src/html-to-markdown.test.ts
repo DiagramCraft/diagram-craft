@@ -84,6 +84,14 @@ describe('HTMLToMarkdownConverter', () => {
 
       expect(converter.convert(div)).toBe('__Bold__');
     });
+
+    test('converts small text', () => {
+      const div = document.createElement('div');
+      div.innerHTML = '<small>Small text</small>';
+      const converter = new HTMLToMarkdownConverter();
+
+      expect(converter.convert(div)).toBe('-# Small text');
+    });
   });
 
   describe('paragraphs', () => {
@@ -159,7 +167,6 @@ describe('HTMLToMarkdownConverter', () => {
       const result = converter.convert(div).trim();
       expect(result).toBe('```javascript\nconst x = 1;\n```');
     });
-
   });
 
   describe('lists', () => {
