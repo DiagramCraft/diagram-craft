@@ -74,6 +74,15 @@ export const defaultAppConfig: AppConfig = {
         }
       }),
       stencilEntry({
+        id: 'c4',
+        name: 'C4',
+        loader: 'basic',
+        opts: {
+          stencils: () =>
+            import('@diagram-craft/stencil-c4/stencil-c4-loader').then(m => m.loadC4Stencils)
+        }
+      }),
+      stencilEntry({
         id: 'uml',
         name: 'UML',
         loader: 'basic',

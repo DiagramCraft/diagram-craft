@@ -36,6 +36,7 @@
       "@diagram-craft/canvas-react/*": ["./packages/canvas-react/src/*"],
       "@diagram-craft/canvas-drawio/*": ["./packages/canvas-drawio/src/*"],
       "@diagram-craft/stencil-bpmn/*": ["./packages/stencil-bpmn/src/*"],
+      "@diagram-craft/stencil-c4/*": ["./packages/stencil-c4/src/*"],
       "@diagram-craft/stencil-data-modelling/*": ["./packages/stencil-data-modelling/src/*"],
       "@diagram-craft/markdown/*": ["./packages/markdown/src/*"],
       "@diagram-craft/playwright/*": ["./packages/playwright/src/*"]

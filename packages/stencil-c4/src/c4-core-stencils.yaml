@@ -1,0 +1,32 @@
+stencils:
+  - id: 'c4-core-basic'
+    stencil: Element
+    elements:
+      - id: jppt3rq
+        type: node
+        nodeType: rounded-rect
+        bounds:
+          x: 0
+          y: 0
+          w: 180
+          h: 109
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            roundedRect:
+              radius: 20
+          fill:
+            color: "#ffffff"
+          stroke:
+            color: "#3e63dd"
+            width: 3
+          text:
+            color: "#3e63dd"
+            fontSize: 12
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<h1>Element</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+        tags:
