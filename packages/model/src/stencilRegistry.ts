@@ -229,3 +229,9 @@ export const addStencilStylesToDocument = (
     }
   }
 };
+
+export const stencilScaleStrokes = (stencil: Stencil) => {
+  return stencil.settings?.scaleStrokes !== undefined
+    ? stencil.settings?.scaleStrokes
+    : stencil.type !== 'default' && stencil.type !== 'yaml';
+};

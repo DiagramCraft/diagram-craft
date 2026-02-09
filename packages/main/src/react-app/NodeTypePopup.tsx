@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Stencil } from '@diagram-craft/model/stencilRegistry';
+import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
@@ -153,11 +153,7 @@ export const NodeTypePopup = (props: Props) => {
                   diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
                   onMouseDown={() => addNode(stencil)}
-                  scaleStrokes={
-                    stencil.settings?.scaleStrokes !== undefined
-                      ? stencil.settings.scaleStrokes
-                      : stencil.type !== 'default' && stencil.type !== 'yaml'
-                  }
+                  scaleStrokes={stencilScaleStrokes(stencil)}
                 />
               </div>
             ))}

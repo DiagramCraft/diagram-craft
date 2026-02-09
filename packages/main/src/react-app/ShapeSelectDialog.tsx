@@ -6,7 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useCallback, useRef, useState } from 'react';
-import { Stencil } from '@diagram-craft/model/stencilRegistry';
+import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
@@ -57,11 +57,7 @@ const StencilView = (props: {
         showHover={true}
         name={props.stencil.name ?? 'unknown'}
         onMouseDown={props.onClick}
-        scaleStrokes={
-          props.stencil.settings?.scaleStrokes !== undefined
-            ? props.stencil.settings.scaleStrokes
-            : props.stencil.type !== 'default' && props.stencil.type !== 'yaml'
-        }
+        scaleStrokes={stencilScaleStrokes(props.stencil)}
       />
     </div>
   );

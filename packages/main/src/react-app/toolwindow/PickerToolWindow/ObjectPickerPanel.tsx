@@ -3,7 +3,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
   Stencil,
-  StencilPackage
+  StencilPackage,
+  stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
@@ -163,11 +164,7 @@ export const ObjectPickerPanel = (props: Props) => {
                         () => setShowHover(true)
                       );
                     }}
-                    scaleStrokes={
-                      s.stencil.settings?.scaleStrokes !== undefined
-                        ? s.stencil.settings?.scaleStrokes
-                        : s.stencil.type !== 'default' && s.stencil.type !== 'yaml'
-                    }
+                    scaleStrokes={stencilScaleStrokes(s.stencil)}
                   />
                 </div>
               ))}
