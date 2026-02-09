@@ -12,6 +12,7 @@ import {
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { ElementProps } from '@diagram-craft/model/diagramProps';
 
 export type StencilElements = { bounds: Box; elements: DiagramElement[] };
 
@@ -20,7 +21,11 @@ export type Stencil = {
   name?: string;
   elementsForPicker: (diagram: Diagram) => StencilElements;
   elementsForCanvas: (diagram: Diagram) => StencilElements;
+  styles?: Array<{ id: string; name: string; type: 'edge' | 'node' | 'text'; props: ElementProps }>;
   type: 'default' | string;
+  settings?: {
+    scaleStrokes?: boolean;
+  };
 };
 
 export type StencilPackage = {

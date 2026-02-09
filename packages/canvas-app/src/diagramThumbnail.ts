@@ -44,7 +44,9 @@ export const createThumbnail = (
     }
 
     for (const el of elements) {
-      layer.addElement(el, uow);
+      // TODO: Why is this needed? The elements should be added through
+      //       factory()
+      if (!layer.elements.includes(el)) layer.addElement(el, uow);
       if (isNode(el)) el.invalidateAnchors(uow);
     }
 

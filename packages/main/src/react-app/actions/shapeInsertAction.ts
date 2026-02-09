@@ -6,6 +6,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -21,12 +22,11 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.SHAPE_INSERT.name', 'Insert Shape');
 
   getCriteria(application: Application) {
+    const activeLayer = application.model.activeDiagram.activeLayer;
     return ActionCriteria.EventTriggered(
       application.model.activeDiagram.layers,
       'layerStructureChange',
-      () =>
-        application.model.activeDiagram.activeLayer.type === 'regular' &&
-        !application.model.activeDiagram.activeLayer.isLocked()
+      () => activeLayer.type === 'regular' && !activeLayer.isLocked()
     );
   }
 
@@ -49,6 +49,18 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
         const newElements = cloneElements(elements, layer as RegularLayer);
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+          const styleManager = diagram.document.styles;
+          for (const style of stencil.styles ?? []) {
+            if (styleManager.get(style.id) === undefined) {
+              const stylesheet = Stylesheet.fromSnapshot(
+                style.type,
+                style,
+                styleManager.crdt.factory
+              );
+              styleManager.addStylesheet(style.id, stylesheet, uow);
+            }
+          }
+
           for (const node of newElements) {
             layer.addElement(node, uow);
 

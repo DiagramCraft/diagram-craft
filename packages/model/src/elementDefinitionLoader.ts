@@ -1,25 +1,19 @@
 import type { Stencil } from './stencilRegistry';
-import { type Diagram, DocumentBuilder } from './diagram';
-import { newid } from '@diagram-craft/utils/id';
-import { DiagramDocument } from './diagramDocument';
-import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
+import { type Diagram } from './diagram';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {
     const mkNode = (diagram: Diagram) => {
-      const { layer } = DocumentBuilder.empty(
-        newid(),
-        stencil.name,
-        new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
-      );
+      const layer = diagram.activeLayer as RegularLayer;
 
       return UnitOfWork.execute(diagram, uow => {
         const elements = deserializeDiagramElements(
@@ -38,6 +32,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
     dest.push({
       id: stencil.id,
       name: stencil.name,
+      styles: stencil.styles,
+      settings: stencil.settings,
       elementsForPicker: mkNode,
       elementsForCanvas: mkNode,
       type: 'yaml'

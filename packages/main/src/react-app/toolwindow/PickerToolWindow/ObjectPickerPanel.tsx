@@ -11,6 +11,8 @@ import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -33,6 +35,20 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     doc.registry,
     { padding: 5 }
   );
+
+  UnitOfWork.execute(stencilDiagram, uow => {
+    const styleManager = stencilDiagram.document.styles;
+    for (const style of n.styles ?? []) {
+      if (styleManager.get(style.id) === undefined) {
+        const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
+        styleManager.addStylesheet(style.id, stylesheet, uow);
+      }
+    }
+
+    stencilElements.forEach(e => {
+      e.clearCache();
+    });
+  });
 
   const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
     padding: 5
@@ -142,11 +158,22 @@ export const ObjectPickerPanel = (props: Props) => {
 
                       setShowHover(false);
                       DRAG_DROP_MANAGER.initiate(
-                        new ObjectPickerDrag(ev, s.canvasElements, diagram, s.stencil.id, app),
+                        new ObjectPickerDrag(
+                          ev,
+                          s.canvasElements,
+                          diagram,
+                          s.stencil.id,
+                          s.stencil.styles ?? [],
+                          app
+                        ),
                         () => setShowHover(true)
                       );
                     }}
-                    scaleStrokes={s.stencil.type !== 'default' && s.stencil.type !== 'yaml'}
+                    scaleStrokes={
+                      s.stencil.settings?.scaleStrokes !== undefined
+                        ? s.stencil.settings?.scaleStrokes
+                        : s.stencil.type !== 'default' && s.stencil.type !== 'yaml'
+                    }
                   />
                 </div>
               ))}
