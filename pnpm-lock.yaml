@@ -348,6 +348,9 @@ importers:
       '@diagram-craft/stencil-bpmn':
         specifier: workspace:^
         version: link:../stencil-bpmn
+      '@diagram-craft/stencil-c4':
+        specifier: workspace:^
+        version: link:../stencil-c4
       '@diagram-craft/stencil-data-modelling':
         specifier: workspace:^
         version: link:../stencil-data-modelling
@@ -442,6 +445,24 @@ importers:
         version: 1.15.3
 
   packages/stencil-bpmn:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../canvas-nodes
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
+  packages/stencil-c4:
     dependencies:
       '@diagram-craft/canvas':
         specifier: workspace:^

@@ -1,0 +1,19 @@
+{
+  "name": "@diagram-craft/stencil-c4",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson",
+  "dependencies": {
+    "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/utils": "workspace:^",
+    "@diagram-craft/geometry": "workspace:^",
+    "@diagram-craft/model": "workspace:^",
+    "@diagram-craft/canvas-nodes": "workspace:^"
+  }
+}

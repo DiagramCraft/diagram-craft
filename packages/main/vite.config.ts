@@ -47,6 +47,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         '@diagram-craft/model': path.join(__dirname, '../../packages/model/src'),
         '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src'),
         '@diagram-craft/graph': path.join(__dirname, '../../packages/graph/src'),
+        '@diagram-craft/stencil-c4': path.join(__dirname, '../../packages/stencil-c4/src'),
         '@diagram-craft/stencil-bpmn': path.join(__dirname, '../../packages/stencil-bpmn/src'),
         '@diagram-craft/stencil-data-modelling': path.join(
           __dirname,
