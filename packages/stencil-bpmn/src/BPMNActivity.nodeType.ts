@@ -38,8 +38,8 @@ import {
   roundedRectOutline
 } from '@diagram-craft/stencil-bpmn/utils';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { renderChildren, renderElement } from '@diagram-craft/canvas/components/renderElement';
 import {
   BOTTOM_MARGIN,
   ICON_MARGIN,
@@ -47,6 +47,8 @@ import {
   MARKER_SIZE,
   MARKER_SPACING
 } from '@diagram-craft/stencil-bpmn/spacing';
+import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 
 type SubprocessType =
   | 'default'
@@ -298,7 +300,41 @@ export class BPMNActivityNodeDefinition extends ShapeNodeDefinition {
 
       shapeBuilder.text(this);
 
-      shapeBuilder.add(renderChildren(this, props.node, props));
+      if (
+        data.activityType === 'sub-process' ||
+        data.activityType === 'event-sub-process' ||
+        data.activityType === 'call-activity-sub-process'
+      ) {
+        if (props.nodeProps.custom.bpmnActivity.expanded) {
+          shapeBuilder.add(renderChildren(this, props.node, props));
+        } else {
+          const events = props.node.children.filter(
+            e => isNode(e) && e.nodeType === 'bpmnEvent'
+          ) as DiagramNode[];
+
+          if (
+            data.activityType === 'event-sub-process' &&
+            events.length === 1 &&
+            events[0]!.metadata.data?.data?.find(e => e.schema === 'bpmnEvent')?.data?.eventType ===
+              'start'
+          ) {
+            const margin = _p(4, 4);
+            const offset = Point.subtract(Point.subtract(events[0]!.bounds, node.bounds), margin);
+
+            shapeBuilder.add(
+              svg.g(
+                {
+                  transform: `${Transforms.rotateBack(node.bounds)} translate(${-offset.x}, ${-offset.y})`,
+                  style: `pointer-events: none; user-select: none;`
+                },
+                renderElement(this, events[0]!, props)
+              )
+            );
+          }
+        }
+      } else {
+        shapeBuilder.add(renderChildren(this, props.node, props));
+      }
     }
   };
 
