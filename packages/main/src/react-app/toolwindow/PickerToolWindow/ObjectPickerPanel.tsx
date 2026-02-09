@@ -45,9 +45,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
       }
     }
 
-    stencilElements.forEach(e => {
-      e.clearCache();
-    });
+    stencilElements.forEach(e => e.clearCache());
   });
 
   const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {

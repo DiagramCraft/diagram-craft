@@ -516,12 +516,14 @@ export const makeStencilNode =
         uow
       );
 
+      layer.addElement(n, uow);
+
       return { bounds: n.bounds, elements: [n] };
     });
 
 export const makeStencilEdge =
   (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
-    UnitOfWork.execute($d, _uow => {
+    UnitOfWork.execute($d, uow => {
       const layer = $d.activeLayer;
       assertRegularLayer(layer);
 
@@ -534,6 +536,8 @@ export const makeStencilEdge =
         [],
         layer
       );
+
+      layer.addElement(e, uow);
 
       return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
     });

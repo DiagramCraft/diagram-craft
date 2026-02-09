@@ -77,7 +77,7 @@ export const NodeTypePopup = (props: Props) => {
   const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
     const nodes = diagram.document.registry.stencils.get('default').stencils;
     return nodes.map(n => {
-      const { diagram: dest, layer } = DocumentBuilder.empty(
+      const { diagram: dest } = DocumentBuilder.empty(
         n.id,
         n.name ?? n.id,
         new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
@@ -90,11 +90,6 @@ export const NodeTypePopup = (props: Props) => {
 
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-
-      // TODO: Why is this needed. Should be added by elementsForPicker()
-      if (!layer.elements.includes(node)) {
-        UnitOfWork.execute(dest, uow => layer.addElement(node, uow));
-      }
 
       return [n, dest];
     });
