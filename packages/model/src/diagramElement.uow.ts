@@ -12,6 +12,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { SerializedEdge, SerializedNode } from '@diagram-craft/model/serialization/serializedTypes';
+import { unique } from '@diagram-craft/utils/array';
 
 declare global {
   namespace DiagramCraft {
@@ -62,15 +63,15 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
     }
 
     // Batch
-    const added = operations
-      .filter(e => e.type === 'add')
-      .map(e => e.target.object as DiagramElement);
-    const updated = operations
-      .filter(e => e.type === 'update')
-      .map(e => e.target.object as DiagramElement);
-    const removed = operations
-      .filter(e => e.type === 'remove')
-      .map(e => e.target.object as DiagramElement);
+    const added = unique(
+      operations.filter(e => e.type === 'add').map(e => e.target.object as DiagramElement)
+    );
+    const updated = unique(
+      operations.filter(e => e.type === 'update').map(e => e.target.object as DiagramElement)
+    );
+    const removed = unique(
+      operations.filter(e => e.type === 'remove').map(e => e.target.object as DiagramElement)
+    );
     uow.diagram.emit('elementBatchChange', { removed, updated, added });
 
     if (phase === 'notify') {
