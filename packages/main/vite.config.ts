@@ -11,11 +11,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
   const userConfig: UserConfig = {
     base: './',
     plugins: [react(), yaml()],
-    test: {
-      fakeTimers: {
-        toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask']
-      }
-    },
     build: {
       rollupOptions: {
         output: {

@@ -420,6 +420,13 @@ export class UnitOfWork {
 
     this.emitEvent('before-commit');
 
+    DEBUG: {
+      const operationsByType = groupBy(this.#operations, op => op.type);
+      console.log(
+        `Commit: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
+      );
+    }
+
     for (const [k, ops] of groupBy(this.#operations, op => op.target.type)) {
       UOWRegistry.getAdapter(k).onBeforeCommit?.(ops, this);
     }
