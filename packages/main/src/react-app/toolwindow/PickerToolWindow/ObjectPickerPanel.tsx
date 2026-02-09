@@ -1,6 +1,10 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Stencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import {
+  addStencilStylesToDocument,
+  Stencil,
+  StencilPackage
+} from '@diagram-craft/model/stencilRegistry';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
@@ -11,7 +15,6 @@ import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type StencilEntry = {
@@ -37,14 +40,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   );
 
   UnitOfWork.execute(stencilDiagram, uow => {
-    const styleManager = stencilDiagram.document.styles;
-    for (const style of n.styles ?? []) {
-      if (styleManager.get(style.id) === undefined) {
-        const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
-        styleManager.addStylesheet(style.id, stylesheet, uow);
-      }
-    }
-
+    addStencilStylesToDocument(n, stencilDiagram.document, uow);
     stencilElements.forEach(e => e.clearCache());
   });
 

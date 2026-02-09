@@ -25,8 +25,8 @@ import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvas
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Translation } from '@diagram-craft/geometry/transform';
-import { ElementProps } from '@diagram-craft/model/diagramProps';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { StencilStyle } from '@diagram-craft/model/stencilRegistry';
 
 enum State {
   INSIDE,
@@ -45,12 +45,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     readonly source: DiagramElement[],
     readonly diagram: Diagram,
     readonly stencilId: string | undefined,
-    readonly styles: Array<{
-      id: string;
-      name: string;
-      type: 'edge' | 'node' | 'text';
-      props: ElementProps;
-    }>,
+    readonly styles: Array<StencilStyle>,
     context: Context
   ) {
     super(diagram, Point.ORIGIN, event, context);

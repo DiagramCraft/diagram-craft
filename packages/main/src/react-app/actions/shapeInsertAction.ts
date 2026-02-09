@@ -6,7 +6,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { addStencilStylesToDocument } from '@diagram-craft/model/stencilRegistry';
 
 export const shapeInsertActions = (application: Application) => ({
   SHAPE_INSERT: new ShapeInsertAction(application)
@@ -49,17 +49,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
         const newElements = cloneElements(elements, layer as RegularLayer);
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
-          const styleManager = diagram.document.styles;
-          for (const style of stencil.styles ?? []) {
-            if (styleManager.get(style.id) === undefined) {
-              const stylesheet = Stylesheet.fromSnapshot(
-                style.type,
-                style,
-                styleManager.crdt.factory
-              );
-              styleManager.addStylesheet(style.id, stylesheet, uow);
-            }
-          }
+          addStencilStylesToDocument(stencil, diagram.document, uow);
 
           for (const node of newElements) {
             layer.addElement(node, uow);
