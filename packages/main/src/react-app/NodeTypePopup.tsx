@@ -6,7 +6,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Stencil } from '@diagram-craft/model/stencilRegistry';
+import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
@@ -77,7 +77,7 @@ export const NodeTypePopup = (props: Props) => {
   const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
     const nodes = diagram.document.registry.stencils.get('default').stencils;
     return nodes.map(n => {
-      const { diagram: dest, layer } = DocumentBuilder.empty(
+      const { diagram: dest } = DocumentBuilder.empty(
         n.id,
         n.name ?? n.id,
         new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
@@ -90,7 +90,6 @@ export const NodeTypePopup = (props: Props) => {
 
       dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
       dest.viewBox.offset = { x: -5, y: -5 };
-      UnitOfWork.execute(dest, uow => layer.addElement(node, uow));
 
       return [n, dest];
     });
@@ -154,7 +153,7 @@ export const NodeTypePopup = (props: Props) => {
                   diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
                   onMouseDown={() => addNode(stencil)}
-                  scaleStrokes={stencil.type !== 'default' && stencil.type !== 'yaml'}
+                  scaleStrokes={stencilScaleStrokes(stencil)}
                 />
               </div>
             ))}

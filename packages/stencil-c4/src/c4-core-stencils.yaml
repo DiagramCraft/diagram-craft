@@ -1,6 +1,30 @@
 stencils:
   - id: 'c4-core-basic'
     stencil: Element
+    styles:
+      - id: 'c4-element'
+        name: 'C4 Element'
+        type: 'node'
+        props:
+          custom:
+            roundedRect:
+              radius: 20
+          fill:
+            color: "var(--canvas-bg-bright)"
+          stroke:
+            color: "blue"
+            width: 3
+      - id: 'c4-element-text'
+        name: 'C4 Element Text'
+        type: 'text'
+        props:
+          text:
+            color: "blue"
+            fontSize: 12
+
+    settings:
+      scaleStrokes: true
+
     elements:
       - id: jppt3rq
         type: node
@@ -12,21 +36,10 @@ stencils:
           h: 109
           r: 0
         children: [ ]
-        props:
-          custom:
-            roundedRect:
-              radius: 20
-          fill:
-            color: "#ffffff"
-          stroke:
-            color: "#3e63dd"
-            width: 3
-          text:
-            color: "#3e63dd"
-            fontSize: 12
+        props: { }
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: c4-element
+          textStyle: c4-element-text
         texts:
           text: "<h1>Element</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
         tags:

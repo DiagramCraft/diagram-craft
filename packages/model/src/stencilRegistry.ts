@@ -12,6 +12,10 @@ import {
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import { ElementProps } from '@diagram-craft/model/diagramProps';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export type StencilElements = { bounds: Box; elements: DiagramElement[] };
 
@@ -20,7 +24,11 @@ export type Stencil = {
   name?: string;
   elementsForPicker: (diagram: Diagram) => StencilElements;
   elementsForCanvas: (diagram: Diagram) => StencilElements;
+  styles?: Array<StencilStyle>;
   type: 'default' | string;
+  settings?: {
+    scaleStrokes?: boolean;
+  };
 };
 
 export type StencilPackage = {
@@ -32,6 +40,13 @@ export type StencilPackage = {
     name: string;
     stencils: Array<Stencil>;
   }>;
+};
+
+export type StencilStyle = {
+  id: string;
+  name: string;
+  type: 'edge' | 'node' | 'text';
+  props: ElementProps;
 };
 
 /* Stencil Loader ******************************************************************* */
@@ -199,4 +214,24 @@ export const addStencil = (
   } else {
     pkg.stencils.push(stencil);
   }
+};
+
+export const addStencilStylesToDocument = (
+  stencil: Stencil,
+  document: DiagramDocument,
+  uow: UnitOfWork
+) => {
+  const styleManager = document.styles;
+  for (const style of stencil.styles ?? []) {
+    if (styleManager.get(style.id) === undefined) {
+      const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
+      styleManager.addStylesheet(style.id, stylesheet, uow);
+    }
+  }
+};
+
+export const stencilScaleStrokes = (stencil: Stencil) => {
+  return stencil.settings?.scaleStrokes !== undefined
+    ? stencil.settings?.scaleStrokes
+    : stencil.type !== 'default' && stencil.type !== 'yaml';
 };

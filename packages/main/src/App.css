@@ -98,6 +98,7 @@
 
   --canvas-fg: var(--gray-12);
   --canvas-bg: white;
+  --canvas-bg-bright: white;
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);
@@ -138,6 +139,7 @@
 
   --canvas-fg: var(--gray-1);
   --canvas-bg: var(--gray-12);
+  --canvas-bg-bright: var(--gray-12);
   --canvas-bg2: white;
 
   --error-fg: var(--red-9);

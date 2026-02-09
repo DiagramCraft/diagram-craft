@@ -25,6 +25,8 @@ import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvas
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Translation } from '@diagram-craft/geometry/transform';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { StencilStyle } from '@diagram-craft/model/stencilRegistry';
 
 enum State {
   INSIDE,
@@ -43,6 +45,7 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     readonly source: DiagramElement[],
     readonly diagram: Diagram,
     readonly stencilId: string | undefined,
+    readonly styles: Array<StencilStyle>,
     context: Context
   ) {
     super(diagram, Point.ORIGIN, event, context);
@@ -205,6 +208,14 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
   }
 
   private addElement(point: Point) {
+    const styleManager = this.diagram.document.styles;
+    for (const style of this.styles) {
+      if (styleManager.get(style.id) === undefined) {
+        const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
+        styleManager.addStylesheet(style.id, stylesheet, this.uow);
+      }
+    }
+
     const sourceDiagram = this.source[0]!.diagram;
     const sourceLayer = sourceDiagram.activeLayer;
     assertRegularLayer(sourceLayer);

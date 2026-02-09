@@ -99,7 +99,7 @@ const handleDragStart = (
   if (ev.button !== 0) return;
 
   DRAG_DROP_MANAGER.initiate(
-    new ObjectPickerDrag(ev.nativeEvent, elements, diagram, undefined, app)
+    new ObjectPickerDrag(ev.nativeEvent, elements, diagram, undefined, [], app)
   );
 
   ev.preventDefault();

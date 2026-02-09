@@ -24,6 +24,8 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
 
       node.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, uow);
 
+      layer.addElement(node, uow);
+
       return { elements: [node], bounds: node.bounds };
     });
   };

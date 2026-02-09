@@ -43,10 +43,7 @@ export const createThumbnail = (
       bounds = Box.boundingBox(elements.map(e => e.bounds));
     }
 
-    for (const el of elements) {
-      layer.addElement(el, uow);
-      if (isNode(el)) el.invalidateAnchors(uow);
-    }
+    elements.filter(isNode).forEach(e => e.invalidateAnchors(uow));
 
     const padding = opts?.padding ?? 0;
     diagram.viewBox.dimensions = Box.grow(bounds, 2 * padding);

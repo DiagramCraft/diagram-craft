@@ -1,6 +1,11 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { Stencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import {
+  addStencilStylesToDocument,
+  Stencil,
+  StencilPackage,
+  stencilScaleStrokes
+} from '@diagram-craft/model/stencilRegistry';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
@@ -11,6 +16,7 @@ import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -33,6 +39,11 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     doc.registry,
     { padding: 5 }
   );
+
+  UnitOfWork.execute(stencilDiagram, uow => {
+    addStencilStylesToDocument(n, stencilDiagram.document, uow);
+    stencilElements.forEach(e => e.clearCache());
+  });
 
   const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
     padding: 5
@@ -142,11 +153,18 @@ export const ObjectPickerPanel = (props: Props) => {
 
                       setShowHover(false);
                       DRAG_DROP_MANAGER.initiate(
-                        new ObjectPickerDrag(ev, s.canvasElements, diagram, s.stencil.id, app),
+                        new ObjectPickerDrag(
+                          ev,
+                          s.canvasElements,
+                          diagram,
+                          s.stencil.id,
+                          s.stencil.styles ?? [],
+                          app
+                        ),
                         () => setShowHover(true)
                       );
                     }}
-                    scaleStrokes={s.stencil.type !== 'default' && s.stencil.type !== 'yaml'}
+                    scaleStrokes={stencilScaleStrokes(s.stencil)}
                   />
                 </div>
               ))}
