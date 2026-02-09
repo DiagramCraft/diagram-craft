@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import styles from './Toolbar.module.css';
 import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { Toolbar as BaseUIToolbar } from '@base-ui/react/toolbar';
@@ -11,6 +11,7 @@ const Root = (props: RootProps) => {
       data-direction={props.direction}
       className={styles.cmpToolbar}
       data-size={props.size ?? 'default'}
+      style={props.style}
     >
       {props.children}
     </BaseUIToolbar.Root>
@@ -22,6 +23,7 @@ type RootProps = {
   size?: 'default' | 'large';
   id?: string;
   direction?: 'horizontal' | 'vertical';
+  style?: CSSProperties;
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwardedRef) => {

@@ -7,6 +7,8 @@ import {
   TbItalic,
   TbLetterCase,
   TbLetterCaseUpper,
+  TbLine,
+  TbPencil,
   TbStrikethrough,
   TbUnderline
 } from 'react-icons/tb';
@@ -203,6 +205,10 @@ export const NodeTextPanelForm = ({
                 palette={$cfg.palette.primary}
                 customPalette={$d.document.customPalette}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                special={{
+                  'stroke': { label: 'Stroke Color', icon: <TbLine /> },
+                  'var(--cmp-fg)': { label: 'Foreground', icon: <TbPencil /> }
+                }}
               />
             )}
             renderValue={props => <ColorPreview {...props} />}

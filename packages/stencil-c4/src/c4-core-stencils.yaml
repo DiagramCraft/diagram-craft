@@ -19,7 +19,7 @@ stencils:
         type: 'text'
         props:
           text:
-            color: "blue"
+            color: "stroke"
             fontSize: 12
 
     settings:
