@@ -415,7 +415,7 @@ export class UnitOfWork {
     }
   }
 
-  commit() {
+  commit(withUndo = false) {
     this.state = 'committed';
 
     this.emitEvent('before-commit');
@@ -423,7 +423,7 @@ export class UnitOfWork {
     DEBUG: {
       const operationsByType = groupBy(this.#operations, op => op.type);
       console.log(
-        `Commit: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
+        `Commit${withUndo ? ' with undo' : ''}: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
       );
     }
 
@@ -442,7 +442,7 @@ export class UnitOfWork {
   }
 
   commitWithUndo(msg: string) {
-    this.commit();
+    this.commit(true);
 
     if (this.#undoableActions.length > 0) {
       const action = new CompoundUndoableAction(this.#undoableActions, msg);
@@ -460,6 +460,10 @@ export class UnitOfWork {
   abort() {
     registry.unregister(this);
     this.state = 'aborted';
+  }
+
+  compact() {
+    this.#operations = consolidateOperations(this.#operations);
   }
 
   _debug() {

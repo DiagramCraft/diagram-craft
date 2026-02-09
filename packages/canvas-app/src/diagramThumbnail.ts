@@ -31,7 +31,7 @@ export const createThumbnail = (
 ) => {
   const { diagram, layer } = createStencilDiagram(definitions);
 
-  return UnitOfWork.execute(diagram, uow => {
+  return UnitOfWork.executeSilently(diagram, uow => {
     const ret = factory(diagram, layer, uow);
     let elements: Array<DiagramElement>;
     let bounds: Box;
