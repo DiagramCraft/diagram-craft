@@ -8,27 +8,25 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { useCallback, useRef, useState } from 'react';
 import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { Box } from '@diagram-craft/geometry/box';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 
 const SIZE = 35;
 
+// TODO: We should be able to cache this across - both here and ObjectPickerPanel
 const NODE_CACHE = new Map<string, Diagram>();
 
-const getDiagram = (props: {
-  document: DiagramDocument;
-  onClick: { (): void };
-  stencil: Stencil;
-}) => {
+const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: Stencil }) => {
+  const document = props.diagram.document;
+
   if (NODE_CACHE.has(props.stencil.id)) {
     return NODE_CACHE.get(props.stencil.id)!;
   }
 
   const { diagram, elements } = createThumbnail(
     d => props.stencil.elementsForCanvas(d),
-    props.document.registry
+    document.registry
   );
   const bbox = Box.boundingBox(elements.map(e => e.bounds));
   diagram.viewBox.dimensions = { w: bbox.w + 10, h: bbox.h + 10 };
@@ -39,21 +37,17 @@ const getDiagram = (props: {
   return diagram;
 };
 
-const StencilView = (props: {
-  stencil: Stencil;
-  document: DiagramDocument;
-  onClick: () => void;
-}) => {
-  const diagram = getDiagram(props);
+const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () => void }) => {
+  const stencilDiagram = getDiagram(props);
 
   return (
-    <div style={{ background: 'transparent' }} data-width={diagram.viewBox.dimensions.w}>
+    <div style={{ background: 'transparent' }} data-width={stencilDiagram.viewBox.dimensions.w}>
       <PickerCanvas
         width={SIZE}
         height={SIZE}
-        diagramWidth={diagram.viewBox.dimensions.w}
-        diagramHeight={diagram.viewBox.dimensions.h}
-        diagram={diagram}
+        diagramWidth={stencilDiagram.viewBox.dimensions.w}
+        diagramHeight={stencilDiagram.viewBox.dimensions.h}
+        diagram={stencilDiagram}
         showHover={true}
         name={props.stencil.name ?? 'unknown'}
         onMouseDown={props.onClick}
@@ -126,7 +120,7 @@ export const ShapeSelectDialog = (props: Props) => {
                 <StencilView
                   key={stencilId}
                   stencil={stencil}
-                  document={document}
+                  diagram={diagram}
                   onClick={() => props.onOk(stencil.id)}
                 />
               );
@@ -159,7 +153,7 @@ export const ShapeSelectDialog = (props: Props) => {
                 <StencilView
                   key={stencil.id}
                   stencil={stencil}
-                  document={document}
+                  diagram={diagram}
                   onClick={() => props.onOk(stencil.id)}
                 />
               ))}

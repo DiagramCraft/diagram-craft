@@ -46,11 +46,12 @@ const ElementStylesheetItem = ({
   onRename,
   onApply
 }: ElementStylesheetItemProps) => {
-  const previewDiagram = useMemo(
-    () =>
-      createPreview(stylesheet.props, stylesheet.type, 'rect', diagram.document.registry).diagram,
-    [stylesheet, diagram]
-  );
+  const previewDiagram = createPreview(
+    stylesheet.props,
+    stylesheet.type,
+    'rect',
+    diagram.document.registry
+  ).diagram;
 
   return (
     <ContextMenu.Root>

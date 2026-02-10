@@ -17,6 +17,8 @@ import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { useEventListener } from '../../hooks/useEventListener';
+import { useRedraw } from '../../hooks/useRedraw';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -26,6 +28,41 @@ type StencilEntry = {
 };
 
 const STENCIL_CACHE = new Map<string, StencilEntry>();
+
+type Group = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  stencils: Array<StencilEntry>;
+};
+
+// TODO: Track if any changes??
+const updateStyles = (groups: Array<Group>, diagram: Diagram) => {
+  for (const group of groups) {
+    for (const stencil of group.stencils) {
+      UnitOfWork.execute(stencil.stencilDiagram, uow => {
+        updateStyle(stencil.stencilDiagram, diagram.document, uow);
+      });
+    }
+  }
+};
+
+const updateStyle = (target: Diagram, sourceDoc: DiagramDocument, uow: UnitOfWork) => {
+  const targetDoc = target.document;
+  const styles = [
+    ...sourceDoc.styles.nodeStyles,
+    ...sourceDoc.styles.edgeStyles,
+    ...sourceDoc.styles.textStyles
+  ];
+  for (const style of styles) {
+    const existing = targetDoc.styles.get(style.id);
+    if (existing) {
+      existing.setProps(style.props, uow);
+    } else {
+      targetDoc.styles.addStylesheet(style.id, style, uow);
+    }
+  }
+};
 
 const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   const cacheKey = n.id;
@@ -42,6 +79,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
   UnitOfWork.execute(stencilDiagram, uow => {
     addStencilStylesToDocument(n, stencilDiagram.document, uow);
+    updateStyle(stencilDiagram, doc, uow);
     stencilElements.forEach(e => e.clearCache());
   });
 
@@ -62,17 +100,14 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
 export const ObjectPickerPanel = (props: Props) => {
   const diagram = useDiagram();
+
   const [showHover, setShowHover] = useState(true);
   const app = useApplication();
   const [loaded, setLoaded] = useState(false);
+  const redraw = useRedraw();
 
   const groups = useMemo(() => {
-    const res: Array<{
-      id: string;
-      name: string;
-      isDefault: boolean;
-      stencils: Array<StencilEntry>;
-    }> = [];
+    const res: Array<Group> = [];
 
     if (!props.isOpen) return res;
 
@@ -105,6 +140,16 @@ export const ObjectPickerPanel = (props: Props) => {
 
     return res;
   }, [diagram.document, props.stencils, props.stencilPackage, props.isOpen]);
+
+  useEventListener(diagram.document.styles, 'stylesheetUpdated', () => {
+    updateStyles(groups, diagram);
+    redraw();
+  });
+
+  useEffect(() => {
+    updateStyles(groups, diagram);
+    redraw();
+  }, [diagram, redraw, groups]);
 
   useEffect(() => {
     if (props.isOpen) {

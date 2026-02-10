@@ -1,7 +1,7 @@
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { StylesheetsPanel } from './StylesheetsPanel';
 import { ToolWindow } from '../ToolWindow';
 import { debounce } from '@diagram-craft/utils/debounce';
@@ -19,19 +19,17 @@ export const StylesheetsTab = () => {
   useEventListener(diagram.document.styles, 'stylesheetUpdated', handleStylesheetChange);
   useEventListener(diagram.document.styles, 'stylesheetRemoved', handleStylesheetChange);
 
-  const allStylesheets = useMemo(() => {
-    const nodeStyles = diagram.document.styles.nodeStyles;
-    const edgeStyles = diagram.document.styles.edgeStyles;
-    const textStyles = diagram.document.styles.textStyles;
+  const nodeStyles = diagram.document.styles.nodeStyles;
+  const edgeStyles = diagram.document.styles.edgeStyles;
+  const textStyles = diagram.document.styles.textStyles;
 
-    const typeOrder = { node: 1, text: 2, edge: 3 };
+  const typeOrder = { node: 1, text: 2, edge: 3 };
 
-    return [...nodeStyles, ...edgeStyles, ...textStyles].sort((a, b) => {
-      const typeCompare = typeOrder[a.type] - typeOrder[b.type];
-      if (typeCompare !== 0) return typeCompare;
-      return a.name.localeCompare(b.name);
-    });
-  }, [diagram.document.styles]);
+  const allStylesheets = [...nodeStyles, ...edgeStyles, ...textStyles].sort((a, b) => {
+    const typeCompare = typeOrder[a.type] - typeOrder[b.type];
+    if (typeCompare !== 0) return typeCompare;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <ToolWindow.TabContent>
