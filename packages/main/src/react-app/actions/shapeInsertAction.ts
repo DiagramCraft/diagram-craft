@@ -53,11 +53,6 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
           for (const node of newElements) {
             layer.addElement(node, uow);
-
-            node.updateMetadata(meta => {
-              meta.style = document.styles.activeNodeStylesheet.id;
-              meta.textStyle = document.styles.activeTextStylesheet.id;
-            }, uow);
           }
 
           assignNewBounds(
