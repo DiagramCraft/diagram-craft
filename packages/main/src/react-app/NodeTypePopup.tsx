@@ -147,8 +147,7 @@ export const NodeTypePopup = (props: Props) => {
               <div key={idx} style={{ background: 'transparent' }}>
                 <PickerCanvas
                   name={d.name}
-                  width={size}
-                  height={size}
+                  size={size}
                   diagramWidth={d.viewBox.dimensions.w}
                   diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}

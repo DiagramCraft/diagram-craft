@@ -2,6 +2,7 @@ import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
+  copyStyles,
   Stencil,
   StencilPackage,
   stencilScaleStrokes
@@ -36,30 +37,14 @@ type Group = {
   stencils: Array<StencilEntry>;
 };
 
-// TODO: Track if any changes??
 const updateStyles = (groups: Array<Group>, diagram: Diagram) => {
   for (const group of groups) {
     for (const stencil of group.stencils) {
       UnitOfWork.execute(stencil.stencilDiagram, uow => {
-        updateStyle(stencil.stencilDiagram, diagram.document, uow);
+        if (!copyStyles(stencil.stencilDiagram, diagram.document, uow)) {
+          uow.abort();
+        }
       });
-    }
-  }
-};
-
-const updateStyle = (target: Diagram, sourceDoc: DiagramDocument, uow: UnitOfWork) => {
-  const targetDoc = target.document;
-  const styles = [
-    ...sourceDoc.styles.nodeStyles,
-    ...sourceDoc.styles.edgeStyles,
-    ...sourceDoc.styles.textStyles
-  ];
-  for (const style of styles) {
-    const existing = targetDoc.styles.get(style.id);
-    if (existing) {
-      existing.setProps(style.props, uow);
-    } else {
-      targetDoc.styles.addStylesheet(style.id, style, uow);
     }
   }
 };
@@ -79,7 +64,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
   UnitOfWork.execute(stencilDiagram, uow => {
     addStencilStylesToDocument(n, stencilDiagram.document, uow);
-    updateStyle(stencilDiagram, doc, uow);
+    copyStyles(stencilDiagram, doc, uow);
     stencilElements.forEach(e => e.clearCache());
   });
 
@@ -180,8 +165,7 @@ export const ObjectPickerPanel = (props: Props) => {
                   data-width={s.stencilDiagram.viewBox.dimensions.w}
                 >
                   <PickerCanvas
-                    width={PickerConfig.size}
-                    height={PickerConfig.size}
+                    size={PickerConfig.size}
                     diagramWidth={s.stencilDiagram.viewBox.dimensions.w}
                     diagramHeight={s.stencilDiagram.viewBox.dimensions.h}
                     diagram={s.stencilDiagram}

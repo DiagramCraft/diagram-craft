@@ -134,8 +134,7 @@ export const StylesPanel = ({
                               >
                                 <div className={styles.styleOverviewPreview}>
                                   <PickerCanvas
-                                    width={PickerConfig.size}
-                                    height={PickerConfig.size}
+                                    size={PickerConfig.size}
                                     diagram={mustExist(style.previewDiagram)}
                                     showHover={false}
                                     onMouseDown={e => {

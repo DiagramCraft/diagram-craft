@@ -5,32 +5,44 @@ import { PickerCanvas } from './PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useCallback, useRef, useState } from 'react';
-import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  addStencilStylesToDocument,
+  copyStyles,
+  Stencil,
+  stencilScaleStrokes
+} from '@diagram-craft/model/stencilRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { createStencilDiagram, createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
-import { Box } from '@diagram-craft/geometry/box';
 import { isEdge } from '@diagram-craft/model/diagramElement';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { useRedraw } from './hooks/useRedraw';
+import { useEventListener } from './hooks/useEventListener';
 
 const SIZE = 35;
 
-// TODO: We should be able to cache this across - both here and ObjectPickerPanel
 const NODE_CACHE = new Map<string, Diagram>();
 
 const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: Stencil }) => {
   const document = props.diagram.document;
 
   if (NODE_CACHE.has(props.stencil.id)) {
-    return NODE_CACHE.get(props.stencil.id)!;
+    const diagram = NODE_CACHE.get(props.stencil.id)!;
+    UnitOfWork.execute(diagram, uow => {
+      if (!copyStyles(diagram, document, uow)) {
+        uow.abort();
+      }
+    });
+    return diagram;
   }
 
-  const { diagram, elements } = createThumbnail(
-    d => props.stencil.elementsForCanvas(d),
-    document.registry
-  );
-  const bbox = Box.boundingBox(elements.map(e => e.bounds));
-  diagram.viewBox.dimensions = { w: bbox.w + 10, h: bbox.h + 10 };
-  diagram.viewBox.offset = { x: -5, y: -5 };
+  const { diagram } = createThumbnail(d => props.stencil.elementsForCanvas(d), document.registry, {
+    padding: 5
+  });
+  UnitOfWork.execute(diagram, uow => {
+    addStencilStylesToDocument(props.stencil, document, uow);
+    copyStyles(diagram, document, uow);
+  });
 
   NODE_CACHE.set(props.stencil.id, diagram);
 
@@ -43,8 +55,7 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
   return (
     <div style={{ background: 'transparent' }} data-width={stencilDiagram.viewBox.dimensions.w}>
       <PickerCanvas
-        width={SIZE}
-        height={SIZE}
+        size={SIZE}
         diagramWidth={stencilDiagram.viewBox.dimensions.w}
         diagramHeight={stencilDiagram.viewBox.dimensions.h}
         diagram={stencilDiagram}
@@ -62,6 +73,12 @@ export const ShapeSelectDialog = (props: Props) => {
   const diagram = useDiagram();
   const ref = useRef<HTMLInputElement>(null);
   const stencilRegistry = diagram.document.registry.stencils;
+  const redraw = useRedraw();
+
+  useEventListener(diagram.document.styles, 'stylesheetUpdated', () => redraw());
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: we want to trigger re-render in case document is changed
+  useEffect(() => redraw(), [document, redraw]);
 
   const [search, setSearch] = useState('');
   const [stencils, setStencils] = useState<Stencil[]>([]);

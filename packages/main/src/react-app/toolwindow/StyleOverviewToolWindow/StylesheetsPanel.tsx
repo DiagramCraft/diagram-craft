@@ -60,8 +60,7 @@ const ElementStylesheetItem = ({
           <div className={styles.styleItem} onClick={() => onApply(stylesheet)}>
             <div className={styles.stylePreview}>
               <PickerCanvas
-                width={PickerConfig.size}
-                height={PickerConfig.size}
+                size={PickerConfig.size}
                 diagram={previewDiagram}
                 showHover={false}
                 onMouseDown={e => {
