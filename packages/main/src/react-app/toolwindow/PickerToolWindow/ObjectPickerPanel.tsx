@@ -38,15 +38,18 @@ type Group = {
 };
 
 const updateStyles = (groups: Array<Group>, diagram: Diagram) => {
+  let changes = false;
   for (const group of groups) {
     for (const stencil of group.stencils) {
       UnitOfWork.execute(stencil.stencilDiagram, uow => {
         if (!copyStyles(stencil.stencilDiagram, diagram.document, uow)) {
           uow.abort();
         }
+        changes = true;
       });
     }
   }
+  return changes;
 };
 
 const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
@@ -65,7 +68,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   UnitOfWork.execute(stencilDiagram, uow => {
     addStencilStylesToDocument(n, stencilDiagram.document, uow);
     copyStyles(stencilDiagram, doc, uow);
-    stencilElements.forEach(e => e.clearCache());
+    //    stencilElements.forEach(e => e.clearCache());
   });
 
   const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
@@ -127,13 +130,11 @@ export const ObjectPickerPanel = (props: Props) => {
   }, [diagram.document, props.stencils, props.stencilPackage, props.isOpen]);
 
   useEventListener(diagram.document.styles, 'stylesheetUpdated', () => {
-    updateStyles(groups, diagram);
-    redraw();
+    if (updateStyles(groups, diagram)) redraw();
   });
 
   useEffect(() => {
-    updateStyles(groups, diagram);
-    redraw();
+    if (updateStyles(groups, diagram)) redraw();
   }, [diagram, redraw, groups]);
 
   useEffect(() => {
@@ -166,8 +167,6 @@ export const ObjectPickerPanel = (props: Props) => {
                 >
                   <PickerCanvas
                     size={PickerConfig.size}
-                    diagramWidth={s.stencilDiagram.viewBox.dimensions.w}
-                    diagramHeight={s.stencilDiagram.viewBox.dimensions.h}
                     diagram={s.stencilDiagram}
                     showHover={showHover}
                     name={

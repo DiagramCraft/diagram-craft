@@ -233,14 +233,11 @@ export const addStencilStylesToDocument = (
 
 export const copyStyles = (target: Diagram, sourceDoc: DiagramDocument, uow: UnitOfWork) => {
   const targetDoc = target.document;
-  const styles = [
-    ...sourceDoc.styles.nodeStyles,
-    ...sourceDoc.styles.edgeStyles,
-    ...sourceDoc.styles.textStyles
-  ];
+  const styles = sourceDoc.styles;
+  const all = [...styles.nodeStyles, ...styles.edgeStyles, ...styles.textStyles];
 
   let changed = false;
-  for (const style of styles) {
+  for (const style of all) {
     const existing = targetDoc.styles.get(style.id);
     if (existing) {
       if (deepEquals(existing.props, style.props)) continue;

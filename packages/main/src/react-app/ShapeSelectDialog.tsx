@@ -36,17 +36,12 @@ const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: S
     return diagram;
   }
 
-  const { diagram, elements } = createThumbnail(
-    d => props.stencil.elementsForCanvas(d),
-    document.registry,
-    {
-      padding: 5
-    }
-  );
+  const { diagram } = createThumbnail(d => props.stencil.elementsForCanvas(d), document.registry, {
+    padding: 5
+  });
   UnitOfWork.execute(diagram, uow => {
     addStencilStylesToDocument(props.stencil, document, uow);
     copyStyles(diagram, document, uow);
-    elements.forEach(e => e.clearCache());
   });
 
   NODE_CACHE.set(props.stencil.id, diagram);
@@ -61,8 +56,6 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
     <div style={{ background: 'transparent' }} data-width={stencilDiagram.viewBox.dimensions.w}>
       <PickerCanvas
         size={SIZE}
-        diagramWidth={stencilDiagram.viewBox.dimensions.w}
-        diagramHeight={stencilDiagram.viewBox.dimensions.h}
         diagram={stencilDiagram}
         showHover={true}
         name={props.stencil.name ?? 'unknown'}

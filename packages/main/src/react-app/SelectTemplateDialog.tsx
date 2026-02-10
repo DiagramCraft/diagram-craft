@@ -94,8 +94,6 @@ export const SelectTemplateDialog = (props: Props) => {
                 <div className={'light-theme'}>
                   <PickerCanvas
                     size={42}
-                    diagramWidth={node.diagram.viewBox.dimensions.w}
-                    diagramHeight={node.diagram.viewBox.dimensions.h}
                     diagram={node.diagram}
                     showHover={true}
                     name={template.name}

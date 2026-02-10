@@ -129,8 +129,6 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
 type PickerCanvasProps = {
   diagram: Diagram;
   size?: number;
-  diagramWidth?: number;
-  diagramHeight?: number;
   showHover?: boolean;
   name?: string;
   onMouseDown?: (e: MouseEvent) => void;

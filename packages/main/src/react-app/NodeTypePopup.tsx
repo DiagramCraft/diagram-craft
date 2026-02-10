@@ -98,7 +98,6 @@ export const NodeTypePopup = (props: Props) => {
     UnitOfWork.execute(diagram, uow => {
       addStencilStylesToDocument(n, diagram.document, uow);
       copyStyles(dest, diagram.document, uow);
-      elements.forEach(e => e.clearCache());
     });
 
     return [n, dest];
@@ -157,8 +156,6 @@ export const NodeTypePopup = (props: Props) => {
                 <PickerCanvas
                   name={d.name}
                   size={size}
-                  diagramWidth={d.viewBox.dimensions.w}
-                  diagramHeight={d.viewBox.dimensions.h}
                   diagram={d}
                   onMouseDown={() => addNode(stencil)}
                   scaleStrokes={stencilScaleStrokes(stencil)}
