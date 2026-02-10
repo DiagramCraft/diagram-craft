@@ -247,7 +247,12 @@ export const copyStyles = (target: Diagram, sourceDoc: DiagramDocument, uow: Uni
       existing.setProps(style.props, uow);
       changed = true;
     } else {
-      targetDoc.styles.addStylesheet(style.id, style, uow);
+      const snapshot = style.snapshot();
+      targetDoc.styles.addStylesheet(
+        style.id,
+        Stylesheet.fromSnapshot(snapshot.type, snapshot, targetDoc.styles.crdt.factory),
+        uow
+      );
       changed = true;
     }
   }

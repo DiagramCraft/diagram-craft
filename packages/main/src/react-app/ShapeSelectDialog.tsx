@@ -36,12 +36,17 @@ const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: S
     return diagram;
   }
 
-  const { diagram } = createThumbnail(d => props.stencil.elementsForCanvas(d), document.registry, {
-    padding: 5
-  });
+  const { diagram, elements } = createThumbnail(
+    d => props.stencil.elementsForCanvas(d),
+    document.registry,
+    {
+      padding: 5
+    }
+  );
   UnitOfWork.execute(diagram, uow => {
     addStencilStylesToDocument(props.stencil, document, uow);
     copyStyles(diagram, document, uow);
+    elements.forEach(e => e.clearCache());
   });
 
   NODE_CACHE.set(props.stencil.id, diagram);
