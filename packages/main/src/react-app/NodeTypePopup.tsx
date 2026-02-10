@@ -12,7 +12,7 @@ import {
   Stencil,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
+import { assignNewBounds } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
 import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
@@ -27,6 +27,7 @@ export const NodeTypePopup = (props: Props) => {
 
   const addNode = useCallback(
     (registration: Stencil) => {
+      const sourceNode = mustExist(diagram.nodeLookup.get(props.nodeId));
       const diagramPosition = diagram.viewBox.toDiagramPoint(props.position);
 
       const dimension = 50;
@@ -36,19 +37,21 @@ export const NodeTypePopup = (props: Props) => {
       assertRegularLayer(layer);
 
       // Need to clone outside of the primary uow in order to avoid out-of-order updates
-      const elements = UnitOfWork.execute(diagram, uow =>
-        cloneElements(registration.elementsForPicker(diagram).elements, layer, uow)
-      );
+      const elements = registration.elementsForCanvas(diagram).elements;
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
+      // TODO: This is not particularly elegant - better to call elementsForCanvas with
+      //       a dummy Diagram
+      UnitOfWork.execute(diagram, uow => layer.removeElement(node, uow));
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
         layer.addElement(node, uow);
 
         assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
         node.updateMetadata(meta => {
-          meta.style = diagram.document.styles.activeNodeStylesheet.id;
-          meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+          meta.style = sourceNode.metadata.style ?? diagram.document.styles.activeNodeStylesheet.id;
+          meta.textStyle =
+            sourceNode.metadata.textStyle ?? diagram.document.styles.activeTextStylesheet.id;
         }, uow);
 
         const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
