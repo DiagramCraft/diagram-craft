@@ -213,14 +213,10 @@ const TemplateGridItem = (props: {
               className={'light-theme'}
             >
               <PickerCanvas
-                width={PICKER_CANVAS_SIZE}
-                height={PICKER_CANVAS_SIZE}
-                diagramWidth={itemDiagram.viewBox.dimensions.w}
-                diagramHeight={itemDiagram.viewBox.dimensions.h}
+                size={PICKER_CANVAS_SIZE}
                 diagram={itemDiagram}
                 showHover={true}
                 name={item[schema.fields[0]!.id] as string}
-                onMouseDown={() => {}}
               />
             </div>
           }
@@ -416,14 +412,10 @@ const DataProviderListView = (props: DataViewProps) => {
                                             className={'light-theme'}
                                           >
                                             <PickerCanvas
-                                              width={PICKER_CANVAS_SIZE}
-                                              height={PICKER_CANVAS_SIZE}
-                                              diagramWidth={n.diagram.viewBox.dimensions.w}
-                                              diagramHeight={n.diagram.viewBox.dimensions.h}
+                                              size={PICKER_CANVAS_SIZE}
                                               diagram={n.diagram}
                                               showHover={true}
                                               name={t.name}
-                                              onMouseDown={() => {}}
                                             />
                                           </div>
                                         }

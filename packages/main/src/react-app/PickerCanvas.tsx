@@ -116,8 +116,8 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
       <Canvas<StaticCanvasComponent, StaticCanvasProps>
         id={`picker-canvas-${props.diagram.id}`}
         context={application}
-        width={props.width ?? 40}
-        height={props.height ?? 40}
+        width={props.size ?? 40}
+        height={props.size ?? 40}
         diagram={diagram}
         viewbox={`${props.diagram.viewBox.svgViewboxString}`}
         canvasFactory={canvasFactory}
@@ -128,10 +128,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
 
 type PickerCanvasProps = {
   diagram: Diagram;
-  width?: number;
-  height?: number;
-  diagramWidth?: number;
-  diagramHeight?: number;
+  size?: number;
   showHover?: boolean;
   name?: string;
   onMouseDown?: (e: MouseEvent) => void;

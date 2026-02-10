@@ -1,12 +1,17 @@
 import { PickerCanvas } from './PickerCanvas';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
+import {
+  addStencilStylesToDocument,
+  copyStyles,
+  Stencil,
+  stencilScaleStrokes
+} from '@diagram-craft/model/stencilRegistry';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
@@ -74,26 +79,29 @@ export const NodeTypePopup = (props: Props) => {
 
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
-  const diagramsAndNodes: Array<[Stencil, Diagram]> = useMemo(() => {
-    const nodes = diagram.document.registry.stencils.get('default').stencils;
-    return nodes.map(n => {
-      const { diagram: dest } = DocumentBuilder.empty(
-        n.id,
-        n.name ?? n.id,
-        new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
-      );
+  const nodes = diagram.document.registry.stencils.get('default').stencils;
+  const diagramsAndNodes: Array<[Stencil, Diagram]> = nodes.map(n => {
+    const { diagram: dest } = DocumentBuilder.empty(
+      n.id,
+      n.name ?? n.id,
+      new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
+    );
 
-      // TODO: Can we use createThumbnail here somehow
-      const elements = n.elementsForPicker(dest).elements;
-      assert.arrayWithExactlyOneElement(elements);
-      const node = elements[0]! as DiagramNode;
+    // TODO: Can we use createThumbnail here somehow
+    const elements = n.elementsForPicker(dest).elements;
+    assert.arrayWithExactlyOneElement(elements);
+    const node = elements[0]! as DiagramNode;
 
-      dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-      dest.viewBox.offset = { x: -5, y: -5 };
+    dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+    dest.viewBox.offset = { x: -5, y: -5 };
 
-      return [n, dest];
+    UnitOfWork.execute(diagram, uow => {
+      addStencilStylesToDocument(n, diagram.document, uow);
+      copyStyles(dest, diagram.document, uow);
     });
-  }, [diagram]);
+
+    return [n, dest];
+  });
 
   // Cleanup documents when they change or component unmounts
   useEffect(() => {
@@ -147,10 +155,7 @@ export const NodeTypePopup = (props: Props) => {
               <div key={idx} style={{ background: 'transparent' }}>
                 <PickerCanvas
                   name={d.name}
-                  width={size}
-                  height={size}
-                  diagramWidth={d.viewBox.dimensions.w}
-                  diagramHeight={d.viewBox.dimensions.h}
+                  size={size}
                   diagram={d}
                   onMouseDown={() => addNode(stencil)}
                   scaleStrokes={stencilScaleStrokes(stencil)}

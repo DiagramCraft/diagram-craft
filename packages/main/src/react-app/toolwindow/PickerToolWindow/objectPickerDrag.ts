@@ -1,10 +1,5 @@
 import { AbstractMoveDrag } from '@diagram-craft/canvas/drag/moveDrag';
-import {
-  DiagramElement,
-  isEdge,
-  isNode,
-  transformElements
-} from '@diagram-craft/model/diagramElement';
+import { DiagramElement, transformElements } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { _p, Point } from '@diagram-craft/geometry/point';
@@ -18,7 +13,6 @@ import {
 } from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { clamp } from '@diagram-craft/utils/math';
 import { insert } from '@diagram-craft/canvas/component/vdom';
 import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
@@ -240,24 +234,6 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this.#elements, point, Point.of(scaleX, scaleY), uow);
-
-      this.#elements.forEach(e => {
-        if (isNode(e)) {
-          e.updateMetadata(meta => {
-            if (meta.style === DefaultStyles.node.default) {
-              meta.style = this.diagram.document.styles.activeNodeStylesheet.id;
-            }
-            if (meta.textStyle === DefaultStyles.text.default) {
-              meta.textStyle = this.diagram.document.styles.activeTextStylesheet.id;
-            }
-          }, uow);
-        } else if (isEdge(e)) {
-          e.updateMetadata(
-            meta => (meta.style = this.diagram.document.styles.activeEdgeStylesheet.id),
-            uow
-          );
-        }
-      });
     });
 
     this.diagram.selection.clear();

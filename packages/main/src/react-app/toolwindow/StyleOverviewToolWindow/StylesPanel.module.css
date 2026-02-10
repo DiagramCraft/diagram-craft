@@ -1,3 +1,11 @@
+.styleOverviewSelect {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--cmp-border);
+
+  .cmp-select-trigger {
+    width: 100%;
+  }
+}
 
 .styleOverviewTooltip {
   white-space: pre-line;

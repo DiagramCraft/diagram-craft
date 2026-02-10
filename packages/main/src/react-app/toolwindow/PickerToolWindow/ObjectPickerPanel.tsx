@@ -2,6 +2,7 @@ import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
+  copyStyles,
   Stencil,
   StencilPackage,
   stencilScaleStrokes
@@ -17,6 +18,8 @@ import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { useEventListener } from '../../hooks/useEventListener';
+import { useRedraw } from '../../hooks/useRedraw';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -26,6 +29,28 @@ type StencilEntry = {
 };
 
 const STENCIL_CACHE = new Map<string, StencilEntry>();
+
+type Group = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  stencils: Array<StencilEntry>;
+};
+
+const updateStyles = (groups: Array<Group>, diagram: Diagram) => {
+  let changes = false;
+  for (const group of groups) {
+    for (const stencil of group.stencils) {
+      UnitOfWork.execute(stencil.stencilDiagram, uow => {
+        if (!copyStyles(stencil.stencilDiagram, diagram.document, uow)) {
+          uow.abort();
+        }
+        changes = true;
+      });
+    }
+  }
+  return changes;
+};
 
 const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   const cacheKey = n.id;
@@ -42,7 +67,8 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
   UnitOfWork.execute(stencilDiagram, uow => {
     addStencilStylesToDocument(n, stencilDiagram.document, uow);
-    stencilElements.forEach(e => e.clearCache());
+    copyStyles(stencilDiagram, doc, uow);
+    //    stencilElements.forEach(e => e.clearCache());
   });
 
   const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
@@ -62,17 +88,14 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
 
 export const ObjectPickerPanel = (props: Props) => {
   const diagram = useDiagram();
+
   const [showHover, setShowHover] = useState(true);
   const app = useApplication();
   const [loaded, setLoaded] = useState(false);
+  const redraw = useRedraw();
 
   const groups = useMemo(() => {
-    const res: Array<{
-      id: string;
-      name: string;
-      isDefault: boolean;
-      stencils: Array<StencilEntry>;
-    }> = [];
+    const res: Array<Group> = [];
 
     if (!props.isOpen) return res;
 
@@ -106,6 +129,14 @@ export const ObjectPickerPanel = (props: Props) => {
     return res;
   }, [diagram.document, props.stencils, props.stencilPackage, props.isOpen]);
 
+  useEventListener(diagram.document.styles, 'stylesheetUpdated', () => {
+    if (updateStyles(groups, diagram)) redraw();
+  });
+
+  useEffect(() => {
+    if (updateStyles(groups, diagram)) redraw();
+  }, [diagram, redraw, groups]);
+
   useEffect(() => {
     if (props.isOpen) {
       setLoaded(true);
@@ -135,10 +166,7 @@ export const ObjectPickerPanel = (props: Props) => {
                   data-width={s.stencilDiagram.viewBox.dimensions.w}
                 >
                   <PickerCanvas
-                    width={PickerConfig.size}
-                    height={PickerConfig.size}
-                    diagramWidth={s.stencilDiagram.viewBox.dimensions.w}
-                    diagramHeight={s.stencilDiagram.viewBox.dimensions.h}
+                    size={PickerConfig.size}
                     diagram={s.stencilDiagram}
                     showHover={showHover}
                     name={

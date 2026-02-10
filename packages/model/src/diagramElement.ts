@@ -28,6 +28,7 @@ import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -536,23 +537,24 @@ export const bindElementListeners = (diagram: Diagram, releasables: Releasables)
   );
 
   /* On stylesheet change -------------------------------------------- */
-  releasables.add(
-    diagram.document.styles.on('stylesheetUpdated', s => {
-      const id = s.stylesheet.id;
+  // biome-ignore lint/suspicious/noExplicitAny: any needed for Stylesheet
+  const stylesheetUpdated = (s: { stylesheet: Stylesheet<any> }) => {
+    const id = s.stylesheet.id;
 
-      const elements = new Set<DiagramElement>();
-      for (const el of diagram.allElements()) {
-        if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
-          elements.add(el);
-        }
+    const elements = new Set<DiagramElement>();
+    for (const el of diagram.allElements()) {
+      if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
+        elements.add(el);
       }
-      elements.forEach(e => {
-        e.clearCache();
-        e.diagram.emit('elementChange', { element: e });
-      });
-      diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
-    })
-  );
+    }
+    elements.forEach(e => {
+      e.clearCache();
+      e.diagram.emit('elementChange', { element: e });
+    });
+    diagram.emit('elementBatchChange', { added: [], removed: [], updated: [...elements] });
+  };
+  releasables.add(diagram.document.styles.on('stylesheetUpdated', stylesheetUpdated));
+  releasables.add(diagram.document.styles.on('stylesheetAdded', stylesheetUpdated));
 
   /* On layer change ------------------------------------------------- */
   releasables.add(

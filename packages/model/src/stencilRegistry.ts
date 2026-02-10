@@ -16,6 +16,7 @@ import { ElementProps } from '@diagram-craft/model/diagramProps';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { deepEquals } from '@diagram-craft/utils/object';
 
 export type StencilElements = { bounds: Box; elements: DiagramElement[] };
 
@@ -228,6 +229,32 @@ export const addStencilStylesToDocument = (
       styleManager.addStylesheet(style.id, stylesheet, uow);
     }
   }
+};
+
+export const copyStyles = (target: Diagram, sourceDoc: DiagramDocument, uow: UnitOfWork) => {
+  const targetDoc = target.document;
+  const styles = sourceDoc.styles;
+  const all = [...styles.nodeStyles, ...styles.edgeStyles, ...styles.textStyles];
+
+  let changed = false;
+  for (const style of all) {
+    const existing = targetDoc.styles.get(style.id);
+    if (existing) {
+      if (deepEquals(existing.props, style.props)) continue;
+      existing.setProps(style.props, uow);
+      changed = true;
+    } else {
+      const snapshot = style.snapshot();
+      targetDoc.styles.addStylesheet(
+        style.id,
+        Stylesheet.fromSnapshot(snapshot.type, snapshot, targetDoc.styles.crdt.factory),
+        uow
+      );
+      changed = true;
+    }
+  }
+
+  return changed;
 };
 
 export const stencilScaleStrokes = (stencil: Stencil) => {
