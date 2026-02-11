@@ -4,18 +4,16 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
-import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
   copyStyles,
   Stencil,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
-import { assignNewBounds } from '@diagram-craft/model/diagramElementUtils';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
-import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -37,12 +35,13 @@ export const NodeTypePopup = (props: Props) => {
       assertRegularLayer(layer);
 
       // Need to clone outside of the primary uow in order to avoid out-of-order updates
-      const elements = registration.elementsForCanvas(diagram).elements;
+      // TODO: Do we need to clone these elements or not
+      const registry = diagram.document.registry;
+      const elements = UnitOfWork.execute(diagram, uow =>
+        cloneElements(registration.elementsForPicker(registry).elements, layer, uow)
+      );
       assert.arrayWithExactlyOneElement(elements);
       const node = elements[0]! as DiagramNode;
-      // TODO: This is not particularly elegant - better to call elementsForCanvas with
-      //       a dummy Diagram
-      UnitOfWork.execute(diagram, uow => layer.removeElement(node, uow));
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
         layer.addElement(node, uow);
@@ -84,14 +83,8 @@ export const NodeTypePopup = (props: Props) => {
   //       node type
   const nodes = diagram.document.registry.stencils.get('default').stencils;
   const diagramsAndNodes: Array<[Stencil, Diagram]> = nodes.map(n => {
-    const { diagram: dest } = DocumentBuilder.empty(
-      n.id,
-      n.name ?? n.id,
-      new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
-    );
-
     // TODO: Can we use createThumbnail here somehow
-    const elements = n.elementsForPicker(dest).elements;
+    const { elements, diagram: dest } = n.elementsForPicker(diagram.document.registry);
     assert.arrayWithExactlyOneElement(elements);
     const node = elements[0]! as DiagramNode;
 

@@ -16,7 +16,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { registerUMLShapes } from '@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader';
-import { NodeDefinitionRegistry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Scale } from '@diagram-craft/geometry/transform';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -366,7 +366,7 @@ const SHAPES_DEFS = [
 
 const writeShape = (
   shape: string,
-  factory: (diagram: Diagram) => { elements: DiagramElement[] },
+  factory: (registry: Registry) => { elements: DiagramElement[] },
   y: number,
   layer: RegularLayer,
   diagram: Diagram,
@@ -404,7 +404,7 @@ const writeShape = (
   UnitOfWork.execute(diagram, uow => {
     for (let i = 0; i < SHAPES_DEFS.length; i++) {
       const def = SHAPES_DEFS[i]!;
-      const els = factory(diagram).elements;
+      const els = factory(diagram.document.registry).elements;
       if (els.length !== 1) throw new Error('Expected single element');
 
       const el = els[0]!.duplicate(undefined, `${shape}-${i}`);

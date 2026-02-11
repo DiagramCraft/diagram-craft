@@ -1,23 +1,19 @@
-import { DiagramNode, NodeTexts } from './diagramNode';
+import { DiagramNode } from './diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from './unitOfWork';
 import { Anchor } from './anchor';
 import { Box } from '@diagram-craft/geometry/box';
 import type { Diagram } from './diagram';
-import { newid } from '@diagram-craft/utils/id';
 import { PathList } from '@diagram-craft/geometry/pathList';
-import { assertRegularLayer } from './diagramLayerUtils';
-import { ElementFactory } from './elementFactory';
 import type { Property } from './property';
 import type { EdgeDefinition } from './edgeDefinition';
-import type { EdgeProps, ElementMetadata, NodeProps } from './diagramProps';
+import type { EdgeProps, NodeProps } from './diagramProps';
 import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 export type NodeFlag = string & { __brand: 'nodeFlag' };
@@ -473,71 +469,3 @@ export type Registry = {
   edges: EdgeDefinitionRegistry;
   stencils: StencilRegistry;
 };
-
-export type MakeStencilNodeOpts = {
-  id?: string;
-  name?: string;
-  aspectRatio?: number;
-  size?: { w: number; h: number };
-  props?: MakeStencilNodeOptsProps;
-  metadata?: ElementMetadata;
-  texts?: NodeTexts;
-  subPackage?: string;
-};
-
-export type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps | EdgeProps>;
-
-export const makeStencilNode =
-  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
-    UnitOfWork.execute($d, uow => {
-      const layer = $d.activeLayer;
-      assertRegularLayer(layer);
-
-      const n = ElementFactory.node(
-        newid(),
-        typeId,
-        Box.applyAspectRatio(
-          { x: 0, y: 0, w: $d.bounds.w, h: $d.bounds.h, r: 0 },
-          opts?.aspectRatio ?? 1
-        ),
-        layer,
-        (opts?.props?.(t) ?? {}) as NodeProps,
-        opts?.metadata ?? {},
-        opts?.texts
-      );
-
-      const size = { w: 100, h: 100 };
-
-      n.setBounds(
-        Box.applyAspectRatio(
-          { x: 0, y: 0, w: opts?.size?.w ?? size.w, h: opts?.size?.h ?? size.h, r: 0 },
-          opts?.aspectRatio ?? 1
-        ),
-        uow
-      );
-
-      layer.addElement(n, uow);
-
-      return { bounds: n.bounds, elements: [n] };
-    });
-
-export const makeStencilEdge =
-  (typeId: string, t: 'picker' | 'canvas', opts?: MakeStencilNodeOpts) => ($d: Diagram) =>
-    UnitOfWork.execute($d, uow => {
-      const layer = $d.activeLayer;
-      assertRegularLayer(layer);
-
-      const e = ElementFactory.edge(
-        newid(),
-        new FreeEndpoint(_p(0, 50)),
-        new FreeEndpoint(_p(100, 50)),
-        { ...(opts?.props?.(t) ?? {}), shape: typeId } as EdgeProps,
-        opts?.metadata ?? {},
-        [],
-        layer
-      );
-
-      layer.addElement(e, uow);
-
-      return { bounds: Box.from({ w: 100, h: 100 }), elements: [e] };
-    });

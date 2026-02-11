@@ -1,8 +1,4 @@
-import {
-  MakeStencilNodeOptsProps,
-  NodeDefinitionRegistry,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UmlModuleNodeDefinition } from './umlModule';
 import { Box } from '@diagram-craft/geometry/box';
 import { shapeParsers } from '../../drawioShapeParserRegistry';
@@ -25,6 +21,7 @@ import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 import { addStencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { MakeStencilNodeOpts } from '@diagram-craft/model/stencilUtils';
 
 export const parseUMLShapes = async (
   id: string,
@@ -58,7 +55,7 @@ export const loadUMLStencils = async (registry: Registry) => {
 
   umlStencils.stencils.push(...loadStencilsFromYaml(stencils));
 
-  const props: MakeStencilNodeOptsProps = () => ({
+  const props: MakeStencilNodeOpts['props'] = () => ({
     fill: {
       color: 'var(--canvas-bg2)'
     },
@@ -71,7 +68,7 @@ export const loadUMLStencils = async (registry: Registry) => {
     }
   });
 
-  const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOptsProps = p => () =>
+  const mergedProps: (p: Partial<NodeProps>) => MakeStencilNodeOpts['props'] = p => () =>
     deepMerge(props('picker'), p);
 
   addStencil(umlStencils, new UmlActor(), { aspectRatio: 0.6, props });

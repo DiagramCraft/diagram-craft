@@ -11,7 +11,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
-import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnail2 } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ToolWindowPanel, type ToolWindowPanelMode } from '../ToolWindowPanel';
 import { PickerConfig } from './pickerConfig';
@@ -59,7 +59,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     return STENCIL_CACHE.get(cacheKey)!;
   }
 
-  const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail(
+  const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail2(
     d => n.elementsForPicker(d),
     doc.registry,
     { padding: 5 }
@@ -71,7 +71,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     //    stencilElements.forEach(e => e.clearCache());
   });
 
-  const { elements: canvasElements } = createThumbnail(d => n.elementsForCanvas(d), doc.registry, {
+  const { elements: canvasElements } = createThumbnail2(d => n.elementsForCanvas(d), doc.registry, {
     padding: 5
   });
 

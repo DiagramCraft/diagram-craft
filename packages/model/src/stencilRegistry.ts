@@ -2,13 +2,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
-import {
-  makeStencilEdge,
-  makeStencilNode,
-  MakeStencilNodeOpts,
-  NodeDefinition,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinition, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { safeSplit } from '@diagram-craft/utils/safe';
@@ -17,14 +11,21 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
+import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilUtils';
 
-export type StencilElements = { bounds: Box; elements: DiagramElement[] };
+export type StencilElements = {
+  bounds: Box;
+  elements: DiagramElement[];
+  diagram: Diagram;
+  layer: RegularLayer;
+};
 
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (diagram: Diagram) => StencilElements;
-  elementsForCanvas: (diagram: Diagram) => StencilElements;
+  elementsForPicker: (registry: Registry) => StencilElements;
+  elementsForCanvas: (registry: Registry) => StencilElements;
   styles?: Array<StencilStyle>;
   type: 'default' | string;
   settings?: {
@@ -202,11 +203,11 @@ export const addStencil = (
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
     elementsForPicker: isNodeDef
-      ? makeStencilNode(def.type, 'picker', opts)
-      : makeStencilEdge(def.type, 'picker', opts),
+      ? StencilUtils.makeNode(def.type, 'picker', opts)
+      : StencilUtils.makeEdge(def.type, 'picker', opts),
     elementsForCanvas: isNodeDef
-      ? makeStencilNode(def.type, 'canvas', opts)
-      : makeStencilEdge(def.type, 'canvas', opts),
+      ? StencilUtils.makeNode(def.type, 'canvas', opts)
+      : StencilUtils.makeEdge(def.type, 'canvas', opts),
     type: pkg.type
   };
 

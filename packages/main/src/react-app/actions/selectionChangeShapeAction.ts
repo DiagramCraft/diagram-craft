@@ -56,7 +56,7 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);
 
-          const elements = stencil.elementsForPicker(diagram).elements;
+          const elements = stencil.elementsForPicker(diagram.document.registry).elements;
           assert.arrayWithExactlyOneElement(elements);
           const source = elements[0]!;
           if (!isNode(source)) throw new VerifyNotReached();

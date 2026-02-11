@@ -1,24 +1,23 @@
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
-import { Diagram } from '@diagram-craft/model/diagram';
 import { assertDrawioShapeNodeDefinition } from './node-types/DrawioShape.nodeType';
 import { newid } from '@diagram-craft/utils/id';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DrawioStencil } from './drawioStencilLoader';
-import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
 export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
-  const mkNode = ($d: Diagram) => {
+  const mkNode = (registry: Registry) => {
+    const { diagram, layer } = StencilUtils.makeDiagram(registry);
+
     const type = 'drawio';
 
-    const def = $d.document.registry.nodes.get(type);
+    const def = diagram.document.registry.nodes.get(type);
     assertDrawioShapeNodeDefinition(def);
 
-    const layer = $d.activeLayer;
-    assertRegularLayer(layer);
-
-    return UnitOfWork.execute($d, uow => {
+    return UnitOfWork.execute(diagram, uow => {
       const node = ElementFactory.node(newid(), type, Box.unit(), layer, drawio.props, {});
       const size = def.getSize(node);
 
@@ -26,7 +25,7 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
 
       layer.addElement(node, uow);
 
-      return { elements: [node], bounds: node.bounds };
+      return { elements: [node], bounds: node.bounds, diagram, layer };
     });
   };
   return {
