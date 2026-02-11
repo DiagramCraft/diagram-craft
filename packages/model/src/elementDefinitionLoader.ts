@@ -26,12 +26,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
         );
         elements.forEach(e => layer.addElement(e, uow));
 
-        return {
-          elements: elements,
-          bounds: Box.boundingBox(elements.map(e => e.bounds)),
-          diagram,
-          layer
-        };
+        const bounds = Box.boundingBox(elements.map(e => e.bounds));
+        return { elements, bounds, diagram, layer };
       });
     };
     dest.push({

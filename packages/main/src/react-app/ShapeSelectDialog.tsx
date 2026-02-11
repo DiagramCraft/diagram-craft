@@ -13,7 +13,7 @@ import {
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
 import { isEmptyString } from '@diagram-craft/utils/strings';
-import { createThumbnail2 } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { createThumbnailFromStencil } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useRedraw } from './hooks/useRedraw';
@@ -36,7 +36,7 @@ const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: S
     return diagram;
   }
 
-  const { diagram } = createThumbnail2(d => props.stencil.forCanvas(d), document.registry, {
+  const { diagram } = createThumbnailFromStencil(props.stencil.forCanvas(document.registry), {
     padding: 5
   });
   UnitOfWork.execute(diagram, uow => {

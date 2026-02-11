@@ -40,12 +40,11 @@ export const createThumbnail = (
   });
 };
 
-export const createThumbnail2 = (
-  factory: (registry: Registry) => StencilElements,
-  definitions: Registry,
+export const createThumbnailFromStencil = (
+  stencil: StencilElements,
   opts?: { padding: number }
 ) => {
-  const { elements, diagram, bounds, layer } = factory(definitions);
+  const { elements, diagram, bounds } = stencil;
 
   return UnitOfWork.executeSilently(diagram, uow => {
     elements.filter(isNode).forEach(e => e.invalidateAnchors(uow));
@@ -54,6 +53,6 @@ export const createThumbnail2 = (
     diagram.viewBox.dimensions = Box.grow(bounds, 2 * padding);
     diagram.viewBox.offset = { x: -padding, y: -padding };
 
-    return { diagram, layer, elements, bounds };
+    return stencil;
   });
 };

@@ -38,7 +38,6 @@ export const NodeTypePopup = (props: Props) => {
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
         const els = cloneElements(stencil.forPicker(registry).elements, layer, uow);
-
         assert.arrayWithExactlyOneElement(els);
         const node = els[0]! as DiagramNode;
 
