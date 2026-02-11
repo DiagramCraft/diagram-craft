@@ -60,7 +60,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
   }
 
   const { elements: stencilElements, diagram: stencilDiagram } = createThumbnail2(
-    d => n.elementsForPicker(d),
+    d => n.forPicker(d),
     doc.registry,
     { padding: 5 }
   );
@@ -71,7 +71,7 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     //    stencilElements.forEach(e => e.clearCache());
   });
 
-  const { elements: canvasElements } = createThumbnail2(d => n.elementsForCanvas(d), doc.registry, {
+  const { elements: canvasElements } = createThumbnail2(d => n.forCanvas(d), doc.registry, {
     padding: 5
   });
 

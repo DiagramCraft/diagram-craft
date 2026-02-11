@@ -479,7 +479,7 @@ const shapesTestFile = async (
 
     for (const stencil of stencils.get(pkg.slice(4)).stencils) {
       if (stencil.id === 'table' || stencil.id === 'container') continue;
-      writeShape(stencil.name ?? stencil.id, stencil.elementsForPicker, y, layer, diagram, opts);
+      writeShape(stencil.name ?? stencil.id, stencil.forPicker, y, layer, diagram, opts);
       y += opts.yDiff;
     }
 
@@ -503,7 +503,7 @@ const shapesTestFile = async (
       if (stencil.id === shape) {
         const ret = writeShape(
           stencil.name ?? stencil.id,
-          stencil.elementsForPicker,
+          stencil.forPicker,
           y,
           layer,
           diagram,

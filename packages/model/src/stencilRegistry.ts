@@ -24,8 +24,8 @@ export type StencilElements = {
 export type Stencil = {
   id: string;
   name?: string;
-  elementsForPicker: (registry: Registry) => StencilElements;
-  elementsForCanvas: (registry: Registry) => StencilElements;
+  forPicker: (registry: Registry) => StencilElements;
+  forCanvas: (registry: Registry) => StencilElements;
   styles?: Array<StencilStyle>;
   type: 'default' | string;
   settings?: {
@@ -202,10 +202,10 @@ export const addStencil = (
   const stencil = {
     id: opts?.id ?? def.type,
     name: opts?.name ?? def.name,
-    elementsForPicker: isNodeDef
+    forPicker: isNodeDef
       ? StencilUtils.makeNode(def.type, 'picker', opts)
       : StencilUtils.makeEdge(def.type, 'picker', opts),
-    elementsForCanvas: isNodeDef
+    forCanvas: isNodeDef
       ? StencilUtils.makeNode(def.type, 'canvas', opts)
       : StencilUtils.makeEdge(def.type, 'canvas', opts),
     type: pkg.type

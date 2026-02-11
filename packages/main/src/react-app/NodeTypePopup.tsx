@@ -24,7 +24,7 @@ export const NodeTypePopup = (props: Props) => {
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const addNode = useCallback(
-    (registration: Stencil) => {
+    (stencil: Stencil) => {
       const sourceNode = mustExist(diagram.nodeLookup.get(props.nodeId));
       const diagramPosition = diagram.viewBox.toDiagramPoint(props.position);
 
@@ -34,16 +34,14 @@ export const NodeTypePopup = (props: Props) => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      // Need to clone outside of the primary uow in order to avoid out-of-order updates
-      // TODO: Do we need to clone these elements or not
       const registry = diagram.document.registry;
-      const elements = UnitOfWork.execute(diagram, uow =>
-        cloneElements(registration.elementsForPicker(registry).elements, layer, uow)
-      );
-      assert.arrayWithExactlyOneElement(elements);
-      const node = elements[0]! as DiagramNode;
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+        const els = cloneElements(stencil.forPicker(registry).elements, layer, uow);
+
+        assert.arrayWithExactlyOneElement(els);
+        const node = els[0]! as DiagramNode;
+
         layer.addElement(node, uow);
 
         assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
@@ -58,7 +56,7 @@ export const NodeTypePopup = (props: Props) => {
 
         uow.diagram.undoManager.getToMark().forEach(a => uow.add(a));
       });
-      diagram.document.props.recentStencils.register(registration.id);
+      diagram.document.props.recentStencils.register(stencil.id);
 
       props.onClose();
     },
@@ -84,7 +82,7 @@ export const NodeTypePopup = (props: Props) => {
   const nodes = diagram.document.registry.stencils.get('default').stencils;
   const diagramsAndNodes: Array<[Stencil, Diagram]> = nodes.map(n => {
     // TODO: Can we use createThumbnail here somehow
-    const { elements, diagram: dest } = n.elementsForPicker(diagram.document.registry);
+    const { elements, diagram: dest } = n.forPicker(diagram.document.registry);
     assert.arrayWithExactlyOneElement(elements);
     const node = elements[0]! as DiagramNode;
 

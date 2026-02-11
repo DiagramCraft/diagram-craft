@@ -36,7 +36,7 @@ const getDiagram = (props: { diagram: Diagram; onClick: { (): void }; stencil: S
     return diagram;
   }
 
-  const { diagram } = createThumbnail2(d => props.stencil.elementsForCanvas(d), document.registry, {
+  const { diagram } = createThumbnail2(d => props.stencil.forCanvas(d), document.registry, {
     padding: 5
   });
   UnitOfWork.execute(diagram, uow => {
@@ -100,7 +100,7 @@ export const ShapeSelectDialog = (props: Props) => {
     const stencil = stencilRegistry.getStencil(s)!;
     if (!stencil) return false;
 
-    const { elements } = stencil.elementsForPicker(document.registry);
+    const { elements } = stencil.forPicker(document.registry);
 
     if (props.excludeMultiElementStencils && elements.length > 1) return false;
 

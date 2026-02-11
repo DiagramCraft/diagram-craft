@@ -39,8 +39,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
       name: stencil.name,
       styles: stencil.styles,
       settings: stencil.settings,
-      elementsForPicker: mkNode,
-      elementsForCanvas: mkNode,
+      forPicker: mkNode,
+      forCanvas: mkNode,
       type: 'yaml'
     });
   }
