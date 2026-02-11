@@ -7,9 +7,9 @@ export const RecentShapesPickerPanel = () => {
 
   return (
     <ObjectPickerPanel
-      stencils={diagram.document.props.recentStencils.stencils.map(
-        s => stencilRegistry.getStencil(s)!
-      )}
+      stencils={diagram.document.props.recentStencils.stencils
+        .map(s => stencilRegistry.getStencil(s)!)
+        .filter(e => !!e)}
       id={'recent-shapes'}
       title={'Recent shapes'}
       isOpen={true}
