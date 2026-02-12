@@ -4,8 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
-import { Diagram, DocumentBuilder } from '@diagram-craft/model/diagram';
-import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
   copyStyles,
@@ -15,7 +14,6 @@ import {
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
-import { NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -26,7 +24,8 @@ export const NodeTypePopup = (props: Props) => {
   const anchorRef = useRef<HTMLDivElement>(null);
 
   const addNode = useCallback(
-    (registration: Stencil) => {
+    (stencil: Stencil) => {
+      const sourceNode = mustExist(diagram.nodeLookup.get(props.nodeId));
       const diagramPosition = diagram.viewBox.toDiagramPoint(props.position);
 
       const dimension = 50;
@@ -35,20 +34,20 @@ export const NodeTypePopup = (props: Props) => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      // Need to clone outside of the primary uow in order to avoid out-of-order updates
-      const elements = UnitOfWork.execute(diagram, uow =>
-        cloneElements(registration.elementsForPicker(diagram).elements, layer, uow)
-      );
-      assert.arrayWithExactlyOneElement(elements);
-      const node = elements[0]! as DiagramNode;
+      const registry = diagram.document.registry;
 
       UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+        const els = cloneElements(stencil.forPicker(registry).elements, layer, uow);
+        assert.arrayWithExactlyOneElement(els);
+        const node = els[0]! as DiagramNode;
+
         layer.addElement(node, uow);
 
         assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
         node.updateMetadata(meta => {
-          meta.style = diagram.document.styles.activeNodeStylesheet.id;
-          meta.textStyle = diagram.document.styles.activeTextStylesheet.id;
+          meta.style = sourceNode.metadata.style ?? diagram.document.styles.activeNodeStylesheet.id;
+          meta.textStyle =
+            sourceNode.metadata.textStyle ?? diagram.document.styles.activeTextStylesheet.id;
         }, uow);
 
         const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
@@ -56,7 +55,7 @@ export const NodeTypePopup = (props: Props) => {
 
         uow.diagram.undoManager.getToMark().forEach(a => uow.add(a));
       });
-      diagram.document.props.recentStencils.register(registration.id);
+      diagram.document.props.recentStencils.register(stencil.id);
 
       props.onClose();
     },
@@ -81,14 +80,8 @@ export const NodeTypePopup = (props: Props) => {
   //       node type
   const nodes = diagram.document.registry.stencils.get('default').stencils;
   const diagramsAndNodes: Array<[Stencil, Diagram]> = nodes.map(n => {
-    const { diagram: dest } = DocumentBuilder.empty(
-      n.id,
-      n.name ?? n.id,
-      new DiagramDocument(diagram.document.registry, true, new NoOpCRDTRoot())
-    );
-
     // TODO: Can we use createThumbnail here somehow
-    const elements = n.elementsForPicker(dest).elements;
+    const { elements, diagram: dest } = n.forPicker(diagram.document.registry);
     assert.arrayWithExactlyOneElement(elements);
     const node = elements[0]! as DiagramNode;
 

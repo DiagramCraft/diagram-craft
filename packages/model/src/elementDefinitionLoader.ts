@@ -1,19 +1,19 @@
 import type { Stencil } from './stencilRegistry';
-import { type Diagram } from './diagram';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
+import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
+import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 export const loadStencilsFromYaml = (stencils: any) => {
   const dest: Array<Stencil> = [];
   for (const stencil of stencils.stencils) {
-    const mkNode = (diagram: Diagram) => {
-      const layer = diagram.activeLayer as RegularLayer;
+    const mkNode = (registry: Registry) => {
+      const { diagram, layer } = StencilUtils.makeDiagram(registry);
 
       return UnitOfWork.execute(diagram, uow => {
         const elements = deserializeDiagramElements(
@@ -26,7 +26,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
         );
         elements.forEach(e => layer.addElement(e, uow));
 
-        return { elements: elements, bounds: Box.boundingBox(elements.map(e => e.bounds)) };
+        const bounds = Box.boundingBox(elements.map(e => e.bounds));
+        return { elements, bounds, diagram, layer };
       });
     };
     dest.push({
@@ -34,8 +35,8 @@ export const loadStencilsFromYaml = (stencils: any) => {
       name: stencil.name,
       styles: stencil.styles,
       settings: stencil.settings,
-      elementsForPicker: mkNode,
-      elementsForCanvas: mkNode,
+      forPicker: mkNode,
+      forCanvas: mkNode,
       type: 'yaml'
     });
   }

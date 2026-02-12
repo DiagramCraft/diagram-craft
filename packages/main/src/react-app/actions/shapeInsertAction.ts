@@ -45,7 +45,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
         const v = diagram.viewBox;
 
-        const { bounds, elements } = stencil.elementsForPicker(diagram);
+        const { bounds, elements } = stencil.forCanvas(document.registry);
         const newElements = cloneElements(elements, layer as RegularLayer);
 
         UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {

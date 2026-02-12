@@ -13,7 +13,7 @@ import { transformElements } from '@diagram-craft/model/diagramElement';
 import { _p } from '@diagram-craft/geometry/point';
 import { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import { toYAML } from '@diagram-craft/utils/yaml';
-import { createStencilDiagram } from '@diagram-craft/canvas-app/diagramThumbnail';
+import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
 export const debugActions = (context: ActionContext) => ({
   DOCUMENT_DUMP: new DumpDocument(context),
@@ -53,7 +53,7 @@ class MakeStencilSelectionAction extends AbstractAction {
   name = $tStr('action.STENCIL_MAKE_STENCIL.name', 'Make Stencil');
 
   execute(): void {
-    const { layer, diagram } = createStencilDiagram(this.context.model.activeDocument.registry);
+    const { layer, diagram } = StencilUtils.makeDiagram(this.context.model.activeDocument.registry);
 
     const cloned = cloneElements(this.context.model.activeDiagram.selection.elements, layer);
 
