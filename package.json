@@ -39,6 +39,7 @@
       "js-yaml": ">=4.1.1",
       "@isaacs/brace-expansion": ">=5.0.1",
       "lodash": ">=4.17.23",
+      "lodash-es": ">=4.17.23",
       "tar": ">=7.5.7"
     }
   },
@@ -50,7 +51,7 @@
     "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
-    "skott": "^0.35.6",
+    "skott": "^0.35.7",
     "syncpack": "^12.4.0",
     "tsx": "^4.20.6",
     "typedoc": "^0.28.14",
