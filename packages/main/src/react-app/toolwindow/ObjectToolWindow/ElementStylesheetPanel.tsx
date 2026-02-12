@@ -170,6 +170,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                   Save As...
                 </Menu.Item>
                 <Menu.Item
+                  disabled={$s.val.startsWith('default')}
                   onClick={() => {
                     application.ui.showDialog(
                       new MessageDialogCommand(

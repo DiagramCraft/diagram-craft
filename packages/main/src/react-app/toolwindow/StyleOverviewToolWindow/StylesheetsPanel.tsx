@@ -79,7 +79,12 @@ const ElementStylesheetItem = ({
       />
       <ContextMenu.Menu>
         <Menu.Item onClick={() => onModify(stylesheet)}>Modify</Menu.Item>
-        <Menu.Item onClick={() => onDelete(stylesheet)}>Delete</Menu.Item>
+        <Menu.Item
+          onClick={() => onDelete(stylesheet)}
+          disabled={stylesheet.id.startsWith('default')}
+        >
+          Delete
+        </Menu.Item>
         <Menu.Item onClick={() => onRename(stylesheet)}>Rename</Menu.Item>
       </ContextMenu.Menu>
     </ContextMenu.Root>
@@ -135,7 +140,12 @@ const TextStylesheetItem = ({
       />
       <ContextMenu.Menu>
         <Menu.Item onClick={() => onModify(stylesheet)}>Modify</Menu.Item>
-        <Menu.Item onClick={() => onDelete(stylesheet)}>Delete</Menu.Item>
+        <Menu.Item
+          onClick={() => onDelete(stylesheet)}
+          disabled={stylesheet.id.startsWith('default')}
+        >
+          Delete
+        </Menu.Item>
         <Menu.Item onClick={() => onRename(stylesheet)}>Rename</Menu.Item>
       </ContextMenu.Menu>
     </ContextMenu.Root>
