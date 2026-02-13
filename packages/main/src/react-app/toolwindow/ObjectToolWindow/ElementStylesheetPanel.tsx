@@ -150,7 +150,8 @@ export const ElementStylesheetPanel = (props: Props) => {
                                 ...(isText ? { text: commonProps.text } : commonProps)
                               }
                             },
-                            $d.document.styles.crdt.factory
+                            $d.document.styles.crdt.factory,
+                            $d.document.styles
                           );
 
                           UnitOfWork.executeWithUndo($d, 'Add style', uow => {

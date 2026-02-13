@@ -23,6 +23,7 @@ import {
   DiagramStylesUOWAdapter,
   StylesheetSnapshot
 } from '@diagram-craft/model/diagramStyles.uow';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -40,15 +41,21 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
   type: T;
 
   readonly _trackableType = 'stylesheet';
+  private readonly _styles: DiagramStyles;
 
-  constructor(readonly crdt: CRDTMap<StylesheetSnapshot>) {
+  constructor(
+    readonly crdt: CRDTMap<StylesheetSnapshot>,
+    styles: DiagramStyles
+  ) {
     this.type = crdt.get('type') as T;
+    this._styles = styles;
   }
 
   static fromSnapshot<T extends StylesheetType>(
     type: T,
     snapshot: Omit<StylesheetSnapshot, '_snapshotType' | 'type'>,
-    factory: CRDTFactory
+    factory: CRDTFactory,
+    styles: DiagramStyles
   ) {
     const m = factory.makeMap<StylesheetSnapshot>();
     m.set('_snapshotType', 'stylesheet');
@@ -56,7 +63,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
     m.set('name', snapshot.name);
     m.set('props', snapshot.props);
     m.set('type', type);
-    return new Stylesheet<T>(m);
+    return new Stylesheet<T>(m, styles);
   }
 
   get id(): string {
@@ -64,7 +71,48 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
   }
 
   get props(): Partial<P> {
-    return this.crdt.get('props') as P;
+    const parent = this.parent;
+
+    let parentProps: Partial<P> = {};
+    if (parent) {
+      parentProps = parent.props as Partial<P>;
+    }
+
+    return deepMerge({}, this.crdt.get('props') as Partial<P>, parentProps) as Partial<P>;
+  }
+
+  set parent(parent: Stylesheet<T> | undefined) {
+    assert.false(parent && this.ancestors.includes(parent));
+    // @ts-ignore
+    assert.false(parent?.ancestors.includes(this));
+
+    this.crdt.set('parentId', parent?.id ?? '');
+  }
+
+  get parent(): Stylesheet<T> | undefined {
+    const parentId = this.crdt.get('parentId') as string;
+    if (parentId) {
+      const parent = this._styles.getStyle(parentId) as Stylesheet<T>;
+      assert.true(parent.type, this.type);
+      return parent;
+    }
+    return undefined;
+  }
+
+  get ancestors(): Array<Stylesheet<T>> {
+    const dest: Array<Stylesheet<T>> = [];
+
+    let el = this.parent;
+    while (el !== undefined) {
+      dest.push(el);
+      el = el.parent;
+    }
+
+    return dest;
+  }
+
+  get children() {
+    return mustExist(this._styles).styles.filter(s => s.parent === this);
   }
 
   setProps(props: Partial<P>, uow: UnitOfWork): void {
@@ -86,6 +134,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.crdt.set('name', snapshot.name);
     this.crdt.set('props', snapshot.props);
+    this.crdt.set('parentId', snapshot.parentId);
     uow.updateElement(this);
   }
 
@@ -95,6 +144,7 @@ export class Stylesheet<T extends StylesheetType, P = TypeMap[T]> implements UOW
       id: this.id,
       name: this.name,
       props: deepClone(this.props) as NodeProps | EdgeProps,
+      parentId: this.parent?.id ?? undefined,
       type: this.type
     };
   }
@@ -231,7 +281,7 @@ const mapper: (
   // biome-ignore lint/suspicious/noExplicitAny: false positive
 ) => CRDTMapper<Stylesheet<any>, CRDTMap<StylesheetSnapshot>> = d => ({
   fromCRDT<T extends StylesheetType>(e: CRDTMap<StylesheetSnapshot>): Stylesheet<T> {
-    const s = new Stylesheet<T>(e);
+    const s = new Stylesheet<T>(e, d);
     s.crdt.on('remoteUpdate', _e => {
       d.emit('stylesheetUpdated', { stylesheet: s });
     });
@@ -295,17 +345,20 @@ export class DiagramStyles
       crdt.transact(() => {
         if (hasNoTextStyles) {
           Object.entries(DEFAULT_TEXT_STYLES).forEach(([id, s]) => {
-            this.#textStyles.set(id, Stylesheet.fromSnapshot('text', { id, ...s }, crdt.factory));
+            const stylesheet = Stylesheet.fromSnapshot('text', { id, ...s }, crdt.factory, this);
+            this.#textStyles.set(id, stylesheet);
           });
         }
         if (hasNoNodeStyles) {
           Object.entries(DEFAULT_NODE_STYLES).forEach(([id, s]) => {
-            this.#nodeStyles.set(id, Stylesheet.fromSnapshot('node', { id, ...s }, crdt.factory));
+            const stylesheet = Stylesheet.fromSnapshot('node', { id, ...s }, crdt.factory, this);
+            this.#nodeStyles.set(id, stylesheet);
           });
         }
         if (hasNoEdgeStyles) {
           Object.entries(DEFAULT_EDGE_STYLES).forEach(([id, s]) => {
-            this.#edgeStyles.set(id, Stylesheet.fromSnapshot('edge', { id, ...s }, crdt.factory));
+            const stylesheet = Stylesheet.fromSnapshot('edge', { id, ...s }, crdt.factory, this);
+            this.#edgeStyles.set(id, stylesheet);
           });
         }
       });
@@ -326,6 +379,11 @@ export class DiagramStyles
 
   get textStyles(): Stylesheet<'text'>[] {
     return Array.from(this.#textStyles.values);
+  }
+
+  // biome-ignore lint/suspicious/noExplicitAny: needed
+  get styles(): Stylesheet<any>[] {
+    return [...this.nodeStyles, ...this.edgeStyles, ...this.textStyles];
   }
 
   get activeNodeStylesheet() {

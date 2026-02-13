@@ -81,7 +81,7 @@ export class DiagramStylesChildUOWAdapter implements UOWChildAdapter<StylesheetS
   ): void {
     const styles = diagram.document.styles;
 
-    const stylesheet = Stylesheet.fromSnapshot(child.type, child, styles.crdt.factory);
+    const stylesheet = Stylesheet.fromSnapshot(child.type, child, styles.crdt.factory, styles);
     styles.addStylesheet(childId, stylesheet, uow);
   }
 
@@ -92,6 +92,7 @@ export class DiagramStylesChildUOWAdapter implements UOWChildAdapter<StylesheetS
 
 export type StylesheetSnapshot = {
   id: string;
+  parentId?: string | undefined;
   name: string;
   props: NodeProps | EdgeProps;
   type: StylesheetType;

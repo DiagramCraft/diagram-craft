@@ -17,7 +17,13 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const name = 'Test stylesheet';
       const props: NodeProps = { fill: { color: 'blue' } };
 
-      const stylesheet = Stylesheet.fromSnapshot(type, { id, name, props }, new NoOpCRDTFactory());
+      const { doc1 } = standardTestModel(backend);
+      const stylesheet = Stylesheet.fromSnapshot(
+        type,
+        { id, name, props },
+        new NoOpCRDTFactory(),
+        doc1.styles
+      );
 
       expect(stylesheet.id).toBe(id);
       expect(stylesheet.name).toBe(name);
@@ -40,7 +46,8 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const stylesheet = Stylesheet.fromSnapshot(
         'node',
         { id, name: 'Test', props: initialProps },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, stylesheet, uow));
 
@@ -86,7 +93,8 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       const stylesheet = Stylesheet.fromSnapshot(
         'node',
         { id, name: name, props: { fill: { color: 'blue' } } },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, stylesheet, uow));
 
@@ -218,7 +226,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
             name: 'Custom',
             props: {}
           },
-          styles1.crdt.factory
+          styles1.crdt.factory,
+          styles1
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
@@ -246,7 +255,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
             name: 'Custom',
             props: {}
           },
-          styles1.crdt.factory
+          styles1.crdt.factory,
+          styles1
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
@@ -274,7 +284,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
             name: 'Custom',
             props: {}
           },
-          styles1.crdt.factory
+          styles1.crdt.factory,
+          styles1
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
@@ -372,7 +383,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: name,
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.executeWithUndo(diagram1, 'add', uow =>
         styles1.addStylesheet(id, customNodeStyle, uow)
@@ -419,7 +431,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Edge',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('custom-edge', customEdgeStyle, uow)
@@ -444,7 +457,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Text',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('custom-text', customTextStyle, uow)
@@ -472,7 +486,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: name,
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
@@ -496,7 +511,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
@@ -552,7 +568,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node 1',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       const customNodeStyle2 = Stylesheet.fromSnapshot(
         'node',
@@ -561,7 +578,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node 2',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => {
         styles1.addStylesheet('custom-node-1', customNodeStyle1, uow);
@@ -634,7 +652,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Custom Node',
           props: {}
         },
-        styles.crdt.factory
+        styles.crdt.factory,
+        styles
       );
       UnitOfWork.execute(diagram, uow => styles.addStylesheet('custom-node', customNodeStyle, uow));
 
@@ -669,7 +688,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Remote Node',
           props: { fill: { color: 'blue' } }
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('remote-node', customNodeStyle, uow)
@@ -701,7 +721,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Remote Edge',
           props: { stroke: { color: 'red' } }
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('remote-edge', customEdgeStyle, uow)
@@ -733,7 +754,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Remote Text',
           props: { text: { fontSize: 16 } }
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('remote-text', customTextStyle, uow)
@@ -760,7 +782,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Update Test',
           props: { fill: { color: 'blue' } }
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('update-test', customNodeStyle, uow)
@@ -795,7 +818,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Old Name',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('name-test', customNodeStyle, uow));
 
@@ -826,7 +850,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Delete Test',
           props: {}
         },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow =>
         styles1.addStylesheet('delete-test', customNodeStyle, uow)
@@ -861,7 +886,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Local Node',
           props: {}
         },
-        styles.crdt.factory
+        styles.crdt.factory,
+        styles
       );
       UnitOfWork.execute(diagram1, uow => styles.addStylesheet('local-node', customNodeStyle, uow));
 
@@ -880,7 +906,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Local Update',
           props: { fill: { color: 'blue' } }
         },
-        styles.crdt.factory
+        styles.crdt.factory,
+        styles
       );
       UnitOfWork.execute(diagram1, uow =>
         styles.addStylesheet('local-update', customNodeStyle, uow)
@@ -911,7 +938,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Old Name',
           props: {}
         },
-        styles.crdt.factory
+        styles.crdt.factory,
+        styles
       );
       UnitOfWork.execute(diagram1, uow => styles.addStylesheet('local-name', customNodeStyle, uow));
 
@@ -938,7 +966,8 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
           name: 'Local Delete',
           props: {}
         },
-        styles.crdt.factory
+        styles.crdt.factory,
+        styles
       );
       UnitOfWork.execute(diagram1, uow =>
         styles.addStylesheet('local-delete', customNodeStyle, uow)
@@ -977,14 +1006,16 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       const style1 = Stylesheet.fromSnapshot(
         'node',
         { id: 'multi-1', name: 'Multi 1', props: {} },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('multi-1', style1, uow));
 
       const style2 = Stylesheet.fromSnapshot(
         'edge',
         { id: 'multi-2', name: 'Multi 2', props: {} },
-        styles1.crdt.factory
+        styles1.crdt.factory,
+        styles1
       );
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('multi-2', style2, uow));
 

@@ -205,7 +205,12 @@ export class ObjectPickerDrag extends AbstractMoveDrag {
     const styleManager = this.diagram.document.styles;
     for (const style of this.styles) {
       if (styleManager.get(style.id) === undefined) {
-        const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
+        const stylesheet = Stylesheet.fromSnapshot(
+          style.type,
+          style,
+          styleManager.crdt.factory,
+          styleManager
+        );
         styleManager.addStylesheet(style.id, stylesheet, this.uow);
       }
     }
