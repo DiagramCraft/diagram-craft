@@ -18,17 +18,12 @@ import type { EdgeProps, NodeProps } from './diagramProps';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { UOWRegistry } from '@diagram-craft/model/unitOfWork';
 import {
-  StylesheetUOWAdapter,
   DiagramStylesChildUOWAdapter,
   DiagramStylesUOWAdapter,
-  StylesheetSnapshot
+  StylesheetSnapshot,
+  StylesheetUOWAdapter
 } from '@diagram-craft/model/diagramStyles.uow';
-import {
-  assert,
-  mustExist,
-  VERIFY_NOT_REACHED,
-  VerifyNotReached
-} from '@diagram-craft/utils/assert';
+import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 export type StylesheetType = 'node' | 'edge' | 'text';
 
@@ -48,11 +43,15 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
   readonly _trackableType = 'stylesheet';
   private readonly _styles: DiagramStyles;
 
-  constructor(
+  protected constructor(
     readonly crdt: CRDTMap<StylesheetSnapshot>,
-    styles: DiagramStyles
+    styles: DiagramStyles,
+    type: StylesheetType
   ) {
     this._styles = styles;
+    if (this.crdt.get('type') !== type) {
+      this.crdt.set('type', type);
+    }
   }
 
   static fromSnapshot<T extends StylesheetType>(
@@ -273,14 +272,23 @@ export const isSelectionDirty = ($d: Diagram, isText: boolean) => {
 
 export class TextStylesheet extends Stylesheet<TextStyleProps> {
   type: 'text' = 'text';
+  constructor(crdt: CRDTMap<StylesheetSnapshot>, styles: DiagramStyles) {
+    super(crdt, styles, 'text');
+  }
 }
 
 export class NodeStylesheet extends Stylesheet<NodeStyleProps> {
   type: 'node' = 'node';
+  constructor(crdt: CRDTMap<StylesheetSnapshot>, styles: DiagramStyles) {
+    super(crdt, styles, 'node');
+  }
 }
 
 export class EdgeStylesheet extends Stylesheet<EdgeStyleProps> {
   type: 'edge' = 'edge';
+  constructor(crdt: CRDTMap<StylesheetSnapshot>, styles: DiagramStyles) {
+    super(crdt, styles, 'edge');
+  }
 }
 
 export function isTextStylesheet(s: Stylesheet): s is TextStylesheet {
@@ -303,9 +311,7 @@ export const makeStylesheet = <T extends StylesheetType>(
   if (type === 'text') return new TextStylesheet(m, styles) as StylesheetTypeImplementations[T];
   else if (type === 'node')
     return new NodeStylesheet(m, styles) as StylesheetTypeImplementations[T];
-  else if (type === 'edge')
-    return new EdgeStylesheet(m, styles) as StylesheetTypeImplementations[T];
-  else throw new VerifyNotReached();
+  else return new EdgeStylesheet(m, styles) as StylesheetTypeImplementations[T];
 };
 
 declare global {
@@ -321,6 +327,8 @@ const mapper = <S extends Stylesheet>(
   d: DiagramStyles
 ): CRDTMapper<S, CRDTMap<StylesheetSnapshot>> => ({
   fromCRDT(e: CRDTMap<StylesheetSnapshot>): S {
+    console.log([...e.values()]);
+
     const s = makeStylesheet(e.get('type')!, e, d) as S;
     s.crdt.on('remoteUpdate', _e => {
       d.emit('stylesheetUpdated', { stylesheet: s });
