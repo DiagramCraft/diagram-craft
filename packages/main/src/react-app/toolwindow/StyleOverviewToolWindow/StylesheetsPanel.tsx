@@ -1,6 +1,11 @@
 import styles from './StyleOverviewToolWindow.module.css';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import type { Stylesheet, StylesheetType } from '@diagram-craft/model/diagramStyles';
+import {
+  EdgeStylesheet,
+  NodeStylesheet,
+  StylesheetType,
+  TextStylesheet
+} from '@diagram-craft/model/diagramStyles';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { PickerCanvas } from '../../PickerCanvas';
 import { PickerConfig } from '../PickerToolWindow/pickerConfig';
@@ -22,21 +27,21 @@ import { type DiagramElement, isNode } from '@diagram-craft/model/diagramElement
 import { createPreview } from './stylesPanelUtils';
 
 type StylesheetsPanelProps = {
-  stylesheets: Array<Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>>;
+  stylesheets: Array<NodeStylesheet | EdgeStylesheet | TextStylesheet>;
 };
 
 type StylesheetGroup = {
   type: StylesheetType;
-  stylesheets: Array<Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'>>;
+  stylesheets: Array<NodeStylesheet | EdgeStylesheet | TextStylesheet>;
 };
 
 type ElementStylesheetItemProps = {
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>;
+  stylesheet: NodeStylesheet | EdgeStylesheet;
   diagram: Diagram;
-  onModify: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
-  onDelete: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
-  onRename: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
-  onApply: (stylesheet: Stylesheet<'node'> | Stylesheet<'edge'>) => void;
+  onModify: (stylesheet: NodeStylesheet | EdgeStylesheet) => void;
+  onDelete: (stylesheet: NodeStylesheet | EdgeStylesheet) => void;
+  onRename: (stylesheet: NodeStylesheet | EdgeStylesheet) => void;
+  onApply: (stylesheet: NodeStylesheet | EdgeStylesheet) => void;
 };
 const ElementStylesheetItem = ({
   stylesheet,
@@ -92,11 +97,11 @@ const ElementStylesheetItem = ({
 };
 
 type TextStylesheetProps = {
-  stylesheet: Stylesheet<'text'>;
-  onModify: (stylesheet: Stylesheet<'text'>) => void;
-  onDelete: (stylesheet: Stylesheet<'text'>) => void;
-  onRename: (stylesheet: Stylesheet<'text'>) => void;
-  onApply: (stylesheet: Stylesheet<'text'>) => void;
+  stylesheet: TextStylesheet;
+  onModify: (stylesheet: TextStylesheet) => void;
+  onDelete: (stylesheet: TextStylesheet) => void;
+  onRename: (stylesheet: TextStylesheet) => void;
+  onApply: (stylesheet: TextStylesheet) => void;
 };
 const TextStylesheetItem = ({
   stylesheet,
@@ -158,7 +163,7 @@ const typeLabels = {
   text: 'Text Styles'
 };
 
-type AnyStylesheet = Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
+type AnyStylesheet = TextStylesheet | NodeStylesheet | EdgeStylesheet;
 
 export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
   const diagram = useDiagram();
@@ -280,7 +285,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
                         {group.stylesheets.map(stylesheet => (
                           <TextStylesheetItem
                             key={stylesheet.id}
-                            stylesheet={stylesheet as Stylesheet<'text'>}
+                            stylesheet={stylesheet as TextStylesheet}
                             onModify={handleModify}
                             onDelete={handleDelete}
                             onRename={handleRename}
@@ -293,7 +298,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
                         {group.stylesheets.map(stylesheet => (
                           <ElementStylesheetItem
                             key={stylesheet.id}
-                            stylesheet={stylesheet as Stylesheet<'node'> | Stylesheet<'edge'>}
+                            stylesheet={stylesheet as NodeStylesheet | EdgeStylesheet}
                             diagram={diagram}
                             onModify={handleModify}
                             onDelete={handleDelete}

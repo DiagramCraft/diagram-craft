@@ -27,12 +27,12 @@ export class StylesheetUOWAdapter implements UOWAdapter<
       switch (op.type) {
         case 'add':
           uow.diagram.document.styles.emit('stylesheetAdded', {
-            stylesheet: op.target.object as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet
           });
           break;
         case 'update':
           uow.diagram.document.styles.emit('stylesheetUpdated', {
-            stylesheet: op.target.object as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet
           });
           break;
         case 'remove':

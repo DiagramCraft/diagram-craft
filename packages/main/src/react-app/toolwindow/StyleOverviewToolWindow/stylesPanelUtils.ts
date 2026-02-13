@@ -5,7 +5,12 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
-import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import {
+  EdgeStylesheet,
+  NodeStylesheet,
+  Stylesheet,
+  TextStylesheet
+} from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { newid } from '@diagram-craft/utils/id';
@@ -20,7 +25,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 export type StyleFilterType = 'all' | 'fill' | 'stroke' | 'shadow' | 'effects' | 'text';
 
 export type StyleCombination = {
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | undefined;
+  stylesheet: NodeStylesheet | EdgeStylesheet | undefined;
   elements: DiagramElement[];
   previewDiagram?: Diagram;
   previewElement?: DiagramElement;
@@ -31,14 +36,14 @@ export type StyleCombination = {
 
 export type TextStyleCombination = {
   elements: DiagramElement[];
-  stylesheet: Stylesheet<'text'> | undefined;
+  stylesheet: TextStylesheet | undefined;
   differences: string[];
   propsDifferences: Partial<ElementProps>;
   props: NodePropsForRendering;
 };
 
 export type StylesheetGroup<T> = {
-  stylesheet: Stylesheet<'node'> | Stylesheet<'edge'> | Stylesheet<'text'> | undefined;
+  stylesheet: Stylesheet | undefined;
   styles: T[];
   totalElements: number;
 };
@@ -231,8 +236,8 @@ export const collectStyles = (
 
     const stylesheetId = element.metadata.style ?? undefined;
     const stylesheet = diagram.document.styles.getStyle(stylesheetId) as
-      | Stylesheet<'node'>
-      | Stylesheet<'edge'>
+      | NodeStylesheet
+      | EdgeStylesheet
       | undefined;
 
     const { differences, propsDifferences } = computeStyleDifferences(

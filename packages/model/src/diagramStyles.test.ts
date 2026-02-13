@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DiagramStyles, getCommonProps, Stylesheet } from './diagramStyles';
+import {
+  DiagramStyles,
+  EdgeStylesheet,
+  getCommonProps,
+  NodeStylesheet,
+  Stylesheet,
+  TextStylesheet
+} from './diagramStyles';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramDocument } from './diagramDocument';
 import { TestModel } from './test-support/testModel';
@@ -231,7 +238,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
-        styles1.activeNodeStylesheet = customNodeStyle;
+        styles1.activeNodeStylesheet = customNodeStyle as NodeStylesheet;
 
         expect(styles1.activeNodeStylesheet.id).toBe(id);
         expect(styles2.activeNodeStylesheet.id).not.toBe(id);
@@ -260,7 +267,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
-        styles1.activeEdgeStylesheet = customNodeStyle;
+        styles1.activeEdgeStylesheet = customNodeStyle as EdgeStylesheet;
 
         expect(styles1.activeEdgeStylesheet.id).toBe(id);
         expect(styles2.activeEdgeStylesheet.id).not.toBe(id);
@@ -289,7 +296,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         );
         UnitOfWork.execute(diagram1, uow => styles1.addStylesheet('custom', customNodeStyle, uow));
 
-        styles1.activeTextStylesheet = customNodeStyle;
+        styles1.activeTextStylesheet = customNodeStyle as TextStylesheet;
 
         expect(styles1.activeTextStylesheet.id).toBe(id);
         expect(styles2.activeTextStylesheet.id).not.toBe(id);

@@ -32,7 +32,7 @@ export const ElementStylesheetPanel = (props: Props) => {
     | undefined
     | {
         props: NodeProps | EdgeProps;
-        style: Stylesheet<'text'> | Stylesheet<'node'> | Stylesheet<'edge'>;
+        style: Stylesheet;
       }
   >(undefined);
 
