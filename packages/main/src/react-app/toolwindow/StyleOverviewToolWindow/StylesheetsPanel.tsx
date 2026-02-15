@@ -77,7 +77,11 @@ const ElementStylesheetItem = ({
             </div>
             <div className={styles.styleInfo}>
               <div className={styles.styleName}>{stylesheet.name}</div>
-              {/*<div className={styles.stylePath}>&gt; {stylesheet.name}</div>*/}
+              {stylesheet.parent && (
+                <div className={styles.styleAux}>
+                  {stylesheet.ancestors.map(s => s.name).join(' &gt; ')} &gt; {stylesheet.name}
+                </div>
+              )}
             </div>
           </div>
         }
