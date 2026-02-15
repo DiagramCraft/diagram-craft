@@ -573,7 +573,7 @@ export class DiagramStyles
   }
 
   // TODO: Is this really needed? It seems it will have no additional effect
-  reapplyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
+  reapplyStylesheet(stylesheet: Stylesheet, uow: UnitOfWork) {
     this.crdt.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
