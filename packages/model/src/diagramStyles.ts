@@ -117,6 +117,10 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
     return dest;
   }
 
+  get descendants(): Array<Stylesheet> {
+    return this.children.flatMap(c => [c, ...c.descendants]);
+  }
+
   get children() {
     return mustExist(this._styles).styles.filter(s => s.parent === this);
   }
@@ -569,7 +573,7 @@ export class DiagramStyles
   }
 
   // TODO: Is this really needed? It seems it will have no additional effect
-  reapplyStylesheet(stylesheet: Stylesheet, uow: UnitOfWork) {
+  reapplyStylesheet(stylesheet: Stylesheet<StylesheetType>, uow: UnitOfWork) {
     this.crdt.transact(() => {
       for (const diagram of this.document.diagramIterator({ nest: true })) {
         for (const el of diagram.allElements()) {
