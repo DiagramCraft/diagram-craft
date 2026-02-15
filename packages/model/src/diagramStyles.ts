@@ -66,6 +66,9 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
     m.set('name', snapshot.name);
     m.set('props', snapshot.props);
     m.set('type', type);
+    if (snapshot.parentId) {
+      m.set('parentId', snapshot.parentId);
+    }
 
     return makeStylesheet<T>(type, m, styles);
   }
@@ -96,7 +99,7 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
     const parentId = this.crdt.get('parentId') as string;
     if (parentId) {
       const parent = this._styles.getStyle(parentId);
-      assert.true(parent.type, this.type);
+      assert.true(parent.type === this.type);
       return parent;
     }
     return undefined;

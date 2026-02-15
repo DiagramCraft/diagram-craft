@@ -22,6 +22,32 @@ import { useState } from 'react';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { isObj } from '@diagram-craft/utils/object';
+
+const computeChildStylesheetProps = (
+  elementProps: Record<string, unknown>,
+  parentProps: Record<string, unknown>
+): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+
+  for (const key of Object.keys(elementProps)) {
+    const elementValue = elementProps[key];
+    const parentValue = parentProps[key];
+
+    if (elementValue === undefined) continue;
+
+    if (isObj(elementValue) && isObj(parentValue)) {
+      const nested = computeChildStylesheetProps(elementValue, parentValue);
+      if (Object.keys(nested).length > 0) {
+        result[key] = nested;
+      }
+    } else if (elementValue !== parentValue) {
+      result[key] = elementValue;
+    }
+  }
+
+  return result;
+};
 
 export const ElementStylesheetPanel = (props: Props) => {
   const $d = useDiagram();
@@ -126,50 +152,102 @@ export const ElementStylesheetPanel = (props: Props) => {
                 >
                   Save
                 </Menu.Item>
-                <Menu.Item
-                  onClick={() => {
-                    application.ui.showDialog(
-                      new StringInputDialogCommand(
-                        {
-                          label: 'Name',
-                          title: 'New style',
-                          saveButtonLabel: 'Create',
-                          value: ''
-                        },
-                        v => {
-                          const id = newid();
-                          const commonProps = getCommonProps(
-                            $d.selection.elements.map(e => e.editProps)
-                          ) as NodeProps & EdgeProps;
-                          const s = Stylesheet.fromSnapshot(
-                            isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
-                            {
-                              id,
-                              name: v,
-                              props: {
-                                ...(isText ? { text: commonProps.text } : commonProps)
-                              }
-                            },
-                            $d.document.styles.crdt.factory,
-                            $d.document.styles
-                          );
-
-                          UnitOfWork.executeWithUndo($d, 'Add style', uow => {
-                            $d.document.styles.addStylesheet(s.id, s, uow);
-                            $d.document.styles.setStylesheet(
-                              $d.selection.elements[0]!,
-                              id,
-                              uow,
-                              true
+                <Menu.SubMenu label="Save As...">
+                  <Menu.Item
+                    onClick={() => {
+                      application.ui.showDialog(
+                        new StringInputDialogCommand(
+                          {
+                            label: 'Name',
+                            title: 'New style',
+                            saveButtonLabel: 'Create',
+                            value: ''
+                          },
+                          v => {
+                            const id = newid();
+                            const commonProps = getCommonProps(
+                              $d.selection.elements.map(e => e.editProps)
+                            ) as NodeProps & EdgeProps;
+                            const s = Stylesheet.fromSnapshot(
+                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
+                              {
+                                id,
+                                name: v,
+                                props: {
+                                  ...(isText ? { text: commonProps.text } : commonProps)
+                                }
+                              },
+                              $d.document.styles.crdt.factory,
+                              $d.document.styles
                             );
-                          });
-                        }
-                      )
-                    );
-                  }}
-                >
-                  Save As...
-                </Menu.Item>
+
+                            UnitOfWork.executeWithUndo($d, 'Add style', uow => {
+                              $d.document.styles.addStylesheet(s.id, s, uow);
+                              $d.document.styles.setStylesheet(
+                                $d.selection.elements[0]!,
+                                id,
+                                uow,
+                                true
+                              );
+                            });
+                          }
+                        )
+                      );
+                    }}
+                  >
+                    New Style
+                  </Menu.Item>
+                  <Menu.Item
+                    disabled={$s.val.startsWith('default')}
+                    onClick={() => {
+                      application.ui.showDialog(
+                        new StringInputDialogCommand(
+                          {
+                            label: 'Name',
+                            title: 'New derived style',
+                            saveButtonLabel: 'Create',
+                            value: ''
+                          },
+                          v => {
+                            const id = newid();
+                            const parentStylesheet = $d.document.styles.get($s.val)!;
+                            const commonProps = getCommonProps(
+                              $d.selection.elements.map(e => e.editProps)
+                            ) as NodeProps & EdgeProps;
+
+                            const elementProps = isText ? { text: commonProps.text } : commonProps;
+                            const parentProps = parentStylesheet.props as Record<string, unknown>;
+                            const diffProps = computeChildStylesheetProps(
+                              elementProps as Record<string, unknown>,
+                              parentProps
+                            );
+
+                            const s = Stylesheet.fromSnapshot(
+                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
+                              {
+                                id,
+                                name: v,
+                                props: diffProps,
+                                parentId: parentStylesheet.id
+                              },
+                              $d.document.styles.crdt.factory,
+                              $d.document.styles
+                            );
+
+                            UnitOfWork.executeWithUndo($d, 'Add derived style', uow => {
+                              $d.document.styles.addStylesheet(s.id, s, uow);
+                              $d.selection.elements.forEach(el => {
+                                $d.document.styles.setStylesheet(el, id, uow, true);
+                              });
+                            });
+                          }
+                        )
+                      );
+                    }}
+                  >
+                    New Derived Style
+                  </Menu.Item>
+                </Menu.SubMenu>
                 <Menu.Item
                   disabled={$s.val.startsWith('default')}
                   onClick={() => {
