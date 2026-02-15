@@ -146,7 +146,8 @@ export const StylesTab = () => {
                 name,
                 props: newProps
               },
-              diagram.document.styles.crdt.factory
+              diagram.document.styles.crdt.factory,
+              diagram.document.styles
             );
 
             UnitOfWork.executeWithUndo(diagram, 'Create stylesheet', uow => {

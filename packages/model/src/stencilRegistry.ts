@@ -226,7 +226,12 @@ export const addStencilStylesToDocument = (
   const styleManager = document.styles;
   for (const style of stencil.styles ?? []) {
     if (styleManager.get(style.id) === undefined) {
-      const stylesheet = Stylesheet.fromSnapshot(style.type, style, styleManager.crdt.factory);
+      const stylesheet = Stylesheet.fromSnapshot(
+        style.type,
+        style,
+        styleManager.crdt.factory,
+        styleManager
+      );
       styleManager.addStylesheet(style.id, stylesheet, uow);
     }
   }
@@ -248,7 +253,12 @@ export const copyStyles = (target: Diagram, sourceDoc: DiagramDocument, uow: Uni
       const snapshot = style.snapshot();
       targetDoc.styles.addStylesheet(
         style.id,
-        Stylesheet.fromSnapshot(snapshot.type, snapshot, targetDoc.styles.crdt.factory),
+        Stylesheet.fromSnapshot(
+          snapshot.type,
+          snapshot,
+          targetDoc.styles.crdt.factory,
+          targetDoc.styles
+        ),
         uow
       );
       changed = true;

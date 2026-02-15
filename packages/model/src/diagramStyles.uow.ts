@@ -27,12 +27,12 @@ export class StylesheetUOWAdapter implements UOWAdapter<
       switch (op.type) {
         case 'add':
           uow.diagram.document.styles.emit('stylesheetAdded', {
-            stylesheet: op.target.object as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet
           });
           break;
         case 'update':
           uow.diagram.document.styles.emit('stylesheetUpdated', {
-            stylesheet: op.target.object as Stylesheet<StylesheetType>
+            stylesheet: op.target.object as Stylesheet
           });
           break;
         case 'remove':
@@ -81,7 +81,7 @@ export class DiagramStylesChildUOWAdapter implements UOWChildAdapter<StylesheetS
   ): void {
     const styles = diagram.document.styles;
 
-    const stylesheet = Stylesheet.fromSnapshot(child.type, child, styles.crdt.factory);
+    const stylesheet = Stylesheet.fromSnapshot(child.type, child, styles.crdt.factory, styles);
     styles.addStylesheet(childId, stylesheet, uow);
   }
 
@@ -92,6 +92,7 @@ export class DiagramStylesChildUOWAdapter implements UOWChildAdapter<StylesheetS
 
 export type StylesheetSnapshot = {
   id: string;
+  parentId?: string | undefined;
   name: string;
   props: NodeProps | EdgeProps;
   type: StylesheetType;

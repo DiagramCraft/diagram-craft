@@ -539,11 +539,15 @@ export const bindElementListeners = (diagram: Diagram, releasables: Releasables)
   /* On stylesheet change -------------------------------------------- */
   // biome-ignore lint/suspicious/noExplicitAny: any needed for Stylesheet
   const stylesheetUpdated = (s: { stylesheet: Stylesheet<any> }) => {
-    const id = s.stylesheet.id;
+    const idsToRefresh = new Set(s.stylesheet.descendants.map(s => s.id));
+    idsToRefresh.add(s.stylesheet.id);
 
     const elements = new Set<DiagramElement>();
     for (const el of diagram.allElements()) {
-      if (el.metadata.style === id || (isNode(el) && el.metadata.textStyle === id)) {
+      if (
+        (el.metadata.style && idsToRefresh.has(el.metadata.style)) ||
+        (isNode(el) && el.metadata.textStyle && idsToRefresh.has(el.metadata.textStyle))
+      ) {
         elements.add(el);
       }
     }

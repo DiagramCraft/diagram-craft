@@ -314,7 +314,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 };
 
 const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>
-  Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory);
+  Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory, styles);
 
 const deserializeDiagrams = async <T extends Diagram>(
   doc: DiagramDocument,
