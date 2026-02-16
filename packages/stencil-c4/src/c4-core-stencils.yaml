@@ -264,3 +264,26 @@ stencils:
         texts:
           text: "<h1>Module</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
         tags:
+  - id: 'c4-core-cli'
+    stencil: CLI
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: 1cxyn6m
+        type: node
+        nodeType: c4CLIRect
+        bounds:
+          x: 0
+          y: 0
+          w: 200.99999999999997
+          h: 110
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>CLI</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
