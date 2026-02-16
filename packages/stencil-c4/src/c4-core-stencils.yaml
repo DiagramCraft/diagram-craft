@@ -1,7 +1,7 @@
 stencils:
   - id: 'c4-core-basic'
     stencil: Element
-    styles:
+    styles: &c4-styles
       - id: 'c4-element'
         name: 'C4 Element'
         type: 'node'
@@ -36,7 +36,10 @@ stencils:
           h: 109
           r: 0
         children: [ ]
-        props: { }
+        props:
+          custom:
+            roundedRect:
+              radius: 10
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -46,26 +49,7 @@ stencils:
 
   - id: 'c4-core-person'
     stencil: Person
-    styles:
-      - id: 'c4-element'
-        name: 'C4 Element'
-        type: 'node'
-        props:
-          custom:
-            roundedRect:
-              radius: 20
-          fill:
-            color: "var(--canvas-bg-bright)"
-          stroke:
-            color: "#3066b7"
-            width: 3
-      - id: 'c4-element-text'
-        name: 'C4 Element Text'
-        type: 'text'
-        props:
-          text:
-            color: "stroke"
-            fontSize: 12
+    styles: *c4-styles
 
     settings:
       scaleStrokes: true
@@ -78,7 +62,7 @@ stencils:
           x: 0
           y: 0
           w: 180
-          h: 170
+          h: 180
           r: 0
         children:
           - id: sl3e1v6
@@ -86,7 +70,7 @@ stencils:
             nodeType: rounded-rect
             bounds:
               x: 0
-              y: 61
+              y: 71
               w: 180
               h: 109
               r: 0
@@ -121,6 +105,97 @@ stencils:
               textStyle: c4-element-text
             texts:
               text: ""
+            tags:
+        props: { }
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+
+  - id: 'c4-core-data-store'
+    stencil: Data Store
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: esmm16v
+        type: node
+        nodeType: cylinder
+        bounds:
+          x: 0
+          y: 0
+          w: 170.00000000000003
+          h: 120
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            cylinder:
+              size: 18
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Data store</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-folder'
+    stencil: Folder
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: kn7nao0
+        type: node
+        nodeType: group
+        bounds:
+          x: 0
+          y: 0
+          w: 180
+          h: 125.5
+          r: 0
+        children:
+          - id: zt3yyj9
+            type: node
+            nodeType: rounded-rect
+            bounds:
+              x: 13
+              y: 0
+              w: 71
+              h: 44.5
+              r: 0
+            children: [ ]
+            props:
+              custom:
+                roundedRect:
+                  radius: 8
+            metadata:
+              style: c4-element
+              textStyle: c4-element-text
+            texts:
+              text: "<h1><br></h1>"
+            tags:
+          - id: ettnb20
+            type: node
+            nodeType: rounded-rect
+            bounds:
+              x: 0
+              y: 16.5
+              w: 180
+              h: 109
+              r: 0
+            children: [ ]
+            props:
+              custom:
+                roundedRect:
+                  radius: 5
+            metadata:
+              style: c4-element
+              textStyle: c4-element-text
+            texts:
+              text: "<h1>Folder</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
             tags:
         props: { }
         metadata:
