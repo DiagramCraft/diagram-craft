@@ -103,6 +103,7 @@ export type SerializedOverride = {
 export interface SerializedStyles {
   edgeStyles: ReadonlyArray<SerializedStylesheet>;
   nodeStyles: ReadonlyArray<SerializedStylesheet>;
+  textStyles: ReadonlyArray<SerializedStylesheet>;
 }
 
 export type SerializedStylesheet = Omit<StylesheetSnapshot, '_snapshotType'>;

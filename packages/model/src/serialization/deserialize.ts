@@ -218,6 +218,11 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
         doc.styles.addStylesheet(nodeStyle.id, deserializeStylesheet(nodeStyle, doc.styles), uow)
       );
     }
+    for (const textStyle of document.styles.textStyles ?? []) {
+      UnitOfWork.executeSilently(undefined, uow =>
+        doc.styles.addStylesheet(textStyle.id, deserializeStylesheet(textStyle, doc.styles), uow)
+      );
+    }
 
     for (const schema of document.schemas) {
       doc.data._schemas.add(schema);

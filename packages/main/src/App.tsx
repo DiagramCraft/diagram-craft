@@ -319,7 +319,10 @@ export const App = (props: {
     Autosave.get()
       .exists()
       .then(setDirty)
-      .catch(() => setDirty(false));
+      .catch(e => {
+        console.warn(e);
+        setDirty(false);
+      });
   }, []);
 
   // TODO: Can we change this to use state instead - see https://stackoverflow.com/questions/59600572/how-to-rerender-when-refs-change
@@ -339,9 +342,10 @@ export const App = (props: {
     if (event.silent) return;
 
     Autosave.get().asyncSave(url, doc, s => {
-      setDirty(s.hash !== hash);
+      const newDirtyValue = s.hash !== hash;
+      if (newDirtyValue !== dirty) setDirty(newDirtyValue);
     });
-    setDirty(true);
+    if (!dirty) setDirty(true);
   };
 
   useEventListener($d, 'diagramChange', autosave);

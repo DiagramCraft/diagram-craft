@@ -77,7 +77,8 @@ const serializeCustomPalette = (customPalette: DiagramPalette): string[] => {
 const serializeStyles = (styles: DiagramStyles): SerializedStyles => {
   return {
     edgeStyles: styles.edgeStyles.map(e => e.snapshot()),
-    nodeStyles: styles.nodeStyles.map(e => e.snapshot())
+    nodeStyles: styles.nodeStyles.map(e => e.snapshot()),
+    textStyles: styles.textStyles.map(e => e.snapshot())
   };
 };
 
