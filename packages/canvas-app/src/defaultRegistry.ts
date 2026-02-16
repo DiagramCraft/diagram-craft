@@ -19,6 +19,7 @@ import { TriangleNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/T
 import { ProcessNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Process.nodeType';
 import { ArrowNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arrow.nodeType';
 import { CylinderNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cylinder.nodeType';
+import { TruncatedConeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/TruncatedCone.nodeType';
 import { CurlyBracketNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/CurlyBracket.nodeType';
 import { ArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Arc.nodeType';
 import { BlockArcNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/BlockArc.nodeType';
@@ -78,6 +79,7 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new TextNodeDefinition());
   reg.register(new TrapezoidNodeDefinition());
   reg.register(new TriangleNodeDefinition());
+  reg.register(new TruncatedConeNodeDefinition());
 
   return reg;
 };
@@ -141,6 +143,7 @@ export const defaultStencilRegistry = () => {
   addStencil(defaults, new TriangleNodeDefinition());
   addStencil(defaults, new ProcessNodeDefinition(), { size: { w: 100, h: 60 } });
   addStencil(defaults, new CylinderNodeDefinition());
+  addStencil(defaults, new TruncatedConeNodeDefinition());
   addStencil(defaults, new CurlyBracketNodeDefinition(), { size: { w: 35, h: 100 } });
   addStencil(defaults, new BlockArcNodeDefinition());
   addStencil(defaults, new ArcNodeDefinition());
