@@ -12,7 +12,7 @@ stencils:
           fill:
             color: "var(--canvas-bg-bright)"
           stroke:
-            color: "blue"
+            color: "#3066b7"
             width: 3
       - id: 'c4-element-text'
         name: 'C4 Element Text'
@@ -42,4 +42,90 @@ stencils:
           textStyle: c4-element-text
         texts:
           text: "<h1>Element</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-person'
+    stencil: Person
+    styles:
+      - id: 'c4-element'
+        name: 'C4 Element'
+        type: 'node'
+        props:
+          custom:
+            roundedRect:
+              radius: 20
+          fill:
+            color: "var(--canvas-bg-bright)"
+          stroke:
+            color: "#3066b7"
+            width: 3
+      - id: 'c4-element-text'
+        name: 'C4 Element Text'
+        type: 'text'
+        props:
+          text:
+            color: "stroke"
+            fontSize: 12
+
+    settings:
+      scaleStrokes: true
+
+    elements:
+      - id: 10cmsfz
+        type: node
+        nodeType: group
+        bounds:
+          x: 0
+          y: 0
+          w: 180
+          h: 170
+          r: 0
+        children:
+          - id: sl3e1v6
+            type: node
+            nodeType: rounded-rect
+            bounds:
+              x: 0
+              y: 61
+              w: 180
+              h: 109
+              r: 0
+            children: [ ]
+            props:
+              custom:
+                roundedRect:
+                  radius: 42
+              text:
+                top: 12
+            metadata:
+              style: c4-element
+              textStyle: c4-element-text
+            texts:
+              text: "<h1>Person</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+            tags:
+          - id: h7pylel
+            type: node
+            nodeType: circle
+            bounds:
+              x: 50
+              y: 0
+              w: 80
+              h: 80
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                width: 3
+            metadata:
+              style: c4-element
+              textStyle: c4-element-text
+            texts:
+              text: ""
+            tags:
+        props: { }
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
         tags:
