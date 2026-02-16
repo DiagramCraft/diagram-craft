@@ -6,12 +6,17 @@ import {
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import c4CoreStencils from './c4-core-stencils.yaml';
+import { C4ModuleNodeDefinition } from './c4Module';
 
-export const registerC4Nodes = async (_nodes: NodeDefinitionRegistry) => {};
+export const registerC4Nodes = async (nodes: NodeDefinitionRegistry) => {
+  nodes.register(new C4ModuleNodeDefinition());
+};
 
 export const registerC4Edges = async (_edges: EdgeDefinitionRegistry) => {};
 
-export const loadC4Stencils = async (_registry: Registry) => {
+export const loadC4Stencils = async (registry: Registry) => {
+  await registerC4Nodes(registry.nodes);
+
   const c4Stencils: StencilPackage = {
     stencils: [],
     type: 'default',
