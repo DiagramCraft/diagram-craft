@@ -546,8 +546,8 @@ export class DiagramStyles
       return;
     }
 
-    this.crdt.transact(() => {
-      this.clearStylesheet(id, uow);
+    const deleteRecursively = (id: string, uow: UnitOfWork) => {
+      const children = [...stylesheet.children];
 
       uow.executeRemove(stylesheet, this, 0, () => {
         if (stylesheet.type === 'node') {
@@ -559,7 +559,14 @@ export class DiagramStyles
         }
       });
 
-      //this.emit('stylesheetRemoved', { stylesheet: stylesheet.id });
+      for (const child of children) {
+        deleteRecursively(child.id, uow);
+      }
+      this.clearStylesheet(id, uow);
+    };
+
+    this.crdt.transact(() => {
+      deleteRecursively(id, uow);
 
       // TODO: This can fail in case we delete the last stylesheet
       if (stylesheet.type === 'node') {
