@@ -228,8 +228,6 @@ stencils:
               size: 26.98
             cylinder:
               size: 18
-          text:
-            top: 18
         metadata:
           style: c4-element
           textStyle: c4-element-text

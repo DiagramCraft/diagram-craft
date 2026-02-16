@@ -70,6 +70,28 @@ const getGeometry = (def: DiagramNode) => {
   };
 };
 
+const getTextBounds = (def: DiagramNode) => {
+  const bounds = def.bounds;
+  const { sizeNorm, topSizeNorm, maxWidth } = getGeometry(def);
+
+  // Text starts below entire top ellipse (front + back visible)
+  // Text ends at back edge of base ellipse (only front visible)
+  const textTop = topSizeNorm * bounds.h;
+  const textBottom = (sizeNorm / 2) * bounds.h;
+
+  // Width constrained to the narrower of top/base, centered horizontally
+  const textWidth = bounds.w / maxWidth;
+  const textX = bounds.x + (bounds.w - textWidth) / 2;
+
+  return {
+    x: textX,
+    y: bounds.y + textTop,
+    w: textWidth,
+    h: bounds.h - textTop - textBottom,
+    r: bounds.r
+  };
+};
+
 // NodeDefinition and Shape *****************************************************
 
 export class TruncatedConeNodeDefinition extends ShapeNodeDefinition {
@@ -94,11 +116,7 @@ export class TruncatedConeNodeDefinition extends ShapeNodeDefinition {
       const baseSize = sizeNorm * bounds.h;
       const centerX = bounds.x + bounds.w / 2;
 
-      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, {
-        ...bounds,
-        y: bounds.y + topSize,
-        h: bounds.h - topSize - baseSize
-      });
+      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, getTextBounds(props.node));
 
       // Control point for depth (size) - on the base ellipse
       shapeBuilder.controlPoint(
@@ -123,12 +141,20 @@ export class TruncatedConeNodeDefinition extends ShapeNodeDefinition {
     }
   };
 
-  getShapeAnchors(_def: DiagramNode): Anchor[] {
+  getShapeAnchors(def: DiagramNode): Anchor[] {
+    const { sizeNorm, topSizeNorm, baseHalfWidth, topHalfWidth } = getGeometry(def);
+
+    // Calculate x position at y=0.5 by interpolating along the sloped edge
+    const topY = topSizeNorm / 2;
+    const baseY = 1 - sizeNorm / 2;
+    const t = (0.5 - topY) / (baseY - topY);
+    const halfWidthAtMiddle = topHalfWidth + t * (baseHalfWidth - topHalfWidth);
+
     return [
       { id: '1', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: '2', start: _p(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
+      { id: '2', start: _p(0.5 + halfWidthAtMiddle, 0.5), type: 'point', isPrimary: true, normal: 0 },
       { id: '3', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: '4', start: _p(0, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+      { id: '4', start: _p(0.5 - halfWidthAtMiddle, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
       { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
     ];
   }
