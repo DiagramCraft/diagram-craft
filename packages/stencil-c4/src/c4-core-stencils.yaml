@@ -204,3 +204,35 @@ stencils:
         texts:
           text: ""
         tags:
+
+  - id: 'c4-core-bucket'
+    stencil: Bucket
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: 8cxofss
+        type: node
+        nodeType: truncatedCone
+        bounds:
+          x: 0
+          y: 0
+          w: 210.00000000000006
+          h: 140
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            truncatedCone:
+              topRatio: 1.28
+              size: 26.98
+            cylinder:
+              size: 18
+          text:
+            top: 18
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Bucket</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
