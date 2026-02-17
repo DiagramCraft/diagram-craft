@@ -10,12 +10,14 @@ import { C4ModuleNodeDefinition } from './c4Module';
 import { C4CLIRectNodeDefinition } from './c4CLIRect';
 import { C4BrowserRectNodeDefinition } from '@diagram-craft/stencil-c4/c4BrowserRect';
 import { C4PersonNodeDefinition } from './c4Person';
+import { C4FolderNodeDefinition } from './c4Folder';
 
 export const registerC4Nodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new C4ModuleNodeDefinition());
   nodes.register(new C4CLIRectNodeDefinition());
   nodes.register(new C4BrowserRectNodeDefinition());
   nodes.register(new C4PersonNodeDefinition());
+  nodes.register(new C4FolderNodeDefinition());
 };
 
 export const registerC4Edges = async (_edges: EdgeDefinitionRegistry) => {};

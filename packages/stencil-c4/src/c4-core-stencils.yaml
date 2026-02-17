@@ -110,60 +110,20 @@ stencils:
     elements:
       - id: kn7nao0
         type: node
-        nodeType: group
+        nodeType: c4Folder
         bounds:
           x: 0
           y: 0
           w: 180
           h: 125.5
           r: 0
-        children:
-          - id: zt3yyj9
-            type: node
-            nodeType: rounded-rect
-            bounds:
-              x: 13
-              y: 0
-              w: 71
-              h: 44.5
-              r: 0
-            children: [ ]
-            props:
-              custom:
-                roundedRect:
-                  radius: 8
-            metadata:
-              style: c4-element
-              textStyle: c4-element-text
-            texts:
-              text: "<h1><br></h1>"
-            tags:
-          - id: ettnb20
-            type: node
-            nodeType: rounded-rect
-            bounds:
-              x: 0
-              y: 16.5
-              w: 180
-              h: 109
-              r: 0
-            children: [ ]
-            props:
-              custom:
-                roundedRect:
-                  radius: 5
-            metadata:
-              style: c4-element
-              textStyle: c4-element-text
-            texts:
-              text: "<h1>Folder</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
-            tags:
+        children: [ ]
         props: { }
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: c4-element
+          textStyle: c4-element-text
         texts:
-          text: ""
+          text: "<h1>Folder</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
         tags:
 
   - id: 'c4-core-bucket'
