@@ -96,5 +96,7 @@ export type StylesheetSnapshot = {
   name: string;
   props: NodeProps | EdgeProps;
   type: StylesheetType;
+  strokeColors?: string[];
+  fillColors?: string[];
   _snapshotType: 'stylesheet';
 };

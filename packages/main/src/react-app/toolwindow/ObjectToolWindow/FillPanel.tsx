@@ -151,6 +151,7 @@ export const FillPanelForm = ({
   imageSaturation,
   imageTint,
   imageTintStrength,
+  palette,
   diagram: $d,
   config: $cfg
 }: FormProps) => {
@@ -181,6 +182,7 @@ export const FillPanelForm = ({
               render={props => (
                 <ColorPicker
                   {...props}
+                  extraPalettes={{ Stylesheet: palette }}
                   palette={$cfg.palette.primary}
                   customPalette={$d.document.customPalette}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
@@ -457,6 +459,7 @@ type FormProps = {
   imageSaturation: Property<number>;
   imageTint: Property<string>;
   imageTintStrength: Property<number>;
+  palette?: string[];
   diagram: Diagram;
   config: ConfigurationContextType;
 };

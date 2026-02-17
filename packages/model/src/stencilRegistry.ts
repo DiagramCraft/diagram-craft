@@ -49,6 +49,8 @@ export type StencilStyle = {
   name: string;
   type: 'edge' | 'node' | 'text';
   props: ElementProps;
+  strokeColors?: string[];
+  fillColors?: string[];
 };
 
 /* Stencil Loader ******************************************************************* */

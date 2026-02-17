@@ -5,6 +5,13 @@ stencils:
       - id: 'c4-element'
         name: 'C4 Element'
         type: 'node'
+        strokeColors:
+          - '#3066b7'
+          - '#df8b34'
+          - '#af2927'
+          - '#427c23'
+          - '#791eb6'
+          - '#3f8299'
         props:
           custom:
             roundedRect:
@@ -296,4 +303,70 @@ stencils:
             texts:
               text: "<p>Relationship</p>"
             tags:
+        tags:
+
+  - id: 'c4-core-expanded-container'
+    name: Expanded Container
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: 4qxyhta
+        type: node
+        nodeType: rounded-rect
+        bounds:
+          x: 0
+          y: 0
+          w: 449.9999999999999
+          h: 274.5
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            roundedRect:
+              radius: 10
+          text:
+            align: left
+            valign: bottom
+          fill:
+            enabled: false
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Name</h1>\n\n<small>[Type]</small>"
+        tags:
+
+  - id: 'c4-core-expanded-container-dashed'
+    name: Expanded Container Dashed
+    settings:
+      scaleStrokes: true
+    elements:
+      - id: ns7fj2j
+        type: node
+        nodeType: rounded-rect
+        bounds:
+          x: 0
+          y: 0
+          w: 449.9999999999999
+          h: 274.5
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            roundedRect:
+              radius: 10
+          text:
+            align: left
+            valign: bottom
+          stroke:
+            color: 'var(--canvas-fg)'
+            pattern: DASHED
+          fill:
+            enabled: false
+        metadata:
+          style: default
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Name</h1>\n\n<small>[Type]</small>"
         tags:

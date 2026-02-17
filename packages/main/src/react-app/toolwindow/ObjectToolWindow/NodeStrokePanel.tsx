@@ -12,6 +12,7 @@ import { LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import { unique } from '@diagram-craft/utils/array';
 
 type FormProps = {
   diagram: Diagram;
@@ -24,6 +25,7 @@ type FormProps = {
   lineCap: Property<LineCap>;
   lineJoin: Property<LineJoin>;
   miterLimit: Property<number>;
+  palette?: string[];
 };
 
 export const NodeStrokePanelForm = ({
@@ -36,7 +38,8 @@ export const NodeStrokePanelForm = ({
   strokeSpacing,
   lineCap,
   lineJoin,
-  miterLimit
+  miterLimit,
+  palette
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
@@ -47,6 +50,7 @@ export const NodeStrokePanelForm = ({
           render={props => (
             <ColorPicker
               {...props}
+              extraPalettes={{ Stylesheet: palette }}
               palette={$cfg.palette.primary}
               customPalette={$d.document.customPalette}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
@@ -164,6 +168,11 @@ export const NodeStrokePanel = (props: Props) => {
         lineCap={lineCap}
         lineJoin={lineJoin}
         miterLimit={miterLimit}
+        palette={unique(
+          $d.selection.nodes.flatMap(
+            n => $d.document.styles.getNodeStyle(n.metadata.style)?.strokeColors ?? []
+          )
+        )}
       />
     </ToolWindowPanel>
   );

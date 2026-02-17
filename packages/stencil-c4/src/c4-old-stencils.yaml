@@ -5,13 +5,22 @@ stencils:
       - id: 'c4-old-element'
         name: 'C4 Old Element'
         type: 'node'
+        fillColors:
+          - "#1c4175"
+          - "#3066b7"
+          - "#91b9ed"
+          - "#999999"
+        strokeColors:
+          - "#3066b7"
+          - "#406fa2"
+          - "#777777"
         props:
           custom:
             roundedRect:
               radius: 20
           stroke:
             enabled: false
-            color: "#3066b7"
+            color: "#406fa2"
             width: 1
           fill:
             color: '#3169b9'
@@ -185,29 +194,6 @@ stencils:
           textStyle: c4-old-element-text
         texts:
           text: "<h1>Module</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
-        tags:
-  - id: 'c4-old-cli'
-    stencil: CLI
-    settings:
-      scaleStrokes: true
-    styles: *c4-styles
-    elements:
-      - id: 1cxyn6m
-        type: node
-        nodeType: c4CLIRect
-        bounds:
-          x: 0
-          y: 0
-          w: 200.99999999999997
-          h: 110
-          r: 0
-        children: [ ]
-        props: { }
-        metadata:
-          style: c4-old-element
-          textStyle: c4-old-element-text
-        texts:
-          text: "<h1>CLI</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
         tags:
   - id: 'c4-old-window'
     stencil: Window

@@ -69,6 +69,8 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
     if (snapshot.parentId) {
       m.set('parentId', snapshot.parentId);
     }
+    m.set('fillColors', snapshot.fillColors);
+    m.set('strokeColors', snapshot.strokeColors);
 
     return makeStylesheet<T>(type, m, styles);
   }
@@ -141,6 +143,26 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
     });
   }
 
+  get fillColors() {
+    return this.crdt.get('fillColors')!;
+  }
+
+  setFillColors(fillColors: string[], uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.crdt.set('fillColors', fillColors);
+    });
+  }
+
+  get strokeColors() {
+    return this.crdt.get('strokeColors')!;
+  }
+
+  setStrokeColors(strokeColors: string[], uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.crdt.set('strokeColors', strokeColors);
+    });
+  }
+
   restore(snapshot: StylesheetSnapshot, uow: UnitOfWork): void {
     this.crdt.set('name', snapshot.name);
     this.crdt.set('props', snapshot.props);
@@ -155,6 +177,8 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
       name: this.name,
       props: deepClone(this.props) as NodeProps | EdgeProps,
       parentId: this.parent?.id ?? undefined,
+      fillColors: this.fillColors,
+      strokeColors: this.strokeColors,
       type: this.type
     };
   }
