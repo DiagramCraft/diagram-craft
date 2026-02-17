@@ -1,8 +1,4 @@
-import {
-  EdgeDefinitionRegistry,
-  NodeDefinitionRegistry,
-  Registry
-} from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import c4CoreStencils from './c4-core-stencils.yaml';
