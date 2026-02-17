@@ -14,6 +14,22 @@
     .svg-node__text {
       cursor: move;
       pointer-events: none;
+
+      h1 {
+        font-size: 200%;
+        margin-bottom: 0.5rem;
+        line-height: 1.1;
+      }
+
+      small, p {
+        display: block;
+        margin-top: 0;
+        margin-bottom: 0.5rem;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
     }
   }
 }
@@ -22,6 +38,7 @@
   .svg-node__text {
     white-space: nowrap !important;
     width: fit-content !important;
+
   }
 }
 
