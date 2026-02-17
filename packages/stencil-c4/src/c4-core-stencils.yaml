@@ -1,7 +1,7 @@
 stencils:
   - id: 'c4-core-basic'
     stencil: Element
-    styles:
+    styles: &c4-styles
       - id: 'c4-element'
         name: 'C4 Element'
         type: 'node'
@@ -9,10 +9,8 @@ stencils:
           custom:
             roundedRect:
               radius: 20
-          fill:
-            color: "var(--canvas-bg-bright)"
           stroke:
-            color: "blue"
+            color: "#3066b7"
             width: 3
       - id: 'c4-element-text'
         name: 'C4 Element Text'
@@ -36,10 +34,266 @@ stencils:
           h: 109
           r: 0
         children: [ ]
-        props: { }
+        props:
+          custom:
+            roundedRect:
+              radius: 10
         metadata:
           style: c4-element
           textStyle: c4-element-text
         texts:
           text: "<h1>Element</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-person'
+    stencil: Person
+    styles: *c4-styles
+
+    settings:
+      scaleStrokes: true
+
+    elements:
+      - id: 10cmsfz
+        type: node
+        nodeType: c4Person
+        bounds:
+          x: 0
+          y: 0
+          w: 180
+          h: 180
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 12
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Person</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-data-store'
+    stencil: Data Store
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: esmm16v
+        type: node
+        nodeType: cylinder
+        bounds:
+          x: 0
+          y: 0
+          w: 170.00000000000003
+          h: 120
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            cylinder:
+              size: 18
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Data store</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-folder'
+    stencil: Folder
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: kn7nao0
+        type: node
+        nodeType: c4Folder
+        bounds:
+          x: 0
+          y: 0
+          w: 180
+          h: 125.5
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Folder</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-bucket'
+    stencil: Bucket
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: 8cxofss
+        type: node
+        nodeType: truncatedCone
+        bounds:
+          x: 0
+          y: 0
+          w: 210.00000000000006
+          h: 140
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            truncatedCone:
+              topRatio: 1.28
+              size: 26.98
+            cylinder:
+              size: 18
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Bucket</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-module'
+    stencil: Module
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: ltbe77f
+        type: node
+        nodeType: c4Module
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 151
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            c4Module:
+              jettyWidth: 33
+              jettyHeight: 15
+          text:
+            left: 24
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Module</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+  - id: 'c4-core-cli'
+    stencil: CLI
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: 1cxyn6m
+        type: node
+        nodeType: c4CLIRect
+        bounds:
+          x: 0
+          y: 0
+          w: 200.99999999999997
+          h: 110
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>CLI</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+  - id: 'c4-core-window'
+    stencil: Window
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: utbr5su
+        type: node
+        nodeType: c4BrowserRect
+        bounds:
+          x: 0
+          y: 0
+          w: 205.0000000000001
+          h: 140
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: c4-element
+          textStyle: c4-element-text
+        texts:
+          text: "<h1>Window</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-relationship'
+    stencil: Relationship
+    settings:
+      scaleStrokes: true
+    styles:
+      - id: 'c4-edge'
+        name: 'C4 Edge'
+        type: 'edge'
+        props:
+          stroke:
+            pattern: DASHED
+            width: 2
+          arrow:
+            end:
+              type: SQUARE_ARROW_FILLED
+          fill:
+            color: black
+      - id: 'c4-edge-text'
+        name: 'C4 Edge Text'
+        type: 'text'
+        props:
+          text:
+            align: center
+            fontSize: 14
+          fill:
+            enabled: false
+    elements:
+      - id: kiucwid
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 201.04639094534696
+            y: 1.3053884989049038
+        labelNodes:
+          - id: xx720ij
+            type: horizontal
+            offset:
+              x: 0
+              y: 25
+            timeOffset: 0.5
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: c4-edge
+        children:
+          - id: xx720ij
+            type: node
+            nodeType: text
+            bounds:
+              x: 1080.9768045273265
+              y: 1595.8473057505475
+              r: 0
+              h: 17
+              w: 77
+            children: [ ]
+            props: { }
+            metadata:
+              style: default-text
+              textStyle: c4-edge-text
+            texts:
+              text: "<p>Relationship</p>"
+            tags:
         tags:

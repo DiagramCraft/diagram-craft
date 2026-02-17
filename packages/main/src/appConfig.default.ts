@@ -42,6 +42,11 @@ export const defaultAppConfig: AppConfig = {
           import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
             m => m.registerDataModellingEdges
           )
+      },
+      {
+        shapes: /^(c4[A-Z][a-zA-Z0-9]+)$/,
+        nodeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-c4/stencil-c4-loader').then(m => m.registerC4Nodes)
       }
     ]
   },
