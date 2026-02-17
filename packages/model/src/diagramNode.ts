@@ -742,6 +742,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   duplicate(ctx?: DuplicationContext, id?: string): DiagramNode {
+    assert.false(this.id === id);
+
     const isTopLevel = ctx === undefined;
     const context = ctx ?? {
       targetElementsInGroup: new Map()

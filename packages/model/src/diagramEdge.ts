@@ -846,6 +846,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   duplicate(ctx?: DuplicationContext, id?: string) {
+    assert.false(this.id === id);
+
     return UnitOfWork.executeSilently(this.diagram, uow => {
       const edge = SimpleDiagramEdge._create(
         id ?? newid(),
@@ -867,6 +869,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         const newNode = l.node().duplicate(ctx, id ? `${id}-${i}` : undefined);
         newLabelNodes.push({
           ...l,
+          id: newNode.id,
           node: () => newNode
         });
       }
