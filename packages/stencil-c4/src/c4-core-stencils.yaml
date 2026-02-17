@@ -57,61 +57,22 @@ stencils:
     elements:
       - id: 10cmsfz
         type: node
-        nodeType: group
+        nodeType: c4Person
         bounds:
           x: 0
           y: 0
           w: 180
           h: 180
           r: 0
-        children:
-          - id: sl3e1v6
-            type: node
-            nodeType: rounded-rect
-            bounds:
-              x: 0
-              y: 71
-              w: 180
-              h: 109
-              r: 0
-            children: [ ]
-            props:
-              custom:
-                roundedRect:
-                  radius: 42
-              text:
-                top: 12
-            metadata:
-              style: c4-element
-              textStyle: c4-element-text
-            texts:
-              text: "<h1>Person</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
-            tags:
-          - id: h7pylel
-            type: node
-            nodeType: circle
-            bounds:
-              x: 50
-              y: 0
-              w: 80
-              h: 80
-              r: 0
-            children: [ ]
-            props:
-              stroke:
-                width: 3
-            metadata:
-              style: c4-element
-              textStyle: c4-element-text
-            texts:
-              text: ""
-            tags:
-        props: { }
+        children: [ ]
+        props:
+          text:
+            top: 12
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: c4-element
+          textStyle: c4-element-text
         texts:
-          text: ""
+          text: "<h1>Person</h1>\n\n<p><small>[Type: Value]</small></p>\n\n<p>Description</p>"
         tags:
 
   - id: 'c4-core-data-store'
