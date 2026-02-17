@@ -20,8 +20,6 @@ export const registerC4Nodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new C4FolderNodeDefinition());
 };
 
-export const registerC4Edges = async (_edges: EdgeDefinitionRegistry) => {};
-
 export const loadC4Stencils = async (registry: Registry) => {
   await registerC4Nodes(registry.nodes);
 
