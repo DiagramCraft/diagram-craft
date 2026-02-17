@@ -2,6 +2,7 @@ import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDe
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import c4CoreStencils from './c4-core-stencils.yaml';
+import c4OldStencils from './c4-old-stencils.yaml';
 import { C4ModuleNodeDefinition } from './c4Module';
 import { C4CLIRectNodeDefinition } from './c4CLIRect';
 import { C4BrowserRectNodeDefinition } from '@diagram-craft/stencil-c4/c4BrowserRect';
@@ -36,6 +37,15 @@ export const loadC4Stencils = async (registry: Registry) => {
   loadStencilsFromYaml(c4CoreStencils).forEach(s => {
     c4Stencils.stencils.push(s);
     c4Stencils.subPackages!.find(p => p.id === 'core')?.stencils.push(s);
+  });
+
+  /* *********************************************************************** */
+  /* OLD STYLE PACKAGE                                                       */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(c4OldStencils).forEach(s => {
+    c4Stencils.stencils.push(s);
+    c4Stencils.subPackages!.find(p => p.id === 'old')?.stencils.push(s);
   });
 
   return c4Stencils;
