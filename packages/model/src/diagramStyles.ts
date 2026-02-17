@@ -177,6 +177,8 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
       name: this.name,
       props: deepClone(this.props) as NodeProps | EdgeProps,
       parentId: this.parent?.id ?? undefined,
+      fillColors: this.fillColors,
+      strokeColors: this.strokeColors,
       type: this.type
     };
   }

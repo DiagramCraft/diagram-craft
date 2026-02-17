@@ -175,6 +175,26 @@ export const ColorPicker = (props: Props) => {
               </>
             )}
 
+            {props.extraPalettes &&
+              Object.entries(props.extraPalettes)
+                .filter(([_k, v]) => v !== undefined && v.length > 0)
+                .map(([k, v]) => (
+                  <React.Fragment key={k}>
+                    <h2>{k}</h2>
+                    {(v as string[]).map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        style={{ backgroundColor: c }}
+                        onClick={() => {
+                          setColor(c);
+                          enablePropertyEditorTooltip();
+                        }}
+                      ></button>
+                    ))}
+                  </React.Fragment>
+                ))}
+
             <h2>Custom palette</h2>
             {range(0, 14).map(i => (
               <EditableColorWell
@@ -226,6 +246,7 @@ export const ColorPicker = (props: Props) => {
 
 type Props = {
   palette: string[][];
+  extraPalettes?: Record<string, string[] | undefined>;
   isIndeterminate?: boolean;
   state?: 'set' | 'unset' | 'overridden';
   customPalette: DiagramPalette;

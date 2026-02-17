@@ -7,6 +7,7 @@ import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
+import { unique } from '@diagram-craft/utils/array';
 
 export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
@@ -67,6 +68,11 @@ export const NodeFillPanel = (props: Props) => {
         imageTintStrength={imageTintStrength}
         imageW={imageW}
         pattern={pattern}
+        palette={unique(
+          $d.selection.nodes.flatMap(
+            n => $d.document.styles.getNodeStyle(n.metadata.style)?.fillColors ?? []
+          )
+        )}
       />
     </ToolWindowPanel>
   );

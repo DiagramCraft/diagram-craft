@@ -6,12 +6,14 @@ stencils:
         name: 'C4 Old Element'
         type: 'node'
         fillColors:
-          - "#3066b7"
           - "#1c4175"
-          - "#999999"
+          - "#3066b7"
           - "#91b9ed"
+          - "#999999"
         strokeColors:
+          - "#3066b7"
           - "#406fa2"
+          - "#777777"
         props:
           custom:
             roundedRect:
