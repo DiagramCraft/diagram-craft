@@ -9,8 +9,6 @@ stencils:
           custom:
             roundedRect:
               radius: 20
-          fill:
-            color: "var(--canvas-bg-bright)"
           stroke:
             color: "#3066b7"
             width: 3
@@ -230,4 +228,72 @@ stencils:
           textStyle: c4-element-text
         texts:
           text: "<h1>Window</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
+        tags:
+
+  - id: 'c4-core-relationship'
+    stencil: Relationship
+    settings:
+      scaleStrokes: true
+    styles:
+      - id: 'c4-edge'
+        name: 'C4 Edge'
+        type: 'edge'
+        props:
+          stroke:
+            pattern: DASHED
+            width: 2
+          arrow:
+            end:
+              type: SQUARE_ARROW_FILLED
+          fill:
+            color: black
+      - id: 'c4-edge-text'
+        name: 'C4 Edge Text'
+        type: 'text'
+        props:
+          text:
+            align: center
+            fontSize: 14
+          fill:
+            enabled: false
+    elements:
+      - id: kiucwid
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 201.04639094534696
+            y: 1.3053884989049038
+        labelNodes:
+          - id: xx720ij
+            type: horizontal
+            offset:
+              x: 0
+              y: 25
+            timeOffset: 0.5
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: c4-edge
+        children:
+          - id: xx720ij
+            type: node
+            nodeType: text
+            bounds:
+              x: 1080.9768045273265
+              y: 1595.8473057505475
+              r: 0
+              h: 17
+              w: 77
+            children: [ ]
+            props: { }
+            metadata:
+              style: default-text
+              textStyle: c4-edge-text
+            texts:
+              text: "<p>Relationship</p>"
+            tags:
         tags:

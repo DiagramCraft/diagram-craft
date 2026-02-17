@@ -128,14 +128,14 @@ export class C4BrowserRectComponent extends BaseNodeComponent {
     shapeBuilder
       .buildInterior()
       .addShape(buildCirclePath(props.node.bounds, left + sxr, top + syr, sxr, syr))
-      .fill({ color: 'white' });
+      .fill({ color: props.nodeProps.fill.color });
 
     shapeBuilder
       .buildInterior()
       .addShape(
         buildCirclePath(props.node.bounds, left + 2 * sxr + space + sxr, top + syr, sxr, syr)
       )
-      .fill({ color: 'white' });
+      .fill({ color: props.nodeProps.fill.color });
 
     shapeBuilder
       .buildInterior()
@@ -148,7 +148,7 @@ export class C4BrowserRectComponent extends BaseNodeComponent {
           syr
         )
       )
-      .fill({ color: 'white' });
+      .fill({ color: props.nodeProps.fill.color });
 
     shapeBuilder
       .buildInterior()
@@ -163,7 +163,7 @@ export class C4BrowserRectComponent extends BaseNodeComponent {
           syr
         )
       )
-      .fill({ color: 'white' });
+      .fill({ color: props.nodeProps.fill.color });
 
     shapeBuilder.text(this);
   }
