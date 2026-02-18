@@ -19,9 +19,16 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { LineEndIcon } from './icons/LineEndIcon';
 
+// This is here to avoid creating all thumbnails on initial load
+// We cannot simply rely on props.isOpen to determine if thumbnails should be created
+// as props.isOpen will be false during the closing animation of the popover
+let hasBeenOpen = false;
+
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
   const anchorRef = useRef<HTMLDivElement>(null);
+
+  hasBeenOpen ||= props.isOpen;
 
   const addNode = useCallback(
     (stencil: Stencil) => {
@@ -78,23 +85,26 @@ export const NodeTypePopup = (props: Props) => {
 
   // TODO: Add some smartness to select recent node types and/or node types suggested by the source
   //       node type
+
   const nodes = diagram.document.registry.stencils.get('default').stencils;
-  const diagramsAndNodes: Array<[Stencil, Diagram]> = nodes.map(n => {
-    // TODO: Can we use createThumbnail here somehow
-    const { elements, diagram: dest } = n.forPicker(diagram.document.registry);
-    assert.arrayWithExactlyOneElement(elements);
-    const node = elements[0]! as DiagramNode;
+  const diagramsAndNodes: Array<[Stencil, Diagram]> = hasBeenOpen
+    ? nodes.map(n => {
+        // TODO: Can we use createThumbnail here somehow
+        const { elements, diagram: dest } = n.forPicker(diagram.document.registry);
+        assert.arrayWithExactlyOneElement(elements);
+        const node = elements[0]! as DiagramNode;
 
-    dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
-    dest.viewBox.offset = { x: -5, y: -5 };
+        dest.viewBox.dimensions = { w: node.bounds.w + 10, h: node.bounds.h + 10 };
+        dest.viewBox.offset = { x: -5, y: -5 };
 
-    UnitOfWork.execute(diagram, uow => {
-      addStencilStylesToDocument(n, diagram.document, uow);
-      copyStyles(dest, diagram.document, uow);
-    });
+        UnitOfWork.execute(dest, uow => {
+          addStencilStylesToDocument(n, dest.document, uow);
+          copyStyles(dest, diagram.document, uow);
+        });
 
-    return [n, dest];
-  });
+        return [n, dest];
+      })
+    : [];
 
   // Cleanup documents when they change or component unmounts
   useEffect(() => {
