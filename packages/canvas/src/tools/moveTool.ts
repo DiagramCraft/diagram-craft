@@ -56,7 +56,12 @@ export class MoveTool extends AbstractTool {
       this.diagram.viewBox.toDiagramPoint(point)
     );
 
-    if (isClickOnSelection && !isClickOnBackground) {
+    const isOnlyLabelNode =
+      selection.type === 'single-node' &&
+      selection.nodes[0]!.nodeType === 'text' &&
+      selection.nodes[0]!.isLabelNode();
+
+    if (isClickOnSelection && !isClickOnBackground && !isOnlyLabelNode) {
       let element = mustExist(this.diagram.lookup(id));
 
       const selStack = getElementAndAncestors(element).reverse();

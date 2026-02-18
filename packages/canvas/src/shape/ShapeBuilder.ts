@@ -142,79 +142,8 @@ export class ShapeBuilder {
     opts.style ??= {};
 
     const bounds = this.props.element.bounds;
+
     const joinedPaths = this.processPath(props, opts, paths);
-    const elementId = this.props.element.id;
-
-    const dblclickHandler =
-      this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {});
-
-    // Deferred mousedown handling to allow dblclick to work.
-    // The issue: mousedown triggers selection changes which cause a re-render,
-    // recreating the DOM element before the browser can fire dblclick.
-    // Solution: defer mousedown effects until we know it's not a dblclick.
-    const deferredMouseDown = (e: MouseEvent) => {
-      e.stopPropagation();
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-
-      (window as any).__pendingMouseDown = {
-        handler: this.props.onMouseDown,
-        event: e,
-        elementId,
-        startX,
-        startY,
-        dragStarted: false
-      };
-
-      // If user moves mouse > 5px, it's a drag - execute mousedown immediately
-      const onMouseMove = (moveEvent: MouseEvent) => {
-        const pending = (window as any).__pendingMouseDown;
-        if (!pending || pending.elementId !== elementId || pending.dragStarted) return;
-
-        const dx = Math.abs(moveEvent.clientX - startX);
-        const dy = Math.abs(moveEvent.clientY - startY);
-
-        if (dx > 5 || dy > 5) {
-          pending.dragStarted = true;
-          pending.handler?.(pending.event);
-          document.removeEventListener('mousemove', onMouseMove);
-          document.removeEventListener('mouseup', onMouseUp);
-        }
-      };
-
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
-
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    };
-
-    const onMouseUp = () => {
-      const pending = (window as any).__pendingMouseDown;
-      if (pending && pending.elementId === elementId && !pending.dragStarted) {
-        // Small delay to allow dblclick to fire first
-        setTimeout(() => {
-          const stillPending = (window as any).__pendingMouseDown;
-          if (stillPending && stillPending.elementId === elementId && !stillPending.dragStarted) {
-            // Just select the element (don't initiate drag since mouse is already up)
-            const diagram = this.props.element.diagram;
-            if (!diagram.selection.elements.includes(this.props.element)) {
-              diagram.selection.clear();
-              diagram.selection.toggle(this.props.element);
-            }
-            (window as any).__pendingMouseDown = undefined;
-          }
-        }, 0);
-      }
-    };
-
-    const onDblClick = (e: MouseEvent) => {
-      (window as any).__pendingMouseDown = undefined;
-      dblclickHandler?.(e);
-    };
 
     this.nodes.push(
       ...joinedPaths
@@ -225,11 +154,11 @@ export class ShapeBuilder {
           width: bounds.w.toString(),
           height: bounds.h.toString(),
           class: opts.className,
-          style: `${toInlineCSS(d.style)}; pointer-events: all;`,
+          style: toInlineCSS(d.style),
           on: {
-            mousedown: deferredMouseDown,
-            mouseup: onMouseUp,
-            dblclick: onDblClick
+            mousedown: this.props.onMouseDown,
+            dblclick:
+              this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
           }
         }))
         .map(p => opts.map!(svg.path(p)))
