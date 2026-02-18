@@ -374,3 +374,39 @@ stencils:
         texts:
           text: "<h1>Name</h1>\n\n<small>[Type]</small>"
         tags:
+
+  - id: 'c4-core-title'
+    name: Title
+    settings:
+      scaleStrokes: true
+    styles: *c4-styles
+    elements:
+      - id: qygo4k6
+        type: node
+        nodeType: text
+        bounds:
+          x: 0
+          y: 0
+          w: 615
+          h: 76
+          r: 0
+        children: [ ]
+        props:
+          stroke:
+            enabled: false
+          fill:
+            enabled: false
+          text:
+            align: left
+            left: 0
+            top: 0
+            right: 0
+            bottom: 0
+            valign: top
+            fontSize: 12
+        metadata:
+          style: default-text
+          textStyle: default-text-default
+        texts:
+          text: "<h1>Component View: Title</h1>\n\n<p>Description | Author | URL</p>"
+        tags:
