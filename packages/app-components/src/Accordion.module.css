@@ -63,6 +63,7 @@
       color: var(--cmp-fg);
       background-color: transparent;
       border: 1px solid transparent;
+      text-align: left;
 
       &:focus,
       &[data-focus="true"] {
