@@ -16,8 +16,11 @@ export const EditableCanvas = forwardRef<SVGSVGElement, Props & Actions>((props,
 
   const cmpProps = { ...props, diagram, actionMap, keyMap };
 
+  // TODO: This update() call during render can cause "Cannot update a component while rendering
+  //       a different component" warnings. The proper fix is to move this into a useEffect, but
+  //       that causes other issues that need debugging. As a workaround, useRedraw was modified
+  //       to use queueMicrotask - revert that change once this is properly fixed.
   if (ref.current) {
-    // TODO: Is this needed or not?
     cmpRef.current.update(cmpProps);
   }
 
