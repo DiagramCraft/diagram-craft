@@ -203,8 +203,6 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     doc.hash = document.hash;
   }
 
-  const dest = await deserializeDiagrams(doc, diagrams, diagramFactory);
-
   doc.root.transact(() => {
     doc.customPalette.setColors(document.customPalette);
 
@@ -234,7 +232,10 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
       };
       doc.data.setSchemaMetadata(schema.id, metadata);
     }
+  });
 
+  const dest = await deserializeDiagrams(doc, diagrams, diagramFactory);
+  doc.root.transact(() => {
     dest.forEach(d => doc.addDiagram(d));
 
     // Populate document tags from all element tags
