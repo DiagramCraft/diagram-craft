@@ -157,6 +157,7 @@ export class ShapeBuilder {
           style: toInlineCSS(d.style),
           on: {
             mousedown: this.props.onMouseDown,
+
             dblclick:
               this.props.onDoubleClick ?? (textId ? this.makeOnDblclickHandle(textId) : () => {})
           }

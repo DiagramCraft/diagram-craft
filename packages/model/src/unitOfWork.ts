@@ -415,15 +415,15 @@ export class UnitOfWork {
     }
   }
 
-  commit(withUndo = false) {
+  commit(_withUndo = false) {
     this.state = 'committed';
 
     this.emitEvent('before-commit');
 
     DEBUG: {
-      const operationsByType = groupBy(this.#operations, op => op.type);
-      /*      console.log(
-        `Commit${withUndo ? ' with undo' : ''}: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
+      /*const operationsByType = groupBy(this.#operations, op => op.type);
+      console.log(
+        `Commit${_withUndo ? ' with undo' : ''}: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
       );*/
     }
 
