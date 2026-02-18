@@ -52,6 +52,7 @@ output/
 
 **/storybook-static
 **/local-tests
+**/playwright-report
 
 packages/server-main/data
 
