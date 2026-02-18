@@ -147,9 +147,9 @@ export class C4PersonComponent extends BaseNodeComponent {
 
     // Position text within the body area, between the two leg lines
     const textBounds = {
-      x: bounds.x + bounds.w * 0.2,
+      x: bounds.x,
       y: bounds.y + bodyTop,
-      w: bounds.w * 0.6,
+      w: bounds.w,
       h: bodyHeight,
       r: bounds.r
     };
