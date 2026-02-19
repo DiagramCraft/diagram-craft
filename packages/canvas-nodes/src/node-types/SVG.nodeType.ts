@@ -4,16 +4,13 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
-import { _p } from '@diagram-craft/geometry/point';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 
 // NodeProps extension for custom props *****************************************
 
-const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#4488ff"/></svg>`;
+const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="black"/></svg>`;
 
 type ExtraProps = {
   svgContent?: string;
@@ -38,21 +35,7 @@ export class SVGNodeDefinition extends ShapeNodeDefinition {
     super('svg', 'SVG', SVGComponent);
     this.setFlags({
       [NodeFlags.StyleFill]: false
-    })
-  }
-
-  getBoundingPathBuilder(def: DiagramNode) {
-    return new PathListBuilder()
-      .withTransform(fromUnitLCS(def.bounds))
-      .moveTo(_p(0, 0))
-      .lineTo(_p(1, 0))
-      .lineTo(_p(1, 1))
-      .lineTo(_p(0, 1))
-      .close();
-  }
-
-  getCustomPropertyDefinitions(_node: DiagramNode) {
-    return new CustomPropertyDefinition();
+    });
   }
 }
 
@@ -63,7 +46,7 @@ class SVGComponent extends BaseNodeComponent<SVGNodeDefinition> {
 
     shapeBuilder.noBoundaryNeeded();
 
-    // Transparent rect for mouse interaction (hit target)
+    // Create hit target
     shapeBuilder.add(
       svg.rect({
         x,
@@ -83,10 +66,10 @@ class SVGComponent extends BaseNodeComponent<SVGNodeDefinition> {
     const processedSvg = svgContent.replace(/currentColor/g, strokeColor);
 
     // Render SVG content as image filling the node bounds
-    const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
+    const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
     shapeBuilder.add(
       svg.image({
-        href: dataUri,
+        href,
         x,
         y,
         width,

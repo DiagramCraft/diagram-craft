@@ -51,8 +51,8 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     this.uow = UnitOfWork.begin(this.diagram);
     this.addElement(_p(0, 0));
     transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);
+
     super.onDragEnd();
-    this.onDropped();
   }
 
   cancel() {
@@ -100,9 +100,6 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
   /** Adds the element(s) to the active layer at the given diagram point. */
   protected abstract addElement(point: Point): void;
-
-  /** Called after a successful drop. Override to perform post-drop actions. */
-  protected onDropped(): void {}
 
   protected addDragImage(point: Point) {
     if (this.#dragImage) return;

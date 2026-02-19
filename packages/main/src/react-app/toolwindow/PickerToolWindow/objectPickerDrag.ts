@@ -2,7 +2,11 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
-import { addAllChildren, assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
+import {
+  addAllChildren,
+  assignNewBounds,
+  cloneElements
+} from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { clamp } from '@diagram-craft/utils/math';
@@ -18,7 +22,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
   constructor(
     event: MouseEvent,
     readonly source: DiagramElement[],
-    diagram: Diagram,
+    readonly diagram: Diagram,
     readonly stencilId: string | undefined,
     readonly styles: Array<StencilStyle>,
     context: Context
@@ -53,10 +57,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
 
     const $canvasEl = $canvasVdomNode.el! as HTMLElement;
     $canvasEl.style.background = 'transparent';
-    ($canvasEl as SVGElement & HTMLElement).setAttribute(
-      'viewBox',
-      `-2 -2 ${bounds.w + 4} ${bounds.h + 4}`
-    );
+    $canvasEl.setAttribute('viewBox', `-2 -2 ${bounds.w + 4} ${bounds.h + 4}`);
     return $canvasEl;
   }
 
@@ -102,7 +103,8 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     this.diagram.selection.setElements(this._elements);
   }
 
-  protected onDropped() {
+  onDragEnd() {
+    super.onDragEnd();
     if (this.stencilId) {
       this.diagram.document.props.recentStencils.register(this.stencilId);
     }

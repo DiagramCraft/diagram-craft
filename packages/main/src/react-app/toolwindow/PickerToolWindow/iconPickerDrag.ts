@@ -14,8 +14,11 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { newid } from '@diagram-craft/utils/id';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { AbstractPickerDrag } from './abstractPickerDrag';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="currentColor"/></svg>`;
+const WIDTH = 100;
+const HEIGHT = 100;
 
 const svgAspectRatio = (svg: string): number => {
   const match = svg.match(/viewBox="([^"]+)"/);
@@ -40,16 +43,13 @@ export class IconPickerDrag extends AbstractPickerDrag {
   ) {
     super(event, diagram, context);
 
-    svgPromise.then(content => {
-      this.#svgContent = content;
-    });
-
+    svgPromise.then(content => (this.#svgContent = content));
     this.addDragImage({ x: event.clientX, y: event.clientY });
   }
 
   protected createDragImageContent(): HTMLElement {
     const zoomLevel = this.diagram.viewBox.zoomLevel;
-    const baseSize = Math.round(100 / zoomLevel);
+    const baseSize = Math.round(WIDTH / zoomLevel);
 
     const img = document.createElement('img');
     img.width = baseSize;
@@ -57,9 +57,10 @@ export class IconPickerDrag extends AbstractPickerDrag {
     img.style.pointerEvents = 'none';
     img.style.opacity = '0.8';
 
-    const color =
-      this.diagram.document.styles.nodeStyles.find(s => s.id === 'default')?.props.stroke?.color ??
-      'black';
+    const defaultNodeStyle = mustExist(
+      this.diagram.document.styles.nodeStyles.find(s => s.id === 'default')
+    );
+    const color = defaultNodeStyle?.props.stroke?.color ?? 'black';
 
     const setSrc = (svg: string) => {
       img.width = baseSize;
@@ -81,13 +82,13 @@ export class IconPickerDrag extends AbstractPickerDrag {
     assertRegularLayer(activeLayer);
 
     const svgContent = this.#svgContent ?? DEFAULT_SVG;
-    const h = Math.round(100 * svgAspectRatio(svgContent));
+    const h = Math.round(HEIGHT * svgAspectRatio(svgContent));
 
     const { layer: sourceLayer } = createThumbnail((_d, layer, uow) => {
       const node = ElementFactory.node(
         newid(),
         'svg',
-        { x: 0, y: 0, w: 100, h, r: 0 },
+        { x: 0, y: 0, w: WIDTH, h, r: 0 },
         layer,
         { custom: { svg: { svgContent } } } as NodeProps,
         {}
@@ -96,10 +97,13 @@ export class IconPickerDrag extends AbstractPickerDrag {
       return [node];
     }, this.diagram.document.registry);
 
+    // TODO: This seems a bit over the top....
     this._elements = cloneElements(sourceLayer.elements, activeLayer);
 
     this._elements.forEach(e => {
       activeLayer.addElement(e, this.uow);
+
+      // TODO: This as well...
       addAllChildren(e, this.uow);
     });
 
@@ -111,6 +115,7 @@ export class IconPickerDrag extends AbstractPickerDrag {
     this.diagram.selection.setElements(this._elements);
 
     if (!this.#svgContent) {
+      // This is to handle the edge case in which the SVG didn't fully load when initiating the drag
       this.svgPromise.then(content => {
         if (this._elements.length > 0) {
           UnitOfWork.execute(this.diagram, uow => {
@@ -120,6 +125,7 @@ export class IconPickerDrag extends AbstractPickerDrag {
               p.custom.svg ??= {};
               p.custom.svg.svgContent = content;
             }, uow);
+
             const { x, y, w } = node.bounds;
             node.setBounds({ x, y, w, h: Math.round(w * svgAspectRatio(content)), r: 0 }, uow);
           });
