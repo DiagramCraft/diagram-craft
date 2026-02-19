@@ -27,9 +27,10 @@ const assignNewIdsToSerializedElements = (
 
     if (e.type === 'node' || e.type === 'delegating-node') {
       nodeIdMapping.set(oldId, newId);
-      for (const c of e.children ?? []) {
-        assignNodeIds(c);
-      }
+    }
+
+    for (const c of e.children ?? []) {
+      assignNodeIds(c);
     }
   };
 
@@ -53,6 +54,11 @@ const assignNewIdsToSerializedElements = (
           // Node not in cloned set - convert to free endpoint
           e.end = { position: e.end.position! };
         }
+      }
+
+      for (const ln of e.labelNodes ?? []) {
+        // @ts-expect-error
+        ln.id = nodeIdMapping.get(ln.id)!;
       }
     }
 
