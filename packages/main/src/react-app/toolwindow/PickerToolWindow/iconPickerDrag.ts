@@ -48,9 +48,12 @@ export class IconPickerDrag extends AbstractPickerDrag {
   }
 
   protected createDragImageContent(): HTMLElement {
+    const zoomLevel = this.diagram.viewBox.zoomLevel;
+    const baseSize = Math.round(100 / zoomLevel);
+
     const img = document.createElement('img');
-    img.width = 35;
-    img.height = 35;
+    img.width = baseSize;
+    img.height = baseSize;
     img.style.pointerEvents = 'none';
     img.style.opacity = '0.8';
 
@@ -59,6 +62,8 @@ export class IconPickerDrag extends AbstractPickerDrag {
       'black';
 
     const setSrc = (svg: string) => {
+      img.width = baseSize;
+      img.height = Math.round(baseSize * svgAspectRatio(svg));
       img.src = `data:image/svg+xml,${encodeURIComponent(svg.replaceAll('currentColor', color))}`;
     };
 
