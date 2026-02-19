@@ -21,9 +21,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 4px 2px;
+  padding: 4px;
   font-size: 11px;
   color: var(--base-fg-dim);
+  border-top: 1px solid var(--base-fg-more-dim);
+  border-bottom: 1px solid var(--base-fg-more-dim);
+  margin-bottom: 0.25rem;
 }
 
 .paginationBtn {
