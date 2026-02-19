@@ -39,6 +39,7 @@ import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
+import { SVGNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/SVG.nodeType';
 import { addStencil, StencilPackage, StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 
 export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> = []) => {
@@ -72,6 +73,7 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new RegularPolygonNodeDefinition());
   reg.register(new RoundedRectNodeDefinition());
   reg.register(new StarNodeDefinition());
+  reg.register(new SVGNodeDefinition());
   reg.register(new StepNodeDefinition());
   reg.register(new SwimlaneNodeDefinition());
   reg.register(new TableNodeDefinition());
