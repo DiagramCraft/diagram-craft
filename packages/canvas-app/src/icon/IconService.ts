@@ -26,4 +26,7 @@ export interface IconService {
 
   /** Returns the URL to render a single icon as an SVG image */
   getIconUrl(prefix: string, icon: string, color: string): string;
+
+  /** Fetches the raw SVG text for an icon using currentColor */
+  fetchIconSvg(prefix: string, icon: string): Promise<string>;
 }

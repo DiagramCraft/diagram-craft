@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -14,6 +15,10 @@ import type {
 } from '@diagram-craft/canvas-app/icon/IconService';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import styles from './IconPickerTab.module.css';
+import { useApplication, useDiagram } from '../../../application';
+import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
+import { IconPickerDrag } from './iconPickerDrag';
+import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 const service: IconService = new IconifyIconService();
 
@@ -33,21 +38,88 @@ const flattenIcons = (data: CollectionIcons): string[] => {
   return entries;
 };
 
-const IconGrid = (props: { icons: string[]; getUrl: (icon: string) => string }) => (
-  <div className={'cmp-object-picker'}>
-    {props.icons.map(icon => (
-      <img
-        key={icon}
-        className={styles.iconPickerIconItem}
-        loading="lazy"
-        src={props.getUrl(icon)}
-        width={35}
-        height={35}
-        title={icon}
-      />
-    ))}
-  </div>
-);
+const IconGrid = (props: {
+  icons: string[];
+  getUrl: (icon: string) => string;
+  getTooltipUrl?: (icon: string) => string;
+  onIconMouseDown?: (event: MouseEvent, prefix: string, icon: string) => void;
+  prefix?: string;
+}) => {
+  const timeout = useRef<number | null>(null);
+  const [hover, setHover] = useState<{ x: number; y: number; url: string; name: string } | undefined>();
+
+  const onMouseLeave = useCallback(() => {
+    if (timeout.current) clearTimeout(timeout.current);
+    setHover(undefined);
+  }, []);
+
+  return (
+    <div className={'cmp-object-picker'} onMouseLeave={onMouseLeave}>
+      {hover &&
+        createPortal(
+          <div
+            style={{
+              position: 'absolute',
+              left: hover.x + 40,
+              top: hover.y,
+              width: 100,
+              height: 110,
+              zIndex: 200,
+              background: 'var(--canvas-bg)',
+              borderRadius: '4px',
+              lineHeight: '0',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              color: 'var(--canvas-fg)',
+              fontSize: '11px',
+              paddingTop: '0.75rem',
+              paddingBottom: '0.75rem',
+              boxShadow:
+                'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px'
+            }}
+          >
+            <img src={hover.url} width={80} height={80} />
+            <div style={{ lineHeight: '14px', marginTop: 'auto', textAlign: 'center' }}>
+              {hover.name}
+            </div>
+          </div>,
+          document.body
+        )}
+      {props.icons.map(icon => {
+        const fullPrefix = props.prefix ?? icon.split(':')[0]!;
+        const iconName = props.prefix ? icon : icon.split(':')[1]!;
+        return (
+          <img
+            key={icon}
+            className={styles.iconPickerIconItem}
+            loading="lazy"
+            src={props.getUrl(icon)}
+            width={35}
+            height={35}
+            title={icon}
+            onMouseEnter={
+              props.getTooltipUrl
+                ? e => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    if (timeout.current) clearTimeout(timeout.current);
+                    timeout.current = window.setTimeout(() => {
+                      setHover({ x: rect.x, y: rect.y, url: props.getTooltipUrl!(icon), name: iconName });
+                    }, 100);
+                  }
+                : undefined
+            }
+            onMouseDown={
+              props.onIconMouseDown
+                ? e => props.onIconMouseDown!(e.nativeEvent, fullPrefix, iconName)
+                : undefined
+            }
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 const Pagination = (props: {
   page: number;
@@ -86,10 +158,11 @@ type CollectionIconsProps = {
   prefix: string;
   cachedData: CollectionIcons | undefined;
   onLoad: (prefix: string, data: CollectionIcons) => void;
+  onIconMouseDown?: (event: MouseEvent, prefix: string, icon: string) => void;
 };
 
 const CollectionIconsPanel = (props: CollectionIconsProps) => {
-  const { service, prefix, cachedData, onLoad } = props;
+  const { service, prefix, cachedData, onLoad, onIconMouseDown } = props;
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -117,12 +190,22 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
         onPrev={() => setPage(p => p - 1)}
         onNext={() => setPage(p => p + 1)}
       />
-      <IconGrid icons={pageIcons} getUrl={icon => service.getIconUrl(prefix, icon, '#fefefe')} />
+      <IconGrid
+        icons={pageIcons}
+        getUrl={icon => service.getIconUrl(prefix, icon, '#fefefe')}
+        getTooltipUrl={icon => service.getIconUrl(prefix, icon, '#333333')}
+        prefix={prefix}
+        onIconMouseDown={onIconMouseDown}
+      />
     </>
   );
 };
 
-const SearchResultsPanel = (props: { service: IconService; icons: string[] }) => {
+const SearchResultsPanel = (props: {
+  service: IconService;
+  icons: string[];
+  onIconMouseDown?: (event: MouseEvent, prefix: string, icon: string) => void;
+}) => {
   const [page, setPage] = useState(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: this is intentional to trigger a page reset
@@ -146,18 +229,37 @@ const SearchResultsPanel = (props: { service: IconService; icons: string[] }) =>
         onPrev={() => setPage(p => p - 1)}
         onNext={() => setPage(p => p + 1)}
       />
-      <IconGrid icons={pageIcons} getUrl={getUrl} />
+      <IconGrid
+        icons={pageIcons}
+        getUrl={getUrl}
+        getTooltipUrl={icon => {
+          const [pfx, name] = icon.split(':');
+          return props.service.getIconUrl(pfx!, name!, '#333333');
+        }}
+        onIconMouseDown={props.onIconMouseDown}
+      />
     </>
   );
 };
 
 export const IconPickerTab = () => {
+  const diagram = useDiagram();
+  const app = useApplication();
   const [collections, setCollections] = useState<Record<string, CollectionInfo> | null>(null);
   const [openCategories, setOpenCategories] = useState<string[]>([]);
   const [loadedIcons, setLoadedIcons] = useState<Map<string, CollectionIcons>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const ref = useRef<HTMLInputElement>(null);
+
+  const handleIconMouseDown = useCallback(
+    (event: MouseEvent, prefix: string, icon: string) => {
+      if (!isRegularLayer(diagram.activeLayer)) return;
+      const svgPromise = service.fetchIconSvg(prefix, icon);
+      DRAG_DROP_MANAGER.initiate(new IconPickerDrag(event, prefix, icon, svgPromise, diagram, app));
+    },
+    [diagram, app]
+  );
 
   useEffect(() => {
     service.getCollections().then(data => setCollections(data));
@@ -222,7 +324,11 @@ export const IconPickerTab = () => {
 
       {!isEmptyString(searchQuery) ? (
         <div style={{ marginTop: '0.75rem', marginLeft: '0.5rem', marginRight: '0.5rem' }}>
-          <SearchResultsPanel service={service} icons={searchResults} />
+          <SearchResultsPanel
+            service={service}
+            icons={searchResults}
+            onIconMouseDown={handleIconMouseDown}
+          />
         </div>
       ) : (
         <Accordion.Root type="multiple" value={openCategories} onValueChange={setOpenCategories}>
@@ -242,6 +348,7 @@ export const IconPickerTab = () => {
                             prefix={prefix}
                             cachedData={loadedIcons.get(prefix)}
                             onLoad={handleIconLoad}
+                            onIconMouseDown={handleIconMouseDown}
                           />
                         </Collapsible>
                       ))}
