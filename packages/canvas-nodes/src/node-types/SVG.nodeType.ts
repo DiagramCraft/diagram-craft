@@ -7,7 +7,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder, fromUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { _p } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { CustomPropertyDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
+import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 
@@ -36,6 +36,9 @@ registerCustomNodeDefaults('svg', {
 export class SVGNodeDefinition extends ShapeNodeDefinition {
   constructor() {
     super('svg', 'SVG', SVGComponent);
+    this.setFlags({
+      [NodeFlags.StyleFill]: false
+    })
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
@@ -75,8 +78,12 @@ class SVGComponent extends BaseNodeComponent<SVGNodeDefinition> {
       })
     );
 
+    // Replace currentColor with the node's stroke color before encoding
+    const strokeColor = props.nodeProps.stroke.color;
+    const processedSvg = svgContent.replace(/currentColor/g, strokeColor);
+
     // Render SVG content as image filling the node bounds
-    const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+    const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
     shapeBuilder.add(
       svg.image({
         href: dataUri,
