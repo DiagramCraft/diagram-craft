@@ -324,15 +324,19 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           open={!!dialogProps}
           props={dialogProps.props}
           type={dialogProps.style.type}
+          fillColors={dialogProps.style.fillColors}
+          strokeColors={dialogProps.style.strokeColors}
           onClose={() => setDialogProps(undefined)}
-          onSave={e => {
+          onSave={(e, fillColors, strokeColors) => {
             const style = dialogProps.style;
 
             const stylesheet = diagram.document.styles.get(style.id);
             if (stylesheet) {
-              UnitOfWork.executeWithUndo(diagram, 'Modify style', uow =>
-                stylesheet.setProps(e, uow)
-              );
+              UnitOfWork.executeWithUndo(diagram, 'Modify style', uow => {
+                stylesheet.setProps(e, uow);
+                stylesheet.setFillColors(fillColors, uow);
+                stylesheet.setStrokeColors(strokeColors, uow);
+              });
             }
 
             setDialogProps(undefined);

@@ -8,6 +8,7 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+import { StylesheetPaletteEditor } from './StylesheetPaletteEditor';
 
 export const STYLESHEET_EDITORS = {
   text: [{ name: 'Text', editor: NodeTextEditor }],
@@ -32,7 +33,12 @@ export const ElementStylesheetDialog = (props: Props) => {
   const redraw = useRedraw();
 
   const [data, setData] = useState<NodeProps | EdgeProps>(deepClone(props.props));
+  const [fillColors, setFillColors] = useState<string[]>([...(props.fillColors ?? [])]);
+  const [strokeColors, setStrokeColors] = useState<string[]>([...(props.strokeColors ?? [])]);
+
   useEffect(() => setData(deepClone(props.props)), [props.props]);
+  useEffect(() => setFillColors([...(props.fillColors ?? [])]), [props.fillColors]);
+  useEffect(() => setStrokeColors([...(props.strokeColors ?? [])]), [props.strokeColors]);
 
   let name = 'Element Stylesheet';
   if (props.type === 'text') name = 'Text Stylesheet';
@@ -44,7 +50,7 @@ export const ElementStylesheetDialog = (props: Props) => {
       open={props.open}
       title={name}
       buttons={[
-        { type: 'default', label: 'Save', onClick: () => props.onSave(data) },
+        { type: 'default', label: 'Save', onClick: () => props.onSave(data, fillColors, strokeColors) },
         { type: 'cancel', label: 'Cancel', onClick: props.onClose }
       ]}
       onClose={props.onClose}
@@ -57,6 +63,7 @@ export const ElementStylesheetDialog = (props: Props) => {
                 {e.name}
               </Tabs.Trigger>
             ))}
+            <Tabs.Trigger value="palette">Palette</Tabs.Trigger>
             <Tabs.Trigger value="json">JSON</Tabs.Trigger>
           </Tabs.List>
           {props.editors.map(e => (
@@ -75,6 +82,25 @@ export const ElementStylesheetDialog = (props: Props) => {
               </div>
             </Tabs.Content>
           ))}
+          <Tabs.Content value="palette" style={{ height: '100%' }}>
+            <div
+              style={{
+                overflow: 'auto',
+                maxHeight: '100%',
+                scrollbarGutter: 'stable',
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'var(--base-fg-more-dim) var(--panel-bg)'
+              }}
+            >
+              <StylesheetPaletteEditor
+                type={props.type}
+                fillColors={fillColors}
+                strokeColors={strokeColors}
+                onFillColorsChange={setFillColors}
+                onStrokeColorsChange={setStrokeColors}
+              />
+            </div>
+          </Tabs.Content>
           <Tabs.Content value="json">
             <div style={{ padding: '0.5rem 0' }}>
               <TextArea
@@ -103,6 +129,8 @@ type Props = {
   type: StylesheetType;
   open: boolean;
   onClose: () => void;
-  onSave: (props: NodeProps | EdgeProps) => void;
+  onSave: (props: NodeProps | EdgeProps, fillColors: string[], strokeColors: string[]) => void;
   editors: Array<{ name: string; editor: Editor }>;
+  fillColors?: string[];
+  strokeColors?: string[];
 };
