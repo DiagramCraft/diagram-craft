@@ -110,6 +110,9 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
     const basePath = clipPath(props.element.path(), props.element, startArrow, endArrow);
     if (basePath === undefined) return svg.g({});
 
+    const pathLength = basePath.length();
+    if (Number.isNaN(pathLength) || pathLength <= 0) return svg.g({});
+
     const z = new Zoom($d.viewBox.zoomLevel);
 
     const points: VNode[] = [];
