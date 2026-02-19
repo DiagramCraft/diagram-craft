@@ -1,0 +1,49 @@
+.iconPickerIconItem {
+  width: 35px;
+  height: 35px;
+  margin: 0.2rem;
+  display: block;
+}
+
+.iconPickerCollectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.iconPickerLoading {
+  padding: 8px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.iconPickerPagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+  border-top: 1px solid var(--base-fg-more-dim);
+  border-bottom: 1px solid var(--base-fg-more-dim);
+  margin-bottom: 0.25rem;
+}
+
+.iconPickerPaginationBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cmp-fg);
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+
+  &:hover:not(:disabled) {
+    background: var(--cmp-bg-hover);
+  }
+
+  &:disabled {
+    color: var(--cmp-fg-disabled);
+    cursor: default;
+  }
+}

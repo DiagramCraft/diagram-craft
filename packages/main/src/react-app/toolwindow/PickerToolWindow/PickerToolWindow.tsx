@@ -2,6 +2,7 @@ import { ModelPickerTab } from './ModelPickerTab';
 import { RecentShapesPickerPanel } from './RecentShapesPickerPanel';
 import { ToolWindow } from '../ToolWindow';
 import { ShapesPickerTab } from './ShapesPickerTab';
+import { IconPickerTab } from './IconPickerTab';
 
 export const PickerToolWindow = () => {
   return (
@@ -16,6 +17,9 @@ export const PickerToolWindow = () => {
       </ToolWindow.Tab>
       <ToolWindow.Tab id={'model'} title={'Model'}>
         <ModelPickerTab />
+      </ToolWindow.Tab>
+      <ToolWindow.Tab id={'icons'} title={'Icons'}>
+        <IconPickerTab />
       </ToolWindow.Tab>
     </ToolWindow.Root>
   );

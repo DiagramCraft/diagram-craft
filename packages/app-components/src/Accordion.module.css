@@ -107,10 +107,6 @@
     > .cmp-accordion {
       margin: -5px -10px;
 
-      .cmp-accordion__trigger {
-        font-weight: normal;
-      }
-
       .cmp-accordion__chevron {
         color: var(--panel-fg);
 
