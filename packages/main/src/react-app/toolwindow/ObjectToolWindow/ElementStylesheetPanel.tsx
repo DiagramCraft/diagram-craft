@@ -315,14 +315,18 @@ export const ElementStylesheetPanel = (props: Props) => {
           open={!!dialogProps}
           props={dialogProps.props}
           type={dialogProps.style.type}
+          fillColors={dialogProps.style.fillColors}
+          strokeColors={dialogProps.style.strokeColors}
           onClose={() => setDialogProps(undefined)}
-          onSave={e => {
+          onSave={(e, fillColors, strokeColors) => {
             const style = dialogProps.style;
 
             const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
               UnitOfWork.executeWithUndo($d, 'Modify style', uow => {
                 stylesheet.setProps(e, uow);
+                stylesheet.setFillColors(fillColors, uow);
+                stylesheet.setStrokeColors(strokeColors, uow);
               });
             }
 
