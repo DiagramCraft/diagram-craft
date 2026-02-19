@@ -1,23 +1,23 @@
-.iconItem {
+.iconPickerIconItem {
   width: 35px;
   height: 35px;
   margin: 0.2rem;
   display: block;
 }
 
-.collectionList {
+.iconPickerCollectionList {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.loading {
+.iconPickerLoading {
   padding: 8px;
   font-size: 11px;
   color: var(--base-fg-dim);
 }
 
-.pagination {
+.iconPickerPagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,7 +29,7 @@
   margin-bottom: 0.25rem;
 }
 
-.paginationBtn {
+.iconPickerPaginationBtn {
   background: none;
   border: none;
   cursor: pointer;

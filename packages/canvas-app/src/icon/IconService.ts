@@ -25,5 +25,5 @@ export interface IconService {
   searchIcons(query: string, limit?: number): Promise<SearchResult>;
 
   /** Returns the URL to render a single icon as an SVG image */
-  getIconUrl(prefix: string, icon: string): string;
+  getIconUrl(prefix: string, icon: string, color: string): string;
 }

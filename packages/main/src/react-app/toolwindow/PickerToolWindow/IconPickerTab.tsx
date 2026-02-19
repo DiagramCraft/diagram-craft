@@ -38,7 +38,7 @@ const IconGrid = (props: { icons: string[]; getUrl: (icon: string) => string }) 
     {props.icons.map(icon => (
       <img
         key={icon}
-        className={styles.iconItem}
+        className={styles.iconPickerIconItem}
         loading="lazy"
         src={props.getUrl(icon)}
         width={35}
@@ -57,10 +57,10 @@ const Pagination = (props: {
 }) => {
   if (props.totalPages <= 1) return null;
   return (
-    <div className={styles.pagination}>
+    <div className={styles.iconPickerPagination}>
       <button
         type="button"
-        className={styles.paginationBtn}
+        className={styles.iconPickerPaginationBtn}
         disabled={props.page === 0}
         onClick={props.onPrev}
       >
@@ -71,7 +71,7 @@ const Pagination = (props: {
       </span>
       <button
         type="button"
-        className={styles.paginationBtn}
+        className={styles.iconPickerPaginationBtn}
         disabled={props.page >= props.totalPages - 1}
         onClick={props.onNext}
       >
@@ -98,11 +98,12 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
     }
   }, [cachedData, prefix, service, onLoad]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is intentional to trigger a page reset
   useEffect(() => {
     setPage(0);
   }, [cachedData]);
 
-  if (!cachedData) return <div className={styles.loading}>Loading...</div>;
+  if (!cachedData) return <div className={styles.iconPickerLoading}>Loading...</div>;
 
   const allIcons = flattenIcons(cachedData);
   const totalPages = Math.ceil(allIcons.length / PAGE_SIZE);
@@ -116,7 +117,7 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
         onPrev={() => setPage(p => p - 1)}
         onNext={() => setPage(p => p + 1)}
       />
-      <IconGrid icons={pageIcons} getUrl={icon => service.getIconUrl(prefix, icon)} />
+      <IconGrid icons={pageIcons} getUrl={icon => service.getIconUrl(prefix, icon, '#fefefe')} />
     </>
   );
 };
@@ -124,6 +125,7 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
 const SearchResultsPanel = (props: { service: IconService; icons: string[] }) => {
   const [page, setPage] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this is intentional to trigger a page reset
   useEffect(() => {
     setPage(0);
   }, [props.icons]);
@@ -133,7 +135,7 @@ const SearchResultsPanel = (props: { service: IconService; icons: string[] }) =>
 
   const getUrl = (icon: string) => {
     const [prefix, name] = icon.split(':');
-    return props.service.getIconUrl(prefix!, name!);
+    return props.service.getIconUrl(prefix!, name!, '#fefefe');
   };
 
   return (
@@ -173,7 +175,7 @@ export const IconPickerTab = () => {
   if (!collections) {
     return (
       <ToolWindow.TabContent>
-        <div className={styles.loading}>Loading collections...</div>
+        <div className={styles.iconPickerLoading}>Loading collections...</div>
       </ToolWindow.TabContent>
     );
   }
@@ -230,7 +232,7 @@ export const IconPickerTab = () => {
               <Accordion.Item key={category} value={category}>
                 <Accordion.ItemHeader>{category}</Accordion.ItemHeader>
                 <Accordion.ItemContent forceMount={false}>
-                  <div className={styles.collectionList}>
+                  <div className={styles.iconPickerCollectionList}>
                     {entries
                       .toSorted(([, a], [, b]) => a.name.localeCompare(b.name))
                       .map(([prefix, info]) => (
