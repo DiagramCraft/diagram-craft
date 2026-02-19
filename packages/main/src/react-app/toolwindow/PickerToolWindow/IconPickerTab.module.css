@@ -1,0 +1,46 @@
+.iconItem {
+  width: 35px;
+  height: 35px;
+  margin: 0.2rem;
+  display: block;
+}
+
+.collectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.loading {
+  padding: 8px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 2px;
+  font-size: 11px;
+  color: var(--base-fg-dim);
+}
+
+.paginationBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--cmp-fg);
+  padding: 2px 6px;
+  font-size: 11px;
+  border-radius: 3px;
+
+  &:hover:not(:disabled) {
+    background: var(--cmp-bg-hover);
+  }
+
+  &:disabled {
+    color: var(--cmp-fg-disabled);
+    cursor: default;
+  }
+}
