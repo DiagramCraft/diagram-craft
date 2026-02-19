@@ -46,7 +46,9 @@ const IconGrid = (props: {
   prefix?: string;
 }) => {
   const timeout = useRef<number | null>(null);
-  const [hover, setHover] = useState<{ x: number; y: number; url: string; name: string } | undefined>();
+  const [hover, setHover] = useState<
+    { x: number; y: number; url: string; name: string } | undefined
+  >();
 
   const onMouseLeave = useCallback(() => {
     if (timeout.current) clearTimeout(timeout.current);
@@ -104,7 +106,12 @@ const IconGrid = (props: {
                     const rect = e.currentTarget.getBoundingClientRect();
                     if (timeout.current) clearTimeout(timeout.current);
                     timeout.current = window.setTimeout(() => {
-                      setHover({ x: rect.x, y: rect.y, url: props.getTooltipUrl!(icon), name: iconName });
+                      setHover({
+                        x: rect.x,
+                        y: rect.y,
+                        url: props.getTooltipUrl!(icon),
+                        name: iconName
+                      });
                     }, 100);
                   }
                 : undefined
@@ -257,6 +264,8 @@ export const IconPickerTab = () => {
       if (!isRegularLayer(diagram.activeLayer)) return;
       const svgPromise = service.fetchIconSvg(prefix, icon);
       DRAG_DROP_MANAGER.initiate(new IconPickerDrag(event, prefix, icon, svgPromise, diagram, app));
+
+      event.preventDefault();
     },
     [diagram, app]
   );

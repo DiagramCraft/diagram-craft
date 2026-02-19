@@ -2,7 +2,11 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
-import { addAllChildren, assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
+import {
+  addAllChildren,
+  assignNewBounds,
+  cloneElements
+} from '@diagram-craft/model/diagramElementUtils';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -50,8 +54,12 @@ export class IconPickerDrag extends AbstractPickerDrag {
     img.style.pointerEvents = 'none';
     img.style.opacity = '0.8';
 
+    const color =
+      this.diagram.document.styles.nodeStyles.find(s => s.id === 'default')?.props.stroke?.color ??
+      'black';
+
     const setSrc = (svg: string) => {
-      img.src = `data:image/svg+xml,${encodeURIComponent(svg.replaceAll('currentColor', '#1a1a1a'))}`;
+      img.src = `data:image/svg+xml,${encodeURIComponent(svg.replaceAll('currentColor', color))}`;
     };
 
     if (this.#svgContent) {
@@ -70,21 +78,18 @@ export class IconPickerDrag extends AbstractPickerDrag {
     const svgContent = this.#svgContent ?? DEFAULT_SVG;
     const h = Math.round(100 * svgAspectRatio(svgContent));
 
-    const { layer: sourceLayer } = createThumbnail(
-      (_d, layer, uow) => {
-        const node = ElementFactory.node(
-          newid(),
-          'svg',
-          { x: 0, y: 0, w: 100, h, r: 0 },
-          layer,
-          { custom: { svg: { svgContent } } } as NodeProps,
-          {}
-        );
-        layer.addElement(node, uow);
-        return [node];
-      },
-      this.diagram.document.registry
-    );
+    const { layer: sourceLayer } = createThumbnail((_d, layer, uow) => {
+      const node = ElementFactory.node(
+        newid(),
+        'svg',
+        { x: 0, y: 0, w: 100, h, r: 0 },
+        layer,
+        { custom: { svg: { svgContent } } } as NodeProps,
+        {}
+      );
+      layer.addElement(node, uow);
+      return [node];
+    }, this.diagram.document.registry);
 
     this._elements = cloneElements(sourceLayer.elements, activeLayer);
 
