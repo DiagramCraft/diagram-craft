@@ -14,6 +14,7 @@ import { EdgeType, LineCap, LineJoin } from '@diagram-craft/model/diagramProps';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
+import { unique } from '@diagram-craft/utils/array';
 
 type FormProps = {
   diagram: Diagram;
@@ -40,6 +41,8 @@ type FormProps = {
   supportsArrows: boolean;
   supportsLineHops: boolean;
   supportsFill: boolean;
+
+  palette?: string[];
 };
 
 export const EdgeLinePanelForm = ({
@@ -63,7 +66,8 @@ export const EdgeLinePanelForm = ({
   strokeSpacing,
   pattern,
   config: $cfg,
-  diagram: $d
+  diagram: $d,
+  palette
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
@@ -126,6 +130,7 @@ export const EdgeLinePanelForm = ({
               palette={$cfg.palette.primary}
               customPalette={$d.document.customPalette}
               onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              extraPalettes={{ Stylesheet: palette }}
             />
           )}
           renderValue={props => <ColorPreview {...props} />}
@@ -140,6 +145,7 @@ export const EdgeLinePanelForm = ({
                 palette={$cfg.palette.primary}
                 customPalette={$d.document.customPalette}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                extraPalettes={{ Stylesheet: palette }}
               />
             )}
             renderValue={props => <ColorPreview {...props} />}
@@ -306,6 +312,11 @@ export const EdgeLinePanel = (props: Props) => {
         lineHopsSize={lineHopsSize}
         lineHopsType={lineHopsType}
         fillColor={fillColor}
+        palette={unique(
+          $d.selection.edges.flatMap(
+            n => $d.document.styles.getEdgeStyle(n.metadata.style)?.strokeColors ?? []
+          )
+        )}
       />
     </ToolWindowPanel>
   );

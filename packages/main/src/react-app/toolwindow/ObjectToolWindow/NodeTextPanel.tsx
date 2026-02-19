@@ -28,6 +28,7 @@ import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
+import { unique } from '@diagram-craft/utils/array';
 
 type FormProps = {
   diagram: Diagram;
@@ -49,6 +50,7 @@ type FormProps = {
   shrink: Property<boolean>;
   position: Property<string>;
   width: Property<number>;
+  palette?: string[];
 };
 
 class FormatProperty extends MultiProperty<string[]> {
@@ -127,7 +129,8 @@ export const NodeTextPanelForm = ({
   lineHeight,
   shrink,
   position,
-  width
+  width,
+  palette
 }: FormProps) => {
   const fonts = $cfg.fonts;
 
@@ -202,6 +205,7 @@ export const NodeTextPanelForm = ({
             render={props => (
               <ColorPicker
                 {...props}
+                extraPalettes={{ Stylesheet: palette }}
                 palette={$cfg.palette.primary}
                 customPalette={$d.document.customPalette}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
@@ -422,6 +426,11 @@ export const NodeTextPanel = (props: Props) => {
         shrink={shrink}
         position={position as Property<string>}
         width={width}
+        palette={unique(
+          $d.selection.nodes.flatMap(
+            n => $d.document.styles.getTextStyle(n.metadata.textStyle)?.strokeColors ?? []
+          )
+        )}
       />
     </ToolWindowPanel>
   );
