@@ -15,8 +15,9 @@ import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvas
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
-import { StencilStyle } from '@diagram-craft/model/stencilRegistry';
+import { copyStyles, StencilStyle } from '@diagram-craft/model/stencilRegistry';
 import { AbstractPickerDrag } from './abstractPickerDrag';
+import { mustExist } from '@diagram-craft/utils/assert';
 
 export class ObjectPickerDrag extends AbstractPickerDrag {
   constructor(
@@ -40,6 +41,12 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
         return e;
       });
     }, this.diagram.document.registry);
+
+    const sourceDiagram = mustExist(this.source[0]).diagram;
+    UnitOfWork.execute(sourceDiagram, uow => {
+      copyStyles(dest, sourceDiagram.document, uow);
+      dest.elements.forEach(e => e.clearCache());
+    });
 
     const bounds = Box.boundingBox(this.source.map(e => e.bounds));
 

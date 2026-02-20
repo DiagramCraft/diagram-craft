@@ -69,8 +69,16 @@ const makeDiagramNode = (doc: DiagramDocument, n: Stencil): StencilEntry => {
     copyStyles(stencilDiagram, doc, uow);
   });
 
-  const { elements: canvasElements } = createThumbnailFromStencil(n.forCanvas(doc.registry), {
-    padding: 5
+  const { elements: canvasElements, diagram: canvasDiagram } = createThumbnailFromStencil(
+    n.forCanvas(doc.registry),
+    {
+      padding: 5
+    }
+  );
+
+  UnitOfWork.execute(canvasDiagram, uow => {
+    addStencilStylesToDocument(n, canvasDiagram.document, uow);
+    copyStyles(canvasDiagram, doc, uow);
   });
 
   const entry: StencilEntry = {
