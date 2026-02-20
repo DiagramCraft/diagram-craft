@@ -19,6 +19,69 @@ import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { DataFields } from '../ObjectDataToolWindow/DataFields';
+import { Button } from '@diagram-craft/app-components/Button';
+import { ShapeSelectDialog } from '../../ShapeSelectDialog';
+import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
+import { safeSplit } from '@diagram-craft/utils/safe';
+import { ColorPicker } from '../../components/ColorPicker';
+import { useConfiguration } from '../../context/ConfigurationContext';
+import { TbPencil, TbX } from 'react-icons/tb';
+
+const iconService = new IconifyIconService();
+
+const IconPropertyEditor = (props: {
+  value: string;
+  onChange: (v: string | undefined) => void;
+}) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const previewSrc = props.value
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(props.value)}`
+    : undefined;
+  return (
+    <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+      {previewSrc && <img src={previewSrc} width={20} height={20} alt="icon" />}
+      <Button type={'icon-only'} onClick={() => setDialogOpen(true)}>
+        <TbPencil />
+      </Button>
+      {props.value && (
+        <Button type={'icon-only'} onClick={() => props.onChange(undefined)}>
+          <TbX />
+        </Button>
+      )}
+      <ShapeSelectDialog
+        open={dialogOpen}
+        title={'Select Icon'}
+        tabs={['icons']}
+        onOk={async result => {
+          setDialogOpen(false);
+          if (result.type === 'icon') {
+            const [prefix, name] = safeSplit(result.id, ':', 2, 2);
+            const svgText = await iconService.fetchIconSvg(prefix, name);
+            props.onChange(svgText);
+          }
+        }}
+        onCancel={() => setDialogOpen(false)}
+      />
+    </div>
+  );
+};
+
+const ColorPropertyEditor = (props: {
+  value: string;
+  onChange: (v: string | undefined) => void;
+}) => {
+  const $cfg = useConfiguration();
+  const diagram = useDiagram();
+  return (
+    <ColorPicker
+      palette={$cfg.palette.primary}
+      customPalette={diagram.document.customPalette}
+      onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+      value={props.value}
+      onChange={props.onChange}
+    />
+  );
+};
 
 const CustomPropertyList = (props: {
   customProperties: CustomPropertyDefinition;
@@ -85,6 +148,36 @@ const CustomPropertyList = (props: {
                       </Select.Item>
                     ))}
                   </Select.Root>
+                )}
+              />
+            </dd>
+          </React.Fragment>
+        );
+      } else if (value.type === 'icon') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
+              <PropertyEditor<any>
+                property={prop}
+                render={props => (
+                  <IconPropertyEditor value={props.value ?? ''} onChange={props.onChange} />
+                )}
+              />
+            </dd>
+          </React.Fragment>
+        );
+      } else if (value.type === 'color') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
+              <PropertyEditor<any>
+                property={prop}
+                render={props => (
+                  <ColorPropertyEditor value={props.value ?? ''} onChange={props.onChange} />
                 )}
               />
             </dd>

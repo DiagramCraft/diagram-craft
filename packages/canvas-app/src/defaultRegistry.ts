@@ -33,6 +33,7 @@ import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
 import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/Table.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
+import { IconRoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/IconRoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
@@ -72,6 +73,7 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new ProcessNodeDefinition());
   reg.register(new RegularPolygonNodeDefinition());
   reg.register(new RoundedRectNodeDefinition());
+  reg.register(new IconRoundedRectNodeDefinition());
   reg.register(new StarNodeDefinition());
   reg.register(new SVGNodeDefinition());
   reg.register(new StepNodeDefinition());
@@ -109,6 +111,17 @@ export const defaultStencilRegistry = () => {
       custom: {
         roundedRect: {
           radius: mode === 'picker' ? 20 : 10
+        }
+      }
+    })
+  });
+  addStencil(defaults, new IconRoundedRectNodeDefinition(), {
+    props: mode => ({
+      custom: {
+        iconRoundedRect: {
+          radius: mode === 'picker' ? 20 : 10,
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="currentColor"/></svg>',
+          iconColor: '#777777'
         }
       }
     })
