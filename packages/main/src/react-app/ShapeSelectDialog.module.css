@@ -1,0 +1,57 @@
+.shapeSelectDialogStencilView {
+  background: transparent;
+}
+
+.shapeSelectDialogIconsTab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+}
+
+.shapeSelectDialogIconGrid {
+  min-height: 12rem;
+}
+
+.shapeSelectDialogIconGridInner {
+  max-width: 31rem;
+  margin-top: 1rem;
+  max-height: 14rem;
+  overflow: auto;
+  gap: 10px;
+}
+
+.shapeSelectDialogIconItem {
+  cursor: pointer;
+}
+
+.shapeSelectDialogPagination {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.shapeSelectDialogPaginationLink {
+  color: var(--cmp-fg);
+  font-weight: normal;
+
+  &[data-active='true'] {
+    font-weight: bold;
+  }
+}
+
+.shapeSelectDialogRecentStencils {
+  max-width: 30rem;
+}
+
+.shapeSelectDialogSearchResults {
+  max-width: 31rem;
+  margin-top: 1rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.shapeSelectDialogSingleTabContent {
+  height: 16rem;
+}
