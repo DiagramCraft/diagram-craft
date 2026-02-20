@@ -1108,8 +1108,12 @@ foreignObject {
 }
 
 .cmp-toolbar {
+  div:has(> .cmp-select-trigger) {
+    margin-top: -2px;
+  }
+
   .cmp-select-trigger {
-    margin: 0 0 0 2px;
+    margin: 0 0 0 4px;
     border-color: transparent;
     font-size: 10px;
   }
