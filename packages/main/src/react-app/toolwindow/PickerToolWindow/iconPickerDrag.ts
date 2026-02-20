@@ -11,20 +11,11 @@ import { newid } from '@diagram-craft/utils/id';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { AbstractPickerDrag } from './abstractPickerDrag';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { svgAspectRatio } from '@diagram-craft/utils/svg';
 
 const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="currentColor"/></svg>`;
 const WIDTH = 100;
 const HEIGHT = 100;
-
-const svgAspectRatio = (svg: string): number => {
-  const match = svg.match(/viewBox="([^"]+)"/);
-  if (!match) return 1;
-  const parts = match[1]!.trim().split(/[\s,]+/);
-  if (parts.length < 4) return 1;
-  const w = parseFloat(parts[2]!);
-  const h = parseFloat(parts[3]!);
-  return w > 0 && h > 0 ? h / w : 1;
-};
 
 export class IconPickerDrag extends AbstractPickerDrag {
   #svgContent: string | undefined;

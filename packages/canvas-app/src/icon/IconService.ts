@@ -14,6 +14,20 @@ export type SearchResult = {
   total: number;
 };
 
+/** Flattens a CollectionIcons response into a single array of icon names. */
+export const flattenIcons = (data: CollectionIcons): string[] => {
+  const entries: string[] = [];
+  if (data.categories) {
+    for (const icons of Object.values(data.categories)) {
+      entries.push(...icons);
+    }
+  }
+  if (data.uncategorized) {
+    entries.push(...data.uncategorized);
+  }
+  return entries;
+};
+
 export interface IconService {
   /** Returns all available icon collections keyed by prefix */
   getCollections(): Promise<Record<string, CollectionInfo>>;

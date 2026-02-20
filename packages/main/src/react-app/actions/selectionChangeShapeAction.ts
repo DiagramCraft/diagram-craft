@@ -48,10 +48,13 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
         id: 'shapeSelect',
         props: {
           title: 'Change shape',
-          excludeMultiElementStencils: true
+          excludeMultiElementStencils: true,
+          tabs: ['recent', 'search']
         },
-        onOk: (stencilId: string) => {
-          const stencil = document.registry.stencils.getStencil(stencilId);
+        onOk: ({ id, type }: { id: string; type: 'stencil' | 'icon' }) => {
+          assert.false(type === 'stencil');
+
+          const stencil = document.registry.stencils.getStencil(id);
 
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);

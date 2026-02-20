@@ -8,10 +8,11 @@ import { TbSearch } from 'react-icons/tb';
 import { ToolWindow } from '../ToolWindow';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
-import type {
-  CollectionIcons,
-  CollectionInfo,
-  IconService
+import {
+  flattenIcons,
+  type CollectionIcons,
+  type CollectionInfo,
+  type IconService
 } from '@diagram-craft/canvas-app/icon/IconService';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import styles from './IconPickerTab.module.css';
@@ -25,18 +26,6 @@ const service: IconService = new IconifyIconService();
 const PAGE_SIZE = 30;
 const SEARCH_PAGE_SIZE = 60;
 
-const flattenIcons = (data: CollectionIcons): string[] => {
-  const entries: string[] = [];
-  if (data.categories) {
-    for (const icons of Object.values(data.categories)) {
-      entries.push(...icons);
-    }
-  }
-  if (data.uncategorized) {
-    entries.push(...data.uncategorized);
-  }
-  return entries;
-};
 
 const IconGrid = (props: {
   icons: string[];
