@@ -2,11 +2,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  addAllChildren,
-  assignNewBounds,
-  cloneElements
-} from '@diagram-craft/model/diagramElementUtils';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -57,9 +53,7 @@ export class IconPickerDrag extends AbstractPickerDrag {
     img.style.pointerEvents = 'none';
     img.style.opacity = '0.8';
 
-    const defaultNodeStyle = mustExist(
-      this.diagram.document.styles.nodeStyles.find(s => s.id === 'default')
-    );
+    const defaultNodeStyle = mustExist(this.diagram.document.styles.getNodeStyle('default'));
     const color = defaultNodeStyle?.props.stroke?.color ?? 'black';
 
     const setSrc = (svg: string) => {
@@ -97,37 +91,24 @@ export class IconPickerDrag extends AbstractPickerDrag {
       return [node];
     }, this.diagram.document.registry);
 
-    // TODO: This seems a bit over the top....
     this._elements = cloneElements(sourceLayer.elements, activeLayer);
-
-    this._elements.forEach(e => {
-      activeLayer.addElement(e, this.uow);
-
-      // TODO: This as well...
-      addAllChildren(e, this.uow);
-    });
+    this._elements.forEach(e => activeLayer.addElement(e, this.uow));
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this._elements, point, Point.of(1, 1), uow);
     });
 
-    this.diagram.selection.clear();
     this.diagram.selection.setElements(this._elements);
 
+    // This is to handle the edge case in which the SVG didn't fully load when initiating the drag
     if (!this.#svgContent) {
-      // This is to handle the edge case in which the SVG didn't fully load when initiating the drag
-      this.svgPromise.then(content => {
+      this.svgPromise.then(svgContent => {
         if (this._elements.length > 0) {
           UnitOfWork.execute(this.diagram, uow => {
             const node = this._elements[0] as DiagramNode;
-            node.updateProps(p => {
-              p.custom ??= {};
-              p.custom.svg ??= {};
-              p.custom.svg.svgContent = content;
-            }, uow);
-
+            node.updateProps(p => (p.custom = { svg: { svgContent } }), uow);
             const { x, y, w } = node.bounds;
-            node.setBounds({ x, y, w, h: Math.round(w * svgAspectRatio(content)), r: 0 }, uow);
+            node.setBounds({ x, y, w, h: Math.round(w * svgAspectRatio(svgContent)), r: 0 }, uow);
           });
         }
       });

@@ -29,6 +29,12 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     document.body.classList.add('no-select');
   }
 
+  /** Returns the inner element to display as the drag preview. */
+  protected abstract createDragImageContent(): HTMLElement;
+
+  /** Adds the element(s) to the active layer at the given diagram point. */
+  protected abstract addElement(point: Point): void;
+
   onDrag(event: DragEvents.DragStart) {
     if (this.isCanvasEvent(event.target)) {
       super.onDrag(event);
@@ -94,12 +100,6 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
       DRAG_DROP_MANAGER.clear();
     }
   }
-
-  /** Returns the inner element to display as the drag preview. */
-  protected abstract createDragImageContent(): HTMLElement;
-
-  /** Adds the element(s) to the active layer at the given diagram point. */
-  protected abstract addElement(point: Point): void;
 
   protected addDragImage(point: Point) {
     if (this.#dragImage) return;
