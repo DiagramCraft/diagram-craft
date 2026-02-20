@@ -181,12 +181,22 @@ export interface BooleanCustomPropertyType extends CustomPropertyType<boolean> {
   type: 'boolean';
 }
 
+export interface IconCustomPropertyType extends CustomPropertyType<string> {
+  type: 'icon';
+}
+
+export interface ColorCustomPropertyType extends CustomPropertyType<string> {
+  type: 'color';
+}
+
 declare global {
   namespace DiagramCraft {
     interface CustomPropertyTypes {
       number: NumberCustomPropertyType;
       select: SelectCustomPropertyType;
       boolean: BooleanCustomPropertyType;
+      icon: IconCustomPropertyType;
+      color: ColorCustomPropertyType;
     }
   }
 }
@@ -262,6 +272,44 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
           el.updateProps(p => acc.set(p, property, value), uow);
         },
         ...opts
+      };
+    },
+
+    icon: (
+      el: T,
+      label: string,
+      property: PropPath<P>
+    ): IconCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'icon',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as string,
+        set: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        }
+      };
+    },
+
+    color: (
+      el: T,
+      label: string,
+      property: PropPath<P>
+    ): ColorCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: label.toLowerCase().replace(/\s/g, '-'),
+        type: 'color',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as string,
+        set: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        }
       };
     },
 
