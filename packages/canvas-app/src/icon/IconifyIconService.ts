@@ -3,6 +3,7 @@ import type { CollectionIcons, CollectionInfo, IconService, SearchResult } from 
 const BASE_URL = 'https://api.iconify.design';
 
 export class IconifyIconService implements IconService {
+  readonly #svgCache = new Map<string, Promise<string>>();
   async getCollections(): Promise<Record<string, CollectionInfo>> {
     const res = await fetch(`${BASE_URL}/collections`);
     return await res.json() as Promise<Record<string, CollectionInfo>>;
@@ -22,5 +23,14 @@ export class IconifyIconService implements IconService {
 
   getIconUrl(prefix: string, icon: string, color: string): string {
     return `${BASE_URL}/${prefix}/${icon}.svg?color=${encodeURIComponent(color)}`;
+  }
+
+  fetchIconSvg(prefix: string, icon: string): Promise<string> {
+    const key = `${prefix}:${icon}`;
+    if (!this.#svgCache.has(key)) {
+      const url = this.getIconUrl(prefix, icon, 'currentColor');
+      this.#svgCache.set(key, fetch(url).then(r => r.text()));
+    }
+    return this.#svgCache.get(key)!;
   }
 }
