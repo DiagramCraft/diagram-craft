@@ -325,7 +325,7 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     movable: true,
     rotatable: true,
     adjustSizeBasedOnText: false,
-    inheritStyle: true
+    inheritStyle: false
   },
 
   text: {
