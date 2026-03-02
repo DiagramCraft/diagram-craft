@@ -22,6 +22,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 import { addStencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { MakeStencilNodeOpts } from '@diagram-craft/model/stencilUtils';
+import { adjustShape } from '@diagram-craft/canvas-drawio/drawioShapeBundleRegistry';
 
 export const parseUMLShapes = async (
   id: string,
@@ -38,14 +39,22 @@ export const parseUMLShapes = async (
       jettyWidth: style.num('jettyWidth', 20),
       jettyHeight: style.num('jettyHeight', 10)
     };
-    return ElementFactory.node(id, 'module', bounds, layer, props, {});
+    return ElementFactory.node(id, 'mxgraph.module', bounds, layer, props, {});
   } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
       participant: style.str('participant')
     };
   }
 
-  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node(
+    id,
+    adjustShape(style.str('shape')!),
+    bounds,
+    layer,
+    props,
+    metadata,
+    texts
+  );
 };
 
 export const loadUMLStencils = async (registry: Registry) => {
@@ -143,7 +152,7 @@ export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
   r.register(new ProvidedRequiredInterface());
   r.register(new RequiredInterface());
 
-  shapeParsers['umlLifeline'] = parseUMLShapes;
-  shapeParsers['module'] = parseUMLShapes;
-  shapeParsers['component'] = parseUMLShapes;
+  shapeParsers['mxgraph.umlLifeline'] = parseUMLShapes;
+  shapeParsers['mxgraph.module'] = parseUMLShapes;
+  shapeParsers['mxgraph.component'] = parseUMLShapes;
 };

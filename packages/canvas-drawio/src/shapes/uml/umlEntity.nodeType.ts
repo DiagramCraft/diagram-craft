@@ -6,7 +6,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 export class UmlEntity extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlEntity', 'UML Entity');
+    super('mxgraph.umlEntity', 'UML Entity');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {

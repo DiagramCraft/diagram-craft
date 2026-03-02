@@ -13,7 +13,7 @@ const TAB_HEIGHT = 15;
 
 export class Folder extends SimpleShapeNodeDefinition {
   constructor() {
-    super('folder', 'UML Folder');
+    super('mxgraph.folder', 'UML Folder');
   }
 
   /*
