@@ -1,8 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 export const useRedraw = () => {
-  const [_redraw, setRedraw] = useState(1);
+  const [, setRedraw] = useState(0);
+  const pending = useRef(false);
+
   return useCallback(() => {
-    queueMicrotask(() => setRedraw(redraw => redraw + 1));
+    if (pending.current) return;
+    pending.current = true;
+    queueMicrotask(() => {
+      pending.current = false;
+      setRedraw(r => r + 1);
+    });
   }, []);
 };
