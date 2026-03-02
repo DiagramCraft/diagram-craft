@@ -58,18 +58,6 @@ const shapeBundles: Array<[RegExp, ShapeBundle]> = [
   ]
 ];
 
-export const adjustShape = (shape: string) => {
-  if (
-    /^(module|folder|component|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/.test(
-      shape
-    )
-  ) {
-    return `mxgraph.${shape}`;
-  } else {
-    return shape;
-  }
-};
-
 export const getShapeBundle = (shape: string | undefined): ShapeBundle | undefined => {
   if (!shape) return undefined;
   return shapeBundles.find(([r]) => shape.match(r))?.[1];

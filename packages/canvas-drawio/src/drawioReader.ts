@@ -41,7 +41,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { WorkQueue } from './workQueue';
 import { arrows, drawioBuiltinShapes, LABEL_POSITIONS } from './drawioDefaults';
-import { adjustShape, getShapeBundle, loadShapeBundle } from './drawioShapeBundleRegistry';
+import { getShapeBundle, loadShapeBundle } from './drawioShapeBundleRegistry';
 import {
   angleFromDirection,
   deflate,
@@ -53,6 +53,7 @@ import {
   parseStencilString
 } from './drawioReaderUtils';
 import { sanitizeHtml } from '@diagram-craft/utils/dom';
+import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 type Parent = RegularLayer | DiagramNode | DiagramEdge;
 

@@ -23,20 +23,20 @@ const DEFAULT_SIZE = 12;
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
-      boxContainer?: {
+      dataModellingIeEntity?: {
         size?: number;
       };
     }
   }
 }
 
-registerCustomNodeDefaults('boxContainer', { size: DEFAULT_SIZE });
+registerCustomNodeDefaults('dataModellingIeEntity', { size: DEFAULT_SIZE });
 
 export class IEEntityNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
 
   constructor() {
-    super('boxContainer', 'IE Entity', IEEntityComponent);
+    super('dataModellingIeEntity', 'IE Entity', IEEntityComponent);
 
     this.setFlags({
       [NodeFlags.StyleFill]: true,
@@ -48,7 +48,7 @@ export class IEEntityNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   getContainerPadding(node: DiagramNode) {
-    const titleSize = node.renderProps.custom.boxContainer.size ?? DEFAULT_SIZE;
+    const titleSize = node.renderProps.custom.dataModellingIeEntity.size ?? DEFAULT_SIZE;
     return { top: titleSize, bottom: 0, right: 0, left: 0 };
   }
 
@@ -69,7 +69,7 @@ export class IEEntityComponent extends BaseNodeComponent<IEEntityNodeDefinition>
       builder.add(renderChildren(this, props.node, props));
     }
 
-    const titleSize = nodeProps.custom.boxContainer.size ?? DEFAULT_SIZE;
+    const titleSize = nodeProps.custom.dataModellingIeEntity.size ?? DEFAULT_SIZE;
 
     const separator = new PathListBuilder()
       .moveTo(Point.of(bounds.x, bounds.y + titleSize))
@@ -88,7 +88,7 @@ export class IEEntityComponent extends BaseNodeComponent<IEEntityNodeDefinition>
         UnitOfWork.execute(props.node.diagram, uow => {
           uow.metadata.nonDirty = true;
 
-          props.node.updateCustomProps('boxContainer', p => (p.size = size.h), uow);
+          props.node.updateCustomProps('dataModellingIeEntity', p => (p.size = size.h), uow);
 
           const parent = props.node.parent;
           if (isNode(parent)) {

@@ -87,7 +87,7 @@ export class BarkerEntityComponent extends BaseNodeComponent<BarkerEntityNodeDef
       builder.add(renderChildren(this, props.node, props));
     }
 
-    const titleSize = nodeProps.custom.boxContainer.size ?? DEFAULT_SIZE;
+    const titleSize = nodeProps.custom.dataModellingIeEntity.size ?? DEFAULT_SIZE;
 
     builder.text(
       this,

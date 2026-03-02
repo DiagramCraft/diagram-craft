@@ -22,7 +22,7 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 import { addStencil, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { MakeStencilNodeOpts } from '@diagram-craft/model/stencilUtils';
-import { adjustShape } from '@diagram-craft/canvas-drawio/drawioShapeBundleRegistry';
+import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 export const parseUMLShapes = async (
   id: string,
