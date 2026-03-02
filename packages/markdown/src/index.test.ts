@@ -63,4 +63,9 @@ describe('Markdown Parser', () => {
     expect(html).toContain('<p>Normal text</p>');
     expect(html).toContain('<small>small text</small>');
   });
+
+  test('should handle backslash line breaks', () => {
+    const html = markdownToHTML('Line 1\\\nLine 2');
+    expect(html).toContain('<br');
+  });
 });

@@ -214,7 +214,7 @@ describe('HTMLToMarkdownConverter', () => {
       const converter = new HTMLToMarkdownConverter();
 
       const result = converter.convert(div).trim();
-      expect(result).toBe('> Line 1\n> Line 2');
+      expect(result).toBe('> Line 1\\\n> Line 2');
     });
   });
 
@@ -224,7 +224,15 @@ describe('HTMLToMarkdownConverter', () => {
       div.innerHTML = 'Line 1<br>Line 2';
       const converter = new HTMLToMarkdownConverter();
 
-      expect(converter.convert(div)).toBe('Line 1\nLine 2');
+      expect(converter.convert(div)).toBe('Line 1\\\nLine 2');
+    });
+
+    test('strips leading newline from text node after br', () => {
+      const div = document.createElement('div');
+      div.innerHTML = 'Line 1<br />\nLine 2';
+      const converter = new HTMLToMarkdownConverter();
+
+      expect(converter.convert(div)).toBe('Line 1\\\nLine 2');
     });
 
     test('converts horizontal rules', () => {
