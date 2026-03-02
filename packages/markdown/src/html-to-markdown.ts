@@ -48,7 +48,12 @@ export class HTMLToMarkdownConverter {
 
   private processElement(element: Element | Node): string {
     if (element.nodeType === Node.TEXT_NODE) {
-      return this.escapeMarkdown((element as Text).textContent ?? '');
+      let text = (element as Text).textContent ?? '';
+      const prev = element.previousSibling;
+      if (prev?.nodeType === Node.ELEMENT_NODE && (prev as Element).tagName.toLowerCase() === 'br') {
+        text = text.replace(/^\n/, '');
+      }
+      return this.escapeMarkdown(text);
     }
 
     if (element.nodeType !== Node.ELEMENT_NODE) {
@@ -93,7 +98,7 @@ export class HTMLToMarkdownConverter {
       case 'li':
         return this.convertListItem(el);
       case 'br':
-        return '\n';
+        return '\\\n';
       case 'hr':
         return '\n---\n\n';
       case 'div':
