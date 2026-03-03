@@ -54,6 +54,7 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     const point = this.diagram.selection.bounds;
     this.removeElement();
     this.uow.abort();
+
     this.uow = UnitOfWork.begin(this.diagram);
     this.addElement(_p(0, 0));
     transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);

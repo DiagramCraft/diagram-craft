@@ -192,28 +192,30 @@ export abstract class AbstractMoveDrag extends Drag {
       if (this.#currentElement) {
         const p = Point.add(selection.bounds, this.offset);
         const el = this.#currentElement;
-        if (isNode(el)) {
-          for (const e of getElementAndAncestors(el)) {
-            if (!isNode(e)) continue;
+        // Check that element is still in the diagram
+        if (this.diagram.lookup(el.id) === el) {
+          if (isNode(el)) {
+            for (const e of getElementAndAncestors(el)) {
+              if (!isNode(e)) continue;
 
-            const pDef = e.getDefinition();
-            if (!pDef.onDrop) continue;
+              const pDef = e.getDefinition();
+              if (!pDef.onDrop) continue;
 
-            this.uow.select(this.diagram, selection.elements);
+              this.uow.select(this.diagram, selection.elements);
 
-            const elementsToMove = selection.elements.filter(el => el.parent !== e);
-            if (elementsToMove.length > 0) {
-              pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+              const elementsToMove = selection.elements.filter(el => el.parent !== e);
+              if (elementsToMove.length > 0) {
+                pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+              }
+              break;
             }
-            break;
+          } else if (isEdge(el)) {
+            const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
+            el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
+          } else {
+            VERIFY_NOT_REACHED();
           }
-        } else if (isEdge(el)) {
-          const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
-          el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
-        } else {
-          VERIFY_NOT_REACHED();
         }
-
         // TODO: Change to use capabilities - or perhaps onDragOut
         // Move elements out of a container
       } else if (
