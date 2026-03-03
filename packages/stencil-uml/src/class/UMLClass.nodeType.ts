@@ -28,7 +28,6 @@ declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       umlClass?: {
-        dependant?: boolean;
         size?: number;
       };
     }
@@ -36,7 +35,6 @@ declare global {
 }
 
 registerCustomNodeDefaults('umlClass', {
-  dependant: true,
   size: DEFAULT_TITLE_SIZE
 });
 
@@ -63,9 +61,8 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(p => [
-      ...super.getCollapsiblePropertyDefinitions(def).entries,
-      p.boolean(def, 'Dependant', 'custom.umlClass.dependant')
+    return new CustomPropertyDefinition(_p => [
+      ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
 
