@@ -49,6 +49,7 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.setFlags({
       [NodeFlags.StyleFill]: true,
       [NodeFlags.StyleRounding]: false,
+      [NodeFlags.ChildrenAllowed]: true,
       [NodeFlags.ChildrenCollapsible]: true,
       [NodeFlags.ChildrenTransformScaleX]: false,
       [NodeFlags.ChildrenTransformScaleY]: false,
