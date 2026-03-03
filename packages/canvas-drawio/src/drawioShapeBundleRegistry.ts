@@ -53,7 +53,7 @@ const shapeBundles: Array<[RegExp, ShapeBundle]> = [
   [/^mxgraph\.salesforce/, registerSalesforceShapes],
   [/^mxgraph\.android/, registerAndroidShapes],
   [
-    /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
+    /^mxgraph\.(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
     registerUMLShapes
   ]
 ];

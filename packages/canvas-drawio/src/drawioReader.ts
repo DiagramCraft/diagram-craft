@@ -53,6 +53,7 @@ import {
   parseStencilString
 } from './drawioReaderUtils';
 import { sanitizeHtml } from '@diagram-craft/utils/dom';
+import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 type Parent = RegularLayer | DiagramNode | DiagramEdge;
 
@@ -528,31 +529,35 @@ const parseShape = async (
   { queue }: CellContext
 ): Promise<DiagramNode> => {
   const diagram = layer.diagram;
-  if (style.shape! in shapeParsers) {
-    const parser = mustExist(shapeParsers[style.shape!]);
+  const shapeName = adjustShape(style.shape ?? '');
+
+  if (id === 'cWmGFZhKdYEZwk7NpRVw-19') console.log(shapeName);
+
+  if (shapeName! in shapeParsers) {
+    const parser = mustExist(shapeParsers[shapeName!]);
     return await parser(id, bounds, props, metadata, texts, style, layer, queue);
   } else if (style.styleName === 'image' || style.has('image')) {
     return await parseImage(id, bounds, props, metadata, texts, style, layer, queue);
-  } else if (style.shape?.startsWith('mxgraph.') || getShapeBundle(style.shape) !== undefined) {
+  } else if (shapeName?.startsWith('mxgraph.')) {
     const registry = diagram.document.registry.nodes;
 
-    const bundle = getShapeBundle(style.shape);
+    const bundle = getShapeBundle(shapeName);
     if (!bundle) {
-      console.warn(`No bundle found for ${style.shape}`);
+      console.warn(`No bundle found for ${shapeName}`);
       return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
     }
 
-    if (!registry.hasRegistration(style.shape!)) {
+    if (!registry.hasRegistration(shapeName!)) {
       await loadShapeBundle(bundle, registry);
     }
 
     const newBounds = applyRotation(bounds, style);
 
-    const parser = getParser(style.shape);
+    const parser = getParser(shapeName);
     if (parser) {
       return await parser(id, newBounds, props, metadata, texts, style, layer, queue);
     } else {
-      return ElementFactory.node(id, style.shape!, newBounds, layer, props, metadata, texts);
+      return ElementFactory.node(id, shapeName!, newBounds, layer, props, metadata, texts);
     }
   } else if (style.styleName === 'triangle') {
     return await parseTriangle(id, bounds, props, metadata, texts, style, layer);

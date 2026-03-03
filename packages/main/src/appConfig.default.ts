@@ -26,13 +26,6 @@ export const defaultAppConfig: AppConfig = {
           import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.registerBPMNEdges)
       },
       {
-        shapes: /^(module|folder|providedRequiredInterface|requiredInterface|uml[A-Z][a-z]+)$/,
-        nodeDefinitionLoader: () =>
-          import('@diagram-craft/canvas-drawio/shapes/uml/canvas-drawio-stencil-uml-loader').then(
-            m => m.registerUMLShapes
-          )
-      },
-      {
         shapes: /^(dataModelling[A-Z][a-zA-Z0-9]+)$/,
         nodeDefinitionLoader: () =>
           import('@diagram-craft/stencil-data-modelling/stencil-data-modelling-loader').then(
@@ -47,6 +40,11 @@ export const defaultAppConfig: AppConfig = {
         shapes: /^(c4[A-Z][a-zA-Z0-9]+)$/,
         nodeDefinitionLoader: () =>
           import('@diagram-craft/stencil-c4/stencil-c4-loader').then(m => m.registerC4Nodes)
+      },
+      {
+        shapes: /^(uml[A-Z][a-zA-Z0-9]+)$/,
+        nodeDefinitionLoader: () =>
+          import('@diagram-craft/stencil-uml/stencil-uml-loader').then(m => m.registerUMLNodes)
       }
     ]
   },
@@ -65,6 +63,15 @@ export const defaultAppConfig: AppConfig = {
         opts: {
           stencils: () =>
             import('@diagram-craft/stencil-bpmn/stencil-bpmn-loader').then(m => m.loadBPMNStencils)
+        }
+      }),
+      stencilEntry({
+        id: 'uml',
+        name: 'UML',
+        loader: 'basic',
+        opts: {
+          stencils: () =>
+            import('@diagram-craft/stencil-uml/stencil-uml-loader').then(m => m.loadUMLStencils)
         }
       }),
       stencilEntry({
@@ -88,8 +95,8 @@ export const defaultAppConfig: AppConfig = {
         }
       }),
       stencilEntry({
-        id: 'uml',
-        name: 'UML',
+        id: 'drawioUml',
+        name: 'UML (DrawIO)',
         loader: 'basic',
         opts: {
           stencils: () =>

@@ -4,7 +4,7 @@ stencils:
     elements:
       - id: 9tu57ur
         type: node
-        nodeType: boxContainer
+        nodeType: dataModellingIeEntity
         bounds:
           x: 0
           y: 0
@@ -45,7 +45,7 @@ stencils:
             tags:
         props:
           custom:
-            boxContainer:
+            dataModellingIeEntity:
               size: 20
           text:
             textTransform: uppercase

@@ -13,6 +13,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { DeepWriteable } from '@diagram-craft/utils/types';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { adjustShape } from '@diagram-craft/canvas-drawio/drawioAdjustShape';
 
 declare global {
   namespace DiagramCraft {
@@ -28,7 +29,7 @@ registerCustomNodeDefaults('umlLifeline', { participant: '' });
 
 export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlLifeline', 'UML Lifeline');
+    super('mxgraph.umlLifeline', 'UML Lifeline');
     this.setFlags({
       [NodeFlags.AnchorsBoundary]: false,
       [NodeFlags.AnchorsConfigurable]: false
@@ -74,7 +75,7 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participant = coalesce(props.node.renderProps.custom.umlLifeline?.participant, 'rect')!;
 
-    const shape = props.node.diagram.document.registry.nodes.get(participant);
+    const shape = props.node.diagram.document.registry.nodes.get(adjustShape(participant));
     if (!shape) VERIFY_NOT_REACHED();
 
     const nodeComponent = (shape as ShapeNodeDefinition).component;

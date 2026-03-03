@@ -6,7 +6,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 
 export class RequiredInterface extends SimpleShapeNodeDefinition {
   constructor() {
-    super('requiredInterface', 'Required Interface');
+    super('mxgraph.requiredInterface', 'Required Interface');
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {

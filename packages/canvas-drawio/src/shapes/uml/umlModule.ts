@@ -55,7 +55,7 @@ const propJettyHeight = (node: DiagramNode) =>
 // NodeDefinition and Shape *****************************************************
 
 export class UmlModuleNodeDefinition extends ShapeNodeDefinition {
-  constructor(id = 'module', name = 'UML Module') {
+  constructor(id = 'mxgraph.module', name = 'UML Module') {
     super(id, name, UmlModuleNodeDefinition.Shape);
   }
 

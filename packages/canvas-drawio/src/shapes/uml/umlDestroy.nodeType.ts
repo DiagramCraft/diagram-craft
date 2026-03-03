@@ -10,7 +10,7 @@ import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class UmlDestroy extends SimpleShapeNodeDefinition {
   constructor() {
-    super('umlDestroy', 'UML Destroy');
+    super('mxgraph.umlDestroy', 'UML Destroy');
     this.setFlags({ [NodeFlags.AnchorsConfigurable]: false });
   }
 

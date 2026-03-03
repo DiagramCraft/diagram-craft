@@ -63,13 +63,14 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
     this.setFlags({
       [NodeFlags.StyleFill]: true,
       [NodeFlags.StyleRounding]: false,
+      [NodeFlags.ChildrenAllowed]: true,
       [NodeFlags.ChildrenCollapsible]: true,
       [NodeFlags.ChildrenTransformScaleX]: false,
       [NodeFlags.ChildrenTransformScaleY]: false
     });
   }
 
-  private getCollapsedBounds(
+  private calculateCollapsedBounds(
     currentBounds: Box,
     orientation: Orientation,
     titleSize: number,
@@ -106,7 +107,7 @@ export class SwimlaneNodeDefinition extends LayoutCapableShapeNodeDefinition {
       // Collapsing: swap dimensions to create perpendicular appearance
       // Vertical swimlane: keep height, set width to 2x titleSize
       // Horizontal swimlane: keep width, set height to 2x titleSize
-      const collapsedBounds = this.getCollapsedBounds(
+      const collapsedBounds = this.calculateCollapsedBounds(
         currentBounds,
         orientation,
         titleSize,
