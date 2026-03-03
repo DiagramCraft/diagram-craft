@@ -1,7 +1,12 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
+import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import classStencils from './class/uml-class-stencils.yaml';
 
-export const registerUMLNodes = async (_nodes: NodeDefinitionRegistry) => {};
+export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
+  nodes.register(new UMLClassNodeDefinition());
+};
 
 export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLNodes(registry.nodes);
@@ -10,17 +15,22 @@ export const loadUMLStencils = async (registry: Registry) => {
     stencils: [],
     type: 'default',
 
-    subPackages: [{ id: 'class', name: 'Class Diagrams', stencils: [] }]
+    subPackages: [
+      { id: 'class', name: 'Class Diagrams', stencils: [] },
+      { id: 'use-case', name: 'Use-Case Diagrams', stencils: [] }
+    ]
   };
 
   /* *********************************************************************** */
   /* CLASS PACKAGE                                                           */
   /* *********************************************************************** */
 
-  /*loadStencilsFromYaml(c4CoreStencils).forEach(s => {
+  //  addStencilToSubpackage('class', umlStencils, new UMLClassNodeDefinition());
+
+  loadStencilsFromYaml(classStencils).forEach(s => {
     umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'core')?.stencils.push(s);
-  });*/
+    umlStencils.subPackages!.find(p => p.id === 'class')?.stencils.push(s);
+  });
 
   return umlStencils;
 };

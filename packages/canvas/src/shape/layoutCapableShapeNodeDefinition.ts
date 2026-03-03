@@ -127,12 +127,14 @@ export abstract class LayoutCapableShapeNodeDefinition
 
     const currentBounds = Box.toString(node.bounds);
     const previousBounds =
-      customProps.bounds === '' || !customProps.bounds
-        ? Box.fromCorners(
-            Point.of(node.bounds.x, node.bounds.y),
-            Point.of(node.bounds.x + 100, node.bounds.y + 50)
-          )
-        : Box.fromString(customProps.bounds);
+      mode === 'expanded'
+        ? this.getCollapsedBounds(customProps.bounds, node)
+        : customProps.bounds === '' || !customProps.bounds
+          ? Box.fromCorners(
+              Point.of(node.bounds.x, node.bounds.y),
+              Point.of(node.bounds.x + 100, node.bounds.y + 50)
+            )
+          : Box.fromString(customProps.bounds);
 
     node.setBounds(
       { ...previousBounds, x: node.bounds.x, y: node.bounds.y, r: node.bounds.r },
@@ -153,6 +155,15 @@ export abstract class LayoutCapableShapeNodeDefinition
     // Invalidate all edges connected to descendants so they recalculate positions
     invalidateDescendantEdges(node, uow);
     this.adjustEdges(edgeSnapshot, uow);
+  }
+
+  protected getCollapsedBounds(storedBounds: string | undefined, node: DiagramNode) {
+    if (storedBounds && storedBounds !== '') return Box.fromString(storedBounds);
+
+    return Box.fromCorners(
+      Point.of(node.bounds.x, node.bounds.y),
+      Point.of(node.bounds.x + 100, node.bounds.y + 50)
+    );
   }
 
   /**

@@ -1,0 +1,578 @@
+stencils:
+  - id: 'uml-class-abstract-class'
+    name: Abstract Class
+    elements:
+      - id: vqmthpw
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 175.00000000000003
+          h: 117.33333333333334
+          r: 0
+          _discriminator:
+        children:
+          - id: b4ervfr
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 24
+              w: 175.00000000000003
+              h: 66.66666666666667
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "+ email: String {id}&nbsp;<div>+ title: String&nbsp;<div>+ firstName: String</div></div><div>+ lastName: String</div>"
+            tags:
+          - id: z11d9k6
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 90.66666666666667
+              w: 175.00000000000003
+              h: 26.666666666666668
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "+ send(subject: String, body: String)"
+            tags:
+        props:
+          custom:
+            umlClass:
+              size: 24
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Person
+        tags:
+
+  - id: 'uml-class-class'
+    name: Class
+    elements:
+      - id: 8wev7u1
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.50000000000003
+          h: 96
+          r: 0
+        children:
+          - id: d302w2p
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 24
+              w: 152.50000000000003
+              h: 36
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "- employeeNumber: String {id}<div>- salary: Number</div>"
+            tags:
+          - id: mddx5nt
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 60
+              w: 152.50000000000003
+              h: 36
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "+ paySalary()<div>+ promote()</div>"
+            tags:
+        props:
+          custom:
+            umlClass:
+              size: 24
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<span style=\"font-style: normal;\">Employee</span>"
+        tags:
+  - id: 'uml-class-enumeration'
+    name: Enumeration
+    elements:
+      - id: 29u9hbj
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.50000000000003
+          h: 84
+          r: 0
+        children:
+          - id: 7zrvvlt
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 36
+              w: 152.50000000000003
+              h: 48
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "Red<div>Green</div><div>Blue</div>"
+            tags:
+        props:
+          custom:
+            umlClass:
+              size: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;enumeration&gt;&gt;</span></div><span style=\"font-style: normal;\">Color</span>"
+        tags:
+  - id: 'uml-class-with-stereotype'
+    name: Class with Stereotype
+    elements:
+      - id: 9oejapf
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.50000000000003
+          h: 72
+          r: 0
+        children:
+          - id: 04m3uia
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 36
+              w: 152.50000000000003
+              h: 36
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "employeeNumber: String {id}<div>salary: Number</div>"
+            tags:
+        props:
+          custom:
+            umlClass:
+              size: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;entity&gt;&gt;</span></div><span style=\"font-style: normal;\">Employee</span>"
+        tags:
+  - id: 'uml-class-collapsed-class'
+    name: Collapsed Class
+    elements:
+      - id: nntdxun
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 153.75000000000006
+          h: 23.6939831450712
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlClass:
+              size: 24
+            _collapsible:
+              collapsible: false
+              mode: expanded
+              bounds: 398.75,979.9999999999999,100,50.000000000000114,0
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<span style=\"font-style: normal;\">Employee</span>"
+        tags:
+  - id: 'uml-class-collapsed-interface'
+    name: Collapsed Interface
+    elements:
+      - id: oc81ulr
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.49999999999997
+          h: 33.98362459587066
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlClass:
+              size: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;interface&gt;&gt;</span></div><span style=\"font-style: normal;\">Vehicle</span>"
+        tags:
+  - id: 'uml-class-arrow-generalization'
+    name: Generalization
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+  - id: 'uml-class-arrow-interface-generalization'
+    name: Interface Generalization
+    elements:
+      - id: kffzynl
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+          fill: { }
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+  - id: 'uml-class-arrow-use'
+    name: Use
+    elements:
+      - id: 492ywhl
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes:
+          - id: 3gghp9j
+            type: horizontal
+            offset:
+              x: 0
+              y: -11
+            timeOffset: 0.5
+        waypoints:
+          - point:
+              x: 22.845519913808516
+              y: 0.07615550648961289
+            controlPoints:
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+              size: 75
+          fill: { }
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+        metadata:
+          style: default-edge
+        children:
+          - id: 3gghp9j
+            type: node
+            nodeType: text
+            bounds:
+              x: 995.4999814562606
+              y: 1983.0701132582324
+              r: 0
+              h: 12
+              w: 39
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: true
+                color: "var(--canvas-bg)"
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "&lt;&lt;use&gt;&gt;"
+            tags:
+        tags:
+  - id: 'uml-class-arrow-aggregation'
+    name: Aggregation
+    elements:
+      - id: ifnchyp
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_OUTLINE
+              size: 150
+          fill: { }
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
+  - id: 'uml-class-arrow-composition'
+    name: Composition
+    elements:
+      - id: ceg6lv1
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_FILLED
+              size: 150
+          fill:
+            color: black
+        metadata:
+          style: default-edge
+        children: [ ]
+        tags:
