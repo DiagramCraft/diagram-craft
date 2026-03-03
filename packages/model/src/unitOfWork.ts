@@ -422,8 +422,8 @@ export class UnitOfWork {
 
     DEBUG: {
       /*const operationsByType = groupBy(this.#operations, op => op.type);
-      console.log(
-        `Commit${_withUndo ? ' with undo' : ''}: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
+        console.log(
+          `Commit${_withUndo ? ' with undo' : ''}: ${this.#operations.length} / ${operationsByType.get('add')?.length ?? 0} / ${operationsByType.get('remove')?.length ?? 0} / ${operationsByType.get('update')?.length ?? 0} /  ${this.#undoableActions.length}`
       );*/
     }
 
