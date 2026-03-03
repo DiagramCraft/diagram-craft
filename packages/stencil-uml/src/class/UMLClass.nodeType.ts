@@ -120,8 +120,9 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
 
       let h = 0;
       const children: VNode[] = [];
-      for (let i = 0; i < props.node.children.length; i++) {
-        const child = props.node.children[i]!;
+      const childrenInOrder = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
+      for (let i = 0; i < childrenInOrder.length; i++) {
+        const child = childrenInOrder[i]!;
         children.push(
           svg.g(
             { transform: Transforms.rotateBack(props.node.bounds) },
@@ -130,7 +131,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
         );
         h += child.bounds.h;
 
-        if (i < props.node.children.length - 1) {
+        if (i < childrenInOrder.length - 1) {
           children.push(
             svg.line({
               x1: bounds.x,
