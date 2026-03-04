@@ -111,12 +111,13 @@ export const deleteElements = (elements: readonly DiagramElement[], uow: UnitOfW
 export const cloneElements = (
   elements: readonly DiagramElement[],
   targetLayer: RegularLayer,
-  uow?: UnitOfWork
+  uow?: UnitOfWork,
+  assignNewIds: boolean = true
 ) => {
   const cb = (uow: UnitOfWork) => {
     const source = elements.map(e => deepClone(serializeDiagramElement(e)));
 
-    assignNewIdsToSerializedElements(source);
+    if (assignNewIds) assignNewIdsToSerializedElements(source);
 
     return deserializeDiagramElements(
       source,
