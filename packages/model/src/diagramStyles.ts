@@ -358,8 +358,6 @@ const mapper = <S extends Stylesheet>(
   d: DiagramStyles
 ): CRDTMapper<S, CRDTMap<StylesheetSnapshot>> => ({
   fromCRDT(e: CRDTMap<StylesheetSnapshot>): S {
-    console.log([...e.values()]);
-
     const s = makeStylesheet(e.get('type')!, e, d) as S;
     s.crdt.on('remoteUpdate', _e => {
       d.emit('stylesheetUpdated', { stylesheet: s });

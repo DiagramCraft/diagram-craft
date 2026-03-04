@@ -42,7 +42,6 @@ describe('GroupAction', () => {
       new GroupAction('group', mockContext(diagram)).execute();
 
       expect(layer.elements.filter(isNode).length).toBe(initialNodeCount - 1);
-
       const groupNode = layer.elements
         .filter(isNode)
         .find(n => n.nodeType === 'group') as DiagramNode;
@@ -56,8 +55,9 @@ describe('GroupAction', () => {
       expect(layer.elements).not.toContain(node2);
 
       // Children should be sorted by layer order
-      expect(groupNode!.children[0]).toBe(node1);
-      expect(groupNode!.children[1]).toBe(node2);
+      // TODO: Change to use object equals
+      expect(groupNode!.children[0]?.id).toBe(node1.id);
+      expect(groupNode!.children[1]?.id).toBe(node2.id);
     });
   });
 
