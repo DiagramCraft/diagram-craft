@@ -21,6 +21,7 @@ import type { PropertyInfo } from './property';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -218,4 +219,20 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   get comments() {
     return this.delegate.comments;
   }
+
+  // region Detachable ****************************************************************************
+
+  get _isAttached() {
+    return this.delegate._isAttached;
+  }
+
+  _detach(root: boolean, uow: UnitOfWork, callback?: () => void) {
+    this.delegate._detach(root, uow, callback);
+  }
+
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork) {
+    this.delegate._attach(parent, uow);
+  }
+
+  // endregion
 }

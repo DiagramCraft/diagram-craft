@@ -53,7 +53,7 @@ export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge
 
 export type InvalidationScope = 'full' | 'quick';
 
-export interface DiagramElement {
+export interface DiagramElement extends Detachable<DiagramElement | Layer> {
   _trackableType: 'element';
 
   readonly id: string;
@@ -126,7 +126,7 @@ export interface DiagramElement {
 }
 
 export abstract class AbstractDiagramElement
-  implements DiagramElement, AttachmentConsumer, Releasable, Detachable<DiagramElement | Layer>
+  implements DiagramElement, AttachmentConsumer, Releasable
 {
   readonly _trackableType = 'element';
 
@@ -444,7 +444,7 @@ export abstract class AbstractDiagramElement
     }
   }
 
-  /* Detachable ********************************************************************************************** */
+  // region Detachable ****************************************************************************
 
   _isAttached = false;
 
@@ -465,8 +465,7 @@ export abstract class AbstractDiagramElement
     this._onDetach(uow, true);
 
     for (const c of this.children.toReversed()) {
-      // TODO: Need to check that parent is actually Detachable
-      (c as AbstractDiagramElement)._detach(false, uow);
+      c._detach(false, uow);
     }
 
     if (!root) {
@@ -481,10 +480,10 @@ export abstract class AbstractDiagramElement
   _attach(parent: DiagramElement | Layer, uow: UnitOfWork) {
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
 
-    const recurse = (element: AbstractDiagramElement, parent: DiagramElement | undefined) => {
+    const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
       assert.false(element._isAttached);
-      assert.true(element._layer === undefined);
-      assert.true(element._diagram === undefined);
+      assert.true(element.layer === undefined);
+      assert.true(element.diagram === undefined);
 
       element._setParent(parent);
       element._setLayer(layer, this._diagram);
@@ -501,19 +500,16 @@ export abstract class AbstractDiagramElement
       }
 
       for (const c of this.children) {
-        // TODO: Need to check that parent is actually Detachable
-        recurse(c as AbstractDiagramElement, element);
+        recurse(c, element);
       }
 
       this._isAttached = true;
     };
 
-    recurse(
-      // TODO: Need to check that parent is actually Detachable
-      this as AbstractDiagramElement,
-      parent._trackableType === 'element' ? (parent as DiagramElement) : undefined
-    );
+    recurse(this, parent._trackableType === 'element' ? (parent as DiagramElement) : undefined);
   }
+
+  // endregion
 }
 
 /**
