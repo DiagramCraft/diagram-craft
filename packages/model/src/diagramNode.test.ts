@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
-import { TestDiagramNodeBuilder, TestModel } from './test-support/testModel';
+import { TestDiagramNodeBuilder } from './test-support/testModel';
 import {
   type StandardTestModel,
   standardTestModel
@@ -309,13 +309,6 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
         node1.addChild(child, uow);
         expect(() => node1.addChild(child, uow)).toThrow();
       });
-    });
-
-    it('should not add the child if it is already present in a different diagram', () => {
-      const child = model.layer1.createNode();
-      const otherDiagram = TestModel.newDiagram();
-      const other = otherDiagram.newLayer().createNode();
-      UnitOfWork.execute(model.diagram1, uow => expect(() => other.addChild(child, uow)).toThrow());
     });
   });
 

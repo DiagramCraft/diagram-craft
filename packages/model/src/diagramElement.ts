@@ -29,6 +29,8 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { Detachable } from '@diagram-craft/model/detachable';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -115,7 +117,7 @@ export interface DiagramElement {
   comments: ReadonlyArray<Comment>;
 
   _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
-  _onDetach(uow: UnitOfWork): void;
+  _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
   _onAttach(
     layer: RegularLayer | ModificationLayer,
     parent: DiagramElement | RegularLayer | ModificationLayer,
@@ -124,7 +126,7 @@ export interface DiagramElement {
 }
 
 export abstract class AbstractDiagramElement
-  implements DiagramElement, AttachmentConsumer, Releasable
+  implements DiagramElement, AttachmentConsumer, Releasable, Detachable<DiagramElement | Layer>
 {
   readonly _trackableType = 'element';
 
@@ -221,7 +223,7 @@ export abstract class AbstractDiagramElement
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
-  abstract _onDetach(uow: UnitOfWork): void;
+  abstract _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -371,7 +373,8 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
-    assert.true(child.diagram === this.diagram);
+    assert.false((child as AbstractDiagramElement)._isAttached);
+
     // Can't add multiple times'
     assert.false(this._children.has(child.id));
     // Can't add yourself as a child
@@ -421,7 +424,7 @@ export abstract class AbstractDiagramElement
     callback?.();
     this._crdt.set(clone);
 
-    this._onDetach(uow);
+    this._onDetach(uow, false);
   }
 
   _onAttach(
@@ -439,6 +442,77 @@ export abstract class AbstractDiagramElement
     for (const child of this.children) {
       child._onAttach(layer, this, uow);
     }
+  }
+
+  /* Detachable ********************************************************************************************** */
+
+  _isAttached = false;
+
+  _detach(root: boolean, uow: UnitOfWork, callback?: () => void) {
+    if (root) {
+      const clone = this._crdt.get().clone();
+      callback?.();
+      this._crdt.set(clone);
+    }
+
+    assert.true(this._isAttached);
+    this._isAttached = false;
+
+    this._diagram.unregister(this);
+    // @ts-expect-error
+    this._setLayer(undefined, undefined);
+
+    this._onDetach(uow, true);
+
+    for (const c of this.children.toReversed()) {
+      // TODO: Need to check that parent is actually Detachable
+      (c as AbstractDiagramElement)._detach(false, uow);
+    }
+
+    if (!root) {
+      if (this.parent) {
+        uow.removeElement(this.parent, this, this.parent.children.indexOf(this));
+      } else {
+        uow.removeElement(this.layer, this, this.layer.elements.indexOf(this));
+      }
+    }
+  }
+
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork) {
+    const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
+
+    const recurse = (element: AbstractDiagramElement, parent: DiagramElement | undefined) => {
+      assert.false(element._isAttached);
+      assert.true(element._layer === undefined);
+      assert.true(element._diagram === undefined);
+
+      element._setParent(parent);
+      element._setLayer(layer, this._diagram);
+      layer.diagram.register(element);
+
+      if (isNode(element)) {
+        element.getDefinition().onAdd(element, this._diagram, uow);
+      }
+
+      if (parent) {
+        uow.addElement(element, parent, parent.children.length);
+      } else {
+        uow.addElement(element, layer, layer.elements.length);
+      }
+
+      for (const c of this.children) {
+        // TODO: Need to check that parent is actually Detachable
+        recurse(c as AbstractDiagramElement, element);
+      }
+
+      this._isAttached = true;
+    };
+
+    recurse(
+      // TODO: Need to check that parent is actually Detachable
+      this as AbstractDiagramElement,
+      parent._trackableType === 'element' ? (parent as DiagramElement) : undefined
+    );
   }
 }
 

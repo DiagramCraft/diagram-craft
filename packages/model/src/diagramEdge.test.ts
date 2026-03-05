@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
-import { TestModel } from './test-support/testModel';
 import {
   resetListeners,
   standardTestModel,
@@ -422,18 +421,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Verify
       UnitOfWork.execute(model.diagram1, uow => expect(() => edge1.addChild(child, uow)).toThrow());
-    });
-
-    it('should not add the child if it is already present in a different diagram', () => {
-      // **** Act
-      const child = model.layer1.createNode();
-      const otherDiagram = TestModel.newDiagram();
-      const otherEdge = otherDiagram.newLayer().addEdge();
-
-      // **** Verify
-      UnitOfWork.execute(model.diagram1, uow =>
-        expect(() => otherEdge.addChild(child, uow)).toThrow()
-      );
     });
 
     it('should fail is the child is an edge', () => {
