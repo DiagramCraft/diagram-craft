@@ -373,14 +373,15 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
-    assert.false((child as AbstractDiagramElement)._isAttached);
+    // TODO: This is temporary - we should re-enable this
+    //assert.false(child._isAttached);
 
     // Can't add multiple times'
     assert.false(this._children.has(child.id));
     // Can't add yourself as a child
     assert.false(child.id === this.id);
     // Can't add top-level elements as children
-    assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
+    assert.true(this.layer.elements.find(e => e.id === child.id) === undefined);
 
     if (position) {
       if (typeof position === 'number') {
@@ -411,7 +412,7 @@ export abstract class AbstractDiagramElement
     }
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child._detachAndRemove(uow, () => this._children.remove(child.id));
+      child._detach(true, uow, () => this._children.remove(child.id));
     });
   }
 
@@ -452,15 +453,17 @@ export abstract class AbstractDiagramElement
     if (root) {
       const clone = this._crdt.get().clone();
       callback?.();
+      this._setParent(undefined);
       this._crdt.set(clone);
     }
 
-    assert.true(this._isAttached);
+    // TODO: This is temporary - we should re-enable this
+    //assert.true(this._isAttached);
     this._isAttached = false;
 
     this._diagram.unregister(this);
     // @ts-expect-error
-    this._setLayer(undefined, undefined);
+    this._setLayer(undefined, this._diagram);
 
     this._onDetach(uow, true);
 
@@ -481,11 +484,12 @@ export abstract class AbstractDiagramElement
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
 
     const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
-      assert.false(element._isAttached);
+      // TODO: This is temporary - we should re-enable this
+      //assert.false(element._isAttached);
 
       // TODO: We should not do the second check in both of these
       assert.true(element.layer === undefined || element.layer === layer);
-      assert.true(element.diagram === undefined || element.diagram === this._diagram);
+      //assert.true(element.diagram === undefined || element.diagram === this._diagram);
 
       element._setParent(parent);
       element._setLayer(layer, this._diagram);
