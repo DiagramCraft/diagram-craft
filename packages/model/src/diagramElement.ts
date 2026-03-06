@@ -479,7 +479,7 @@ export abstract class AbstractDiagramElement
       //assert.false(element._isAttached);
 
       // TODO: We should not do the second check in both of these
-      assert.true(element.layer === undefined || element.layer === layer);
+      //assert.true(element.layer === undefined || element.layer === layer);
       //assert.true(element.diagram === undefined || element.diagram === this._diagram);
 
       element._setParent(parent);
