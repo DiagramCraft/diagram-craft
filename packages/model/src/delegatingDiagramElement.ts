@@ -230,8 +230,8 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     this.delegate._detach(root, uow, callback);
   }
 
-  _attach(parent: DiagramElement | Layer, uow: UnitOfWork) {
-    this.delegate._attach(parent, uow);
+  _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
+    this.delegate._attach(root, parent, uow);
   }
 
   // endregion

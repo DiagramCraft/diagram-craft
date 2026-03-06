@@ -400,7 +400,7 @@ export abstract class AbstractDiagramElement
       });
     }
 
-    child._onAttach(this.layer, this, uow);
+    child._attach(true, this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -477,13 +477,15 @@ export abstract class AbstractDiagramElement
     }
   }
 
-  _attach(parent: DiagramElement | Layer, uow: UnitOfWork) {
+  _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
 
     const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
       assert.false(element._isAttached);
-      assert.true(element.layer === undefined);
-      assert.true(element.diagram === undefined);
+
+      // TODO: We should not do the second check in both of these
+      assert.true(element.layer === undefined || element.layer === layer);
+      assert.true(element.diagram === undefined || element.diagram === this._diagram);
 
       element._setParent(parent);
       element._setLayer(layer, this._diagram);
@@ -493,17 +495,21 @@ export abstract class AbstractDiagramElement
         element.getDefinition().onAdd(element, this._diagram, uow);
       }
 
-      if (parent) {
-        uow.addElement(element, parent, parent.children.length);
-      } else {
-        uow.addElement(element, layer, layer.elements.length);
+      const isRoot = root && element !== this;
+      if (isRoot) {
+        if (parent) {
+          uow.addElement(element, parent, parent.children.indexOf(element));
+        } else {
+          uow.addElement(element, layer, layer.elements.indexOf(element));
+        }
       }
 
-      for (const c of this.children) {
+      for (const c of element.children) {
         recurse(c, element);
       }
 
-      this._isAttached = true;
+      // TODO: Eventually we should use the layer _isAttached instead of true
+      this._isAttached = parent ? parent._isAttached : true;
     };
 
     recurse(this, parent._trackableType === 'element' ? (parent as DiagramElement) : undefined);
