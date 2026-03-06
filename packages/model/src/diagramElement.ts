@@ -116,7 +116,7 @@ export interface DiagramElement extends Detachable<DiagramElement | Layer> {
 
   comments: ReadonlyArray<Comment>;
 
-  _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
+  _onDetach(uow: UnitOfWork): void;
   _onAttach(
     layer: RegularLayer | ModificationLayer,
     parent: DiagramElement | RegularLayer | ModificationLayer,
@@ -222,7 +222,7 @@ export abstract class AbstractDiagramElement
   abstract getAttachmentsInUse(): Array<string>;
 
   abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
-  abstract _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
+  abstract _onDetach(uow: UnitOfWork): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,
@@ -456,7 +456,7 @@ export abstract class AbstractDiagramElement
     // @ts-expect-error
     this._setLayer(undefined, this._diagram);
 
-    this._onDetach(uow, true);
+    this._onDetach(uow);
 
     for (const c of this.children.toReversed()) {
       c._detach(false, () => {}, uow);
