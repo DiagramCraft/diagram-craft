@@ -152,7 +152,6 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   abstract invalidate(scope: InvalidationScope, uow: UnitOfWork): void;
   abstract _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
-  abstract _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   abstract duplicate(ctx?: DuplicationContext, id?: string): DiagramElement;
   abstract transform(
     transforms: ReadonlyArray<Transform>,

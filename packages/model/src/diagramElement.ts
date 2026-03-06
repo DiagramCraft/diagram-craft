@@ -116,7 +116,6 @@ export interface DiagramElement extends Detachable<DiagramElement | Layer> {
 
   comments: ReadonlyArray<Comment>;
 
-  _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   _onDetach(uow: UnitOfWork, isNewStyle: boolean): void;
   _onAttach(
     layer: RegularLayer | ModificationLayer,
@@ -418,14 +417,6 @@ export abstract class AbstractDiagramElement
 
   get comments() {
     return this.diagram.commentManager.getAll().filter(c => c.element?.id === this.id);
-  }
-
-  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
-    const clone = this._crdt.get().clone();
-    callback?.();
-    this._crdt.set(clone);
-
-    this._onDetach(uow, false);
   }
 
   _onAttach(
