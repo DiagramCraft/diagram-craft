@@ -411,7 +411,7 @@ export abstract class AbstractDiagramElement
     }
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child._detach(true, uow, () => this._children.remove(child.id));
+      child._detach(true, () => this._children.remove(child.id), uow);
     });
   }
 
@@ -440,7 +440,7 @@ export abstract class AbstractDiagramElement
 
   _isAttached = false;
 
-  _detach(root: boolean, uow: UnitOfWork, callback?: () => void) {
+  _detach(root: boolean, callback: () => void, uow: UnitOfWork) {
     if (root) {
       const clone = this._crdt.get().clone();
       callback?.();
@@ -459,7 +459,7 @@ export abstract class AbstractDiagramElement
     this._onDetach(uow, true);
 
     for (const c of this.children.toReversed()) {
-      c._detach(false, uow);
+      c._detach(false, () => {}, uow);
     }
 
     if (!root) {

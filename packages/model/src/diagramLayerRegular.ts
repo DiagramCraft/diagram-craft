@@ -165,7 +165,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     }
 
     uow.executeRemove(element, this, this.#elements.getIndex(element.id), () => {
-      element._detach(true, uow, () => this.#elements.remove(element.id));
+      element._detach(true, () => this.#elements.remove(element.id), uow);
     });
   }
 
