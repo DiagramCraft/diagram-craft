@@ -4,7 +4,6 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
-import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
@@ -174,15 +173,11 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   });
 
   // Create an edge connecting the selected node to the new node
-  const newEdge = ElementFactory.edge(
-    newid(),
-    new AnchorEndpoint(selectedNode, 'e'),
-    new AnchorEndpoint(newNode, 'w'),
-    {},
-    {},
-    [],
-    activeLayer
-  );
+  const newEdge = ElementFactory.edge({
+    start: new AnchorEndpoint(selectedNode, 'e'),
+    end: new AnchorEndpoint(newNode, 'w'),
+    layer: activeLayer
+  });
 
   UnitOfWork.executeWithUndo(diagram, 'Create node for data entry', uow => {
     activeLayer.addElement(newNode, uow);

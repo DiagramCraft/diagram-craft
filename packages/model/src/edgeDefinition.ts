@@ -6,7 +6,6 @@ import { DiagramElement, isNode } from './diagramElement';
 import { UnitOfWork } from './unitOfWork';
 import { DiagramNode } from './diagramNode';
 import { AnchorEndpoint } from './endpoint';
-import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from './diagramLayerUtils';
@@ -138,15 +137,13 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
     const anchor = 'c';
 
     // TODO: This requires some work to support dropping on multi-segment edges
-    const newEdge = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(element, anchor),
-      edge.end,
-      deepClone(edge.editProps) as EdgeProps,
-      deepClone(edge.metadata),
-      [],
-      edge.layer
-    );
+    const newEdge = ElementFactory.edge({
+      start: new AnchorEndpoint(element, anchor),
+      end: edge.end,
+      props: deepClone(edge.editProps) as EdgeProps,
+      metadata: deepClone(edge.metadata),
+      layer: edge.layer
+    });
     edge.layer.addElement(newEdge, uow);
 
     edge.setEnd(new AnchorEndpoint(element, anchor), uow);

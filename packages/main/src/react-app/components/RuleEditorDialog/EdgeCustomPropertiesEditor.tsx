@@ -18,15 +18,12 @@ export const EdgeCustomPropertiesEditor: Editor = props => {
 
   const [type, setType] = useState('');
 
-  const edge = ElementFactory.edge(
-    newid(),
-    new FreeEndpoint({ x: 0, y: 0 }),
-    new FreeEndpoint({ x: 100, y: 100 }),
-    deepClone($p),
-    {},
-    [],
-    new RegularLayer(newid(), '', [], $d)
-  );
+  const edge = ElementFactory.edge({
+    start: new FreeEndpoint({ x: 0, y: 0 }),
+    end: new FreeEndpoint({ x: 100, y: 100 }),
+    props: deepClone($p),
+    layer: new RegularLayer(newid(), '', [], $d)
+  });
 
   const edgeTypesWithCustomProps: string[] = [];
   for (const key of $d.document.registry.edges.list()) {

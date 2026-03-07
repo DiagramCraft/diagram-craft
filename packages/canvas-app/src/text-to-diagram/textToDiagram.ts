@@ -304,15 +304,14 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
             end = new FreeEndpoint({ x: 200, y: 200 });
           }
 
-          newElement = ElementFactory.edge(
-            parsedElement.id,
+          newElement = ElementFactory.edge({
+            id: parsedElement.id,
             start,
             end,
             props,
             metadata,
-            [],
             layer
-          );
+          });
 
           layer.addElement(newElement, uow);
 

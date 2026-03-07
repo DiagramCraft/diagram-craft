@@ -113,18 +113,18 @@ export const deserializeDiagramElements = (
       const startEndpoint = deserializeEndpoint(start, nodeLookup);
       const endEndpoint = deserializeEndpoint(end, nodeLookup);
 
-      const edge = ElementFactory.edge(
-        e.id,
-        startEndpoint,
-        endEndpoint,
-        e.props,
-        {
+      const edge = ElementFactory.edge({
+        id: e.id,
+        start: startEndpoint,
+        end: endEndpoint,
+        props: e.props,
+        metadata: {
           style: 'default-edge',
           ...e.metadata
         },
-        e.waypoints ?? [],
+        waypoints: e.waypoints ?? [],
         layer
-      );
+      });
 
       // Need to ensure adds happen before updates
       if (targetParent && n.id === e.id) targetParent.addChild(edge, uow);

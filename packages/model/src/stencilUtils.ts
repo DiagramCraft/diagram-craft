@@ -74,15 +74,13 @@ export const StencilUtils = {
     (registry: Registry) => {
       const { diagram, layer } = StencilUtils.makeDiagram(registry);
       return UnitOfWork.execute(diagram, uow => {
-        const e = ElementFactory.edge(
-          newid(),
-          new FreeEndpoint(_p(0, 50)),
-          new FreeEndpoint(_p(100, 50)),
-          { ...(opts?.props?.(t) ?? {}), shape: typeId } as EdgeProps,
-          opts?.metadata ?? {},
-          [],
+        const e = ElementFactory.edge({
+          start: new FreeEndpoint(_p(0, 50)),
+          end: new FreeEndpoint(_p(100, 50)),
+          props: { ...(opts?.props?.(t) ?? {}), shape: typeId } as EdgeProps,
+          metadata: opts?.metadata ?? {},
           layer
-        );
+        });
 
         layer.addElement(e, uow);
 

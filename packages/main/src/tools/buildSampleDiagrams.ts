@@ -10,7 +10,6 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
-import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
@@ -60,11 +59,10 @@ const writeArrow = (
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
     for (let s = 0; s < SIZES.length; s++) {
-      const edge = ElementFactory.edge(
-        newid(),
-        new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
-        new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
-        {
+      const edge = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
+        end: new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
+        props: {
           arrow: {
             end: { size: SIZES[s], type: arrow }
           },
@@ -78,10 +76,8 @@ const writeArrow = (
             type: 'none'
           }
         },
-        {},
-        [],
         layer
-      );
+      });
       UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
     }
   }
@@ -104,11 +100,10 @@ const writeArrow = (
     });
     UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
-    const edge = ElementFactory.edge(
-      newid(),
-      new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
-      new AnchorEndpoint(n, 'c'),
-      {
+    const edge = ElementFactory.edge({
+      start: new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
+      end: new AnchorEndpoint(n, 'c'),
+      props: {
         arrow: {
           end: { size: SIZES[s], type: arrow }
         },
@@ -122,10 +117,8 @@ const writeArrow = (
           type: 'none'
         }
       },
-      {},
-      [],
       layer
-    );
+    });
     UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
 
     UnitOfWork.execute(diagram, uow => layer.stackModify([n], 10, uow));
@@ -258,11 +251,10 @@ const SHAPES_DEFS = [
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = ElementFactory.edge(
-          newid(),
-          new AnchorEndpoint(n, a.id),
-          new FreeEndpoint(dest),
-          {
+        const e = ElementFactory.edge({
+          start: new AnchorEndpoint(n, a.id),
+          end: new FreeEndpoint(dest),
+          props: {
             stroke: {
               color: 'pink'
             },
@@ -270,20 +262,17 @@ const SHAPES_DEFS = [
               type: 'none'
             }
           },
-          {},
-          [],
-          n.layer
-        );
+          layer: n.layer
+        });
         UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = ElementFactory.edge(
-          newid(),
-          new AnchorEndpoint(n, a.id, offset),
-          new FreeEndpoint(dest),
-          {
+        const e = ElementFactory.edge({
+          start: new AnchorEndpoint(n, a.id, offset),
+          end: new FreeEndpoint(dest),
+          props: {
             stroke: {
               color: 'green'
             },
@@ -291,10 +280,8 @@ const SHAPES_DEFS = [
               type: 'none'
             }
           },
-          {},
-          [],
-          n.layer
-        );
+          layer: n.layer
+        });
         UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       }
     });

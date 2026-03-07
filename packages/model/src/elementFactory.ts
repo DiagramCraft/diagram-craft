@@ -19,16 +19,24 @@ import { Point } from '@diagram-craft/geometry/point';
 import { newid } from '@diagram-craft/utils/id';
 
 export const ElementFactory = {
-  edge(
-    id: string,
-    start: Endpoint,
-    end: Endpoint,
-    props: EdgePropsForEditing,
-    metadata: ElementMetadata,
-    midpoints: ReadonlyArray<Waypoint>,
-    layer: RegularLayer | ModificationLayer
-  ) {
-    return SimpleDiagramEdge._create(id, start, end, props, metadata, midpoints, layer)!;
+  edge(props: {
+    id?: string;
+    start: Endpoint;
+    end: Endpoint;
+    props?: EdgePropsForEditing;
+    metadata?: ElementMetadata;
+    waypoints?: ReadonlyArray<Waypoint>;
+    layer: RegularLayer | ModificationLayer;
+  }) {
+    return SimpleDiagramEdge._create(
+      props.id ?? newid(),
+      props.start,
+      props.end,
+      props.props ?? {},
+      props.metadata ?? {},
+      props.waypoints ?? [],
+      props.layer
+    )!;
   },
 
   emptyEdge(
@@ -74,14 +82,13 @@ export const ElementFactory = {
   },
 
   edgeFromSnapshot(s: DiagramEdgeSnapshot, layer: RegularLayer | ModificationLayer) {
-    return ElementFactory.edge(
-      s.id,
-      new FreeEndpoint(Point.of(0, 0)),
-      new FreeEndpoint(Point.of(0, 0)),
-      s.props as EdgeProps,
-      s.metadata,
-      [],
+    return ElementFactory.edge({
+      id: s.id,
+      start: new FreeEndpoint(Point.of(0, 0)),
+      end: new FreeEndpoint(Point.of(0, 0)),
+      props: s.props as EdgeProps,
+      metadata: s.metadata,
       layer
-    );
+    });
   }
 };

@@ -742,7 +742,15 @@ const parseEdge = (
     edgeProps.type = 'orthogonal';
   }
 
-  const edge = ElementFactory.edge(id, source, target, edgeProps, metadata, waypoints, layer);
+  const edge = ElementFactory.edge({
+    id,
+    start: source,
+    end: target,
+    props: edgeProps,
+    metadata,
+    waypoints,
+    layer
+  });
   parents.set(id, edge);
 
   // Post-pone attaching the edge to the source and target nodes until all

@@ -8,7 +8,6 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
-import { newid } from '@diagram-craft/utils/id';
 import {
   addHighlight,
   getHighlights,
@@ -66,22 +65,19 @@ export class EdgeTool extends AbstractTool {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.edge = ElementFactory.edge(
-      newid(),
-      this.currentAnchor
+    this.edge = ElementFactory.edge({
+      start: this.currentAnchor
         ? new AnchorEndpoint(
             this.diagram.lookup(this.currentElement!) as DiagramNode,
             this.currentAnchor.id
           )
         : new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
-      new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
-      {},
-      {
+      end: new FreeEndpoint(this.diagram.viewBox.toDiagramPoint(point)),
+      metadata: {
         style: this.diagram.document.styles.activeEdgeStylesheet.id
       },
-      [],
       layer
-    );
+    });
 
     UnitOfWork.executeWithUndo(this.diagram, 'Add edge', uow => {
       layer.addElement(this.edge!, uow);
