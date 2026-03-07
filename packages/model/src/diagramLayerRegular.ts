@@ -36,7 +36,6 @@ export class RegularLayer extends Layer<RegularLayer> {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
           uow.addElement(e, this, this.#elements.size - 1);
-          //e._onAttach(this, this, uow);
           e._attach(this, uow);
         },
         onRemoteChange: e => {

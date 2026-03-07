@@ -12,6 +12,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
+import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -117,11 +118,7 @@ export class GroupAction extends AbstractSelectionAction {
         );
         activeLayer.addElement(group, uow);
 
-        elements.forEach(e => {
-          assertRegularLayer(e.layer);
-          if (e.layer.elements.includes(e)) e.layer.removeElement(e, uow);
-          else if (e.parent) e.parent.removeChild(e, uow);
-        });
+        deleteElements(elements, uow);
 
         group.setChildren([...elements], uow);
 

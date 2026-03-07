@@ -267,6 +267,7 @@ export class LayerManager
     uow.executeRemove(layer, this, this.#layers.getIndex(layer.id), () => {
       this.#layers.remove(layer.id);
       this.#visibleLayers.delete(layer.id);
+      // TODO: Need to understand why this is needed
       if (this.diagram.selection.nodes.some(e => !e._isAttached || e.layer === layer)) {
         this.diagram.selection.clear();
       }

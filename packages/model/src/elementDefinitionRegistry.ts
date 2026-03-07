@@ -275,7 +275,11 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    icon: (el: T, label: string, property: PropPath<P>): IconCustomPropertyType => {
+    icon: (
+      el: T,
+      label: string,
+      property: PropPath<P>
+    ): IconCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: label.toLowerCase().replace(/\s/g, '-'),
@@ -290,7 +294,11 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    color: (el: T, label: string, property: PropPath<P>): ColorCustomPropertyType => {
+    color: (
+      el: T,
+      label: string,
+      property: PropPath<P>
+    ): ColorCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: label.toLowerCase().replace(/\s/g, '-'),

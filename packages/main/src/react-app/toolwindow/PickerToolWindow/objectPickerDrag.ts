@@ -93,9 +93,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     const scaleX = sourceBounds.w / bounds.w;
     const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
-    this._elements.forEach(e => {
-      activeLayer.addElement(e, this.uow);
-    });
+    this._elements.forEach(e => activeLayer.addElement(e, this.uow));
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this._elements, point, Point.of(scaleX, scaleY), uow);
