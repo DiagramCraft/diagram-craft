@@ -32,52 +32,56 @@ export class MappedCRDTOrderedMap<
       onInit?: (e: T) => void;
     }
   ) {
-    this.#current = crdt.get();
-
-    const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteChange?.(this.#entries[idx]![1]);
-      }
-
-      this.populateFromCRDT(e);
-    };
-
-    const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteRemove?.(this.#entries[idx]![1]);
-        this.#entries.splice(idx, 1);
-      }
-    };
-
-    const remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']> = e => {
-      this.populateFromCRDT(e);
-      const idx = this.#entries.findIndex(entry => entry[0] === e.key);
-      if (idx >= 0) {
-        props?.onRemoteAdd?.(this.#entries[idx]![1]);
-      }
-    };
-
-    this.#current.on('remoteUpdate', remoteUpdate);
-    this.#current.on('remoteDelete', remoteDelete);
-    this.#current.on('remoteInsert', remoteInsert);
-
-    crdt.on('change', () => {
-      this.#current.off('remoteUpdate', remoteUpdate);
-      this.#current.off('remoteDelete', remoteDelete);
-      this.#current.off('remoteInsert', remoteInsert);
-
+    const onCrdtChange = () => {
       this.#current = crdt.get();
+      const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
+        const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+        if (idx >= 0) {
+          props?.onRemoteChange?.(this.#entries[idx]![1]);
+        }
+
+        this.populateFromCRDT(e);
+      };
+
+      const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
+        const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+        if (idx >= 0) {
+          props?.onRemoteRemove?.(this.#entries[idx]![1]);
+          this.#entries.splice(idx, 1);
+        }
+      };
+
+      const remoteInsert: EventReceiver<CRDTMapEvents['remoteInsert']> = e => {
+        this.populateFromCRDT(e);
+        const idx = this.#entries.findIndex(entry => entry[0] === e.key);
+        if (idx >= 0) {
+          props?.onRemoteAdd?.(this.#entries[idx]![1]);
+        }
+      };
+
       this.#current.on('remoteUpdate', remoteUpdate);
       this.#current.on('remoteDelete', remoteDelete);
       this.#current.on('remoteInsert', remoteInsert);
-    });
 
-    this.populateFromCRDT();
-    for (const e of this.#entries) {
-      props?.onInit?.(e[1]);
-    }
+      crdt.on('change', () => {
+        this.#current.off('remoteUpdate', remoteUpdate);
+        this.#current.off('remoteDelete', remoteDelete);
+        this.#current.off('remoteInsert', remoteInsert);
+
+        this.#current = crdt.get();
+        this.#current.on('remoteUpdate', remoteUpdate);
+        this.#current.on('remoteDelete', remoteDelete);
+        this.#current.on('remoteInsert', remoteInsert);
+      });
+
+      this.populateFromCRDT();
+      for (const e of this.#entries) {
+        props?.onInit?.(e[1]);
+      }
+    };
+
+    crdt.on('change', onCrdtChange);
+    onCrdtChange();
   }
 
   get keys() {

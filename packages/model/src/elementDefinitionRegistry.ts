@@ -1,5 +1,5 @@
 import { DiagramNode } from './diagramNode';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DiagramElement } from './diagramElement';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
@@ -275,11 +275,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    icon: (
-      el: T,
-      label: string,
-      property: PropPath<P>
-    ): IconCustomPropertyType => {
+    icon: (el: T, label: string, property: PropPath<P>): IconCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: label.toLowerCase().replace(/\s/g, '-'),
@@ -294,11 +290,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    color: (
-      el: T,
-      label: string,
-      property: PropPath<P>
-    ): ColorCustomPropertyType => {
+    color: (el: T, label: string, property: PropPath<P>): ColorCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: label.toLowerCase().replace(/\s/g, '-'),
@@ -458,6 +450,7 @@ export class NodeDefinitionRegistry {
     if (!r) {
       missing.add(type);
       console.warn(`Cannot find shape '${type}'`, new Error().stack);
+      VERIFY_NOT_REACHED();
       return this.nodes.get('rect')!;
     }
 

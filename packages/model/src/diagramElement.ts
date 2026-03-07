@@ -462,13 +462,13 @@ export abstract class AbstractDiagramElement
       c._detach(false, () => {}, uow);
     }
 
-    if (!root) {
+    /*if (!root) {
       if (this.parent) {
-        uow.removeElement(this.parent, this, this.parent.children.indexOf(this));
+        uow.removeElement(this, this.parent, this.parent.children.indexOf(this));
       } else {
-        uow.removeElement(this.layer, this, this.layer.elements.indexOf(this));
+        uow.removeElement(this, this.layer, this.layer.elements.indexOf(this));
       }
-    }
+    }*/
   }
 
   _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
@@ -490,8 +490,8 @@ export abstract class AbstractDiagramElement
         element.getDefinition().onAdd(element, this._diagram, uow);
       }
 
-      const isRoot = root && element !== this;
-      if (isRoot) {
+      //console.log('recurse', element.id, !root, element !== this, element.children.length);
+      if (!root || element !== this) {
         if (parent) {
           uow.addElement(element, parent, parent.children.indexOf(element));
         } else {

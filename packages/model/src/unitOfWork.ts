@@ -6,6 +6,7 @@ import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
+import { AbstractDiagramElement } from '@diagram-craft/model/diagramElement';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 
@@ -318,6 +319,12 @@ export class UnitOfWork {
     if (Array.isArray(element)) {
       element.forEach(e => this.removeElement(e, parent, idx));
       return;
+    }
+
+    if (element instanceof AbstractDiagramElement) {
+      for (const c of element.children.toReversed()) {
+        this.removeElement(c, element, element.children.indexOf(c));
+      }
     }
 
     const adapter = UOWRegistry.getAdapter(element._trackableType);

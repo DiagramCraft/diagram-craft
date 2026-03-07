@@ -12,7 +12,6 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
-import { addAllChildren, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 
 export const groupActions = (context: ActionContext) => ({
   GROUP_GROUP: new GroupAction('group', context),
@@ -110,10 +109,6 @@ export class GroupAction extends AbstractSelectionAction {
           return diagram.layers.isAbove(a, b) ? 1 : -1;
         });
 
-        const clonedElements = UnitOfWork.executeSilently(activeLayer.diagram, u =>
-          cloneElements(elements, activeLayer, u, false)
-        );
-
         const group = ElementFactory.node(
           newid(),
           'group',
@@ -124,13 +119,13 @@ export class GroupAction extends AbstractSelectionAction {
         );
         activeLayer.addElement(group, uow);
 
+        // TODO: Is this step really needed
         elements.forEach(e => {
           assertRegularLayer(e.layer);
           if (e.layer.elements.includes(e)) e.layer.removeElement(e, uow);
         });
 
-        group.setChildren([...clonedElements], uow);
-        clonedElements.forEach(e => addAllChildren(e, uow));
+        group.setChildren([...elements], uow);
 
         uow.select(diagram, [group]);
       });
