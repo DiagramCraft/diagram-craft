@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
-import { TestModel } from './test-support/testModel';
 import {
   resetListeners,
   standardTestModel,
@@ -9,6 +8,7 @@ import {
 } from './test-support/collaborationModelTestUtils';
 import { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { ElementFactory } from './elementFactory';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let edge1: DiagramEdge;
@@ -422,18 +422,6 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
       // **** Verify
       UnitOfWork.execute(model.diagram1, uow => expect(() => edge1.addChild(child, uow)).toThrow());
-    });
-
-    it('should not add the child if it is already present in a different diagram', () => {
-      // **** Act
-      const child = model.layer1.createNode();
-      const otherDiagram = TestModel.newDiagram();
-      const otherEdge = otherDiagram.newLayer().addEdge();
-
-      // **** Verify
-      UnitOfWork.execute(model.diagram1, uow =>
-        expect(() => otherEdge.addChild(child, uow)).toThrow()
-      );
     });
 
     it('should fail is the child is an edge', () => {
@@ -869,6 +857,55 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       model.diagram1.undoManager.redo();
       expect(edge1.storedProps.custom?.blockArrow?.width).toBe(20);
       if (edge2) expect(edge2.storedProps.custom?.blockArrow?.width).toBe(20);
+    });
+  });
+
+  describe('_detach', () => {
+    it('should preserve id, waypoints and props', () => {
+      const edge = ElementFactory.edge(
+        'detach-edge',
+        new FreeEndpoint({ x: 0, y: 0 }),
+        new FreeEndpoint({ x: 100, y: 100 }),
+        { stroke: { color: '#00ff00' } },
+        {},
+        [{ point: { x: 50, y: 50 } }],
+        model.layer1
+      );
+
+      UnitOfWork.execute(model.diagram1, uow => model.layer1.addElement(edge, uow));
+      UnitOfWork.execute(model.diagram1, uow => edge._detach(() => {}, uow));
+
+      expect(edge.id).toBe('detach-edge');
+      expect(edge.waypoints).toHaveLength(1);
+      expect(edge.waypoints[0]?.point).toEqual({ x: 50, y: 50 });
+      expect(edge.storedProps.stroke?.color).toBe('#00ff00');
+      expect(edge._isAttached).toBe(false);
+    });
+
+    it('should recursively _detach all children and preserve their properties', () => {
+      const child = ElementFactory.node(
+        'detach-child',
+        'rect',
+        { x: 10, y: 10, w: 30, h: 30, r: 0 },
+        model.layer1,
+        { fill: { color: '#ff0000' } },
+        { style: 'child-style' },
+        { text: 'child text' }
+      );
+
+      UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
+
+      expect(child._isAttached).toBe(true);
+
+      UnitOfWork.execute(model.diagram1, uow => edge1._detach(() => {}, uow));
+
+      expect(edge1._isAttached).toBe(false);
+      expect(child._isAttached).toBe(false);
+      expect(child.id).toBe('detach-child');
+      expect(child.nodeType).toBe('rect');
+      expect(child.getText()).toBe('child text');
+      expect(child.storedProps.fill?.color).toBe('#ff0000');
+      expect(child.metadata.style).toBe('child-style');
     });
   });
 });

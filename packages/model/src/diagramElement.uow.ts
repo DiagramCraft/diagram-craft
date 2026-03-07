@@ -95,6 +95,18 @@ export class DiagramElementUOWAdapter implements UOWAdapter<ElementSnapshot, Dia
   snapshot(element: DiagramElement): ElementSnapshot {
     return element.snapshot() as ElementSnapshot;
   }
+
+  addRecursively(element: DiagramElement, uow: UnitOfWork) {
+    for (const c of element.children) {
+      uow.addElement(c, element, element.children.indexOf(c));
+    }
+  }
+
+  removeRecursively(element: DiagramElement, uow: UnitOfWork) {
+    for (const c of element.children.toReversed()) {
+      uow.removeElement(c, element, element.children.indexOf(c));
+    }
+  }
 }
 
 export class DiagramElementChildUOWAdapter implements UOWChildAdapter<ElementSnapshot> {

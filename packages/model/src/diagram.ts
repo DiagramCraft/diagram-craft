@@ -340,6 +340,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     else if (isEdge(element)) this.edgeLookup.set(element.id, element);
   }
 
+  unregister(element: DiagramElement) {
+    if (isNode(element)) this.nodeLookup.delete(element.id);
+    else if (isEdge(element)) this.edgeLookup.delete(element.id);
+  }
+
   get index(): SpatialIndex {
     if (!this.#spatialIndex) {
       this.#spatialIndex = new SpatialIndex(this);

@@ -7,7 +7,7 @@ import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import { standardTestModel } from '@diagram-craft/model/test-support/collaborationModelTestUtils';
 
-describe.for(Backends.all())('RegularLayer [%s]', ([_name, backend]) => {
+describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
   beforeEach(backend.beforeEach);
   afterEach(backend.afterEach);
 

@@ -12,7 +12,7 @@ import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/flatObject';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper } from './diagramElementMapper';
@@ -29,6 +29,8 @@ import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/ma
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
+import { Detachable } from '@diagram-craft/model/detachable';
+import { Layer } from '@diagram-craft/model/diagramLayer';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -51,7 +53,7 @@ export type ElementType = 'node' | 'delegating-node' | 'edge' | 'delegating-edge
 
 export type InvalidationScope = 'full' | 'quick';
 
-export interface DiagramElement {
+export interface DiagramElement extends Detachable<DiagramElement | Layer> {
   _trackableType: 'element';
 
   readonly id: string;
@@ -114,7 +116,6 @@ export interface DiagramElement {
 
   comments: ReadonlyArray<Comment>;
 
-  _detachAndRemove(uow: UnitOfWork, callback: () => void): void;
   _onDetach(uow: UnitOfWork): void;
   _onAttach(
     layer: RegularLayer | ModificationLayer,
@@ -131,8 +132,8 @@ export abstract class AbstractDiagramElement
   // Transient properties
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
-  protected _diagram: Diagram;
-  protected _layer: RegularLayer | ModificationLayer;
+  protected _diagram: Diagram | undefined;
+  protected _layer: RegularLayer | ModificationLayer | undefined;
   protected _activeDiagram: Diagram;
 
   // The cache is created lazily for performance reasons
@@ -174,23 +175,23 @@ export abstract class AbstractDiagramElement
       makeElementMapper(this.layer, undefined),
       {
         onRemoteAdd: e => {
-          this._diagram.register(e);
+          this.diagram.register(e);
 
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.addElement(e, this, this.children.length - 1);
           uow.updateElement(this);
         },
         onRemoteChange: e => {
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.updateElement(e);
           uow.updateElement(this);
         },
         onRemoteRemove: e => {
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.removeElement(e, this, this.children.indexOf(e));
           uow.updateElement(this);
         },
-        onInit: e => this._diagram.register(e)
+        onInit: e => this.diagram.register(e)
       }
     );
 
@@ -199,7 +200,7 @@ export abstract class AbstractDiagramElement
       'parentId',
       {
         toCRDT: parent => parent?.id ?? '',
-        fromCRDT: v => (v !== '' ? this._diagram.lookup(v) : undefined)
+        fromCRDT: v => (v !== '' ? this.diagram.lookup(v) : undefined)
       }
     );
     this._parent.init(undefined);
@@ -211,7 +212,7 @@ export abstract class AbstractDiagramElement
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       UnitOfWork.executeSilently(this._diagram, uow => this.invalidate('full', uow));
-      this._diagram.emit('elementChange', { element: this });
+      this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
   }
@@ -269,11 +270,11 @@ export abstract class AbstractDiagramElement
   }
 
   get diagram() {
-    return this._diagram;
+    return mustExist(this._diagram);
   }
 
   get layer() {
-    return this._layer;
+    return mustExist(this._layer);
   }
 
   get activeDiagram() {
@@ -371,13 +372,14 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
-    assert.true(child.diagram === this.diagram);
+    assert.false(child._isAttached);
+
     // Can't add multiple times'
     assert.false(this._children.has(child.id));
     // Can't add yourself as a child
     assert.false(child.id === this.id);
     // Can't add top-level elements as children
-    assert.true(child.layer.elements.find(e => e.id === child.id) === undefined);
+    assert.true(this.layer.elements.find(e => e.id === child.id) === undefined);
 
     if (position) {
       if (typeof position === 'number') {
@@ -397,31 +399,20 @@ export abstract class AbstractDiagramElement
       });
     }
 
-    child._onAttach(this.layer, this, uow);
+    child._attach(this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    assert.true(child._isAttached);
     assert.true(this._children.has(child.id));
 
-    for (const c of child.children) {
-      child.removeChild(c, uow);
-    }
-
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child._detachAndRemove(uow, () => this._children.remove(child.id));
+      child._detach(() => this._children.remove(child.id), uow);
     });
   }
 
   get comments() {
     return this.diagram.commentManager.getAll().filter(c => c.element?.id === this.id);
-  }
-
-  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
-    const clone = this._crdt.get().clone();
-    callback?.();
-    this._crdt.set(clone);
-
-    this._onDetach(uow);
   }
 
   _onAttach(
@@ -440,6 +431,64 @@ export abstract class AbstractDiagramElement
       child._onAttach(layer, this, uow);
     }
   }
+
+  // region Detachable ****************************************************************************
+
+  _isAttached = false;
+
+  _detach(callback: () => void, uow: UnitOfWork): void {
+    assert.true(this._isAttached);
+
+    // TODO: We should eventually look at _isAttached from the layer
+    if (this.parent?._isAttached || !this.parent) {
+      const clone = this._crdt.get().clone();
+      callback?.();
+      this._setParent(undefined);
+      this._crdt.set(clone);
+    }
+
+    this._onDetach(uow);
+    this.diagram.unregister(this);
+
+    this._isAttached = false;
+    // TODO: Re-enable this - currently this causes issues when dragging object
+    //       on to the grid and then doing undo
+    //this._layer = undefined;
+    //this._diagram = undefined;
+
+    for (const c of this.children.toReversed()) {
+      c._detach(() => {}, uow);
+    }
+  }
+
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork): void {
+    const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
+    const diagram = parent.diagram;
+
+    const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
+      assert.true(uow.isRemote || !element._isAttached);
+
+      element._setParent(parent);
+      this._layer = layer;
+      this._diagram = diagram;
+      layer.diagram.register(element);
+
+      if (isNode(element)) {
+        element.getDefinition().onAdd(element, this.diagram, uow);
+      }
+
+      // TODO: Eventually we should use the layer _isAttached instead of true
+      element._isAttached = parent ? parent._isAttached : true;
+
+      for (const c of element.children) {
+        recurse(c, element);
+      }
+    };
+
+    recurse(this, parent._trackableType === 'element' ? (parent as DiagramElement) : undefined);
+  }
+
+  // endregion
 }
 
 /**

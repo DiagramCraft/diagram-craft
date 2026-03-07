@@ -36,7 +36,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         onRemoteAdd: e => {
           const uow = getRemoteUnitOfWork(diagram);
           uow.addElement(e, this, this.#elements.size - 1);
-          e._onAttach(this, this, uow);
+          e._attach(this, uow);
         },
         onRemoteChange: e => {
           const uow = getRemoteUnitOfWork(diagram);
@@ -49,7 +49,7 @@ export class RegularLayer extends Layer<RegularLayer> {
         onInit: e => {
           diagram.emit('elementAdd', { element: e });
           const uow = getRemoteUnitOfWork(diagram);
-          e._onAttach(this, this, uow);
+          e._attach(this, uow);
         }
       }
     );
@@ -150,7 +150,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     assert.true(element.parent === undefined);
     assert.false(this.#elements.has(element.id));
     uow.executeAdd(element, this, index, () => this.#elements.insert(element.id, element, index));
-    element._onAttach(this, this, uow);
+    element._attach(this, uow);
   }
 
   addElement(element: DiagramElement, uow: UnitOfWork) {
@@ -160,12 +160,8 @@ export class RegularLayer extends Layer<RegularLayer> {
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     assert.true(this.#elements.has(element.id));
 
-    for (const child of element.children) {
-      element.removeChild(child, uow);
-    }
-
     uow.executeRemove(element, this, this.#elements.getIndex(element.id), () => {
-      element._detachAndRemove(uow, () => this.#elements.remove(element.id));
+      element._detach(() => this.#elements.remove(element.id), uow);
     });
   }
 

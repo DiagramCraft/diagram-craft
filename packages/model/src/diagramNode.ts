@@ -879,12 +879,6 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   _onDetach(uow: UnitOfWork) {
-    this.diagram.nodeLookup.delete(this.id);
-
-    for (const c of this.children) {
-      c._onDetach(uow);
-    }
-
     // "Detach" any edges that connects to this node
     for (const anchor of this.#edges.keys) {
       for (const id of this.#edges.get(anchor) ?? []) {
@@ -898,17 +892,6 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
           }
         });
       }
-    }
-
-    if (this.parent?.children.includes(this)) {
-      this.parent.removeChild(this, uow);
-    }
-    this._setParent(undefined);
-
-    // Note, need to check if the element is still in the layer to avoid infinite recursion
-    assert.true(this.layer.type === 'regular');
-    if (this.layer.elements.includes(this)) {
-      this.layer.removeElement(this, uow);
     }
   }
 

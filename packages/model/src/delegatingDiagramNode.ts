@@ -318,10 +318,6 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate._onDetach(uow);
   }
 
-  _detachAndRemove(uow: UnitOfWork, callback: () => void) {
-    this.delegate._detachAndRemove(uow, callback);
-  }
-
   transform(transforms: ReadonlyArray<Transform>, uow: UnitOfWork, isChild = false): void {
     applyNodeTransform(this, transforms, uow, isChild);
   }

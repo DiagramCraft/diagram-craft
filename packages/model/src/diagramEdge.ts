@@ -1025,12 +1025,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   _onDetach(uow: UnitOfWork) {
-    // Update any parent
-    if (this.parent) {
-      if (this.parent.children.includes(this)) this.parent.removeChild(this, uow);
-      this._setParent(undefined);
-    }
-
     // All label nodes must be detached
     for (const l of this.labelNodes) {
       l.node()._onDetach(uow);
@@ -1049,14 +1043,6 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         this,
         uow
       );
-    }
-
-    this.diagram.edgeLookup.delete(this.id);
-
-    // Note, need to check if the element is still in the layer to avoid infinite recursion
-    assert.true(this.layer.type === 'regular');
-    if (this.layer.elements.includes(this)) {
-      this.layer.removeElement(this, uow);
     }
   }
 

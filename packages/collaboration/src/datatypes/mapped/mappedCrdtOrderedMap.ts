@@ -72,6 +72,8 @@ export class MappedCRDTOrderedMap<
       this.#current.on('remoteUpdate', remoteUpdate);
       this.#current.on('remoteDelete', remoteDelete);
       this.#current.on('remoteInsert', remoteInsert);
+
+      this.populateFromCRDT();
     });
 
     this.populateFromCRDT();

@@ -42,6 +42,9 @@ export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
+
+  addRecursively?: (el: E, uow: UnitOfWork) => void;
+  removeRecursively?: (el: E, uow: UnitOfWork) => void;
 }
 
 export interface UOWChildAdapter<S extends Snapshot> {
@@ -322,6 +325,9 @@ export class UnitOfWork {
 
     const adapter = UOWRegistry.getAdapter(element._trackableType);
     const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+
+    adapter.removeRecursively?.(element, this);
+
     this.#operations.push({
       type: 'remove',
       target: { id: adapter.id(element), object: element, type: element._trackableType },
@@ -379,6 +385,8 @@ export class UnitOfWork {
     if (updatesToBeReordered.length > 0) {
       this.#operations.push(...updatesToBeReordered);
     }
+
+    adapter.addRecursively?.(element, this);
   }
 
   select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {

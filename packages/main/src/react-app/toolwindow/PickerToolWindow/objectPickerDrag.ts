@@ -2,11 +2,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { Point } from '@diagram-craft/geometry/point';
-import {
-  addAllChildren,
-  assignNewBounds,
-  cloneElements
-} from '@diagram-craft/model/diagramElementUtils';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { clamp } from '@diagram-craft/utils/math';
@@ -97,10 +93,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     const scaleX = sourceBounds.w / bounds.w;
     const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
-    this._elements.forEach(e => {
-      activeLayer.addElement(e, this.uow);
-      addAllChildren(e, this.uow);
-    });
+    this._elements.forEach(e => activeLayer.addElement(e, this.uow));
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this._elements, point, Point.of(scaleX, scaleY), uow);
