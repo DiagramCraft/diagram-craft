@@ -463,11 +463,7 @@ export abstract class AbstractDiagramElement
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
 
     const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
-      assert.false(element._isAttached);
-
-      // TODO: We should not do the second check in both of these
-      //assert.true(element.layer === undefined || element.layer === layer);
-      //assert.true(element.diagram === undefined || element.diagram === this._diagram);
+      assert.true(uow.isRemote || !element._isAttached);
 
       element._setParent(parent);
       element._setLayer(layer, this._diagram);
@@ -488,7 +484,6 @@ export abstract class AbstractDiagramElement
       }
 
       // TODO: Eventually we should use the layer _isAttached instead of true
-      // @ts-ignore
       element._isAttached = parent ? parent._isAttached : true;
 
       for (const c of element.children) {

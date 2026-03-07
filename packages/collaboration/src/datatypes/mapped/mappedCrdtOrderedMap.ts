@@ -32,6 +32,8 @@ export class MappedCRDTOrderedMap<
       onInit?: (e: T) => void;
     }
   ) {
+    this.#current = crdt.get();
+
     const onCrdtChange = () => {
       this.#current = crdt.get();
       const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
