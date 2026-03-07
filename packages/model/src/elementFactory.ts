@@ -51,8 +51,8 @@ export const ElementFactory = {
     nodeType: 'group' | string,
     bounds: Box,
     layer: RegularLayer | ModificationLayer,
-    props: NodePropsForEditing,
-    metadata: ElementMetadata,
+    props: NodePropsForEditing = {},
+    metadata: ElementMetadata = {},
     text: NodeTexts = { text: '' },
     anchorCache?: ReadonlyArray<Anchor>
   ) {

@@ -87,7 +87,7 @@ export class GroupAction extends AbstractSelectionAction {
         const children = group.children;
 
         children.forEach(e => {
-          e.parent?.removeChild(e, uow);
+          e.parent!.removeChild(e, uow);
           activeLayer.addElement(e, uow);
         });
         group.layer.removeElement(group, uow);
@@ -105,17 +105,15 @@ export class GroupAction extends AbstractSelectionAction {
       if (hasLabelNode) return;
 
       UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
-        const elements = diagram.selection.elements.toSorted((a, b) => {
-          return diagram.layers.isAbove(a, b) ? 1 : -1;
-        });
+        const elements = diagram.selection.elements.toSorted((a, b) =>
+          diagram.layers.isAbove(a, b) ? 1 : -1
+        );
 
         const group = ElementFactory.node(
           newid(),
           'group',
           Box.boundingBox(elements.map(e => e.bounds)),
-          activeLayer,
-          {},
-          {}
+          activeLayer
         );
         activeLayer.addElement(group, uow);
 

@@ -10,6 +10,7 @@ import { serializeDiagram } from './serialization/serialize';
 import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import type { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { ElementFactory } from './elementFactory';
 
 describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
   let node1: TestDiagramNodeBuilder;
@@ -501,6 +502,67 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       };
       expect(node1.getAnchor('c')).toEqual(ref);
       if (node2) expect(node2.getAnchor('c')).toEqual(ref);
+    });
+  });
+
+  describe('_detach', () => {
+    it('should preserve id, nodeType, text, props and metadata', () => {
+      const node = ElementFactory.node(
+        'detach-node',
+        'circle',
+        { x: 10, y: 20, w: 50, h: 50, r: 0 },
+        model.layer1,
+        { fill: { color: '#ff0000' } },
+        { style: 'custom-style' },
+        { text: 'hello world' }
+      );
+
+      UnitOfWork.execute(model.diagram1, uow => model.layer1.addElement(node, uow));
+      UnitOfWork.execute(model.diagram1, uow => node._detach(() => {}, uow));
+
+      expect(node.id).toBe('detach-node');
+      expect(node.nodeType).toBe('circle');
+      expect(node.getText()).toBe('hello world');
+      expect(node.storedProps.fill?.color).toBe('#ff0000');
+      expect(node.metadata.style).toBe('custom-style');
+      expect(node._isAttached).toBe(false);
+    });
+
+    it('should recursively _detach all children and preserve their properties', () => {
+      const parent = ElementFactory.node(
+        'detach-parent',
+        'group',
+        { x: 0, y: 0, w: 100, h: 100, r: 0 },
+        model.layer1,
+        {},
+        {}
+      );
+      const child = ElementFactory.node(
+        'detach-child',
+        'rect',
+        { x: 10, y: 10, w: 30, h: 30, r: 0 },
+        model.layer1,
+        { fill: { color: '#0000ff' } },
+        { style: 'child-style' },
+        { text: 'child text' }
+      );
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        model.layer1.addElement(parent, uow);
+        parent.addChild(child, uow);
+      });
+
+      expect(child._isAttached).toBe(true);
+
+      UnitOfWork.execute(model.diagram1, uow => parent._detach(() => {}, uow));
+
+      expect(parent._isAttached).toBe(false);
+      expect(child._isAttached).toBe(false);
+      expect(child.id).toBe('detach-child');
+      expect(child.nodeType).toBe('rect');
+      expect(child.getText()).toBe('child text');
+      expect(child.storedProps.fill?.color).toBe('#0000ff');
+      expect(child.metadata.style).toBe('child-style');
     });
   });
 });
