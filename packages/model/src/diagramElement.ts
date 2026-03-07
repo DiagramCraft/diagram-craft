@@ -446,14 +446,13 @@ export abstract class AbstractDiagramElement
       this._crdt.set(clone);
     }
 
-    this._isAttached = false;
-
+    this._onDetach(uow);
     this.diagram.unregister(this);
+
+    this._isAttached = false;
     this._layer = undefined;
     // TODO: Re-enable this
-    // this._diagram = undefined;
-
-    this._onDetach(uow);
+    //this._diagram = undefined;
 
     for (const c of this.children.toReversed()) {
       c._detach(false, () => {}, uow);
