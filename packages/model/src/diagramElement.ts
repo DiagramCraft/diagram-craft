@@ -406,10 +406,6 @@ export abstract class AbstractDiagramElement
   removeChild(child: DiagramElement, uow: UnitOfWork) {
     assert.true(this._children.has(child.id));
 
-    for (const c of child.children) {
-      child.removeChild(c, uow);
-    }
-
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
       child._detach(true, () => this._children.remove(child.id), uow);
     });
@@ -441,6 +437,8 @@ export abstract class AbstractDiagramElement
   _isAttached = false;
 
   _detach(root: boolean, callback: () => void, uow: UnitOfWork) {
+    assert.true(this._isAttached);
+
     if (root) {
       const clone = this._crdt.get().clone();
       callback?.();
@@ -448,8 +446,6 @@ export abstract class AbstractDiagramElement
       this._crdt.set(clone);
     }
 
-    // TODO: This is temporary - we should re-enable this
-    //assert.true(this._isAttached);
     this._isAttached = false;
 
     this._diagram.unregister(this);
@@ -461,14 +457,6 @@ export abstract class AbstractDiagramElement
     for (const c of this.children.toReversed()) {
       c._detach(false, () => {}, uow);
     }
-
-    /*if (!root) {
-      if (this.parent) {
-        uow.removeElement(this, this.parent, this.parent.children.indexOf(this));
-      } else {
-        uow.removeElement(this, this.layer, this.layer.elements.indexOf(this));
-      }
-    }*/
   }
 
   _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
@@ -491,6 +479,7 @@ export abstract class AbstractDiagramElement
       }
 
       //console.log('recurse', element.id, !root, element !== this, element.children.length);
+      // TODO: Move this into uow
       if (!root || element !== this) {
         if (parent) {
           uow.addElement(element, parent, parent.children.indexOf(element));
@@ -499,12 +488,13 @@ export abstract class AbstractDiagramElement
         }
       }
 
+      // TODO: Eventually we should use the layer _isAttached instead of true
+      // @ts-ignore
+      element._isAttached = parent ? parent._isAttached : true;
+
       for (const c of element.children) {
         recurse(c, element);
       }
-
-      // TODO: Eventually we should use the layer _isAttached instead of true
-      this._isAttached = parent ? parent._isAttached : true;
     };
 
     recurse(this, parent._trackableType === 'element' ? (parent as DiagramElement) : undefined);
