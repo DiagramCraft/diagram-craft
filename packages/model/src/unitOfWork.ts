@@ -386,6 +386,12 @@ export class UnitOfWork {
     if (updatesToBeReordered.length > 0) {
       this.#operations.push(...updatesToBeReordered);
     }
+
+    if (element instanceof AbstractDiagramElement) {
+      for (const c of element.children) {
+        this.addElement(c, element, element.children.indexOf(c));
+      }
+    }
   }
 
   select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {

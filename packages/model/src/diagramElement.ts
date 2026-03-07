@@ -12,7 +12,7 @@ import type { Diagram } from './diagram';
 import { AttachmentConsumer } from './attachment';
 import { FlatObject } from '@diagram-craft/utils/flatObject';
 import { PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from './diagramLayerRegular';
 import { watch, WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper } from './diagramElementMapper';
@@ -132,8 +132,8 @@ export abstract class AbstractDiagramElement
   // Transient properties
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
 
-  protected _diagram: Diagram;
-  protected _layer: RegularLayer | ModificationLayer;
+  protected _diagram: Diagram | undefined;
+  protected _layer: RegularLayer | ModificationLayer | undefined;
   protected _activeDiagram: Diagram;
 
   // The cache is created lazily for performance reasons
@@ -175,23 +175,23 @@ export abstract class AbstractDiagramElement
       makeElementMapper(this.layer, undefined),
       {
         onRemoteAdd: e => {
-          this._diagram.register(e);
+          this.diagram.register(e);
 
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.addElement(e, this, this.children.length - 1);
           uow.updateElement(this);
         },
         onRemoteChange: e => {
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.updateElement(e);
           uow.updateElement(this);
         },
         onRemoteRemove: e => {
-          const uow = getRemoteUnitOfWork(this._diagram);
+          const uow = getRemoteUnitOfWork(this.diagram);
           uow.removeElement(e, this, this.children.indexOf(e));
           uow.updateElement(this);
         },
-        onInit: e => this._diagram.register(e)
+        onInit: e => this.diagram.register(e)
       }
     );
 
@@ -200,7 +200,7 @@ export abstract class AbstractDiagramElement
       'parentId',
       {
         toCRDT: parent => parent?.id ?? '',
-        fromCRDT: v => (v !== '' ? this._diagram.lookup(v) : undefined)
+        fromCRDT: v => (v !== '' ? this.diagram.lookup(v) : undefined)
       }
     );
     this._parent.init(undefined);
@@ -212,7 +212,7 @@ export abstract class AbstractDiagramElement
 
     this._metadata = new CRDTObject<ElementMetadata>(metadataMap, () => {
       UnitOfWork.executeSilently(this._diagram, uow => this.invalidate('full', uow));
-      this._diagram.emit('elementChange', { element: this });
+      this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
   }
@@ -270,11 +270,11 @@ export abstract class AbstractDiagramElement
   }
 
   get diagram() {
-    return this._diagram;
+    return mustExist(this._diagram);
   }
 
   get layer() {
-    return this._layer;
+    return mustExist(this._layer);
   }
 
   get activeDiagram() {
@@ -448,9 +448,10 @@ export abstract class AbstractDiagramElement
 
     this._isAttached = false;
 
-    this._diagram.unregister(this);
-    // @ts-expect-error
-    this._setLayer(undefined, this._diagram);
+    this.diagram.unregister(this);
+    this._layer = undefined;
+    // TODO: Re-enable this
+    // this._diagram = undefined;
 
     this._onDetach(uow);
 
@@ -459,28 +460,20 @@ export abstract class AbstractDiagramElement
     }
   }
 
-  _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
+  _attach(_root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
+    const diagram = parent.diagram;
 
     const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
       assert.true(uow.isRemote || !element._isAttached);
 
       element._setParent(parent);
-      element._setLayer(layer, this._diagram);
+      this._layer = layer;
+      this._diagram = diagram;
       layer.diagram.register(element);
 
       if (isNode(element)) {
-        element.getDefinition().onAdd(element, this._diagram, uow);
-      }
-
-      //console.log('recurse', element.id, !root, element !== this, element.children.length);
-      // TODO: Move this into uow
-      if (!root || element !== this) {
-        if (parent) {
-          uow.addElement(element, parent, parent.children.indexOf(element));
-        } else {
-          uow.addElement(element, layer, layer.elements.indexOf(element));
-        }
+        element.getDefinition().onAdd(element, this.diagram, uow);
       }
 
       // TODO: Eventually we should use the layer _isAttached instead of true
