@@ -6,7 +6,6 @@ import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
-import { AbstractDiagramElement } from '@diagram-craft/model/diagramElement';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
 
@@ -43,6 +42,9 @@ export interface UOWAdapter<S extends Snapshot, E extends UOWTrackable> {
 
   snapshot: (element: E) => S;
   restore: (snapshot: S, element: E, uow: UnitOfWork) => void;
+
+  addRecursively?: (el: E, uow: UnitOfWork) => void;
+  removeRecursively?: (el: E, uow: UnitOfWork) => void;
 }
 
 export interface UOWChildAdapter<S extends Snapshot> {
@@ -321,14 +323,11 @@ export class UnitOfWork {
       return;
     }
 
-    if (element instanceof AbstractDiagramElement) {
-      for (const c of element.children.toReversed()) {
-        this.removeElement(c, element, element.children.indexOf(c));
-      }
-    }
-
     const adapter = UOWRegistry.getAdapter(element._trackableType);
     const parentAdapter = UOWRegistry.getAdapter(parent._trackableType);
+
+    adapter.removeRecursively?.(element, this);
+
     this.#operations.push({
       type: 'remove',
       target: { id: adapter.id(element), object: element, type: element._trackableType },
@@ -387,11 +386,7 @@ export class UnitOfWork {
       this.#operations.push(...updatesToBeReordered);
     }
 
-    if (element instanceof AbstractDiagramElement) {
-      for (const c of element.children) {
-        this.addElement(c, element, element.children.indexOf(c));
-      }
-    }
+    adapter.addRecursively?.(element, this);
   }
 
   select(diagram: Diagram, after: ArrayOrROArray<{ id: string } | string>) {

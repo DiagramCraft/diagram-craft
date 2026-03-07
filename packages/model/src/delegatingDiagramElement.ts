@@ -225,12 +225,12 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
     return this.delegate._isAttached;
   }
 
-  _detach(root: boolean, callback: () => void, uow: UnitOfWork) {
-    this.delegate._detach(root, callback, uow);
+  _detach(callback: () => void, uow: UnitOfWork): void {
+    this.delegate._detach(callback, uow);
   }
 
-  _attach(root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
-    this.delegate._attach(root, parent, uow);
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork): void {
+    this.delegate._attach(parent, uow);
   }
 
   // endregion

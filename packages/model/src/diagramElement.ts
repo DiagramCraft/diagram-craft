@@ -399,7 +399,7 @@ export abstract class AbstractDiagramElement
       });
     }
 
-    child._attach(true, this, uow);
+    child._attach(this, uow);
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
@@ -407,7 +407,7 @@ export abstract class AbstractDiagramElement
     assert.true(this._children.has(child.id));
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
-      child._detach(true, () => this._children.remove(child.id), uow);
+      child._detach(() => this._children.remove(child.id), uow);
     });
   }
 
@@ -436,10 +436,11 @@ export abstract class AbstractDiagramElement
 
   _isAttached = false;
 
-  _detach(root: boolean, callback: () => void, uow: UnitOfWork) {
+  _detach(callback: () => void, uow: UnitOfWork): void {
     assert.true(this._isAttached);
 
-    if (root) {
+    // TODO: We should eventually look at _isAttached from the layer
+    if (this.parent?._isAttached || !this.parent) {
       const clone = this._crdt.get().clone();
       callback?.();
       this._setParent(undefined);
@@ -456,11 +457,11 @@ export abstract class AbstractDiagramElement
     //this._diagram = undefined;
 
     for (const c of this.children.toReversed()) {
-      c._detach(false, () => {}, uow);
+      c._detach(() => {}, uow);
     }
   }
 
-  _attach(_root: boolean, parent: DiagramElement | Layer, uow: UnitOfWork) {
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork): void {
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
     const diagram = parent.diagram;
 
