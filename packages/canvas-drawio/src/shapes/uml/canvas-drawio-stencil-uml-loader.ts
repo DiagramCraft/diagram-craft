@@ -39,22 +39,22 @@ export const parseUMLShapes = async (
       jettyWidth: style.num('jettyWidth', 20),
       jettyHeight: style.num('jettyHeight', 10)
     };
-    return ElementFactory.node(id, 'mxgraph.module', bounds, layer, props, {});
+    return ElementFactory.node({ id, nodeType: 'mxgraph.module', bounds, layer, props });
   } else if (style.str('shape') === 'umlLifeline') {
     props.custom.umlLifeline = {
       participant: style.str('participant')
     };
   }
 
-  return ElementFactory.node(
+  return ElementFactory.node({
     id,
-    adjustShape(style.str('shape')!),
+    nodeType: adjustShape(style.str('shape')!),
     bounds,
     layer,
     props,
     metadata,
     texts
-  );
+  });
 };
 
 export const loadUMLStencils = async (registry: Registry) => {

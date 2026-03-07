@@ -28,7 +28,11 @@ const { diagram: d } = DocumentBuilder.empty('1', '1', new DiagramDocument(defau
 UnitOfWork.execute(d, uow => {
   for (let i = 0; i < 1000; i++) {
     (d.activeLayer as RegularLayer).addElement(
-      ElementFactory.node(i.toString(), 'rect', randomBox(), d.activeLayer as RegularLayer, {}, {}),
+      ElementFactory.node({
+        id: i.toString(),
+        bounds: randomBox(),
+        layer: d.activeLayer as RegularLayer
+      }),
       uow
     );
   }

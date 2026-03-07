@@ -166,15 +166,14 @@ export class AIModel {
 
     const texts = simpleNode.text ? { text: simpleNode.text } : undefined;
 
-    return ElementFactory.node(
-      newid(),
-      simpleNode.type ?? nodeType,
+    return ElementFactory.node({
+      nodeType: simpleNode.type ?? nodeType,
       bounds,
-      this.layer,
+      layer: this.layer,
       props,
       metadata,
       texts
-    );
+    });
   }
 
   private createEdge(

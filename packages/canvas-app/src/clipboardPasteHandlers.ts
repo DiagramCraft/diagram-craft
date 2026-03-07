@@ -74,12 +74,10 @@ export class ImagePasteHandler extends PasteHandler {
     const img = await createImageBitmap(att.content);
 
     const newElements = [
-      ElementFactory.node(
-        newid(),
-        'rect',
-        { x: point.x, y: point.y, w: img.width, h: img.height, r: 0 },
+      ElementFactory.node({
+        bounds: { x: point.x, y: point.y, w: img.width, h: img.height, r: 0 },
         layer,
-        {
+        props: {
           fill: {
             type: 'image',
             image: { id: att.hash, w: img.width, h: img.height, fit: 'cover' }
@@ -87,9 +85,8 @@ export class ImagePasteHandler extends PasteHandler {
           stroke: {
             enabled: false
           }
-        },
-        {}
-      )
+        }
+      })
     ];
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {
@@ -111,19 +108,17 @@ export class TextPasteHandler extends PasteHandler {
 
     const text = await content.text();
     const newElements = [
-      ElementFactory.node(
-        newid(),
-        'text',
-        { x: point.x, y: point.y, w: 200, h: 20, r: 0 },
+      ElementFactory.node({
+        nodeType: 'text',
+        bounds: { x: point.x, y: point.y, w: 200, h: 20, r: 0 },
         layer,
-        {
+        props: {
           stroke: {
             enabled: false
           }
         },
-        {},
-        { text: text }
-      )
+        texts: { text: text }
+      })
     ];
 
     UnitOfWork.executeWithUndo(diagram, 'Paste', uow => {

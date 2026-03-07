@@ -19,7 +19,7 @@ import type { WithRequired } from '@diagram-craft/utils/types';
 import type { WorkQueue } from '../workQueue';
 
 const makeShape = (
-  type: string,
+  nodeType: string,
   setProps: (s: StyleManager, p: WithRequired<NodeProps, 'custom'>) => void = () => {}
 ) => {
   return async (
@@ -33,7 +33,7 @@ const makeShape = (
   ) => {
     props.custom ??= {};
     setProps(style, props as WithRequired<NodeProps, 'custom'>);
-    return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
+    return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
   };
 };
 
@@ -69,7 +69,7 @@ export const parseRect = async (
 ) => {
   if (style.is('rounded'))
     return parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
-  return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
+  return ElementFactory.node({ id, bounds, layer, props, metadata, texts });
 };
 
 export const parseCube = makeShape('cube');
@@ -176,11 +176,11 @@ export const parseArrow = async (
   style: StyleManager,
   layer: RegularLayer
 ) => {
-  let type = 'arrow-right';
+  let nodeType = 'arrow-right';
   if (style.str('direction') === 'north') {
-    type = 'arrow-up';
+    nodeType = 'arrow-up';
   } else if (style.str('direction') === 'south') {
-    type = 'arrow-down';
+    nodeType = 'arrow-down';
   }
 
   props.custom ??= {};
@@ -189,7 +189,7 @@ export const parseArrow = async (
   props.custom.arrow.y = style.num('dy', 0.2) * 50;
   props.custom.arrow.x = style.num('dx', 20);
 
-  return ElementFactory.node(id, type, bounds, layer, props, metadata, texts);
+  return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
 };
 
 export const parseImage = async (
@@ -269,7 +269,8 @@ export const parseImage = async (
   assertVAlign(valign);
   props.custom.drawioImage.imageValign = valign;
 
-  const node = ElementFactory.node(id, 'drawioImage', bounds, layer, props, metadata, texts);
+  const nodeType = 'drawioImage';
+  const node = ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
 
   // Determine image size
   queue.add(() => {
@@ -314,5 +315,7 @@ export const parseRoundedRect = async (
       ? Math.min(bounds.w / 2, bounds.h / 2, style.num('arcSize', 10) / 2)
       : (style.num('arcSize', 10) * Math.min(bounds.w, bounds.h)) / 100
   };
-  return ElementFactory.node(id, 'rounded-rect', bounds, layer, props, metadata, texts);
+
+  const nodeType = 'rounded-rect';
+  return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
 };

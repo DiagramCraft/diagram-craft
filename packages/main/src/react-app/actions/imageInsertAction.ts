@@ -1,6 +1,5 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Attachment } from '@diagram-craft/model/attachment';
-import { newid } from '@diagram-craft/utils/id';
 import { Application } from '../../application';
 import { ImageInsertDialog } from '../ImageInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -51,10 +50,8 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
         assertRegularLayer(layer);
 
         // TODO: Improve placement to ensure it's at least partially placed within the current viewport
-        const e = ElementFactory.node(
-          newid(),
-          'rect',
-          {
+        const e = ElementFactory.node({
+          bounds: {
             x: (this.context.model.activeDiagram.bounds.w - width) / 2,
             y: (this.context.model.activeDiagram.bounds.h - height) / 2,
             w: width,
@@ -62,7 +59,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             r: 0
           },
           layer,
-          {
+          props: {
             fill: {
               type: 'image',
               image: { id: att.hash, w: width, h: height, fit: 'cover' }
@@ -70,9 +67,8 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
             stroke: {
               enabled: false
             }
-          },
-          {}
-        );
+          }
+        });
 
         UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert image', uow => {
           layer.addElement(e, uow);

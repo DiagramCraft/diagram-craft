@@ -883,15 +883,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     });
 
     it('should recursively _detach all children and preserve their properties', () => {
-      const child = ElementFactory.node(
-        'detach-child',
-        'rect',
-        { x: 10, y: 10, w: 30, h: 30, r: 0 },
-        model.layer1,
-        { fill: { color: '#ff0000' } },
-        { style: 'child-style' },
-        { text: 'child text' }
-      );
+      const child = ElementFactory.node({
+        id: 'detach-child',
+        bounds: { x: 10, y: 10, w: 30, h: 30, r: 0 },
+        layer: model.layer1,
+        props: { fill: { color: '#ff0000' } },
+        metadata: { style: 'child-style' },
+        texts: { text: 'child text' }
+      });
 
       UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 

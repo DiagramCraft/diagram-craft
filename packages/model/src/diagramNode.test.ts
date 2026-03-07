@@ -507,15 +507,15 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
 
   describe('_detach', () => {
     it('should preserve id, nodeType, text, props and metadata', () => {
-      const node = ElementFactory.node(
-        'detach-node',
-        'circle',
-        { x: 10, y: 20, w: 50, h: 50, r: 0 },
-        model.layer1,
-        { fill: { color: '#ff0000' } },
-        { style: 'custom-style' },
-        { text: 'hello world' }
-      );
+      const node = ElementFactory.node({
+        id: 'detach-node',
+        nodeType: 'circle',
+        bounds: { x: 10, y: 20, w: 50, h: 50, r: 0 },
+        layer: model.layer1,
+        props: { fill: { color: '#ff0000' } },
+        metadata: { style: 'custom-style' },
+        texts: { text: 'hello world' }
+      });
 
       UnitOfWork.execute(model.diagram1, uow => model.layer1.addElement(node, uow));
       UnitOfWork.execute(model.diagram1, uow => node._detach(() => {}, uow));
@@ -529,23 +529,20 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
     });
 
     it('should recursively _detach all children and preserve their properties', () => {
-      const parent = ElementFactory.node(
-        'detach-parent',
-        'group',
-        { x: 0, y: 0, w: 100, h: 100, r: 0 },
-        model.layer1,
-        {},
-        {}
-      );
-      const child = ElementFactory.node(
-        'detach-child',
-        'rect',
-        { x: 10, y: 10, w: 30, h: 30, r: 0 },
-        model.layer1,
-        { fill: { color: '#0000ff' } },
-        { style: 'child-style' },
-        { text: 'child text' }
-      );
+      const parent = ElementFactory.node({
+        id: 'detach-parent',
+        nodeType: 'group',
+        bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+        layer: model.layer1
+      });
+      const child = ElementFactory.node({
+        id: 'detach-child',
+        bounds: { x: 10, y: 10, w: 30, h: 30, r: 0 },
+        layer: model.layer1,
+        props: { fill: { color: '#0000ff' } },
+        metadata: { style: 'child-style' },
+        texts: { text: 'child text' }
+      });
 
       UnitOfWork.execute(model.diagram1, uow => {
         model.layer1.addElement(parent, uow);

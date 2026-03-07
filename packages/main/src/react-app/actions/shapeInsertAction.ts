@@ -8,7 +8,6 @@ import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilRegistry';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { newid } from '@diagram-craft/utils/id';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
 import type { ShapeSelectResult } from '../ShapeSelectDialog';
@@ -91,10 +90,9 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
             iconSvc.fetchIconSvg(prefix!, iconName!).then(svgContent => {
               const h = Math.round(100 * svgAspectRatio(svgContent));
-              const node = ElementFactory.node(
-                newid(),
-                'svg',
-                {
+              const node = ElementFactory.node({
+                nodeType: 'svg',
+                bounds: {
                   x: v.offset.x + (v.dimensions.w - 100) / 2,
                   y: v.offset.y + (v.dimensions.h - h) / 2,
                   w: 100,
@@ -102,9 +100,8 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
                   r: 0
                 },
                 layer,
-                { custom: { svg: { svgContent } } } as NodeProps,
-                {}
-              );
+                props: { custom: { svg: { svgContent } } } as NodeProps
+              });
               UnitOfWork.executeWithUndo(diagram, 'Add icon', uow => {
                 layer.addElement(node, uow);
               });

@@ -16,6 +16,7 @@ import type { DiagramElementCRDT } from './diagramElement';
 import { EdgeProps, ElementMetadata } from './diagramProps';
 import { DiagramEdgeSnapshot, DiagramNodeSnapshot } from '@diagram-craft/model/diagramElement.uow';
 import { Point } from '@diagram-craft/geometry/point';
+import { newid } from '@diagram-craft/utils/id';
 
 export const ElementFactory = {
   edge(
@@ -46,30 +47,30 @@ export const ElementFactory = {
     return SimpleDiagramNode._createEmpty(id, layer, crdt);
   },
 
-  node(
-    id: string,
-    nodeType: 'group' | string,
-    bounds: Box,
-    layer: RegularLayer | ModificationLayer,
-    props: NodePropsForEditing = {},
-    metadata: ElementMetadata = {},
-    text: NodeTexts = { text: '' },
-    anchorCache?: ReadonlyArray<Anchor>
-  ) {
+  node(props: {
+    id?: string;
+    nodeType?: 'group' | string;
+    bounds: Box;
+    layer: RegularLayer | ModificationLayer;
+    props?: NodePropsForEditing;
+    metadata?: ElementMetadata;
+    texts?: NodeTexts;
+    anchorCache?: ReadonlyArray<Anchor>;
+  }) {
     return SimpleDiagramNode._create(
-      id,
-      nodeType,
-      bounds,
-      layer,
-      props,
-      metadata,
-      text,
-      anchorCache
+      props.id ?? newid(),
+      props.nodeType ?? 'rect',
+      props.bounds,
+      props.layer,
+      props.props ?? {},
+      props.metadata ?? {},
+      props.texts ?? { text: '' },
+      props.anchorCache
     )!;
   },
 
   nodeFromSnapshot(s: DiagramNodeSnapshot, layer: RegularLayer | ModificationLayer) {
-    return ElementFactory.node(s.id, s.nodeType, s.bounds, layer, s.props, s.metadata, s.texts);
+    return ElementFactory.node({ ...s, layer });
   },
 
   edgeFromSnapshot(s: DiagramEdgeSnapshot, layer: RegularLayer | ModificationLayer) {

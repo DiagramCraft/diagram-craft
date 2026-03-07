@@ -35,19 +35,13 @@ export const parseCisco19Shapes = async (
   style: StyleManager,
   layer: RegularLayer
 ): Promise<DiagramNode> => {
+  let nodeType = style.str('shape')!;
   if (style.str('shape') === 'mxgraph.cisco19.rect') {
     props.fill!.color = '#005073';
-    return ElementFactory.node(
-      id,
-      `mxgraph.cisco19.${style.str('prIcon')}`,
-      bounds,
-      layer,
-      props,
-      metadata
-    );
+    nodeType = `mxgraph.cisco19.${style.str('prIcon')}`;
   }
 
-  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
 };
 
 export const registerCisco19Shapes = async (

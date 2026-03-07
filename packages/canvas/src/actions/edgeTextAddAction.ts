@@ -1,7 +1,6 @@
 import { AbstractAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { LengthOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import { precondition } from '@diagram-craft/utils/assert';
-import { newid } from '@diagram-craft/utils/id';
 import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
@@ -47,21 +46,19 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const path = edge.path();
     const projection = path.projectPoint(context.point);
 
-    const textNode = ElementFactory.node(
-      newid(),
-      'text',
-      { ...projection.point, r: 0, w: 100, h: 0 },
-      this.context.model.activeDiagram.activeLayer,
-      {
+    const textNode = ElementFactory.node({
+      nodeType: 'text',
+      bounds: { ...projection.point, r: 0, w: 100, h: 0 },
+      layer: this.context.model.activeDiagram.activeLayer,
+      props: {
         text: { align: 'center' },
         fill: {
           enabled: true,
           color: '#ffffff'
         }
       },
-      {},
-      { text: 'Label' }
-    );
+      texts: { text: 'Label' }
+    });
 
     const labelNode: ResolvedLabelNode = {
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,

@@ -36,10 +36,9 @@ const writeArrow = (
   layer: RegularLayer,
   diagram: Diagram
 ) => {
-  const n = ElementFactory.node(
-    newid(),
-    'text',
-    {
+  const n = ElementFactory.node({
+    nodeType: 'text',
+    bounds: {
       x: 10,
       y: y,
       w: 300,
@@ -47,17 +46,15 @@ const writeArrow = (
       r: 0
     },
     layer,
-    {
+    props: {
       text: {
         align: 'left'
       }
     },
-    {},
-    {
+    texts: {
       text: arrow
-    },
-    []
-  );
+    }
+  });
   UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 30;
@@ -90,10 +87,8 @@ const writeArrow = (
   }
 
   for (let s = 0; s < SIZES.length; s++) {
-    const n = ElementFactory.node(
-      newid(),
-      'rect',
-      {
+    const n = ElementFactory.node({
+      bounds: {
         x: 10 + 670,
         y: y + s * 30 - 15,
         w: 20,
@@ -101,14 +96,12 @@ const writeArrow = (
         r: 0
       },
       layer,
-      {
+      props: {
         anchors: {
           type: 'none'
         }
-      },
-      {},
-      { text: '' }
-    );
+      }
+    });
     UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
     const edge = ElementFactory.edge(
@@ -372,10 +365,9 @@ const writeShape = (
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {
-  const n = ElementFactory.node(
-    newid(),
-    'text',
-    {
+  const n = ElementFactory.node({
+    nodeType: 'text',
+    bounds: {
       x: startX,
       y: y,
       w: 300,
@@ -383,18 +375,16 @@ const writeShape = (
       r: 0
     },
     layer,
-    {
+    props: {
       text: {
         align: 'left',
         bold: true
       }
     },
-    {},
-    {
+    texts: {
       text: shape
-    },
-    []
-  );
+    }
+  });
   UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 70;
@@ -416,10 +406,10 @@ const writeShape = (
       el.invalidateAnchors(uow);
       layer.addElement(el, uow);
 
-      const label = ElementFactory.node(
-        `${shape}-${i}-label`,
-        'text',
-        {
+      const label = ElementFactory.node({
+        id: `${shape}-${i}-label`,
+        nodeType: 'text',
+        bounds: {
           x: x,
           y: y - 45,
           w: 300,
@@ -427,17 +417,15 @@ const writeShape = (
           r: 0
         },
         layer,
-        {
+        props: {
           text: {
             align: 'left'
           }
         },
-        {},
-        {
+        texts: {
           text: name
-        },
-        []
-      );
+        }
+      });
       layer.addElement(label, uow);
 
       x += xDiff;

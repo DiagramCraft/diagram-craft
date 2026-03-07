@@ -5,7 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -46,14 +45,12 @@ export class PenTool extends AbstractTool {
     if (!this.node) {
       const initialPath = { x: 0, y: 0 };
 
-      this.node = ElementFactory.node(
-        newid(),
-        'generic-path',
-        { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
+      this.node = ElementFactory.node({
+        nodeType: 'generic-path',
+        bounds: { x: diagramPoint.x, y: diagramPoint.y, w: 10, h: 10, r: 0 },
         layer,
-        { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } },
-        {}
-      );
+        props: { custom: { genericPath: { path: `M ${initialPath.x},${initialPath.y}` } } }
+      });
 
       this.builder = new PathListBuilder();
 

@@ -155,8 +155,8 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const layer1 = new RegularLayer(newid(), 'Layer 1', [], diagram);
       const layer2 = new RegularLayer(newid(), 'Layer 2', [], diagram);
 
-      const node1 = ElementFactory.node('1', 'rect', testBounds, layer1, {}, {});
-      const node2 = ElementFactory.node('2', 'rect', testBounds, layer2, {}, {});
+      const node1 = ElementFactory.node({ id: '1', bounds: testBounds, layer: layer1 });
+      const node2 = ElementFactory.node({ id: '2', bounds: testBounds, layer: layer2 });
 
       UnitOfWork.execute(diagram, uow => {
         diagram.layers.add(layer1, uow);

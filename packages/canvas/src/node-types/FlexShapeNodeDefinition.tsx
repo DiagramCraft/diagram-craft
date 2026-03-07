@@ -154,14 +154,13 @@ export class FlexShapeNodeDefinition<
         }
 
         // Create a dummy node
-        const node = ElementFactory.node(
-          `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
-          cmpNodeType,
-          adjustedBounds,
-          props.node.layer,
-          cmpProps,
-          {}
-        );
+        const node = ElementFactory.node({
+          id: `${props.node.id}-${cmpDef?.id ?? cmp.id}`,
+          nodeType: cmpNodeType,
+          bounds: adjustedBounds,
+          layer: props.node.layer,
+          props: cmpProps
+        });
 
         const onDoubleClick = builder.makeOnDblclickHandle('1');
         builder.add(

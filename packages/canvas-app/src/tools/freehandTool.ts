@@ -8,7 +8,6 @@ import {
 } from '@diagram-craft/geometry/pathListBuilder';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { newid } from '@diagram-craft/utils/id';
 import { Context } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { assert } from '@diagram-craft/utils/assert';
@@ -102,18 +101,16 @@ export class FreehandTool extends AbstractTool {
       .singular()
       .asSvgPath();
 
-    const node = ElementFactory.node(
-      newid(),
-      'generic-path',
-      { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
+    const node = ElementFactory.node({
+      nodeType: 'generic-path',
+      bounds: { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height, r: 0 },
       layer,
-      {
+      props: {
         custom: { genericPath: { path: path } },
         fill: { enabled: false },
         anchors: { type: 'per-path', perPathCount: 10 }
-      },
-      {}
-    );
+      }
+    });
 
     assertRegularLayer(layer);
     UnitOfWork.execute(this.diagram, uow => layer.addElement(node, uow));

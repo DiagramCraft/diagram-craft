@@ -123,14 +123,12 @@ export const createPreview = (
       );
     } else {
       elements.push(
-        ElementFactory.node(
-          newid(),
+        ElementFactory.node({
           nodeType,
-          { x: 5, y: 5, w: 40, h: 40, r: 0 },
+          bounds: { x: 5, y: 5, w: 40, h: 40, r: 0 },
           layer,
-          props as Partial<NodeProps>,
-          {}
-        )
+          props: props as Partial<NodeProps>
+        })
       );
     }
 

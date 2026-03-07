@@ -84,19 +84,15 @@ export const deserializeDiagramElements = (
         }
       }
 
-      const node = ElementFactory.node(
-        c.id,
-        c.nodeType,
-        c.bounds,
+      const node = ElementFactory.node({
+        ...c,
         layer,
-        c.props,
-        {
+        metadata: {
           style: c.nodeType === 'text' ? DefaultStyles.node.text : DefaultStyles.node.default,
           ...c.metadata
         },
-        c.texts,
-        c.anchors
-      );
+        anchorCache: c.anchors
+      });
 
       // Need to ensure adds happen before updates
       if (targetParent && n.id === c.id) targetParent.addChild(node, uow);

@@ -8,7 +8,6 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
@@ -38,21 +37,18 @@ export class RectTool extends AbstractTool {
     assertRegularLayer(layer);
 
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = ElementFactory.node(
-      newid(),
-      'rect',
-      {
+    this.node = ElementFactory.node({
+      bounds: {
         ...this.diagram.viewBox.toDiagramPoint(point),
         w: 5,
         h: 5,
         r: 0
       },
       layer,
-      {},
-      {
+      metadata: {
         style: DefaultStyles.node.default
       }
-    );
+    });
 
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();

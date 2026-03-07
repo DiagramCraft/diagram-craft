@@ -1,5 +1,4 @@
 import type { Editor } from './editors';
-import { newid } from '@diagram-craft/utils/id';
 import { deepClone } from '@diagram-craft/utils/object';
 import { useState } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -20,14 +19,12 @@ export const NodeCustomPropertiesEditor: Editor = props => {
   const layer = $d.activeLayer;
   assertRegularLayer(layer);
 
-  const node = ElementFactory.node(
-    newid(),
-    type === '' ? 'rect' : type,
-    { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
+  const node = ElementFactory.node({
+    nodeType: type === '' ? 'rect' : type,
+    bounds: { x: 0, y: 0, w: 1000, h: 1000, r: 0 },
     layer,
-    deepClone($p),
-    {}
-  );
+    props: deepClone($p)
+  });
 
   const nodeTypesWithCustomProps: string[] = [];
   for (const key of $d.document.registry.nodes.list()) {

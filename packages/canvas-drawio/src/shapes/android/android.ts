@@ -73,7 +73,15 @@ export const parseAndroidShapes = async (
     }
   }
 
-  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+  return ElementFactory.node({
+    id,
+    nodeType: style.str('shape')!,
+    bounds,
+    layer,
+    props,
+    metadata,
+    texts
+  });
 };
 
 export const registerAndroidShapes = async (

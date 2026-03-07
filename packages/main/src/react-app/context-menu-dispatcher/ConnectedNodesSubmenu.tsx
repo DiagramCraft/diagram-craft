@@ -160,21 +160,18 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
   const offsetX = 20; // Position closer to the right of selected node
 
   // Create the new node
-  const newNode = ElementFactory.node(
-    newid(),
-    'rect',
-    {
+  const newNode = ElementFactory.node({
+    bounds: {
       w: 100,
       h: 100,
       x: selectedNode.bounds.x + selectedNode.bounds.w + offsetX,
       y: selectedNode.bounds.y,
       r: 0
     },
-    activeLayer,
-    {},
-    { data: { data: [makeDataReference(item, schema.id)] } },
-    { text: `%${schema.fields[0]?.id ?? '_uid'}%` }
-  );
+    layer: activeLayer,
+    metadata: { data: { data: [makeDataReference(item, schema.id)] } },
+    texts: { text: `%${schema.fields[0]?.id ?? '_uid'}%` }
+  });
 
   // Create an edge connecting the selected node to the new node
   const newEdge = ElementFactory.edge(

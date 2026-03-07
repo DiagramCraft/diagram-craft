@@ -8,7 +8,6 @@ import {
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { newid } from '@diagram-craft/utils/id';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
@@ -38,10 +37,9 @@ export class TextTool extends AbstractTool {
     assertRegularLayer(layer);
 
     this.startPoint = this.diagram.viewBox.toDiagramPoint(point);
-    this.node = ElementFactory.node(
-      newid(),
-      'text',
-      {
+    this.node = ElementFactory.node({
+      nodeType: 'text',
+      bounds: {
         ...this.diagram.viewBox.toDiagramPoint(point),
         w: 0,
         h: 0,
@@ -50,7 +48,7 @@ export class TextTool extends AbstractTool {
       layer,
       // TODO: This is partially duplicated in defaultRegistry.ts
       //       - perhaps make static member of Text.nodeType.ts
-      {
+      props: {
         stroke: {
           enabled: false
         },
@@ -65,13 +63,13 @@ export class TextTool extends AbstractTool {
           bottom: 0
         }
       },
-      {
+      metadata: {
         style: DefaultStyles.node.text
       },
-      {
+      texts: {
         text: 'Text'
       }
-    );
+    });
 
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();

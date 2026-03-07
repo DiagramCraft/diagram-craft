@@ -42,18 +42,16 @@ export const StencilUtils = {
     (registry: Registry) => {
       const { diagram, layer } = StencilUtils.makeDiagram(registry);
       return UnitOfWork.execute(diagram, uow => {
-        const n = ElementFactory.node(
-          newid(),
-          typeId,
-          Box.applyAspectRatio(
+        const n = ElementFactory.node({
+          ...opts,
+          nodeType: typeId,
+          bounds: Box.applyAspectRatio(
             { x: 0, y: 0, w: diagram.bounds.w, h: diagram.bounds.h, r: 0 },
             opts?.aspectRatio ?? 1
           ),
           layer,
-          (opts?.props?.(t) ?? {}) as NodeProps,
-          opts?.metadata ?? {},
-          opts?.texts
-        );
+          props: (opts?.props?.(t) ?? {}) as NodeProps
+        });
 
         const size = { w: 100, h: 100 };
 
