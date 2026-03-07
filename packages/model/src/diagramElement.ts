@@ -450,8 +450,9 @@ export abstract class AbstractDiagramElement
     this.diagram.unregister(this);
 
     this._isAttached = false;
-    this._layer = undefined;
-    // TODO: Re-enable this
+    // TODO: Re-enable this - currently this causes issues when dragging object
+    //       on to the grid and then doing undo
+    //this._layer = undefined;
     //this._diagram = undefined;
 
     for (const c of this.children.toReversed()) {
