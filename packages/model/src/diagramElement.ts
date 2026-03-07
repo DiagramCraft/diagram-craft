@@ -372,8 +372,7 @@ export abstract class AbstractDiagramElement
     uow: UnitOfWork,
     position?: { ref: DiagramElement; type: 'after' | 'before' } | number
   ) {
-    // TODO: This is temporary - we should re-enable this
-    //assert.false(child._isAttached);
+    assert.false(child._isAttached);
 
     // Can't add multiple times'
     assert.false(this._children.has(child.id));
@@ -404,6 +403,7 @@ export abstract class AbstractDiagramElement
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    assert.true(child._isAttached);
     assert.true(this._children.has(child.id));
 
     uow.executeRemove(child, this, this._children.getIndex(child.id), () => {
@@ -463,8 +463,7 @@ export abstract class AbstractDiagramElement
     const layer = (parent._trackableType === 'layer' ? parent : parent.layer) as RegularLayer;
 
     const recurse = (element: DiagramElement, parent: DiagramElement | undefined) => {
-      // TODO: This is temporary - we should re-enable this
-      //assert.false(element._isAttached);
+      assert.false(element._isAttached);
 
       // TODO: We should not do the second check in both of these
       //assert.true(element.layer === undefined || element.layer === layer);

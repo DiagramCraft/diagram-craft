@@ -1,10 +1,10 @@
-import { describe, expect, test, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import {
-  TableRowMoveAction,
   TableColumnMoveAction,
+  TableDistributeAction,
   TableInsertAction,
   TableRemoveAction,
-  TableDistributeAction
+  TableRowMoveAction
 } from './tableActions';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
