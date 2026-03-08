@@ -13,7 +13,6 @@ import {
 } from '@diagram-craft/model/diagramStyles';
 import { type EdgeProps, type ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { edgeDefaults, nodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { deepMerge } from '@diagram-craft/utils/object';
@@ -111,26 +110,21 @@ export const createPreview = (
     const elements: DiagramElement[] = [];
     if (type === 'edge') {
       elements.push(
-        ElementFactory.edge(
-          newid(),
-          new FreeEndpoint({ x: 5, y: 25 }),
-          new FreeEndpoint({ x: 45, y: 25 }),
-          props as Partial<EdgeProps>,
-          {},
-          [],
+        ElementFactory.edge({
+          start: new FreeEndpoint({ x: 5, y: 25 }),
+          end: new FreeEndpoint({ x: 45, y: 25 }),
+          props: props as Partial<EdgeProps>,
           layer
-        )
+        })
       );
     } else {
       elements.push(
-        ElementFactory.node(
-          newid(),
+        ElementFactory.node({
           nodeType,
-          { x: 5, y: 5, w: 40, h: 40, r: 0 },
+          bounds: { x: 5, y: 5, w: 40, h: 40, r: 0 },
           layer,
-          props as Partial<NodeProps>,
-          {}
-        )
+          props: props as Partial<NodeProps>
+        })
       );
     }
 

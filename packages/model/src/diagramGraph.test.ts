@@ -4,7 +4,6 @@ import { TestDiagramBuilder, TestLayerBuilder, TestModel } from './test-support/
 import { AnchorEndpoint } from './endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { ElementFactory } from './elementFactory';
-import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from './unitOfWork';
 
 describe('DiagramGraph', () => {
@@ -48,15 +47,11 @@ describe('DiagramGraph', () => {
     const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
     const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
-    const edge = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    const edge = ElementFactory.edge({
+      start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
       layer
-    );
+    });
     UnitOfWork.execute(diagram, uow => layer.addElement(edge, uow));
 
     const graph = new DiagramGraph(layer);
@@ -76,24 +71,16 @@ describe('DiagramGraph', () => {
     const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
     const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
-    const edge1 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    const edge1 = ElementFactory.edge({
+      start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
       layer
-    );
-    const edge2 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    });
+    const edge2 = ElementFactory.edge({
+      start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
       layer
-    );
+    });
     UnitOfWork.execute(diagram, uow => layer.addElement(edge1, uow));
     UnitOfWork.execute(diagram, uow => layer.addElement(edge2, uow));
 
@@ -118,42 +105,26 @@ describe('DiagramGraph', () => {
     const node3 = layer.addNode({ bounds: { x: 400, y: 10, w: 100, h: 100, r: 0 } });
     const node4 = layer.addNode({ bounds: { x: 200, y: 200, w: 100, h: 100, r: 0 } });
 
-    const edge1 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    const edge1 = ElementFactory.edge({
+      start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
       layer
-    );
-    const edge2 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node3, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    });
+    const edge2 = ElementFactory.edge({
+      start: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node3, 'c', Point.ORIGIN),
       layer
-    );
-    const edge3 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node4, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    });
+    const edge3 = ElementFactory.edge({
+      start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node4, 'c', Point.ORIGIN),
       layer
-    );
-    const edge4 = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node4, 'c', Point.ORIGIN),
-      new AnchorEndpoint(node3, 'c', Point.ORIGIN),
-      {},
-      {},
-      [],
+    });
+    const edge4 = ElementFactory.edge({
+      start: new AnchorEndpoint(node4, 'c', Point.ORIGIN),
+      end: new AnchorEndpoint(node3, 'c', Point.ORIGIN),
       layer
-    );
+    });
 
     UnitOfWork.execute(diagram, uow => {
       layer.addElement(edge1, uow);

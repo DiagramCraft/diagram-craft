@@ -1,7 +1,5 @@
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { assertDrawioShapeNodeDefinition } from './node-types/DrawioShape.nodeType';
-import { newid } from '@diagram-craft/utils/id';
-import { Box } from '@diagram-craft/geometry/box';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DrawioStencil } from './drawioStencilLoader';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -12,13 +10,13 @@ export const toRegularStencil = (drawio: DrawioStencil): Stencil => {
   const mkNode = (registry: Registry) => {
     const { diagram, layer } = StencilUtils.makeDiagram(registry);
 
-    const type = 'drawio';
+    const nodeType = 'drawio';
 
-    const def = diagram.document.registry.nodes.get(type);
+    const def = diagram.document.registry.nodes.get(nodeType);
     assertDrawioShapeNodeDefinition(def);
 
     return UnitOfWork.execute(diagram, uow => {
-      const node = ElementFactory.node(newid(), type, Box.unit(), layer, drawio.props, {});
+      const node = ElementFactory.node({ nodeType, layer, props: drawio.props });
       const size = def.getSize(node);
 
       node.setBounds({ x: 0, y: 0, w: size.w, h: size.h, r: 0 }, uow);

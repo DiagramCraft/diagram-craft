@@ -7,7 +7,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { newid } from '@diagram-craft/utils/id';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { AbstractPickerDrag } from './abstractPickerDrag';
 import { mustExist } from '@diagram-craft/utils/assert';
@@ -70,14 +69,12 @@ export class IconPickerDrag extends AbstractPickerDrag {
     const h = Math.round(HEIGHT * svgAspectRatio(svgContent));
 
     const { layer: sourceLayer } = createThumbnail((_d, layer, uow) => {
-      const node = ElementFactory.node(
-        newid(),
-        'svg',
-        { x: 0, y: 0, w: WIDTH, h, r: 0 },
+      const node = ElementFactory.node({
+        nodeType: 'svg',
+        bounds: { x: 0, y: 0, w: WIDTH, h, r: 0 },
         layer,
-        { custom: { svg: { svgContent } } } as NodeProps,
-        {}
-      );
+        props: { custom: { svg: { svgContent } } } as NodeProps
+      });
       layer.addElement(node, uow);
       return [node];
     }, this.diagram.document.registry);

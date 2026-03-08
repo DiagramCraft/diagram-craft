@@ -438,23 +438,20 @@ describe('transformElements', () => {
       const layer = diagram.activeLayer;
       assertRegularLayer(layer);
 
-      const node1 = ElementFactory.node('1', 'rect', testBounds, layer, {}, {});
+      const node1 = ElementFactory.node({ id: '1', bounds: testBounds, layer });
       layer.addElement(node1, uow);
 
-      const node2 = ElementFactory.node(
-        '2',
-        'rect',
-        {
+      const node2 = ElementFactory.node({
+        id: '2',
+        bounds: {
           x: 100,
           y: 100,
           w: 100,
           h: 100,
           r: 0
         },
-        layer,
-        {},
-        {}
-      );
+        layer
+      });
       layer.addElement(node2, uow);
 
       const nodes = [node1, node2];

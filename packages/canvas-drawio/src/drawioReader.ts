@@ -116,12 +116,12 @@ const createLabelNode = (
   props: NodeProps,
   bgColor: string
 ) => {
-  return ElementFactory.node(
+  return ElementFactory.node({
     id,
-    'text',
-    edge.bounds,
-    edge.layer,
-    {
+    nodeType: 'text',
+    bounds: edge.bounds,
+    layer: edge.layer,
+    props: {
       text: {
         align: props.text?.align,
         valign: props.text?.valign,
@@ -134,9 +134,8 @@ const createLabelNode = (
         color: bgColor
       }
     },
-    {},
-    { text }
-  );
+    texts: { text }
+  });
 };
 
 const attachLabelNode = (
@@ -544,7 +543,7 @@ const parseShape = async (
     const bundle = getShapeBundle(shapeName);
     if (!bundle) {
       console.warn(`No bundle found for ${shapeName}`);
-      return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
+      return ElementFactory.node({ id, bounds, layer, props, metadata, texts });
     }
 
     if (!registry.hasRegistration(shapeName!)) {
@@ -557,7 +556,9 @@ const parseShape = async (
     if (parser) {
       return await parser(id, newBounds, props, metadata, texts, style, layer, queue);
     } else {
-      return ElementFactory.node(id, shapeName!, newBounds, layer, props, metadata, texts);
+      const nodeType = shapeName!;
+      const bounds = newBounds;
+      return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
     }
   } else if (style.styleName === 'triangle') {
     return await parseTriangle(id, bounds, props, metadata, texts, style, layer);
@@ -571,7 +572,7 @@ const parseShape = async (
     if (style.is('rounded')) {
       return await parseRoundedRect(id, bounds, props, metadata, texts, style, layer);
     } else {
-      return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
+      return ElementFactory.node({ id, bounds, layer, props, metadata, texts });
     }
   }
 };
@@ -596,7 +597,7 @@ const parseText = (
   props.capabilities ??= {};
   props.capabilities.adjustSizeBasedOnText = true;
 
-  return ElementFactory.node(id, 'rect', bounds, layer, props, metadata, texts);
+  return ElementFactory.node({ id, bounds, layer, props, metadata, texts });
 };
 
 const parseLabelNode = (
@@ -735,7 +736,15 @@ const parseEdge = (
     edgeProps.type = 'orthogonal';
   }
 
-  const edge = ElementFactory.edge(id, source, target, edgeProps, metadata, waypoints, layer);
+  const edge = ElementFactory.edge({
+    id,
+    start: source,
+    end: target,
+    props: edgeProps,
+    metadata,
+    waypoints,
+    layer
+  });
   parents.set(id, edge);
 
   // Post-pone attaching the edge to the source and target nodes until all
@@ -771,7 +780,8 @@ const parseStencil = async (
   const stencil = mustExist(parseStencilString(drawioBuiltinShapes[style.shape!] ?? style.shape));
   props.custom ??= {};
   props.custom.drawio = { shape: btoa(await deflate(stencil)) };
-  return ElementFactory.node(id, 'drawio', bounds, layer, props, metadata, texts);
+  const nodeType = 'drawio';
+  return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
 };
 
 const parseGroup = async (
@@ -803,12 +813,12 @@ const parseGroup = async (
     const grp = await parseShape(id, bounds, props, metadata, texts, style, layer, ctx);
 
     const mode = $cell.getAttribute('collapsed') === '1' ? 'collapsed' : 'expanded';
-    node = ElementFactory.node(
+    node = ElementFactory.node({
       id,
-      'container',
+      nodeType: 'container',
       bounds,
       layer,
-      {
+      props: {
         ...props,
         custom: {
           ...grp.storedProps.custom,
@@ -828,9 +838,9 @@ const parseGroup = async (
       },
       metadata,
       texts
-    );
+    });
   } else {
-    node = ElementFactory.node(id, 'group', bounds, layer, props, metadata, texts);
+    node = ElementFactory.node({ id, nodeType: 'group', bounds, layer, props, metadata, texts });
 
     if (
       style.styleName !== 'group' &&

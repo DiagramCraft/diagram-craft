@@ -8,7 +8,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { newid } from '@diagram-craft/utils/id';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
@@ -127,12 +126,11 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
 
       const scaledPath = transformPathList(p, toUnitLCS(nodeBounds));
 
-      return ElementFactory.node(
-        newid(),
-        'generic-path',
-        nodeBounds,
-        diagram.activeLayer as RegularLayer,
-        {
+      return ElementFactory.node({
+        nodeType: 'generic-path',
+        bounds: nodeBounds,
+        layer: diagram.activeLayer as RegularLayer,
+        props: {
           ...nodes[0]!.storedProps,
           custom: {
             genericPath: {
@@ -140,10 +138,10 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
             }
           }
         },
-        {
+        metadata: {
           ...nodes[0]!.metadata
         }
-      );
+      });
     });
 
     UnitOfWork.executeWithUndo(diagram, 'Boolean operation', uow => {

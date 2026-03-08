@@ -9,7 +9,6 @@ import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
-import { newid } from '@diagram-craft/utils/id';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
 import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -51,15 +50,12 @@ const updateOrCreateLabelNode = (
   }
 
   // Create a new label node
-  const labelNode = ElementFactory.node(
-    newid(),
-    'text',
-    edge.bounds,
+  const labelNode = ElementFactory.node({
+    nodeType: 'text',
+    bounds: edge.bounds,
     layer,
-    {},
-    {},
-    { text: labelText }
-  );
+    texts: { text: labelText }
+  });
 
   layer.addElement(labelNode, uow);
 
@@ -241,15 +237,15 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
             metadata.textStyle = parsedElement.textStylesheet;
           }
 
-          newElement = ElementFactory.node(
-            parsedElement.id,
-            parsedElement.shape,
+          newElement = ElementFactory.node({
+            id: parsedElement.id,
+            nodeType: parsedElement.shape,
             bounds,
             layer,
             props,
             metadata,
-            { text: parsedElement.name ?? '' }
-          );
+            texts: { text: parsedElement.name ?? '' }
+          });
 
           layer.addElement(newElement, uow);
 
@@ -308,15 +304,14 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
             end = new FreeEndpoint({ x: 200, y: 200 });
           }
 
-          newElement = ElementFactory.edge(
-            parsedElement.id,
+          newElement = ElementFactory.edge({
+            id: parsedElement.id,
             start,
             end,
             props,
             metadata,
-            [],
             layer
-          );
+          });
 
           layer.addElement(newElement, uow);
 

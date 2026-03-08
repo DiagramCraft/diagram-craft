@@ -82,21 +82,19 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
 
     const participantProps = deepClone(props.nodeProps) as DeepWriteable<NodePropsForRendering>;
 
-    const node = ElementFactory.node(
-      `${props.node.id}---participant`,
-      shape.type,
-      {
+    const node = ElementFactory.node({
+      id: `${props.node.id}---participant`,
+      nodeType: shape.type,
+      bounds: {
         x: props.node.bounds.x,
         y: props.node.bounds.y,
         w: props.node.bounds.w,
         h: participantHeight,
         r: 0
       },
-      props.node.layer,
-      participantProps,
-      {},
-      { text: '' }
-    );
+      layer: props.node.layer,
+      props: participantProps
+    });
 
     const onDoubleClick = shapeBuilder.makeOnDblclickHandle();
     shapeBuilder.add(

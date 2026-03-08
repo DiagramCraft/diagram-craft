@@ -11,7 +11,6 @@ import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craf
 import { Point } from '@diagram-craft/geometry/point';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 const mkContext = (d: Diagram) => {
@@ -118,15 +117,11 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge connecting the two nodes
-      const connectedEdge = ElementFactory.edge(
-        newid(),
-        new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-        new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-        {},
-        {},
-        [],
+      const connectedEdge = ElementFactory.edge({
+        start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+        end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
         layer
-      );
+      });
       UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);
@@ -171,15 +166,11 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge connecting the two nodes
-      const connectedEdge = ElementFactory.edge(
-        newid(),
-        new AnchorEndpoint(node1, 'c', Point.ORIGIN),
-        new AnchorEndpoint(node2, 'c', Point.ORIGIN),
-        {},
-        {},
-        [],
+      const connectedEdge = ElementFactory.edge({
+        start: new AnchorEndpoint(node1, 'c', Point.ORIGIN),
+        end: new AnchorEndpoint(node2, 'c', Point.ORIGIN),
         layer
-      );
+      });
       UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       // Select only one node and the edge
@@ -214,15 +205,11 @@ describe('DuplicateAction', () => {
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
 
       // Create an edge with specific endpoint properties
-      const connectedEdge = ElementFactory.edge(
-        newid(),
-        new AnchorEndpoint(node1, 'top', { x: 5, y: 5 }),
-        new PointInNodeEndpoint(node2, { x: 0.5, y: 0.5 }, { x: 10, y: 10 }, 'relative'),
-        {},
-        {},
-        [],
+      const connectedEdge = ElementFactory.edge({
+        start: new AnchorEndpoint(node1, 'top', { x: 5, y: 5 }),
+        end: new PointInNodeEndpoint(node2, { x: 0.5, y: 0.5 }, { x: 10, y: 10 }, 'relative'),
         layer
-      );
+      });
       UnitOfWork.execute(diagram, uow => layer.addElement(connectedEdge, uow));
 
       diagram.selection.setElements([node1, node2, connectedEdge]);

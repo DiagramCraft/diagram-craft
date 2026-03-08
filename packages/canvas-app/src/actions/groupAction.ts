@@ -6,7 +6,6 @@ import {
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { newid } from '@diagram-craft/utils/id';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -107,12 +106,11 @@ export class GroupAction extends AbstractSelectionAction {
           diagram.layers.isAbove(a, b) ? 1 : -1
         );
 
-        const group = ElementFactory.node(
-          newid(),
-          'group',
-          Box.boundingBox(elements.map(e => e.bounds)),
-          activeLayer
-        );
+        const group = ElementFactory.node({
+          nodeType: 'group',
+          bounds: Box.boundingBox(elements.map(e => e.bounds)),
+          layer: activeLayer
+        });
         activeLayer.addElement(group, uow);
 
         deleteElements(elements, uow);

@@ -10,7 +10,6 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ARROW_SHAPES } from '@diagram-craft/canvas/arrowShapes';
-import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
@@ -36,10 +35,9 @@ const writeArrow = (
   layer: RegularLayer,
   diagram: Diagram
 ) => {
-  const n = ElementFactory.node(
-    newid(),
-    'text',
-    {
+  const n = ElementFactory.node({
+    nodeType: 'text',
+    bounds: {
       x: 10,
       y: y,
       w: 300,
@@ -47,27 +45,24 @@ const writeArrow = (
       r: 0
     },
     layer,
-    {
+    props: {
       text: {
         align: 'left'
       }
     },
-    {},
-    {
+    texts: {
       text: arrow
-    },
-    []
-  );
+    }
+  });
   UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 30;
   for (let w = 0; w < WIDTHS.length; w++) {
     for (let s = 0; s < SIZES.length; s++) {
-      const edge = ElementFactory.edge(
-        newid(),
-        new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
-        new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
-        {
+      const edge = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 10 + w * 110, y: y + s * 30 }),
+        end: new FreeEndpoint({ x: 80 + w * 110, y: y + s * 30 }),
+        props: {
           arrow: {
             end: { size: SIZES[s], type: arrow }
           },
@@ -81,19 +76,15 @@ const writeArrow = (
             type: 'none'
           }
         },
-        {},
-        [],
         layer
-      );
+      });
       UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
     }
   }
 
   for (let s = 0; s < SIZES.length; s++) {
-    const n = ElementFactory.node(
-      newid(),
-      'rect',
-      {
+    const n = ElementFactory.node({
+      bounds: {
         x: 10 + 670,
         y: y + s * 30 - 15,
         w: 20,
@@ -101,21 +92,18 @@ const writeArrow = (
         r: 0
       },
       layer,
-      {
+      props: {
         anchors: {
           type: 'none'
         }
-      },
-      {},
-      { text: '' }
-    );
+      }
+    });
     UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
-    const edge = ElementFactory.edge(
-      newid(),
-      new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
-      new AnchorEndpoint(n, 'c'),
-      {
+    const edge = ElementFactory.edge({
+      start: new FreeEndpoint({ x: 10 + 600, y: y + s * 30 }),
+      end: new AnchorEndpoint(n, 'c'),
+      props: {
         arrow: {
           end: { size: SIZES[s], type: arrow }
         },
@@ -129,10 +117,8 @@ const writeArrow = (
           type: 'none'
         }
       },
-      {},
-      [],
       layer
-    );
+    });
     UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(edge, uow));
 
     UnitOfWork.execute(diagram, uow => layer.stackModify([n], 10, uow));
@@ -265,11 +251,10 @@ const SHAPES_DEFS = [
       if (a.type === 'point') {
         const start = n._getAnchorPosition(a.id);
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = ElementFactory.edge(
-          newid(),
-          new AnchorEndpoint(n, a.id),
-          new FreeEndpoint(dest),
-          {
+        const e = ElementFactory.edge({
+          start: new AnchorEndpoint(n, a.id),
+          end: new FreeEndpoint(dest),
+          props: {
             stroke: {
               color: 'pink'
             },
@@ -277,20 +262,17 @@ const SHAPES_DEFS = [
               type: 'none'
             }
           },
-          {},
-          [],
-          n.layer
-        );
+          layer: n.layer
+        });
         UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       } else if (a.type === 'edge') {
         const offset = Vector.scale(Vector.from(a.start, a.end!), 0.5);
         const start = n._getPositionInBounds(Point.add(a.start, offset));
         const dest = Point.add(start, Vector.fromPolar((a.normal ?? 0) + rotation, 20));
-        const e = ElementFactory.edge(
-          newid(),
-          new AnchorEndpoint(n, a.id, offset),
-          new FreeEndpoint(dest),
-          {
+        const e = ElementFactory.edge({
+          start: new AnchorEndpoint(n, a.id, offset),
+          end: new FreeEndpoint(dest),
+          props: {
             stroke: {
               color: 'green'
             },
@@ -298,10 +280,8 @@ const SHAPES_DEFS = [
               type: 'none'
             }
           },
-          {},
-          [],
-          n.layer
-        );
+          layer: n.layer
+        });
         UnitOfWork.execute(n.diagram, uow => (n.layer as RegularLayer).addElement(e, uow));
       }
     });
@@ -372,10 +352,9 @@ const writeShape = (
   diagram: Diagram,
   { xDiff, yDiff, startX, dimensions, shapesPerLine }: ShapeOpts
 ): { x: number; y: number } => {
-  const n = ElementFactory.node(
-    newid(),
-    'text',
-    {
+  const n = ElementFactory.node({
+    nodeType: 'text',
+    bounds: {
       x: startX,
       y: y,
       w: 300,
@@ -383,18 +362,16 @@ const writeShape = (
       r: 0
     },
     layer,
-    {
+    props: {
       text: {
         align: 'left',
         bold: true
       }
     },
-    {},
-    {
+    texts: {
       text: shape
-    },
-    []
-  );
+    }
+  });
   UnitOfWork.execute(diagram, uow => (layer as RegularLayer).addElement(n, uow));
 
   y += 70;
@@ -416,10 +393,10 @@ const writeShape = (
       el.invalidateAnchors(uow);
       layer.addElement(el, uow);
 
-      const label = ElementFactory.node(
-        `${shape}-${i}-label`,
-        'text',
-        {
+      const label = ElementFactory.node({
+        id: `${shape}-${i}-label`,
+        nodeType: 'text',
+        bounds: {
           x: x,
           y: y - 45,
           w: 300,
@@ -427,17 +404,15 @@ const writeShape = (
           r: 0
         },
         layer,
-        {
+        props: {
           text: {
             align: 'left'
           }
         },
-        {},
-        {
+        texts: {
           text: name
-        },
-        []
-      );
+        }
+      });
       layer.addElement(label, uow);
 
       x += xDiff;

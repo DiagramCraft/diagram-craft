@@ -1,5 +1,4 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
-import { newid } from '@diagram-craft/utils/id';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
@@ -51,36 +50,31 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
           bounds.x = vb.offset.x + (vb.dimensions.w - bounds.w) / 2;
           bounds.y = vb.offset.y + (vb.dimensions.h - bounds.h) / 2;
 
-          const table = ElementFactory.node(newid(), 'table', bounds, layer, {}, {});
+          const table = ElementFactory.node({ nodeType: 'table', bounds, layer });
           layer.addElement(table, uow);
 
           for (let r = 0; r < height; r++) {
-            const row = ElementFactory.node(
-              newid(),
-              'tableRow',
-              { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
-              layer,
-              {},
-              {}
-            );
+            const row = ElementFactory.node({
+              nodeType: 'tableRow',
+              bounds: { w: bounds.w, h: rowHeight, x: 0, y: r * rowHeight, r: 0 },
+              layer
+            });
             table.addChild(row, uow);
 
             for (let c = 0; c < width; c++) {
-              const cell = ElementFactory.node(
-                newid(),
-                'text',
-                { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
+              const cell = ElementFactory.node({
+                nodeType: 'text',
+                bounds: { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
                 layer,
-                {
+                props: {
                   fill: {
                     enabled: true
                   },
                   text: {
                     bold: r === 0
                   }
-                },
-                {}
-              );
+                }
+              });
               row.addChild(cell, uow);
             }
           }

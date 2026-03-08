@@ -4,7 +4,6 @@ import { DiagramEdge, type EdgePropsForEditing } from '@diagram-craft/model/diag
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
-import { newid } from '@diagram-craft/utils/id';
 import {
   ANCHOR_POSITION_MAP,
   ARROW_TYPE_MAP,
@@ -166,15 +165,14 @@ export class AIModel {
 
     const texts = simpleNode.text ? { text: simpleNode.text } : undefined;
 
-    return ElementFactory.node(
-      newid(),
-      simpleNode.type ?? nodeType,
+    return ElementFactory.node({
+      nodeType: simpleNode.type ?? nodeType,
       bounds,
-      this.layer,
+      layer: this.layer,
       props,
       metadata,
       texts
-    );
+    });
   }
 
   private createEdge(
@@ -215,15 +213,12 @@ export class AIModel {
       if (endArrowType) props.arrow.end = { type: endArrowType, size: 10 };
     }
 
-    return ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(fromNode, fromAnchor),
-      new AnchorEndpoint(toNode, toAnchor),
+    return ElementFactory.edge({
+      start: new AnchorEndpoint(fromNode, fromAnchor),
+      end: new AnchorEndpoint(toNode, toAnchor),
       props,
-      {},
-      [],
-      this.layer
-    );
+      layer: this.layer
+    });
   }
 
   private updateNode(node: DiagramNode, updates: Partial<SimplifiedNode>, uow: UnitOfWork): void {

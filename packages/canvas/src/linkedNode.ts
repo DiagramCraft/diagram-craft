@@ -7,7 +7,6 @@ import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
-import { newid } from '@diagram-craft/utils/id';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { Box } from '@diagram-craft/geometry/box';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
@@ -118,17 +117,15 @@ export const createLinkedNode = (
       additionalStyles.arrow = { end: { type: 'SQUARE_STICK_ARROW' } };
     }
 
-    const edge = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(node, sourceAnchorId),
-      new AnchorEndpoint(newNode, shortest.id),
-      additionalStyles,
-      {
+    const edge = ElementFactory.edge({
+      start: new AnchorEndpoint(node, sourceAnchorId),
+      end: new AnchorEndpoint(newNode, shortest.id),
+      props: additionalStyles,
+      metadata: {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
-      [],
-      node.layer
-    );
+      layer: node.layer
+    });
 
     nodeLayer.addElement(edge, uow);
 

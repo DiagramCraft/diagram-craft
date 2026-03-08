@@ -6,7 +6,6 @@ import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import React, { useEffect, useRef, useState } from 'react';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { newid } from '@diagram-craft/utils/id';
 import {
   TbChevronDown,
   TbChevronRight,
@@ -164,21 +163,18 @@ const makeTemplateNode = (
 const makeDefaultNode = (item: Data, schema: DataSchema, definitions: Registry): DiagramElement => {
   return createThumbnail(
     (_diagram, layer) => [
-      ElementFactory.node(
-        newid(),
-        'rect',
-        { w: 100, h: 100, y: 0, x: 0, r: 0 },
+      ElementFactory.node({
+        bounds: { w: 100, h: 100, y: 0, x: 0, r: 0 },
         layer,
-        {},
-        {
+        metadata: {
           data: {
             data: [makeDataReference(item, schema)]
           }
         },
-        {
+        texts: {
           text: `%${schema.fields[0]!.id}%`
         }
-      )
+      })
     ],
     definitions
   ).elements[0]!;

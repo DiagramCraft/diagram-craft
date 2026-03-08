@@ -862,15 +862,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
 
   describe('_detach', () => {
     it('should preserve id, waypoints and props', () => {
-      const edge = ElementFactory.edge(
-        'detach-edge',
-        new FreeEndpoint({ x: 0, y: 0 }),
-        new FreeEndpoint({ x: 100, y: 100 }),
-        { stroke: { color: '#00ff00' } },
-        {},
-        [{ point: { x: 50, y: 50 } }],
-        model.layer1
-      );
+      const edge = ElementFactory.edge({
+        id: 'detach-edge',
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 100 }),
+        props: { stroke: { color: '#00ff00' } },
+        waypoints: [{ point: { x: 50, y: 50 } }],
+        layer: model.layer1
+      });
 
       UnitOfWork.execute(model.diagram1, uow => model.layer1.addElement(edge, uow));
       UnitOfWork.execute(model.diagram1, uow => edge._detach(() => {}, uow));
@@ -883,15 +882,14 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
     });
 
     it('should recursively _detach all children and preserve their properties', () => {
-      const child = ElementFactory.node(
-        'detach-child',
-        'rect',
-        { x: 10, y: 10, w: 30, h: 30, r: 0 },
-        model.layer1,
-        { fill: { color: '#ff0000' } },
-        { style: 'child-style' },
-        { text: 'child text' }
-      );
+      const child = ElementFactory.node({
+        id: 'detach-child',
+        bounds: { x: 10, y: 10, w: 30, h: 30, r: 0 },
+        layer: model.layer1,
+        props: { fill: { color: '#ff0000' } },
+        metadata: { style: 'child-style' },
+        texts: { text: 'child text' }
+      });
 
       UnitOfWork.execute(model.diagram1, uow => edge1.addChild(child, uow));
 

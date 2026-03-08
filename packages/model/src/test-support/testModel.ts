@@ -104,7 +104,7 @@ export class TestLayerBuilder extends RegularLayer {
       ? new AnchorEndpoint(endNode as DiagramNode, options?.endAnchor ?? 'c', Point.ORIGIN)
       : new FreeEndpoint({ x: 100, y: 100 });
 
-    return ElementFactory.edge(options?.id ?? newid(), start, end, {}, {}, [], this);
+    return ElementFactory.edge({ id: options?.id ?? newid(), start, end, layer: this });
   }
 }
 

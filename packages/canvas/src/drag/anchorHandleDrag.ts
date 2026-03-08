@@ -3,7 +3,6 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { EdgeEndpointMoveDrag } from './edgeEndpointMoveDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
-import { newid } from '@diagram-craft/utils/id';
 import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Direction } from '@diagram-craft/geometry/direction';
@@ -29,17 +28,14 @@ export class AnchorHandleDrag extends Drag {
     const layer = diagram.activeLayer;
     assertRegularLayer(layer);
 
-    this.edge = ElementFactory.edge(
-      newid(),
-      new AnchorEndpoint(this.node, this.anchorId),
-      new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
-      {},
-      {
+    this.edge = ElementFactory.edge({
+      start: new AnchorEndpoint(this.node, this.anchorId),
+      end: new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
+      metadata: {
         style: diagram.document.styles.activeEdgeStylesheet.id
       },
-      [],
       layer
-    );
+    });
 
     diagram.undoManager.setMark();
 

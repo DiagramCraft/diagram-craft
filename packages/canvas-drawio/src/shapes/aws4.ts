@@ -74,15 +74,8 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return ElementFactory.node(
-      id,
-      'mxgraph.aws4.resourceIcon',
-      bounds,
-      layer,
-      props,
-      metadata,
-      texts
-    );
+    const nodeType = 'mxgraph.aws4.resourceIcon';
+    return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
   } else if (
     style.str('shape') === 'mxgraph.aws4.group' ||
     style.str('shape') === 'mxgraph.aws4.groupCenter'
@@ -105,10 +98,11 @@ export const parseAWS4Shapes = async (
       }
     ];
 
-    return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata, texts);
+    const nodeType = style.str('shape')!;
+    return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
   }
 
-  return ElementFactory.node(id, style.str('shape')!, bounds, layer, props, metadata);
+  return ElementFactory.node({ id, nodeType: style.str('shape')!, bounds, layer, props, metadata });
 };
 
 export const registerAWS4Shapes = async (
