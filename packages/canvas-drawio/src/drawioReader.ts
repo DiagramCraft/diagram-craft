@@ -556,15 +556,9 @@ const parseShape = async (
     if (parser) {
       return await parser(id, newBounds, props, metadata, texts, style, layer, queue);
     } else {
-      return ElementFactory.node({
-        id,
-        nodeType: shapeName!,
-        bounds: newBounds,
-        layer,
-        props,
-        metadata,
-        texts
-      });
+      const nodeType = shapeName!;
+      const bounds = newBounds;
+      return ElementFactory.node({ id, nodeType, bounds, layer, props, metadata, texts });
     }
   } else if (style.styleName === 'triangle') {
     return await parseTriangle(id, bounds, props, metadata, texts, style, layer);
