@@ -582,11 +582,7 @@ stencils:
               x: 0
               y: -11
             timeOffset: 0.5
-        waypoints:
-          - point:
-              x: 22.845519913808516
-              y: 0.07615550648961289
-            controlPoints:
+        waypoints: [ ]
         props:
           arrow:
             end:
