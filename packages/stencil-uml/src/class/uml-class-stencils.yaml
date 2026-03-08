@@ -333,6 +333,104 @@ stencils:
         texts:
           text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;entity&gt;&gt;</span></div><span style=\"font-style: normal;\">Employee</span>"
         tags:
+  - id: 'uml-class-template-class'
+    name: Template Class
+    elements:
+      - id: tplclass1
+        type: node
+        nodeType: umlClassTemplate
+        bounds:
+          x: 0
+          y: 12
+          w: 152.5
+          h: 96
+          r: 0
+        children:
+          - id: tplchild1
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 24
+              w: 152.5
+              h: 36
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "- attribute: Type"
+            tags:
+          - id: tplchild2
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 60
+              w: 152.5
+              h: 36
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "+ method()"
+            tags:
+        props:
+          custom:
+            umlClassTemplate:
+              size: 24
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "ClassName"
+          template: "T"
+        tags:
   - id: 'uml-class-collapsed-class'
     name: Collapsed Class
     elements:
@@ -484,11 +582,7 @@ stencils:
               x: 0
               y: -11
             timeOffset: 0.5
-        waypoints:
-          - point:
-              x: 22.845519913808516
-              y: 0.07615550648961289
-            controlPoints:
+        waypoints: [ ]
         props:
           arrow:
             end:

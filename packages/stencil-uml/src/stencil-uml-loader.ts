@@ -1,11 +1,16 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
+import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
+import { UMLFrameNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLFrame.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import classStencils from './class/uml-class-stencils.yaml';
+import commonStencils from './common/uml-common-stencils.yaml';
 
 export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLClassNodeDefinition());
+  nodes.register(new UMLClassTemplateNodeDefinition());
+  nodes.register(new UMLFrameNodeDefinition());
 };
 
 export const loadUMLStencils = async (registry: Registry) => {
@@ -16,10 +21,20 @@ export const loadUMLStencils = async (registry: Registry) => {
     type: 'default',
 
     subPackages: [
+      { id: 'common', name: 'Common', stencils: [] },
       { id: 'class', name: 'Class Diagrams', stencils: [] },
       { id: 'use-case', name: 'Use-Case Diagrams', stencils: [] }
     ]
   };
+
+  /* *********************************************************************** */
+  /* COMMON PACKAGE                                                          */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(commonStencils).forEach(s => {
+    umlStencils.stencils.push(s);
+    umlStencils.subPackages!.find(p => p.id === 'common')?.stencils.push(s);
+  });
 
   /* *********************************************************************** */
   /* CLASS PACKAGE                                                           */

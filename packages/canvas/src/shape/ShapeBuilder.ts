@@ -26,8 +26,10 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
-const defaultOnChange = (element: DiagramNode) => (text: string) => {
-  UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow => element.setText(text, uow));
+const defaultOnChange = (element: DiagramNode, textId: string = '1') => (text: string) => {
+  UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow =>
+    element.setText(text, uow, textId)
+  );
 };
 
 type ShapeBuilderProps = {
@@ -118,7 +120,7 @@ export class ShapeBuilder {
           text: text ?? this.props.element.getText(),
           bounds: { ...effectiveBounds, r: effectiveBounds.r - parentBounds.r },
           onMouseDown: this.props.onMouseDown,
-          onChange: defaultOnChange(this.props.element),
+          onChange: defaultOnChange(this.props.element, id),
           onSizeChange: onSizeChange,
           isSingleSelected: this.props.isSingleSelected
         })

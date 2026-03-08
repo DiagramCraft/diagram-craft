@@ -1,0 +1,29 @@
+stencils:
+  - id: 'uml-common-frame'
+    name: Frame
+    elements:
+      - id: umlframe01
+        type: node
+        nodeType: umlFrame
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 150
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlFrame:
+              labelH: 24
+          text:
+            top: 4
+            bottom: 4
+            left: 6
+            right: 6
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Label"
+        tags:
