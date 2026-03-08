@@ -95,9 +95,7 @@ export class ShapeText extends Component<ShapeTextProps> {
     };
     editable.focus();
 
-    setTimeout(() => {
-      document.execCommand('selectAll', false, undefined);
-    }, 0);
+    setTimeout(() => document.execCommand('selectAll', false, undefined), 0);
   }
 
   render(props: ShapeTextProps) {
@@ -164,7 +162,17 @@ export class ShapeText extends Component<ShapeTextProps> {
         ).toString(),
         width: w.toString(),
         height: props.bounds.h.toString(),
-        style: 'pointer-events: none;'
+        style: 'pointer-events: all;',
+        on: {
+          mousedown: props.onMouseDown,
+          dblclick: (e: MouseEvent) => {
+            if (props.node.renderProps.capabilities.editable === false) return;
+            const textId = props.id.slice('text_'.length, -(props.node.id.length + 1));
+            ShapeText.edit(textId, props.node);
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }
       },
       html.div(
         {
