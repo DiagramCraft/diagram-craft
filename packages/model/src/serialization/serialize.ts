@@ -208,6 +208,7 @@ export const serializeDiagramElement = (element: DiagramElement): SerializedElem
         id: e.id,
         type: e.type,
         offset: e.offset,
+        offsetType: e.offsetType,
         timeOffset: e.timeOffset
       })),
       waypoints: edge.waypoints,

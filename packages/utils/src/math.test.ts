@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { clamp, isDifferent, isSame, mod, round } from './math';
+import { clamp, hasSameSign, isDifferent, isSame, mod, round } from './math';
 
 describe('round', () => {
   test('rounds a number to 2 decimal places', () => {
@@ -91,6 +91,32 @@ describe('isDifferent', () => {
   test('returns false when numbers are exactly equal', () => {
     const result = isDifferent(10, 10);
     expect(result).toBe(false);
+  });
+});
+
+describe('hasSameSign', () => {
+  test('returns true for two positive numbers', () => {
+    expect(hasSameSign(3, 5)).toBe(true);
+  });
+
+  test('returns true for two negative numbers', () => {
+    expect(hasSameSign(-3, -5)).toBe(true);
+  });
+
+  test('returns true when both are zero', () => {
+    expect(hasSameSign(0, 0)).toBe(true);
+  });
+
+  test('returns false for a positive and a negative number', () => {
+    expect(hasSameSign(3, -5)).toBe(false);
+  });
+
+  test('returns false for zero and a positive number', () => {
+    expect(hasSameSign(0, 5)).toBe(false);
+  });
+
+  test('returns false for zero and a negative number', () => {
+    expect(hasSameSign(0, -5)).toBe(false);
   });
 });
 

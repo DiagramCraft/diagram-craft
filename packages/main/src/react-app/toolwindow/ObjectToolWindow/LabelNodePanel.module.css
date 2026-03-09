@@ -1,0 +1,15 @@
+.positionRect {
+  stroke-width: 1px;
+  stroke: var(--cmp-fg-dimmed);
+  fill: var(--base-bg);
+  cursor: pointer;
+
+  &[data-selected="true"] {
+    fill: var(--accent-bg);
+    stroke: var(--accent-border);
+  }
+
+  &:hover {
+    fill: var(--cmp-bg-hover);
+  }
+}

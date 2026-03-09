@@ -120,6 +120,7 @@ export class TestDiagramNodeBuilder extends SimpleDiagramNode {
       node: () => this,
       type: 'perpendicular',
       offset: { x: 0, y: 0 },
+      offsetType: 'absolute',
       timeOffset: 0,
       id: newid()
     };

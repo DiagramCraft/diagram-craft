@@ -167,6 +167,7 @@ export abstract class AbstractEdgeDefinition implements EdgeDefinition {
             id: element.id,
             node: () => element,
             offset: Point.ORIGIN,
+            offsetType: 'absolute',
             timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
             type: 'horizontal'
           },

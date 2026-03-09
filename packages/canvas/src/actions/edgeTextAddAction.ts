@@ -63,6 +63,7 @@ export class EdgeTextAddAction extends AbstractAction<EdgeTextAddActionArg> {
     const labelNode: ResolvedLabelNode = {
       timeOffset: LengthOffsetOnPath.toTimeOffsetOnPath(projection, path).pathT,
       offset: { x: 0, y: 0 },
+      offsetType: 'absolute',
       id: textNode.id,
       node: () => textNode,
       type: 'horizontal'

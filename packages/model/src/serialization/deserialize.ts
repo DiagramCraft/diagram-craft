@@ -173,7 +173,11 @@ export const deserializeDiagramElements = (
         const edge = edgeLookup.get(c.id)!;
         if (c.labelNodes && c.labelNodes.length > 0) {
           edge.setLabelNodes(
-            c.labelNodes.map(ln => ({ ...ln, node: () => nodeLookup.get(ln.id)! })),
+            c.labelNodes.map(ln => ({
+              ...ln,
+              offsetType: ln.offsetType ?? 'absolute',
+              node: () => nodeLookup.get(ln.id)!
+            })),
             uow
           );
         }

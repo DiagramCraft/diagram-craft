@@ -63,6 +63,7 @@ const updateOrCreateLabelNode = (
     id: labelNode.id,
     node: () => labelNode,
     type: 'perpendicular',
+    offsetType: 'absolute',
     offset: { x: 0, y: 0 },
     timeOffset: 0.5
   };

@@ -120,3 +120,22 @@ export const isDifferent = (a: number, b: number, epsilon = 0.01) => {
 export const mod = (n: number, modulo: number) => {
   return ((n % modulo) + modulo) % modulo;
 };
+
+/**
+ * Returns true if both numbers have the same sign (both positive, both negative, or both zero).
+ *
+ * @param a - First number
+ * @param b - Second number
+ * @returns true if a and b have the same sign
+ *
+ * @example
+ * hasSameSign(3, 5);   // true
+ * hasSameSign(-3, -5); // true
+ * hasSameSign(0, 0);   // true
+ * hasSameSign(3, -5);  // false
+ * hasSameSign(0, 5);   // false
+ */
+export const hasSameSign = (a: number, b: number) => {
+  if (a === 0 && b === 0) return true;
+  return (a * b) > 0;
+}
