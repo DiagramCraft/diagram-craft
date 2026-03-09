@@ -104,7 +104,9 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
 
     const titleSize = props.nodeProps.custom.umlClass.size ?? DEFAULT_TITLE_SIZE;
 
-    if (props.node.children.length > 0 && this.def.shouldRenderChildren(props.node)) {
+    const childrenVisible =
+      props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
+    if (childrenVisible) {
       builder.add(
         svg.line({
           x1: bounds.x,
@@ -148,7 +150,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
       '1',
       props.node.getText(),
       nodeProps.text,
-      { ...bounds, h: titleSize },
+      { ...bounds, h: childrenVisible ? titleSize : bounds.h },
       (size: Extent) =>
         UnitOfWork.execute(props.node.diagram, uow => {
           uow.metadata.nonDirty = true;
