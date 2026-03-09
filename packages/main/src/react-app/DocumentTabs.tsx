@@ -155,6 +155,7 @@ export const DocumentTabs = (props: Props) => {
   const tabsListRef = useRef<HTMLDivElement>(null);
   const scrollToTabIdRef = useRef<string | null>(null);
 
+  useEventListener(application.model, 'activeDiagramChange', redraw);
   useEventListener(props.document, 'diagramRemoved', redraw);
   useEventListener(props.document, 'diagramChanged', redraw);
   useEventListener(props.document, 'diagramAdded', ({ diagram }) => {
