@@ -189,6 +189,10 @@ export interface ColorCustomPropertyType extends CustomPropertyType<string> {
   type: 'color';
 }
 
+export interface TextCustomPropertyType extends CustomPropertyType<string> {
+  type: 'text';
+}
+
 declare global {
   namespace DiagramCraft {
     interface CustomPropertyTypes {
@@ -197,6 +201,7 @@ declare global {
       boolean: BooleanCustomPropertyType;
       icon: IconCustomPropertyType;
       color: ColorCustomPropertyType;
+      text: TextCustomPropertyType;
     }
   }
 }
@@ -205,6 +210,8 @@ type CommonCustomPropertyOpts<T> = {
   validate?: (value: T) => boolean;
   format?: (value: T) => T;
 };
+
+const labelToId = (label: string) => label.toLowerCase().replace(/\s/g, '-');
 
 const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
   return {
@@ -216,7 +223,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
     ): NumberCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
-        id: label.toLowerCase().replace(/\s/g, '-'),
+        id: labelToId(label),
         type: 'number',
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
@@ -239,7 +246,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
     ): BooleanCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
-        id: label.toLowerCase().replace(/\s/g, '-'),
+        id: labelToId(label),
         type: 'boolean',
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
@@ -261,7 +268,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
     ): SelectCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
-        id: label.toLowerCase().replace(/\s/g, '-'),
+        id: labelToId(label),
         type: 'select',
         label,
         options,
@@ -282,7 +289,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
     ): IconCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
-        id: label.toLowerCase().replace(/\s/g, '-'),
+        id: labelToId(label),
         type: 'icon',
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
@@ -301,7 +308,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
     ): ColorCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
-        id: label.toLowerCase().replace(/\s/g, '-'),
+        id: labelToId(label),
         type: 'color',
         label,
         isSet: acc.get(el.storedProps as P, property) !== undefined,
@@ -310,6 +317,27 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
           // @ts-expect-error
           el.updateProps(p => acc.set(p, property, value), uow);
         }
+      };
+    },
+
+    text: (
+      el: T,
+      label: string,
+      property: PropPath<P>,
+      opts?: Partial<TextCustomPropertyType>
+    ): TextCustomPropertyType => {
+      const acc = new DynamicAccessor<P>();
+      return {
+        id: labelToId(label),
+        type: 'text',
+        label,
+        isSet: acc.get(el.storedProps as P, property) !== undefined,
+        get: () => acc.get(el.renderProps as P, property) as string,
+        set: (value: string | undefined, uow: UnitOfWork) => {
+          // @ts-expect-error
+          el.updateProps(p => acc.set(p, property, value), uow);
+        },
+        ...opts
       };
     },
 

@@ -24,6 +24,7 @@ import { ShapeSelectDialog } from '../../ShapeSelectDialog';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
 import { safeSplit } from '@diagram-craft/utils/safe';
 import { ColorPicker } from '../../components/ColorPicker';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { TbPencil, TbX } from 'react-icons/tb';
 
@@ -178,6 +179,25 @@ const CustomPropertyList = (props: {
                 property={prop}
                 render={props => (
                   <ColorPropertyEditor value={props.value ?? ''} onChange={props.onChange} />
+                )}
+              />
+            </dd>
+          </React.Fragment>
+        );
+      } else if (value.type === 'text') {
+        return (
+          <React.Fragment key={key}>
+            <dt>{value.label}:</dt>
+            <dd data-type={value.type} data-label={value.label}>
+              {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
+              <PropertyEditor<any>
+                property={prop}
+                render={props => (
+                  <TextInput
+                    value={props.value ?? ''}
+                    onChange={v => props.onChange(v)}
+                    style={{ width: '100%' }}
+                  />
                 )}
               />
             </dd>
