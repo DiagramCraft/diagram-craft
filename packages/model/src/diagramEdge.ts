@@ -853,7 +853,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         id ?? newid(),
         this.start,
         this.end,
-        deepClone(this.#props) as EdgeProps,
+        this.#props.getClone() as EdgeProps,
         deepClone(this.metadata),
         deepClone(this.waypoints) as Array<Waypoint>,
         this.layer
