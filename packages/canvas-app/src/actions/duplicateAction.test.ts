@@ -66,6 +66,28 @@ describe('DuplicateAction', () => {
       expect(diagram.selection.elements[0]).toBe(duplicatedNode);
     });
 
+    test('should preserve props when duplicating a node', () => {
+      const node = layer.addNode({
+        bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 },
+        props: {
+          text: { fontSize: 18, bold: true, color: '#ff0000' },
+          effects: { opacity: 0.5 }
+        }
+      });
+
+      diagram.selection.setElements([node]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedNode = layer.elements.filter(isNode).find(n => n.id !== node.id)!;
+      expect(duplicatedNode).toBeDefined();
+
+      expect(duplicatedNode.storedProps.text?.fontSize).toBe(18);
+      expect(duplicatedNode.storedProps.text?.bold).toBe(true);
+      expect(duplicatedNode.storedProps.text?.color).toBe('#ff0000');
+      expect(duplicatedNode.storedProps.effects?.opacity).toBe(0.5);
+    });
+
     test('should duplicate multiple selected nodes', () => {
       const node1 = layer.addNode({ bounds: { x: 10, y: 10, w: 100, h: 100, r: 0 } });
       const node2 = layer.addNode({ bounds: { x: 200, y: 200, w: 50, h: 50, r: 0 } });
@@ -108,6 +130,35 @@ describe('DuplicateAction', () => {
       // Selection should be updated to the duplicated edge
       expect(diagram.selection.elements).toHaveLength(1);
       expect(diagram.selection.elements[0]).toBe(duplicatedEdge);
+    });
+
+    test('should preserve props when duplicating an edge', () => {
+      const edge = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 100 }),
+        props: {
+          type: 'curved',
+          arrow: {
+            start: { type: 'filled-triangle', size: 10 },
+            end: { type: 'open', size: 8 }
+          }
+        },
+        layer
+      });
+      UnitOfWork.execute(diagram, uow => layer.addElement(edge, uow));
+
+      diagram.selection.setElements([edge]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedEdge = layer.elements.filter(isEdge).find(e => e.id !== edge.id)!;
+      expect(duplicatedEdge).toBeDefined();
+
+      expect(duplicatedEdge.storedProps.type).toBe('curved');
+      expect(duplicatedEdge.storedProps.arrow?.start?.type).toBe('filled-triangle');
+      expect(duplicatedEdge.storedProps.arrow?.start?.size).toBe(10);
+      expect(duplicatedEdge.storedProps.arrow?.end?.type).toBe('open');
+      expect(duplicatedEdge.storedProps.arrow?.end?.size).toBe(8);
     });
   });
 
