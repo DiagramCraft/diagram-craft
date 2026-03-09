@@ -146,6 +146,8 @@ export class ShapeText extends Component<ShapeTextProps> {
     const def = props.node.getDefinition() as ShapeNodeDefinition;
     const handler = def.getTextHandler(props.node).inline;
 
+    const textId = props.id.slice('text_'.length, -(props.node.id.length + 1));
+
     const pos = textProps.position;
     const w = ((textProps.width ?? 100) / 100) * props.bounds.w;
     const foreignObject = svg.foreignObject(
@@ -162,12 +164,12 @@ export class ShapeText extends Component<ShapeTextProps> {
         ).toString(),
         width: w.toString(),
         height: props.bounds.h.toString(),
-        style: 'pointer-events: all;',
+        style:
+          textId !== '1' && textId !== 'text' ? 'pointer-events: all;' : 'pointer-events: none;',
         on: {
           mousedown: props.onMouseDown,
           dblclick: (e: MouseEvent) => {
-            if (props.node.renderProps.capabilities.editable === false) return;
-            const textId = props.id.slice('text_'.length, -(props.node.id.length + 1));
+            if (!props.node.renderProps.capabilities.editable) return;
             ShapeText.edit(textId, props.node);
             e.preventDefault();
             e.stopPropagation();
