@@ -1,0 +1,89 @@
+stencils:
+  - id: 'uml-package-package'
+    name: Package
+    elements:
+      - id: umlpkg01
+        type: node
+        nodeType: umlPackage
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 150
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPackage:
+              tabW: 80
+          text:
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Package"
+        tags:
+
+  - id: 'uml-package-template'
+    name: Template Package
+    elements:
+      - id: umlpkgtpl01
+        type: node
+        nodeType: umlPackageTemplate
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 150
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPackage:
+              tabW: 80
+          text:
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Package"
+          template: "T"
+        tags:
+
+  - id: 'uml-package-model'
+    name: Model Package
+    elements:
+      - id: umlpkg02
+        type: node
+        nodeType: umlPackage
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 150
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPackage:
+              tabW: 80
+              model: true
+          text:
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Package"
+        tags:

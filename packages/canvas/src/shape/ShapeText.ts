@@ -202,7 +202,9 @@ export class ShapeText extends Component<ShapeTextProps> {
                     target.blur();
                   }
 
-                  setTimeout(() => updateBounds(target.offsetWidth, target.offsetHeight), 0);
+                  // TODO: Remove commented line below if scrollWidth proves stable across browsers
+                  // setTimeout(() => updateBounds(target.offsetWidth, target.offsetHeight), 0);
+                  setTimeout(() => updateBounds(target.scrollWidth, target.offsetHeight), 0);
                 },
                 blur: (e: FocusEvent) => {
                   const target = e.target as HTMLElement;
@@ -214,7 +216,9 @@ export class ShapeText extends Component<ShapeTextProps> {
 
                   target.innerHTML = storedToHTML(handler, newValue, metadata);
 
-                  updateBounds(target.offsetWidth, target.offsetHeight);
+                  // TODO: Remove commented line below if scrollWidth proves stable across browsers
+                  // updateBounds(target.offsetWidth, target.offsetHeight);
+                  updateBounds(target.scrollWidth, target.offsetHeight);
                 }
               },
               hooks: {
@@ -222,13 +226,17 @@ export class ShapeText extends Component<ShapeTextProps> {
                   if (!props.text || props.text.trim() === '') return;
 
                   const target = n.el! as HTMLElement;
-                  updateBounds(target.offsetWidth, target.offsetHeight);
+                  // TODO: Remove commented line below if scrollWidth proves stable across browsers
+                  // updateBounds(target.offsetWidth, target.offsetHeight);
+                  updateBounds(target.scrollWidth, target.offsetHeight);
                 },
                 onUpdate: (_o: VNode, n: VNode) => {
                   if (!props.text || props.text.trim() === '') return;
 
                   const target = n.el! as HTMLElement;
-                  updateBounds(target.offsetWidth, target.offsetHeight);
+                  // TODO: Remove commented line below if scrollWidth proves stable across browsers
+                  // updateBounds(target.offsetWidth, target.offsetHeight);
+                  updateBounds(target.scrollWidth, target.offsetHeight);
                 }
               }
             },
