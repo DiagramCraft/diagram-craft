@@ -13,6 +13,7 @@ export type LabelNode = Readonly<{
   id: string;
   offset: Point;
   timeOffset: number;
+  offsetType: 'absolute' | 'relative';
   type: LabelNodeType;
 }>;
 

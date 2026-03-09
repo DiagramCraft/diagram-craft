@@ -35,7 +35,7 @@ import {
 import { DeepReadonly, DeepRequired } from '@diagram-craft/utils/types';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
 import { newid } from '@diagram-craft/utils/id';
-import { isDifferent } from '@diagram-craft/utils/math';
+import { isDifferent, isSame } from '@diagram-craft/utils/math';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { assert, is, mustExist } from '@diagram-craft/utils/assert';
@@ -136,6 +136,7 @@ const makeLabelNodeMapper = (
         id: e.id,
         nodeId: e.node().id,
         offset: e.offset,
+        offsetType: e.offsetType,
         type: e.type,
         timeOffset: e.timeOffset
       });
@@ -626,6 +627,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
               x: 0,
               y: 0
             },
+            offsetType: 'absolute',
             timeOffset: 0
           });
         }
@@ -814,6 +816,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         id: ln.id,
         type: ln.type,
         offset: ln.offset,
+        offsetType: ln.offsetType ?? 'absolute',
         timeOffset: ln.timeOffset
       })),
       tags: [...this.tags]
@@ -1092,7 +1095,31 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       const attachmentPoint = path.pointAt(pathD);
       const labelNodeNode = labelNode.node();
 
+      let hAlign = labelNodeNode.renderProps.text.align;
+      let vAlign = labelNodeNode.renderProps.text.valign;
+
       let newReferencePoint = Point.add(attachmentPoint, labelNode.offset);
+      if (labelNode.offsetType === 'relative') {
+        const directionAtAttachmentPoint = Vector.normalize(path.tangentAt(pathD));
+        const cross = Vector.tangentToNormal(directionAtAttachmentPoint);
+
+        const absoluteOffset = Point.add(
+          Vector.scale(directionAtAttachmentPoint, labelNode.offset.x),
+          Vector.scale(cross, labelNode.offset.y)
+        );
+        newReferencePoint = Point.add(attachmentPoint, absoluteOffset);
+
+        if (!isParallel(labelNode.type) && !isPerpendicular(labelNode.type)) {
+          if (isSame(absoluteOffset.x, 0, 1)) hAlign = 'center';
+          else if (absoluteOffset.x < 0) hAlign = 'right';
+          else if (absoluteOffset.x > 0) hAlign = 'left';
+
+          if (isSame(absoluteOffset.y, 0, 1)) vAlign = 'middle';
+          else if (absoluteOffset.y < 0) vAlign = 'bottom';
+          else if (absoluteOffset.y > 0) vAlign = 'top';
+        }
+      }
+
       let newRotation = labelNodeNode.bounds.r;
       if (isParallel(labelNode.type) || isPerpendicular(labelNode.type)) {
         const tangent = path.tangentAt(pathD);
@@ -1119,16 +1146,18 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       }
 
       const referenceOffsetFromMidpoint = Point.of(0, 0);
-      if (labelNodeNode.renderProps.text.align === 'left') {
+      if (hAlign === 'left') {
         referenceOffsetFromMidpoint.x = labelNodeNode.bounds.w / 2;
-      } else if (labelNodeNode.renderProps.text.align === 'right') {
+      } else if (hAlign === 'right') {
         referenceOffsetFromMidpoint.x = -labelNodeNode.bounds.w / 2;
       }
 
-      if (labelNodeNode.renderProps.text.valign === 'top') {
-        referenceOffsetFromMidpoint.y = labelNodeNode.bounds.h / 2 + 6;
-      } else if (labelNodeNode.renderProps.text.valign === 'bottom') {
-        referenceOffsetFromMidpoint.y = -labelNodeNode.bounds.h / 2 - 1;
+      if (vAlign === 'top') {
+        referenceOffsetFromMidpoint.y =
+          labelNodeNode.bounds.h / 2 + (labelNode.offsetType === 'relative' ? 0 : 6);
+      } else if (vAlign === 'bottom') {
+        referenceOffsetFromMidpoint.y =
+          -labelNodeNode.bounds.h / 2 - (labelNode.offsetType === 'relative' ? 0 : 1);
       }
 
       // Note, using rounding here to avoid infinite recursion

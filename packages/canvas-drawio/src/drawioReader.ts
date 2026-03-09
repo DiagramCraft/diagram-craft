@@ -194,7 +194,14 @@ const attachLabelNode = (
     : Point.ORIGIN;
 
   edge.addLabelNode(
-    { id: textNode.id, type: 'horizontal', node: () => textNode, offset, timeOffset },
+    {
+      id: textNode.id,
+      type: 'horizontal',
+      node: () => textNode,
+      offset,
+      offsetType: 'absolute',
+      timeOffset
+    },
     uow
   );
 };
