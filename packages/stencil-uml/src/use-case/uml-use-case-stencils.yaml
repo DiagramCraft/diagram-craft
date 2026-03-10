@@ -47,7 +47,7 @@ stencils:
   - id: 'uml-use-case-split'
     name: Split Use Case
     elements:
-      - id: umlsuc01
+      - id: hai7xye
         type: node
         nodeType: umlUseCase
         bounds:
@@ -65,7 +65,7 @@ stencils:
           style: default
           textStyle: default-text-default
         texts:
-          text: "Split Use Case"
+          text: "Split <br><br>Use Case"
         tags:
 
   - id: 'uml-use-case-subject'

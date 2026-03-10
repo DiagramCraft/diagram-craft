@@ -1,5 +1,6 @@
 .canvas {
   --zoom: 1;
+  --stroke-dash-zoom: 1;
   background: var(--canvas-bg);
 
   &.tool-edge, &.tool-edge * {

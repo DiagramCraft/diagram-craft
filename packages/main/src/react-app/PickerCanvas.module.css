@@ -1,0 +1,22 @@
+.pickerCanvasPreview {
+  position: absolute;
+  width: 100px;
+  height: 110px;
+  z-index: 200;
+  background: var(--canvas-bg);
+  border-radius: 4px;
+  line-Height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  color: var(--canvas-fg);
+  font-size: 11px;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  box-shadow: hsl(206 22% 7% / 35%) 0 10px 38px -10px, hsl(206 22% 7% / 20%) 0 10px 20px -15px;
+}
+
+.pickerCanvas {
+  --stroke-dash-zoom: 0.5;
+}
