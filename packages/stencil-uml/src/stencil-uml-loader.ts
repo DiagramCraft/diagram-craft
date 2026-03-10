@@ -3,17 +3,24 @@ import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
 import { UMLFrameNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLFrame.nodeType';
+import { UMLRectNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLRect.nodeType';
+import { UMLUseCaseNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLUseCase.nodeType';
 import { UMLPackageNodeDefinition } from '@diagram-craft/stencil-uml/package/UMLPackage.nodeType';
 import { UMLPackageTemplateNodeDefinition } from '@diagram-craft/stencil-uml/package/UMLPackageTemplate.nodeType';
+import { UMLActorNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLActor.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import classStencils from './class/uml-class-stencils.yaml';
 import commonStencils from './common/uml-common-stencils.yaml';
 import packageStencils from './package/uml-package-stencils.yaml';
+import useCaseStencils from './use-case/uml-use-case-stencils.yaml';
 
 export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLClassNodeDefinition());
   nodes.register(new UMLClassTemplateNodeDefinition());
   nodes.register(new UMLFrameNodeDefinition());
+  nodes.register(new UMLRectNodeDefinition());
+  nodes.register(new UMLUseCaseNodeDefinition());
+  nodes.register(new UMLActorNodeDefinition());
   nodes.register(new UMLPackageNodeDefinition());
   nodes.register(new UMLPackageTemplateNodeDefinition());
 };
@@ -60,6 +67,15 @@ export const loadUMLStencils = async (registry: Registry) => {
   loadStencilsFromYaml(packageStencils).forEach(s => {
     umlStencils.stencils.push(s);
     umlStencils.subPackages!.find(p => p.id === 'package')?.stencils.push(s);
+  });
+
+  /* *********************************************************************** */
+  /* USE CASE PACKAGE                                                        */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(useCaseStencils).forEach(s => {
+    umlStencils.stencils.push(s);
+    umlStencils.subPackages!.find(p => p.id === 'use-case')?.stencils.push(s);
   });
 
   return umlStencils;

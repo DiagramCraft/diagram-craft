@@ -1,0 +1,158 @@
+stencils:
+  - id: 'uml-use-case-use-case'
+    name: Use Case
+    elements:
+      - id: umluc01
+        type: node
+        nodeType: umlUseCase
+        bounds:
+          x: 0
+          y: 0
+          w: 120
+          h: 60
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Use Case"
+        tags:
+
+  - id: 'uml-use-case-business-use-case'
+    name: Business Use Case
+    elements:
+      - id: umlbuc01
+        type: node
+        nodeType: umlUseCase
+        bounds:
+          x: 0
+          y: 0
+          w: 120
+          h: 60
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlUseCase:
+              type: business
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Business Use Case"
+        tags:
+
+  - id: 'uml-use-case-split'
+    name: Split Use Case
+    elements:
+      - id: umlsuc01
+        type: node
+        nodeType: umlUseCase
+        bounds:
+          x: 0
+          y: 0
+          w: 120
+          h: 60
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlUseCase:
+              type: split
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Split Use Case"
+        tags:
+
+  - id: 'uml-use-case-subject'
+    name: Subject
+    elements:
+      - id: u163l3u
+        type: node
+        nodeType: umlRect
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 150
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 4
+            left: 6
+            right: 6
+            align: left
+            valign: top
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "&lt;&lt;Business&gt;&gt;<br><b>Subject Name</b>"
+        tags:
+
+  - id: 'uml-use-case-actor'
+    name: Actor
+    elements:
+      - id: umlactor01
+        type: node
+        nodeType: umlActor
+        bounds:
+          x: 0
+          y: 0
+          w: 40
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 16
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 300
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Label"
+        tags:
+
+  - id: 'uml-use-case-business-actor'
+    name: Business Actor
+    elements:
+      - id: umlactor01
+        type: node
+        nodeType: umlActor
+        bounds:
+          x: 0
+          y: 0
+          w: 40
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlActor:
+              type: business
+          text:
+            top: 16
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 300
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Label"
+        tags:
