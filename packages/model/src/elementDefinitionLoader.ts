@@ -4,7 +4,7 @@ import type { DiagramNode } from './diagramNode';
 import { UnitOfWork } from './unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { Box } from '@diagram-craft/geometry/box';
+import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
@@ -26,8 +26,18 @@ export const loadStencilsFromYaml = (stencils: any) => {
         );
         elements.forEach(e => layer.addElement(e, uow));
 
-        const bounds = Box.boundingBox(elements.map(e => e.bounds));
-        return { elements, bounds, diagram, layer };
+        const bounds = Box.asReadWrite(Box.boundingBox(elements.map(e => e.bounds)));
+
+        bounds.x -= (stencil as Stencil).settings?.marginLeft ?? 0;
+        bounds.w += (stencil as Stencil).settings?.marginLeft ?? 0;
+
+        bounds.y -= (stencil as Stencil).settings?.marginTop ?? 0;
+        bounds.h += (stencil as Stencil).settings?.marginTop ?? 0;
+
+        bounds.w += (stencil as Stencil).settings?.marginRight ?? 0;
+        bounds.h += (stencil as Stencil).settings?.marginBottom ?? 0;
+
+        return { elements, bounds: WritableBox.asBox(bounds), diagram, layer };
       });
     };
     dest.push({

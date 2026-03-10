@@ -36,7 +36,11 @@ stencils:
           position:
             x: 0
             y: 80
-        props: { }
+        props:
+          type: straight
+          arrow:
+            end:
+              type: none
 
   - id: 'bpmn-core-annotation-right'
     title: 'BPMN Core Annotation Right'
@@ -79,5 +83,9 @@ stencils:
           position:
             x: 140
             y: 80
-        props: { }
+        props:
+          type: straight
+          arrow:
+            end:
+              type: none
 

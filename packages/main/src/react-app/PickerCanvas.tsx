@@ -1,6 +1,6 @@
 import { Canvas } from '@diagram-craft/canvas-react/Canvas';
 import { Diagram } from '@diagram-craft/model/diagram';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Point } from '@diagram-craft/geometry/point';
 import { useApplication, useDiagram } from '../application';
 import {
@@ -8,6 +8,15 @@ import {
   StaticCanvasProps
 } from '@diagram-craft/canvas/canvas/StaticCanvasComponent';
 import { createPortal } from 'react-dom';
+import styles from './PickerCanvas.module.css';
+import {
+  serializeDiagram,
+  serializeDiagramDocument
+} from '@diagram-craft/model/serialization/serialize';
+import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
+import { newid } from '@diagram-craft/utils/id';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { makeDefaultDiagramFactory } from '@diagram-craft/model/diagramDocumentFactory';
 
 const canvasFactory = () => new StaticCanvasComponent();
 
@@ -18,6 +27,21 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
   const timeout = useRef<number | null>(null);
   const [hover, setHover] = useState<Point | undefined>(undefined);
   const r = useRef<string>('');
+  const [preview, setPreview] = useState<DiagramDocument | undefined>(undefined);
+
+  useEffect(() => {
+    if (preview) setPreview(undefined);
+  }, [diagram]);
+
+  const getPreviewDiagram = async () => {
+    const s = await serializeDiagramDocument(diagram.document);
+    s.diagrams = [serializeDiagram(diagram)];
+    s.diagrams[0]!.id = newid();
+
+    const doc = new DiagramDocument(diagram.document.registry, true);
+    await deserializeDiagramDocument(s, doc, makeDefaultDiagramFactory());
+    return doc;
+  };
 
   const onMouseOver = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -48,6 +72,10 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     setHover(undefined);
   }
 
+  if (hover && props.showHover && preview === undefined) {
+    getPreviewDiagram().then(doc => setPreview(doc));
+  }
+
   // TODO: We should use default cursor instead of move cursor when disabled
   const isRuleLayer = $d.activeLayer.type === 'rule';
   return (
@@ -64,37 +92,16 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     >
       {hover &&
         props.showHover &&
+        preview !== undefined &&
         createPortal(
-          <div
-            style={{
-              position: 'absolute',
-              left: hover.x + 40,
-              top: hover.y,
-              width: 100,
-              height: 110,
-              zIndex: 200,
-              background: 'var(--canvas-bg)',
-              borderRadius: '4px',
-              lineHeight: '0',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'top',
-              color: 'var(--canvas-fg)',
-              fontSize: '11px',
-              paddingTop: '0.75rem',
-              paddingBottom: '0.75rem',
-              boxShadow:
-                'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px'
-            }}
-          >
+          <div className={styles.pickerCanvasPreview} style={{ left: hover.x + 40, top: hover.y }}>
             <Canvas<StaticCanvasComponent, StaticCanvasProps>
               id={`picker-canvas-portal-${props.diagram.id}`}
               context={application}
               width={80}
               height={80}
               onClick={() => {}}
-              diagram={diagram}
+              diagram={preview.diagrams[0]!}
               viewbox={props.diagram.viewBox.svgViewboxString}
               canvasFactory={canvasFactory}
             />
@@ -119,6 +126,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         width={props.size ?? 40}
         height={props.size ?? 40}
         diagram={diagram}
+        className={`canvas ${styles.pickerCanvas}`}
         viewbox={`${props.diagram.viewBox.svgViewboxString}`}
         canvasFactory={canvasFactory}
       />

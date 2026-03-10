@@ -55,7 +55,8 @@ export class UMLPackageTemplateComponent extends UMLPackageComponent {
         'fill': nodeProps.fill.color,
         'stroke': nodeProps.stroke.color,
         'stroke-width': nodeProps.stroke.width,
-        'stroke-dasharray': '5,3'
+        'stroke-dasharray':
+          'calc(5 * var(--stroke-dash-zoom, 1)), calc(3 * var(--stroke-dash-zoom, 1))'
       })
     );
 

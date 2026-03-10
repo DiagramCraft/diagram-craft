@@ -335,6 +335,8 @@ stencils:
         tags:
   - id: 'uml-class-template-class'
     name: Template Class
+    settings:
+      marginRight: 22
     elements:
       - id: tplclass1
         type: node
@@ -665,7 +667,7 @@ stencils:
               type: DIAMOND_THIN_FILLED
               size: 150
           fill:
-            color: black
+            color: var(--canvas-fg)
         metadata:
           style: default-edge
         children: [ ]

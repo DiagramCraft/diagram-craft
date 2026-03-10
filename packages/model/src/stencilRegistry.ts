@@ -30,6 +30,10 @@ export type Stencil = {
   type: 'default' | string;
   settings?: {
     scaleStrokes?: boolean;
+    marginTop?: number;
+    marginRight?: number;
+    marginBottom?: number;
+    marginLeft?: number;
   };
 };
 

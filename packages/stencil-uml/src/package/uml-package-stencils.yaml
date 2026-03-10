@@ -30,6 +30,8 @@ stencils:
 
   - id: 'uml-package-template'
     name: Template Package
+    settings:
+      marginRight: 22
     elements:
       - id: umlpkgtpl01
         type: node
@@ -38,7 +40,7 @@ stencils:
           x: 0
           y: 0
           w: 200
-          h: 150
+          h: 165
           r: 0
         children: [ ]
         props:

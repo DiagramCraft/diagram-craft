@@ -26,11 +26,13 @@ import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
 
-const defaultOnChange = (element: DiagramNode, textId: string = '1') => (text: string) => {
-  UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow =>
-    element.setText(text, uow, textId)
-  );
-};
+const defaultOnChange =
+  (element: DiagramNode, textId: string = '1') =>
+  (text: string) => {
+    UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow =>
+      element.setText(text, uow, textId)
+    );
+  };
 
 type ShapeBuilderProps = {
   element: DiagramElement;
@@ -46,6 +48,19 @@ type Opts = {
   map?: (n: VNode) => VNode;
   className?: string;
   style?: Partial<CSSStyleDeclaration>;
+};
+
+const applyStrokeZoom = (style: Partial<CSSStyleDeclaration>) => {
+  if (style.strokeDasharray === undefined) return style;
+
+  // TODO: Would be nice to only do this in a thumbnail context
+  return {
+    ...style,
+    strokeDasharray: style.strokeDasharray
+      .split(/[|, ]/)
+      .map(s => `calc(${s.trim()} * var(--stroke-dash-zoom, 1))`)
+      .join(' ')
+  };
 };
 
 export class ShapeBuilder {
@@ -156,7 +171,7 @@ export class ShapeBuilder {
           width: bounds.w.toString(),
           height: bounds.h.toString(),
           class: opts.className,
-          style: toInlineCSS(d.style),
+          style: toInlineCSS(applyStrokeZoom(d.style)),
           on: {
             mousedown: this.props.onMouseDown,
 
@@ -188,7 +203,7 @@ export class ShapeBuilder {
           width: bounds.w.toString(),
           height: bounds.h.toString(),
           class: opts.className,
-          style: `${toInlineCSS(p.style)}; pointer-events: none;`
+          style: `${toInlineCSS(applyStrokeZoom(p.style))}; pointer-events: none;`
         }))
         .map(p => opts.map!(svg.path(p)))
     );
@@ -211,6 +226,7 @@ export class ShapeBuilder {
     const processPath = this.processPath(props, opts, paths);
     const path = processPath.map(p => p.path).join(' ');
 
+    const diagramId = this.props.element.diagram.id;
     this.nodes.push(
       ...[
         svg.path({
@@ -222,9 +238,9 @@ export class ShapeBuilder {
         svg.path({
           'class': opts.className,
           'd': path,
-          'style': toInlineCSS(processPath[0]!.style),
-          'marker-start': startArrow ? `url(#s_${this.props.element.id})` : '',
-          'marker-end': endArrow ? `url(#e_${this.props.element.id})` : ''
+          'style': toInlineCSS(applyStrokeZoom(processPath[0]!.style)),
+          'marker-start': startArrow ? `url(#s_${diagramId}_${this.props.element.id})` : '',
+          'marker-end': endArrow ? `url(#e_${diagramId}_${this.props.element.id})` : ''
         })
       ]
     );

@@ -71,7 +71,7 @@ const makeArrowMarker = (
       'stroke-linejoin': 'miter',
       'stroke-miterlimit': '40',
       'stroke-linecap': 'butt',
-      'fill': arrow.fill === 'fg' ? fillColor : arrow.fill === 'bg' ? 'white' : 'none'
+      'fill': arrow.fill === 'fg' ? fillColor : arrow.fill === 'bg' ? 'var(--canvas-bg)' : 'none'
     })
   );
 };
@@ -212,9 +212,10 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       });
     }
 
+    const diagramId = props.element.diagram.id;
     const arrowMarkers = [
-      makeArrowMarker(`s_${props.element.id}`, startArrow, edgeProps),
-      makeArrowMarker(`e_${props.element.id}`, endArrow, edgeProps)
+      makeArrowMarker(`s_${diagramId}_${props.element.id}`, startArrow, edgeProps),
+      makeArrowMarker(`e_${diagramId}_${props.element.id}`, endArrow, edgeProps)
     ].filter(Boolean) as VNode[];
 
     const shapeBuilder = new ShapeBuilder({
