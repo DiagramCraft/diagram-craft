@@ -7,6 +7,10 @@ import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+
+const getTextIds = (node: DiagramNode): string[] =>
+  Object.keys(node.texts).filter(k => node.texts[k] !== undefined);
 
 export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
@@ -20,9 +24,24 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
     isNode(diagram.selection.elements?.[0]?.parent) &&
     diagram.selection.elements[0].parent?.nodeType === 'tableRow';
 
+  const singleNode =
+    diagram.selection.type === 'single-node' ? diagram.selection.nodes[0] : undefined;
+  const textIds = singleNode ? getTextIds(singleNode) : [];
+  const hasMultipleTexts = textIds.length > 1;
+
   return (
     <>
-      <ActionMenuItem action={'TEXT_EDIT'} />
+      {hasMultipleTexts ? (
+        <Menu.SubMenu label={'Edit Text'}>
+          {textIds.map(id => (
+            <ActionMenuItem key={id} action={'TEXT_EDIT'} arg={{ id }}>
+              {id === 'text' ? 'Main text' : id.charAt(0).toUpperCase() + id.slice(1)}
+            </ActionMenuItem>
+          ))}
+        </Menu.SubMenu>
+      ) : (
+        <ActionMenuItem action={'TEXT_EDIT'} arg={{}} />
+      )}
       <ActionMenuItem action={'SELECTION_EXECUTE_ACTION'} arg={{}} />
       <Menu.Separator />
 

@@ -156,18 +156,21 @@ export class TextDecorationAction extends AbstractToggleAction {
   }
 }
 
-export class TextEditAction extends AbstractSelectionAction<Application> {
+type TextEditArg = { id?: string };
+
+export class TextEditAction extends AbstractSelectionAction<Application, TextEditArg> {
   name = $tStr('action.TEXT_EDIT.name', 'Edit...');
 
   constructor(application: Application) {
     super(application, MultipleType.SingleOnly, ElementType.Node);
   }
 
-  execute(): void {
+  execute(arg?: Partial<TextEditArg>): void {
     const selectedItem = this.context.model.activeDiagram.selection.nodes[0]!;
+    const textId = arg?.id ?? 'text';
 
     // Get the current HTML text content
-    const currentHtmlText = selectedItem.texts.text ?? '';
+    const currentHtmlText = selectedItem.getText(textId) ?? '';
 
     const def = selectedItem.getDefinition() as ShapeNodeDefinition;
     const textHandler = def.getTextHandler(selectedItem);
@@ -202,7 +205,7 @@ export class TextEditAction extends AbstractSelectionAction<Application> {
           }
 
           UnitOfWork.executeWithUndo(selectedItem.diagram, 'Edit text', uow =>
-            selectedItem.setText(htmlOutput, uow)
+            selectedItem.setText(htmlOutput, uow, textId)
           );
         }
       )
