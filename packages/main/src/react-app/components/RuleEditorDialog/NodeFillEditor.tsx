@@ -4,6 +4,10 @@ import type { Editor } from './editors';
 import { useDiagram } from '../../../application';
 import { FillPanelForm } from '../../toolwindow/ObjectToolWindow/FillPanel';
 import { makeProperty } from './utils';
+import { ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import { range } from '@diagram-craft/utils/array';
+import { Property } from '@diagram-craft/model/property';
+import { PropPath } from '@diagram-craft/utils/propertyPath';
 
 export const NodeFillEditor: Editor = props => {
   const $p = props.props;
@@ -16,6 +20,22 @@ export const NodeFillEditor: Editor = props => {
   const onChange = () => {
     props.onChange();
   };
+
+  const fillCount = Object.keys(($p as NodeProps).additionalFills ?? {}).length;
+  const additionalFills = range(0, fillCount).map(idx => ({
+    enabled: makeProperty(
+      $p as NodeProps,
+      `additionalFills.${idx}.enabled` as PropPath<ElementProps>,
+      elementDefaults,
+      onChange
+    ) as Property<boolean>,
+    color: makeProperty(
+      $p as NodeProps,
+      `additionalFills.${idx}.color` as PropPath<ElementProps>,
+      elementDefaults,
+      onChange
+    ) as Property<string>
+  }));
 
   return (
     <FillPanelForm
@@ -37,6 +57,7 @@ export const NodeFillEditor: Editor = props => {
       imageTintStrength={makeProperty($p, 'fill.image.tintStrength', elementDefaults, onChange)}
       pattern={makeProperty($p, 'fill.pattern', elementDefaults, onChange)}
       type={makeProperty($p, 'fill.type', elementDefaults, onChange)}
+      additionalFills={additionalFills}
     />
   );
 };

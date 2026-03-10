@@ -187,6 +187,14 @@ export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtension
     url?: string;
   };
 
+  additionalFills?: Record<
+    string,
+    {
+      enabled?: boolean;
+      color?: string;
+    }
+  >;
+
   capabilities?: {
     resizable?: {
       vertical?: boolean;

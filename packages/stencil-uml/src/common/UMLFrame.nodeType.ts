@@ -40,6 +40,8 @@ registerCustomNodeDefaults('umlFrame', {
 });
 
 export class UMLFrameNodeDefinition extends LayoutCapableShapeNodeDefinition {
+  additionalFillCount = 1;
+
   constructor() {
     super('umlFrame', 'UML Frame', UMLFrameComponent);
 
@@ -71,6 +73,28 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
     // Invisible boundary path for hit testing / selection
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
+
+    const labelFill = props.nodeProps.additionalFills?.['0'];
+    if (labelFill?.enabled) {
+      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
+      const sw = strokeWidth;
+      const color = labelFill.color ?? 'transparent';
+      builder.add(
+        svg.path({
+          'd': [
+            `M ${bounds.x + sw} ${bounds.y + sw}`,
+            `L ${bounds.x + labelW} ${bounds.y + sw}`,
+            `L ${bounds.x + labelW} ${bounds.y + labelH - cut}`,
+            `L ${bounds.x + labelW - cut} ${bounds.y + labelH}`,
+            `L ${bounds.x + sw} ${bounds.y + labelH}`,
+            'Z'
+          ].join(' '),
+          'fill': color,
+          'stroke': color,
+          'style': 'pointer-events: none'
+        })
+      );
+    }
 
     // Label box inner border: right edge → diagonal cut → bottom edge
     // The top and left edges are shared with the outer rectangle border

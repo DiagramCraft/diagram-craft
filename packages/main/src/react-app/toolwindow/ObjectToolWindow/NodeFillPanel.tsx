@@ -7,7 +7,8 @@ import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
-import { unique } from '@diagram-craft/utils/array';
+import { range, unique } from '@diagram-craft/utils/array';
+import { makePropertyFromArray } from '@diagram-craft/model/property';
 
 export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
@@ -40,6 +41,51 @@ export const NodeFillPanel = (props: Props) => {
 
   if (panelDisabled) return null;
 
+  const nodeFillCounts = unique($d.selection.nodes.map(e => e.getDefinition().additionalFillCount));
+  const additionalFillCount =
+    ($d.selection.type === 'single-node' || $d.selection.type === 'nodes') &&
+    nodeFillCounts.length === 1
+      ? nodeFillCounts[0]!
+      : 0;
+
+  const additionalFills =
+    additionalFillCount === 0
+      ? []
+      : range(0, additionalFillCount).map(idx => ({
+          color: makePropertyFromArray(
+            'Update fill colors',
+            $d.selection.nodes,
+            n => n.renderProps,
+            n => n.editProps,
+            n => n.getPropsInfo(`additionalFills.${idx}.color`, ''),
+            (n, v, uow) =>
+              n.updateProps(props => {
+                props.additionalFills ??= {};
+                props.additionalFills[idx] ??= {};
+                props.additionalFills[idx].color = v;
+              }, uow),
+            $d,
+            `additionalFills.${idx}.color`,
+            ''
+          ),
+          enabled: makePropertyFromArray(
+            'Update fill colors',
+            $d.selection.nodes,
+            n => n.renderProps,
+            n => n.editProps,
+            n => n.getPropsInfo(`additionalFills.${idx}.enabled`, false),
+            (n, v, uow) =>
+              n.updateProps(props => {
+                props.additionalFills ??= {};
+                props.additionalFills[idx] ??= {};
+                props.additionalFills[idx].enabled = v;
+              }, uow),
+            $d,
+            `additionalFills.${idx}.enabled`,
+            false
+          )
+        }));
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -67,6 +113,7 @@ export const NodeFillPanel = (props: Props) => {
         imageTint={imageTint}
         imageTintStrength={imageTintStrength}
         imageW={imageW}
+        additionalFills={additionalFills}
         pattern={pattern}
         palette={unique(
           $d.selection.nodes.flatMap(

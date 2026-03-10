@@ -14,7 +14,7 @@ export function makeProperty<
   const accessor = new DynamicAccessor<TObj | DeepReadonly<TObj>>();
   const isSet = accessor.get(obj, propertyPath) !== undefined;
   return {
-    val: (accessor.get(obj, propertyPath) as V) ?? (defaults.getRaw(propertyPath) as V),
+    val: (accessor.get(obj, propertyPath) as V) ?? (defaults.getRaw(propertyPath, false) as V),
     set: (v: V) => {
       accessor.set(obj, propertyPath, v);
       onChange(v);

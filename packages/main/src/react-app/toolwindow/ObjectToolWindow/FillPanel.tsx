@@ -12,6 +12,7 @@ import { FillType } from '@diagram-craft/model/diagramProps';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
 import type { Property } from '@diagram-craft/model/property';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -152,6 +153,7 @@ export const FillPanelForm = ({
   imageTint,
   imageTintStrength,
   palette,
+  additionalFills,
   diagram: $d,
   config: $cfg
 }: FormProps) => {
@@ -438,6 +440,31 @@ export const FillPanelForm = ({
           <ImageTint tint={imageTint} tintStrength={imageTintStrength} />
         </>
       )}
+
+      {additionalFills && additionalFills.length > 0 && (
+        <>
+          <div className={'cmp-labeled-table__label'}>Additional:</div>
+
+          <div className={'cmp-labeled-table__value util-vstack util-vgap'}>
+            {additionalFills.map(({ color, enabled }, idx) => (
+              <div key={idx} className={'util-hstack'}>
+                <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
+                <PropertyEditor
+                  property={color}
+                  render={props => (
+                    <ColorPicker
+                      {...props}
+                      palette={$cfg.palette.primary}
+                      customPalette={$d.document.customPalette}
+                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                    />
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -459,6 +486,7 @@ type FormProps = {
   imageSaturation: Property<number>;
   imageTint: Property<string>;
   imageTintStrength: Property<number>;
+  additionalFills: Array<{ color: Property<string>; enabled: Property<boolean> }>;
   palette?: string[];
   diagram: Diagram;
   config: ConfigurationContextType;
