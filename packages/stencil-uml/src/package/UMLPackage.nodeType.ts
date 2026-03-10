@@ -51,6 +51,7 @@ registerCustomNodeDefaults('umlPackage', {
 
 export class UMLPackageNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
+  additionalFillCount = 1;
 
   // biome-ignore lint/suspicious/noExplicitAny: allows subclassing with a different component
   constructor(type = 'umlPackage', name = 'UML Package', component: NodeShapeConstructor<any> = UMLPackageComponent) {
@@ -129,6 +130,23 @@ export class UMLPackageComponent extends BaseNodeComponent<UMLPackageNodeDefinit
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
+
+    const tabFill = nodeProps.additionalFills?.['0'];
+    if (tabFill?.enabled) {
+      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
+      const color = tabFill.color ?? 'transparent';
+      builder.add(
+        svg.rect({
+          x: bounds.x + strokeWidth,
+          y: bounds.y + strokeWidth,
+          width: effectiveTabW - 2 * strokeWidth,
+          height: tabH - 2 * strokeWidth,
+          fill: color,
+          stroke: color,
+          style: 'pointer-events: none'
+        })
+      );
+    }
 
     // Interior line separating tab from body
     const interiorPath = new PathListBuilder().withTransform([new Translation(bounds)]);

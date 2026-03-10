@@ -98,16 +98,18 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
 
-    if (props.nodeProps.additionalFills?.['0']?.enabled) {
+    const titleFill = props.nodeProps.additionalFills?.['0'];
+    if (titleFill?.enabled) {
       const strokeWidth = props.nodeProps.stroke.enabled ? props.nodeProps.stroke.width : 0;
+      const color = titleFill.color ?? 'transparent';
       builder.add(
         svg.rect({
-          x: props.node.bounds.x + strokeWidth,
-          y: props.node.bounds.y + strokeWidth,
-          width: props.node.bounds.w - 2 * strokeWidth,
+          x: bounds.x + strokeWidth,
+          y: bounds.y + strokeWidth,
+          width: bounds.w - 2 * strokeWidth,
           height: titleSize - 2 * strokeWidth,
-          fill: props.nodeProps.additionalFills['0']?.color ?? 'transparent',
-          stroke: props.nodeProps.additionalFills['0']?.color ?? 'transparent',
+          fill: color,
+          stroke: color,
           style: 'pointer-events: none'
         })
       );

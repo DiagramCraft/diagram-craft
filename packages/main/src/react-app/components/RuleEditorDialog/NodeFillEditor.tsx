@@ -22,24 +22,20 @@ export const NodeFillEditor: Editor = props => {
   };
 
   const fillCount = Object.keys(($p as NodeProps).additionalFills ?? {}).length;
-  const fillEnabled = range(0, fillCount).map(
-    idx =>
-      makeProperty(
-        $p as NodeProps,
-        `additionalFill.${idx}.enabled` as PropPath<ElementProps>,
-        elementDefaults,
-        onChange
-      ) as Property<boolean>
-  );
-  const fillColors = range(0, fillCount).map(
-    idx =>
-      makeProperty(
-        $p as NodeProps,
-        `additionalFill.${idx}.color` as PropPath<ElementProps>,
-        elementDefaults,
-        onChange
-      ) as Property<string>
-  );
+  const additionalFills = range(0, fillCount).map(idx => ({
+    enabled: makeProperty(
+      $p as NodeProps,
+      `additionalFills.${idx}.enabled` as PropPath<ElementProps>,
+      elementDefaults,
+      onChange
+    ) as Property<boolean>,
+    color: makeProperty(
+      $p as NodeProps,
+      `additionalFills.${idx}.color` as PropPath<ElementProps>,
+      elementDefaults,
+      onChange
+    ) as Property<string>
+  }));
 
   return (
     <FillPanelForm
@@ -61,8 +57,7 @@ export const NodeFillEditor: Editor = props => {
       imageTintStrength={makeProperty($p, 'fill.image.tintStrength', elementDefaults, onChange)}
       pattern={makeProperty($p, 'fill.pattern', elementDefaults, onChange)}
       type={makeProperty($p, 'fill.type', elementDefaults, onChange)}
-      additionalFillEnabled={fillEnabled}
-      additionalFillColors={fillColors}
+      additionalFills={additionalFills}
     />
   );
 };

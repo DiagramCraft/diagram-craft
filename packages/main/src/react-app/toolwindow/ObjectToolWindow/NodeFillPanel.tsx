@@ -39,6 +39,8 @@ export const NodeFillPanel = (props: Props) => {
     $d.selection.nodes.every(n => !n.getDefinition().hasFlag(NodeFlags.StyleFill)) &&
     $d.selection.edges.every(n => !n.getDefinition().hasFlag(EdgeFlags.StyleFill));
 
+  if (panelDisabled) return null;
+
   const nodeFillCounts = unique($d.selection.nodes.map(e => e.getDefinition().additionalFillCount));
   const additionalFillCount =
     ($d.selection.type === 'single-node' || $d.selection.type === 'nodes') &&
@@ -46,11 +48,11 @@ export const NodeFillPanel = (props: Props) => {
       ? nodeFillCounts[0]!
       : 0;
 
-  const additionalFillColors =
+  const additionalFills =
     additionalFillCount === 0
       ? []
-      : range(0, additionalFillCount).map(idx =>
-          makePropertyFromArray(
+      : range(0, additionalFillCount).map(idx => ({
+          color: makePropertyFromArray(
             'Update fill colors',
             $d.selection.nodes,
             n => n.renderProps,
@@ -65,13 +67,8 @@ export const NodeFillPanel = (props: Props) => {
             $d,
             `additionalFills.${idx}.color`,
             ''
-          )
-        );
-  const additionalFillEnabled =
-    additionalFillCount === 0
-      ? []
-      : range(0, additionalFillCount).map(idx =>
-          makePropertyFromArray(
+          ),
+          enabled: makePropertyFromArray(
             'Update fill colors',
             $d.selection.nodes,
             n => n.renderProps,
@@ -87,9 +84,7 @@ export const NodeFillPanel = (props: Props) => {
             `additionalFills.${idx}.enabled`,
             false
           )
-        );
-
-  if (panelDisabled) return null;
+        }));
 
   return (
     <ToolWindowPanel
@@ -118,8 +113,7 @@ export const NodeFillPanel = (props: Props) => {
         imageTint={imageTint}
         imageTintStrength={imageTintStrength}
         imageW={imageW}
-        additionalFillColors={additionalFillColors}
-        additionalFillEnabled={additionalFillEnabled}
+        additionalFills={additionalFills}
         pattern={pattern}
         palette={unique(
           $d.selection.nodes.flatMap(

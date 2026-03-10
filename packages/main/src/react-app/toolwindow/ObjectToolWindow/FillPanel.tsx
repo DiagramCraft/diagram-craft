@@ -153,8 +153,7 @@ export const FillPanelForm = ({
   imageTint,
   imageTintStrength,
   palette,
-  additionalFillColors,
-  additionalFillEnabled,
+  additionalFills,
   diagram: $d,
   config: $cfg
 }: FormProps) => {
@@ -442,17 +441,14 @@ export const FillPanelForm = ({
         </>
       )}
 
-      {additionalFillColors && additionalFillColors.length > 0 && (
+      {additionalFills && additionalFills.length > 0 && (
         <>
           <div className={'cmp-labeled-table__label'}>Additional:</div>
 
           <div className={'cmp-labeled-table__value util-vstack util-vgap'}>
-            {additionalFillColors.map((color, idx) => (
+            {additionalFills.map(({ color, enabled }, idx) => (
               <div key={idx} className={'util-hstack'}>
-                <PropertyEditor
-                  property={additionalFillEnabled.at(idx) as Property<boolean>}
-                  render={props => <Checkbox {...props} />}
-                />
+                <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
                 <PropertyEditor
                   property={color}
                   render={props => (
@@ -490,8 +486,7 @@ type FormProps = {
   imageSaturation: Property<number>;
   imageTint: Property<string>;
   imageTintStrength: Property<number>;
-  additionalFillColors: Array<Property<string>>;
-  additionalFillEnabled: Array<Property<boolean>>;
+  additionalFills: Array<{ color: Property<string>; enabled: Property<boolean> }>;
   palette?: string[];
   diagram: Diagram;
   config: ConfigurationContextType;
