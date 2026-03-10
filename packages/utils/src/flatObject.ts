@@ -183,11 +183,14 @@ export class FlatObjectMapProxy<T extends object, V = DefaultValue> implements P
    * Proxy trap for getting property descriptors.
    * Returns appropriate descriptors for enumerable properties and special cases like length.
    */
-  getOwnPropertyDescriptor(_target: T, prop: string | symbol): PropertyDescriptor | undefined {
+  getOwnPropertyDescriptor(target: T, prop: string | symbol): PropertyDescriptor | undefined {
     if (this.#isTopLevel && (prop === toJSONProp || prop === deepCloneOverride)) {
       return undefined;
     } else if (prop === lengthProp) {
-      return { writable: true, enumerable: false, configurable: false };
+      // Must match the target's actual length descriptor to satisfy Proxy invariants.
+      // Arrays have length as non-configurable; plain objects do not.
+      const configurable = !Array.isArray(target);
+      return { writable: true, enumerable: false, configurable };
     } else {
       return { enumerable: true, configurable: true, writable: true };
     }

@@ -40,6 +40,7 @@ registerCustomNodeDefaults('umlClass', {
 
 export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
+  additionalFillCount = 1;
 
   constructor() {
     super('umlClass', 'UML Class', UMLClassComponent);
@@ -92,17 +93,25 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
     const nodeProps = props.nodeProps;
     const bounds = props.node.bounds;
 
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all(), props.nodeProps, '1', {
-      style: {
-        fill: 'transparent',
-        stroke: 'transparent'
-      }
-    });
-
-    builder.path(this.getPathBuilder(props.node).getPaths().all(), nodeProps, {});
-
     const titleSize = props.nodeProps.custom.umlClass.size ?? DEFAULT_TITLE_SIZE;
+
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    builder.boundaryPath(boundary.all());
+
+    if (props.nodeProps.additionalFills?.['0']?.enabled) {
+      const strokeWidth = props.nodeProps.stroke.enabled ? props.nodeProps.stroke.width : 0;
+      builder.add(
+        svg.rect({
+          x: props.node.bounds.x + strokeWidth,
+          y: props.node.bounds.y + strokeWidth,
+          width: props.node.bounds.w - 2 * strokeWidth,
+          height: titleSize - 2 * strokeWidth,
+          fill: props.nodeProps.additionalFills['0']?.color ?? 'transparent',
+          stroke: props.nodeProps.additionalFills['0']?.color ?? 'transparent',
+          style: 'pointer-events: none'
+        })
+      );
+    }
 
     const childrenVisible =
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);

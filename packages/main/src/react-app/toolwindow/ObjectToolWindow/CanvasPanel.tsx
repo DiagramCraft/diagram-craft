@@ -175,6 +175,8 @@ export const CanvasPanel = (props: Props) => {
           imageTintStrength={imageTintStrength}
           imageW={imageW}
           pattern={pattern}
+          additionalFillColors={[]}
+          additionalFillEnabled={[]}
         />
       </div>
     </ToolWindowPanel>

@@ -91,6 +91,8 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     });
   }
 
+  additionalFillCount = 0;
+
   protected setFlags(flags: Record<NodeFlag, boolean>) {
     this.flags = { ...this.flags, ...flags };
   }

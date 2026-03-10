@@ -282,11 +282,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    icon: (
-      el: T,
-      label: string,
-      property: PropPath<P>
-    ): IconCustomPropertyType => {
+    icon: (el: T, label: string, property: PropPath<P>): IconCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: labelToId(label),
@@ -301,11 +297,7 @@ const makeCustomPropertyHelper = <T extends DiagramElement, P>() => {
       };
     },
 
-    color: (
-      el: T,
-      label: string,
-      property: PropPath<P>
-    ): ColorCustomPropertyType => {
+    color: (el: T, label: string, property: PropPath<P>): ColorCustomPropertyType => {
       const acc = new DynamicAccessor<P>();
       return {
         id: labelToId(label),
@@ -402,6 +394,7 @@ export interface NodeDefinition {
   name: string;
 
   hasFlag(flag: NodeFlag): boolean;
+  additionalFillCount: number;
 
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 

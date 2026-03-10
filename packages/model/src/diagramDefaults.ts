@@ -290,6 +290,8 @@ const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators
     url: ''
   },
 
+  additionalFills: {},
+
   effects: {
     blur: 0,
     glass: false,
