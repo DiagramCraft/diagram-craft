@@ -60,7 +60,7 @@
 }
 
 .cmp-text-area__max_dialog {
-  .cmp-dialog__content {
+  :global(.cDialog) {
     max-width: 100vw;
     max-height: 100vh;
 
@@ -72,7 +72,6 @@
 
     & > div {
       height: 100%;
-
     }
 
     textarea {
@@ -83,11 +82,11 @@
     padding: 10px 15px 80px 15px;
   }
 
-  .cmp-dialog__description {
+  :global(.eContent) {
     height: 100%;
-  }
 
-  .cmp-dialog__description > * {
-    height: 100%;
+    & > * {
+      height: 100%;
+    }
   }
 }
