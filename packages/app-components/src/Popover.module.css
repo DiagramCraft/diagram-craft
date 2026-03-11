@@ -1,4 +1,10 @@
-.cmp-popover {
+/**
+ *  Portal
+ *  | Popover - .cPopover
+ *  | | Arrow - .eArrow
+ *  | | Close - .eClose
+ */
+.cPopover {
   border-radius: 4px;
   padding: 20px;
   width: 300px;
@@ -16,60 +22,43 @@
 
   height: var(--popup-height, auto);
 
-  &[data-starting-style],
-  &[data-ending-style] {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  .cmp-panel__enabled:focus {
-    box-shadow: none;
-    outline: none;
-  }
-
-  &[data-open][data-side='top'] {
-    animation-name: slideDownAndFade;
-  }
-
-  .cmp-popover__arrow {
+  .eArrow {
     background: transparent;
 
-    width: 0;
-    height: 0;
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
 
     border-bottom: 5px solid var(--panel-bg);
 
-    display: flex;
-
     &[data-side='bottom'] {
       top: -5px;
-      rotate: 0deg;
     }
   }
 
-  .cmp-popover__close {
+  .eClose {
     font-family: inherit;
     background: transparent;
     height: 25px;
     width: 25px;
-    align-items: center;
-    justify-content: center;
     color: var(--accent-fg);
     position: absolute;
     top: 5px;
     right: 5px;
     z-index: 200;
     border: none;
+  }
 
-    &:hover {
-      color: var(--accent-fg);
-    }
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 
-    &:focus {
-      color: var(--accent-fg);
-    }
+  /* TODO: Remove this */
+
+  .cmp-panel__enabled:focus {
+    box-shadow: none;
+    outline: none;
   }
 
   & h2:first-of-type {
@@ -79,4 +68,3 @@
     text-align: left;
   }
 }
-
