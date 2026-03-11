@@ -81,20 +81,20 @@ export const MultiSelect = (props: Props) => {
   if (props.isIndeterminate) {
     return (
       <div
-        className={styles.cmpMultiSelect}
+        className={styles.cMultiSelect}
         {...extractDataAttributes(props)}
         data-field-state="indeterminate"
         style={props.style ?? {}}
       >
-        <div className={styles.cmpMultiSelectContainer}>
-          <div className={styles.cmpMultiSelectTags}>
+        <div className={styles.eContainer}>
+          <div className={styles.eTags}>
             <input
               {...PropsUtils.filterDomProperties(props)}
               type="text"
               value=""
               placeholder="···"
               disabled={true}
-              className={styles.cmpMultiSelectInput}
+              className={styles.eInput}
               readOnly
             />
           </div>
@@ -113,22 +113,19 @@ export const MultiSelect = (props: Props) => {
       disabled={props.disabled}
     >
       <div
-        className={styles.cmpMultiSelect}
+        className={styles.cMultiSelect}
         {...extractDataAttributes(props)}
         data-field-state={props.state}
         data-combobox-root
         style={props.style ?? {}}
       >
-        <div className={styles.cmpMultiSelectContainer}>
-          <div className={styles.cmpMultiSelectTags}>
-            <BaseUICombobox.Chips className={styles.cmpMultiSelectChipsContainer}>
+        <div className={styles.eContainer}>
+          <div className={styles.eTags}>
+            <BaseUICombobox.Chips className={styles.eChips}>
               {props.selectedValues.map((value, index) => (
-                <BaseUICombobox.Chip key={`${value}-${index}`} className={styles.cmpMultiSelectTag}>
-                  <span className={styles.cmpMultiSelectTagText}>{getItemLabel(value)}</span>
-                  <BaseUICombobox.ChipRemove
-                    className={styles.cmpMultiSelectTagRemove}
-                    tabIndex={-1}
-                  >
+                <BaseUICombobox.Chip key={`${value}-${index}`} className={styles.eChip}>
+                  <span className={styles.eChipText}>{getItemLabel(value)}</span>
+                  <BaseUICombobox.ChipRemove className={styles.eChipRemove} tabIndex={-1}>
                     <TbX />
                   </BaseUICombobox.ChipRemove>
                 </BaseUICombobox.Chip>
@@ -137,7 +134,7 @@ export const MultiSelect = (props: Props) => {
 
             <BaseUICombobox.Input
               {...PropsUtils.filterDomProperties(props)}
-              className={styles.cmpMultiSelectInput}
+              className={styles.eInput}
               placeholder={
                 props.selectedValues.length === 0
                   ? (props.placeholder ?? 'Search and select...')
@@ -152,13 +149,13 @@ export const MultiSelect = (props: Props) => {
         {filteredItems.length > 0 && (
           <BaseUICombobox.Portal container={portal}>
             <BaseUICombobox.Positioner side="bottom" align="start" sideOffset={2}>
-              <BaseUICombobox.Popup className={styles.cmpMultiSelectSuggestions}>
+              <BaseUICombobox.Popup className={styles.cMultiSelectSuggestions}>
                 <BaseUICombobox.List>
                   {filteredItems.map(item => (
                     <BaseUICombobox.Item
                       key={item.value}
                       value={item.value}
-                      className={styles.cmpMultiSelectSuggestion}
+                      className={styles.eSuggestion}
                     >
                       {item.label}
                     </BaseUICombobox.Item>
