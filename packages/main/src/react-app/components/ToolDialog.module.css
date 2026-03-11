@@ -30,13 +30,15 @@
     }
   }
 
-  .cmp-button--primary {
+  /* TODO: This is leaky... this assumes internal Button implementation details */
+  
+  *[data-variant="primary"] {
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
     outline: none;
   }
 
-  .cmp-button--secondary {
+  *[data-variant="secondary"] {
     background: var(--accent-bg);
     color: var(--accent-fg);
     border: 1px solid var(--accent-border);

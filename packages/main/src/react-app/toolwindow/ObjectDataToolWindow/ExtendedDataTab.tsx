@@ -17,6 +17,7 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/externalDataHelpers';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DataFields } from './DataFields';
+import { LinkButton } from '@diagram-craft/app-components/Button';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -156,13 +157,13 @@ export const ExtendedDataTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        <LinkButton
+          type={'icon-only'}
           style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
           onClick={() => setEditMode(v => !v)}
         >
           {editMode ? <TbFilterOff /> : <TbFilter />}
-        </a>
+        </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <ToolWindowPanel
@@ -255,33 +256,33 @@ export const ExtendedDataTab = () => {
                       </div>
                       <Accordion.ItemHeaderButtons>
                         {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
+                          <LinkButton
+                            type={'icon-only'}
                             style={{ marginRight: '0.5rem' }}
                             onClick={() => editExternalData(schema.id)}
                             title="Edit external data"
                           >
                             <TbPencil />
-                          </a>
+                          </LinkButton>
                         )}
                         {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
+                          <LinkButton
+                            type={'icon-only'}
                             onClick={() => clearExternalLinkage(schema.id)}
                             title="Unlink external data"
                             style={{ color: 'var(--accent-fg)' }}
                           >
                             <TbLinkOff />
-                          </a>
+                          </LinkButton>
                         )}
                         {!isExternal && isExternalSchema && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
+                          <LinkButton
+                            type={'icon-only'}
                             onClick={() => addExternalLinkage(schema)}
                             title="Link to external data"
                           >
                             <TbLink />
-                          </a>
+                          </LinkButton>
                         )}
                       </Accordion.ItemHeaderButtons>
                     </Accordion.ItemHeader>

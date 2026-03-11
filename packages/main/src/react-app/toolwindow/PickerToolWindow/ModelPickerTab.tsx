@@ -22,7 +22,7 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { Button } from '@diagram-craft/app-components/Button';
+import { Button, LinkButton } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -270,8 +270,8 @@ const DataProviderGridView = (props: DataViewProps) => {
       value={true}
       headerButtons={
         <div style={{ gap: '0.5rem', display: 'flex' }}>
-          <a
-            className={'cmp-button--icon-only'}
+          <LinkButton
+            type={'icon-only'}
             onClick={() => {
               app.actions['EXTERNAL_DATA_LINK_RENAME_TEMPLATE']?.execute({
                 templateId: t.id
@@ -279,10 +279,10 @@ const DataProviderGridView = (props: DataViewProps) => {
             }}
           >
             <TbPencil />
-          </a>
-          <a className={'cmp-button--icon-only'} onClick={() => handleDeleteTemplate(t)}>
+          </LinkButton>
+          <LinkButton type={'icon-only'} onClick={() => handleDeleteTemplate(t)}>
             <TbTrash />
-          </a>
+          </LinkButton>
         </div>
       }
     >
@@ -628,8 +628,8 @@ export const ModelPickerTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        <LinkButton
+          type={'icon-only'}
           aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
@@ -643,9 +643,9 @@ export const ModelPickerTab = () => {
           }}
         >
           <TbRefresh />
-        </a>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        </LinkButton>
+        <LinkButton
+          type={'icon-only'}
           onClick={() => {
             application.ui.showDialog(
               new ModelCenterDialogCommand(
@@ -657,7 +657,7 @@ export const ModelPickerTab = () => {
           }}
         >
           <TbSettings />
-        </a>
+        </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <Accordion.Root type="multiple" defaultValue={['query', 'response']}>

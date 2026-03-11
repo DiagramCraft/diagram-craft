@@ -13,6 +13,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
 import type { Property } from '@diagram-craft/model/property';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -358,7 +359,7 @@ export const FillPanelForm = ({
           <div className={'cmp-labeled-table__value'}>
             <div style={{ display: 'flex', alignItems: 'top' }}>
               <label
-                className={'cmp-button'}
+                className={buttonStyles.cButton}
                 style={{ fontSize: '11px', justifyContent: 'left' }}
                 htmlFor={'fill-file-upload'}
               >

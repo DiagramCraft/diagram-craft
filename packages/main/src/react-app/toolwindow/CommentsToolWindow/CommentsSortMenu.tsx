@@ -22,7 +22,7 @@ export const CommentsSortMenu = ({
 }: CommentsSortMenuProps) => {
   return (
     <MenuButton.Root>
-      <MenuButton.Trigger className={'cmp-button cmp-button--icon-only'}>
+      <MenuButton.Trigger type={'icon-only'}>
         <TbArrowsSort />
       </MenuButton.Trigger>
       <MenuButton.Menu>

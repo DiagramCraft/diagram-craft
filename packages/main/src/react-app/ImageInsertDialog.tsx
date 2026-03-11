@@ -6,6 +6,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
+import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 
 type DirEntry = {
   name: string;
@@ -97,7 +98,7 @@ export const ImageInsertDialog = (props: Props) => {
         </Tabs.List>
         <Tabs.Content value={'device'}>
           <label
-            className={'cmp-button'}
+            className={buttonStyles.cButton}
             style={{ fontSize: '11px', justifyContent: 'left' }}
             htmlFor={'file-upload'}
           >

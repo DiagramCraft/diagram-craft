@@ -1,4 +1,4 @@
-.cmp-button {
+.cButton {
   flex: 0 0 auto;
   color: var(--cmp-fg);
   height: 23px;
@@ -14,6 +14,46 @@
   margin: 0;
   width: fit-content !important;
   box-sizing: content-box;
+
+  &[data-variant="primary"] {
+    outline: 1px solid var(--cmp-border-focus);
+    outline-offset: -1px;
+  }
+
+  &[data-variant="danger"] {
+    border: 1px solid var(--error-fg);
+    color: var(--error-fg);
+
+    &:focus,
+    &[data-focus="true"] {
+      position: relative;
+      box-shadow: 0 0 0 2px var(--error-fg);
+      outline: none;
+      border: 1px solid transparent;
+    }
+
+    &:disabled {
+      border: 1px solid var(--cmp-border);
+    }
+  }
+
+  &[data-variant="icon-only"] {
+    padding: 0;
+    margin: 0;
+    background: none;
+    appearance: none;
+    border: 1px solid transparent;
+
+    &:hover,
+    &[data-hover="true"] {
+      background: none;
+      color: var(--accent-fg);
+    }
+
+    &:disabled {
+      border: 1px solid transparent;
+    }
+  }
 
   &:hover,
   &[data-hover="true"] {
@@ -32,47 +72,6 @@
     color: var(--cmp-fg-disabled);
     border: 1px solid var(--cmp-border);
     pointer-events: none;
-  }
-}
-
-.cmp-button--primary {
-  outline: 1px solid var(--cmp-border-focus);
-  outline-offset: -1px;
-}
-
-.cmp-button--danger {
-  border: 1px solid var(--error-fg);
-  color: var(--error-fg);
-
-  &:focus,
-  &[data-focus="true"] {
-    position: relative;
-    box-shadow: 0 0 0 2px var(--error-fg);
-    outline: none;
-    border: 1px solid transparent;
-  }
-
-  &:disabled {
-    border: 1px solid var(--cmp-border);
-  }
-}
-
-.cmp-button--icon-only {
-  padding: 0;
-  margin: 0;
-  background: none;
-  appearance: none;
-  font-size: 11px;
-  border: 1px solid transparent;
-
-  &:hover,
-  &[data-hover="true"] {
-    background: none;
-    color: var(--accent-fg);
-  }
-
-  &:disabled {
-    border: 1px solid transparent;
   }
 }
 
