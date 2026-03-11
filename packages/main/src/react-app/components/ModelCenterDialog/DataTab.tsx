@@ -259,9 +259,9 @@ export const DataTab = () => {
     selectedItems.size > 0 && selectedItemsWithOverrides.length === selectedItems.size;
 
   return (
-    <>
-      <div className={styles.dataTabHeader}>
-        <p className={styles.dataTabTitle}>Data</p>
+    <div className={styles.icDataTab}>
+      <div className={styles.eHeader}>
+        <p className={styles.eTitle}>Data</p>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Button
             type="secondary"
@@ -282,7 +282,7 @@ export const DataTab = () => {
           <MenuButton.Root>
             <MenuButton.Trigger
               type="secondary"
-              className={styles.dataTabAddButton}
+              className={styles.eAddBtn}
               disabled={!(canMutateData && hasSchemas)}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -304,14 +304,14 @@ export const DataTab = () => {
       </div>
 
       {!hasSchemas && (
-        <div className={styles.dataTabMessageBox}>
+        <div className={styles.eMessage}>
           <p>No schemas available</p>
           <p>Create schemas in the Schemas tab before adding data.</p>
         </div>
       )}
 
       {!canMutateData && (
-        <div className={`${styles.dataTabMessageBox}`}>
+        <div className={styles.eMessage}>
           <p>The current data provider does not support data management.</p>
           <p>Switch to a different provider (like REST API) to manage data.</p>
         </div>
@@ -319,9 +319,9 @@ export const DataTab = () => {
 
       {hasSchemas && (
         <>
-          <div className={styles.dataTabSearchControls}>
+          <div className={styles.eSearchControls}>
             <div>
-              <label className={styles.dataTabFilterLabel}>Filter by Schema:</label>
+              <label className={styles.eFilterLabel}>Filter by Schema:</label>
               <Select.Root value={selectedSchemaId} onChange={v => setSelectedSchemaId(v ?? 'all')}>
                 <Select.Item value="all">All Schemas ({allDataItems.length} items)</Select.Item>
                 {db.schemas.map(schema => {
@@ -335,8 +335,8 @@ export const DataTab = () => {
             </div>
 
             <div>
-              <label className={styles.dataTabFilterLabel}>Search:</label>
-              <div className={styles.dataTabSearchInputGroup}>
+              <label className={styles.eFilterLabel}>Search:</label>
+              <div className={styles.eInputGroup}>
                 <TextInput
                   ref={searchRef}
                   value={searchText}
@@ -353,7 +353,7 @@ export const DataTab = () => {
                       searchRef.current?.blur();
                     }
                   }}
-                  className={styles.dataTabSearchInput}
+                  className={styles.eSearchInput}
                 />
                 <Button
                   type="secondary"
@@ -368,7 +368,7 @@ export const DataTab = () => {
 
           {/* Data Results */}
           {filteredDataItems.length === 0 && (
-            <div className={styles.dataTab__messageBox}>
+            <div className={styles.eMessage}>
               {allDataItems.length === 0 ? (
                 <p>No data items yet</p>
               ) : (
@@ -378,7 +378,7 @@ export const DataTab = () => {
           )}
 
           {filteredDataItems.length > 0 && (
-            <table className={styles.dataTabTable}>
+            <table className={styles.eTable}>
               <thead>
                 <tr>
                   <th style={{ width: '40px' }}>
@@ -427,15 +427,12 @@ export const DataTab = () => {
                             )
                           : '-'}
                       </td>
-                      <td
-                        data-status={overrideStatus.status}
-                        className={styles.dataTabOverrideStatus}
-                      >
+                      <td data-status={overrideStatus.status} className={styles.eOverrideStatus}>
                         {overrideStatus.text}
                       </td>
                       {canMutateData && (
                         <td>
-                          <div className={styles.dataTabTableActions}>
+                          <div className={styles.eActions}>
                             <Button
                               type="icon-only"
                               onClick={() =>
@@ -477,6 +474,6 @@ export const DataTab = () => {
         selectedSchema={editItemDialog.schema?.id}
         editItem={editItemDialog.item}
       />
-    </>
+    </div>
   );
 };

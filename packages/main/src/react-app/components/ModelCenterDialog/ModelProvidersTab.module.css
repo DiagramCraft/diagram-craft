@@ -1,89 +1,85 @@
-/* Stack layout */
+.icProvidersEditDialog {
+  .eContent {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 
-.model-providers-tab__stack {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    .eGroup {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+
+      .eLabel {
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+    }
+
+    .eFieldStack {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .eSettingsGroup {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+
+        .eLabel {
+          display: block;
+          margin-bottom: 0.2rem;
+        }
+      }
+    }
+  }
 }
 
-/* Provider Selection */
+.icMessage {
+  &[data-type="error"] {
+    color: var(--error-fg);
+  }
 
-.model-providers-tab__provider-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  &[data-type="success"] {
+    color: var(--success-fg);
+  }
 }
 
-.model-providers-tab__provider-label {
-  display: block;
-  margin-bottom: 0.2rem;
-}
+.icModelProvidersTab {
+  .eFieldStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 
-/* Settings Groups */
+    .eTabHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
-.model-providers-tab__settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
+      .eTitle {
+        margin: 0;
+      }
 
-.model-providers-tab__settings-label {
-  display: block;
-  margin-bottom: 0.2rem;
-}
+      .eActions {
+        display: flex;
+        gap: 0.5rem;
+      }
+    }
 
-/* Messages */
+    .eEmptyState {
+      padding: 2rem;
+      text-align: center;
+      background-color: var(--base-bg-dim);
+      border-radius: 6px;
+    }
 
-.model-providers-tab__error-message {
-  color: var(--error-fg);
-}
+    .eTable {
+      width: 100%;
+      border-collapse: collapse;
 
-.model-providers-tab__success-message {
-  color: var(--success-fg);
-}
-
-/* Header */
-
-.model-providers-tab__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.model-providers-tab__title {
-  margin: 0;
-}
-
-.model-providers-tab__header-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* Empty State */
-
-.model-providers-tab__empty-state {
-  padding: 2rem;
-  text-align: center;
-  background-color: var(--base-bg-dim);
-  border-radius: 6px;
-}
-
-/* Provider Table */
-
-.model-providers-tab__table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.model-providers-tab__table-actions {
-  display: flex;
-  gap: 4px;
-}
-
-/* Dialog */
-
-.model-providers-tab__dialog-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+      .eActions {
+        display: flex;
+        gap: 4px;
+      }
+    }
+  }
 }
