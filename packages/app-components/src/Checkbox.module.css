@@ -1,4 +1,9 @@
-.cmp-checkbox:indeterminate::before {
-  clip-path: polygon(0% 40%, 0% 60%, 100% 60%, 100% 40%);
-  transform: scale(1);
+/**
+ *  Checkbox - .cCheckbox
+ */
+.cCheckbox {
+  &:indeterminate::before {
+    clip-path: polygon(0% 40%, 0% 60%, 100% 60%, 100% 40%);
+    transform: scale(1);
+  }
 }

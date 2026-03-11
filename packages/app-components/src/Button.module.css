@@ -1,3 +1,6 @@
+/**
+ *  Button - .cButton - data-variant={primary,danger,icon-only}
+ */
 .cButton {
   flex: 0 0 auto;
   color: var(--cmp-fg);

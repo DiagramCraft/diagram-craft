@@ -22,7 +22,7 @@ export const Checkbox = (props: Props) => {
         {...extractMouseEvents(props)}
         ref={ref}
         type="checkbox"
-        className={styles.cmpCheckbox}
+        className={styles.cCheckbox}
         checked={props.value}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         onChange={e => {
@@ -44,19 +44,19 @@ export const FancyCheckbox = (props: Props) => {
 
   return (
     <ToggleButtonGroup.Root
-        type={'single'}
-        value={props.value ? 'set' : ''}
-        data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
-        onChange={value => {
-          props.onChange(value === 'set');
-        }}
-      >
-        <ToggleButtonGroup.Item value={'set'}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {getIcon()} {props.label}
-          </div>
-        </ToggleButtonGroup.Item>
-      </ToggleButtonGroup.Root>
+      type={'single'}
+      value={props.value ? 'set' : ''}
+      data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
+      onChange={value => {
+        props.onChange(value === 'set');
+      }}
+    >
+      <ToggleButtonGroup.Item value={'set'}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {getIcon()} {props.label}
+        </div>
+      </ToggleButtonGroup.Item>
+    </ToggleButtonGroup.Root>
   );
 };
 
