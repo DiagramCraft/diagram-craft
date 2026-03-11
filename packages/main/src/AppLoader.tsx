@@ -54,8 +54,9 @@ const loadInitialDocument = async (
 
       if (multiWindowAutosaved) {
         console.log('Load from auto save');
-        multiWindowAutosaved.document.url = diagram.url;
-        return { doc: multiWindowAutosaved.document, url: diagram.url };
+        const restoredUrl = multiWindowAutosaved.url ?? diagram.url;
+        multiWindowAutosaved.document.url = restoredUrl;
+        return { doc: multiWindowAutosaved.document, url: restoredUrl };
       } else {
         console.log('Load from url');
         const defDiagram = await loadFileFromUrl(
