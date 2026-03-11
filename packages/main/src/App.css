@@ -368,7 +368,7 @@ table {
     display: flex;
     gap: 0.25rem;
 
-    .cmp-toolbar__button[data-pressed] {
+    .cToolbar > .eButton[data-pressed] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }
@@ -429,7 +429,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-pressed] {
+  .cToolbar > .eButton[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -460,7 +460,7 @@ table {
   border-top: 1px solid var(--panel-border);
   width: auto;
 
-  .cmp-toolbar__button[data-pressed] {
+  .cToolbar > .eButton[data-pressed] {
     background-color: var(--accent-bg);
     color: var(--accent-fg);
   }
@@ -496,7 +496,7 @@ table {
     }
   }
 
-  .cmp-toolbar {
+  .cToolbar {
     background-color: var(--panel-bg);
   }
 }
@@ -773,7 +773,7 @@ foreignObject {
     border-bottom: none;
   }
 
-  > .cmp-toolbar {
+  > .cToolbar {
     padding: 3px 0 3px 3px;
     margin: 0;
     width: calc(100% + 20px);
@@ -1096,14 +1096,14 @@ foreignObject {
 /* Adjustments of general components for specific use-cases */
 
 #menu {
-  .cmp-toolbar {
+  .cToolbar {
     overflow: auto;
     flex-wrap: nowrap;
     padding: 2px 2px;
   }
 }
 
-.cmp-toolbar {
+.cToolbar {
   div:has(> .cSelectTrigger) {
     margin-top: -2px;
   }

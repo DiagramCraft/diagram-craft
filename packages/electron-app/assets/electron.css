@@ -25,28 +25,28 @@
   padding-top: 2px;
 
   ._tools {
-    .cmp-toolbar__button[data-pressed] {
+    .cToolbar > .eButton[data-pressed] {
       background-color: #4F4F4F !important;
       color: #F3F3F3 !important;
     }
   }
 
-  .cmp-toolbar__button[data-pressed] {
+  .cToolbar > .eButton[data-pressed] {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
   }
 
-  .cmp-toolbar__button:hover, .cmp-toolbar__button:focus {
+  .cToolbar > .eButton:hover, .cToolbar > .eButton:focus {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
     box-shadow: none !important;
   }
 
-  .cmp-toolbar__button:focus:not(:hover) {
+  .cToolbar > .eButton:focus:not(:hover) {
     background-color: transparent !important;
   }
 
-  .cmp-toolbar__separator {
+  .cToolbar > .eSeparator {
     background-color: #3F3F3F !important;
   }
 }

@@ -30,7 +30,8 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       modules: {
         exportGlobals: true,
         scopeBehaviour: 'global',
-        localsConvention: 'camelCase'
+        localsConvention: 'camelCase',
+        globalModulePaths: [/Toolbar.module.css/]
       }
     },
     resolve: {

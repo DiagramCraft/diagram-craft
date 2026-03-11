@@ -27,6 +27,7 @@
     position: relative;
 
     .eTrigger {
+      font-size: 12px;
       padding: 7.75px 9px;
       background: none;
       color: var(--panel-fg);

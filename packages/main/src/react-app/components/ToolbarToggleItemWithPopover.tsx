@@ -19,7 +19,7 @@ export const ToolbarToggleItemWithPopover = (props: Props) => {
       <Popover.Root>
         <Popover.Trigger
           element={
-            <Toolbar.Button isOverflow>
+            <Toolbar.Button isDropdown>
               <TbChevronDown />
             </Toolbar.Button>
           }
