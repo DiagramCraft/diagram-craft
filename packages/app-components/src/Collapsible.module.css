@@ -1,12 +1,21 @@
-.cmp-collapsible {
+/**
+ *  Collapsible - .cAccordion
+ *  | Trigger - .eTrigger
+ *  | | TriggerInner - .eTriggerInner
+ *  | Content - .eContent
+ */
+.cCollapsible {
+  /* Default value */
+  --collapsible-panel-height: 1rem;
+
   min-width: 10rem;
 
-  .cmp-collapsible__trigger {
+  .eTrigger {
     position: relative;
     z-index: 5;
     color: var(--base-fg-dim);
 
-    .cmp-collapsible__trigger_inner {
+    .eTriggerInner {
       width: 100%;
       background-color: transparent;
       padding: 0;
@@ -28,7 +37,9 @@
     }
   }
 
-  .cmp-collapsible__content {
+  /* TODO: Remove the :local when we move to local names */
+
+  :local(.eContent) {
     margin-top: 0.5rem;
     will-change: height;
     margin-left: 1px;

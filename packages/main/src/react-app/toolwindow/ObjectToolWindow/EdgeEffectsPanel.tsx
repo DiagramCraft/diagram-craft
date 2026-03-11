@@ -34,86 +34,96 @@ export const EdgeEffectsPanelForm = ({
 }: FormProps) => {
   return (
     <div className={'cmp-labeled-table'}>
-      <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Opacity:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={opacity}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} />}
-            />
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Opacity:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={opacity}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} />}
+              />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
 
-      <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
-          </div>
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Enabled:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
+            </div>
 
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={sketchStrength}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} max={25} />}
-            />
+            <div className={'cmp-labeled-table__label'}></div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={sketchStrength}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} max={25} />}
+              />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
 
-      <Collapsible label={'Marching Ants'} defaultOpen={marchingAnts.isSet && marchingAnts.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={marchingAnts} render={props => <Checkbox {...props} />} />
-          </div>
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Marching Ants'} defaultOpen={marchingAnts.isSet && marchingAnts.val}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Enabled:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor property={marchingAnts} render={props => <Checkbox {...props} />} />
+            </div>
 
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={marchingAntsSpeed}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} max={100} />}
-            />
+            <div className={'cmp-labeled-table__label'}></div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={marchingAntsSpeed}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} max={100} />}
+              />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
 
-      <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
-          </div>
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Enabled:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
+            </div>
 
-          <div className={'cmp-labeled-table__label'}></div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={roundingAmount}
-              render={props => <Slider {...props} max={100} unit={'px'} />}
-            />
+            <div className={'cmp-labeled-table__label'}></div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={roundingAmount}
+                render={props => <Slider {...props} max={100} unit={'px'} />}
+              />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
 
-      <Collapsible label={'Dash Offset'} defaultOpen={dashOffset.isSet && dashOffset.val !== 0}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Offset:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={dashOffset}
-              render={props => <NumberInput {...props} numberOfDecimals={0} min={-10} max={10} />}
-            />
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Dash Offset'} defaultOpen={dashOffset.isSet && dashOffset.val !== 0}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Offset:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={dashOffset}
+                render={props => <NumberInput {...props} numberOfDecimals={0} min={-10} max={10} />}
+              />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
     </div>
   );
 };

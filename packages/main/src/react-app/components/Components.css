@@ -222,10 +222,6 @@
     align-items: center;
     font-size: 11px;
   }
-
-  .cmp-collapsible {
-    grid-column: 1/3;
-  }
 }
 
 

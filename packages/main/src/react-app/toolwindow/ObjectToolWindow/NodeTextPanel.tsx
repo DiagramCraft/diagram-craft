@@ -358,26 +358,28 @@ export const NodeTextPanelForm = ({
       </div>
 
       <div style={{ marginTop: '0.5rem' }}></div>
-      <Collapsible label={'Advanced'}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Line height:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={lineHeight}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => (
-                <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
-              )}
-            />
-          </div>
+      <div className={'cmp-labeled-table__row'}>
+        <Collapsible label={'Advanced'}>
+          <div className={'cmp-labeled-table'}>
+            <div className={'cmp-labeled-table__label'}>Line height:</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor
+                property={lineHeight}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => (
+                  <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
+                )}
+              />
+            </div>
 
-          <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={shrink} render={props => <Checkbox {...props} />} />
+            <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
+            <div className={'cmp-labeled-table__value'}>
+              <PropertyEditor property={shrink} render={props => <Checkbox {...props} />} />
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
     </>
   );
 };

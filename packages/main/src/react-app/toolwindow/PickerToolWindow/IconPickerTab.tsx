@@ -26,7 +26,6 @@ const service: IconService = new IconifyIconService();
 const PAGE_SIZE = 30;
 const SEARCH_PAGE_SIZE = 60;
 
-
 const IconGrid = (props: {
   icons: string[];
   getUrl: (icon: string) => string;
@@ -340,15 +339,17 @@ export const IconPickerTab = () => {
                     {entries
                       .toSorted(([, a], [, b]) => a.name.localeCompare(b.name))
                       .map(([prefix, info]) => (
-                        <Collapsible key={prefix} label={info.name}>
-                          <CollectionIconsPanel
-                            service={service}
-                            prefix={prefix}
-                            cachedData={loadedIcons.get(prefix)}
-                            onLoad={handleIconLoad}
-                            onIconMouseDown={handleIconMouseDown}
-                          />
-                        </Collapsible>
+                        <div key={prefix} className={'cmp-labeled-table__row'}>
+                          <Collapsible label={info.name}>
+                            <CollectionIconsPanel
+                              service={service}
+                              prefix={prefix}
+                              cachedData={loadedIcons.get(prefix)}
+                              onLoad={handleIconLoad}
+                              onIconMouseDown={handleIconMouseDown}
+                            />
+                          </Collapsible>
+                        </div>
                       ))}
                   </div>
                 </Accordion.ItemContent>

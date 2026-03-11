@@ -7,15 +7,15 @@ export const Collapsible = (props: Props) => {
   const [open, setOpen] = useState(props.defaultOpen ?? false);
   return (
     <BaseUICollapsible.Root
-      className={styles.cmpCollapsible}
+      className={styles.cCollapsible}
       open={open}
       onOpenChange={setOpen}
       defaultOpen={props.defaultOpen}
     >
-      <div className={styles.cmpCollapsibleTrigger}>
+      <div className={styles.eTrigger}>
         <BaseUICollapsible.Trigger
           render={p => (
-            <button {...p} type="button" className={styles.cmpCollapsibleTriggerInner}>
+            <button {...p} type="button" className={styles.eTriggerInner}>
               <div>{props.label}</div>
               <div>{open ? <TbMinus /> : <TbPlus />}</div>
             </button>
@@ -23,7 +23,7 @@ export const Collapsible = (props: Props) => {
         />
       </div>
 
-      <BaseUICollapsible.Panel className={styles.cmpCollapsibleContent}>
+      <BaseUICollapsible.Panel className={styles.eContent}>
         {props.children}
       </BaseUICollapsible.Panel>
     </BaseUICollapsible.Root>

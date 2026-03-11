@@ -65,34 +65,36 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
   const $cfg = useConfiguration();
   const $d = useDiagram();
   return (
-    <Collapsible label={'Tint'}>
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <PropertyEditor
-            property={props.tint}
-            render={props => (
-              <ColorPicker
-                {...props}
-                palette={$cfg.palette.primary}
-                canClearColor={true}
-                customPalette={$d.document.customPalette}
-                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              />
-            )}
-          />
+    <div className={'cmp-labeled-table__row'}>
+      <Collapsible label={'Tint'}>
+        <div className={'cmp-labeled-table'}>
+          <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={props.tint}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  canClearColor={true}
+                  customPalette={$d.document.customPalette}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
+            />
+          </div>
+          <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
+          <div className={'cmp-labeled-table__value'}>
+            <PropertyEditor
+              property={props.tintStrength}
+              formatValue={v => round(v * 100)}
+              storeValue={v => v / 100}
+              render={props => <Slider {...props} />}
+            />
+          </div>
         </div>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <PropertyEditor
-            property={props.tintStrength}
-            formatValue={v => round(v * 100)}
-            storeValue={v => v / 100}
-            render={props => <Slider {...props} />}
-          />
-        </div>
-      </div>
-    </Collapsible>
+      </Collapsible>
+    </div>
   );
 };
 
@@ -101,39 +103,41 @@ const ImageAdjustments = (props: {
   brightness: Property<number>;
   saturation: Property<number>;
 }) => (
-  <Collapsible label={'Adjustments'}>
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.contrast}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
-      </div>
+  <div className={'cmp-labeled-table__row'}>
+    <Collapsible label={'Adjustments'}>
+      <div className={'cmp-labeled-table'}>
+        <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={props.contrast}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </div>
 
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.brightness}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
-      </div>
+        <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={props.brightness}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </div>
 
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.saturation}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
+        <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
+        <div className={'cmp-labeled-table__value'}>
+          <PropertyEditor
+            property={props.saturation}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </div>
       </div>
-    </div>
-  </Collapsible>
+    </Collapsible>
+  </div>
 );
 
 export const FillPanelForm = ({
