@@ -39,6 +39,7 @@ export const RuleEditorDialog = (props: Props) => {
     <Dialog
       open={props.open}
       onClose={props.onCancel ?? (() => {})}
+      className={styles.icRuleEditorDialog}
       buttons={[
         {
           type: 'cancel',
@@ -66,7 +67,7 @@ export const RuleEditorDialog = (props: Props) => {
       ]}
       title={'Rule Editor'}
     >
-      <div className={styles.ruleEditor__container}>
+      <div className={styles.eContent}>
         <div>
           <label>{'Name'}:</label>
           <TextInput ref={ref} value={rule.name} size={40} />
@@ -83,17 +84,17 @@ export const RuleEditorDialog = (props: Props) => {
               }}
             >
               <ToggleButtonGroup.Item value={'node'}>
-                <div className={styles.ruleEditor__typeButtonContainer}>
+                <div className={styles.eTypeButton}>
                   <TbPentagon /> Node
                 </div>
               </ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value={'edge'}>
-                <div className={styles.ruleEditor__typeButtonContainer}>
+                <div className={styles.eTypeButton}>
                   <TbLine /> Edge
                 </div>
               </ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value={'advanced'}>
-                <div className={styles.ruleEditor__typeButtonContainer}>
+                <div className={styles.eTypeButton}>
                   <TbPencilCode /> Advanced
                 </div>
               </ToggleButtonGroup.Item>

@@ -1,30 +1,62 @@
-.ruleEditor__sectionTitle {
-  margin: 1rem 0 0 0;
-}
-
-/* TODO: These are duplicates of styles in RuleEditorDialog.simple.module.css */
-.ruleEditor__clause {
-  width: 100%;
+.icRuleEditorSubDialogAdvanced {
+  margin-top: 0.5rem;
   display: grid;
-  gap: 0.5rem;
-  grid-template-areas: "select select props buttons" "empty extra extra extra";
-  grid-template-columns: 1rem max-content 1fr max-content;
-  grid-template-rows: min-content max-content;
+  gap: 0.25rem;
+
+  .eHeader {
+    display: flex;
+    align-items: center;
+    margin-top: 0.25rem;
+
+    .eTitle {
+      margin: 0;
+    }
+  }
+
+  .eEmpty {
+    color: var(--base-fg-dim);
+  }
+
+  .eTriggers {
+    .eClause {
+      width: 100%;
+      display: grid;
+      gap: 0.5rem;
+      grid-template-areas: "select select props buttons" "empty extra extra extra";
+      grid-template-columns: 1rem max-content 1fr max-content;
+      grid-template-rows: min-content max-content;
+
+      .eSelect {
+        grid-area: select;
+      }
+
+      .eProps {
+        grid-area: props;
+
+        .ePropsRow {
+          display: flex;
+          gap: 0.5rem;
+        }
+      }
+
+      .eButtons {
+        grid-area: buttons;
+      }
+    }
+  }
+
+  .eCode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+
+    .eButtons {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
 }
 
-.ruleEditorClause__select {
-  grid-area: select;
-}
-
-.ruleEditorClause__props {
-  grid-area: props;
-}
-
-.ruleEditorClause__propsRow {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.ruleEditorClause__buttons {
-  grid-area: buttons;
-}

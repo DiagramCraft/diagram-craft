@@ -1,11 +1,13 @@
-.ruleEditor__container {
-  display: grid;
-  gap: 0.5rem;
-  min-width: 35rem;
-  grid-template-columns: 1fr max-content;
-}
+.icRuleEditorDialog {
+  .eContent {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 35rem;
+    grid-template-columns: 1fr max-content;
+  }
 
-.ruleEditor__typeButtonContainer {
-  display: flex;
-  gap: 0.5rem;
+  .eTypeButton {
+    display: flex;
+    gap: 0.5rem;
+  }
 }
