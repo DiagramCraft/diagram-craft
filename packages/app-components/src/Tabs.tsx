@@ -5,7 +5,7 @@ import { Tabs as BaseUITabs } from '@base-ui/react/tabs';
 const Root = (props: RootProps) => {
   return (
     <BaseUITabs.Root
-      className={styles.cmpTabs}
+      className={styles.cTabs}
       value={props.value}
       defaultValue={props.defaultValue}
       onValueChange={props.onValueChange}
@@ -23,7 +23,7 @@ type RootProps = {
 };
 
 const List = (props: ListProps) => {
-  return <BaseUITabs.List className={styles.cmpTabsList}>{props.children}</BaseUITabs.List>;
+  return <BaseUITabs.List className={styles.eList}>{props.children}</BaseUITabs.List>;
 };
 
 type ListProps = {
@@ -32,7 +32,7 @@ type ListProps = {
 
 const Trigger = (props: TriggerProps) => {
   return (
-    <BaseUITabs.Tab className={styles.cmpTabsTrigger} value={props.value} disabled={props.disabled}>
+    <BaseUITabs.Tab className={styles.eTrigger} value={props.value} disabled={props.disabled}>
       {props.children}
     </BaseUITabs.Tab>
   );
@@ -46,11 +46,7 @@ type TriggerProps = {
 
 const Content = (props: ContentProps) => {
   return (
-    <BaseUITabs.Panel
-      className={styles.cmpTabsContent}
-      value={props.value}
-      style={props.style ?? {}}
-    >
+    <BaseUITabs.Panel className={styles.eContent} value={props.value} style={props.style ?? {}}>
       {props.children}
     </BaseUITabs.Panel>
   );

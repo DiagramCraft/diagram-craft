@@ -1,50 +1,55 @@
-.cmp-tabs {
+/**
+ *  Tabs - .cTabs
+ *  | List - .eList
+ *  | | Trigger [1..*] - .eTrigger
+ *  | Content [1..*] - .eContent
+ */
+:global(.cTabs) {
   display: flex;
   flex-direction: column;
   width: 100%;
 
   --tab-height: 33.5px;
-}
 
-.cmp-tabs__list {
-  font-family: inherit;
-  padding: 0;
-  font-size: 12px;
-  font-weight: bold;
-  line-height: 1;
-  background-color: var(--panel-bg);
-  border-bottom: 1px solid var(--panel-border);
-  height: var(--tab-height);
+  .eList {
+    font-family: inherit;
+    padding: 0;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+    background-color: var(--panel-bg);
+    border-bottom: 1px solid var(--panel-border);
+    height: var(--tab-height);
 
-  display: flex;
-  gap: 5px;
-  width: 100%;
-  position: relative;
-}
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    position: relative;
 
-.cmp-tabs__trigger {
-  padding: 7.75px 9px;
-  background: none;
-  color: var(--panel-fg);
-  font-size: 12px;
-  border-width: 0;
-  position: relative;
-  border-bottom: 2px solid transparent;
+    .eTrigger {
+      padding: 7.75px 9px;
+      background: none;
+      color: var(--panel-fg);
+      border-width: 0;
+      position: relative;
+      border-bottom: 2px solid transparent;
 
-  &[data-active] {
-    border-bottom: 2px solid var(--accent-chroma);
+      &[data-active] {
+        border-bottom: 2px solid var(--accent-chroma);
+      }
+
+      &:disabled {
+        color: var(--cmp-fg-disabled);
+      }
+    }
   }
 
-  &:disabled {
-    color: var(--cmp-fg-disabled);
-  }
-}
+  :global(.eContent) {
+    padding: 0.5rem 0;
+    height: 12rem;
 
-.cmp-tabs__content {
-  padding: 0.5rem 0;
-  height: 12rem;
-
-  &:focus-visible {
-    outline: none;
+    &:focus-visible {
+      outline: none;
+    }
   }
 }

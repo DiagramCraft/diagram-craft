@@ -1,6 +1,6 @@
 .model-center-dialog {
 
-  .cmp-tabs__content {
+  :global(.cTabs) > :global(.eContent) {
     height: 100%;
     padding: 1rem;
     display: flex;

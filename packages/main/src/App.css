@@ -487,9 +487,9 @@ table {
 .cmp-sidebar {
   position: relative;
 
-  .cmp-tabs__content {
-    height: initial;
+  :global(.cTabs) > :global(.eContent) {
     padding: 0;
+    height: initial;
 
     &:not(:has(.cmp-panel__headless)) {
       padding-top: 0;
