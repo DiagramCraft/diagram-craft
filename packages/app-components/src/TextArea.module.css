@@ -1,4 +1,11 @@
-.cmp-text-area {
+/**
+ *  TextArea - .cTextArea
+ *  | TextArea - .eTextArea
+ *  | Maximize - .eMaximize
+ *
+ *  TextAreaMaximizedDialog - .cTextAreaMaximizedDialog
+ */
+.cTextArea {
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
@@ -6,24 +13,7 @@
   padding: 1px 0 0 3px;
   line-height: 1;
 
-  &:focus-within,
-  &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-border-shadow-focus) !important;
-  }
-
-  &[data-error='true'] {
-    color: var(--error-fg);
-
-    > textarea {
-      color: var(--error-fg);
-    }
-  }
-
-  &:has(> textarea:disabled) {
-    border-color: transparent;
-  }
-
-  > textarea {
+  .eTextArea {
     color: var(--panel-fg);
     border: none;
     background: none;
@@ -39,27 +29,44 @@
       color: var(--cmp-fg-disabled);
     }
   }
-}
 
-.cmp-text-area__resize {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: 0.125rem;
-  background: transparent;
-  color: var(--cmp-fg-dimmed);
-  display: flex;
-  align-Items: center;
-  justify-content: center;
-  z-index: 200;
-  cursor: pointer;
+  .eMaximize {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.125rem;
+    background: transparent;
+    color: var(--cmp-fg-dimmed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: pointer;
 
-  &:hover {
-    color: var(--cmp-fg);
+    &:hover {
+      color: var(--cmp-fg);
+    }
+  }
+
+  &:focus-within,
+  &:has(*[data-focus="true"]) {
+    box-shadow: var(--cmp-border-shadow-focus) !important;
+  }
+
+  &[data-error='true'] {
+    color: var(--error-fg);
+
+    > textarea {
+      color: var(--error-fg);
+    }
+  }
+
+  &:has(> .eTextArea:disabled) {
+    border-color: transparent;
   }
 }
 
-.cmp-text-area__max_dialog {
+.cTextAreaMaximizedDialog {
   :global(.cDialog) {
     max-width: 100vw;
     max-height: 100vh;
@@ -74,7 +81,7 @@
       height: 100%;
     }
 
-    textarea {
+    .eTextArea {
       height: calc(100% - 5px) !important;
     }
 

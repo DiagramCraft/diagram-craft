@@ -183,11 +183,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
         )}
 
         {!maximized && (
-          <button
-            onClick={() => setMaximized(true)}
-            type={'button'}
-            className={textAreaStyles.cmpTextAreaResize}
-          >
+          <button onClick={() => setMaximized(true)} type={'button'} className={styles.eMaximize}>
             <TbArrowsDiagonal />
           </button>
         )}
@@ -197,7 +193,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     if (maximized) {
       return (
         <Dialog
-          className={textAreaStyles.cmpTextAreaMaxDialog}
+          className={textAreaStyles.cTextAreaMaximizedDialog}
           title=""
           open={true}
           buttons={[

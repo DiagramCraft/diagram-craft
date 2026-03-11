@@ -2,6 +2,7 @@
  *  SyntaxHighlightingEditor - .cSyntaxHighlightingEditor
  *  | Editor - .eEditor
  *  | HighlightedText - .eHighlightedText
+ *  | Maximize - .eMaximize
  *  | Tooltip - .eTooltip
  */
 .cSyntaxHighlightingEditor {
@@ -76,6 +77,24 @@
       text-decoration: underline;
       text-decoration-color: var(--red-9);
       text-decoration-style: wavy;
+    }
+  }
+
+  .eMaximize {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.125rem;
+    background: transparent;
+    color: var(--cmp-fg-dimmed);
+    display: flex;
+    align-Items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--cmp-fg);
     }
   }
 

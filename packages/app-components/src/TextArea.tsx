@@ -20,7 +20,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
   const inner = (
     <>
       <div
-        className={styles.cmpTextArea}
+        className={styles.cTextArea}
         {...extractDataAttributes(props)}
         data-error={error}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
@@ -32,6 +32,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
       >
         <textarea
           ref={ref}
+          className={styles.eTextArea}
           {...PropsUtils.filterDomProperties(props)}
           placeholder={props.isIndeterminate ? '···' : undefined}
           disabled={props.disabled}
@@ -69,11 +70,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
         </textarea>
 
         {!maximized && (
-          <button
-            onClick={() => setMaximized(true)}
-            type={'button'}
-            className={styles.cmpTextAreaResize}
-          >
+          <button onClick={() => setMaximized(true)} type={'button'} className={styles.eMaximize}>
             <TbArrowsDiagonal />
           </button>
         )}
@@ -84,7 +81,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
   if (maximized) {
     return (
       <Dialog
-        className={styles.cmpTextAreaMaxDialog}
+        className={styles.cTextAreaMaximizedDialog}
         title=""
         open={true}
         buttons={[
