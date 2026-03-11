@@ -117,19 +117,20 @@ export const NumberInput = (props: Props) => {
 
   return (
     <div
-      className={styles.cmpNumberInput} /*$c('cmp-number-input', { error: error })}*/
+      className={styles.cNumberInput}
       {...extractDataAttributes(props)}
       data-error={error}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       style={props.style ?? {}}
     >
       {props.label && (
-        <div className={styles.cmpNumberInputLabel} data-label-length={props.label?.length ?? 0}>
+        <div className={styles.eLabel} data-label-length={props.label?.length ?? 0}>
           {props.label}
         </div>
       )}
       <input
         {...PropsUtils.filterDomProperties(props)}
+        className={styles.eInput}
         placeholder={props.isIndeterminate ? '···' : undefined}
         type={'text'}
         value={props.isIndeterminate ? '' : currentValue}
@@ -163,14 +164,14 @@ export const NumberInput = (props: Props) => {
         {...extractDataAttributes(props)}
       />
       <AdjustButton
-        className={styles.cmpNumberInputBtnUp}
+        className={styles.eBtnUp}
         disabled={props.disabled}
         onClick={() => adjust(props.step ? Number(props.step) : 1)}
       >
         <TbChevronUp size={'11px'} />
       </AdjustButton>
       <AdjustButton
-        className={styles.cmpNumberInputBtnDown}
+        className={styles.eBtnDown}
         disabled={props.disabled}
         onClick={() => adjust(props.step ? -1 * Number(props.step) : -1)}
       >

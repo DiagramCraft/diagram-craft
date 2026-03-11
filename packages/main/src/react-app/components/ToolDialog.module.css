@@ -10,7 +10,9 @@
   border-bottom: 1px solid var(--accent-border);
   z-index: 10;
 
-  .cmp-number-input {
+  /* TODO: This is a bit leaky */
+  
+  :global(.cNumberInput) {
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
   }
@@ -31,7 +33,7 @@
   }
 
   /* TODO: This is leaky... this assumes internal Button implementation details */
-  
+
   *[data-variant="primary"] {
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
