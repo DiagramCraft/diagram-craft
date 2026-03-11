@@ -18,15 +18,16 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
 
   return (
     <div
-      className={styles.cmpTextInput}
+      className={styles.cTextInput}
       {...extractDataAttributes(props)}
       data-error={error}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       style={props.style ?? {}}
     >
-      {props.label && <div className={styles.cmpTextInputLabel}>{props.label}</div>}
+      {props.label && <div className={styles.eLabel}>{props.label}</div>}
       <input
         ref={ref}
+        className={styles.eInput}
         {...PropsUtils.filterDomProperties(props)}
         placeholder={props.isIndeterminate ? '···' : props.placeholder}
         type={props.type}
@@ -62,7 +63,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
       {props.onClear && currentValue !== '' && (
         <Button
           type={'icon-only'}
-          style={{ paddingRight: '0.25rem' }}
+          className={styles.eClear}
           onClick={() => {
             setCurrentValue('');
             props.onClear!();
