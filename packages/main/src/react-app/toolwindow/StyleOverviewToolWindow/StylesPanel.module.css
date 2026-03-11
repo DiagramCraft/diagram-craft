@@ -2,7 +2,7 @@
   padding: 0.5rem;
   border-bottom: 1px solid var(--cmp-border);
 
-  .cmp-select-trigger {
+  :global(.cSelectTrigger) {
     width: 100%;
   }
 }

@@ -1,4 +1,17 @@
-.cmp-select-trigger {
+/**
+ *  SelectTrigger - .cSelectTrigger
+ *  | Icon - .eIcon
+ *
+ *  Under portal:
+ *
+ *  SelectContent - .cSelectContent
+ *  | List - .eList
+ *  | | Item [0..*] - .eItem
+ *  | | | Text - .eItemText
+ *  | | | Indicator - .eItemIndicator
+ */
+
+:global(.cSelectTrigger) {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -11,6 +24,11 @@
   border: 1px solid var(--cmp-border);
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
+
+  .eIcon {
+    color: var(--base-fg-dim);
+    margin-left: auto;
+  }
 
   svg {
     stroke: var(--base-fg-dim);
@@ -30,14 +48,9 @@
   &:disabled {
     color: var(--cmp-fg-disabled);
   }
-
-  .trigger__icon {
-    color: var(--base-fg-dim);
-    margin-left: auto;
-  }
 }
 
-.cmp-select-content {
+.cSelectContent {
   overflow: hidden;
   color: var(--cmp-fg);
   background-color: var(--cmp-bg);
@@ -45,42 +58,45 @@
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
 
+  .eList {
+    padding: 5px;
+
+    .eItem {
+      font-size: 11px;
+      line-height: 1;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      height: 25px;
+      padding: 0 35px 0 25px;
+      position: relative;
+      user-select: none;
+
+      .eItemText {
+      }
+
+      .eItemIndicator {
+        position: absolute;
+        left: 0;
+        width: 25px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      &[data-disabled] {
+        color: var(--cmp-fg-disabled);
+        pointer-events: none;
+      }
+
+      &[data-highlighted] {
+        outline: none;
+        background-color: var(--accent-bg-selected);
+      }
+    }
+  }
+
   svg {
     stroke: var(--cmp-fg);
-  }
-
-  .cmp-select-content__viewpoint {
-    padding: 5px;
-  }
-
-  .cmp-select-content__item {
-    font-size: 11px;
-    line-height: 1;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-    height: 25px;
-    padding: 0 35px 0 25px;
-    position: relative;
-    user-select: none;
-
-    &[data-disabled] {
-      color: var(--cmp-fg-disabled);
-      pointer-events: none;
-    }
-
-    &[data-highlighted] {
-      outline: none;
-      background-color: var(--accent-bg-selected);
-    }
-  }
-
-  .cmp-select-content__item-indicator {
-    position: absolute;
-    left: 0;
-    width: 25px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
   }
 }
