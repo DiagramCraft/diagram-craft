@@ -43,7 +43,7 @@ const Menu = (props: MenuProps) => {
   return (
     <BaseUIContextMenu.Portal>
       <BaseUIContextMenu.Positioner>
-        <BaseUIContextMenu.Popup className={props.className ?? styles.cmpMenu}>
+        <BaseUIContextMenu.Popup className={props.className ?? styles.cMenu}>
           {props.children}
         </BaseUIContextMenu.Popup>
       </BaseUIContextMenu.Positioner>

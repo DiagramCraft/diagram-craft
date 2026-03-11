@@ -1,4 +1,12 @@
-.cmp-menu {
+/**
+ *  Menu - .cMenu
+ *  | Separator [0..*] - .eSeparator
+ *  | Item [1..*] - .eItem - data-type {regular,checkbox,radio,submenu-trigger}
+ *  | | LeftSlot - .eItemLeftSlot
+ *  | | RightSlot - .eItemRightSlot
+ *  | Arrow - .eArrow
+ */
+.cMenu {
   min-width: 220px;
   background-color: var(--cmp-bg);
   border-radius: 6px;
@@ -8,15 +16,7 @@
   border: 1px solid var(--cmp-border);
   z-index: 250;
 
-  &:focus,
-  &:focus-visible {
-    outline: none;
-  }
-
-  .cmp-menu__item,
-  .cmp-menu__checkbox-item,
-  .cmp-menu__radio-item,
-  .cmp-menu__sub-trigger {
+  .eItem {
     font-size: 11px;
     line-height: 1;
     color: var(--cmp-fg);
@@ -29,16 +29,7 @@
     user-select: none;
     outline: none;
 
-    &[data-disabled] {
-      color: var(--cmp-fg-disabled);
-      pointer-events: none;
-    }
-
-    &[data-highlighted] {
-      background-color: var(--accent-bg-selected);
-    }
-
-    .cmp-menu__left-slot {
+    .eItemLeftSlot {
       position: absolute;
       left: 0;
       width: 25px;
@@ -52,7 +43,7 @@
       }
     }
 
-    .cmp-menu__right-slot {
+    .eItemRightSlot {
       display: flex;
       gap: 0.25rem;
       margin-left: auto;
@@ -60,28 +51,37 @@
       color: var(--accent-fg);
     }
 
-    &[data-highlighted] > .cmp-menu__right-slot {
+    &[data-disabled] {
+      color: var(--cmp-fg-disabled);
+      pointer-events: none;
+    }
+
+    &[data-highlighted] {
+      background-color: var(--accent-bg-selected);
+    }
+
+    &[data-type='submenu-trigger'][data-popup-open] {
+      background-color: var(--accent-bg-selected);
+      color: var(--panel-fg);
+    }
+
+    &[data-highlighted] > .eItemRightSlot {
       color: var(--accent-fg);
     }
 
-    &[data-disabled] .cmp-menu__right-slot,
-    &[data-disabled] .cmp-menu__left-slot {
+    &[data-disabled] .eItemLeftSlot,
+    &[data-disabled] .eItemRightSlot {
       color: var(--cmp-fg-disabled);
     }
   }
 
-  .cmp-menu__sub-trigger[data-popup-open] {
-    background-color: var(--accent-bg-selected);
-    color: var(--panel-fg);
-  }
-
-  .cmp-menu__separator {
+  .eSeparator {
     height: 1px;
     background-color: var(--cmp-border);
     margin: 5px;
   }
 
-  .cmp-menu__arrow {
+  .eArrow {
     --__size: 5px;
 
     background: transparent;
@@ -102,7 +102,6 @@
 
     &[data-side='bottom'] {
       top: calc(-1 * var(--__size) + 1px);
-      rotate: 0deg;
     }
 
     &[data-side='left'] {
@@ -114,7 +113,10 @@
       left: calc(-1 * var(--__size) - 1px);
       rotate: -90deg;
     }
+  }
 
-    fill: var(--panel-bg);
+  &:focus,
+  &:focus-visible {
+    outline: none;
   }
 }

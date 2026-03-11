@@ -1,18 +1,10 @@
 import React, { type ReactElement } from 'react';
-import { assert } from '@diagram-craft/utils/assert';
 import { ContextMenu as BaseUIContextMenu } from '@base-ui/react/context-menu';
 import { Menu as BaseUIMenu } from '@base-ui/react/menu';
 import { TbCheck, TbChevronRight } from 'react-icons/tb';
 import styles from './Menu.module.css';
 
 const MenuContext = React.createContext<{ type: 'context' | 'menu' } | undefined>(undefined);
-
-// @ts-expect-error Keeping for reference
-const _useMenuContext = () => {
-  const context = React.useContext(MenuContext);
-  assert.present(context);
-  return context.type;
-};
 
 type ContextProps = { type: 'context' | 'menu'; children: React.ReactNode };
 
@@ -32,13 +24,14 @@ type ItemProps = {
 const Item = (props: ItemProps) => {
   return (
     <BaseUIMenu.Item
-      className={props.className ?? styles.cmpMenuItem}
+      className={props.className ?? styles.eItem}
       disabled={props.disabled}
       onClick={props.onClick}
+      data-type={'regular'}
     >
-      {props.leftSlot && <div className={styles.cmpMenuLeftSlot}>{props.leftSlot}</div>}
+      {props.leftSlot && <div className={styles.eItemLeftSlot}>{props.leftSlot}</div>}
       <span>{props.children}</span>
-      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+      {props.rightSlot && <div className={styles.eItemRightSlot}>{props.rightSlot}</div>}
     </BaseUIMenu.Item>
   );
 };
@@ -48,7 +41,7 @@ type SeparatorProps = {
 };
 
 const Separator = (props: SeparatorProps) => {
-  return <BaseUIMenu.Separator className={props.className ?? styles.cmpMenuSeparator} />;
+  return <BaseUIMenu.Separator className={props.className ?? styles.eSeparator} />;
 };
 
 type RadioItemProps = {
@@ -63,16 +56,17 @@ type RadioItemProps = {
 const RadioItem = (props: RadioItemProps) => {
   return (
     <BaseUIMenu.RadioItem
-      className={styles.cmpMenuRadioItem}
+      className={styles.eItem}
+      data-type={'radio'}
       disabled={props.disabled}
       value={props.value}
       onClick={props.onClick}
     >
-      <BaseUIMenu.RadioItemIndicator className={styles.cmpMenuLeftSlot}>
+      <BaseUIMenu.RadioItemIndicator className={styles.eItemLeftSlot}>
         <TbCheck />
       </BaseUIMenu.RadioItemIndicator>
       {props.children}
-      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+      {props.rightSlot && <div className={styles.eItemRightSlot}>{props.rightSlot}</div>}
     </BaseUIMenu.RadioItem>
   );
 };
@@ -98,16 +92,17 @@ type CheckboxItemProps = {
 const CheckboxItem = (props: CheckboxItemProps) => {
   return (
     <BaseUIMenu.CheckboxItem
-      className={props.className ?? styles.cmpMenuCheckboxItem}
+      className={props.className ?? styles.eItem}
+      data-type={'checkbox'}
       disabled={props.disabled}
       checked={props.checked}
       onCheckedChange={props.onCheckedChange}
     >
-      <BaseUIMenu.CheckboxItemIndicator className={styles.cmpMenuLeftSlot}>
+      <BaseUIMenu.CheckboxItemIndicator className={styles.eItemLeftSlot}>
         <TbCheck />
       </BaseUIMenu.CheckboxItemIndicator>
       {props.children}
-      {props.rightSlot && <div className={styles.cmpMenuRightSlot}>{props.rightSlot}</div>}
+      {props.rightSlot && <div className={styles.eItemRightSlot}>{props.rightSlot}</div>}
     </BaseUIMenu.CheckboxItem>
   );
 };
@@ -122,16 +117,20 @@ type SubMenuProps = {
 const SubMenu = (props: SubMenuProps) => {
   return (
     <BaseUIMenu.SubmenuRoot>
-      <BaseUIMenu.SubmenuTrigger className={styles.cmpMenuSubTrigger} disabled={props.disabled}>
-        {props.leftSlot && <div className={styles.cmpMenuLeftSlot}>{props.leftSlot}</div>}
+      <BaseUIMenu.SubmenuTrigger
+        className={styles.eItem}
+        disabled={props.disabled}
+        data-type={'submenu-trigger'}
+      >
+        {props.leftSlot && <div className={styles.eItemLeftSlot}>{props.leftSlot}</div>}
         {props.label}
-        <div className={styles.cmpMenuRightSlot}>
+        <div className={styles.eItemRightSlot}>
           <TbChevronRight />
         </div>
       </BaseUIMenu.SubmenuTrigger>
       <BaseUIMenu.Portal>
         <BaseUIMenu.Positioner sideOffset={2} alignOffset={-5}>
-          <BaseUIContextMenu.Popup className={styles.cmpMenu}>
+          <BaseUIContextMenu.Popup className={styles.cMenu}>
             {props.children}
           </BaseUIContextMenu.Popup>
         </BaseUIMenu.Positioner>
