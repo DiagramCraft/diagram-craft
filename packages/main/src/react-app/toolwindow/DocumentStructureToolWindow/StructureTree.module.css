@@ -1,0 +1,68 @@
+/**
+ *  StructureTree - .icTree
+ *  | Node [1..*] - .eNode
+ */
+
+.icStructureTree {
+  .eNode {
+    position: relative;
+
+    &:hover {
+      color: var(--accent-fg-hover) !important;
+      background-color: var(--accent-bg);
+    }
+
+    &[data-depth="0"]:not(:first-child) {
+      border-top: 1px dashed var(--cmp-border);
+    }
+
+    &[data-pendingdrop="before"] {
+      &:before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-color: var(--cmp-fg);
+        width: 100%;
+        z-index: 100;
+      }
+    }
+
+    &[data-pendingdrop="after"] {
+      &:before {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background-color: var(--cmp-fg);
+        width: 100%;
+        z-index: 100;
+      }
+    }
+
+    &[data-pendingdrop="on"] {
+      background-color: var(--cmp-bg-hover);
+    }
+
+    &[data-selected="true"] {
+      color: var(--accent-fg);
+      font-weight: bold;
+    }
+
+    &[data-selected="true"], &[data-selected="true"] + div > * {
+      &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: -1px;
+        left: 0;
+        width: 2px;
+        background-color: var(--accent-chroma);
+      }
+    }
+  }
+}

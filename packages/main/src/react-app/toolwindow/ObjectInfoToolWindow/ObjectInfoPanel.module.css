@@ -1,5 +1,5 @@
-.objectInfoToolWindow {
-  .cTree {
+.icObjectInfoToolWindow {
+  .eTree {
     grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 1fr);
   }
 }
