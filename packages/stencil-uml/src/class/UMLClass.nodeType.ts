@@ -21,6 +21,7 @@ import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { VNode } from '@diagram-craft/canvas/component/vdom';
 import { Box } from '@diagram-craft/geometry/box';
+import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -42,8 +43,13 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
   additionalFillCount = 1;
 
-  constructor() {
-    super('umlClass', 'UML Class', UMLClassComponent);
+  // biome-ignore lint/suspicious/noExplicitAny: allows subclassing with a different component
+  constructor(
+    type = 'umlClass',
+    name = 'UML Class',
+    component: NodeShapeConstructor<any> = UMLClassComponent
+  ) {
+    super(type, name, component);
 
     this.setFlags({
       [NodeFlags.StyleFill]: true,
@@ -165,9 +171,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
       (size: Extent) =>
         UnitOfWork.execute(props.node.diagram, uow => {
           uow.metadata.nonDirty = true;
-
           props.node.updateCustomProps('umlClass', p => (p.size = size.h), uow);
-
           const parent = props.node.parent;
           if (isNode(parent)) {
             parent.getDefinition().onChildChanged(parent, uow);
