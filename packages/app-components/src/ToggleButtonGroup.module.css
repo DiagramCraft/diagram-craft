@@ -1,4 +1,8 @@
-.cmp-toggle-button-group {
+/**
+ *  ToggleButtonGroup - .cToggleButtonGroup
+ *  | Item [1..*] - .eItem
+ */
+:global(.cToggleButtonGroup) {
   padding: 0;
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
@@ -6,11 +10,7 @@
   width: fit-content !important;
   min-width: 0;
 
-  &:not(:has(*[data-state='off'])):not(:has(*:nth-child(2))) {
-    border: 1px solid var(--cmp-border-focus);
-  }
-
-  .cmp-toggle-button-group__item {
+  :global(.eItem) {
     flex: 0 0 auto;
     color: var(--cmp-fg);
     background-color: transparent;
@@ -24,7 +24,7 @@
     justify-content: center;
     margin-left: 2px;
 
-    /* Note, this is a bit of a hack to make some icon details red */
+    /* TODO: this is a bit of a hack to make some icon details red */
 
     .svg__remove {
       path:nth-child(3), path:nth-child(4) {
@@ -70,5 +70,8 @@
       }
     }
   }
-}
 
+  &:not(:has(*[data-state='off'])):not(:has(*:nth-child(2))) {
+    border: 1px solid var(--cmp-border-focus);
+  }
+}

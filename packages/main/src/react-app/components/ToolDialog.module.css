@@ -11,24 +11,24 @@
   z-index: 10;
 
   /* TODO: This is a bit leaky */
-  
+
   :global(.cNumberInput) {
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
   }
 
-  .cmp-toggle-button-group {
+  :global(.cToggleButtonGroup) {
     border: 1px solid var(--accent-border);
     background: var(--accent-border);
-  }
 
-  .cmp-toggle-button-group__item {
-    background: var(--accent-bg-selected);
-    color: var(--accent-fg);
-    margin-left: 1px;
+    :global(.eItem) {
+      background: var(--accent-bg-selected);
+      color: var(--accent-fg);
+      margin-left: 1px;
 
-    &[data-pressed] {
-      color: var(--base-fg);
+      &[data-pressed] {
+        color: var(--base-fg);
+      }
     }
   }
 
