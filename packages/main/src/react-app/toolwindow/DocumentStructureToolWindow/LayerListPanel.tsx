@@ -149,7 +149,7 @@ const LayerEntry = (props: { layer: Layer }) => {
               {layer.name}
             </div>
           </Tree.NodeLabel>
-          <Tree.NodeCell className="cmp-tree__node__action">
+          <Tree.NodeCell type={'action'}>
             {layer.type !== 'reference' && layer.type !== 'rule' ? (
               <LockToggle layer={layer} diagram={diagram} />
             ) : (
@@ -249,7 +249,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
           <Tree.NodeLabel>
             {icon} &nbsp;{shorten(e.name, 25)}
           </Tree.NodeLabel>
-          <Tree.NodeCell className="cmp-tree__node__action">
+          <Tree.NodeCell type={'action'}>
             <span
               style={{ cursor: 'pointer' }}
               onClick={e => {
@@ -317,7 +317,7 @@ const ModificationEntry = (props: {
         <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
         <Tree.NodeLabelText>{element?.name ?? m.id}</Tree.NodeLabelText>
       </Tree.NodeLabel>
-      <Tree.NodeCell className="cmp-tree__node__action">
+      <Tree.NodeCell type={'action'}>
         <span
           style={{ cursor: 'pointer' }}
           onClick={e => {

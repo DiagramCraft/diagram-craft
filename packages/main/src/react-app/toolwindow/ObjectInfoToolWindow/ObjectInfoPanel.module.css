@@ -1,5 +1,5 @@
 .objectInfoToolWindow {
-  .cmp-tree {
+  .cTree {
     grid-template-columns: minmax(max-content, 1fr) minmax(max-content, 1fr);
   }
 }

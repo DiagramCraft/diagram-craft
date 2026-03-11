@@ -31,7 +31,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
         exportGlobals: true,
         scopeBehaviour: 'global',
         localsConvention: 'camelCase',
-        globalModulePaths: [/Toolbar.module.css/]
+        globalModulePaths: [/Toolbar.module.css/, /Tree.module.css/]
       }
     },
     resolve: {

@@ -786,13 +786,13 @@ foreignObject {
   padding: 0;
 }
 
-.cmp-layer-list, .cmp-document-list {
-  .cmp-tree__node__label__text {
+.cmp-layer-list.cTree, .cmp-document-list.cTree {
+  .eLabel .eText {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .cmp-tree__node {
+  .eNode {
     position: relative;
 
     &:hover {
@@ -801,11 +801,11 @@ foreignObject {
     }
   }
 
-  .cmp-tree__node[data-depth="0"]:not(:first-child) {
+  .eNode[data-depth="0"]:not(:first-child) {
     border-top: 1px dashed var(--cmp-border);
   }
 
-  .cmp-tree__node[data-pendingdrop="before"] {
+  .eNode[data-pendingdrop="before"] {
     &:before {
       content: '';
       position: absolute;
@@ -819,7 +819,7 @@ foreignObject {
     }
   }
 
-  .cmp-tree__node[data-pendingdrop="after"] {
+  .eNode[data-pendingdrop="after"] {
     &:before {
       content: '';
       position: absolute;
@@ -833,17 +833,17 @@ foreignObject {
     }
   }
 
-  .cmp-tree__node[data-pendingdrop="on"] {
+  .eNode[data-pendingdrop="on"] {
     background-color: var(--cmp-bg-hover);
   }
 
-
   .cmp-layer-list__layer--selected {
-    & .cmp-tree__node__label, .cmp-tree__node__value {
+    .eLabel {
       color: var(--accent-fg);
       font-weight: bold;
     }
   }
+
 
   .cmp-layer-list__layer--selected, .cmp-layer-list__layer--selected + div > * {
     &:after {

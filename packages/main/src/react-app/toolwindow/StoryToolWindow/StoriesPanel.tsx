@@ -240,7 +240,7 @@ export const StoriesPanel = () => {
               <Tree.NodeLabel>
                 <TbMovie /> &nbsp;{story.name}
               </Tree.NodeLabel>
-              <Tree.NodeCell className="cmp-tree__node__action">
+              <Tree.NodeCell type={'action'}>
                 <span style={{ cursor: 'pointer' }} onClick={handlePlayStory} title="Play story">
                   <TbPlayerPlay />
                 </span>
@@ -275,7 +275,7 @@ export const StoriesPanel = () => {
                     <Tree.NodeLabel>
                       <TbList /> &nbsp;{stepIndex + 1}. {step.title}
                     </Tree.NodeLabel>
-                    <Tree.NodeCell className="cmp-tree__node__action">
+                    <Tree.NodeCell type={'action'}>
                       <span
                         style={{ cursor: 'pointer' }}
                         onClick={() => handleReRecordStep(story.id, step.id)}
