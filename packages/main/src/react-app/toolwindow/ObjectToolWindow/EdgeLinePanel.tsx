@@ -1,4 +1,4 @@
-import { TbLine, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
+import { TbLine, TbPlus, TbShape3, TbVectorBezier2, TbVectorSpline } from 'react-icons/tb';
 import { ArrowSelector } from './components/ArrowSelector';
 import { ConfigurationContextType, useConfiguration } from '../../context/ConfigurationContext';
 import { useEdgeProperty } from '../../hooks/useProperty';
@@ -88,6 +88,9 @@ export const EdgeLinePanelForm = ({
               </ToggleButtonGroup.Item>
               <ToggleButtonGroup.Item value={'bezier'}>
                 <TbVectorBezier2 />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'axis-aligned'}>
+                <TbPlus />
               </ToggleButtonGroup.Item>
             </ToggleButtonGroup.Root>
           )}

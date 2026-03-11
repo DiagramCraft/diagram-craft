@@ -7,6 +7,7 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { buildOrthogonalEdgePath } from './edgePathBuilder.orthogonal';
 import { buildBezierEdgePath } from './edgePathBuilder.bezier';
 import { buildStraightEdgePath } from './edgePathBuilder.straight';
+import { buildAxisAlignedEdgePath } from './edgePathBuilder.axisAligned';
 
 export const buildEdgePath = (
   edge: DiagramEdge,
@@ -23,6 +24,9 @@ export const buildEdgePath = (
     }
     case 'bezier':
       return buildBezierEdgePath(edge);
+
+    case 'axis-aligned':
+      return buildAxisAlignedEdgePath(edge);
 
     default: {
       return buildStraightEdgePath(edge);

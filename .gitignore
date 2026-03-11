@@ -12,9 +12,12 @@ dist
 dist-ssr
 *.local
 
+# AI settings
 .claude
 .junie
 CLAUDE.md
+AGENTS.md
+
 **/test-results
 
 .env
