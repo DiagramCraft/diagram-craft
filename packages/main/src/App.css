@@ -496,10 +496,6 @@ table {
     }
   }
 
-  .cmp-accordion__header {
-    background-color: var(--panel-bg);
-  }
-
   .cmp-toolbar {
     background-color: var(--panel-bg);
   }

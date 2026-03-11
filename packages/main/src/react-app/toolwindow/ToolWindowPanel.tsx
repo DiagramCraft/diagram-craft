@@ -51,7 +51,6 @@ export const ToolWindowPanel = (props: Props) => {
           <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
             {props.hasCheckbox && (
               <input
-                className="cmp-accordion__enabled"
                 type={'checkbox'}
                 checked={props.value ?? false}
                 onChange={() => {

@@ -194,21 +194,14 @@ export const ExtendedDataTab = () => {
                       <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
                         {editMode && (
                           <input
-                            className="cmp-accordion__enabled"
                             type={'checkbox'}
                             disabled={isSchemaEnabled && mustHaveSchemas.has(schema.id)}
                             checked={isSchemaEnabled}
                             onChange={e => {
                               const isChecked = e.target.checked;
-                              const accordionItem = e.target.closest(
-                                '.cmp-accordion__item'
-                              ) as HTMLElement;
-                              const accordionContent = accordionItem.querySelector(
-                                '.cmp-accordion__content'
-                              ) as HTMLElement;
-                              const accordionHeader = accordionItem.querySelector(
-                                '.cmp-accordion__header'
-                              ) as HTMLElement;
+
+                              const { accordionItem, accordionContent, accordionHeader } =
+                                Accordion.getAccordion(e.target);
 
                               if (isChecked) {
                                 accordionItem.dataset.state = 'open';
