@@ -147,7 +147,7 @@ export abstract class BaseEdgeComponent extends Component<EdgeComponentProps> {
       }
     }
 
-    if (isSingleSelected) {
+    if (isSingleSelected && edgeProps.type !== 'axis-aligned') {
       firstEdge.waypoints.map((wp, idx) => {
         if (edgeProps.type === 'bezier') {
           for (const [name, cp] of Object.entries(wp.controlPoints ?? {})) {

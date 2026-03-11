@@ -10,7 +10,7 @@ export function assertGridType(s: string | undefined): asserts s is GridType | u
     throw new Error(`invalid grid type: ${s}`);
 }
 
-export type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal';
+export type EdgeType = 'straight' | 'bezier' | 'curved' | 'orthogonal' | 'axis-aligned';
 
 export type FillType = 'solid' | 'gradient' | 'image' | 'texture' | 'pattern';
 
