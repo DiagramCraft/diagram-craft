@@ -1,4 +1,10 @@
-.cmp-syntax-highlighting-editor {
+/**
+ *  SyntaxHighlightingEditor - .cSyntaxHighlightingEditor
+ *  | Editor - .eEditor
+ *  | HighlightedText - .eHighlightedText
+ *  | Tooltip - .eTooltip
+ */
+.cSyntaxHighlightingEditor {
   --_padding: 3px;
 
   font: 11px / 15px monospace;
@@ -10,11 +16,7 @@
   min-height: calc(attr(data-rows number, 3) * 15px + 2 * var(--_padding));
   background-color: var(--cmp-bg);
 
-  &:focus-within {
-    border-color: var(--accent-border);
-  }
-
-  textarea {
+  .eEditor {
     font: 11px / 15px monospace;
     color: transparent;
     white-space: nowrap;
@@ -40,55 +42,63 @@
       caret-color: transparent;
     }
   }
+
+  .eHighlightedText {
+    border: 1px solid transparent;
+    margin: 0;
+    overflow: scroll;
+    position: absolute;
+    inset: 0;
+    padding: var(--_padding);
+
+    &:focus {
+      border: 1px solid var(--accent-chroma);
+      outline: none;
+    }
+
+    :global(.syntax-label) {
+      color: var(--accent-fg);
+    }
+
+    :global(.syntax-string) {
+      color: var(--green-9);
+    }
+
+    :global(.syntax-bracket) {
+      color: var(--base-fg);
+    }
+
+    :global(.syntax-props) {
+      color: var(--accent-chroma);
+    }
+
+    :global(.syntax-error) {
+      text-decoration: underline;
+      text-decoration-color: var(--red-9);
+      text-decoration-style: wavy;
+    }
+  }
+
+  .eTooltip {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    position: fixed;
+    background: var(--red-9);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    z-index: 1000;
+    pointer-events: none;
+    max-width: 300px;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  &:focus-within {
+    border-color: var(--accent-border);
+  }
+
 }
 
-.syntax-highlighter {
-  border: 1px solid transparent;
-  margin: 0;
-  overflow: scroll;
-  position: absolute;
-  inset: 0;
-  padding: var(--_padding);
 
-  &:focus {
-    border: 1px solid var(--accent-chroma);
-    outline: none;
-  }
 
-  .syntax-label {
-    color: var(--accent-fg);
-  }
-
-  .syntax-string {
-    color: var(--green-9);
-  }
-
-  .syntax-bracket {
-    color: var(--base-fg);
-  }
-
-  .syntax-props {
-    color: var(--accent-chroma);
-  }
-
-  .syntax-error {
-    text-decoration: underline;
-    text-decoration-color: var(--red-9);
-    text-decoration-style: wavy;
-  }
-}
-
-.tooltip {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 11px;
-  position: fixed;
-  background: var(--red-9);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  z-index: 1000;
-  pointer-events: none;
-  max-width: 300px;
-  word-wrap: break-word;
-  white-space: normal;
-}

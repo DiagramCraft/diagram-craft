@@ -139,13 +139,14 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     const inner = (
       <div
         ref={containerRef}
-        className={`${styles.cmpSyntaxHighlightingEditor} ${props.className ?? ''}`}
+        className={`${styles.cSyntaxHighlightingEditor} ${props.className ?? ''}`}
         {...extractDataAttributes(props)}
         style={props.style ?? {}}
         data-rows={props.rows ?? 10}
       >
         <textarea
           ref={textareaRef}
+          className={styles.eEditor}
           spellCheck={false}
           disabled={props.disabled}
           onKeyDown={onKeydown}
@@ -163,7 +164,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           value={value}
         />
 
-        <pre className={styles.syntaxHighlighter} ref={preElementRef}>
+        <pre className={styles.eHighlightedText} ref={preElementRef}>
           <code
             ref={codeElementRef}
             dangerouslySetInnerHTML={{
@@ -174,7 +175,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
 
         {tooltip && (
           <div
-            className={styles.tooltip}
+            className={styles.eTooltip}
             style={{ left: `${tooltip.x}px`, top: `${tooltip.y + 20}px` }}
           >
             {tooltip.message}
