@@ -15,7 +15,7 @@ export const AwarenessToolbar = () => {
   const seenUsers: Set<string> = new Set();
 
   return (
-    <div id="awareness" className={styles.cmpAwarenessToolbar}>
+    <div id="awareness" className={styles.icAwarenessToolbar}>
       {CollaborationConfig.Backend.awareness!.getUserStates()
         .filter(user => !!user && !!user.name && !seenUsers.has(user.name))
         .map(user => {
@@ -25,7 +25,7 @@ export const AwarenessToolbar = () => {
         .map((user, idx) => (
           <div
             key={`${user.name}-${idx}`}
-            className={styles.cmpAwarenessToolbarUser}
+            className={styles.eUser}
             style={{ '--avatar-color': user.color } as React.CSSProperties}
           >
             {user.name[0]}
