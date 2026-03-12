@@ -27,11 +27,6 @@
   }
 }
 
-.cmp-error {
-  color: var(--error-fg);
-  margin-top: 0.25rem;
-}
-
 
 .cmp-label {
   display: flex;
