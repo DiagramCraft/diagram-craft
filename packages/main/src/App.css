@@ -266,13 +266,13 @@ input::selection {
 div[data-field-state='set'],
 button[data-field-state='set'],
 input[type="checkbox"][data-field-state='set'] {
-  border: 1px solid var(--accent-border);
+  border: 1px solid var(--accent-border) !important;
 }
 
 div[data-field-state='overridden'],
 button[data-field-state='overridden'],
 input[type="checkbox"][data-field-state='overridden'] {
-  background: repeating-linear-gradient(-45deg, var(--cmp-border), var(--cmp-border) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px);
+  background: repeating-linear-gradient(-45deg, var(--cmp-border), var(--cmp-border) 5px, var(--cmp-bg) 5px, var(--cmp-bg) 10px) !important;
 }
 
 table {

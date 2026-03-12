@@ -53,7 +53,7 @@ export function PropertyEditor<T>(props: Props<T>) {
         />
         <BaseUITooltip.Portal>
           <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
-            <BaseUITooltip.Popup className={styles.cmpTooltip}>
+            <BaseUITooltip.Popup className={styles.cTooltip}>
               {props.property.hasMultipleValues && (
                 <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Multiple values</div>
               )}
@@ -144,7 +144,7 @@ export function PropertyEditor<T>(props: Props<T>) {
                   ))}
                 </div>
               </div>
-              <BaseUITooltip.Arrow className={styles.cmpTooltipArrow} />
+              <BaseUITooltip.Arrow className={styles.eArrow} />
             </BaseUITooltip.Popup>
           </BaseUITooltip.Positioner>
         </BaseUITooltip.Portal>
