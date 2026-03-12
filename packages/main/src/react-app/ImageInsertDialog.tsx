@@ -29,8 +29,8 @@ const ImageInsertDialogBrowser = (props: Props) => {
   }, [path]);
 
   return (
-    <div className={styles.cmpInsertImageDialog}>
-      <div className={styles.cmpInsertImageDialogPath}>
+    <div className={styles.icInsertImageDialog}>
+      <div className={styles.ePath}>
         Path:{' '}
         <a href={'#'} onClick={() => setPath([])}>
           Home
@@ -54,7 +54,7 @@ const ImageInsertDialogBrowser = (props: Props) => {
       {list === undefined ? (
         <p>Loading...</p>
       ) : (
-        <div className={styles.cmpInsertImageDialogList}>
+        <div className={styles.eList}>
           <div>
             <ul>
               {list.map(entry => (

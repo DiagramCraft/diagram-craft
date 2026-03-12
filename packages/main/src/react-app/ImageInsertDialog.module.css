@@ -1,5 +1,22 @@
-.cmp-insert-image-dialog {
-  .cmp-insert-image-dialog__list {
+.icInsertImageDialog {
+  .ePath {
+    margin-bottom: 0.5rem;
+
+    & > a {
+      color: var(--base-fg-dim);
+      margin-right: 0.25rem;
+
+      &:hover {
+        color: var(--accent-fg);
+      }
+
+      &:not(:first-child) {
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  .eList {
     background-color: var(--base-bg);
     border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
@@ -25,23 +42,6 @@
         &:hover {
           color: var(--accent-fg);
         }
-      }
-    }
-  }
-
-  .cmp-insert-image-dialog__path {
-    margin-bottom: 0.5rem;
-
-    & > a {
-      color: var(--base-fg-dim);
-      margin-right: 0.25rem;
-
-      &:hover {
-        color: var(--accent-fg);
-      }
-
-      &:not(:first-child) {
-        margin-left: 0.25rem;
       }
     }
   }
