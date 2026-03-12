@@ -1,20 +1,6 @@
 /* Generic Components */
 
 
-.cmp-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--panel-fg);
-  margin-bottom: 0.25rem;
-
-  .cmp-label__label {
-    width: 4rem;
-  }
-}
-
 .cmp-labeled-table {
   display: grid;
   grid-template-columns: 4rem 2fr;
