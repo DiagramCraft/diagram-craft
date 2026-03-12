@@ -94,7 +94,10 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         props.showHover &&
         preview !== undefined &&
         createPortal(
-          <div className={styles.pickerCanvasPreview} style={{ left: hover.x + 40, top: hover.y }}>
+          <div
+            className={styles.icPickerCanvasPreview}
+            style={{ left: hover.x + 40, top: hover.y }}
+          >
             <Canvas<StaticCanvasComponent, StaticCanvasProps>
               id={`picker-canvas-portal-${props.diagram.id}`}
               context={application}
@@ -126,7 +129,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         width={props.size ?? 40}
         height={props.size ?? 40}
         diagram={diagram}
-        className={`canvas ${styles.pickerCanvas}`}
+        className={`canvas ${styles.icPickerCanvas}`}
         viewbox={`${props.diagram.viewBox.svgViewboxString}`}
         canvasFactory={canvasFactory}
       />
