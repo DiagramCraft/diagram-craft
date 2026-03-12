@@ -1,10 +1,10 @@
-.commandPalette {
+.icCommandPalette {
   background: rgba(0, 0, 0, 0.5);
   position: fixed;
   inset: 0;
   z-index: 1000;
 
-  .commandPalette__content {
+  .eContent {
     background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: 8px;
@@ -22,17 +22,17 @@
     &[data-has-query="false"] {
       height: 80px;
 
-      .commandPalette__searchContainer {
+      .eSearchContainer {
         border-bottom: none;
       }
     }
 
-    .commandPalette__searchContainer {
+    .eSearchContainer {
       padding: 16px;
       border-bottom: 1px solid var(--panel-border);
       flex-shrink: 0;
 
-      .commandPalette__searchInput {
+      .eSearchInput {
         width: 100%;
         padding: 12px;
         font-size: 16px;
@@ -50,13 +50,13 @@
       }
     }
 
-    .commandPalette__commandList {
+    .eCommandList {
       flex: 1;
       overflow-y: auto;
       padding: 8px;
       min-height: 0;
 
-      .commandPalette__commandItem {
+      .eCommandItem {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -64,14 +64,13 @@
         border-radius: 6px;
         cursor: pointer;
         transition: background-color 0.15s ease;
-
-
-        &.commandPalette__commandItem--selected {
+        
+        &[data-selected='true'] {
           background: var(--accent-9) !important;
           color: white !important;
 
-          .commandPalette__commandLabel,
-          .commandPalette__commandDescription {
+          .eCommandLabel,
+          .eCommandDescription {
             color: white !important;
           }
 
@@ -80,7 +79,7 @@
           }
         }
 
-        &.commandPalette__commandItem--disabled {
+        &[data-disabled='true'] {
           opacity: 0.5;
           cursor: not-allowed;
 
@@ -89,43 +88,42 @@
           }
         }
 
-        .commandPalette__commandInfo {
+        .eCommandInfo {
           flex: 1;
           display: flex;
           flex-direction: column;
           gap: 4px;
 
-          .commandPalette__commandLabel {
+          .eCommandLabel {
             font-size: 14px;
             font-weight: 500;
             color: var(--cmp-fg);
           }
 
-          .commandPalette__commandDescription {
+          .eCommandDescription {
             font-size: 12px;
             color: var(--base-fg-more-dim);
           }
         }
 
-        .commandPalette__keyBinding {
+        .eKeyBinding {
           font-size: 12px;
           color: var(--accent-fg);
         }
       }
 
-      .commandPalette__noResults {
+      .eNoResults {
         text-align: center;
         color: var(--base-fg-more-dim);
         font-style: italic;
         padding: 24px;
       }
 
-      &.commandPalette__commandList--mouseEnabled {
-        .commandPalette__commandItem:hover:not(.commandPalette__commandItem--selected) {
+      &[data-mouse-enabled='true'] {
+        .eCommandItem:hover:not([data-selected='true']) {
           background: var(--cmp-bg-hover);
         }
       }
     }
   }
 }
-

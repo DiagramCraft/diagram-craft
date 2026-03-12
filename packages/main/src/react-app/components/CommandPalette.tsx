@@ -167,15 +167,15 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
   if (!open) return null;
 
   return (
-    <div className={styles.commandPalette} onClick={onClose} onMouseMove={handleMouseMove}>
+    <div className={styles.icCommandPalette} onClick={onClose} onMouseMove={handleMouseMove}>
       <div
-        className={styles.commandPalette__content}
+        className={styles.eContent}
         onClick={e => e.stopPropagation()}
         data-has-query={searchText.trim() !== ''}
       >
-        <div className={styles.commandPalette__searchContainer}>
+        <div className={styles.eSearchContainer}>
           <input
-            className={styles.commandPalette__searchInput}
+            className={styles.eSearchInput}
             type="text"
             placeholder="Type a command..."
             value={searchText}
@@ -188,20 +188,19 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
         {searchText.trim() !== '' && (
           <div
             ref={commandListRef}
-            className={`${styles.commandPalette__commandList} ${
-              hasMouseMoved ? styles['commandPalette__commandList--mouseEnabled'] : ''
-            }`}
+            className={styles.eCommandList}
+            data-mouse-enabled={hasMouseMoved}
           >
             {filteredCommands.length === 0 ? (
-              <div className={styles.commandPalette__noResults}>No commands found</div>
+              <div className={styles.eNoResults}>No commands found</div>
             ) : (
               filteredCommands.map((command, index) => (
                 <div
                   key={command.id}
                   ref={el => (commandItemRefs.current[index] = el)}
-                  className={`${styles.commandPalette__commandItem} ${
-                    index === selectedIndex ? styles['commandPalette__commandItem--selected'] : ''
-                  } ${!command.isEnabled ? styles['commandPalette__commandItem--disabled'] : ''}`}
+                  className={styles.eCommandItem}
+                  data-selected={index === selectedIndex}
+                  data-disabled={!command.isEnabled}
                   onClick={() => command.isEnabled && executeCommand(command.id)}
                   onMouseEnter={() => {
                     if (hasMouseMoved && !isKeyboardNavigation) {
@@ -210,14 +209,12 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
                   }}
                   onMouseMove={handleMouseMove}
                 >
-                  <div className={styles.commandPalette__commandInfo}>
-                    <div className={styles.commandPalette__commandLabel}>{command.label}</div>
-                    <div className={styles.commandPalette__commandDescription}>
-                      {command.description}
-                    </div>
+                  <div className={styles.eCommandInfo}>
+                    <div className={styles.eCommandLabel}>{command.label}</div>
+                    <div className={styles.eCommandDescription}>{command.description}</div>
                   </div>
                   {command.keyBinding && (
-                    <div className={styles.commandPalette__keyBinding}>{command.keyBinding}</div>
+                    <div className={styles.eKeyBinding}>{command.keyBinding}</div>
                   )}
                 </div>
               ))
