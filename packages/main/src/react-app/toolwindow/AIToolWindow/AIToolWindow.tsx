@@ -158,45 +158,43 @@ export const AIToolWindow = () => {
     <ToolWindow.Root id={'ai-tool'} defaultTab={'chat'}>
       <ToolWindow.Tab id={'chat'} title={'Chat'}>
         <ToolWindow.TabContent>
-          <div className={styles['cmp-ai-container']}>
-            <div className={styles['cmp-ai-messages']}>
+          <div className={styles.icAIToolWindow}>
+            <div className={styles.eMessages}>
               {messages.length === 0 && (
-                <div className={styles['cmp-ai-welcome']}>
+                <div className={styles.eWelcomeMessage}>
                   <h3>AI Diagram Assistant</h3>
                   <p>Ask me to create or modify diagrams!</p>
                 </div>
               )}
 
               {messages.map((msg, idx) => (
-                <div key={idx} className={`${styles['cmp-ai-message']} ${styles[msg.role]}`}>
-                  <div className={styles['cmp-ai-message-role']}>
-                    {msg.role === 'user' ? 'You' : 'AI'}
-                  </div>
-                  <div className={styles['cmp-ai-message-content']}>
+                <div key={idx} className={styles.eMessage} data-role={msg.role}>
+                  <div className={styles.eRole}>{msg.role === 'user' ? 'You' : 'AI'}</div>
+                  <div className={styles.eContent}>
                     {msg.role === 'assistant' ? filterJsonFromContent(msg.content) : msg.content}
                   </div>
                 </div>
               ))}
 
               {streamingContent && (
-                <div className={`${styles['cmp-ai-message']} ${styles.assistant}`}>
-                  <div className={styles['cmp-ai-message-role']}>AI</div>
-                  <div className={styles['cmp-ai-message-content']}>
+                <div className={styles.eMessage} data-role={'assistant'}>
+                  <div className={styles.eRole}>AI</div>
+                  <div className={styles.eContent}>
                     {filterJsonFromContent(streamingContent)}
-                    <span className={styles['cmp-ai-cursor']}>|</span>
+                    <span className={styles.eCursor}>|</span>
                   </div>
                 </div>
               )}
 
               {error && (
-                <div className={styles['cmp-ai-error']}>
+                <div className={styles.eError}>
                   <strong>Error:</strong> {error}
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            <div className={styles['cmp-ai-input-area']}>
+            <div className={styles.eInputArea}>
               <TextArea
                 key={textAreaKey}
                 value={input}
@@ -205,9 +203,9 @@ export const AIToolWindow = () => {
                 placeholder="Describe the diagram you want to create..."
                 rows={3}
                 disabled={isDisabled}
-                className={styles['cmp-ai-input']}
+                className={styles.eInput}
               />
-              <div className={styles['cmp-ai-actions']}>
+              <div className={styles.eActions}>
                 <Button onClick={clear} disabled={isDisabled} type="secondary">
                   Clear
                 </Button>
