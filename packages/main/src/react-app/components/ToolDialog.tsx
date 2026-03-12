@@ -86,14 +86,15 @@ export const ToolDialog = (props: ToolDialogProps) => {
       onOpenChange={handleOpenChange}
     >
       <BaseUIAlertDialog.Portal container={portal}>
+        {/* TODO: This overlay is not working */}
         <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
-        <BaseUIAlertDialog.Viewport className={styles.toolDialog}>
-          <BaseUIAlertDialog.Popup initialFocus={false} className={styles.toolDialogContent}>
-            <BaseUIAlertDialog.Title className={styles.toolDialogTitle}>
+        <BaseUIAlertDialog.Viewport className={styles.icToolDialog}>
+          <BaseUIAlertDialog.Popup initialFocus={false} className={styles.eContent}>
+            <BaseUIAlertDialog.Title className={styles.eTitle}>
               {props.title}
             </BaseUIAlertDialog.Title>
             <BaseUIAlertDialog.Description
-              render={<div className={styles.toolDialogDescription}>{props.children}</div>}
+              render={<div className={styles.eDescription}>{props.children}</div>}
             />
 
             <Button style={{ marginLeft: 'auto' }} onClick={() => props.onOk()}>

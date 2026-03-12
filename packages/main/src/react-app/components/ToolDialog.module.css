@@ -1,4 +1,4 @@
-.toolDialog {
+.icToolDialog {
   position: absolute;
   left: 200px;
   top: 100px;
@@ -47,22 +47,24 @@
   }
 }
 
-.toolDialogContent {
+.eContent {
   padding: 0 8px;
   height: 100%;
   display: flex;
   align-items: center;
   gap: 0.25rem;
+
+  .eTitle {
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .eDescription {
+    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
-.toolDialogTitle {
-  font-weight: bold;
-  font-size: 12px;
-}
 
-.toolDialogDescription {
-  margin-left: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
