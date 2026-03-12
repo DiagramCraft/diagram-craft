@@ -63,8 +63,8 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
     <>
       {props.clauses.map((c, idx) => {
         return (
-          <div key={c.id} className={styles.advancedSearchClause}>
-            <div className={styles.advancedSearchClause__select}>
+          <div key={c.id} className={styles.eClause}>
+            <div className={styles.eSelect}>
               <Select.Root
                 value={c.type ?? ''}
                 placeholder={'Select Rule'}
@@ -82,9 +82,9 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               </Select.Root>
             </div>
 
-            <div className={styles.advancedSearchClause__props}>
+            <div className={styles.eProps}>
               {c.type === 'props' && (
-                <div className={styles.advancedSearchClause__propsColumn}>
+                <div className={styles.ePropsColumn}>
                   <TreeSelect.Root
                     value={c.path ?? ''}
                     onValueChange={v => {
@@ -160,9 +160,9 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               )}
             </div>
 
-            <div className={styles.advancedSearchClause__props}>
+            <div className={styles.eProps}>
               {c.type === 'any' && (
-                <div className={styles.advancedSearchClause__subClause}>
+                <div className={styles.eSubClause}>
                   <AdvancedSearchClauseList
                     clauses={c.clauses ?? [{ id: newid() }]}
                     onChange={newClauses => {
@@ -176,7 +176,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               )}
             </div>
 
-            <div className={styles.advancedSearchClause__buttons}>
+            <div className={styles.eButtons}>
               <Button
                 type={'icon-only'}
                 onClick={() => {
@@ -200,7 +200,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
               </Button>
             </div>
 
-            <div className={styles.advancedSearchClause__indent}></div>
+            <div className={styles.eIndent}></div>
           </div>
         );
       })}
@@ -285,8 +285,8 @@ export const AdvancedSearchTab = () => {
           defaultValue={['advanced-search-criteria', 'search-results']}
         >
           <ToolWindowPanel mode="headless" id="advanced-search-criteria" title="Search Criteria">
-            <div className={styles.advancedSearch__container}>
-              <div className={styles.advancedSearch__header}>
+            <div className={styles.icAdvancedSearchForm}>
+              <div className={styles.eHeader}>
                 <ToggleButtonGroup.Root
                   type="single"
                   value={type}
@@ -308,7 +308,7 @@ export const AdvancedSearchTab = () => {
                 </Select.Root>
               </div>
 
-              <div className={styles.advancedSearch__criteria}>
+              <div className={styles.eCriteria}>
                 <AdvancedSearchClauseList
                   clauses={clauses}
                   onChange={setClauses}
@@ -317,11 +317,7 @@ export const AdvancedSearchTab = () => {
                 />
               </div>
 
-              <Button
-                type="primary"
-                onClick={executeSearch}
-                className={styles.advancedSearch__searchButton}
-              >
+              <Button type="primary" onClick={executeSearch} className={styles.eSearchButton}>
                 <TbSearch />
                 Search
               </Button>
