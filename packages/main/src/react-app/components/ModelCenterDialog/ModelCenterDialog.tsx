@@ -52,27 +52,23 @@ export const ModelCenterDialog = (props: Props) => {
       }}
     >
       <BaseUIAlertDialog.Portal container={portal}>
-        <div className={styles.modelCenterDialog}>
-          <BaseUIAlertDialog.Backdrop className={styles.modelCenterDialogOverlay} />
-          <BaseUIAlertDialog.Viewport className={styles.modelCenterDialogContent}>
+        <div className={styles.icModelCenterDialog}>
+          <BaseUIAlertDialog.Backdrop className={styles.eOverlay} />
+          <BaseUIAlertDialog.Viewport className={styles.eContent}>
             <BaseUIAlertDialog.Popup initialFocus={false}>
-              <BaseUIAlertDialog.Title className={styles.modelCenterDialogTitle}>
+              <BaseUIAlertDialog.Title className={styles.eTitle}>
                 Model Center
-                <div className={styles.modelCenterDialogActions}>
+                <div className={styles.eActions}>
                   <BaseUIAlertDialog.Close
                     render={
-                      <Button
-                        className={`${styles.modelCenterDialogButton} ${styles.modelCenterDialogButtonCancel}`}
-                        onClick={() => {}}
-                        type={'icon-only'}
-                      >
+                      <Button onClick={() => {}} type={'icon-only'}>
                         <TbX size={'14px'} />
                       </Button>
                     }
                   />
                 </div>
               </BaseUIAlertDialog.Title>
-              <div className={styles.modelCenterDialogMainContent}>
+              <div className={styles.eMainContent}>
                 <Tabs.Root
                   value={activeTab}
                   onValueChange={value =>
