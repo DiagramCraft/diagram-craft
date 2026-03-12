@@ -87,7 +87,7 @@ export const TextToolWindow = () => {
       <ToolWindow.Tab
         id={'text'}
         title={'Text'}
-        indicator={dirty ? <div className={styles.textEditorDirtyIndicator} /> : null}
+        indicator={dirty ? <div className={styles.icDirtyIndicator} /> : null}
       >
         <ToolWindow.TabActions>
           <Button type={'icon-only'} disabled={!dirty} onClick={() => updateText()}>
@@ -116,7 +116,7 @@ export const TextToolWindow = () => {
               }}
               highlighter={highlighter}
               errors={errors}
-              className={styles.textEditorContainer}
+              className={styles.icTextEditor}
             />
           </ToolWindowPanel>
         </ToolWindow.TabContent>
