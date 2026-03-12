@@ -111,7 +111,7 @@ export const CanvasTooltip = () => {
 
   return (
     <div
-      className={styles.canvasTooltip}
+      className={styles.icCanvasTooltip}
       style={{
         left: `${tooltip.x + 10}px`,
         top: `${tooltip.y + 10}px`
