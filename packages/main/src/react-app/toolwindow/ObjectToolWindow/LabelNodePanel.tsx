@@ -255,49 +255,47 @@ export const LabelNodePanel = (props: Props) => {
           </KeyValueTable.Value>
 
           <KeyValueTable.Label>Offset:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-vcenter util-hstack'}>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <NumberInput
+              defaultUnit={'px'}
+              value={round(offset.x)}
+              style={{ width: '50px' }}
+              onChange={v => {
+                UnitOfWork.execute(edge.diagram, uow => {
+                  node.updateLabelNode({ offset: { x: Number(v), y: offset.y } }, uow);
+                });
+              }}
+            />
+            {(type === 'independent' || type === 'horizontal' || type === 'vertical') && (
               <NumberInput
                 defaultUnit={'px'}
-                value={round(offset.x)}
+                value={round(offset.y)}
                 style={{ width: '50px' }}
                 onChange={v => {
                   UnitOfWork.execute(edge.diagram, uow => {
-                    node.updateLabelNode({ offset: { x: Number(v), y: offset.y } }, uow);
+                    node.updateLabelNode({ offset: { x: offset.x, y: Number(v) } }, uow);
                   });
                 }}
               />
-              {(type === 'independent' || type === 'horizontal' || type === 'vertical') && (
-                <NumberInput
-                  defaultUnit={'px'}
-                  value={round(offset.y)}
-                  style={{ width: '50px' }}
-                  onChange={v => {
-                    UnitOfWork.execute(edge.diagram, uow => {
-                      node.updateLabelNode({ offset: { x: offset.x, y: Number(v) } }, uow);
-                    });
-                  }}
-                />
-              )}
+            )}
 
-              <ToggleButtonGroup.Root
-                value={labelNode.offsetType}
-                onChange={v => {
-                  UnitOfWork.execute(edge.diagram, uow => {
-                    node.updateLabelNode({ offsetType: v as 'absolute' | 'relative' }, uow);
-                  });
-                }}
-                aria-label="Offset type"
-                type={'single'}
-              >
-                <ToggleButtonGroup.Item value={'absolute'}>
-                  <TbLetterA />
-                </ToggleButtonGroup.Item>
-                <ToggleButtonGroup.Item value={'relative'}>
-                  <TbLetterR />
-                </ToggleButtonGroup.Item>
-              </ToggleButtonGroup.Root>
-            </div>
+            <ToggleButtonGroup.Root
+              value={labelNode.offsetType}
+              onChange={v => {
+                UnitOfWork.execute(edge.diagram, uow => {
+                  node.updateLabelNode({ offsetType: v as 'absolute' | 'relative' }, uow);
+                });
+              }}
+              aria-label="Offset type"
+              type={'single'}
+            >
+              <ToggleButtonGroup.Item value={'absolute'}>
+                <TbLetterA />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'relative'}>
+                <TbLetterR />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
           </KeyValueTable.Value>
         </KeyValueTable.Root>
       </div>

@@ -133,88 +133,70 @@ export const NodeTableStrokePanel = (props: Props) => {
         </KeyValueTable.Value>
 
         <KeyValueTable.Label>Style:</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-vcenter util-hstack'}>
-            <PropertyEditor
-              property={strokeWidth}
-              render={props => (
-                <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
-              )}
-            />
-            <DashSelector property={pattern} />
-            <PopoverButton label={<TbAdjustmentsHorizontal />}>
-              <KeyValueTable.Root>
-                <KeyValueTable.Label>Stroke:</KeyValueTable.Label>
-                <KeyValueTable.Value>
-                  <div className={'util-hstack'}>
-                    <PropertyEditor
-                      property={strokeSize}
-                      render={props => (
-                        <NumberInput
-                          {...props}
-                          defaultUnit={'%'}
-                          min={1}
-                          style={{ width: '45px' }}
-                        />
-                      )}
-                    />
-                    <PropertyEditor
-                      property={strokeSpacing}
-                      render={props => (
-                        <NumberInput
-                          {...props}
-                          defaultUnit={'%'}
-                          min={1}
-                          style={{ width: '45px' }}
-                        />
-                      )}
-                    />
-                  </div>
-                </KeyValueTable.Value>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <PropertyEditor
+            property={strokeWidth}
+            render={props => (
+              <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
+            )}
+          />
+          <DashSelector property={pattern} />
+          <PopoverButton label={<TbAdjustmentsHorizontal />}>
+            <KeyValueTable.Root>
+              <KeyValueTable.Label>Stroke:</KeyValueTable.Label>
+              <KeyValueTable.Value stack={'horizontal'}>
+                <PropertyEditor
+                  property={strokeSize}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                  )}
+                />
+                <PropertyEditor
+                  property={strokeSpacing}
+                  render={props => (
+                    <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                  )}
+                />
+              </KeyValueTable.Value>
 
-                <KeyValueTable.Label>Line cap:</KeyValueTable.Label>
-                <KeyValueTable.Value>
+              <KeyValueTable.Label>Line cap:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <PropertyEditor
+                  property={lineCap as Property<string>}
+                  render={props => (
+                    <Select.Root {...props}>
+                      <Select.Item value={'butt'}>Butt</Select.Item>
+                      <Select.Item value={'round'}>Round</Select.Item>
+                      <Select.Item value={'square'}>Square</Select.Item>
+                    </Select.Root>
+                  )}
+                />
+              </KeyValueTable.Value>
+
+              <KeyValueTable.Label>Line join:</KeyValueTable.Label>
+              <KeyValueTable.Value stack={'horizontal'}>
+                <PropertyEditor
+                  property={lineJoin as Property<string>}
+                  render={props => (
+                    <Select.Root {...props}>
+                      <Select.Item value={'miter'}>Miter</Select.Item>
+                      <Select.Item value={'round'}>Round</Select.Item>
+                      <Select.Item value={'bevel'}>Bevel</Select.Item>
+                    </Select.Root>
+                  )}
+                />
+
+                {lineJoin.val === 'miter' && (
                   <PropertyEditor
-                    property={lineCap as Property<string>}
-                    render={props => (
-                      <Select.Root {...props}>
-                        <Select.Item value={'butt'}>Butt</Select.Item>
-                        <Select.Item value={'round'}>Round</Select.Item>
-                        <Select.Item value={'square'}>Square</Select.Item>
-                      </Select.Root>
-                    )}
+                    property={miterLimit}
+                    formatValue={v => v * 10}
+                    storeValue={v => v / 10}
+                    render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
                   />
-                </KeyValueTable.Value>
-
-                <KeyValueTable.Label>Line join:</KeyValueTable.Label>
-                <KeyValueTable.Value>
-                  <div className={'util-hstack'}>
-                    <PropertyEditor
-                      property={lineJoin as Property<string>}
-                      render={props => (
-                        <Select.Root {...props}>
-                          <Select.Item value={'miter'}>Miter</Select.Item>
-                          <Select.Item value={'round'}>Round</Select.Item>
-                          <Select.Item value={'bevel'}>Bevel</Select.Item>
-                        </Select.Root>
-                      )}
-                    />
-
-                    {lineJoin.val === 'miter' && (
-                      <PropertyEditor
-                        property={miterLimit}
-                        formatValue={v => v * 10}
-                        storeValue={v => v / 10}
-                        render={props => (
-                          <NumberInput {...props} min={0} style={{ width: '50px' }} />
-                        )}
-                      />
-                    )}
-                  </div>
-                </KeyValueTable.Value>
-              </KeyValueTable.Root>
-            </PopoverButton>
-          </div>
+                )}
+              </KeyValueTable.Value>
+            </KeyValueTable.Root>
+          </PopoverButton>
         </KeyValueTable.Value>
       </KeyValueTable.Root>
     </ToolWindowPanel>

@@ -100,229 +100,214 @@ export const ElementStylesheetPanel = (props: Props) => {
       >
         <KeyValueTable.Root>
           <KeyValueTable.Label>{isText ? 'Text Style' : 'Style'}:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-hstack'}>
-              <Select.Root
-                value={$s.val}
-                isIndeterminate={$s.hasMultipleValues}
-                onChange={v => {
-                  UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
-                    $d.selection.elements.forEach(n => {
-                      $d.document.styles.setStylesheet(n, v!, uow, true);
-                    });
-                    $s.set(v);
+          <KeyValueTable.Value stack={'horizontal'}>
+            <Select.Root
+              value={$s.val}
+              isIndeterminate={$s.hasMultipleValues}
+              onChange={v => {
+                UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
+                  $d.selection.elements.forEach(n => {
+                    $d.document.styles.setStylesheet(n, v!, uow, true);
                   });
-                }}
-              >
-                {styleList.map(e => (
-                  <Select.Item key={e.id} value={e.id}>
-                    {isDirty && e.id === $s.val ? `${e.name} ∗` : e.name}
-                  </Select.Item>
-                ))}
-              </Select.Root>
-              <MenuButton.Root>
-                <MenuButton.Trigger>
-                  <TbDots />
-                </MenuButton.Trigger>
+                  $s.set(v);
+                });
+              }}
+            >
+              {styleList.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {isDirty && e.id === $s.val ? `${e.name} ∗` : e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+            <MenuButton.Root>
+              <MenuButton.Trigger>
+                <TbDots />
+              </MenuButton.Trigger>
 
-                <MenuButton.Menu>
-                  <Menu.Item
-                    onClick={() => {
-                      UnitOfWork.executeWithUndo($d, 'Reapply style', uow => {
-                        $d.selection.elements.forEach(n => {
-                          $d.document.styles.setStylesheet(n, $s.val, uow, true);
-                        });
+              <MenuButton.Menu>
+                <Menu.Item
+                  onClick={() => {
+                    UnitOfWork.executeWithUndo($d, 'Reapply style', uow => {
+                      $d.selection.elements.forEach(n => {
+                        $d.document.styles.setStylesheet(n, $s.val, uow, true);
                       });
-                    }}
-                  >
-                    Reset
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={() => {
-                      // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                      UnitOfWork.executeWithUndo($d, 'Redefine style', uow => {
-                        const stylesheet = $d.document.styles.get($s.val);
-                        if (stylesheet) {
-                          const commonProps = getCommonProps(
-                            $d.selection.elements.map(e => e.editProps)
-                          ) as NodeProps & EdgeProps;
-                          stylesheet.setProps(
-                            isText ? { text: commonProps.text } : commonProps,
-                            uow
-                          );
-                          $d.document.styles.reapplyStylesheet(stylesheet, uow);
-                        }
-                      });
-                    }}
-                  >
-                    Save
-                  </Menu.Item>
-                  <Menu.SubMenu label="Save As...">
-                    <Menu.Item
-                      onClick={() => {
-                        application.ui.showDialog(
-                          new StringInputDialogCommand(
-                            {
-                              label: 'Name',
-                              title: 'New style',
-                              saveButtonLabel: 'Create',
-                              value: ''
-                            },
-                            v => {
-                              const id = newid();
-                              const commonProps = getCommonProps(
-                                $d.selection.elements.map(e => e.editProps)
-                              ) as NodeProps & EdgeProps;
-                              const s = Stylesheet.fromSnapshot(
-                                isText
-                                  ? 'text'
-                                  : isNode($d.selection.elements[0])
-                                    ? 'node'
-                                    : 'edge',
-                                {
-                                  id,
-                                  name: v,
-                                  props: {
-                                    ...(isText ? { text: commonProps.text } : commonProps)
-                                  }
-                                },
-                                $d.document.styles.crdt.factory,
-                                $d.document.styles
-                              );
-
-                              UnitOfWork.executeWithUndo($d, 'Add style', uow => {
-                                $d.document.styles.addStylesheet(s.id, s, uow);
-                                $d.document.styles.setStylesheet(
-                                  $d.selection.elements[0]!,
-                                  id,
-                                  uow,
-                                  true
-                                );
-                              });
-                            }
-                          )
-                        );
-                      }}
-                    >
-                      New Style
-                    </Menu.Item>
-                    <Menu.Item
-                      disabled={$s.val.startsWith('default')}
-                      onClick={() => {
-                        application.ui.showDialog(
-                          new StringInputDialogCommand(
-                            {
-                              label: 'Name',
-                              title: 'New derived style',
-                              saveButtonLabel: 'Create',
-                              value: ''
-                            },
-                            v => {
-                              const id = newid();
-                              const parentStylesheet = $d.document.styles.get($s.val)!;
-                              const commonProps = getCommonProps(
-                                $d.selection.elements.map(e => e.editProps)
-                              ) as NodeProps & EdgeProps;
-
-                              const elementProps = isText
-                                ? { text: commonProps.text }
-                                : commonProps;
-                              const parentProps = parentStylesheet.props as Record<string, unknown>;
-                              const diffProps = computeChildStylesheetProps(
-                                elementProps as Record<string, unknown>,
-                                parentProps
-                              );
-
-                              const s = Stylesheet.fromSnapshot(
-                                isText
-                                  ? 'text'
-                                  : isNode($d.selection.elements[0])
-                                    ? 'node'
-                                    : 'edge',
-                                {
-                                  id,
-                                  name: v,
-                                  props: diffProps,
-                                  parentId: parentStylesheet.id
-                                },
-                                $d.document.styles.crdt.factory,
-                                $d.document.styles
-                              );
-
-                              UnitOfWork.executeWithUndo($d, 'Add derived style', uow => {
-                                $d.document.styles.addStylesheet(s.id, s, uow);
-                                $d.selection.elements.forEach(el => {
-                                  $d.document.styles.setStylesheet(el, id, uow, true);
-                                });
-                              });
-                            }
-                          )
-                        );
-                      }}
-                    >
-                      New Derived Style
-                    </Menu.Item>
-                  </Menu.SubMenu>
-                  <Menu.Item
-                    disabled={$s.val.startsWith('default')}
-                    onClick={() => {
-                      application.ui.showDialog(
-                        new MessageDialogCommand(
-                          {
-                            title: 'Confirm delete',
-                            message: 'Are you sure you want to delete this style?',
-                            okLabel: 'Yes',
-                            okType: 'danger',
-                            cancelLabel: 'No'
-                          },
-                          () => {
-                            UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
-                              $d.document.styles.deleteStylesheet($s.val, uow);
-                            });
-                          }
-                        )
-                      );
-                    }}
-                  >
-                    Delete
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={() => {
-                      const style = $d.document.styles.get($s.val);
-                      setDialogProps({
-                        props: style?.props ?? {},
-                        style: style!
-                      });
-                    }}
-                  >
-                    Modify
-                  </Menu.Item>
+                    });
+                  }}
+                >
+                  Reset
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
+                    UnitOfWork.executeWithUndo($d, 'Redefine style', uow => {
+                      const stylesheet = $d.document.styles.get($s.val);
+                      if (stylesheet) {
+                        const commonProps = getCommonProps(
+                          $d.selection.elements.map(e => e.editProps)
+                        ) as NodeProps & EdgeProps;
+                        stylesheet.setProps(isText ? { text: commonProps.text } : commonProps, uow);
+                        $d.document.styles.reapplyStylesheet(stylesheet, uow);
+                      }
+                    });
+                  }}
+                >
+                  Save
+                </Menu.Item>
+                <Menu.SubMenu label="Save As...">
                   <Menu.Item
                     onClick={() => {
                       application.ui.showDialog(
                         new StringInputDialogCommand(
                           {
                             label: 'Name',
-                            title: 'Rename style',
-                            description: 'Enter a new name for the style.',
-                            saveButtonLabel: 'Rename',
-                            value: $d.document.styles.get($s.val)?.name ?? ''
+                            title: 'New style',
+                            saveButtonLabel: 'Create',
+                            value: ''
                           },
                           v => {
-                            UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
-                              const stylesheet = $d.document.styles.get($s.val)!;
-                              stylesheet.setName(v, uow);
+                            const id = newid();
+                            const commonProps = getCommonProps(
+                              $d.selection.elements.map(e => e.editProps)
+                            ) as NodeProps & EdgeProps;
+                            const s = Stylesheet.fromSnapshot(
+                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
+                              {
+                                id,
+                                name: v,
+                                props: {
+                                  ...(isText ? { text: commonProps.text } : commonProps)
+                                }
+                              },
+                              $d.document.styles.crdt.factory,
+                              $d.document.styles
+                            );
+
+                            UnitOfWork.executeWithUndo($d, 'Add style', uow => {
+                              $d.document.styles.addStylesheet(s.id, s, uow);
+                              $d.document.styles.setStylesheet(
+                                $d.selection.elements[0]!,
+                                id,
+                                uow,
+                                true
+                              );
                             });
                           }
                         )
                       );
                     }}
                   >
-                    Rename
+                    New Style
                   </Menu.Item>
-                </MenuButton.Menu>
-              </MenuButton.Root>
-            </div>
+                  <Menu.Item
+                    disabled={$s.val.startsWith('default')}
+                    onClick={() => {
+                      application.ui.showDialog(
+                        new StringInputDialogCommand(
+                          {
+                            label: 'Name',
+                            title: 'New derived style',
+                            saveButtonLabel: 'Create',
+                            value: ''
+                          },
+                          v => {
+                            const id = newid();
+                            const parentStylesheet = $d.document.styles.get($s.val)!;
+                            const commonProps = getCommonProps(
+                              $d.selection.elements.map(e => e.editProps)
+                            ) as NodeProps & EdgeProps;
+
+                            const elementProps = isText ? { text: commonProps.text } : commonProps;
+                            const parentProps = parentStylesheet.props as Record<string, unknown>;
+                            const diffProps = computeChildStylesheetProps(
+                              elementProps as Record<string, unknown>,
+                              parentProps
+                            );
+
+                            const s = Stylesheet.fromSnapshot(
+                              isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
+                              {
+                                id,
+                                name: v,
+                                props: diffProps,
+                                parentId: parentStylesheet.id
+                              },
+                              $d.document.styles.crdt.factory,
+                              $d.document.styles
+                            );
+
+                            UnitOfWork.executeWithUndo($d, 'Add derived style', uow => {
+                              $d.document.styles.addStylesheet(s.id, s, uow);
+                              $d.selection.elements.forEach(el => {
+                                $d.document.styles.setStylesheet(el, id, uow, true);
+                              });
+                            });
+                          }
+                        )
+                      );
+                    }}
+                  >
+                    New Derived Style
+                  </Menu.Item>
+                </Menu.SubMenu>
+                <Menu.Item
+                  disabled={$s.val.startsWith('default')}
+                  onClick={() => {
+                    application.ui.showDialog(
+                      new MessageDialogCommand(
+                        {
+                          title: 'Confirm delete',
+                          message: 'Are you sure you want to delete this style?',
+                          okLabel: 'Yes',
+                          okType: 'danger',
+                          cancelLabel: 'No'
+                        },
+                        () => {
+                          UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
+                            $d.document.styles.deleteStylesheet($s.val, uow);
+                          });
+                        }
+                      )
+                    );
+                  }}
+                >
+                  Delete
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    const style = $d.document.styles.get($s.val);
+                    setDialogProps({
+                      props: style?.props ?? {},
+                      style: style!
+                    });
+                  }}
+                >
+                  Modify
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    application.ui.showDialog(
+                      new StringInputDialogCommand(
+                        {
+                          label: 'Name',
+                          title: 'Rename style',
+                          description: 'Enter a new name for the style.',
+                          saveButtonLabel: 'Rename',
+                          value: $d.document.styles.get($s.val)?.name ?? ''
+                        },
+                        v => {
+                          UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
+                            const stylesheet = $d.document.styles.get($s.val)!;
+                            stylesheet.setName(v, uow);
+                          });
+                        }
+                      )
+                    );
+                  }}
+                >
+                  Rename
+                </Menu.Item>
+              </MenuButton.Menu>
+            </MenuButton.Root>
           </KeyValueTable.Value>
         </KeyValueTable.Root>
       </ToolWindowPanel>

@@ -253,15 +253,13 @@ export const ElementTransformPanel = (props: Props) => {
           </KeyValueTable.Value>
 
           <KeyValueTable.Label>Flip</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-hstack'}>
-              <ToggleButton value={flipV.val} onChange={flipV.set}>
-                <TbFlipHorizontal />
-              </ToggleButton>
-              <ToggleButton value={flipH.val} onChange={flipH.set}>
-                <TbFlipVertical />
-              </ToggleButton>
-            </div>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <ToggleButton value={flipV.val} onChange={flipV.set}>
+              <TbFlipHorizontal />
+            </ToggleButton>
+            <ToggleButton value={flipH.val} onChange={flipH.set}>
+              <TbFlipVertical />
+            </ToggleButton>
           </KeyValueTable.Value>
         </KeyValueTable.Root>
       </div>

@@ -75,40 +75,38 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
       </KeyValueTable.Value>
 
       <KeyValueTable.Label valign={'top'}>Position:</KeyValueTable.Label>
-      <KeyValueTable.Value>
-        <div className={'util-vstack'}>
-          <PropertyEditor
-            property={props.position as Property<string>}
-            render={props => (
-              <Select.Root {...props} disabled={$p.isReadOnly}>
-                <Select.Item value={'e'}>East</Select.Item>
-                <Select.Item value={'ne'}>North East</Select.Item>
-                <Select.Item value={'n'}>North</Select.Item>
-                <Select.Item value={'nw'}>North West</Select.Item>
-                <Select.Item value={'w'}>West</Select.Item>
-                <Select.Item value={'sw'}>South West</Select.Item>
-                <Select.Item value={'s'}>South</Select.Item>
-                <Select.Item value={'se'}>South East</Select.Item>
-                <Select.Item value={'c'}>Center</Select.Item>
-              </Select.Root>
-            )}
-          />
-          <PropertyEditor
-            property={props.offset}
-            render={props => <NumberInput {...props} disabled={$p.isReadOnly} label="Δ" />}
-          />
-          <PropertyEditor
-            property={props.direction as Property<string>}
-            render={props => (
-              <Select.Root {...props} disabled={$p.isReadOnly}>
-                <Select.Item value={'e'}>East</Select.Item>
-                <Select.Item value={'n'}>North</Select.Item>
-                <Select.Item value={'w'}>West</Select.Item>
-                <Select.Item value={'s'}>South</Select.Item>
-              </Select.Root>
-            )}
-          />
-        </div>
+      <KeyValueTable.Value stack={'vertical'}>
+        <PropertyEditor
+          property={props.position as Property<string>}
+          render={props => (
+            <Select.Root {...props} disabled={$p.isReadOnly}>
+              <Select.Item value={'e'}>East</Select.Item>
+              <Select.Item value={'ne'}>North East</Select.Item>
+              <Select.Item value={'n'}>North</Select.Item>
+              <Select.Item value={'nw'}>North West</Select.Item>
+              <Select.Item value={'w'}>West</Select.Item>
+              <Select.Item value={'sw'}>South West</Select.Item>
+              <Select.Item value={'s'}>South</Select.Item>
+              <Select.Item value={'se'}>South East</Select.Item>
+              <Select.Item value={'c'}>Center</Select.Item>
+            </Select.Root>
+          )}
+        />
+        <PropertyEditor
+          property={props.offset}
+          render={props => <NumberInput {...props} disabled={$p.isReadOnly} label="Δ" />}
+        />
+        <PropertyEditor
+          property={props.direction as Property<string>}
+          render={props => (
+            <Select.Root {...props} disabled={$p.isReadOnly}>
+              <Select.Item value={'e'}>East</Select.Item>
+              <Select.Item value={'n'}>North</Select.Item>
+              <Select.Item value={'w'}>West</Select.Item>
+              <Select.Item value={'s'}>South</Select.Item>
+            </Select.Root>
+          )}
+        />
       </KeyValueTable.Value>
     </KeyValueTable.Root>
   );

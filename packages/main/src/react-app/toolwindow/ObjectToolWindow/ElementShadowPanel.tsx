@@ -32,55 +32,43 @@ export const ElementShadowPanelForm = ({
   return (
     <KeyValueTable.Root>
       <KeyValueTable.Label>Color:</KeyValueTable.Label>
-      <KeyValueTable.Value>
-        <div className={'util-hstack util-vcenter'}>
-          <PropertyEditor
-            property={color}
-            render={props => (
-              <ColorPicker
-                {...props}
-                palette={$cfg.palette.primary}
-                customPalette={$d.document.customPalette}
-                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              />
-            )}
-            renderValue={props => <ColorPreview {...props} />}
-          />
-          <PropertyEditor
-            property={opacity}
-            formatValue={v => round((1 - v) * 100)}
-            storeValue={v => (100 - v) / 100}
-            render={props => (
-              <NumberInput
-                {...props}
-                style={{ width: '45px' }}
-                min={0}
-                max={100}
-                defaultUnit={'%'}
-              />
-            )}
-          />
-        </div>
+      <KeyValueTable.Value stack={'horizontal'}>
+        <PropertyEditor
+          property={color}
+          render={props => (
+            <ColorPicker
+              {...props}
+              palette={$cfg.palette.primary}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+          )}
+          renderValue={props => <ColorPreview {...props} />}
+        />
+        <PropertyEditor
+          property={opacity}
+          formatValue={v => round((1 - v) * 100)}
+          storeValue={v => (100 - v) / 100}
+          render={props => (
+            <NumberInput {...props} style={{ width: '45px' }} min={0} max={100} defaultUnit={'%'} />
+          )}
+        />
       </KeyValueTable.Value>
 
       <KeyValueTable.Label>Position:</KeyValueTable.Label>
-      <KeyValueTable.Value>
-        <div className={'util-vcenter util-hstack'}>
-          <PropertyEditor
-            property={x}
-            render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
-          />
-          <PropertyEditor
-            property={y}
-            render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
-          />
-          <PropertyEditor
-            property={blur}
-            render={p => (
-              <NumberInput {...p} min={0} style={{ width: '45px' }} defaultUnit={'px'} />
-            )}
-          />
-        </div>
+      <KeyValueTable.Value stack={'horizontal'}>
+        <PropertyEditor
+          property={x}
+          render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
+        />
+        <PropertyEditor
+          property={y}
+          render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
+        />
+        <PropertyEditor
+          property={blur}
+          render={p => <NumberInput {...p} min={0} style={{ width: '45px' }} defaultUnit={'px'} />}
+        />
       </KeyValueTable.Value>
     </KeyValueTable.Root>
   );

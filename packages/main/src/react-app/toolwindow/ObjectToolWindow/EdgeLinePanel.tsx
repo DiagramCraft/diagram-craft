@@ -101,38 +101,48 @@ export const EdgeLinePanelForm = ({
       {supportsArrows && (
         <>
           <KeyValueTable.Label>Line start:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-vcenter util-hstack'}>
-              <ArrowSelector property={startType} />
-              <PropertyEditor
-                property={startSize}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
-                )}
-              />
-            </div>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <ArrowSelector property={startType} />
+            <PropertyEditor
+              property={startSize}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
+              )}
+            />
           </KeyValueTable.Value>
 
           <KeyValueTable.Label>Line end:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-vcenter util-hstack'}>
-              <ArrowSelector property={endType} />
-              <PropertyEditor
-                property={endSize}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
-                )}
-              />
-            </div>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <ArrowSelector property={endType} />
+            <PropertyEditor
+              property={endSize}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
+              )}
+            />
           </KeyValueTable.Value>
         </>
       )}
 
       <KeyValueTable.Label>Color:</KeyValueTable.Label>
-      <KeyValueTable.Value>
-        <div className={'util-vcenter util-hstack'}>
+      <KeyValueTable.Value stack={'horizontal'}>
+        <PropertyEditor
+          property={strokeColor}
+          render={props => (
+            <ColorPicker
+              {...props}
+              palette={$cfg.palette.primary}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+              extraPalettes={{ Stylesheet: palette }}
+            />
+          )}
+          renderValue={props => <ColorPreview {...props} />}
+        />
+
+        {!supportsFill && (
           <PropertyEditor
-            property={strokeColor}
+            property={fillColor}
             render={props => (
               <ColorPicker
                 {...props}
@@ -144,23 +154,7 @@ export const EdgeLinePanelForm = ({
             )}
             renderValue={props => <ColorPreview {...props} />}
           />
-
-          {!supportsFill && (
-            <PropertyEditor
-              property={fillColor}
-              render={props => (
-                <ColorPicker
-                  {...props}
-                  palette={$cfg.palette.primary}
-                  customPalette={$d.document.customPalette}
-                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                  extraPalettes={{ Stylesheet: palette }}
-                />
-              )}
-              renderValue={props => <ColorPreview {...props} />}
-            />
-          )}
-        </div>
+        )}
       </KeyValueTable.Value>
 
       <KeyValueTable.Label>Width:</KeyValueTable.Label>
@@ -174,50 +168,46 @@ export const EdgeLinePanelForm = ({
       </KeyValueTable.Value>
 
       <KeyValueTable.Label>Dash:</KeyValueTable.Label>
-      <KeyValueTable.Value>
-        <div className={'util-vcenter util-hstack'}>
-          <DashSelector property={pattern} />
-          <PropertyEditor
-            property={strokeSize}
-            render={props => (
-              <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
-            )}
-          />
+      <KeyValueTable.Value stack={'horizontal'}>
+        <DashSelector property={pattern} />
+        <PropertyEditor
+          property={strokeSize}
+          render={props => (
+            <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+          )}
+        />
 
-          <PropertyEditor
-            property={strokeSpacing}
-            render={props => (
-              <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
-            )}
-          />
-        </div>
+        <PropertyEditor
+          property={strokeSpacing}
+          render={props => (
+            <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+          )}
+        />
       </KeyValueTable.Value>
 
       {supportsLineHops && (
         <>
           <KeyValueTable.Label valign={'top'}>Line hops:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-vecnter util-vstack'} style={{ width: '100%' }}>
-              <PropertyEditor
-                property={lineHopsType as Property<string>}
-                render={props => (
-                  <Select.Root {...props}>
-                    <Select.Item value={'none'}>None</Select.Item>
-                    <Select.Item value={'below-hide'}>Gap when below</Select.Item>
-                    <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
-                    <Select.Item value={'below-arc'}>Arc when below</Select.Item>
-                    <Select.Item value={'above-arc'}>Arc when above</Select.Item>
-                  </Select.Root>
-                )}
-              />
+          <KeyValueTable.Value stack={'vertical'}>
+            <PropertyEditor
+              property={lineHopsType as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'none'}>None</Select.Item>
+                  <Select.Item value={'below-hide'}>Gap when below</Select.Item>
+                  <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
+                  <Select.Item value={'below-arc'}>Arc when below</Select.Item>
+                  <Select.Item value={'above-arc'}>Arc when above</Select.Item>
+                </Select.Root>
+              )}
+            />
 
-              <PropertyEditor
-                property={lineHopsSize}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
-                )}
-              />
-            </div>
+            <PropertyEditor
+              property={lineHopsSize}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
+              )}
+            />
           </KeyValueTable.Value>
         </>
       )}

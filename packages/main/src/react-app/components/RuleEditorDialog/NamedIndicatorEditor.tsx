@@ -48,15 +48,13 @@ export const NamedIndicatorEditor: Editor = props => {
 
         <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
         <KeyValueTable.Value>
-          <div className={'util-vcenter'}>
-            <Checkbox
-              value={enabled.val}
-              onChange={v => {
-                enabled.set(v);
-                onChange();
-              }}
-            />
-          </div>
+          <Checkbox
+            value={enabled.val}
+            onChange={v => {
+              enabled.set(v);
+              onChange();
+            }}
+          />
         </KeyValueTable.Value>
       </KeyValueTable.Root>
 

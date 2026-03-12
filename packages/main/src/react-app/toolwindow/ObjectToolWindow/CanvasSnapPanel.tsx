@@ -21,34 +21,30 @@ export const CanvasSnapPanel = (props: Props) => {
     >
       <KeyValueTable.Root>
         <KeyValueTable.Label valign={'top'}>Snap:</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-vstack'}>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GRID'}>Snap to grid</ActionCheckbox>
-            </div>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GUIDES'}>Snap to guides</ActionCheckbox>
-            </div>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_NODE'}>
-                Snap to object bounds
-              </ActionCheckbox>
-            </div>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_CANVAS'}>
-                Snap to canvas midpoint
-              </ActionCheckbox>
-            </div>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_SIZE'}>
-                Snap to object size
-              </ActionCheckbox>
-            </div>
-            <div className={'util-vcenter util-vgap util-font-body'}>
-              <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
-                Snap to object distance
-              </ActionCheckbox>
-            </div>
+        <KeyValueTable.Value stack={'vertical'}>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GRID'}>Snap to grid</ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GUIDES'}>Snap to guides</ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_NODE'}>
+              Snap to object bounds
+            </ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_CANVAS'}>
+              Snap to canvas midpoint
+            </ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_SIZE'}>Snap to object size</ActionCheckbox>
+          </div>
+          <div className={'util-vcenter util-vgap util-font-body'}>
+            <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_DISTANCE'}>
+              Snap to object distance
+            </ActionCheckbox>
           </div>
         </KeyValueTable.Value>
 

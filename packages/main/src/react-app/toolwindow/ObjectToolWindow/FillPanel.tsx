@@ -185,14 +185,27 @@ export const FillPanelForm = ({
       {(type.val === 'gradient' || type.val === 'solid') && (
         <>
           <KeyValueTable.Label>Color:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-hstack'}>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <PropertyEditor
+              property={color}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  extraPalettes={{ Stylesheet: palette }}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
+              renderValue={props => <ColorPreview {...props} />}
+            />
+
+            {type.val === 'gradient' && (
               <PropertyEditor
-                property={color}
+                property={color2}
                 render={props => (
                   <ColorPicker
                     {...props}
-                    extraPalettes={{ Stylesheet: palette }}
                     palette={$cfg.palette.primary}
                     customPalette={$d.document.customPalette}
                     onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
@@ -200,22 +213,7 @@ export const FillPanelForm = ({
                 )}
                 renderValue={props => <ColorPreview {...props} />}
               />
-
-              {type.val === 'gradient' && (
-                <PropertyEditor
-                  property={color2}
-                  render={props => (
-                    <ColorPicker
-                      {...props}
-                      palette={$cfg.palette.primary}
-                      customPalette={$d.document.customPalette}
-                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                    />
-                  )}
-                  renderValue={props => <ColorPreview {...props} />}
-                />
-              )}
-            </div>
+            )}
           </KeyValueTable.Value>
         </>
       )}
@@ -285,33 +283,31 @@ export const FillPanelForm = ({
           </KeyValueTable.Value>
 
           <KeyValueTable.Label>Color:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-hstack'}>
-              <PropertyEditor
-                property={color}
-                render={props => (
-                  <ColorPicker
-                    {...props}
-                    palette={$cfg.palette.primary}
-                    customPalette={$d.document.customPalette}
-                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                  />
-                )}
-                renderValue={props => <ColorPreview {...props} />}
-              />
-              <PropertyEditor
-                property={color2}
-                render={props => (
-                  <ColorPicker
-                    {...props}
-                    palette={$cfg.palette.primary}
-                    customPalette={$d.document.customPalette}
-                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                  />
-                )}
-                renderValue={props => <ColorPreview {...props} />}
-              />
-            </div>
+          <KeyValueTable.Value stack={'horizontal'}>
+            <PropertyEditor
+              property={color}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
+              renderValue={props => <ColorPreview {...props} />}
+            />
+            <PropertyEditor
+              property={color2}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  customPalette={$d.document.customPalette}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
+              renderValue={props => <ColorPreview {...props} />}
+            />
           </KeyValueTable.Value>
         </>
       )}
@@ -456,27 +452,23 @@ export const FillPanelForm = ({
       {additionalFills && additionalFills.length > 0 && (
         <>
           <KeyValueTable.Label>Additional:</KeyValueTable.Label>
-          <KeyValueTable.Value>
-            <div className={'util-vstack util-vgap'}>
-              {additionalFills.map(({ color, enabled }, idx) => (
-                <div key={idx} className={'util-hstack'}>
-                  <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
-                  <PropertyEditor
-                    property={color}
-                    render={props => (
-                      <ColorPicker
-                        {...props}
-                        palette={$cfg.palette.primary}
-                        customPalette={$d.document.customPalette}
-                        onChangeCustomPalette={(idx, v) =>
-                          $d.document.customPalette.setColor(idx, v)
-                        }
-                      />
-                    )}
-                  />
-                </div>
-              ))}
-            </div>
+          <KeyValueTable.Value stack={'vertical'}>
+            {additionalFills.map(({ color, enabled }, idx) => (
+              <div key={idx} className={'util-hstack'}>
+                <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
+                <PropertyEditor
+                  property={color}
+                  render={props => (
+                    <ColorPicker
+                      {...props}
+                      palette={$cfg.palette.primary}
+                      customPalette={$d.document.customPalette}
+                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                    />
+                  )}
+                />
+              </div>
+            ))}
           </KeyValueTable.Value>
         </>
       )}

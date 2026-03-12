@@ -43,12 +43,18 @@ const Label = (props: LabelProps) => {
 
 type ValueProps = {
   children: React.ReactNode | React.ReactNode[];
+  stack?: 'vertical' | 'horizontal';
 } & HTMLAttributes<HTMLDivElement>;
 
 const Value = (props: ValueProps) => {
   return (
     <div {...props} className={styles.eValue}>
-      {props.children}
+      {props.stack && (
+        <div className={props.stack === 'vertical' ? 'util-vstack' : 'util-hstack'}>
+          {props.children}
+        </div>
+      )}
+      {!props.stack && props.children}
     </div>
   );
 };

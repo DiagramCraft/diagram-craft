@@ -141,70 +141,62 @@ export const NodeTextPanelForm = ({
     <>
       <KeyValueTable.Root>
         <KeyValueTable.Label>Font:</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-hstack util-vcenter'}>
-            <PropertyEditor
-              property={fontSize}
-              render={props => (
-                <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
-              )}
-            />
-            <PropertyEditor
-              property={font}
-              render={props => (
-                <Select.Root {...props}>
-                  {Object.entries(fonts).map(([label, value]) => (
-                    <Select.Item key={value} value={value}>
-                      {label}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              )}
-            />
-          </div>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <PropertyEditor
+            property={fontSize}
+            render={props => (
+              <NumberInput {...props} defaultUnit={'pt'} min={1} style={{ width: '45px' }} />
+            )}
+          />
+          <PropertyEditor
+            property={font}
+            render={props => (
+              <Select.Root {...props}>
+                {Object.entries(fonts).map(([label, value]) => (
+                  <Select.Item key={value} value={value}>
+                    {label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            )}
+          />
         </KeyValueTable.Value>
 
         <KeyValueTable.Label />
-        <KeyValueTable.Value>
-          <div className={'util-hstack util-vcenter'}>
-            <PropertyEditor
-              property={format}
-              render={props => (
-                <ToggleButtonGroup.Root
-                  {...props}
-                  aria-label="Formatting options"
-                  type={'multiple'}
-                >
-                  <ToggleButtonGroup.Item value={'bold'}>
-                    <TbBold />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'italic'}>
-                    <TbItalic />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'underline'}>
-                    <TbUnderline />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'strikethrough'}>
-                    <TbStrikethrough />
-                  </ToggleButtonGroup.Item>
-                </ToggleButtonGroup.Root>
-              )}
-            />
+        <KeyValueTable.Value stack={'horizontal'}>
+          <PropertyEditor
+            property={format}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'multiple'}>
+                <ToggleButtonGroup.Item value={'bold'}>
+                  <TbBold />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'italic'}>
+                  <TbItalic />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'underline'}>
+                  <TbUnderline />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'strikethrough'}>
+                  <TbStrikethrough />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
 
-            <PropertyEditor
-              property={textTransform as Property<string>}
-              render={props => (
-                <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-                  <ToggleButtonGroup.Item value={'capitalize'}>
-                    <TbLetterCase />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'uppercase'}>
-                    <TbLetterCaseUpper />
-                  </ToggleButtonGroup.Item>
-                </ToggleButtonGroup.Root>
-              )}
-            />
-          </div>
+          <PropertyEditor
+            property={textTransform as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'capitalize'}>
+                  <TbLetterCase />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'uppercase'}>
+                  <TbLetterCaseUpper />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
         </KeyValueTable.Value>
 
         <KeyValueTable.Label>Color:</KeyValueTable.Label>
@@ -229,42 +221,40 @@ export const NodeTextPanelForm = ({
         </KeyValueTable.Value>
 
         <KeyValueTable.Label>Align:</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-hstack util-vcenter'}>
-            <PropertyEditor
-              property={align as Property<string>}
-              render={props => (
-                <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-                  <ToggleButtonGroup.Item value={'left'}>
-                    <TbAlignLeft />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'center'}>
-                    <TbAlignCenter />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'right'}>
-                    <TbAlignRight />
-                  </ToggleButtonGroup.Item>
-                </ToggleButtonGroup.Root>
-              )}
-            />
+        <KeyValueTable.Value stack={'horizontal'}>
+          <PropertyEditor
+            property={align as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'left'}>
+                  <TbAlignLeft />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'center'}>
+                  <TbAlignCenter />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'right'}>
+                  <TbAlignRight />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
 
-            <PropertyEditor
-              property={valign as Property<string>}
-              render={props => (
-                <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
-                  <ToggleButtonGroup.Item value={'top'}>
-                    <RxTextAlignTop />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'middle'}>
-                    <RxTextAlignMiddle />
-                  </ToggleButtonGroup.Item>
-                  <ToggleButtonGroup.Item value={'bottom'}>
-                    <RxTextAlignBottom />
-                  </ToggleButtonGroup.Item>
-                </ToggleButtonGroup.Root>
-              )}
-            />
-          </div>
+          <PropertyEditor
+            property={valign as Property<string>}
+            render={props => (
+              <ToggleButtonGroup.Root {...props} aria-label="Formatting options" type={'single'}>
+                <ToggleButtonGroup.Item value={'top'}>
+                  <RxTextAlignTop />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'middle'}>
+                  <RxTextAlignMiddle />
+                </ToggleButtonGroup.Item>
+                <ToggleButtonGroup.Item value={'bottom'}>
+                  <RxTextAlignBottom />
+                </ToggleButtonGroup.Item>
+              </ToggleButtonGroup.Root>
+            )}
+          />
         </KeyValueTable.Value>
 
         <KeyValueTable.Label valign={'top'}>Spacing:</KeyValueTable.Label>

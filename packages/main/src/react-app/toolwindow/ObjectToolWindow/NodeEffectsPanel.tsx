@@ -220,25 +220,23 @@ export const NodeEffectsPanelForm = ({
             </KeyValueTable.Value>
 
             <KeyValueTable.Label>Stroke</KeyValueTable.Label>
-            <KeyValueTable.Value>
-              <div className={'util-hstack'}>
-                <PropertyEditor
-                  property={isometricStrokeEnabled}
-                  render={props => <Checkbox {...props} />}
-                />
-                <PropertyEditor
-                  property={isometricStrokeColor}
-                  render={props => (
-                    <ColorPicker
-                      {...props}
-                      palette={$cfg.palette.primary}
-                      canClearColor={true}
-                      customPalette={$d.document.customPalette}
-                      onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                    />
-                  )}
-                />
-              </div>
+            <KeyValueTable.Value stack={'horizontal'}>
+              <PropertyEditor
+                property={isometricStrokeEnabled}
+                render={props => <Checkbox {...props} />}
+              />
+              <PropertyEditor
+                property={isometricStrokeColor}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    palette={$cfg.palette.primary}
+                    canClearColor={true}
+                    customPalette={$d.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  />
+                )}
+              />
             </KeyValueTable.Value>
 
             <KeyValueTable.Label>Height</KeyValueTable.Label>

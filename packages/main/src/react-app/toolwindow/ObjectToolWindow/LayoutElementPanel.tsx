@@ -61,49 +61,45 @@ export const LayoutElementPanel = (props: Props) => {
     >
       <KeyValueTable.Root>
         <KeyValueTable.Label>Width</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-hstack'}>
-            <NumberInput
-              value={widthMin.val}
-              onChange={widthMin.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="0"
-              style={{ width: '76px' }}
-            />
-            <div>-</div>
-            <NumberInput
-              value={widthMax.val}
-              onChange={widthMax.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="∞"
-              style={{ width: '76px' }}
-            />
-          </div>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <NumberInput
+            value={widthMin.val}
+            onChange={widthMin.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="0"
+            style={{ width: '76px' }}
+          />
+          <div>-</div>
+          <NumberInput
+            value={widthMax.val}
+            onChange={widthMax.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="∞"
+            style={{ width: '76px' }}
+          />
         </KeyValueTable.Value>
 
         <KeyValueTable.Label>Height</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <div className={'util-hstack'}>
-            <NumberInput
-              value={heightMin.val}
-              onChange={heightMin.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="0"
-              style={{ width: '76px' }}
-            />
-            <div>-</div>
-            <NumberInput
-              value={heightMax.val}
-              onChange={heightMax.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="∞"
-              style={{ width: '76px' }}
-            />
-          </div>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <NumberInput
+            value={heightMin.val}
+            onChange={heightMin.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="0"
+            style={{ width: '76px' }}
+          />
+          <div>-</div>
+          <NumberInput
+            value={heightMax.val}
+            onChange={heightMax.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="∞"
+            style={{ width: '76px' }}
+          />
         </KeyValueTable.Value>
 
         <KeyValueTable.Label>Aspect Ratio</KeyValueTable.Label>
