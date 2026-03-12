@@ -18,10 +18,10 @@ export const TagsPanel = () => {
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'tags'} title={'Tags'}>
-      <div className={styles.tags}>
-        <div className={styles.tags__list}>
+      <div className={styles.icTagsPanel}>
+        <div className={styles.eTagList}>
           {document.tags.tags.length === 0 ? (
-            <div className={styles.tagsEmpty}>
+            <div className={styles.eEmptyMessage}>
               No tags
               <br />
               <br />
@@ -34,11 +34,12 @@ export const TagsPanel = () => {
               return (
                 <div
                   key={tag}
-                  className={`${styles.tag} ${isSelected ? styles['tag--selected'] : ''}`}
+                  className={styles.eTag}
+                  data-selected={isSelected}
                   onClick={() => handleTagClick(tag)}
                 >
-                  <TbTag className={styles.tagIcon} />
-                  <span className={styles.tagText}>{tag}</span>
+                  <TbTag className={styles.eIcon} />
+                  <span className={styles.eText}>{tag}</span>
                 </div>
               );
             })
