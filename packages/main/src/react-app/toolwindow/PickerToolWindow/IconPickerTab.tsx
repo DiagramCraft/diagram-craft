@@ -44,35 +44,12 @@ const IconGrid = (props: {
   }, []);
 
   return (
-    <div className={'cmp-object-picker'} onMouseLeave={onMouseLeave}>
+    <div className={`cmp-object-picker ${styles.eGrid}`} onMouseLeave={onMouseLeave}>
       {hover &&
         createPortal(
-          <div
-            style={{
-              position: 'absolute',
-              left: hover.x + 40,
-              top: hover.y,
-              width: 100,
-              height: 110,
-              zIndex: 200,
-              background: 'var(--canvas-bg)',
-              borderRadius: '4px',
-              lineHeight: '0',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              color: 'var(--canvas-fg)',
-              fontSize: '11px',
-              paddingTop: '0.75rem',
-              paddingBottom: '0.75rem',
-              boxShadow:
-                'hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px'
-            }}
-          >
+          <div className={styles.eIconTooltip} style={{ left: hover.x + 40, top: hover.y }}>
             <img src={hover.url} width={80} height={80} />
-            <div style={{ lineHeight: '14px', marginTop: 'auto', textAlign: 'center' }}>
-              {hover.name}
-            </div>
+            <div className={styles.eIconTooltipLabel}>{hover.name}</div>
           </div>,
           document.body
         )}
@@ -82,7 +59,7 @@ const IconGrid = (props: {
         return (
           <img
             key={icon}
-            className={styles.iconPickerIconItem}
+            className={styles.eIcon}
             loading="lazy"
             src={props.getUrl(icon)}
             width={35}
@@ -124,10 +101,10 @@ const Pagination = (props: {
 }) => {
   if (props.totalPages <= 1) return null;
   return (
-    <div className={styles.iconPickerPagination}>
+    <div className={styles.ePagination}>
       <button
         type="button"
-        className={styles.iconPickerPaginationBtn}
+        className={styles.ePaginationButton}
         disabled={props.page === 0}
         onClick={props.onPrev}
       >
@@ -138,7 +115,7 @@ const Pagination = (props: {
       </span>
       <button
         type="button"
-        className={styles.iconPickerPaginationBtn}
+        className={styles.ePaginationButton}
         disabled={props.page >= props.totalPages - 1}
         onClick={props.onNext}
       >
@@ -171,14 +148,14 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
     setPage(0);
   }, [cachedData]);
 
-  if (!cachedData) return <div className={styles.iconPickerLoading}>Loading...</div>;
+  if (!cachedData) return <div className={styles.icLoadingMessage}>Loading...</div>;
 
   const allIcons = flattenIcons(cachedData);
   const totalPages = Math.ceil(allIcons.length / PAGE_SIZE);
   const pageIcons = allIcons.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
-    <>
+    <div className={styles.icIconList}>
       <Pagination
         page={page}
         totalPages={totalPages}
@@ -192,7 +169,7 @@ const CollectionIconsPanel = (props: CollectionIconsProps) => {
         prefix={prefix}
         onIconMouseDown={onIconMouseDown}
       />
-    </>
+    </div>
   );
 };
 
@@ -217,7 +194,7 @@ const SearchResultsPanel = (props: {
   };
 
   return (
-    <>
+    <div className={styles.icIconList}>
       <Pagination
         page={page}
         totalPages={totalPages}
@@ -233,7 +210,7 @@ const SearchResultsPanel = (props: {
         }}
         onIconMouseDown={props.onIconMouseDown}
       />
-    </>
+    </div>
   );
 };
 
@@ -274,7 +251,7 @@ export const IconPickerTab = () => {
   if (!collections) {
     return (
       <ToolWindow.TabContent>
-        <div className={styles.iconPickerLoading}>Loading collections...</div>
+        <div className={styles.icLoadingMessage}>Loading collections...</div>
       </ToolWindow.TabContent>
     );
   }
@@ -320,7 +297,7 @@ export const IconPickerTab = () => {
       </ToolWindowPanel>
 
       {!isEmptyString(searchQuery) ? (
-        <div style={{ marginTop: '0.75rem', marginLeft: '0.5rem', marginRight: '0.5rem' }}>
+        <div className={styles.icIconSearchResults}>
           <SearchResultsPanel
             service={service}
             icons={searchResults}
@@ -335,21 +312,19 @@ export const IconPickerTab = () => {
               <Accordion.Item key={category} value={category}>
                 <Accordion.ItemHeader>{category}</Accordion.ItemHeader>
                 <Accordion.ItemContent forceMount={false}>
-                  <div className={styles.iconPickerCollectionList}>
+                  <div className={styles.icIconPackageList}>
                     {entries
                       .toSorted(([, a], [, b]) => a.name.localeCompare(b.name))
                       .map(([prefix, info]) => (
-                        <div key={prefix} className={'cmp-labeled-table__row'}>
-                          <Collapsible label={info.name}>
-                            <CollectionIconsPanel
-                              service={service}
-                              prefix={prefix}
-                              cachedData={loadedIcons.get(prefix)}
-                              onLoad={handleIconLoad}
-                              onIconMouseDown={handleIconMouseDown}
-                            />
-                          </Collapsible>
-                        </div>
+                        <Collapsible key={prefix} label={info.name}>
+                          <CollectionIconsPanel
+                            service={service}
+                            prefix={prefix}
+                            cachedData={loadedIcons.get(prefix)}
+                            onLoad={handleIconLoad}
+                            onIconMouseDown={handleIconMouseDown}
+                          />
+                        </Collapsible>
                       ))}
                   </div>
                 </Accordion.ItemContent>

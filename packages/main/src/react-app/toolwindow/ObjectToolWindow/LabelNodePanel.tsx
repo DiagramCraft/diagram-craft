@@ -160,7 +160,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('startAbove', labelNode)}
                 onClick={() => applyPosition('startAbove', edge, node)}
               />
@@ -169,7 +169,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('startOn', labelNode)}
                 onClick={() => applyPosition('startOn', edge, node)}
               />
@@ -178,7 +178,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('startBelow', labelNode)}
                 onClick={() => applyPosition('startBelow', edge, node)}
               />
@@ -188,7 +188,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('centerAbove', labelNode)}
                 onClick={() => applyPosition('centerAbove', edge, node)}
               />
@@ -197,7 +197,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('centerOn', labelNode)}
                 onClick={() => applyPosition('centerOn', edge, node)}
               />
@@ -206,7 +206,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('centerBelow', labelNode)}
                 onClick={() => applyPosition('centerBelow', edge, node)}
               />
@@ -216,7 +216,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('endAbove', labelNode)}
                 onClick={() => applyPosition('endAbove', edge, node)}
               />
@@ -225,7 +225,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('endOn', labelNode)}
                 onClick={() => applyPosition('endOn', edge, node)}
               />
@@ -234,7 +234,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.isPositionRect}
                 data-selected={isPosition('endBelow', labelNode)}
                 onClick={() => applyPosition('endBelow', edge, node)}
               />

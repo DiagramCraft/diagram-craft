@@ -1,49 +1,85 @@
-.iconPickerIconItem {
-  width: 35px;
-  height: 35px;
-  margin: 0.2rem;
-  display: block;
-}
-
-.iconPickerCollectionList {
+.icIconPackageList {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.iconPickerLoading {
+.icIconList {
+  .ePagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px;
+    font-size: 11px;
+    color: var(--base-fg-dim);
+    border-top: 1px solid var(--base-fg-more-dim);
+    border-bottom: 1px solid var(--base-fg-more-dim);
+    margin-bottom: 0.25rem;
+
+    .ePaginationButton {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--cmp-fg);
+      padding: 2px 6px;
+      font-size: 11px;
+      border-radius: 3px;
+
+      &:hover:not(:disabled) {
+        background: var(--cmp-bg-hover);
+      }
+
+      &:disabled {
+        color: var(--cmp-fg-disabled);
+        cursor: default;
+      }
+    }
+  }
+
+  .eGrid {
+    .eIcon {
+      width: 35px;
+      height: 35px;
+      margin: 0.2rem;
+      display: block;
+    }
+
+    .eIconTooltip {
+      position: absolute;
+      width: 100px;
+      height: 110px;
+      z-index: 200;
+      background: var(--canvas-bg);
+      border-radius: 4px;
+      line-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--canvas-fg);
+      font-size: 11px;
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+      box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px,
+      hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
+
+      .eIconTooltipLabel {
+        line-height: 14px;
+        margin-top: auto;
+        text-align: center;
+      }
+    }
+  }
+}
+
+.icLoadingMessage {
   padding: 8px;
   font-size: 11px;
   color: var(--base-fg-dim);
 }
 
-.iconPickerPagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px;
-  font-size: 11px;
-  color: var(--base-fg-dim);
-  border-top: 1px solid var(--base-fg-more-dim);
-  border-bottom: 1px solid var(--base-fg-more-dim);
-  margin-bottom: 0.25rem;
-}
 
-.iconPickerPaginationBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--cmp-fg);
-  padding: 2px 6px;
-  font-size: 11px;
-  border-radius: 3px;
-
-  &:hover:not(:disabled) {
-    background: var(--cmp-bg-hover);
-  }
-
-  &:disabled {
-    color: var(--cmp-fg-disabled);
-    cursor: default;
-  }
+.icIconSearchResults {
+  margin-top: 0.75rem;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
 }
