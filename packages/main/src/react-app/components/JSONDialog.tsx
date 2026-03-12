@@ -2,6 +2,7 @@ import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
 
 type Props<T> = {
   title: string;
@@ -57,7 +58,7 @@ export function JSONDialog<T>(
         cols={60}
         value={JSON.stringify(props.data ? props.data : {}, undefined, 2)}
       />
-      {error && <div className={'cmp-error'}>Error: {error}</div>}
+      {error && <ErrorMessage>Error: {error}</ErrorMessage>}
     </Dialog>
   );
 }

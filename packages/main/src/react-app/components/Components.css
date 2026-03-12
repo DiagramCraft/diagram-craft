@@ -1,33 +1,6 @@
 /* Generic Components */
 
 
-.cmp-more {
-  > button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--cmp-radius);
-    padding: 0 5px;
-    font-size: 13px;
-    line-height: 1;
-    height: 25px;
-    gap: 10px;
-    background-color: var(--cmp-bg);
-    color: var(--cmp-fg);
-    border: 1px solid var(--cmp-border);
-
-    &:hover {
-      background-color: var(--cmp-bg-hover);
-    }
-
-    &:focus {
-      outline: none;
-      box-shadow: var(--cmp-border-shadow-focus);
-    }
-  }
-}
-
-
 .cmp-label {
   display: flex;
   align-items: center;

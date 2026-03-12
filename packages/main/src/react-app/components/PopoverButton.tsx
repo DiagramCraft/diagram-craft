@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Popover } from '@diagram-craft/app-components/Popover';
+import styles from './PopoverButton.module.css';
 
 export const PopoverButton = (props: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={'cmp-more'}>
+    <div className={styles.cPopoverButton}>
       <Popover.Root open={open} onOpenChange={o => setOpen(o)}>
         <Popover.Trigger element={<button type="button">{props.label}</button>} />
         <Popover.Content sideOffset={5} focus={false}>

@@ -17,6 +17,7 @@ import {
   jsonHighlighter,
   SyntaxHighlightingEditor
 } from '@diagram-craft/app-components/SyntaxHighlightingEditor';
+import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -204,7 +205,7 @@ export const DJQLSearchTab = () => {
             title={`Query Response ${res ? `(${res.length} hits)` : 0}`}
           >
             <div className={'cmp-query-response'}>
-              {!!error && <div className={'cmp-error'}>{error}</div>}
+              {!!error && <ErrorMessage>{error}</ErrorMessage>}
               {res?.map((e, idx) => (
                 <div
                   key={idx}
