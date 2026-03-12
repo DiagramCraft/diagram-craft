@@ -15,6 +15,7 @@ import { useDiagram } from '../../../application';
 import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { SnapMarkers } from '@diagram-craft/canvas/snap/snapManager';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const origins = {
   tl: { x: 0, y: 0 },
@@ -153,112 +154,116 @@ export const ElementTransformPanel = (props: Props) => {
       title={'Transform'}
       hasCheckbox={false}
     >
-      <div className={'cmp-labeled-table cmp-transform'}>
-        <div className={'cmp-labeled-table__label cmp-transform__graphics'}>
-          <svg viewBox={'0 0 1 1'}>
-            <rect className={'cmp-transform__rect'} x={0.1} y={0.1} width={0.8} height={0.8} />
-            {Object.entries(origins).map(([k, v]) => (
-              <circle
-                key={k}
-                className={$c('cmp-transform__node', { active: origin === k })}
-                cx={0.1 + v.x * 0.8}
-                cy={0.1 + v.y * 0.8}
-                r={0.08}
-                onClick={() => setOrigin(k as keyof typeof origins)}
-              />
-            ))}
-          </svg>
-        </div>
-        <div className={'cmp-labeled-table__value'}>
-          <div className={'cmp-transform__inputs'}>
-            <div style={{ gridArea: 'x' }}>
-              <NumberInput
-                label={'x'}
-                value={round(transformedBounds.x)}
-                defaultUnit={'px'}
-                disabled={!movable}
-                min={0}
-                onChange={ev => updateBounds({ ...transformedBounds, x: ev ?? 0 })}
-              />
-            </div>
-            <div style={{ gridArea: 'y' }}>
-              <NumberInput
-                label={'y'}
-                value={round(transformedBounds.y)}
-                defaultUnit={'px'}
-                disabled={!movable}
-                min={0}
-                onChange={ev => updateBounds({ ...transformedBounds, y: ev ?? 0 })}
-              />
-            </div>
-            <div style={{ gridArea: 'w' }}>
-              <NumberInput
-                value={round(transformedBounds.w)}
-                label={'w'}
-                defaultUnit={'px'}
-                min={0}
-                disabled={!resizeableHorizontally}
-                onChange={ev => {
-                  updateBounds({
-                    ...transformedBounds,
-                    w: ev ?? 0,
-                    ...(lockAspectRatio ? { h: (ev ?? 0) / aspectRatio } : {})
-                  });
-                }}
-              />
-            </div>
-            <div style={{ gridArea: 'h' }}>
-              <NumberInput
-                value={round(transformedBounds.h)}
-                label={'h'}
-                defaultUnit={'px'}
-                min={0}
-                disabled={!resizeableVertically}
-                onChange={ev => {
-                  updateBounds({
-                    ...transformedBounds,
-                    ...(lockAspectRatio ? { w: (ev ?? 0) * aspectRatio } : {}),
-                    h: ev ?? 0
-                  });
-                }}
-              />
-            </div>
-            <div style={{ gridArea: 'r' }}>
-              <NumberInput
-                value={round(Angle.toDeg(transformedBounds.r))}
-                label={'r'}
-                min={-360}
-                max={360}
-                defaultUnit={'°'}
-                disabled={!rotatable}
-                onChange={ev => {
-                  const number = ev ?? 0;
-                  updateBounds({
-                    ...transformedBounds,
-                    r: Angle.toRad(Number.isNaN(number) ? 0 : number)
-                  });
-                }}
-              />
-            </div>
+      {/* TODO: Is this needed */}
+      <div className={'cmp-transform'}>
+        <KeyValueTable.Root>
+          <KeyValueTable.Label valign="top" style={{ marginTop: '0.1rem' }}>
+            <svg viewBox={'0 0 1 1'} className={'cmp-transform__graphics'}>
+              <rect className={'cmp-transform__rect'} x={0.1} y={0.1} width={0.8} height={0.8} />
+              {Object.entries(origins).map(([k, v]) => (
+                <circle
+                  key={k}
+                  className={$c('cmp-transform__node', { active: origin === k })}
+                  cx={0.1 + v.x * 0.8}
+                  cy={0.1 + v.y * 0.8}
+                  r={0.08}
+                  onClick={() => setOrigin(k as keyof typeof origins)}
+                />
+              ))}
+            </svg>
+          </KeyValueTable.Label>
+          <KeyValueTable.Value>
+            <div className={'cmp-transform__inputs'}>
+              <div style={{ gridArea: 'x' }}>
+                <NumberInput
+                  label={'x'}
+                  value={round(transformedBounds.x)}
+                  defaultUnit={'px'}
+                  disabled={!movable}
+                  min={0}
+                  onChange={ev => updateBounds({ ...transformedBounds, x: ev ?? 0 })}
+                />
+              </div>
+              <div style={{ gridArea: 'y' }}>
+                <NumberInput
+                  label={'y'}
+                  value={round(transformedBounds.y)}
+                  defaultUnit={'px'}
+                  disabled={!movable}
+                  min={0}
+                  onChange={ev => updateBounds({ ...transformedBounds, y: ev ?? 0 })}
+                />
+              </div>
+              <div style={{ gridArea: 'w' }}>
+                <NumberInput
+                  value={round(transformedBounds.w)}
+                  label={'w'}
+                  defaultUnit={'px'}
+                  min={0}
+                  disabled={!resizeableHorizontally}
+                  onChange={ev => {
+                    updateBounds({
+                      ...transformedBounds,
+                      w: ev ?? 0,
+                      ...(lockAspectRatio ? { h: (ev ?? 0) / aspectRatio } : {})
+                    });
+                  }}
+                />
+              </div>
+              <div style={{ gridArea: 'h' }}>
+                <NumberInput
+                  value={round(transformedBounds.h)}
+                  label={'h'}
+                  defaultUnit={'px'}
+                  min={0}
+                  disabled={!resizeableVertically}
+                  onChange={ev => {
+                    updateBounds({
+                      ...transformedBounds,
+                      ...(lockAspectRatio ? { w: (ev ?? 0) * aspectRatio } : {}),
+                      h: ev ?? 0
+                    });
+                  }}
+                />
+              </div>
+              <div style={{ gridArea: 'r' }}>
+                <NumberInput
+                  value={round(Angle.toDeg(transformedBounds.r))}
+                  label={'r'}
+                  min={-360}
+                  max={360}
+                  defaultUnit={'°'}
+                  disabled={!rotatable}
+                  onChange={ev => {
+                    const number = ev ?? 0;
+                    updateBounds({
+                      ...transformedBounds,
+                      r: Angle.toRad(Number.isNaN(number) ? 0 : number)
+                    });
+                  }}
+                />
+              </div>
 
-            <div style={{ gridArea: 'aspect-ratio', justifySelf: 'end' }}>
-              <ToggleButton value={lockAspectRatio} onChange={setLockAspectRatio}>
-                <TbAspectRatio />
+              <div style={{ gridArea: 'aspect-ratio', justifySelf: 'end' }}>
+                <ToggleButton value={lockAspectRatio} onChange={setLockAspectRatio}>
+                  <TbAspectRatio />
+                </ToggleButton>
+              </div>
+            </div>
+          </KeyValueTable.Value>
+
+          <KeyValueTable.Label>Flip</KeyValueTable.Label>
+          <KeyValueTable.Value>
+            <div className={'util-hstack'}>
+              <ToggleButton value={flipV.val} onChange={flipV.set}>
+                <TbFlipHorizontal />
+              </ToggleButton>
+              <ToggleButton value={flipH.val} onChange={flipH.set}>
+                <TbFlipVertical />
               </ToggleButton>
             </div>
-          </div>
-        </div>
-        <div className={'cmp-labeled-table__label'}>Flip</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div className={'util-hstack'}>
-            <ToggleButton value={flipV.val} onChange={flipV.set}>
-              <TbFlipHorizontal />
-            </ToggleButton>
-            <ToggleButton value={flipH.val} onChange={flipH.set}>
-              <TbFlipVertical />
-            </ToggleButton>
-          </div>
-        </div>
+          </KeyValueTable.Value>
+        </KeyValueTable.Root>
       </div>
     </ToolWindowPanel>
   );

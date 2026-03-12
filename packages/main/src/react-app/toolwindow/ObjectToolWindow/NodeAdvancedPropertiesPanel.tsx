@@ -5,6 +5,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import type { Property } from '@diagram-craft/model/property';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   resizableH: Property<boolean>;
@@ -30,58 +31,58 @@ export const NodeAdvancedPropertiesPanelForm = ({
   adjustSizeBasedOnText
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
-      <div className={'cmp-labeled-table__label'}>Resize Horizontally:</div>
-      <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Root type="wide">
+      <KeyValueTable.Label>Resize Horizontally:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={resizableH} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Resize Vertically:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Resize Vertically:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={resizableV} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Resize Based On Text:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Resize Based On Text:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={adjustSizeBasedOnText}
           render={props => <Checkbox {...props} />}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Movable:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Movable:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={movable} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Rotatable:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Rotatable:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={rotatable} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Editable:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Editable:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={editable} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Deletable:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Deletable:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={deletable} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Inherit Style:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Inherit Style:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor property={inheritStyle} render={props => <Checkbox {...props} />} />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Anchor Spacing:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Anchor Spacing:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={routingSpacing}
           render={props => <NumberInput {...props} defaultUnit={'px'} />}
         />
-      </div>
-    </div>
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
   );
 };
 

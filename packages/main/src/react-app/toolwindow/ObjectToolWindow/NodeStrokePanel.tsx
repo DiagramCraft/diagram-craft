@@ -13,6 +13,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import { unique } from '@diagram-craft/utils/array';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   diagram: Diagram;
@@ -42,9 +43,9 @@ export const NodeStrokePanelForm = ({
   palette
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={strokeColor}
           render={props => (
@@ -58,77 +59,84 @@ export const NodeStrokePanelForm = ({
           )}
           renderValue={props => <ColorPreview {...props} />}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Style:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-        <PropertyEditor
-          property={strokeWidth}
-          render={props => (
-            <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
-          )}
-        />
+      <KeyValueTable.Label>Style:</KeyValueTable.Label>
+      <KeyValueTable.Value className={'util-vcenter util-hstack'}>
+        <div className={'util-vcenter util-hstack'}>
+          <PropertyEditor
+            property={strokeWidth}
+            render={props => (
+              <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '35px' }} />
+            )}
+          />
 
-        <DashSelector property={pattern} />
+          <DashSelector property={pattern} />
 
-        <PopoverButton label={<TbAdjustmentsHorizontal />}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Stroke:</div>
-            <div className={'cmp-labeled-table__value util-hstack'}>
-              <PropertyEditor
-                property={strokeSize}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
-                )}
-              />
+          <PopoverButton label={<TbAdjustmentsHorizontal />}>
+            <KeyValueTable.Root>
+              <KeyValueTable.Label>Stroke:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <div className={'util-hstack'}>
+                  <PropertyEditor
+                    property={strokeSize}
+                    render={props => (
+                      <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                    )}
+                  />
 
-              <PropertyEditor
-                property={strokeSpacing}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
-                )}
-              />
-            </div>
+                  <PropertyEditor
+                    property={strokeSpacing}
+                    render={props => (
+                      <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
+                    )}
+                  />
+                </div>
+              </KeyValueTable.Value>
 
-            <div className={'cmp-labeled-table__label'}>Line cap:</div>
-            <div className={'cmp-labeled-table__value util-hstack'}>
-              <PropertyEditor
-                property={lineCap as Property<string>}
-                render={props => (
-                  <Select.Root {...props}>
-                    <Select.Item value={'butt'}>Butt</Select.Item>
-                    <Select.Item value={'round'}>Round</Select.Item>
-                    <Select.Item value={'square'}>Square</Select.Item>
-                  </Select.Root>
-                )}
-              />
-            </div>
-            <div className={'cmp-labeled-table__label'}>Line join:</div>
-            <div className={'cmp-labeled-table__value util-hstack'}>
-              <PropertyEditor
-                property={lineJoin as Property<string>}
-                render={props => (
-                  <Select.Root {...props}>
-                    <Select.Item value={'miter'}>Miter</Select.Item>
-                    <Select.Item value={'round'}>Round</Select.Item>
-                    <Select.Item value={'bevel'}>Bevel</Select.Item>
-                  </Select.Root>
-                )}
-              />
-
-              {lineJoin.val === 'miter' && (
+              <KeyValueTable.Label>Line cap:</KeyValueTable.Label>
+              <KeyValueTable.Value>
                 <PropertyEditor
-                  property={miterLimit}
-                  formatValue={v => v * 10}
-                  storeValue={v => v / 10}
-                  render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
+                  property={lineCap as Property<string>}
+                  render={props => (
+                    <Select.Root {...props}>
+                      <Select.Item value={'butt'}>Butt</Select.Item>
+                      <Select.Item value={'round'}>Round</Select.Item>
+                      <Select.Item value={'square'}>Square</Select.Item>
+                    </Select.Root>
+                  )}
                 />
-              )}
-            </div>
-          </div>
-        </PopoverButton>
-      </div>
-    </div>
+              </KeyValueTable.Value>
+
+              <KeyValueTable.Label>Line join:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <div className={'util-hstack'}>
+                  <PropertyEditor
+                    property={lineJoin as Property<string>}
+                    render={props => (
+                      <Select.Root {...props}>
+                        <Select.Item value={'miter'}>Miter</Select.Item>
+                        <Select.Item value={'round'}>Round</Select.Item>
+                        <Select.Item value={'bevel'}>Bevel</Select.Item>
+                      </Select.Root>
+                    )}
+                  />
+
+                  {lineJoin.val === 'miter' && (
+                    <PropertyEditor
+                      property={miterLimit}
+                      formatValue={v => v * 10}
+                      storeValue={v => v / 10}
+                      render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
+                    />
+                  )}
+                </div>
+              </KeyValueTable.Value>
+            </KeyValueTable.Root>
+          </PopoverButton>
+        </div>
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
   );
 };
 

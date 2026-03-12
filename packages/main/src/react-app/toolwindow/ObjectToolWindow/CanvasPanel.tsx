@@ -10,6 +10,7 @@ import { useDiagram } from '../../../application';
 import { FillPanelForm } from './FillPanel';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const DEFAULTS = nodeDefaults.applyDefaults({}).fill!;
 
@@ -70,14 +71,9 @@ export const CanvasPanel = (props: Props) => {
       title={'Canvas'}
       hasCheckbox={false}
     >
-      <div className={'cmp-labeled-table'}>
-        <div
-          className={'cmp-labeled-table__label'}
-          style={{ alignSelf: 'start', marginTop: '0.25rem' }}
-        >
-          Size:
-        </div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label valign={'top'}>Size:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <div
             style={{
               display: 'grid',
@@ -152,8 +148,8 @@ export const CanvasPanel = (props: Props) => {
               />
             </div>
           </div>
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
 
       <div style={{ marginTop: '0.5rem' }}>
         <FillPanelForm

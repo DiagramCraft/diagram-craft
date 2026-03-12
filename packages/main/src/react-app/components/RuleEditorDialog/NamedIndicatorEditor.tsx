@@ -6,6 +6,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { makeProperty } from './utils';
 import { IndicatorForm } from '../../toolwindow/ObjectToolWindow/IndicatorForm';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 const path = (id: string, rest: string): any => `indicators.${id}.${rest}`;
@@ -29,9 +30,9 @@ export const NamedIndicatorEditor: Editor = props => {
 
   return (
     <div>
-      <div className={'cmp-labeled-table'} style={{ marginBottom: '0.5rem' }}>
-        <div className={'cmp-labeled-table__label'}>Name:</div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root style={{ marginBottom: '0.5rem' }}>
+        <KeyValueTable.Label>Name:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <TextInput
             value={id}
             onChange={v => {
@@ -43,19 +44,21 @@ export const NamedIndicatorEditor: Editor = props => {
               onChange();
             }}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Enabled:</div>
-        <div className={'cmp-labeled-table__value util-vcenter'}>
-          <Checkbox
-            value={enabled.val}
-            onChange={v => {
-              enabled.set(v);
-              onChange();
-            }}
-          />
-        </div>
-      </div>
+        <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <div className={'util-vcenter'}>
+            <Checkbox
+              value={enabled.val}
+              onChange={v => {
+                enabled.set(v);
+                onChange();
+              }}
+            />
+          </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
 
       <IndicatorForm
         shape={shape}

@@ -10,6 +10,7 @@ import { useDiagram } from '../../../application';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   opacity: Property<number>;
@@ -33,98 +34,98 @@ export const EdgeEffectsPanelForm = ({
   dashOffset
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__row'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.FullRow>
         <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Opacity:</div>
-            <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Opacity:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor
                 property={opacity}
                 formatValue={v => round(v * 100)}
                 storeValue={v => v / 100}
                 render={props => <Slider {...props} />}
               />
-            </div>
-          </div>
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
         </Collapsible>
-      </div>
+      </KeyValueTable.FullRow>
 
-      <div className={'cmp-labeled-table__row'}>
+      <KeyValueTable.FullRow>
         <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Enabled:</div>
-            <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
-            </div>
+            </KeyValueTable.Value>
 
-            <div className={'cmp-labeled-table__label'}></div>
-            <div className={'cmp-labeled-table__value'}>
+            <KeyValueTable.Label></KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor
                 property={sketchStrength}
                 formatValue={v => round(v * 100)}
                 storeValue={v => v / 100}
                 render={props => <Slider {...props} max={25} />}
               />
-            </div>
-          </div>
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
         </Collapsible>
-      </div>
+      </KeyValueTable.FullRow>
 
-      <div className={'cmp-labeled-table__row'}>
+      <KeyValueTable.FullRow>
         <Collapsible label={'Marching Ants'} defaultOpen={marchingAnts.isSet && marchingAnts.val}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Enabled:</div>
-            <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor property={marchingAnts} render={props => <Checkbox {...props} />} />
-            </div>
+            </KeyValueTable.Value>
 
-            <div className={'cmp-labeled-table__label'}></div>
-            <div className={'cmp-labeled-table__value'}>
+            <KeyValueTable.Label></KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor
                 property={marchingAntsSpeed}
                 formatValue={v => round(v * 100)}
                 storeValue={v => v / 100}
                 render={props => <Slider {...props} max={100} />}
               />
-            </div>
-          </div>
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
         </Collapsible>
-      </div>
+      </KeyValueTable.FullRow>
 
-      <div className={'cmp-labeled-table__row'}>
+      <KeyValueTable.FullRow>
         <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Enabled:</div>
-            <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
-            </div>
+            </KeyValueTable.Value>
 
-            <div className={'cmp-labeled-table__label'}></div>
-            <div className={'cmp-labeled-table__value'}>
+            <KeyValueTable.Label></KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor
                 property={roundingAmount}
                 render={props => <Slider {...props} max={100} unit={'px'} />}
               />
-            </div>
-          </div>
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
         </Collapsible>
-      </div>
+      </KeyValueTable.FullRow>
 
-      <div className={'cmp-labeled-table__row'}>
+      <KeyValueTable.FullRow>
         <Collapsible label={'Dash Offset'} defaultOpen={dashOffset.isSet && dashOffset.val !== 0}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label'}>Offset:</div>
-            <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Offset:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <PropertyEditor
                 property={dashOffset}
                 render={props => <NumberInput {...props} numberOfDecimals={0} min={-10} max={10} />}
               />
-            </div>
-          </div>
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
         </Collapsible>
-      </div>
-    </div>
+      </KeyValueTable.FullRow>
+    </KeyValueTable.Root>
   );
 };
 

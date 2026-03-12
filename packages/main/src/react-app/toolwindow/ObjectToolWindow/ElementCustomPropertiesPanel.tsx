@@ -27,6 +27,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { TbPencil, TbX } from 'react-icons/tb';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const iconService = new IconifyIconService();
 
@@ -219,9 +220,9 @@ export const ElementCustomPropertiesPanelForm = ({
   return (
     <>
       {customProperties.dataSchemas.length === 0 && (
-        <div className={'cmp-labeled-table cmp-labeled-table--wide'}>
+        <KeyValueTable.Root type={'wide'}>
           <CustomPropertyList customProperties={customProperties} onChange={onChange} />
-        </div>
+        </KeyValueTable.Root>
       )}
       {customProperties.dataSchemas.length > 0 && (
         <>
@@ -229,9 +230,9 @@ export const ElementCustomPropertiesPanelForm = ({
             <>
               <div style={{ color: 'var(--panel-fg)', marginBottom: '-1.05rem' }}>Style:</div>
 
-              <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+              <KeyValueTable.Root type={'inline'}>
                 <CustomPropertyList customProperties={customProperties} onChange={onChange} />
-              </div>
+              </KeyValueTable.Root>
             </>
           )}
 
@@ -242,9 +243,9 @@ export const ElementCustomPropertiesPanelForm = ({
               >
                 Data:
               </div>
-              <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+              <KeyValueTable.Root type={'inline'}>
                 <DataFields key={schema.id} schema={schema} />
-              </div>
+              </KeyValueTable.Root>
             </React.Fragment>
           ))}
         </>

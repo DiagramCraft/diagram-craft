@@ -18,6 +18,7 @@ import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/e
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DataFields } from './DataFields';
 import { LinkButton } from '@diagram-craft/app-components/Button';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -287,9 +288,9 @@ export const ExtendedDataTab = () => {
                       </Accordion.ItemHeaderButtons>
                     </Accordion.ItemHeader>
                     <Accordion.ItemContent forceMount={true}>
-                      <div className={'cmp-labeled-table'}>
+                      <KeyValueTable.Root>
                         <DataFields schema={schema} disabled={isExternal} />
-                      </div>
+                      </KeyValueTable.Root>
                     </Accordion.ItemContent>
                   </Accordion.Item>
                 );
@@ -299,7 +300,7 @@ export const ExtendedDataTab = () => {
               <Accordion.Item value={'_custom'}>
                 <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
                 <Accordion.ItemContent>
-                  <div className={'cmp-labeled-table'}>
+                  <KeyValueTable.Root>
                     {customDataKeys.map(k => {
                       const v = unique(
                         $d.selection.elements.map(
@@ -309,19 +310,19 @@ export const ExtendedDataTab = () => {
 
                       return (
                         <React.Fragment key={k}>
-                          <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
-                          <div className={'cmp-labeled-table__value'}>
+                          <KeyValueTable.Label valign={'top'}>{k}:</KeyValueTable.Label>
+                          <KeyValueTable.Value>
                             <TextArea
                               value={v[0] ?? ''}
                               isIndeterminate={v.length > 1}
                               style={{ height: '40px' }}
                               onChange={v => changeCustomCallback(k, v)}
                             />
-                          </div>
+                          </KeyValueTable.Value>
                         </React.Fragment>
                       );
                     })}
-                  </div>
+                  </KeyValueTable.Root>
                 </Accordion.ItemContent>
               </Accordion.Item>
             )}

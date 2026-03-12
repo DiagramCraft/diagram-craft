@@ -9,6 +9,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();
@@ -34,73 +35,77 @@ export const CanvasGridPanel = (props: Props) => {
       onChange={enabled.set}
       id={'grid'}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Base</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            value={color.val}
-            onChange={color.set}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          />
-          <NumberInput
-            style={{ width: '45px' }}
-            value={size.val}
-            onChange={n => size.set(n ?? 0)}
-            validUnits={['px']}
-            defaultUnit={'px'}
-          />
-          <ToggleButtonGroup.Root
-            aria-label="Grid type"
-            type={'single'}
-            value={type.val}
-            onChange={v => {
-              assertGridType(v);
-              type.set(v);
-            }}
-          >
-            <ToggleButtonGroup.Item value={'lines'}>
-              <TbGrid3X3 />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value={'dots'}>
-              <TbGridDots />
-            </ToggleButtonGroup.Item>
-          </ToggleButtonGroup.Root>
-        </div>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Base</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <div className={'util-hstack'}>
+            <ColorPicker
+              palette={$cfg.palette.primary}
+              value={color.val}
+              onChange={color.set}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+            <NumberInput
+              style={{ width: '45px' }}
+              value={size.val}
+              onChange={n => size.set(n ?? 0)}
+              validUnits={['px']}
+              defaultUnit={'px'}
+            />
+            <ToggleButtonGroup.Root
+              aria-label="Grid type"
+              type={'single'}
+              value={type.val}
+              onChange={v => {
+                assertGridType(v);
+                type.set(v);
+              }}
+            >
+              <ToggleButtonGroup.Item value={'lines'}>
+                <TbGrid3X3 />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'dots'}>
+                <TbGridDots />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Major</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
-          <ColorPicker
-            palette={$cfg.palette.primary}
-            value={majorColor.val}
-            onChange={majorColor.set}
-            customPalette={$d.document.customPalette}
-            onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-          />
-          <NumberInput
-            style={{ width: '45px' }}
-            value={majorCount.val}
-            onChange={n => majorCount.set(n ?? 0)}
-          />
-          <ToggleButtonGroup.Root
-            aria-label="Grid type"
-            type={'single'}
-            value={majorType.val}
-            onChange={v => {
-              assertGridType(v);
-              majorType.set(v);
-            }}
-          >
-            <ToggleButtonGroup.Item value={'lines'}>
-              <TbGrid3X3 />
-            </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value={'dots'}>
-              <TbGridDots />
-            </ToggleButtonGroup.Item>
-          </ToggleButtonGroup.Root>
-        </div>
-      </div>
+        <KeyValueTable.Label>Major</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <div className={'util-hstack'}>
+            <ColorPicker
+              palette={$cfg.palette.primary}
+              value={majorColor.val}
+              onChange={majorColor.set}
+              customPalette={$d.document.customPalette}
+              onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+            />
+            <NumberInput
+              style={{ width: '45px' }}
+              value={majorCount.val}
+              onChange={n => majorCount.set(n ?? 0)}
+            />
+            <ToggleButtonGroup.Root
+              aria-label="Grid type"
+              type={'single'}
+              value={majorType.val}
+              onChange={v => {
+                assertGridType(v);
+                majorType.set(v);
+              }}
+            >
+              <ToggleButtonGroup.Item value={'lines'}>
+                <TbGrid3X3 />
+              </ToggleButtonGroup.Item>
+              <ToggleButtonGroup.Item value={'dots'}>
+                <TbGridDots />
+              </ToggleButtonGroup.Item>
+            </ToggleButtonGroup.Root>
+          </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

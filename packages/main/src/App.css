@@ -19,7 +19,6 @@
 
 @import '@radix-ui/colors/black-alpha.css';
 
-@import "./react-app/components/Components.css";
 @import "./Canvas.css";
 
 .dark-theme {
@@ -898,14 +897,9 @@ foreignObject {
 }
 
 .cmp-transform {
-  .cmp-transform__graphics {
-    align-self: start;
-    margin-top: 0.1rem;
-
-    svg {
-      width: 3rem;
-      height: 3rem;
-    }
+  svg.cmp-transform__graphics {
+    width: 3rem;
+    height: 3rem;
   }
 
   .cmp-transform__node {

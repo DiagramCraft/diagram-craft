@@ -1,0 +1,79 @@
+.cKeyValueTable {
+  display: grid;
+  grid-template-columns: 4rem 2fr;
+  row-gap: 0.5rem;
+  align-items: center;
+
+  .eLabel {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+  }
+
+  .eValue {
+    /* This is intentionally empty */
+  }
+
+  .eRow {
+    grid-column: 1/3;
+    margin-bottom: -2px;
+  }
+
+  &[data-type="wide"] {
+    grid-template-columns: 1fr 5rem !important;
+  }
+
+  &[data-type="inline"] {
+    grid-template-rows: min-content min-content;
+    row-gap: 0.25rem;
+
+    .eLabel, dt {
+      grid-column: 2/3;
+    }
+
+    .eValue, dd {
+      grid-column: 2/3;
+      margin-bottom: 0.25rem
+    }
+
+    /*
+        dt:has(+ dd[data-type="boolean"]) {
+          display: none;
+        }
+
+        dd[data-type="boolean"] {
+          position: relative;
+          margin-top: 0.25rem;
+
+          &::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 20px;
+            top: 0;
+          }
+        }*/
+  }
+
+  /*
+    dt {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    > dl {
+      display: contents;
+    }
+
+    &.cmp-labeled-table--wide {
+      grid-template-columns: 1fr 5rem !important;
+    }
+
+    &.cmp-labeled-table--inline {
+
+    }
+
+
+  */
+
+}

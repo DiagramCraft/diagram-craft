@@ -8,6 +8,7 @@ import { isEdge } from '@diagram-craft/model/diagramElement';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { useTable } from '../../hooks/useTable';
 import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const NodeTableCellDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -51,9 +52,9 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Cell Dimensions'} id={'dimensions'}>
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Height:</div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Height:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             defaultUnit={'px'}
             value={Math.round(height)}
@@ -63,9 +64,10 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
             style={{ width: '50px' }}
             onChange={ev => updateHeight(ev ?? 1)}
           />
-        </div>
-        <div className={'cmp-labeled-table__label'}>Width:</div>
-        <div className={'cmp-labeled-table__value'}>
+        </KeyValueTable.Value>
+
+        <KeyValueTable.Label>Width:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             defaultUnit={'px'}
             value={Math.round(width)}
@@ -75,8 +77,8 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
             style={{ width: '50px' }}
             onChange={ev => updateWidth(ev ?? 1)}
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };
