@@ -32,7 +32,7 @@ type CommentItemMenuProps = {
 
 const CommentItemMenu = (props: CommentItemMenuProps) => (
   <MenuButton.Root>
-    <MenuButton.Trigger className={styles['comment__menu-button']}>
+    <MenuButton.Trigger className={styles.eMenuButton}>
       <TbDots size={14} />
     </MenuButton.Trigger>
     <MenuButton.Menu>
@@ -105,15 +105,13 @@ export const CommentItem = ({
   }, [diagram, comment.id, application]);
 
   return (
-    <div
-      className={`${styles.comment} ${comment.isReply() ? styles['comment--reply'] : comment.state === 'unresolved' ? styles['comment--unresolved'] : styles['comment--resolved']}`}
-    >
-      <div className={styles.comment__header}>
+    <div className={styles.icCommentItem} data-state={comment.isReply() ? 'reply' : comment.state}>
+      <div className={styles.eHeader}>
         <Tooltip
           message={comment.author}
           element={
             <div
-              className={styles.comment__avatar}
+              className={styles.eAvatar}
               style={{
                 background: comment.userColor ?? '#336633'
               }}
@@ -131,7 +129,7 @@ export const CommentItem = ({
           <div>{comment.author}</div>
           <div>{formatDate(comment.date)}</div>
         </div>
-        <div className={styles.comment__menu}>
+        <div className={styles.eMenu}>
           <CommentItemMenu
             onEditComment={() => application.actions.COMMENT_EDIT!.execute({ comment })}
             onChangeState={() => onResolve(comment)}
@@ -142,7 +140,7 @@ export const CommentItem = ({
         </div>
       </div>
 
-      <div className={styles.comment__content}>{comment.message}</div>
+      <div className={styles.eContent}>{comment.message}</div>
 
       {!comment.isReply() && comment.type === 'element' && (
         <a
@@ -154,7 +152,7 @@ export const CommentItem = ({
             }, 1000);
             return false;
           }}
-          className={styles['comment__element-link']}
+          className={styles.eLink}
         >
           <TbLink />
           {getElementNameFromComment(comment)}
@@ -162,13 +160,13 @@ export const CommentItem = ({
       )}
 
       {canReply && (
-        <div className={styles.comment__reply}>
+        <div className={styles.eReply}>
           <TextArea
             value={replyText}
             onChange={value => setReplyText(value ?? '')}
             rows={1}
             placeholder="Reply to comment..."
-            className={styles['comment__reply-textarea']}
+            className={styles.eReplyTextArea}
             onFocus={e => (e.currentTarget.style.height = '40px')}
             onBlur={e => {
               if (replyText.trim() === '') {

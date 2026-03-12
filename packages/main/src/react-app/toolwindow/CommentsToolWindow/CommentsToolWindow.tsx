@@ -103,17 +103,15 @@ export const CommentsToolWindow = () => {
         : groupThreadsByAuthor(myThreads);
 
   const renderThreadsContent = (threads: typeof commentThreads, grouped: typeof groupedThreads) => (
-    <div className={styles['comments-tool-window']}>
+    <div className={styles.icCommentsToolWindow}>
       {threads.length === 0 ? (
-        <div className={styles['comments-tool-window__no-comments']}>No comments</div>
+        <div className={styles.eNoComments}>No comments</div>
       ) : (
         grouped.map(group => (
-          <div key={group.key} className={styles['comments-tool-window__group']}>
-            {group.title && (
-              <div className={styles['comments-tool-window__group-title']}>{group.title}</div>
-            )}
+          <div key={group.key} className={styles.eGroup}>
+            {group.title && <div className={styles.eTitle}>{group.title}</div>}
             {group.threads.map(thread => (
-              <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
+              <div key={thread.root.id} className={styles.eThread}>
                 <CommentItem
                   comment={thread.root}
                   onResolve={handleResolveComment}
@@ -192,7 +190,7 @@ const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) =
       {replies.map(replyNode => (
         <div key={replyNode.comment.id}>
           <div
-            className={styles['comments-tool-window__nested-reply']}
+            className={styles.eNestedReply}
             style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}
           >
             <CommentItem
