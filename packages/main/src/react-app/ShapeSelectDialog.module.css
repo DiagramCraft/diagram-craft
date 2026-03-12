@@ -1,57 +1,57 @@
-.shapeSelectDialogStencilView {
+.icStencilView {
   background: transparent;
 }
 
-.shapeSelectDialogIconsTab {
+.icIconsTabs {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   height: 100%;
-}
 
-.shapeSelectDialogIconGrid {
-  min-height: 12rem;
-}
+  .eIconGrid {
+    min-height: 12rem;
 
-.shapeSelectDialogIconGridInner {
-  max-width: 31rem;
-  margin-top: 1rem;
-  max-height: 14rem;
-  overflow: auto;
-  gap: 10px;
-}
+    .eIconGridInner {
+      max-width: 31rem;
+      margin-top: 1rem;
+      max-height: 14rem;
+      overflow: auto;
+      gap: 10px;
 
-.shapeSelectDialogIconItem {
-  cursor: pointer;
-}
+      .eItem {
+        cursor: pointer;
+      }
+    }
+    
+    .ePagination {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 1rem;
 
-.shapeSelectDialogPagination {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  margin-top: 1rem;
-}
+      .eLink {
+        color: var(--cmp-fg);
+        font-weight: normal;
 
-.shapeSelectDialogPaginationLink {
-  color: var(--cmp-fg);
-  font-weight: normal;
-
-  &[data-active='true'] {
-    font-weight: bold;
+        &[data-active='true'] {
+          font-weight: bold;
+        }
+      }
+    }
   }
 }
 
-.shapeSelectDialogRecentStencils {
+.icRecentStencils {
   max-width: 30rem;
 }
 
-.shapeSelectDialogSearchResults {
+.icSearchResults {
   max-width: 31rem;
   margin-top: 1rem;
   max-height: 14rem;
   overflow: auto;
 }
 
-.shapeSelectDialogSingleTabContent {
+.icSingleTabContent {
   height: 16rem;
 }
