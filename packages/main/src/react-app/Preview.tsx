@@ -70,8 +70,8 @@ export const Preview = (props: Props) => {
   if (!viewbox) return null;
 
   return (
-    <div className={styles.preview} id={'preview'}>
-      <div className={styles.previewTools}>
+    <div className={styles.icPreview} id={'preview'}>
+      <div className={styles.eTools}>
         <Button
           type={'icon-only'}
           onClick={() => {
@@ -133,7 +133,7 @@ export const Preview = (props: Props) => {
         </Button>
       </div>
 
-      <div className={styles.previewCanvas}>
+      <div className={styles.eCanvas}>
         <Canvas<InteractiveCanvasComponent, InteractiveCanvasProps>
           id={`preview-canvas-${diagram.id}`}
           context={application}
