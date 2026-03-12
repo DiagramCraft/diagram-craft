@@ -65,8 +65,8 @@ export const FileDialog = (props: Props) => {
           : [{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]
       }
     >
-      <div className={styles.cmpFileDialog}>
-        <div className={styles.cmpFileDialogPath}>
+      <div className={styles.icFileDialog}>
+        <div className={styles.ePath}>
           Path:{' '}
           <a href={'#'} onClick={() => setPath([])}>
             Home
@@ -90,7 +90,7 @@ export const FileDialog = (props: Props) => {
         {list === undefined ? (
           <p>Loading...</p>
         ) : (
-          <div className={styles.cmpFileDialogList}>
+          <div className={styles.eList}>
             <div>
               <ul>
                 {list.map(entry => (
