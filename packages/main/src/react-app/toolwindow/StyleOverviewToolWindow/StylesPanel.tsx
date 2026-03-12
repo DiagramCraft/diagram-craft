@@ -35,7 +35,7 @@ type FilterSelectProps = {
 };
 
 const FilterSelect = ({ filterType, onFilterTypeChange }: FilterSelectProps) => (
-  <div className={styles.styleOverviewSelect}>
+  <div className={styles.eFilter}>
     <Select.Root
       value={filterType}
       onChange={value => onFilterTypeChange(value as StyleFilterType)}
@@ -100,84 +100,86 @@ export const StylesPanel = ({
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'styles-list'} title={'Styles'}>
-      <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
-      {groups.length === 0 ? (
-        <EmptyStyleComponent />
-      ) : (
-        <Accordion.Root type={'multiple'} value={openItems}>
-          {groups.map(group => {
-            const groupId = group.stylesheet?.id ?? 'no-stylesheet';
+      <div className={styles.icStylesPanel}>
+        <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
+        {groups.length === 0 ? (
+          <EmptyStyleComponent />
+        ) : (
+          <Accordion.Root type={'multiple'} value={openItems}>
+            {groups.map(group => {
+              const groupId = group.stylesheet?.id ?? 'no-stylesheet';
 
-            return (
-              <Accordion.Item key={groupId} value={groupId}>
-                <Accordion.ItemHeader>
-                  <div className={styles.styleOverviewName}>
-                    <span>{group.stylesheet?.name}</span>
-                    {group.stylesheet?.type && (
-                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                        ({group.stylesheet?.type})
-                      </span>
-                    )}
-                  </div>
-                </Accordion.ItemHeader>
-                <Accordion.ItemContent>
-                  <div className={styles.styleOverviewList}>
-                    {group.styles.map((style, idx) => {
-                      return (
-                        <ContextMenu.Root key={`${groupId}-${idx}`}>
-                          <ContextMenu.Trigger
-                            element={
-                              <div
-                                key={`${groupId}-${idx}`}
-                                className={styles.styleOverviewItem}
-                                onClick={() => onStyleClick(style)}
-                              >
-                                <div className={styles.styleOverviewPreview}>
-                                  <PickerCanvas
-                                    size={PickerConfig.size}
-                                    diagram={mustExist(style.previewDiagram)}
-                                    showHover={false}
-                                    onMouseDown={e => {
-                                      if (e.button !== 1) return;
-                                      onStyleClick(style);
-                                    }}
-                                  />
-                                </div>
-                                <div className={styles.styleOverviewInfo}>
-                                  <div className={styles.styleOverviewCount}>
-                                    {style.elements.length}
-                                    {style.differences.length > 0 && (
-                                      <span className={styles.styleOverviewDirty}>*</span>
-                                    )}
+              return (
+                <Accordion.Item key={groupId} value={groupId}>
+                  <Accordion.ItemHeader>
+                    <div className={styles.eName}>
+                      <span>{group.stylesheet?.name}</span>
+                      {group.stylesheet?.type && (
+                        <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                          ({group.stylesheet?.type})
+                        </span>
+                      )}
+                    </div>
+                  </Accordion.ItemHeader>
+                  <Accordion.ItemContent>
+                    <div className={styles.eStyleList}>
+                      {group.styles.map((style, idx) => {
+                        return (
+                          <ContextMenu.Root key={`${groupId}-${idx}`}>
+                            <ContextMenu.Trigger
+                              element={
+                                <div
+                                  key={`${groupId}-${idx}`}
+                                  className={styles.eItem}
+                                  onClick={() => onStyleClick(style)}
+                                >
+                                  <div className={styles.ePreview}>
+                                    <PickerCanvas
+                                      size={PickerConfig.size}
+                                      diagram={mustExist(style.previewDiagram)}
+                                      showHover={false}
+                                      onMouseDown={e => {
+                                        if (e.button !== 1) return;
+                                        onStyleClick(style);
+                                      }}
+                                    />
+                                  </div>
+                                  <div className={styles.eInfo}>
+                                    <div className={styles.eCount}>
+                                      {style.elements.length}
+                                      {style.differences.length > 0 && (
+                                        <span className={styles.eDirtyIndicator}>*</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            }
-                            tooltip={
-                              style.differences.length > 0 ? (
-                                <div className={styles.styleOverviewTooltip}>
-                                  {style.differences.join('\n')}
-                                </div>
-                              ) : null
-                            }
-                          />
-                          <StyleContextMenu
-                            style={style}
-                            onStyleReset={onStyleReset}
-                            onCreateStylesheet={onCreateStylesheet}
-                            onCopyStyle={onCopyStyle}
-                            onPasteStyle={onPasteStyle}
-                          />
-                        </ContextMenu.Root>
-                      );
-                    })}
-                  </div>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-            );
-          })}
-        </Accordion.Root>
-      )}
+                              }
+                              tooltip={
+                                style.differences.length > 0 ? (
+                                  <div className={styles.icTooltip}>
+                                    {style.differences.join('\n')}
+                                  </div>
+                                ) : null
+                              }
+                            />
+                            <StyleContextMenu
+                              style={style}
+                              onStyleReset={onStyleReset}
+                              onCreateStylesheet={onCreateStylesheet}
+                              onCopyStyle={onCopyStyle}
+                              onPasteStyle={onPasteStyle}
+                            />
+                          </ContextMenu.Root>
+                        );
+                      })}
+                    </div>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              );
+            })}
+          </Accordion.Root>
+        )}
+      </div>
     </ToolWindowPanel>
   );
 };
@@ -196,97 +198,91 @@ export const TextStylesPanel = ({
 
   return (
     <ToolWindowPanel mode={'headless-no-padding'} id={'text-styles-list'} title={'Text Styles'}>
-      <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
-      {groups.length === 0 ? (
-        <EmptyStyleComponent />
-      ) : (
-        <Accordion.Root type={'multiple'} value={openItems}>
-          {groups.map(group => {
-            const groupId = group.stylesheet?.id ?? 'no-stylesheet';
+      <div className={styles.icStylesPanel}>
+        <FilterSelect filterType={filterType} onFilterTypeChange={onFilterTypeChange} />
+        {groups.length === 0 ? (
+          <EmptyStyleComponent />
+        ) : (
+          <Accordion.Root type={'multiple'} value={openItems}>
+            {groups.map(group => {
+              const groupId = group.stylesheet?.id ?? 'no-stylesheet';
 
-            return (
-              <Accordion.Item key={groupId} value={groupId}>
-                <Accordion.ItemHeader>
-                  <div className={styles.styleOverviewName}>
-                    <span>{group.stylesheet?.name}</span>
-                    {group.stylesheet?.type && (
-                      <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
-                        ({group.stylesheet?.type})
-                      </span>
-                    )}
-                  </div>
-                </Accordion.ItemHeader>
-                <Accordion.ItemContent>
-                  <div className={styles.fontList}>
-                    {group.styles.map((textStyle, idx) => {
-                      const key = `${groupId}-${idx}`;
-                      const fontStyle = {
-                        fontFamily: textStyle.props.text.font,
-                        fontSize: `${Math.min(textStyle.props.text.fontSize, 14)}px`,
-                        fontWeight: textStyle.props.text.bold ? 'bold' : 'normal',
-                        fontStyle: textStyle.props.text.italic ? 'italic' : 'normal'
-                      };
+              return (
+                <Accordion.Item key={groupId} value={groupId}>
+                  <Accordion.ItemHeader>
+                    <div className={styles.eName}>
+                      <span>{group.stylesheet?.name}</span>
+                      {group.stylesheet?.type && (
+                        <span style={{ fontSize: '0.625rem', opacity: 0.7, marginLeft: '0.25rem' }}>
+                          ({group.stylesheet?.type})
+                        </span>
+                      )}
+                    </div>
+                  </Accordion.ItemHeader>
+                  <Accordion.ItemContent>
+                    <div>
+                      {group.styles.map((textStyle, idx) => {
+                        const key = `${groupId}-${idx}`;
+                        const fontStyle = {
+                          fontFamily: textStyle.props.text.font,
+                          fontSize: `${Math.min(textStyle.props.text.fontSize, 14)}px`,
+                          fontWeight: textStyle.props.text.bold ? 'bold' : 'normal',
+                          fontStyle: textStyle.props.text.italic ? 'italic' : 'normal'
+                        };
 
-                      const metaParts = [
-                        `${textStyle.props.text.fontSize}px`,
-                        textStyle.props.text.bold && 'Bold',
-                        textStyle.props.text.italic && 'Italic',
-                        textStyle.props.text.color
-                      ].filter(Boolean);
+                        const metaParts = [
+                          `${textStyle.props.text.fontSize}px`,
+                          textStyle.props.text.bold && 'Bold',
+                          textStyle.props.text.italic && 'Italic',
+                          textStyle.props.text.color
+                        ].filter(Boolean);
 
-                      return (
-                        <ContextMenu.Root key={key}>
-                          <ContextMenu.Trigger
-                            element={
-                              <div
-                                key={key}
-                                className={styles.fontItem}
-                                onClick={() => onStyleClick(textStyle)}
-                              >
-                                <div className={styles.fontIcon}>
-                                  <TbLetterCase size={18} />
-                                </div>
-                                <div className={styles.fontDetails}>
-                                  <div className={styles.fontPreview} style={fontStyle}>
-                                    {textStyle.props.text.font}
+                        return (
+                          <ContextMenu.Root key={key}>
+                            <ContextMenu.Trigger
+                              element={
+                                <div key={key} onClick={() => onStyleClick(textStyle)}>
+                                  <div>
+                                    <TbLetterCase size={18} />
                                   </div>
-                                  <div className={styles.fontCount}>
-                                    {metaParts.join(', ')}
+                                  <div>
+                                    <div style={fontStyle}>{textStyle.props.text.font}</div>
                                     <div>
-                                      {textStyle.elements.length} element(s)
-                                      {textStyle.differences.length > 0 && (
-                                        <span className={styles.fontDirty}>*</span>
-                                      )}
+                                      {metaParts.join(', ')}
+                                      <div>
+                                        {textStyle.elements.length} element(s)
+                                        {textStyle.differences.length > 0 && <span>*</span>}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            }
-                            tooltip={
-                              textStyle.differences.length > 0 ? (
-                                <div className={styles.styleOverviewTooltip}>
-                                  {textStyle.differences.join('\n')}
-                                </div>
-                              ) : null
-                            }
-                          />
-                          <StyleContextMenu
-                            style={textStyle}
-                            onStyleReset={onStyleReset}
-                            onCreateStylesheet={onCreateStylesheet}
-                            onCopyStyle={onCopyStyle}
-                            onPasteStyle={onPasteStyle}
-                          />
-                        </ContextMenu.Root>
-                      );
-                    })}
-                  </div>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-            );
-          })}
-        </Accordion.Root>
-      )}
+                              }
+                              tooltip={
+                                textStyle.differences.length > 0 ? (
+                                  <div className={styles.icTooltip}>
+                                    {textStyle.differences.join('\n')}
+                                  </div>
+                                ) : null
+                              }
+                            />
+                            <StyleContextMenu
+                              style={textStyle}
+                              onStyleReset={onStyleReset}
+                              onCreateStylesheet={onCreateStylesheet}
+                              onCopyStyle={onCopyStyle}
+                              onPasteStyle={onPasteStyle}
+                            />
+                          </ContextMenu.Root>
+                        );
+                      })}
+                    </div>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              );
+            })}
+          </Accordion.Root>
+        )}
+      </div>
     </ToolWindowPanel>
   );
 };
