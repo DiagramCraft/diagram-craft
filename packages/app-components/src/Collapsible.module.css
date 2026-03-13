@@ -37,9 +37,7 @@
     }
   }
 
-  /* TODO: Remove the :local when we move to local names */
-
-  :local(.eContent) {
+  .eContent {
     margin-top: 0.5rem;
     will-change: height;
     margin-left: 1px;
