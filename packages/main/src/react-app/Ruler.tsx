@@ -31,7 +31,7 @@ const roundTicks = (ticks: Tick[]) => {
   }
 };
 
-export const Ruler = ({ orientation }: Props) => {
+export const Ruler = ({ orientation, id }: Props) => {
   const diagram = useDiagram();
   const viewbox = diagram.viewBox;
 
@@ -118,7 +118,7 @@ export const Ruler = ({ orientation }: Props) => {
     roundTicks(ticks);
 
     return (
-      <div id={'ruler-h'} className={`${styles.icRuler} dark-theme`}>
+      <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'horizontal'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
@@ -153,7 +153,7 @@ export const Ruler = ({ orientation }: Props) => {
     roundTicks(ticks);
 
     return (
-      <div id={'ruler-v'} className={`${styles.icRuler} dark-theme`}>
+      <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'vertical'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
@@ -189,5 +189,6 @@ export const Ruler = ({ orientation }: Props) => {
 };
 
 type Props = {
+  id?: string;
   orientation: 'horizontal' | 'vertical';
 };

@@ -5,6 +5,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { UserState } from '../UserState';
 import { IconType } from 'react-icons';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
+import styles from './Sidebar.module.css';
 
 const MIN_WIDTH = 248;
 const MAX_WIDTH = 1024;
@@ -12,7 +13,7 @@ const DEFAULT_WIDTH = 248;
 const MIN_DIAGRAM_WIDTH = 300;
 const TOOLBAR_WIDTH = 40; // Width of left and right button toolbars
 
-export const SideBarPage = (props: SideBarPageProps) => {
+export const SidebarPage = (props: SideBarPageProps) => {
   return <ErrorBoundary>{props.children}</ErrorBoundary>;
 };
 
@@ -23,15 +24,15 @@ type SideBarPageProps = {
   extra?: React.ReactNode;
 };
 
-export const SideBarBottomToolbar = (props: { children: React.ReactNode }) => {
+export const SidebarBottomToolbar = (props: { children: React.ReactNode }) => {
   return (
-    <div className={'cmp-sidebar-bottom-toolbar'}>
+    <div className={styles.eBottomContainer}>
       <Toolbar.Root direction={'vertical'}>{props.children}</Toolbar.Root>
     </div>
   );
 };
 
-export const SideBar = (props: Props) => {
+export const Sidebar = (props: Props) => {
   const propName = props.side === 'left' ? 'panelLeft' : 'panelRight';
   const widthPropName = props.side === 'left' ? 'panelLeftWidth' : 'panelRightWidth';
 
@@ -140,8 +141,8 @@ export const SideBar = (props: Props) => {
   }, [props.side, selected, width]);
 
   return (
-    <>
-      <Toolbar.Root id={`${props.side}-buttons`} direction={'vertical'}>
+    <div id={props.id} className={styles.icSidebar} data-side={props.side}>
+      <Toolbar.Root direction={'vertical'}>
         <Toolbar.ToggleGroup type={'single'} value={selected.toString()} onChange={() => {}}>
           {props.children.map((c, idx) => {
             const element = c as ReactElement<SideBarPageProps>;
@@ -178,25 +179,24 @@ export const SideBar = (props: Props) => {
           })}
         </Toolbar.ToggleGroup>
       </Toolbar.Root>
-      <div
-        id={`${props.side}`}
-        className={'cmp-sidebar'}
-        style={{ display: selected === -1 ? 'none' : 'block' }}
-      >
+
+      {props.bottom}
+
+      <div className={styles.eExpanded} style={{ display: selected === -1 ? 'none' : 'block' }}>
         <div
-          className={`cmp-sidebar-resize-handle cmp-sidebar-resize-handle-${props.side}`}
+          className={styles.eResizeHandle}
           onMouseDown={handleResizeStart}
           onDoubleClick={() => updateWidth(DEFAULT_WIDTH)}
           style={{ cursor: isResizing ? 'col-resize' : undefined }}
         />
         {props.children[selected]}
       </div>
-      {props.bottom}
-    </>
+    </div>
   );
 };
 
 type Props = {
+  id: string;
   side: 'left' | 'right';
   children: React.ReactNode[];
   bottom?: React.ReactNode;

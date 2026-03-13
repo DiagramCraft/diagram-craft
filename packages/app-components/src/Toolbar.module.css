@@ -140,4 +140,20 @@
       margin: 0 10px;
     }
   }
+
+  div:has(> :global(.cSelectTrigger)) {
+    margin-top: -2px;
+  }
+
+  :global(.cSelectTrigger) {
+    margin: 0 0 0 4px;
+    border-color: transparent;
+    font-size: 10px;
+  }
+
+  div[data-field-state='set'],
+  button[data-field-state='set'],
+  input[type="checkbox"][data-field-state='set'] {
+    border: 1px solid transparent !important;
+  }
 }
