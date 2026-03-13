@@ -749,35 +749,6 @@ foreignObject {
 }
 
 
-.cmp-layer-indicator {
-  display: grid;
-  align-items: center;
-  margin-left: auto;
-  font-size: 11px;
-  border: none;
-  border-left: 1px solid var(--cmp-border);
-  padding: 0 0.5rem;
-  gap: 0.25rem;
-  background-color: var(--panel-bg);
-  border-radius: 0;
-  color: var(--panel-fg);
-  max-width: calc(var(--__layer-indicator-width) - 20px);
-
-  & > span {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  }
-
-  grid-template-columns: min-content 1fr min-content;
-
-  .cmp-layer-indicator__lock {
-    color: var(--error-fg);
-    line-height: 0;
-    margin-left: 0.25rem;
-  }
-}
-
 .cmp-transform {
   svg.cmp-transform__graphics {
     width: 3rem;
