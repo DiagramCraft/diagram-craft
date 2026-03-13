@@ -82,35 +82,35 @@
   }
 
   .eArrow {
-    --__size: 5px;
+    --_size: 5px;
 
     background: transparent;
 
     width: 0;
     height: 0;
 
-    border-left: var(--__size) solid transparent;
-    border-right: var(--__size) solid transparent;
-    border-bottom: var(--__size) solid var(--cmp-bg);
+    border-left: var(--_size) solid transparent;
+    border-right: var(--_size) solid transparent;
+    border-bottom: var(--_size) solid var(--cmp-bg);
 
     display: flex;
 
     &[data-side='top'] {
-      bottom: calc(-1 * var(--__size) + 1px);
+      bottom: calc(-1 * var(--_size) + 1px);
       rotate: 180deg;
     }
 
     &[data-side='bottom'] {
-      top: calc(-1 * var(--__size) + 1px);
+      top: calc(-1 * var(--_size) + 1px);
     }
 
     &[data-side='left'] {
-      right: calc(-1 * var(--__size) - 1px);
+      right: calc(-1 * var(--_size) - 1px);
       rotate: 90deg;
     }
 
     &[data-side='right'] {
-      left: calc(-1 * var(--__size) - 1px);
+      left: calc(-1 * var(--_size) - 1px);
       rotate: -90deg;
     }
   }

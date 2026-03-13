@@ -1,10 +1,10 @@
 .icSidebar {
-  --__width: 39px;
+  --_width: 39px;
 
   anchor-name: --sidebar;
   anchor-scope: --sidebar;
   background: var(--panel-bg);
-  width: var(--__width);
+  width: var(--_width);
 
   .eExpanded {
     position: absolute;
@@ -55,7 +55,7 @@
   .eBottomContainer {
     position: absolute;
     bottom: 5px;
-    width: var(--__width);
+    width: var(--_width);
     display: flex;
 
     > div {

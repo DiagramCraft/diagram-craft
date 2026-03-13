@@ -10,7 +10,7 @@
   background-color: var(--panel-bg);
   border-radius: 0;
   color: var(--panel-fg);
-  max-width: calc(var(--__layer-indicator-width) - 20px);
+  max-width: calc(var(--_layer-indicator-width) - 20px);
 
   & > span {
     overflow: hidden;
