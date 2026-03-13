@@ -73,7 +73,7 @@ export const MainMenu = () => {
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <button type={'button'} className={'_menu-button'}>
+          <button type={'button'} id={'menu-button'}>
             <TbMenu2 size={'24px'} />
           </button>
         }

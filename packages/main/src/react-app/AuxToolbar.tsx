@@ -4,7 +4,7 @@ import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 
 export const AuxToolbar = () => {
   return (
-    <div className={'_extra-tools'}>
+    <div id={'extra-tools'}>
       <Toolbar.Root>
         <ActionToolbarButton action={'PREVIEW'}>
           <TbEye size={'17.5px'} />

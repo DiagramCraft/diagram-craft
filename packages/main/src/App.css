@@ -323,7 +323,7 @@ table {
   grid-template-columns: 1fr auto 1fr;
   border-bottom: 1px solid var(--panel-border);
 
-  ._menu-button {
+  #menu-button {
     position: relative;
     display: flex;
     gap: 1rem;
@@ -349,7 +349,7 @@ table {
 
   }
 
-  ._document {
+  #document {
     margin-left: 0.25rem;
     display: flex;
     align-items: center;
@@ -359,7 +359,7 @@ table {
     color: var(--panel-fg);
   }
 
-  ._tools {
+  #tools {
     display: flex;
     gap: 0.25rem;
 
@@ -373,7 +373,7 @@ table {
     }
   }
 
-  ._extra-tools {
+  #extra-tools {
     display: flex;
     gap: 0.25rem;
     justify-self: end;
@@ -382,7 +382,7 @@ table {
 }
 
 @media (max-width: 1000px) {
-  ._extra-tools {
+  #extra-tools {
     display: none !important;
   }
 }

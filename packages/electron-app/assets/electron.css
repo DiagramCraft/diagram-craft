@@ -11,7 +11,7 @@
   }
 }
 
-#menu ._menu-button {
+#menu #menu-button {
   > * {
     display: none !important;
   }
@@ -24,7 +24,7 @@
 #menu {
   padding-top: 2px;
 
-  ._tools {
+  #tools {
     .cToolbar > div > button[data-pressed] {
       background-color: #4F4F4F !important;
       color: #F3F3F3 !important;
@@ -51,10 +51,10 @@
   }
 }
 
-body.fullscreen #menu ._menu-button {
+body.fullscreen #menu #menu-button {
   display: none;
 }
 
-body.fullscreen ._tools {
+body.fullscreen #tools {
   margin-left: 0.4rem;
 }
