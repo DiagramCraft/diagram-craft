@@ -243,7 +243,7 @@ const CustomAnchorsEditor = ({
                   />
                 </div>
                 <Button
-                  type="icon-only"
+                  variant="icon-only"
                   onClick={() => {
                     const newAnchors = { ...(customAnchors.val ?? {}) };
                     delete newAnchors[id];
@@ -260,7 +260,7 @@ const CustomAnchorsEditor = ({
           )}
 
           <Button
-            type={'secondary'}
+            variant={'secondary'}
             onClick={() => {
               const id = newid();
               const newAnchors = { ...(customAnchors.val ?? {}) };

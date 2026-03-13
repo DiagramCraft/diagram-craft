@@ -178,7 +178,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
 
             <div className={styles.eButtons}>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx + 1, 0, {
                     id: newid()
@@ -189,7 +189,7 @@ const AdvancedSearchClauseList = (props: ClauseListProps) => {
                 <TbPlus />
               </Button>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 disabled={idx === 0 && props.clauses.length === 1}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx, 1);
@@ -317,7 +317,7 @@ export const AdvancedSearchTab = () => {
                 />
               </div>
 
-              <Button type="primary" onClick={executeSearch} className={styles.eSearchButton}>
+              <Button variant="primary" onClick={executeSearch} className={styles.eSearchButton}>
                 <TbSearch />
                 Search
               </Button>

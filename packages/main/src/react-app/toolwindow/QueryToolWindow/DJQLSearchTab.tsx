@@ -165,14 +165,14 @@ export const DJQLSearchTab = () => {
               }}
             >
               <Button
-                type={'secondary'}
+                variant={'secondary'}
                 onClick={() => {
                   setExpanded([]);
                 }}
               >
                 Save as...
               </Button>
-              <Button type={'secondary'} onClick={() => exportToFile()}>
+              <Button variant={'secondary'} onClick={() => exportToFile()}>
                 Export
               </Button>
               <a
@@ -245,11 +245,11 @@ export const DJQLSearchTab = () => {
                         gap: '0.25rem'
                       }}
                     >
-                      <Button type={'icon-only'}>
+                      <Button variant={'icon-only'}>
                         <TbArrowDownRight />
                       </Button>
                       <Button
-                        type={'icon-only'}
+                        variant={'icon-only'}
                         onClick={ev => {
                           navigator.clipboard.writeText(
                             JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)

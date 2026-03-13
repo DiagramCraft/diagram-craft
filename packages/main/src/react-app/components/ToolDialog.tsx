@@ -100,7 +100,7 @@ export const ToolDialog = (props: ToolDialogProps) => {
             <Button style={{ marginLeft: 'auto' }} onClick={() => props.onOk()}>
               Ok
             </Button>
-            <Button type={'secondary'} onClick={() => props.onCancel()}>
+            <Button variant={'secondary'} onClick={() => props.onCancel()}>
               Cancel
             </Button>
           </BaseUIAlertDialog.Popup>

@@ -155,7 +155,7 @@ export const RuleEditorSubDialogSimple = forwardRef<
 
               <div>
                 <Button
-                  type={'icon-only'}
+                  variant={'icon-only'}
                   onClick={() => {
                     const newActions = actions.toSpliced(idx + 1, 0, {
                       id: newid()
@@ -166,7 +166,7 @@ export const RuleEditorSubDialogSimple = forwardRef<
                   <TbPlus />
                 </Button>
                 <Button
-                  type={'icon-only'}
+                  variant={'icon-only'}
                   disabled={idx === 0 && actions.length === 1}
                   onClick={() => {
                     const newActions = actions.toSpliced(idx, 1);
@@ -315,7 +315,7 @@ const ClauseList = (props: ClauseListProps) => {
 
             <div className={styles.eButtons}>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx + 1, 0, {
                     id: newid()
@@ -326,7 +326,7 @@ const ClauseList = (props: ClauseListProps) => {
                 <TbPlus />
               </Button>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 disabled={idx === 0 && props.clauses.length === 1}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx, 1);

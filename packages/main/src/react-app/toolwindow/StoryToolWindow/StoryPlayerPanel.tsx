@@ -99,19 +99,23 @@ export const StoryPlayerPanel = () => {
                 border: '1px solid var(--cmp-border)'
               }}
             >
-              <Button onClick={handlePrevious} type={'secondary'} disabled={currentStepIndex <= 0}>
+              <Button
+                onClick={handlePrevious}
+                variant={'secondary'}
+                disabled={currentStepIndex <= 0}
+              >
                 <TbPlayerSkipBack />
               </Button>
               <Button
                 onClick={handleStart}
-                type={!currentStory || currentStepIndex >= 0 ? 'secondary' : 'primary'}
+                variant={!currentStory || currentStepIndex >= 0 ? 'secondary' : 'primary'}
                 disabled={!currentStory || currentStepIndex >= 0}
               >
                 <TbPlayerPlay />
               </Button>
               <Button
                 onClick={handlePresentationMode}
-                type={'primary'}
+                variant={'primary'}
                 disabled={!selectedStoryId}
                 title="Start Presentation Mode"
               >
@@ -119,14 +123,14 @@ export const StoryPlayerPanel = () => {
               </Button>
               <Button
                 onClick={handleStop}
-                type={currentStepIndex < 0 ? 'secondary' : 'primary'}
+                variant={currentStepIndex < 0 ? 'secondary' : 'primary'}
                 disabled={currentStepIndex < 0}
               >
                 <TbPlayerStop />
               </Button>
               <Button
                 onClick={handleNext}
-                type={
+                variant={
                   currentStepIndex >= 0 && currentStepIndex < currentStory.steps.length - 1
                     ? 'primary'
                     : 'secondary'

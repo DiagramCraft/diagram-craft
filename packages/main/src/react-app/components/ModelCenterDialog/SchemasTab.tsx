@@ -119,7 +119,7 @@ export const SchemasTab = () => {
         {providers.length > 0 && (
           <MenuButton.Root>
             <MenuButton.Trigger
-              type="secondary"
+              variant="secondary"
               disabled={!canMutateSchemas}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -223,7 +223,7 @@ export const SchemasTab = () => {
                     <td>
                       <div className={styles.eActions}>
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => setEditSchemaDialog({ open: true, schema })}
                           title="Edit schema"
                           disabled={!db.isSchemasEditable(schema.providerId)}
@@ -231,7 +231,7 @@ export const SchemasTab = () => {
                           <TbPencil />
                         </Button>
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => handleDeleteSchema(schema)}
                           title="Delete schema"
                           disabled={!db.isSchemasEditable(schema.providerId)}

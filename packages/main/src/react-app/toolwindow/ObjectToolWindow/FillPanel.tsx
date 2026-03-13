@@ -373,7 +373,7 @@ export const FillPanelForm = ({
               </label>
               &nbsp;
               <Button
-                type={'secondary'}
+                variant={'secondary'}
                 style={{ fontSize: '11px' }}
                 disabled={image.val === ''}
                 onClick={() => {

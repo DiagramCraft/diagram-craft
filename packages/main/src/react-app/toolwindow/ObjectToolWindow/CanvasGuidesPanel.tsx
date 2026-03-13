@@ -65,7 +65,7 @@ const GuideRow = (props: GuideRowProps) => {
       style={{ gap: '4px', padding: '2px 2px' }}
     >
       <Button
-        type={'secondary'}
+        variant={'secondary'}
         onClick={handleTypeToggle}
         title={`Change to ${guide.type === 'horizontal' ? 'vertical' : 'horizontal'} guide`}
       >
@@ -85,7 +85,7 @@ const GuideRow = (props: GuideRowProps) => {
         onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
       />
       <div style={{ marginLeft: 'auto' }}>
-        <Button type="icon-only" onClick={handleRemove} title="Remove guide">
+        <Button variant="icon-only" onClick={handleRemove} title="Remove guide">
           <TbTrash />
         </Button>
       </div>
@@ -214,7 +214,7 @@ export const CanvasGuidesPanel = (props: Props) => {
 
         <div style={{ marginTop: '8px' }}>
           <Button
-            type="primary"
+            variant="primary"
             onClick={addGuide}
             title={'Add Guide'}
             style={{ display: 'flex', alignItems: 'center', gap: '4px' }}

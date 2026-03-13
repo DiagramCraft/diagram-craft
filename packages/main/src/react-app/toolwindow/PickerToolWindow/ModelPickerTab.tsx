@@ -273,7 +273,7 @@ const DataProviderGridView = (props: DataViewProps) => {
       headerButtons={
         <div style={{ gap: '0.5rem', display: 'flex' }}>
           <LinkButton
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={() => {
               app.actions['EXTERNAL_DATA_LINK_RENAME_TEMPLATE']?.execute({
                 templateId: t.id
@@ -282,7 +282,7 @@ const DataProviderGridView = (props: DataViewProps) => {
           >
             <TbPencil />
           </LinkButton>
-          <LinkButton type={'icon-only'} onClick={() => handleDeleteTemplate(t)}>
+          <LinkButton variant={'icon-only'} onClick={() => handleDeleteTemplate(t)}>
             <TbTrash />
           </LinkButton>
         </div>
@@ -483,7 +483,7 @@ const DataProviderQueryView = (props: {
         </div>
 
         <Button
-          type={'secondary'}
+          variant={'secondary'}
           onClick={() => props.showItemAddDialog()}
           disabled={!('addData' in db)}
         >
@@ -523,7 +523,7 @@ const DataProviderQueryView = (props: {
             props.onSearch(search);
             ref.current?.blur();
           }}
-          type={'secondary'}
+          variant={'secondary'}
         >
           <TbSearch />
         </Button>
@@ -631,7 +631,7 @@ export const ModelPickerTab = () => {
     <>
       <ToolWindow.TabActions>
         <LinkButton
-          type={'icon-only'}
+          variant={'icon-only'}
           aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
@@ -647,7 +647,7 @@ export const ModelPickerTab = () => {
           <TbRefresh />
         </LinkButton>
         <LinkButton
-          type={'icon-only'}
+          variant={'icon-only'}
           onClick={() => {
             application.ui.showDialog(
               new ModelCenterDialogCommand(

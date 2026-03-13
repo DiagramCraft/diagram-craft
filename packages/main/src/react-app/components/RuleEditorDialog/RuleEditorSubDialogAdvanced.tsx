@@ -66,7 +66,7 @@ export const RuleEditorSubDialogAdvanced = forwardRef<
     <div className={styles.icRuleEditorSubDialogAdvanced}>
       <div className={styles.eHeader}>
         <h4 className={styles.eTitle}>Triggers</h4>
-        <Button type={'icon-only'} onClick={addTrigger} style={{ marginLeft: 'auto' }}>
+        <Button variant={'icon-only'} onClick={addTrigger} style={{ marginLeft: 'auto' }}>
           <TbPlus /> Add
         </Button>
       </div>
@@ -148,7 +148,7 @@ export const RuleEditorSubDialogAdvanced = forwardRef<
             </div>
 
             <div className={styles.eButtons}>
-              <Button type={'icon-only'} onClick={() => removeTrigger(idx)}>
+              <Button variant={'icon-only'} onClick={() => removeTrigger(idx)}>
                 <TbTrash />
               </Button>
             </div>
@@ -177,7 +177,7 @@ export const RuleEditorSubDialogAdvanced = forwardRef<
               Debug mode
             </label>
             <div style={{ marginLeft: 'auto' }}>
-              <Button type={'secondary'} onClick={() => run()}>
+              <Button variant={'secondary'} onClick={() => run()}>
                 Run...
               </Button>
             </div>

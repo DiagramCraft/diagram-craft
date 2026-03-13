@@ -157,7 +157,7 @@ export const ExtendedDataTab = () => {
     <>
       <ToolWindow.TabActions>
         <LinkButton
-          type={'icon-only'}
+          variant={'icon-only'}
           style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
           onClick={() => setEditMode(v => !v)}
         >
@@ -259,7 +259,7 @@ export const ExtendedDataTab = () => {
                         <Accordion.ItemHeaderButtons>
                           {isExternal && (
                             <LinkButton
-                              type={'icon-only'}
+                              variant={'icon-only'}
                               style={{ marginRight: '0.5rem' }}
                               onClick={() => editExternalData(schema.id)}
                               title="Edit external data"
@@ -269,7 +269,7 @@ export const ExtendedDataTab = () => {
                           )}
                           {isExternal && (
                             <LinkButton
-                              type={'icon-only'}
+                              variant={'icon-only'}
                               onClick={() => clearExternalLinkage(schema.id)}
                               title="Unlink external data"
                               style={{ color: 'var(--accent-fg)' }}
@@ -279,7 +279,7 @@ export const ExtendedDataTab = () => {
                           )}
                           {!isExternal && isExternalSchema && (
                             <LinkButton
-                              type={'icon-only'}
+                              variant={'icon-only'}
                               onClick={() => addExternalLinkage(schema)}
                               title="Link to external data"
                             >

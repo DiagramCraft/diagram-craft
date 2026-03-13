@@ -313,7 +313,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </div>
 
                   <Button
-                    type="icon-only"
+                    variant="icon-only"
                     onClick={() => addFieldAfter(index)}
                     title="Add field below"
                   >
@@ -321,7 +321,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </Button>
 
                   <Button
-                    type="icon-only"
+                    variant="icon-only"
                     onClick={() => removeField(index)}
                     disabled={fields.length === 1}
                     title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
@@ -388,7 +388,7 @@ export const EditSchemaDialog = (props: Props) => {
                             )}
                           </div>
                           <Button
-                            type="icon-only"
+                            variant="icon-only"
                             onClick={() => {
                               const newOptions = [...field.options];
                               newOptions.splice(optionIndex + 1, 0, {
@@ -402,7 +402,7 @@ export const EditSchemaDialog = (props: Props) => {
                             <TbPlus />
                           </Button>
                           <Button
-                            type="icon-only"
+                            variant="icon-only"
                             onClick={() => {
                               const newOptions = field.options.filter((_, i) => i !== optionIndex);
                               updateField(field.id, { options: newOptions });

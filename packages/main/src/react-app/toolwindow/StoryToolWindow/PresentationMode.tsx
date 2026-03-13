@@ -173,7 +173,7 @@ export const PresentationMode = (props: Props) => {
       <div className={styles.eTools}>
         {!isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={() => {
               document.getElementById('presentation')?.requestFullscreen();
               setIsFullScreen(true);
@@ -184,7 +184,7 @@ export const PresentationMode = (props: Props) => {
         )}
         {isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={async () => {
               try {
                 await document.exitFullscreen();
@@ -197,7 +197,7 @@ export const PresentationMode = (props: Props) => {
             <TbWindowMinimize />
           </Button>
         )}
-        <Button type={'icon-only'} onClick={handleClose}>
+        <Button variant={'icon-only'} onClick={handleClose}>
           <TbX />
         </Button>
       </div>
@@ -231,14 +231,14 @@ export const PresentationMode = (props: Props) => {
         <div className={styles.eControlsInner}>
           <Button
             onClick={handlePrevious}
-            type={'secondary'}
+            variant={'secondary'}
             disabled={player1.currentStepIndex <= 0}
           >
             <TbPlayerSkipBack />
           </Button>
           <Button
             onClick={handleNext}
-            type={'primary'}
+            variant={'primary'}
             disabled={player1.currentStepIndex >= props.story.steps.length - 1}
           >
             <TbPlayerSkipForward />

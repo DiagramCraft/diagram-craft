@@ -237,14 +237,14 @@ export const ModelProvidersTab = () => {
           <p className={styles.eTitle}>Model Providers</p>
           <div className={styles.eActions}>
             <Button
-              type="secondary"
+              variant="secondary"
               onClick={handleRefreshAll}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
               <TbRefresh /> Refresh All
             </Button>
             <Button
-              type="secondary"
+              variant="secondary"
               onClick={handleAddProvider}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -267,7 +267,7 @@ export const ModelProvidersTab = () => {
         {providers.length === 0 ? (
           <div className={styles.eEmptyState}>
             <p>No providers configured</p>
-            <Button type="primary" onClick={handleAddProvider}>
+            <Button variant="primary" onClick={handleAddProvider}>
               <TbPlus /> Add Your First Provider
             </Button>
           </div>
@@ -290,7 +290,7 @@ export const ModelProvidersTab = () => {
                   <td>
                     <div className={styles.eActions}>
                       <Button
-                        type="icon-only"
+                        variant="icon-only"
                         onClick={() => handleEditProvider(providerWithId)}
                         title="Edit provider"
                         disabled={providerWithId.isFirst}
@@ -299,7 +299,7 @@ export const ModelProvidersTab = () => {
                       </Button>
                       {!providerWithId.isFirst && (
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => handleDeleteProvider(providerWithId)}
                           title="Delete provider"
                         >

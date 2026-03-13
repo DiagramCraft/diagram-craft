@@ -62,7 +62,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, Props>((props, ref) 
       />
       {props.onClear && currentValue !== '' && (
         <Button
-          type={'icon-only'}
+          variant={'icon-only'}
           className={styles.eClear}
           onClick={() => {
             setCurrentValue('');

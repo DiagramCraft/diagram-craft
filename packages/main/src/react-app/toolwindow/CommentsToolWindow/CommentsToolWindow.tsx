@@ -107,7 +107,7 @@ export const CommentsToolWindow = () => {
     <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
         <ToolWindow.TabActions>
-          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
             <TbPlus />
           </Button>
           <CommentsSortMenu
@@ -121,13 +121,18 @@ export const CommentsToolWindow = () => {
         </ToolWindow.TabActions>
         <ToolWindow.TabContent>
           <ToolWindowPanel mode={'headless'} id={'comments'} title={'Comments'}>
-            <ThreadsContent threads={commentThreads} grouped={groupedThreads} onResolve={handleResolveComment} formatDate={formatDate} />
+            <ThreadsContent
+              threads={commentThreads}
+              grouped={groupedThreads}
+              onResolve={handleResolveComment}
+              formatDate={formatDate}
+            />
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab title={'My Threads'} id={'my-threads'}>
         <ToolWindow.TabActions>
-          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
             <TbPlus />
           </Button>
           <CommentsSortMenu
@@ -141,7 +146,12 @@ export const CommentsToolWindow = () => {
         </ToolWindow.TabActions>
         <ToolWindow.TabContent>
           <ToolWindowPanel mode={'headless'} id={'my-threads'} title={'My Threads'}>
-            <ThreadsContent threads={myThreads} grouped={myGroupedThreads} onResolve={handleResolveComment} formatDate={formatDate} />
+            <ThreadsContent
+              threads={myThreads}
+              grouped={myGroupedThreads}
+              onResolve={handleResolveComment}
+              formatDate={formatDate}
+            />
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>

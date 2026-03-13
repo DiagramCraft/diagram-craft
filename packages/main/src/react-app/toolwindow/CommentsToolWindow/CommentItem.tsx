@@ -186,7 +186,7 @@ export const CommentItem = ({
               }
             }}
           />
-          <Button type={'secondary'} onClick={handleReply} disabled={replyText.trim() === ''}>
+          <Button variant={'secondary'} onClick={handleReply} disabled={replyText.trim() === ''}>
             <TbMessageReply />
           </Button>
         </div>

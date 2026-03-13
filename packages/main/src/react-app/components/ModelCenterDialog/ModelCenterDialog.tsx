@@ -61,7 +61,7 @@ export const ModelCenterDialog = (props: Props) => {
                 <div className={styles.eActions}>
                   <BaseUIAlertDialog.Close
                     render={
-                      <Button onClick={() => {}} type={'icon-only'}>
+                      <Button onClick={() => {}} variant={'icon-only'}>
                         <TbX size={'14px'} />
                       </Button>
                     }

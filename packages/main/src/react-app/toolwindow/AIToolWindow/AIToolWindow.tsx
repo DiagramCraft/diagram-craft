@@ -206,7 +206,7 @@ export const AIToolWindow = () => {
                 className={styles.eInput}
               />
               <div className={styles.eActions}>
-                <Button onClick={clear} disabled={isDisabled} type="secondary">
+                <Button onClick={clear} disabled={isDisabled} variant="secondary">
                   Clear
                 </Button>
                 <Button onClick={sendMessage} disabled={isDisabled || !input.trim()}>

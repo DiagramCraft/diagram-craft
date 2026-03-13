@@ -157,7 +157,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
           }}
           style={{ flexGrow: 1 }}
         />
-        <Button type={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
+        <Button variant={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
           Search
         </Button>
         &nbsp;
@@ -301,7 +301,7 @@ export const ShapeSelectDialog = (props: Props) => {
             }}
             style={{ flexGrow: 1 }}
           />
-          <Button type={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
+          <Button variant={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
             Search
           </Button>
         </div>

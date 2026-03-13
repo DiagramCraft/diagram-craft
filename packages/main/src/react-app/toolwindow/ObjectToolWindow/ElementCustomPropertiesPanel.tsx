@@ -42,11 +42,11 @@ const IconPropertyEditor = (props: {
   return (
     <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
       {previewSrc && <img src={previewSrc} width={20} height={20} alt="icon" />}
-      <Button type={'icon-only'} onClick={() => setDialogOpen(true)}>
+      <Button variant={'icon-only'} onClick={() => setDialogOpen(true)}>
         <TbPencil />
       </Button>
       {props.value && (
-        <Button type={'icon-only'} onClick={() => props.onChange(undefined)}>
+        <Button variant={'icon-only'} onClick={() => props.onChange(undefined)}>
           <TbX />
         </Button>
       )}

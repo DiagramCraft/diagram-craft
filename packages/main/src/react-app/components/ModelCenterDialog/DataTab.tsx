@@ -264,7 +264,7 @@ export const DataTab = () => {
         <p className={styles.eTitle}>Data</p>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <Button
-            type="secondary"
+            variant="secondary"
             onClick={handleApplySelectedOverrides}
             disabled={!allSelectedHaveOverrides}
             style={{ display: 'flex', gap: '0.25rem' }}
@@ -272,7 +272,7 @@ export const DataTab = () => {
             Apply Overrides
           </Button>
           <Button
-            type="danger"
+            variant="danger"
             onClick={handleClearSelectedOverrides}
             disabled={!allSelectedHaveOverrides}
             style={{ display: 'flex', gap: '0.25rem' }}
@@ -281,7 +281,7 @@ export const DataTab = () => {
           </Button>
           <MenuButton.Root>
             <MenuButton.Trigger
-              type="secondary"
+              variant="secondary"
               className={styles.eAddBtn}
               disabled={!(canMutateData && hasSchemas)}
               style={{ display: 'flex', gap: '0.25rem' }}
@@ -356,7 +356,7 @@ export const DataTab = () => {
                   className={styles.eSearchInput}
                 />
                 <Button
-                  type="secondary"
+                  variant="secondary"
                   onClick={handleSearch}
                   style={{ display: 'flex', gap: '0.25rem' }}
                 >
@@ -434,7 +434,7 @@ export const DataTab = () => {
                         <td>
                           <div className={styles.eActions}>
                             <Button
-                              type="icon-only"
+                              variant="icon-only"
                               onClick={() =>
                                 setEditItemDialog({ open: true, item, schema: item._schema })
                               }
@@ -444,7 +444,7 @@ export const DataTab = () => {
                               <TbPencil />
                             </Button>
                             <Button
-                              type="icon-only"
+                              variant="icon-only"
                               onClick={() => handleDeleteItem(item)}
                               title="Delete item"
                               disabled={!db.isDataEditable(item._schema)}

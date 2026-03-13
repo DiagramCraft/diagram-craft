@@ -73,7 +73,7 @@ export const Preview = (props: Props) => {
     <div className={styles.icPreview} id={'preview'}>
       <div className={styles.eTools}>
         <Button
-          type={'icon-only'}
+          variant={'icon-only'}
           onClick={() => {
             viewbox.zoom(1.1, viewbox.midpoint);
           }}
@@ -81,20 +81,20 @@ export const Preview = (props: Props) => {
           <TbZoomOut />
         </Button>
         <Button
-          type={'icon-only'}
+          variant={'icon-only'}
           onClick={() => {
             viewbox.zoom(0.9, viewbox.midpoint);
           }}
         >
           <TbZoomIn />
         </Button>
-        <Button type={'icon-only'} onClick={() => zoomFit()}>
+        <Button variant={'icon-only'} onClick={() => zoomFit()}>
           <TbZoomScan />
         </Button>
 
         {!isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={() => {
               document.getElementById('preview')?.requestFullscreen();
               setIsFullScreen(true);
@@ -105,7 +105,7 @@ export const Preview = (props: Props) => {
         )}
         {isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={async () => {
               try {
                 await document.exitFullscreen();
@@ -119,7 +119,7 @@ export const Preview = (props: Props) => {
           </Button>
         )}
         <Button
-          type={'icon-only'}
+          variant={'icon-only'}
           onClick={async () => {
             try {
               await document.exitFullscreen();

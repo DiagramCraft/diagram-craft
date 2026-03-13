@@ -9,7 +9,7 @@ export const DirtyIndicator = (props: Props) => {
     <div className={styles.icDirtyIndicator}>
       <div className={styles.eText}>- Unsaved</div>
       {props.onDirtyChange && (
-        <Button type={'icon-only'} onClick={() => props.onDirtyChange!()}>
+        <Button variant={'icon-only'} onClick={() => props.onDirtyChange!()}>
           <TbTrash size={'14px'} />
         </Button>
       )}

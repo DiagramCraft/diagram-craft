@@ -90,10 +90,10 @@ export const TextToolWindow = () => {
         indicator={dirty ? <div className={styles.icDirtyIndicator} /> : null}
       >
         <ToolWindow.TabActions>
-          <Button type={'icon-only'} disabled={!dirty} onClick={() => updateText()}>
+          <Button variant={'icon-only'} disabled={!dirty} onClick={() => updateText()}>
             <TbRestore />
           </Button>
-          <Button type={'icon-only'} disabled={!dirty} onClick={() => applyChanges()}>
+          <Button variant={'icon-only'} disabled={!dirty} onClick={() => applyChanges()}>
             <TbCheck />
           </Button>
         </ToolWindow.TabActions>
