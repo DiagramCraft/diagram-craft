@@ -5,7 +5,6 @@ import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { $c } from '@diagram-craft/utils/classname';
 import { round } from '@diagram-craft/utils/math';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
@@ -16,6 +15,7 @@ import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { SnapMarkers } from '@diagram-craft/canvas/snap/snapManager';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import styles from './ElementTransformPanel.module.css';
 
 const origins = {
   tl: { x: 0, y: 0 },
@@ -154,16 +154,16 @@ export const ElementTransformPanel = (props: Props) => {
       title={'Transform'}
       hasCheckbox={false}
     >
-      {/* TODO: Is this needed */}
-      <div className={'cmp-transform'}>
+      <div className={styles.eElementTransformPanel}>
         <KeyValueTable.Root>
           <KeyValueTable.Label valign="top" style={{ marginTop: '0.1rem' }}>
-            <svg viewBox={'0 0 1 1'} className={'cmp-transform__graphics'}>
-              <rect className={'cmp-transform__rect'} x={0.1} y={0.1} width={0.8} height={0.8} />
+            <svg viewBox={'0 0 1 1'} className={styles.eGraphics}>
+              <rect className={styles.eRect} x={0.1} y={0.1} width={0.8} height={0.8} />
               {Object.entries(origins).map(([k, v]) => (
                 <circle
                   key={k}
-                  className={$c('cmp-transform__node', { active: origin === k })}
+                  className={styles.eNode}
+                  data-active={origin === k}
                   cx={0.1 + v.x * 0.8}
                   cy={0.1 + v.y * 0.8}
                   r={0.08}
@@ -173,7 +173,7 @@ export const ElementTransformPanel = (props: Props) => {
             </svg>
           </KeyValueTable.Label>
           <KeyValueTable.Value>
-            <div className={'cmp-transform__inputs'}>
+            <div className={styles.eInputs}>
               <div style={{ gridArea: 'x' }}>
                 <NumberInput
                   label={'x'}

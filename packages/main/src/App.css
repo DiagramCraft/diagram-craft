@@ -535,46 +535,6 @@ foreignObject {
 }
 
 
-.cmp-transform {
-  svg.cmp-transform__graphics {
-    width: 3rem;
-    height: 3rem;
-  }
-
-  .cmp-transform__node {
-    fill: var(--panel-bg);
-    stroke: var(--panel-fg);
-    stroke-width: 0.02;
-    cursor: pointer;
-
-    &.cmp-transform__node--active {
-      stroke: var(--accent-fg-hover);
-      fill: var(--accent-fg-hover);
-    }
-  }
-
-  .cmp-transform__rect {
-    fill: transparent;
-    stroke: var(--panel-fg);
-    stroke-width: 0.02;
-    stroke-dasharray: 0.05 0.05;
-  }
-
-  .cmp-transform__inputs {
-    display: grid;
-    grid-template-areas: "x w" "y h" "r aspect-ratio";
-    grid-template-rows: repeat(3, 1fr);
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    row-gap: 0.5rem;
-    column-gap: 0.3em;
-
-    input {
-      width: 100%;
-    }
-  }
-}
-
 .cmp-query-response {
   pre {
     margin: 0;
