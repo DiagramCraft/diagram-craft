@@ -103,7 +103,7 @@ export const TextToolWindow = () => {
             id={'text'}
             title={'Text'}
             // @ts-expect-error - anchorName is a new CSS property
-            style={{ anchorName: '--content' }}
+            style={{ anchorName: '--content', borderBottomWidth: 0 }}
           >
             <SyntaxHighlightingEditor
               value={text}

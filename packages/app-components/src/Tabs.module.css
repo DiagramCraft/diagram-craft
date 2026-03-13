@@ -9,7 +9,7 @@
   flex-direction: column;
   width: 100%;
 
-  --tab-height: 33.5px;
+  --tab-height: 34.5px;
 
   .eList {
     font-family: inherit;
