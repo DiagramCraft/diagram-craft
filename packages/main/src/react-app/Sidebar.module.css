@@ -42,10 +42,10 @@
       }
     }
 
-    .cToolbar {
+    :global(.cToolbar) {
       background-color: var(--panel-bg);
 
-      > .eButton[data-pressed] {
+      > div > button[data-pressed] {
         background-color: var(--accent-bg);
         color: var(--accent-fg);
       }

@@ -4,7 +4,7 @@
  *  | DropdownButton [1..*] - .eDropdownButton
  *  | Separator [1..*] - .eSeparator
  */
-.cToolbar {
+:global(.cToolbar) {
   display: flex;
   padding: 4px 0 0 2px;
   width: 100%;

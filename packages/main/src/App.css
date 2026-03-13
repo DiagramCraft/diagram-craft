@@ -363,7 +363,7 @@ table {
     display: flex;
     gap: 0.25rem;
 
-    .cToolbar > .eButton[data-pressed] {
+    .cToolbar > div > button[data-pressed] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }

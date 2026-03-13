@@ -10,7 +10,7 @@
     background-color: var(--panel-bg);
     margin-top: 1rem;
   }
-  
+
   &[data-headless="true"] {
     background-color: var(--base-bg);
     padding: 10px 10px 10px 10px;
@@ -22,7 +22,7 @@
       border-bottom: none;
     }
 
-    > .cToolbar {
+    > :global(.cToolbar) {
       padding: 3px 0 3px 3px;
       margin: 0;
       width: calc(100% + 20px);

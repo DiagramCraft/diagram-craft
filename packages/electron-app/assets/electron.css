@@ -25,28 +25,28 @@
   padding-top: 2px;
 
   ._tools {
-    .cToolbar > .eButton[data-pressed] {
+    .cToolbar > div > button[data-pressed] {
       background-color: #4F4F4F !important;
       color: #F3F3F3 !important;
     }
   }
 
-  .cToolbar > .eButton[data-pressed] {
+  .cToolbar > div > button[data-pressed] {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
   }
 
-  .cToolbar > .eButton:hover, .cToolbar > .eButton:focus {
+  .cToolbar > div > button:hover, .cToolbar > div > button:focus {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
     box-shadow: none !important;
   }
 
-  .cToolbar > .eButton:focus:not(:hover) {
+  .cToolbar > div > button:focus:not(:hover) {
     background-color: transparent !important;
   }
 
-  .cToolbar > .eSeparator {
+  .cToolbar > [role="separator"] {
     background-color: #3F3F3F !important;
   }
 }

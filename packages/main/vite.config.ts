@@ -29,9 +29,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
     css: {
       modules: {
         exportGlobals: true,
-        /*        scopeBehaviour: 'global',*/
-        localsConvention: 'camelCase',
-        globalModulePaths: [/Toolbar.module.css/]
+        localsConvention: 'camelCase'
       }
     },
     resolve: {
