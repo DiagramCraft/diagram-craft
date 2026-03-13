@@ -1,5 +1,5 @@
 /* TODO: Can we avoid having a shared .module.css files */
-.icObjectPicker {
+:global(.icObjectPicker) {
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem;

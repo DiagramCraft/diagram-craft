@@ -150,7 +150,7 @@
 
 .dark-theme #left-sidebar,
 .dark-theme .icNodeTypePopup,
-.dark-theme .cmp-shape-select-dialog {
+.dark-theme .icObjectPicker {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-2);
   --canvas-bg2: var(--gray-3);
@@ -162,7 +162,7 @@
 
 .light-theme #left-sidebar,
 .light-theme .icNodeTypePopup,
-.light-theme .cmp-shape-select-dialog {
+.light-theme .icObjectPicker {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-4);
   --canvas-bg2: var(--gray-3);

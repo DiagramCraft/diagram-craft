@@ -176,9 +176,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
       </div>
 
       <div className={styles.eIconGrid}>
-        <div
-          className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.eIconGridInner}`}
-        >
+        <div className={`${objectPickerStyles.icObjectPicker} ${styles.eIconGridInner}`}>
           {pageIcons.map(icon => {
             const [prefix, name] = safeSplit(icon, ':', 2, 2);
             return (
