@@ -86,8 +86,6 @@ export const ToolDialog = (props: ToolDialogProps) => {
       onOpenChange={handleOpenChange}
     >
       <BaseUIAlertDialog.Portal container={portal}>
-        {/* TODO: This overlay is not working */}
-        <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
         <BaseUIAlertDialog.Viewport className={styles.icToolDialog}>
           <BaseUIAlertDialog.Popup initialFocus={false} className={styles.eContent}>
             <BaseUIAlertDialog.Title className={styles.eTitle}>
