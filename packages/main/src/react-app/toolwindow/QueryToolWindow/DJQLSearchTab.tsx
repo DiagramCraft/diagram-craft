@@ -18,6 +18,7 @@ import {
   SyntaxHighlightingEditor
 } from '@diagram-craft/app-components/SyntaxHighlightingEditor';
 import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
+import styles from '../QueryResponse.module.css';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -204,12 +205,12 @@ export const DJQLSearchTab = () => {
             id={'response'}
             title={`Query Response ${res ? `(${res.length} hits)` : 0}`}
           >
-            <div className={'cmp-query-response'}>
+            <div className={styles.icQueryResponse}>
               {!!error && <ErrorMessage>{error}</ErrorMessage>}
               {res?.map((e, idx) => (
                 <div
                   key={idx}
-                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                  className={`${styles.eItem} ${expanded.includes(idx) ? styles.eItemExpanded : ''}`}
                   style={{
                     cursor: 'pointer'
                   }}

@@ -45,6 +45,7 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import styles from '../QueryResponse.module.css';
 
 const NODE_CACHE = new Map<string, DiagramElement>();
 const PICKER_CANVAS_SIZE = 42;
@@ -314,14 +315,14 @@ const DataProviderListView = (props: DataViewProps) => {
 
   return (
     <ToolWindowPanel id={'response'} title={'Data'} mode={'accordion'}>
-      <div className={'cmp-query-response'}>
+      <div className={styles.icQueryResponse}>
         {data.map(item => {
           return (
             <ContextMenu.Root key={item._uid}>
               <ContextMenu.Trigger
                 element={
                   <div
-                    className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
+                    className={`util-draggable ${styles.eItem} ${expanded.includes(item._uid) ? styles.eItemExpanded : ''}`}
                     style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
                   >
                     <div

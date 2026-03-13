@@ -535,48 +535,6 @@ foreignObject {
 }
 
 
-.cmp-query-response {
-  pre {
-    margin: 0;
-  }
-
-  .cmp-query-response__item {
-    display: grid;
-    grid-template-columns: 1rem 1fr;
-    align-items: top;
-
-    border-left: 2px solid transparent;
-    margin-left: -10px;
-    margin-right: -10px;
-    padding-left: 5px;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-    margin-top: 0;
-    max-height: 100px;
-    overflow: hidden;
-
-    &:hover {
-      border-left: 2px solid var(--accent-fg-hover);
-      background-color: var(--cmp-bg-hover);
-
-      svg {
-        color: var(--accent-fg-hover);
-      }
-    }
-
-    & svg {
-      margin-top: 2px;
-      color: var(--accent-fg);
-    }
-  }
-
-  .cmp-query-response__item--expanded {
-    position: relative;
-    max-height: 1000px !important;
-  }
-}
-
-
 /* Adjustments of general components for specific use-cases */
 
 #menu {
