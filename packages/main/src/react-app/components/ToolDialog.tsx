@@ -51,7 +51,7 @@ export const ToolDialog = (props: ToolDialogProps) => {
   // TODO: This is a bit ugly
   useLayoutEffect(() => {
     queueMicrotask(() => {
-      const toolDialogs = document.getElementsByClassName('toolDialog');
+      const toolDialogs = document.getElementsByClassName(styles.icToolDialog!);
       if (toolDialogs.length === 0) {
         return;
       }

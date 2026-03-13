@@ -3,9 +3,12 @@ import { PropsUtils } from '@diagram-craft/utils/propsUtils';
 import { extractDataAttributes } from './utils';
 import styles from './TextArea.module.css';
 import { TbArrowsDiagonal } from 'react-icons/tb';
-import { Dialog } from './Dialog';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
+import { Button } from '@diagram-craft/app-components/Button';
+import { usePortal } from '@diagram-craft/app-components/PortalContext';
 
 export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
+  const portal = usePortal();
   const [error, setError] = useState(false);
   const [origValue, setOrigValue] = useState(props.value.toString());
   const [currentValue, setCurrentValue] = useState(props.value.toString());
@@ -80,21 +83,26 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, Props>((props, ref
 
   if (maximized) {
     return (
-      <Dialog
-        className={styles.cTextAreaMaximizedDialog}
-        title=""
+      <BaseUIAlertDialog.Root
         open={true}
-        buttons={[
-          {
-            type: 'cancel',
-            label: 'Ok',
-            onClick: () => setMaximized(false)
-          }
-        ]}
-        onClose={() => setMaximized(false)}
+        defaultOpen={true}
+        onOpenChange={() => setMaximized(false)}
       >
-        {inner}
-      </Dialog>
+        <BaseUIAlertDialog.Portal container={portal} className={styles.cTextAreaMaximizedDialog}>
+          <BaseUIAlertDialog.Viewport className={styles.eDialog}>
+            <BaseUIAlertDialog.Popup initialFocus={true}>
+              <BaseUIAlertDialog.Description
+                className={styles.eContent}
+                render={p => <div {...p}>{inner}</div>}
+              />
+
+              <div className={styles.eButtons}>
+                <Button onClick={() => setMaximized(false)}>Ok</Button>
+              </div>
+            </BaseUIAlertDialog.Popup>
+          </BaseUIAlertDialog.Viewport>
+        </BaseUIAlertDialog.Portal>
+      </BaseUIAlertDialog.Root>
     );
   }
   return <div>{inner}</div>;

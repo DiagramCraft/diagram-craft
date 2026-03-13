@@ -6,6 +6,7 @@
  *  TextAreaMaximizedDialog - .cTextAreaMaximizedDialog
  */
 .cTextArea {
+  position: relative;
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
@@ -66,16 +67,28 @@
   }
 }
 
-.cTextAreaMaximizedDialog {
-  :global(.cDialog) {
-    max-width: 100vw;
-    max-height: 100vh;
 
+.cTextAreaMaximizedDialog {
+  .eDialog {
+    background: var(--base-bg);
+
+    position: fixed;
     left: 0;
+    /* TODO: Replace with anchor positioning */
     top: 46px;
     bottom: 0;
     right: 0;
     transform: none;
+
+    padding: 1rem 1rem 4rem 1rem;
+
+    .eContent {
+      height: 100%;
+
+      .cTextArea {
+        height: 100%;
+      }
+    }
 
     & > div {
       height: 100%;
@@ -85,15 +98,23 @@
       height: calc(100% - 5px) !important;
     }
 
-    animation: none;
-    padding: 10px 15px 80px 15px;
-  }
+    .eButtons {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.75rem;
 
-  :global(.eContent) {
-    height: 100%;
+      button {
+        padding: 0 1.25rem;
+        font-weight: 500;
+        height: 35px;
+        outline: none;
 
-    & > * {
-      height: 100%;
+        border-radius: 4px;
+        color: var(--base-fg-dim);
+        background-color: var(--panel-bg);
+
+        border: 1px solid var(--cmp-border);
+      }
     }
   }
 }
