@@ -87,7 +87,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
         // @ts-expect-error valid use
         '--container-outline': '#d5d5d4'
       }}
-      className={props.scaleStrokes === undefined || props.scaleStrokes ? 'scale-strokes' : ''}
+      className={props.scaleStrokes === undefined || props.scaleStrokes ? styles.uScaleStrokes : ''}
       onPointerDown={isRuleLayer ? () => {} : e => props.onMouseDown?.(e.nativeEvent) ?? (() => {})}
     >
       {hover &&

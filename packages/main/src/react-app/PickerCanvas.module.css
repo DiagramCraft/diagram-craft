@@ -20,3 +20,15 @@
 .icPickerCanvas {
   --stroke-dash-zoom: 0.5;
 }
+
+.uScaleStrokes {
+  svg {
+    * {
+      vector-effect: initial;
+
+      path {
+        vector-effect: initial;
+      }
+    }
+  }
+}

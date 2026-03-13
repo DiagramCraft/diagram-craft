@@ -33,7 +33,7 @@
       display: none;
     }
 
-    :global(.cTabs) > :global(.eContent) {
+    :global(.cTabs) > [role="tabpanel"] {
       padding: 0;
       height: initial;
 

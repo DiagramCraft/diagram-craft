@@ -149,7 +149,6 @@
 }
 
 .dark-theme #left-sidebar,
-.dark-theme .icNodeTypePopup,
 .dark-theme .icObjectPicker {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-2);
@@ -161,7 +160,6 @@
 }
 
 .light-theme #left-sidebar,
-.light-theme .icNodeTypePopup,
 .light-theme .icObjectPicker {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-4);
