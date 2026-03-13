@@ -54,9 +54,6 @@
     transform: scale(0.9);
   }
 
-  /* TODO: Remove this */
-
-
   & h2:first-of-type {
     margin-top: 0;
     margin-bottom: 0.25rem;
