@@ -2,27 +2,28 @@
 @import '@radix-ui/colors/gray-dark.css';
 @import '@radix-ui/colors/gray-alpha.css';
 @import '@radix-ui/colors/gray-dark-alpha.css';
-
 @import '@radix-ui/colors/blue.css';
 @import '@radix-ui/colors/blue-dark.css';
 @import '@radix-ui/colors/red.css';
 @import '@radix-ui/colors/red-dark.css';
-
 @import '@radix-ui/colors/green.css';
 @import '@radix-ui/colors/green-dark.css';
-
 @import '@radix-ui/colors/crimson.css';
 @import '@radix-ui/colors/crimson-dark.css';
-
 @import '@radix-ui/colors/orange.css';
 @import '@radix-ui/colors/orange-dark.css';
-
 @import '@radix-ui/colors/black-alpha.css';
 
 @import "./Canvas.css";
 
-/* Component CSS modules */
+/* region Component CSS modules **************************************************************** */
+
 @import '@diagram-craft/canvas/components/DragLabelComponent.component.css';
+
+/* endregion */
+
+
+/* region Theme ******************************************************************************** */
 
 .dark-theme {
   --accent-1: var(--blue-1);
@@ -60,10 +61,6 @@
 
 :root {
   --cmp-radius: 4px;
-}
-
-#root {
-  isolation: isolate;
 }
 
 .light-theme {
@@ -170,12 +167,20 @@
   }
 }
 
+/* endregion */
+
+
+/* region Base HTML element styling ************************************************************ */
+
+#root {
+  isolation: isolate;
+}
 
 body {
   --right-indent: 0;
   --left-indent: 0;
 
-  .hide_container {
+  &.hide_container {
     --container-outline: transparent;
   }
 
@@ -194,10 +199,12 @@ body.no-select * {
 
 foreignObject {
   overflow: inherit;
+
+  /* To prevent flickering in Safari */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-
-/* Base HTML element styling */
 dd {
   margin: 0;
 }
@@ -249,6 +256,7 @@ input[type="checkbox"]:disabled {
   cursor: not-allowed;
 }
 
+input::placeholder,
 input::-webkit-input-placeholder {
   color: var(--panel-fg);
 }
@@ -258,7 +266,6 @@ input::selection {
   background-color: var(--highlight-reverse-bg);
   color: var(--highlight-reverse-fg);
 }
-
 
 div[data-field-state='set'],
 button[data-field-state='set'],
@@ -292,11 +299,14 @@ table {
   }
 }
 
-/* App layout */
+/* endregion */
+
+
+/* region App Layout *************************************************************************** */
+
 #app {
   position: fixed;
   inset: 0;
-
   display: grid;
   grid-template-areas: "menu" "main";
   grid-template-columns: 1fr;
@@ -346,7 +356,6 @@ table {
       display: block;
       color: var(--panel-fg);
     }
-
   }
 
   #document {
@@ -378,6 +387,12 @@ table {
     gap: 0.25rem;
     justify-self: end;
     padding-right: 1rem;
+  }
+
+  .cToolbar {
+    overflow: auto;
+    flex-wrap: nowrap;
+    padding: 2px 2px;
   }
 }
 
@@ -462,30 +477,10 @@ table {
   }
 }
 
-
-/* Canvas stuff */
-
-/* To prevent flickering in Safari */
-foreignObject {
-  user-select: none;
-  -webkit-user-select: none;
-}
+/* endregion */
 
 
-/* Specific / one-use components */
-
-
-/* Adjustments of general components for specific use-cases */
-
-#menu {
-  .cToolbar {
-    overflow: auto;
-    flex-wrap: nowrap;
-    padding: 2px 2px;
-  }
-}
-
-/* Util */
+/* region Utils ******************************************************************************** */
 
 .util-vcenter {
   display: flex;
@@ -531,8 +526,10 @@ foreignObject {
   cursor: move;
 }
 
+/* endregion */
 
-/* Animations */
+
+/* region Animation **************************************************************************** */
 
 @keyframes overlayShow {
   from {
@@ -554,8 +551,11 @@ foreignObject {
   }
 }
 
+/* endregion */
 
-/* Test stuff */
+
+/* region Test Stuff *************************************************************************** */
+
 .svg-node--highlight-node__edge-connect .svg-node__boundary {
   /*stroke: orange !important;
   stroke-width: 3px !important;*/
@@ -587,8 +587,10 @@ foreignObject {
   stroke: var(--accent-9) !important;
 }
 
+/* endregion */
 
-/* Hacks */
+
+/* region Hacks ******************************************************************************** */
 
 .svg__remove {
   path:nth-child(3), path:nth-child(4) {
@@ -601,3 +603,5 @@ foreignObject {
     stroke: #00BB00;
   }
 }
+
+/* endregion */
