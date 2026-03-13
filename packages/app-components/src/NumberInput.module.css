@@ -67,7 +67,7 @@
     background: var(--cmp-bg);
     border-left: 1px solid var(--cmp-border) !important;
     position: absolute;
-    
+
     &:disabled {
       color: var(--cmp-fg-disabled);
     }

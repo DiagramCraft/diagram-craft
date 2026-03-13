@@ -1,6 +1,6 @@
 .icModelCenterDialog {
 
-  :global(.cTabs) > :global(.eContent) {
+  :global(.cTabs) > [role="tabpanel"] {
     height: 100%;
     padding: 1rem;
     display: flex;

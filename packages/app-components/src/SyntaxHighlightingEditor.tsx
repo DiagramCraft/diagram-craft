@@ -132,7 +132,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     const highlightedLines = (props.highlighter ? props.highlighter(lines) : lines).map(
       (l, idx) => {
         const error = props.errors?.get(idx);
-        return `<span class="${error ? 'syntax-error' : ''}">${l}</span>`;
+        return `<span class="${error ? styles.syntaxError : ''}">${l}</span>`;
       }
     );
 
@@ -231,10 +231,10 @@ export const jsonHighlighter = (lines: string[]): string[] => {
   return lines.map(line => {
     // Simple highlighting: keywords in blue, strings in green
     return line
-      .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
-      .replace(/\}/g, '<span class="syntax-bracket">}</span>')
-      .replace(/\{/g, '<span class="syntax-bracket">{</span>')
-      .replace(/\]/g, '<span class="syntax-bracket">]</span>')
-      .replace(/\[/g, '<span class="syntax-bracket">[</span>');
+      .replace(/"([^"]*)"/g, `<span class="${styles.syntaxString}">"$1"</span>`)
+      .replace(/\}/g, `<span class="${styles.syntaxBracket}">}</span>`)
+      .replace(/\{/g, `<span class="${styles.syntaxBracket}">{</span>`)
+      .replace(/\]/g, `<span class="${styles.syntaxBracket}">]</span>`)
+      .replace(/\[/g, `<span class="${styles.syntaxBracket}">[</span>`);
   });
 };

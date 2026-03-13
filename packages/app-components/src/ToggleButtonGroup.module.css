@@ -10,7 +10,7 @@
   width: fit-content !important;
   min-width: 0;
 
-  :global(.eItem) {
+  .eItem {
     flex: 0 0 auto;
     color: var(--cmp-fg);
     background-color: transparent;
