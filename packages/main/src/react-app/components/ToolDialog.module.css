@@ -10,19 +10,6 @@
   border-bottom: 1px solid var(--accent-border);
   z-index: 10;
 
-  /* TODO: This is leaky... this assumes internal Button implementation details */
-
-  *[data-variant="primary"] {
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border);
-    outline: none;
-  }
-
-  *[data-variant="secondary"] {
-    background: var(--accent-bg);
-    color: var(--accent-fg);
-    border: 1px solid var(--accent-border);
-  }
 }
 
 .eContent {
@@ -63,6 +50,18 @@
       background: var(--accent-bg);
       border: 1px solid var(--accent-border);
     }
+  }
+  
+  button[data-variant="primary"] {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    outline: none;
+  }
+
+  button[data-variant="secondary"] {
+    background: var(--accent-bg);
+    color: var(--accent-fg);
+    border: 1px solid var(--accent-border);
   }
 }
 
