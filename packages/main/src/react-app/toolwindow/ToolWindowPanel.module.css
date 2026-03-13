@@ -1,0 +1,33 @@
+.icToolWindowPanel {
+  .eEnabledToggle {
+    &:focus {
+      box-shadow: none;
+      outline: none;
+    }
+  }
+
+  .eChildren {
+    background-color: var(--panel-bg);
+    margin-top: 1rem;
+  }
+  
+  &[data-headless="true"] {
+    background-color: var(--base-bg);
+    padding: 10px 10px 10px 10px;
+    color: var(--base-fg-dim);
+    border-bottom: 1px solid var(--panel-border);
+    font-size: 11px;
+
+    &[data-isempty="true"] {
+      border-bottom: none;
+    }
+
+    > .cToolbar {
+      padding: 3px 0 3px 3px;
+      margin: 0;
+      width: calc(100% + 20px);
+      max-width: calc(100% + 20px);
+    }
+  }
+}
+

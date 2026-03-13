@@ -1,21 +1,20 @@
 import React, { useRef } from 'react';
 import { Accordion } from '@diagram-craft/app-components/Accordion';
+import styles from './ToolWindowPanel.module.css';
 
 export const ToolWindowPanel = (props: Props) => {
   const ref = useRef<HTMLButtonElement>(null);
 
   if (props.mode === 'panel') {
     return (
-      <>
-        <h2 className={'util-hstack'} style={{ gap: '0.5rem' }}>
+      <div className={styles.icToolWindowPanel}>
+        <h2 className={`util-hstack`} style={{ gap: '0.5rem' }}>
           {props.hasCheckbox && (
             <input
-              className="cmp-panel__enabled"
+              className={styles.eEnabledToggle}
               type={'checkbox'}
               checked={props.value ?? false}
-              onChange={() => {
-                props.onChange!(!props.value);
-              }}
+              onChange={() => props.onChange!(!props.value)}
               onClick={e => {
                 if (props.value || ref.current?.dataset['state'] === 'open') {
                   e.stopPropagation();
@@ -25,21 +24,27 @@ export const ToolWindowPanel = (props: Props) => {
           )}
           <span>{props.title}</span>
         </h2>
-        <div className={'cmp-panel__children'}>{props.children}</div>
-      </>
+        <div className={styles.eChildren}>{props.children}</div>
+      </div>
     );
   } else if (props.mode === 'headless') {
     return (
-      <div className={'cmp-panel__headless'} data-isempty={props.isEmpty} style={props.style ?? {}}>
+      <div
+        className={styles.icToolWindowPanel}
+        data-headless="true"
+        data-isempty={props.isEmpty}
+        style={props.style}
+      >
         {props.children}
       </div>
     );
   } else if (props.mode === 'headless-no-padding') {
     return (
       <div
-        className={'cmp-panel__headless cmp-panel__headless--no-padding'}
+        className={styles.icToolWindowPanel}
+        data-headless="true"
         data-isempty={props.isEmpty}
-        style={props.style ?? {}}
+        style={{ ...(props.style ?? {}), padding: 0 }}
       >
         {props.children}
       </div>

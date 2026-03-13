@@ -149,7 +149,7 @@
 }
 
 .dark-theme #left-sidebar,
-.dark-theme .cmp-node-type-popup,
+.dark-theme .icNodeTypePopup,
 .dark-theme .cmp-shape-select-dialog {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-2);
@@ -161,7 +161,7 @@
 }
 
 .light-theme #left-sidebar,
-.light-theme .cmp-node-type-popup,
+.light-theme .icNodeTypePopup,
 .light-theme .cmp-shape-select-dialog {
   --canvas-fg: var(--gray-11);
   --canvas-bg: var(--gray-4);
@@ -172,10 +172,6 @@
   }
 }
 
-/* TODO: Move into module.css for NodeTypePopup */
-.cmp-node-type-popup {
-  max-width: 13rem;
-}
 
 body {
   --right-indent: 0;
@@ -536,35 +532,6 @@ foreignObject {
       }
     }
   }
-}
-
-.cmp-panel__children {
-  background-color: var(--panel-bg);
-  margin-top: 1rem;
-}
-
-.cmp-panel__headless {
-  background-color: var(--base-bg);
-  padding: 10px 10px 10px 10px;
-  color: var(--base-fg-dim);
-  border-bottom: 1px solid var(--panel-border);
-  font-size: 11px;
-
-  &[data-isempty="true"] {
-    border-bottom: none;
-  }
-
-  > .cToolbar {
-    padding: 3px 0 3px 3px;
-    margin: 0;
-    width: calc(100% + 20px);
-    max-width: calc(100% + 20px);
-  }
-
-}
-
-.cmp-panel__headless--no-padding {
-  padding: 0;
 }
 
 

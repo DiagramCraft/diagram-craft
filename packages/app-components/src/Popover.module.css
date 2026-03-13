@@ -56,10 +56,6 @@
 
   /* TODO: Remove this */
 
-  .cmp-panel__enabled:focus {
-    box-shadow: none;
-    outline: none;
-  }
 
   & h2:first-of-type {
     margin-top: 0;
