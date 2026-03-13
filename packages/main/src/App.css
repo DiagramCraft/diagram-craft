@@ -586,3 +586,18 @@ foreignObject {
   stroke-width: 2px !important;
   stroke: var(--accent-9) !important;
 }
+
+
+/* Hacks */
+
+.svg__remove {
+  path:nth-child(3), path:nth-child(4) {
+    stroke: #BB0000;
+  }
+}
+
+.svg__insert {
+  path:nth-child(3), path:nth-child(4) {
+    stroke: #00BB00;
+  }
+}

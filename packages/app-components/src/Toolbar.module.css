@@ -25,20 +25,6 @@
     justify-content: center;
     margin-left: 2px;
 
-    /* TODO: this is a bit of a hack to make some icon details red */
-
-    .svg__remove {
-      path:nth-child(3), path:nth-child(4) {
-        stroke: #BB0000;
-      }
-    }
-
-    .svg__insert {
-      path:nth-child(3), path:nth-child(4) {
-        stroke: #00BB00;
-      }
-    }
-
     &:disabled > svg > path:nth-child(n + 2) {
       stroke: currentColor !important;
     }
