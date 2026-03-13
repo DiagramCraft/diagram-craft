@@ -34,22 +34,22 @@ export class DragLabelComponent extends Component<CanvasState> {
       return () => document.removeEventListener('mousemove', cb);
     }, []);
 
-    if (!this.state) return html.div({ class: 'cmp-drag-label', style: 'display: none' });
+    if (!this.state) return html.div({ class: 'icDragLabel', style: 'display: none' });
 
     const s = this.state;
 
-    return html.div({ class: 'cmp-drag-label', style: '' }, [
+    return html.div({ class: 'icDragLabel', style: '' }, [
       html.div({}, [text(s.label ?? '')]),
       s.props &&
         html.div(
-          { class: 'cmp-drag-label__props' },
+          { class: 'eProps' },
           Object.entries(s.props).map(([key, value]) =>
-            html.div({ class: 'cmp-drag-label__prop' }, [text(`${key}: ${value}`)])
+            html.div({ class: 'eProp' }, [text(`${key}: ${value}`)])
           )
         ),
       hasElements(s.modifiers) &&
         html.div(
-          { class: 'cmp-drag-label__modifiers' },
+          { class: 'eModifier' },
           s.modifiers.map(modifier =>
             html.div({ 'data-state': modifier.isActive ? 'active' : 'inactive' }, [
               text(`${modifier.key}: ${modifier.label}`)

@@ -21,6 +21,9 @@
 
 @import "./Canvas.css";
 
+/* Component CSS modules */
+@import '@diagram-craft/canvas/components/DragLabelComponent.component.css';
+
 .dark-theme {
   --accent-1: var(--blue-1);
   --accent-2: var(--blue-2);
@@ -295,7 +298,6 @@ table {
   }
 }
 
-
 /* App layout */
 #app {
   position: fixed;
@@ -318,7 +320,6 @@ table {
   grid-template-rows: 35.5px 1fr 24px;
   grid-template-columns: 40px 5fr 40px;
 }
-
 
 #menu {
   align-items: center;
@@ -420,7 +421,6 @@ table {
   grid-template-columns: 1fr var(--__layer-indicator-width);
 }
 
-
 #left-sidebar {
   grid-area: left-buttons;
 }
@@ -428,7 +428,6 @@ table {
 #right-sidebar {
   grid-area: right-buttons;
 }
-
 
 #canvas-area {
   grid-area: canvas-area;
@@ -481,50 +480,6 @@ foreignObject {
 
 /* Specific / one-use components */
 
-.cmp-drag-label {
-  position: fixed;
-  background-color: var(--panel-bg);
-  color: var(--panel-fg);
-  box-shadow: var(--popover-shadow);
-  padding: 0.5rem 0.5rem;
-  font-size: 11px;
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-
-  /* Hide by default */
-  left: 0;
-  top: 0;
-  z-index: 1000;
-
-  /* Note: this is fixing a specific issue in safari */
-
-  > div::selection {
-    background-color: transparent;
-  }
-
-  .cmp-drag-label__props {
-    margin-top: 0.25rem;
-    color: var(--base-fg-dim);
-  }
-
-  .cmp-drag-label__prop {
-    font-size: 10px;
-  }
-
-  .cmp-drag-label__modifiers {
-    margin: 0.25rem -0.5rem 0 -0.5rem;
-    padding: 0.25rem 0.5rem 0 0.5rem;
-    display: flex;
-    gap: 0.5rem;
-    border-top: 1px solid var(--cmp-border);
-
-    & div[data-state='active'] {
-      color: var(--accent-fg);
-    }
-  }
-}
 
 .cmp-object-picker {
   display: flex;
@@ -806,4 +761,3 @@ foreignObject {
   stroke-width: 2px !important;
   stroke: var(--accent-9) !important;
 }
-

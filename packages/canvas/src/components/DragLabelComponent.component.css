@@ -1,0 +1,44 @@
+.icDragLabel {
+  position: fixed;
+  background-color: var(--panel-bg);
+  color: var(--panel-fg);
+  box-shadow: var(--popover-shadow);
+  padding: 0.5rem 0.5rem;
+  font-size: 11px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+
+  /* Hide by default */
+  left: 0;
+  top: 0;
+  z-index: 1000;
+
+  /* Note: this is fixing a specific issue in safari */
+
+  > div::selection {
+    background-color: transparent;
+  }
+
+  .eProps {
+    margin-top: 0.25rem;
+    color: var(--base-fg-dim);
+
+    .eProp {
+      font-size: 10px;
+    }
+  }
+
+  .eModifier {
+    margin: 0.25rem -0.5rem 0 -0.5rem;
+    padding: 0.25rem 0.5rem 0 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--cmp-border);
+
+    & div[data-state='active'] {
+      color: var(--accent-fg);
+    }
+  }
+}
