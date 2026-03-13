@@ -24,6 +24,7 @@ import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import type { Property } from '@diagram-craft/model/property';
 import { assert } from '@diagram-craft/utils/assert';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type CustomAnchorsEditorProps = {
   customAnchors: {
@@ -187,10 +188,10 @@ const CustomAnchorsEditor = ({
 }: CustomAnchorsEditorProps) => {
   return (
     <>
-      <div className={'cmp-labeled-table__label util-a-top-center'} style={{ marginTop: '4px' }}>
+      <KeyValueTable.Label valign={'top'} style={{ marginTop: '4px' }}>
         Anchors:
-      </div>
-      <div className={'cmp-labeled-table__value'}>
+      </KeyValueTable.Label>
+      <KeyValueTable.Value>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <ShapePreviewWithAnchors diagram={diagram} />
           {Object.entries(customAnchors.val ?? {}).map(
@@ -242,7 +243,7 @@ const CustomAnchorsEditor = ({
                   />
                 </div>
                 <Button
-                  type="icon-only"
+                  variant="icon-only"
                   onClick={() => {
                     const newAnchors = { ...(customAnchors.val ?? {}) };
                     delete newAnchors[id];
@@ -259,7 +260,7 @@ const CustomAnchorsEditor = ({
           )}
 
           <Button
-            type={'secondary'}
+            variant={'secondary'}
             onClick={() => {
               const id = newid();
               const newAnchors = { ...(customAnchors.val ?? {}) };
@@ -275,7 +276,7 @@ const CustomAnchorsEditor = ({
             Add Anchor
           </Button>
         </div>
-      </div>
+      </KeyValueTable.Value>
     </>
   );
 };
@@ -299,9 +300,9 @@ export const ElementAnchorsPanel = (props: Props) => {
       title={'Anchor Points'}
       hasCheckbox={false}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Type:</div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Type:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={type as Property<string>}
             render={props => (
@@ -317,12 +318,12 @@ export const ElementAnchorsPanel = (props: Props) => {
               </Select.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
         {type.val !== 'custom' && (
           <>
-            <div className={'cmp-labeled-table__label'}>Number:</div>
-            <div className={'cmp-labeled-table__value'}>
+            <KeyValueTable.Label>Number:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <NumberInput
                 value={
                   type.val === 'per-edge'
@@ -347,7 +348,7 @@ export const ElementAnchorsPanel = (props: Props) => {
                   }
                 }}
               />
-            </div>
+            </KeyValueTable.Value>
           </>
         )}
 
@@ -365,7 +366,7 @@ export const ElementAnchorsPanel = (props: Props) => {
             }}
           />
         )}
-      </div>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

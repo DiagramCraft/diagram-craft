@@ -63,7 +63,7 @@ export const SearchPanel = ({
               onSearch(ref.current?.value ?? '');
               ref.current?.blur();
             }}
-            type={'secondary'}
+            variant={'secondary'}
           >
             <TbSearch />
           </Button>

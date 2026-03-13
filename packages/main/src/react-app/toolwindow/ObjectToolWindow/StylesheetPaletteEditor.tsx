@@ -135,7 +135,7 @@ const ColorPaletteSection = (props: {
             onRemove={() => handleRemove(index)}
           />
         ))}
-        <Button type="secondary" onClick={handleAdd} style={{ marginTop: '0.25rem' }}>
+        <Button variant="secondary" onClick={handleAdd} style={{ marginTop: '0.25rem' }}>
           <TbPlus size={14} />
           Add Color
         </Button>

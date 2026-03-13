@@ -739,8 +739,8 @@ export const App = (props: {
                     </ContextMenu.Root>
                   </ErrorBoundary>
 
-                  <Ruler orientation={'horizontal'} />
-                  <Ruler orientation={'vertical'} />
+                  <Ruler id="ruler-h" orientation={'horizontal'} />
+                  <Ruler id="ruler-v" orientation={'vertical'} />
                   <CanvasOutline />
                   <CanvasTooltip />
 

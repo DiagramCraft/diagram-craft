@@ -8,14 +8,12 @@ type ScrollableProps = {
 
 export const Scrollable = (props: ScrollableProps) => {
   return (
-    <ScrollArea.Root {...props} className={styles.cmpScrollable}>
-      <ScrollArea.Viewport className={styles.cmpScrollableViewport}>
-        <ScrollArea.Content className={styles.cmpScrollableContent}>
-          {props.children}
-        </ScrollArea.Content>
+    <ScrollArea.Root {...props} className={styles.cScrollable}>
+      <ScrollArea.Viewport className={styles.eViewport}>
+        <ScrollArea.Content className={styles.eContent}>{props.children}</ScrollArea.Content>
       </ScrollArea.Viewport>
-      <ScrollArea.Scrollbar className={styles.cmpScrollableScrollbar}>
-        <ScrollArea.Thumb className={styles.cmpScrollableThumb} />
+      <ScrollArea.Scrollbar className={styles.eScrollbar}>
+        <ScrollArea.Thumb className={styles.eThumb} />
       </ScrollArea.Scrollbar>
     </ScrollArea.Root>
   );

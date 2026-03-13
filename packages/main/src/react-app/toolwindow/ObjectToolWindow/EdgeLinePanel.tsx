@@ -15,6 +15,7 @@ import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { unique } from '@diagram-craft/utils/array';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   diagram: Diagram;
@@ -70,9 +71,9 @@ export const EdgeLinePanelForm = ({
   palette
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Type:</div>
-      <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Type:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={type as Property<string>}
           render={props => (
@@ -95,12 +96,12 @@ export const EdgeLinePanelForm = ({
             </ToggleButtonGroup.Root>
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
       {supportsArrows && (
         <>
-          <div className={'cmp-labeled-table__label'}>Line start:</div>
-          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <KeyValueTable.Label>Line start:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <ArrowSelector property={startType} />
             <PropertyEditor
               property={startSize}
@@ -108,10 +109,10 @@ export const EdgeLinePanelForm = ({
                 <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
               )}
             />
-          </div>
+          </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Line end:</div>
-          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <KeyValueTable.Label>Line end:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <ArrowSelector property={endType} />
             <PropertyEditor
               property={endSize}
@@ -119,12 +120,12 @@ export const EdgeLinePanelForm = ({
                 <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '50px' }} />
               )}
             />
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
 
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value stack={'horizontal'}>
         <PropertyEditor
           property={strokeColor}
           render={props => (
@@ -154,20 +155,20 @@ export const EdgeLinePanelForm = ({
             renderValue={props => <ColorPreview {...props} />}
           />
         )}
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Width:</div>
-      <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Label>Width:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={strokeWidth}
           render={props => (
             <NumberInput {...props} defaultUnit={'px'} min={1} style={{ width: '45px' }} />
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Dash:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      <KeyValueTable.Label>Dash:</KeyValueTable.Label>
+      <KeyValueTable.Value stack={'horizontal'}>
         <DashSelector property={pattern} />
         <PropertyEditor
           property={strokeSize}
@@ -182,39 +183,37 @@ export const EdgeLinePanelForm = ({
             <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
       {supportsLineHops && (
         <>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Line hops:</div>
-          <div className={'cmp-labeled-table__value util-vcenter'}>
-            <div className={'util-vstack'} style={{ width: '100%' }}>
-              <PropertyEditor
-                property={lineHopsType as Property<string>}
-                render={props => (
-                  <Select.Root {...props}>
-                    <Select.Item value={'none'}>None</Select.Item>
-                    <Select.Item value={'below-hide'}>Gap when below</Select.Item>
-                    <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
-                    <Select.Item value={'below-arc'}>Arc when below</Select.Item>
-                    <Select.Item value={'above-arc'}>Arc when above</Select.Item>
-                  </Select.Root>
-                )}
-              />
+          <KeyValueTable.Label valign={'top'}>Line hops:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'vertical'}>
+            <PropertyEditor
+              property={lineHopsType as Property<string>}
+              render={props => (
+                <Select.Root {...props}>
+                  <Select.Item value={'none'}>None</Select.Item>
+                  <Select.Item value={'below-hide'}>Gap when below</Select.Item>
+                  <Select.Item value={'below-line'}>Gap with line when below</Select.Item>
+                  <Select.Item value={'below-arc'}>Arc when below</Select.Item>
+                  <Select.Item value={'above-arc'}>Arc when above</Select.Item>
+                </Select.Root>
+              )}
+            />
 
-              <PropertyEditor
-                property={lineHopsSize}
-                render={props => (
-                  <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
-                )}
-              />
-            </div>
-          </div>
+            <PropertyEditor
+              property={lineHopsSize}
+              render={props => (
+                <NumberInput {...props} defaultUnit={'px'} min={0} style={{ width: '50px' }} />
+              )}
+            />
+          </KeyValueTable.Value>
         </>
       )}
 
-      <div className={'cmp-labeled-table__label'}>Line cap:</div>
-      <div className={'cmp-labeled-table__value util-hstack'}>
+      <KeyValueTable.Label>Line cap:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={lineCap as Property<string>}
           render={props => (
@@ -225,31 +224,33 @@ export const EdgeLinePanelForm = ({
             </Select.Root>
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Line join:</div>
-      <div className={'cmp-labeled-table__value util-hstack'}>
-        <PropertyEditor
-          property={lineJoin as Property<string>}
-          render={props => (
-            <Select.Root {...props}>
-              <Select.Item value={'miter'}>Miter</Select.Item>
-              <Select.Item value={'round'}>Round</Select.Item>
-              <Select.Item value={'bevel'}>Bevel</Select.Item>
-            </Select.Root>
-          )}
-        />
-
-        {lineJoin.val === 'miter' && (
+      <KeyValueTable.Label>Line join:</KeyValueTable.Label>
+      <KeyValueTable.Value>
+        <div className={'util-hstack'}>
           <PropertyEditor
-            property={miterLimit}
-            formatValue={v => v * 10}
-            storeValue={v => v / 10}
-            render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
+            property={lineJoin as Property<string>}
+            render={props => (
+              <Select.Root {...props}>
+                <Select.Item value={'miter'}>Miter</Select.Item>
+                <Select.Item value={'round'}>Round</Select.Item>
+                <Select.Item value={'bevel'}>Bevel</Select.Item>
+              </Select.Root>
+            )}
           />
-        )}
-      </div>
-    </div>
+
+          {lineJoin.val === 'miter' && (
+            <PropertyEditor
+              property={miterLimit}
+              formatValue={v => v * 10}
+              storeValue={v => v / 10}
+              render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
+            />
+          )}
+        </div>
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
   );
 };
 

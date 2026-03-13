@@ -10,7 +10,7 @@ export const DocumentName = (props: { dirty: boolean }) => {
   };
 
   return (
-    <div className={'_document'}>
+    <div id={'document'}>
       {application.model.activeDocument.url
         ? urlToName(application.model.activeDocument.url)
         : 'Untitled'}

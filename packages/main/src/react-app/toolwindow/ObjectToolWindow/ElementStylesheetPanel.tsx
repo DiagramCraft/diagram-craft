@@ -23,6 +23,7 @@ import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { isObj } from '@diagram-craft/utils/object';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const computeChildStylesheetProps = (
   elementProps: Record<string, unknown>,
@@ -97,9 +98,9 @@ export const ElementStylesheetPanel = (props: Props) => {
         title={'Style'}
         hasCheckbox={false}
       >
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>{isText ? 'Text Style' : 'Style'}:</div>
-          <div className={'cmp-labeled-table__value util-hstack'}>
+        <KeyValueTable.Root>
+          <KeyValueTable.Label>{isText ? 'Text Style' : 'Style'}:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <Select.Root
               value={$s.val}
               isIndeterminate={$s.hasMultipleValues}
@@ -307,8 +308,8 @@ export const ElementStylesheetPanel = (props: Props) => {
                 </Menu.Item>
               </MenuButton.Menu>
             </MenuButton.Root>
-          </div>
-        </div>
+          </KeyValueTable.Value>
+        </KeyValueTable.Root>
       </ToolWindowPanel>
       {dialogProps && (
         <ElementStylesheetDialog

@@ -10,16 +10,12 @@ export const FullScreenProgress = (props: Props) => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 0.5);
+    setTimeout(() => setVisible(true), 1);
   }, []);
 
   return (
-    <div
-      className={
-        `${styles.cmpFullscreenProgress} ${visible ? styles.cmpFullscreenProgressVisible : ''}`
-      }
-    >
-      <div>{props.message}</div>
+    <div className={styles.icFullscreenProgress} data-visible={visible}>
+      <div className={styles.eMessage}>{props.message}</div>
     </div>
   );
 };

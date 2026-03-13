@@ -1,11 +1,11 @@
-.textEditorDirtyIndicator {
+.icDirtyIndicator {
   background-color: var(--highlight-reverse-bg);
   border-radius: 50%;
   width: 6px;
   height: 6px;
 }
 
-.textEditorContainer {
+.icTextEditor {
   position: absolute !important;
   border-width: 0 !important;
   inset: 0;

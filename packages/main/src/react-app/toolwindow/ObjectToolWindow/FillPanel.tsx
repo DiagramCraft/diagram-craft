@@ -13,6 +13,8 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
 import type { Property } from '@diagram-craft/model/property';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import buttonStyles from '@diagram-craft/app-components/Button.module.css';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -48,15 +50,15 @@ const PATTERNS = [
 
 const ImageScale = (props: { imageScale: Property<number> }) => (
   <>
-    <div className={'cmp-labeled-table__label'}>Scale:</div>
-    <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Label>Scale:</KeyValueTable.Label>
+    <KeyValueTable.Value>
       <PropertyEditor
         property={props.imageScale}
         formatValue={v => round(v * 100)}
         storeValue={v => v / 100}
         render={props => <Slider {...props} />}
       />
-    </div>
+    </KeyValueTable.Value>
   </>
 );
 
@@ -64,34 +66,37 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
   const $cfg = useConfiguration();
   const $d = useDiagram();
   return (
-    <Collapsible label={'Tint'}>
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Tint:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <PropertyEditor
-            property={props.tint}
-            render={props => (
-              <ColorPicker
-                {...props}
-                palette={$cfg.palette.primary}
-                canClearColor={true}
-                customPalette={$d.document.customPalette}
-                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-              />
-            )}
-          />
-        </div>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
-        <div className={'cmp-labeled-table__value'}>
-          <PropertyEditor
-            property={props.tintStrength}
-            formatValue={v => round(v * 100)}
-            storeValue={v => v / 100}
-            render={props => <Slider {...props} />}
-          />
-        </div>
-      </div>
-    </Collapsible>
+    <KeyValueTable.FullRow>
+      <Collapsible label={'Tint'}>
+        <KeyValueTable.Root>
+          <KeyValueTable.Label valign="top">Tint:</KeyValueTable.Label>
+          <KeyValueTable.Value>
+            <PropertyEditor
+              property={props.tint}
+              render={props => (
+                <ColorPicker
+                  {...props}
+                  palette={$cfg.palette.primary}
+                  canClearColor={true}
+                  customPalette={$d.document.customPalette}
+                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                />
+              )}
+            />
+          </KeyValueTable.Value>
+
+          <KeyValueTable.Label valign="top">Strength:</KeyValueTable.Label>
+          <KeyValueTable.Value>
+            <PropertyEditor
+              property={props.tintStrength}
+              formatValue={v => round(v * 100)}
+              storeValue={v => v / 100}
+              render={props => <Slider {...props} />}
+            />
+          </KeyValueTable.Value>
+        </KeyValueTable.Root>
+      </Collapsible>
+    </KeyValueTable.FullRow>
   );
 };
 
@@ -100,39 +105,41 @@ const ImageAdjustments = (props: {
   brightness: Property<number>;
   saturation: Property<number>;
 }) => (
-  <Collapsible label={'Adjustments'}>
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Contrast:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.contrast}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
-      </div>
+  <KeyValueTable.FullRow>
+    <Collapsible label={'Adjustments'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label valign={'top'}>Contrast:</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <PropertyEditor
+            property={props.contrast}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Brightness:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.brightness}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
-      </div>
+        <KeyValueTable.Label valign={'top'}>Brightness:</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <PropertyEditor
+            property={props.brightness}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label util-a-top-center'}>Saturation:</div>
-      <div className={'cmp-labeled-table__value'}>
-        <PropertyEditor
-          property={props.saturation}
-          formatValue={v => round(v * 100)}
-          storeValue={v => v / 100}
-          render={props => <Slider {...props} max={200} />}
-        />
-      </div>
-    </div>
-  </Collapsible>
+        <KeyValueTable.Label valign={'top'}>Saturation:</KeyValueTable.Label>
+        <KeyValueTable.Value>
+          <PropertyEditor
+            property={props.saturation}
+            formatValue={v => round(v * 100)}
+            storeValue={v => v / 100}
+            render={props => <Slider {...props} max={200} />}
+          />
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
+    </Collapsible>
+  </KeyValueTable.FullRow>
 );
 
 export const FillPanelForm = ({
@@ -158,9 +165,9 @@ export const FillPanelForm = ({
   config: $cfg
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Type:</div>
-      <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Type:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={type as Property<string>}
           render={props => (
@@ -173,12 +180,12 @@ export const FillPanelForm = ({
             </Select.Root>
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
       {(type.val === 'gradient' || type.val === 'solid') && (
         <>
-          <div className={'cmp-labeled-table__label'}>Color:</div>
-          <div className={'cmp-labeled-table__value util-hstack'}>
+          <KeyValueTable.Label>Color:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <PropertyEditor
               property={color}
               render={props => (
@@ -207,14 +214,14 @@ export const FillPanelForm = ({
                 renderValue={props => <ColorPreview {...props} />}
               />
             )}
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
 
       {type.val === 'gradient' && (
         <>
-          <div className={'cmp-labeled-table__label'}>Type:</div>
-          <div className={'cmp-labeled-table__value util-hstack'}>
+          <KeyValueTable.Label>Type:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <PropertyEditor
               property={gradientType as Property<string>}
               render={props => (
@@ -224,19 +231,19 @@ export const FillPanelForm = ({
                 </Select.Root>
               )}
             />
-          </div>
+          </KeyValueTable.Value>
 
           {gradientType.val === 'linear' && (
             <>
-              <div className={'cmp-labeled-table__label'}>Direction:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
+              <KeyValueTable.Label>Direction:</KeyValueTable.Label>
+              <KeyValueTable.Value>
                 <PropertyEditor
                   property={gradientDirection}
                   formatValue={v => round(Angle.toDeg(v))}
                   storeValue={v => Angle.toRad(Number(v))}
                   render={props => <Slider {...props} unit={'°'} max={360} />}
                 />
-              </div>
+              </KeyValueTable.Value>
             </>
           )}
         </>
@@ -244,8 +251,8 @@ export const FillPanelForm = ({
 
       {type.val === 'pattern' && (
         <>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Pattern:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label valign={'top'}>Pattern:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             {PATTERNS.map((p, idx) => (
               <svg
                 key={idx}
@@ -273,10 +280,10 @@ export const FillPanelForm = ({
                 <rect width={35} height={35} fill={`url(#pattern-preview-${idx}`} />
               </svg>
             ))}
-          </div>
+          </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Color:</div>
-          <div className={'cmp-labeled-table__value util-hstack'}>
+          <KeyValueTable.Label>Color:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <PropertyEditor
               property={color}
               render={props => (
@@ -301,14 +308,14 @@ export const FillPanelForm = ({
               )}
               renderValue={props => <ColorPreview {...props} />}
             />
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
 
       {type.val === 'texture' && (
         <>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Texture:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label valign={'top'}>Texture:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             {TEXTURES.map(t => (
               <img
                 key={t}
@@ -338,7 +345,7 @@ export const FillPanelForm = ({
                 }}
               />
             ))}
-          </div>
+          </KeyValueTable.Value>
 
           <ImageScale imageScale={imageScale} />
 
@@ -354,11 +361,11 @@ export const FillPanelForm = ({
 
       {type.val === 'image' && (
         <>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Image:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label valign={'top'}>Image:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <div style={{ display: 'flex', alignItems: 'top' }}>
               <label
-                className={'cmp-button'}
+                className={buttonStyles.cButton}
                 style={{ fontSize: '11px', justifyContent: 'left' }}
                 htmlFor={'fill-file-upload'}
               >
@@ -366,7 +373,7 @@ export const FillPanelForm = ({
               </label>
               &nbsp;
               <Button
-                type={'secondary'}
+                variant={'secondary'}
                 style={{ fontSize: '11px' }}
                 disabled={image.val === ''}
                 onClick={() => {
@@ -412,9 +419,10 @@ export const FillPanelForm = ({
                 />
               )}
             </div>
-          </div>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Fit:</div>
-          <div className={'cmp-labeled-table__value'}>
+          </KeyValueTable.Value>
+
+          <KeyValueTable.Label valign={'top'}>Fit:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <PropertyEditor
               property={imageFit as Property<string>}
               render={props => (
@@ -427,7 +435,7 @@ export const FillPanelForm = ({
                 </Select.Root>
               )}
             />
-          </div>
+          </KeyValueTable.Value>
 
           {imageFit.val === 'tile' && <ImageScale imageScale={imageScale} />}
 
@@ -443,9 +451,8 @@ export const FillPanelForm = ({
 
       {additionalFills && additionalFills.length > 0 && (
         <>
-          <div className={'cmp-labeled-table__label'}>Additional:</div>
-
-          <div className={'cmp-labeled-table__value util-vstack util-vgap'}>
+          <KeyValueTable.Label>Additional:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'vertical'}>
             {additionalFills.map(({ color, enabled }, idx) => (
               <div key={idx} className={'util-hstack'}>
                 <PropertyEditor property={enabled} render={props => <Checkbox {...props} />} />
@@ -462,10 +469,10 @@ export const FillPanelForm = ({
                 />
               </div>
             ))}
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
-    </div>
+    </KeyValueTable.Root>
   );
 };
 

@@ -79,7 +79,7 @@ const Root = (props: RootProps) => {
 
   return (
     <ToolWindowContext.Provider value={contextValue}>
-      <div className={styles.sidebarTabs}>
+      <div className={styles.icToolWindowTabs}>
         <Tabs.Root value={tab} onValueChange={updateTab}>
           <Tabs.List>
             {React.Children.map(props.children, child => {
@@ -130,7 +130,7 @@ type TabContentProps = { children: React.ReactNode };
 
 const TabContent = (props: TabContentProps) => {
   return (
-    <div className={styles.sidebarTabsContentInner}>
+    <div className={styles.eContent}>
       <ErrorBoundary>{props.children}</ErrorBoundary>
     </div>
   );
@@ -141,7 +141,7 @@ type TabActions = {
 };
 
 const TabActions = (props: TabActions) => {
-  return <div className={styles.tabActions}>{props.children}</div>;
+  return <div className={styles.eTabActions}>{props.children}</div>;
 };
 
 export const ToolWindow = {

@@ -6,10 +6,10 @@ export const DirtyIndicator = (props: Props) => {
   if (!props.dirty) return null;
 
   return (
-    <div className={styles.cmpDirtyIndicator}>
-      <div className={styles.cmpDirtyIndicatorText}>- Unsaved</div>
+    <div className={styles.icDirtyIndicator}>
+      <div className={styles.eText}>- Unsaved</div>
       {props.onDirtyChange && (
-        <Button type={'icon-only'} onClick={() => props.onDirtyChange!()}>
+        <Button variant={'icon-only'} onClick={() => props.onDirtyChange!()}>
           <TbTrash size={'14px'} />
         </Button>
       )}

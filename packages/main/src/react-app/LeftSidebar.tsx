@@ -1,4 +1,4 @@
-import { SideBar, SideBarBottomToolbar, SideBarPage } from './SideBar';
+import { Sidebar, SidebarBottomToolbar, SidebarPage } from './Sidebar';
 import {
   TbCodeAsterisk,
   TbDatabaseCog,
@@ -22,45 +22,46 @@ import { ActionTooltip } from './components/ActionTooltip';
 
 export const LeftSidebar = () => {
   return (
-    <SideBar
+    <Sidebar
+      id={'left-sidebar'}
       side={'left'}
       bottom={
-        <SideBarBottomToolbar>
+        <SidebarBottomToolbar>
           <ActionToolbarButton action={'MODEL_CENTER'} arg={{}}>
             <TbDatabaseCog size={'17.5px'} />
           </ActionToolbarButton>
-        </SideBarBottomToolbar>
+        </SidebarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPentagonPlus} tooltip={<ActionTooltip action={'SIDEBAR_OBJECTS'} />}>
+      <SidebarPage icon={TbPentagonPlus} tooltip={<ActionTooltip action={'SIDEBAR_OBJECTS'} />}>
         <PickerToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbStack} tooltip={<ActionTooltip action={'SIDEBAR_STRUCTURE'} />}>
+      </SidebarPage>
+      <SidebarPage icon={TbStack} tooltip={<ActionTooltip action={'SIDEBAR_STRUCTURE'} />}>
         <DocumentStructureToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbHistory} tooltip={<ActionTooltip action={'SIDEBAR_HISTORY'} />}>
+      </SidebarPage>
+      <SidebarPage icon={TbHistory} tooltip={<ActionTooltip action={'SIDEBAR_HISTORY'} />}>
         <HistoryToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbSearch} tooltip={<ActionTooltip action={'SIDEBAR_SEARCH'} />}>
+      </SidebarPage>
+      <SidebarPage icon={TbSearch} tooltip={<ActionTooltip action={'SIDEBAR_SEARCH'} />}>
         <QueryToolWindow />
-      </SideBarPage>
-      <SideBarPage
+      </SidebarPage>
+      <SidebarPage
         icon={TbPresentation}
         tooltip={<ActionTooltip action={'SIDEBAR_STORY_PLAYER'} />}
       >
         <StoryToolWindow />
-      </SideBarPage>
-      <SideBarPage
+      </SidebarPage>
+      <SidebarPage
         icon={TbCodeAsterisk}
         tooltip={<ActionTooltip action={'SIDEBAR_DIAGRAM_CODE'} />}
       >
         <TextToolWindow />
-      </SideBarPage>
+      </SidebarPage>
       {AppConfig.get().ai.provider !== 'none' && (
-        <SideBarPage icon={TbSparkles} tooltip={<ActionTooltip action={'SIDEBAR_AI'} />}>
+        <SidebarPage icon={TbSparkles} tooltip={<ActionTooltip action={'SIDEBAR_AI'} />}>
           <AIToolWindow />
-        </SideBarPage>
+        </SidebarPage>
       )}
-    </SideBar>
+    </Sidebar>
   );
 };

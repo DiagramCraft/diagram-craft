@@ -20,6 +20,8 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
+import objectPickerStyles from '../../ObjectPicker.module.css';
+import styles from './ObjectPickerPanel.module.css';
 
 type StencilEntry = {
   stencil: Stencil;
@@ -157,11 +159,11 @@ export const ObjectPickerPanel = (props: Props) => {
       forceMount={true}
     >
       {loaded && (
-        <div className={'cmp-object-picker'}>
+        <div className={`${objectPickerStyles.icObjectPicker} ${styles.icObjectPickerPanel}`}>
           {groups.map(group => (
             <React.Fragment key={group.id}>
               {groups.length > 1 && (
-                <div className={'cmp-object-picker__divider'}>
+                <div className={styles.eDivider}>
                   <span>{group.name}</span>
                 </div>
               )}

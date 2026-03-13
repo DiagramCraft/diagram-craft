@@ -1,4 +1,11 @@
-.cmp-number-input {
+/**
+ *  NumberInput - .cNumberInput
+ *  | Label - .eLabel
+ *  | Input - .eInput
+ *  | BtnUp - .eBtnUp
+ *  | BtnDown - .eBtnDown
+ */
+:global(.cNumberInput) {
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
@@ -11,24 +18,29 @@
   display: flex;
   align-items: center;
 
-  &:focus-within,
-  &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-border-shadow-focus) !important;
-  }
+  .eLabel {
+    font-size: 11px;
+    margin-top: 0;
+    margin-right: 0.25rem;
+    padding-right: 4px;
+    color: var(--cmp-fg);
+    width: 15px;
+    border-right: 1px solid var(--cmp-border);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-  &[data-error='true'] {
-    color: var(--error-fg);
+    &[data-label-length='2'] {
+      width: 2ch;
+    }
 
-    > input {
-      color: var(--error-fg);
+    &[data-label-length='3'] {
+      width: 3ch;
     }
   }
 
-  &:has(> input:disabled) {
-    border-color: transparent;
-  }
-
-  > input {
+  .eInput {
     color: var(--cmp-fg);
     border: none;
     background: none;
@@ -42,82 +54,66 @@
     &:disabled {
       color: var(--cmp-fg-disabled);
     }
+
   }
 
-  > input:focus + button,
-  > input[data-focus="true"] + button,
-  > input:focus + button + button,
-  > input[data-focus="true"] + button + button,
-  &:hover > button {
-    display: flex;
-  }
-
-  > button {
+  .eBtnUp, .eBtnDown {
     width: 13px;
     display: none;
     align-items: center;
     padding: 0;
     border: none;
     color: var(--cmp-fg);
-    background: var(--cmp-bg);;
+    background: var(--cmp-bg);
+    border-left: 1px solid var(--cmp-border) !important;
+    position: absolute;
+
+    &:disabled {
+      color: var(--cmp-fg-disabled);
+    }
 
     &:hover {
       background-color: var(--cmp-bg-hover);
     }
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    border-radius: 4px;
-    inset: -1px;
-    pointer-events: none;
+  .eBtnUp {
+    right: 0;
+    top: 0;
+    height: 12px;
+    border-bottom: 1px solid var(--cmp-border) !important;
+  }
+
+  .eBtnDown {
+    right: 0;
+    bottom: 0;
+    height: 11px;
+  }
+
+  .eInput:focus + button,
+  .eInput[data-focus="true"] + button,
+  .eInput:focus + button + button,
+  .eInput[data-focus="true"] + button + button,
+  &:hover > button {
+    display: flex;
+  }
+
+  &:focus-within,
+  &:has(*[data-focus="true"]) {
+    box-shadow: var(--cmp-border-shadow-focus) !important;
+  }
+
+  &[data-error='true'] {
+    color: var(--error-fg);
+
+    .eInput {
+      color: var(--error-fg);
+    }
+  }
+
+  &:has(.eInput:disabled) {
+    border-color: transparent;
   }
 }
 
-.cmp-number-input__label {
-  font-size: 11px;
-  margin-top: 0;
-  margin-right: 0.25rem;
-  padding-right: 4px;
-  color: var(--cmp-fg);
-  width: 15px;
-  border-right: 1px solid var(--cmp-border);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 
-  &[data-label-length='2'] {
-    width: 2ch;
-  }
-
-  &[data-label-length='3'] {
-    width: 3ch;
-  }
-}
-
-.cmp-number-input__btn-up {
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 12px;
-  border-bottom: 1px solid var(--cmp-border) !important;
-  border-left: 1px solid var(--cmp-border) !important;
-
-  &:disabled {
-    color: var(--cmp-fg-disabled);
-  }
-}
-
-.cmp-number-input__btn_down {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  height: 11px;
-  border-left: 1px solid var(--cmp-border) !important;
-
-  &:disabled {
-    color: var(--cmp-fg-disabled);
-  }
-}

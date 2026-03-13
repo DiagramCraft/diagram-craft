@@ -22,7 +22,7 @@ import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
-import { Button } from '@diagram-craft/app-components/Button';
+import { Button, LinkButton } from '@diagram-craft/app-components/Button';
 import { PickerCanvas } from '../../PickerCanvas';
 import { DataTemplate } from '@diagram-craft/model/diagramDocument';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -45,6 +45,8 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import styles from '../QueryResponse.module.css';
+import objectPickerStyles from '../../ObjectPicker.module.css';
 
 const NODE_CACHE = new Map<string, DiagramElement>();
 const PICKER_CANVAS_SIZE = 42;
@@ -270,8 +272,8 @@ const DataProviderGridView = (props: DataViewProps) => {
       value={true}
       headerButtons={
         <div style={{ gap: '0.5rem', display: 'flex' }}>
-          <a
-            className={'cmp-button--icon-only'}
+          <LinkButton
+            variant={'icon-only'}
             onClick={() => {
               app.actions['EXTERNAL_DATA_LINK_RENAME_TEMPLATE']?.execute({
                 templateId: t.id
@@ -279,14 +281,14 @@ const DataProviderGridView = (props: DataViewProps) => {
             }}
           >
             <TbPencil />
-          </a>
-          <a className={'cmp-button--icon-only'} onClick={() => handleDeleteTemplate(t)}>
+          </LinkButton>
+          <LinkButton variant={'icon-only'} onClick={() => handleDeleteTemplate(t)}>
             <TbTrash />
-          </a>
+          </LinkButton>
         </div>
       }
     >
-      <div className={'cmp-object-picker'}>
+      <div className={objectPickerStyles.icObjectPicker}>
         {data.map(item => (
           <TemplateGridItem
             key={item._uid}
@@ -314,14 +316,14 @@ const DataProviderListView = (props: DataViewProps) => {
 
   return (
     <ToolWindowPanel id={'response'} title={'Data'} mode={'accordion'}>
-      <div className={'cmp-query-response'}>
+      <div className={styles.icQueryResponse}>
         {data.map(item => {
           return (
             <ContextMenu.Root key={item._uid}>
               <ContextMenu.Trigger
                 element={
                   <div
-                    className={`util-draggable cmp-query-response__item ${expanded.includes(item._uid) ? 'cmp-query-response__item--expanded' : ''}`}
+                    className={`util-draggable ${styles.eItem} ${expanded.includes(item._uid) ? styles.eItemExpanded : ''}`}
                     style={{ cursor: isRuleLayer ? 'default' : 'pointer' }}
                   >
                     <div
@@ -369,7 +371,7 @@ const DataProviderListView = (props: DataViewProps) => {
 
                           {dataTemplates.length > 0 && (
                             <div
-                              className={'cmp-object-picker'}
+                              className={objectPickerStyles.icObjectPicker}
                               style={{
                                 border: '1px solid var(--cmp-border)',
                                 borderRadius: 'var(--cmp-radius)',
@@ -481,7 +483,7 @@ const DataProviderQueryView = (props: {
         </div>
 
         <Button
-          type={'secondary'}
+          variant={'secondary'}
           onClick={() => props.showItemAddDialog()}
           disabled={!('addData' in db)}
         >
@@ -521,7 +523,7 @@ const DataProviderQueryView = (props: {
             props.onSearch(search);
             ref.current?.blur();
           }}
-          type={'secondary'}
+          variant={'secondary'}
         >
           <TbSearch />
         </Button>
@@ -628,8 +630,8 @@ export const ModelPickerTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        <LinkButton
+          variant={'icon-only'}
           aria-disabled={!('refreshData' in db) && !('refreshSchemas' in db)}
           onClick={async () => {
             assert.present(db);
@@ -643,9 +645,9 @@ export const ModelPickerTab = () => {
           }}
         >
           <TbRefresh />
-        </a>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        </LinkButton>
+        <LinkButton
+          variant={'icon-only'}
           onClick={() => {
             application.ui.showDialog(
               new ModelCenterDialogCommand(
@@ -657,7 +659,7 @@ export const ModelPickerTab = () => {
           }}
         >
           <TbSettings />
-        </a>
+        </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <Accordion.Root type="multiple" defaultValue={['query', 'response']}>

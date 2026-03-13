@@ -7,7 +7,7 @@ import { ToggleGroup as BaseUIToggleGroup } from '@base-ui/react/toggle-group';
 const Root = (props: RootProps) => {
   return (
     <BaseUIToggleGroup
-      className={styles.cmpToggleButtonGroup}
+      className={styles.cToggleButtonGroup}
       data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
       aria-label={props['aria-label']}
       multiple={props.type === 'multiple'}
@@ -47,7 +47,7 @@ const Item = React.forwardRef<HTMLButtonElement, ItemProps>((props: ItemProps, r
     <BaseUIToggle
       {...props}
       ref={ref}
-      className={props.className ?? styles.cmpToggleButtonGroupItem}
+      className={props.className ?? styles.eItem}
       value={props.value}
       disabled={props.disabled}
     >

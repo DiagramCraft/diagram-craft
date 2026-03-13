@@ -6,6 +6,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
+import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 
 type DirEntry = {
   name: string;
@@ -28,8 +29,8 @@ const ImageInsertDialogBrowser = (props: Props) => {
   }, [path]);
 
   return (
-    <div className={styles.cmpInsertImageDialog}>
-      <div className={styles.cmpInsertImageDialogPath}>
+    <div className={styles.icInsertImageDialog}>
+      <div className={styles.ePath}>
         Path:{' '}
         <a href={'#'} onClick={() => setPath([])}>
           Home
@@ -53,7 +54,7 @@ const ImageInsertDialogBrowser = (props: Props) => {
       {list === undefined ? (
         <p>Loading...</p>
       ) : (
-        <div className={styles.cmpInsertImageDialogList}>
+        <div className={styles.eList}>
           <div>
             <ul>
               {list.map(entry => (
@@ -97,7 +98,7 @@ export const ImageInsertDialog = (props: Props) => {
         </Tabs.List>
         <Tabs.Content value={'device'}>
           <label
-            className={'cmp-button'}
+            className={buttonStyles.cButton}
             style={{ fontSize: '11px', justifyContent: 'left' }}
             htmlFor={'file-upload'}
           >

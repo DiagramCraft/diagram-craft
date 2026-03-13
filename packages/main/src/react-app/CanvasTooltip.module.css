@@ -1,4 +1,4 @@
-.canvasTooltip {
+.icCanvasTooltip {
   min-width: 220px;
   position: fixed;
   background-color: var(--cmp-bg);
@@ -24,54 +24,54 @@
     font-weight: normal;
     margin-bottom: 0.125rem;
   }
+
+  & > h1:first-of-type {
+    margin-top: 0;
+  }
+
+  p {
+    margin: 0 0 0.5em 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul, ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+  }
+
+  code {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+
+  pre {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  a {
+    color: var(--accent-fg);
+    text-decoration: underline;
+  }
 }
 
-.canvasTooltip > h1:first-of-type {
-  margin-top: 0;
-}
-
-.canvasTooltip p {
-  margin: 0 0 0.5em 0;
-}
-
-.canvasTooltip p:last-child {
-  margin-bottom: 0;
-}
-
-.canvasTooltip ul,
-.canvasTooltip ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
-}
-
-.canvasTooltip code {
-  background-color: rgba(0, 0, 0, 0.1);
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-family: monospace;
-}
-
-.canvasTooltip pre {
-  background-color: rgba(0, 0, 0, 0.1);
-  padding: 8px;
-  border-radius: 4px;
-  overflow-x: auto;
-}
-
-.canvasTooltip pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-.canvasTooltip strong {
-  font-weight: 600;
-}
-
-.canvasTooltip em {
-  font-style: italic;
-}
-
-.canvasTooltip a {
-  color: var(--accent-fg);
-  text-decoration: underline;
-}

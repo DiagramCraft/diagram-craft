@@ -1,4 +1,4 @@
-.toolDialog {
+.icToolDialog {
   position: absolute;
   left: 200px;
   top: 100px;
@@ -10,55 +10,59 @@
   border-bottom: 1px solid var(--accent-border);
   z-index: 10;
 
-  .cmp-number-input {
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border);
-  }
-
-  .cmp-toggle-button-group {
-    border: 1px solid var(--accent-border);
-    background: var(--accent-border);
-  }
-
-  .cmp-toggle-button-group__item {
-    background: var(--accent-bg-selected);
-    color: var(--accent-fg);
-    margin-left: 1px;
-
-    &[data-pressed] {
-      color: var(--base-fg);
-    }
-  }
-
-  .cmp-button--primary {
-    background: var(--accent-bg);
-    border: 1px solid var(--accent-border);
-    outline: none;
-  }
-
-  .cmp-button--secondary {
-    background: var(--accent-bg);
-    color: var(--accent-fg);
-    border: 1px solid var(--accent-border);
-  }
 }
 
-.toolDialogContent {
+.eContent {
   padding: 0 8px;
   height: 100%;
   display: flex;
   align-items: center;
   gap: 0.25rem;
+
+  .eTitle {
+    font-weight: bold;
+    font-size: 12px;
+  }
+
+  .eDescription {
+    margin-left: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+
+    :global(.cToggleButtonGroup) {
+      border: 1px solid var(--accent-border);
+      background: var(--accent-border);
+
+      button {
+        background: var(--accent-bg-selected);
+        color: var(--accent-fg);
+        margin-left: 1px;
+
+        &[data-pressed] {
+          color: var(--base-fg);
+        }
+      }
+    }
+
+    :global(.cNumberInput) {
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-border);
+    }
+  }
+  
+  button[data-variant="primary"] {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    outline: none;
+  }
+
+  button[data-variant="secondary"] {
+    background: var(--accent-bg);
+    color: var(--accent-fg);
+    border: 1px solid var(--accent-border);
+  }
 }
 
-.toolDialogTitle {
-  font-weight: bold;
-  font-size: 12px;
-}
 
-.toolDialogDescription {
-  margin-left: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}

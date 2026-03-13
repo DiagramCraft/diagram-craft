@@ -1,128 +1,133 @@
-.cmp-accordion {
+/**
+ *  Accordion - .cAccordion
+ *  | Item [1..*] - .eItem
+ *  | | Header - .eHeader
+ *  | | | Trigger - .eTrigger
+ *  | | | | HeaderBtn [0..*] - .eHeaderBtn
+ *  | | | Chevron - .eChevron
+ *  | | Content - .eContent
+ *  | | | ContentText - .eContentText
+ */
+.cAccordion {
+  /* Default value */
+  --accordion-panel-height: 5rem;
+
   min-width: 10rem;
 
-  .cmp-accordion__item {
+  .eItem {
     overflow: hidden;
     border-bottom: 1px solid var(--cmp-border);
+
+    .eHeader {
+      display: flex;
+      margin: 0;
+
+      .eHeaderBtn {
+        margin-left: auto;
+        margin-right: 0.5rem;
+        align-items: center;
+        display: flex;
+        color: var(--accent-fg);
+
+        > a, > div > a {
+          display: flex;
+          color: var(--cmp-fg);
+
+          &:hover {
+            color: var(--accent-fg-hover);
+          }
+
+          &[aria-disabled="true"] {
+            color: var(--cmp-fg-disabled);
+            pointer-events: none;
+          }
+        }
+      }
+
+      .eTrigger {
+        font-family: inherit;
+        padding: 10px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        font-weight: normal;
+        line-height: 1;
+        color: var(--cmp-fg);
+        background-color: transparent;
+        border: 1px solid transparent;
+        text-align: left;
+
+        .eChevron {
+          color: var(--cmp-fg);
+          transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
+        }
+
+        &:focus,
+        &[data-focus="true"] {
+          outline: none;
+          border: 1px solid var(--cmp-border-focus);
+        }
+
+        &:hover,
+        &[data-hover="true"] {
+          background-color: var(--cmp-bg-hover);
+          border: 1px solid var(--cmp-bg-hover);
+        }
+
+        &[data-panel-open] > .eChevron {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .eContent {
+      overflow: hidden;
+      color: var(--base-fg-dim);
+      background-color: var(--base-bg);
+      text-align: left;
+      height: var(--accordion-panel-height);
+
+      border-top: 1px solid var(--cmp-border);
+      transition: all 150ms cubic-bezier(0.87, 0, 0.13, 1);
+
+      .eContentText {
+        font-size: 11px;
+        padding: 10px;
+
+        > .cmp-tree {
+          margin: -5px -10px;
+        }
+
+        > .cAccordion {
+          margin: -5px -10px;
+
+          .eChevron {
+            color: var(--panel-fg);
+
+            &:hover {
+              color: var(--accent-fg-hover);
+            }
+          }
+        }
+      }
+
+      &[data-starting-style],
+      &[data-ending-style] {
+        border-top-width: 0;
+        height: 0;
+      }
+    }
+
+    &[data-disabled] {
+      .eChevron {
+        visibility: hidden;
+      }
+    }
 
     &:first-child {
       margin-top: 0;
     }
-
-    /* TODO: Not sure this is needed
-    &:focus-within,
-    & .cmp-accordion__trigger[data-focus="true"] {
-      position: relative;
-      z-index: 1;
-    }
-     */
-
-    &[data-disabled] {
-      .cmp-accordion__chevron {
-        visibility: hidden;
-      }
-    }
-  }
-
-  .cmp-accordion__header {
-    display: flex;
-    margin: 0;
-
-    .cmp-accordion__header_btn {
-      margin-left: auto;
-      margin-right: 0.5rem;
-      align-items: center;
-      display: flex;
-      color: var(--accent-fg);
-
-      > a, > div > a {
-        display: flex;
-        color: var(--cmp-fg);
-
-        &:hover {
-          color: var(--accent-fg-hover);
-        }
-
-        &[aria-disabled="true"] {
-          color: var(--cmp-fg-disabled);
-          pointer-events: none;
-        }
-      }
-    }
-
-    .cmp-accordion__trigger {
-      font-family: inherit;
-      padding: 10px 10px;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      font-weight: normal;
-      line-height: 1;
-      color: var(--cmp-fg);
-      background-color: transparent;
-      border: 1px solid transparent;
-      text-align: left;
-
-      &:focus,
-      &[data-focus="true"] {
-        outline: none;
-        border: 1px solid var(--cmp-border-focus);
-      }
-
-      &:hover,
-      &[data-hover="true"] {
-        background-color: var(--cmp-bg-hover);
-        border: 1px solid var(--cmp-bg-hover);
-      }
-    }
-  }
-
-  .cmp-accordion__content {
-    overflow: hidden;
-    color: var(--base-fg-dim);
-    background-color: var(--base-bg);
-    text-align: left;
-    height: var(--accordion-panel-height);
-
-    border-top: 1px solid var(--cmp-border);
-    transition: all 150ms cubic-bezier(0.87, 0, 0.13, 1);;
-
-    &[data-starting-style],
-    &[data-ending-style] {
-      border-top-width: 0;
-      height: 0;
-    }
-  }
-
-  .cmp-accordion__content_text {
-    font-size: 11px;
-    padding: 10px;
-
-    > .cmp-tree {
-      margin: -5px -10px;
-    }
-
-    > .cmp-accordion {
-      margin: -5px -10px;
-
-      .cmp-accordion__chevron {
-        color: var(--panel-fg);
-
-        &:hover {
-          color: var(--accent-fg-hover);
-        }
-      }
-    }
-  }
-
-  .cmp-accordion__chevron {
-    color: var(--cmp-fg);
-    transition: transform 300ms cubic-bezier(0.87, 0, 0.13, 1);
-  }
-
-  .cmp-accordion__trigger[data-panel-open] > .cmp-accordion__chevron {
-    transform: rotate(180deg);
   }
 }

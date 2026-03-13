@@ -9,6 +9,7 @@ import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGro
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { TbArrowsHorizontal, TbArrowsVertical } from 'react-icons/tb';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const LayoutContainerPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -42,9 +43,9 @@ export const LayoutContainerPanel = (props: Props) => {
       value={enabled.val}
       onChange={enabled.set}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Direction</div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Direction</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <ToggleButtonGroup.Root
             type="single"
             value={direction.val}
@@ -57,10 +58,10 @@ export const LayoutContainerPanel = (props: Props) => {
               <TbArrowsVertical />
             </ToggleButtonGroup.Item>
           </ToggleButtonGroup.Root>
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Gap</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Gap</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             value={gap.val}
             onChange={gap.set}
@@ -68,15 +69,15 @@ export const LayoutContainerPanel = (props: Props) => {
             min={0}
             style={{ width: '60px' }}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Auto Shrink</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <Checkbox value={autoShrink.val ?? false} onChange={autoShrink.set} />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Justify</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Justify</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <Select.Root
             value={justifyContent.val}
             onChange={v =>
@@ -88,10 +89,10 @@ export const LayoutContainerPanel = (props: Props) => {
             <Select.Item value="center">Center</Select.Item>
             <Select.Item value="space-between">Space Between</Select.Item>
           </Select.Root>
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Align</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Align</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <Select.Root
             value={alignItems.val}
             onChange={v =>
@@ -104,10 +105,10 @@ export const LayoutContainerPanel = (props: Props) => {
             <Select.Item value="stretch">Stretch</Select.Item>
             <Select.Item value="preserve">Preserve</Select.Item>
           </Select.Root>
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Padding</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label valign={'top'}>Padding</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <div
             style={{
               display: 'grid',
@@ -184,8 +185,8 @@ export const LayoutContainerPanel = (props: Props) => {
               }}
             />
           </div>
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

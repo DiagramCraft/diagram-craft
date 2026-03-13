@@ -5,6 +5,7 @@ import { Comment } from '@diagram-craft/model/comment';
 import { useCallback, useState } from 'react';
 import {
   buildCommentThreads,
+  type CommentThread,
   type CommentThreadNode,
   type GroupBy,
   groupThreadsByAuthor,
@@ -102,43 +103,11 @@ export const CommentsToolWindow = () => {
         ? groupThreadsByElement(myThreads)
         : groupThreadsByAuthor(myThreads);
 
-  const renderThreadsContent = (threads: typeof commentThreads, grouped: typeof groupedThreads) => (
-    <div className={styles['comments-tool-window']}>
-      {threads.length === 0 ? (
-        <div className={styles['comments-tool-window__no-comments']}>No comments</div>
-      ) : (
-        grouped.map(group => (
-          <div key={group.key} className={styles['comments-tool-window__group']}>
-            {group.title && (
-              <div className={styles['comments-tool-window__group-title']}>{group.title}</div>
-            )}
-            {group.threads.map(thread => (
-              <div key={thread.root.id} className={styles['comments-tool-window__thread']}>
-                <CommentItem
-                  comment={thread.root}
-                  onResolve={handleResolveComment}
-                  formatDate={formatDate}
-                  level={0}
-                >
-                  <NestedReplies
-                    replies={thread.replies}
-                    onResolve={handleResolveComment}
-                    formatDate={formatDate}
-                  />
-                </CommentItem>
-              </div>
-            ))}
-          </div>
-        ))
-      )}
-    </div>
-  );
-
   return (
     <ToolWindow.Root id={'comments'} defaultTab={'comments'}>
       <ToolWindow.Tab title={'Comments'} id={'comments'}>
         <ToolWindow.TabActions>
-          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
             <TbPlus />
           </Button>
           <CommentsSortMenu
@@ -152,13 +121,18 @@ export const CommentsToolWindow = () => {
         </ToolWindow.TabActions>
         <ToolWindow.TabContent>
           <ToolWindowPanel mode={'headless'} id={'comments'} title={'Comments'}>
-            {renderThreadsContent(commentThreads, groupedThreads)}
+            <ThreadsContent
+              threads={commentThreads}
+              grouped={groupedThreads}
+              onResolve={handleResolveComment}
+              formatDate={formatDate}
+            />
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
       <ToolWindow.Tab title={'My Threads'} id={'my-threads'}>
         <ToolWindow.TabActions>
-          <Button type={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
+          <Button variant={'icon-only'} onClick={() => application.actions.COMMENT_ADD!.execute()}>
             <TbPlus />
           </Button>
           <CommentsSortMenu
@@ -172,13 +146,55 @@ export const CommentsToolWindow = () => {
         </ToolWindow.TabActions>
         <ToolWindow.TabContent>
           <ToolWindowPanel mode={'headless'} id={'my-threads'} title={'My Threads'}>
-            {renderThreadsContent(myThreads, myGroupedThreads)}
+            <ThreadsContent
+              threads={myThreads}
+              grouped={myGroupedThreads}
+              onResolve={handleResolveComment}
+              formatDate={formatDate}
+            />
           </ToolWindowPanel>
         </ToolWindow.TabContent>
       </ToolWindow.Tab>
     </ToolWindow.Root>
   );
 };
+
+type ThreadsContentProps = {
+  threads: CommentThread[];
+  grouped: { key: string; title: string; threads: CommentThread[] }[];
+  onResolve: (comment: Comment) => void;
+  formatDate: (date: Date) => string;
+};
+
+const ThreadsContent = ({ threads, grouped, onResolve, formatDate }: ThreadsContentProps) => (
+  <div className={styles.icCommentsToolWindow}>
+    {threads.length === 0 ? (
+      <div className={styles.eNoComments}>No comments</div>
+    ) : (
+      grouped.map(group => (
+        <div key={group.key} className={styles.eGroup}>
+          {group.title && <div className={styles.eTitle}>{group.title}</div>}
+          {group.threads.map(thread => (
+            <div key={thread.root.id} className={styles.eThread}>
+              <CommentItem
+                comment={thread.root}
+                onResolve={onResolve}
+                formatDate={formatDate}
+                level={0}
+              >
+                <NestedReplies
+                  replies={thread.replies}
+                  onResolve={onResolve}
+                  formatDate={formatDate}
+                />
+              </CommentItem>
+            </div>
+          ))}
+        </div>
+      ))
+    )}
+  </div>
+);
 
 type NestedRepliesProps = {
   replies: CommentThreadNode[];
@@ -192,7 +208,7 @@ const NestedReplies = ({ replies, onResolve, formatDate }: NestedRepliesProps) =
       {replies.map(replyNode => (
         <div key={replyNode.comment.id}>
           <div
-            className={styles['comments-tool-window__nested-reply']}
+            className={styles.eNestedReply}
             style={{ marginLeft: `${(replyNode.level - 1) * 20}px` }}
           >
             <CommentItem

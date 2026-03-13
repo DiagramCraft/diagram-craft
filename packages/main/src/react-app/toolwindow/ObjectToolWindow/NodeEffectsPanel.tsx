@@ -14,6 +14,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import type { Property } from '@diagram-craft/model/property';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   diagram: Diagram;
@@ -61,202 +62,216 @@ export const NodeEffectsPanelForm = ({
 }: FormProps) => {
   const $cfg = useConfiguration();
   return (
-    <div className={'cmp-labeled-table'}>
-      <Collapsible label={'Reflection'} defaultOpen={reflection.isSet && reflection.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={reflection} render={props => <Checkbox {...props} />} />
-          </div>
+    <KeyValueTable.Root>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Reflection'} defaultOpen={reflection.isSet && reflection.val}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label valign={'top'}>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={reflection} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Strength:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={reflectionStrength}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} />}
-            />
-          </div>
-        </div>
-      </Collapsible>
+            <KeyValueTable.Label valign="top">Strength:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={reflectionStrength}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} />}
+              />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
 
-      <Collapsible label={'Blur'} defaultOpen={blur.isSet && blur.val > 0}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Amount:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={blur}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} />}
-            />
-          </div>
-        </div>
-      </Collapsible>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Blur'} defaultOpen={blur.isSet && blur.val > 0}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label valign={'top'}>Amount:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={blur}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} />}
+              />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
 
-      <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Amount:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={opacity}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} />}
-            />
-          </div>
-        </div>
-      </Collapsible>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Opacity'} defaultOpen={opacity.isSet && opacity.val > 0}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label valign={'top'}>Amount:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={opacity}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} />}
+              />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
 
-      <Collapsible label={'Glass'} defaultOpen={glass.isSet && glass.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={glass} render={props => <Checkbox {...props} />} />
-          </div>
-        </div>
-      </Collapsible>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Glass'} defaultOpen={glass.isSet && glass.val}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label valign={'top'}>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={glass} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
 
-      <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
-          </div>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Sketch'} defaultOpen={sketch.isSet && sketch.val}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label valign={'top'}>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={sketch} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Amount:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={sketchStrength}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => <Slider {...props} max={25} />}
-            />
-          </div>
+            <KeyValueTable.Label valign="top">Amount:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={sketchStrength}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => <Slider {...props} max={25} />}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label util-a-top-center'}>Fill:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={sketchFillType as Property<string>}
-              render={props => (
-                <Select.Root {...props}>
-                  <Select.Item value={'fill'}>Solid</Select.Item>
-                  <Select.Item value={'hachure'}>Hachure</Select.Item>
-                </Select.Root>
-              )}
-            />
-          </div>
-        </div>
-      </Collapsible>
+            <KeyValueTable.Label valign={'top'}>Fill:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={sketchFillType as Property<string>}
+                render={props => (
+                  <Select.Root {...props}>
+                    <Select.Item value={'fill'}>Solid</Select.Item>
+                    <Select.Item value={'hachure'}>Hachure</Select.Item>
+                  </Select.Root>
+                )}
+              />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
 
       {$d.selection.nodes.some(e => e.getDefinition().hasFlag(NodeFlags.StyleRounding)) && (
-        <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
-          <div className={'cmp-labeled-table'}>
-            <div className={'cmp-labeled-table__label util-a-top-center'}>Enabled:</div>
-            <div className={'cmp-labeled-table__value'}>
-              <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
-            </div>
+        <KeyValueTable.FullRow>
+          <Collapsible label={'Rounding'} defaultOpen={rounding.isSet && rounding.val}>
+            <KeyValueTable.Root>
+              <KeyValueTable.Label valign={'top'}>Enabled:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <PropertyEditor property={rounding} render={props => <Checkbox {...props} />} />
+              </KeyValueTable.Value>
 
-            <div className={'cmp-labeled-table__label util-a-top-center'}>Amount:</div>
-            <div className={'cmp-labeled-table__value'}>
-              <PropertyEditor
-                property={roundingAmount}
-                render={props => <Slider {...props} max={200} unit={'px'} />}
-              />
-            </div>
-          </div>
-        </Collapsible>
+              <KeyValueTable.Label valign={'top'}>Amount:</KeyValueTable.Label>
+              <KeyValueTable.Value>
+                <PropertyEditor
+                  property={roundingAmount}
+                  render={props => <Slider {...props} max={200} unit={'px'} />}
+                />
+              </KeyValueTable.Value>
+            </KeyValueTable.Root>
+          </Collapsible>
+        </KeyValueTable.FullRow>
       )}
 
-      <Collapsible label={'Isometric'} defaultOpen={isometric.isSet && isometric.val}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Enabled:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={isometric} render={props => <Checkbox {...props} />} />
-          </div>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Isometric'} defaultOpen={isometric.isSet && isometric.val}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Enabled:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={isometric} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Shape</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={isometricShape}
-              render={props => (
-                <Select.Root {...props} onChange={s => props.onChange(s as 'none' | 'rect')}>
-                  <Select.Item value={'none'}>None</Select.Item>
-                  <Select.Item value={'rect'}>Rectangle</Select.Item>
-                </Select.Root>
-              )}
-            />
-          </div>
+            <KeyValueTable.Label>Shape</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={isometricShape}
+                render={props => (
+                  <Select.Root {...props} onChange={s => props.onChange(s as 'none' | 'rect')}>
+                    <Select.Item value={'none'}>None</Select.Item>
+                    <Select.Item value={'rect'}>Rectangle</Select.Item>
+                  </Select.Root>
+                )}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Color</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={isometricColor}
-              render={props => (
-                <ColorPicker
-                  {...props}
-                  palette={$cfg.palette.primary}
-                  canClearColor={true}
-                  customPalette={$d.document.customPalette}
-                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                />
-              )}
-            />
-          </div>
+            <KeyValueTable.Label>Color</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={isometricColor}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    palette={$cfg.palette.primary}
+                    canClearColor={true}
+                    customPalette={$d.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  />
+                )}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Stroke</div>
-          <div className={'cmp-labeled-table__value util-hstack'}>
-            <PropertyEditor
-              property={isometricStrokeEnabled}
-              render={props => <Checkbox {...props} />}
-            />
-            <PropertyEditor
-              property={isometricStrokeColor}
-              render={props => (
-                <ColorPicker
-                  {...props}
-                  palette={$cfg.palette.primary}
-                  canClearColor={true}
-                  customPalette={$d.document.customPalette}
-                  onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                />
-              )}
-            />
-          </div>
+            <KeyValueTable.Label>Stroke</KeyValueTable.Label>
+            <KeyValueTable.Value stack={'horizontal'}>
+              <PropertyEditor
+                property={isometricStrokeEnabled}
+                render={props => <Checkbox {...props} />}
+              />
+              <PropertyEditor
+                property={isometricStrokeColor}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    palette={$cfg.palette.primary}
+                    canClearColor={true}
+                    customPalette={$d.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  />
+                )}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Height</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={isometricSize}
-              formatValue={v => round(v)}
-              storeValue={v => v}
-              render={props => <Slider {...props} unit={'px'} max={25} />}
-            />
-          </div>
+            <KeyValueTable.Label>Height</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={isometricSize}
+                formatValue={v => round(v)}
+                storeValue={v => v}
+                render={props => <Slider {...props} unit={'px'} max={25} />}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Tilt</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={isometricTilt}
-              formatValue={v => round(v)}
-              storeValue={v => v}
-              render={props => <Slider {...props} unit={''} min={0.1} step={0.05} max={1} />}
-            />
-          </div>
+            <KeyValueTable.Label>Tilt</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={isometricTilt}
+                formatValue={v => round(v)}
+                storeValue={v => v}
+                render={props => <Slider {...props} unit={''} min={0.1} step={0.05} max={1} />}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Rotation</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={isometricRotation}
-              formatValue={v => round(v)}
-              storeValue={v => v}
-              render={props => <Slider {...props} unit={''} min={0} max={60} />}
-            />
-          </div>
-        </div>
-      </Collapsible>
-    </div>
+            <KeyValueTable.Label>Rotation</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={isometricRotation}
+                formatValue={v => round(v)}
+                storeValue={v => v}
+                render={props => <Slider {...props} unit={''} min={0} max={60} />}
+              />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
+    </KeyValueTable.Root>
   );
 };
 

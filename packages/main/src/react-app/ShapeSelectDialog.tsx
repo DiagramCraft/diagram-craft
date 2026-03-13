@@ -24,6 +24,7 @@ import { flattenIcons, type CollectionInfo } from '@diagram-craft/canvas-app/ico
 import { Select } from '@diagram-craft/app-components/Select';
 import { range } from '@diagram-craft/utils/array';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import objectPickerStyles from './ObjectPicker.module.css';
 
 const SIZE = 35;
 
@@ -59,7 +60,7 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
   const stencilDiagram = getDiagram(props);
 
   return (
-    <div className={styles.shapeSelectDialogStencilView} data-width={stencilDiagram.viewBox.dimensions.w}>
+    <div className={styles.icStencilView} data-width={stencilDiagram.viewBox.dimensions.w}>
       <PickerCanvas
         size={SIZE}
         diagram={stencilDiagram}
@@ -75,7 +76,6 @@ const StencilView = (props: { stencil: Stencil; diagram: Diagram; onClick: () =>
 const iconService = new IconifyIconService();
 const ICON_PAGE_SIZE = 44;
 let lastSelectedCollection = '';
-
 
 const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => {
   const [iconCollections, setIconCollections] = useState<Record<string, CollectionInfo> | null>(
@@ -145,7 +145,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
   const pageIcons = displayIcons.slice(iconPage * ICON_PAGE_SIZE, (iconPage + 1) * ICON_PAGE_SIZE);
 
   return (
-    <div className={styles.shapeSelectDialogIconsTab}>
+    <div className={styles.icIconsTabs}>
       <div className={'util-hstack'}>
         <TextInput
           ref={searchRef}
@@ -157,7 +157,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
           }}
           style={{ flexGrow: 1 }}
         />
-        <Button type={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
+        <Button variant={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
           Search
         </Button>
         &nbsp;
@@ -175,8 +175,8 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
         </Select.Root>
       </div>
 
-      <div className={styles.shapeSelectDialogIconGrid}>
-        <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.shapeSelectDialogIconGridInner}`}>
+      <div className={styles.eIconGrid}>
+        <div className={`${objectPickerStyles.icObjectPicker} ${styles.eIconGridInner}`}>
           {pageIcons.map(icon => {
             const [prefix, name] = safeSplit(icon, ':', 2, 2);
             return (
@@ -187,7 +187,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
                 width={35}
                 height={35}
                 title={icon}
-                className={styles.shapeSelectDialogIconItem}
+                className={styles.eItem}
                 onClick={() => props.onOk({ id: icon, type: 'icon' })}
               />
             );
@@ -196,7 +196,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
       </div>
 
       {totalPages > 1 && (
-        <div className={styles.shapeSelectDialogPagination}>
+        <div className={styles.ePagination}>
           Page:
           {range(0, totalPages).map(p => (
             <a
@@ -204,7 +204,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
               href={'#'}
               onClick={() => setIconPage(p)}
               data-active={String(p === iconPage)}
-              className={styles.shapeSelectDialogPaginationLink}
+              className={styles.eLink}
             >
               {p + 1}
             </a>
@@ -271,7 +271,9 @@ export const ShapeSelectDialog = (props: Props) => {
 
   const tabContent: Record<ShapeSelectTab, JSX.Element> = {
     recent: (
-      <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.shapeSelectDialogRecentStencils}`}>
+      <div
+        className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icRecentStencils}`}
+      >
         {recentStencils.map(stencilId => {
           const stencil = stencilRegistry.getStencil(stencilId);
           if (!stencil) return null;
@@ -299,11 +301,13 @@ export const ShapeSelectDialog = (props: Props) => {
             }}
             style={{ flexGrow: 1 }}
           />
-          <Button type={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
+          <Button variant={'primary'} onClick={() => doSearch(ref.current?.value ?? '')}>
             Search
           </Button>
         </div>
-        <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.shapeSelectDialogSearchResults}`}>
+        <div
+          className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icSearchResults}`}
+        >
           {!isEmptyString(search) &&
             stencils.map(stencil => (
               <StencilView
@@ -321,7 +325,7 @@ export const ShapeSelectDialog = (props: Props) => {
 
   const dialogBody =
     activeTabs.length === 1 ? (
-      <div className={styles.shapeSelectDialogSingleTabContent}>{tabContent[activeTabs[0]!]}</div>
+      <div className={styles.icSingleTabContent}>{tabContent[activeTabs[0]!]}</div>
     ) : (
       <Tabs.Root
         defaultValue={

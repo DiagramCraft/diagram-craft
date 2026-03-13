@@ -9,6 +9,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const CanvasGridPanel = (props: Props) => {
   const $d = useDiagram();
@@ -34,9 +35,9 @@ export const CanvasGridPanel = (props: Props) => {
       onChange={enabled.set}
       id={'grid'}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Base</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Base</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
           <ColorPicker
             palette={$cfg.palette.primary}
             value={color.val}
@@ -67,10 +68,10 @@ export const CanvasGridPanel = (props: Props) => {
               <TbGridDots />
             </ToggleButtonGroup.Item>
           </ToggleButtonGroup.Root>
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Major</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+        <KeyValueTable.Label>Major</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
           <ColorPicker
             palette={$cfg.palette.primary}
             value={majorColor.val}
@@ -99,8 +100,8 @@ export const CanvasGridPanel = (props: Props) => {
               <TbGridDots />
             </ToggleButtonGroup.Item>
           </ToggleButtonGroup.Root>
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

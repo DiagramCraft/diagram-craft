@@ -16,7 +16,7 @@ import { ActionToolbarButton } from './toolbar/ActionToolbarButton';
 
 export const MainToolbar = () => {
   return (
-    <div className={'_tools'}>
+    <div id={'tools'}>
       <Toolbar.Root size={'large'}>
         <ActionToggleButton action={'TOOL_MOVE'}>
           <TbPointer size={'17.5px'} />

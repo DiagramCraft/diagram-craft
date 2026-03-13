@@ -17,6 +17,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { MultiProperty } from './types';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 class StrokeProperty extends MultiProperty<string[]> {
   constructor(
@@ -95,9 +96,9 @@ export const NodeTableStrokePanel = (props: Props) => {
       value={enabled.val}
       onChange={enabled.set}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Border:</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Border:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={stroke}
             render={props => (
@@ -114,10 +115,10 @@ export const NodeTableStrokePanel = (props: Props) => {
               </ToggleButtonGroup.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Color:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={strokeColor}
             render={props => (
@@ -129,10 +130,10 @@ export const NodeTableStrokePanel = (props: Props) => {
               />
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Style:</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+        <KeyValueTable.Label>Style:</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
           <PropertyEditor
             property={strokeWidth}
             render={props => (
@@ -141,9 +142,9 @@ export const NodeTableStrokePanel = (props: Props) => {
           />
           <DashSelector property={pattern} />
           <PopoverButton label={<TbAdjustmentsHorizontal />}>
-            <div className={'cmp-labeled-table'}>
-              <div className={'cmp-labeled-table__label'}>Stroke:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
+            <KeyValueTable.Root>
+              <KeyValueTable.Label>Stroke:</KeyValueTable.Label>
+              <KeyValueTable.Value stack={'horizontal'}>
                 <PropertyEditor
                   property={strokeSize}
                   render={props => (
@@ -156,10 +157,10 @@ export const NodeTableStrokePanel = (props: Props) => {
                     <NumberInput {...props} defaultUnit={'%'} min={1} style={{ width: '45px' }} />
                   )}
                 />
-              </div>
+              </KeyValueTable.Value>
 
-              <div className={'cmp-labeled-table__label'}>Line cap:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
+              <KeyValueTable.Label>Line cap:</KeyValueTable.Label>
+              <KeyValueTable.Value>
                 <PropertyEditor
                   property={lineCap as Property<string>}
                   render={props => (
@@ -170,9 +171,10 @@ export const NodeTableStrokePanel = (props: Props) => {
                     </Select.Root>
                   )}
                 />
-              </div>
-              <div className={'cmp-labeled-table__label'}>Line join:</div>
-              <div className={'cmp-labeled-table__value util-hstack'}>
+              </KeyValueTable.Value>
+
+              <KeyValueTable.Label>Line join:</KeyValueTable.Label>
+              <KeyValueTable.Value stack={'horizontal'}>
                 <PropertyEditor
                   property={lineJoin as Property<string>}
                   render={props => (
@@ -192,11 +194,11 @@ export const NodeTableStrokePanel = (props: Props) => {
                     render={props => <NumberInput {...props} min={0} style={{ width: '50px' }} />}
                   />
                 )}
-              </div>
-            </div>
+              </KeyValueTable.Value>
+            </KeyValueTable.Root>
           </PopoverButton>
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

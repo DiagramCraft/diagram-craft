@@ -9,6 +9,7 @@ import {
   enablePropertyEditorTooltip
 } from '@diagram-craft/app-components/Tooltip';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import styles from './ColorPicker.module.css';
 
 const transpose = (matrix: string[][]) =>
   Object.keys(matrix[0]!).map(colNumber =>
@@ -22,7 +23,7 @@ const EditableColorWell = (props: {
 }) => {
   const [color, setColor] = React.useState(props.color);
   return (
-    <div className={'cmp-color-grid__editable'} style={{ backgroundColor: color }}>
+    <div className={styles.eEditableColor} style={{ backgroundColor: color }}>
       <button
         type="button"
         onClick={() => {
@@ -74,7 +75,7 @@ export const ColorPicker = (props: Props) => {
   const customPalette = props.customPalette.colors;
 
   return (
-    <div className={'cmp-color-picker'}>
+    <div className={styles.cColorPicker}>
       <Popover.Root
         open={open}
         onOpenChange={o => {
@@ -94,7 +95,7 @@ export const ColorPicker = (props: Props) => {
               disabled={props.disabled}
             >
               <div
-                className={'cmp-color-picker__well'}
+                className={styles.eWell}
                 style={{
                   backgroundColor: props.value,
                   border: props.isIndeterminate ? '1px dotted var(--cmp-fg-disabled)' : undefined
@@ -107,12 +108,12 @@ export const ColorPicker = (props: Props) => {
           }
         />
         <Popover.Content sideOffset={5} ref={contentRef}>
-          <div className={'cmp-color-grid'}>
+          <div className={styles.icColorGrid}>
             <h2>Colors</h2>
 
             {props.canClearColor && (
               <div
-                className={'cmp-color-grid__row'}
+                className={styles.eRow}
                 style={{
                   marginBottom: '0.25rem'
                 }}

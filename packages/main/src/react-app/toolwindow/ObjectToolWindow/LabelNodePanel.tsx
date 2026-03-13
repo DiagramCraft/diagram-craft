@@ -16,6 +16,7 @@ import { HAlign } from '@diagram-craft/model/diagramProps';
 import { Point } from '@diagram-craft/geometry/point';
 import styles from './LabelNodePanel.module.css';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const values = {
   'independent': 'Independent',
@@ -112,9 +113,9 @@ export const LabelNodePanel = (props: Props) => {
       hasCheckbox={false}
     >
       <div>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Type:</div>
-          <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Root>
+          <KeyValueTable.Label>Type:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <Select.Root
               value={type}
               onChange={v => {
@@ -130,10 +131,10 @@ export const LabelNodePanel = (props: Props) => {
                 </Select.Item>
               ))}
             </Select.Root>
-          </div>
+          </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label util-a-top'}>Quick set:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label valign={'top'}>Quick set:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <svg
               viewBox={'0 0 100 40'}
               width={'100%'}
@@ -160,7 +161,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('startAbove', labelNode)}
                 onClick={() => applyPosition('startAbove', edge, node)}
               />
@@ -169,7 +170,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('startOn', labelNode)}
                 onClick={() => applyPosition('startOn', edge, node)}
               />
@@ -178,7 +179,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('startBelow', labelNode)}
                 onClick={() => applyPosition('startBelow', edge, node)}
               />
@@ -188,7 +189,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('centerAbove', labelNode)}
                 onClick={() => applyPosition('centerAbove', edge, node)}
               />
@@ -197,7 +198,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('centerOn', labelNode)}
                 onClick={() => applyPosition('centerOn', edge, node)}
               />
@@ -206,7 +207,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('centerBelow', labelNode)}
                 onClick={() => applyPosition('centerBelow', edge, node)}
               />
@@ -216,7 +217,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={6}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('endAbove', labelNode)}
                 onClick={() => applyPosition('endAbove', edge, node)}
               />
@@ -225,7 +226,7 @@ export const LabelNodePanel = (props: Props) => {
                 y={16}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('endOn', labelNode)}
                 onClick={() => applyPosition('endOn', edge, node)}
               />
@@ -234,15 +235,15 @@ export const LabelNodePanel = (props: Props) => {
                 y={26}
                 width={15}
                 height={7}
-                className={styles.positionRect}
+                className={styles.icPositionRect}
                 data-selected={isPosition('endBelow', labelNode)}
                 onClick={() => applyPosition('endBelow', edge, node)}
               />
             </svg>
-          </div>
+          </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Position:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label>Position:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <Slider
               value={round(timeOffset * 100)}
               onChange={v => {
@@ -251,10 +252,10 @@ export const LabelNodePanel = (props: Props) => {
                 });
               }}
             />
-          </div>
+          </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Offset:</div>
-          <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+          <KeyValueTable.Label>Offset:</KeyValueTable.Label>
+          <KeyValueTable.Value stack={'horizontal'}>
             <NumberInput
               defaultUnit={'px'}
               value={round(offset.x)}
@@ -295,8 +296,8 @@ export const LabelNodePanel = (props: Props) => {
                 <TbLetterR />
               </ToggleButtonGroup.Item>
             </ToggleButtonGroup.Root>
-          </div>
-        </div>
+          </KeyValueTable.Value>
+        </KeyValueTable.Root>
       </div>
     </ToolWindowPanel>
   );

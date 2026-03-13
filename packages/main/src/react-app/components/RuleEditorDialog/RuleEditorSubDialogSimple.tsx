@@ -92,18 +92,18 @@ export const RuleEditorSubDialogSimple = forwardRef<
   if (props.type === 'advanced') return null;
 
   return (
-    <div>
-      <h4 className={styles.ruleEditor__sectionTitle}>If</h4>
+    <div className={styles.icRuleEditorSubDialogSimple}>
+      <h4 className={styles.eSectionTitle}>If</h4>
       <div></div>
       <div></div>
       <div></div>
 
-      <div className={styles.ruleEditor__clauseList}>
+      <div className={styles.eClauseList}>
         <ClauseList clauses={clauses} onChange={setClauses} subClauses={false} type={props.type} />
       </div>
 
-      <div className={styles.ruleEditor__actionSection}>
-        <h4 className={styles.ruleEditor__sectionTitle}>Then</h4>
+      <div className={styles.eActionSection}>
+        <h4 className={styles.eSectionTitle}>Then</h4>
         <div></div>
         <div></div>
 
@@ -155,7 +155,7 @@ export const RuleEditorSubDialogSimple = forwardRef<
 
               <div>
                 <Button
-                  type={'icon-only'}
+                  variant={'icon-only'}
                   onClick={() => {
                     const newActions = actions.toSpliced(idx + 1, 0, {
                       id: newid()
@@ -166,7 +166,7 @@ export const RuleEditorSubDialogSimple = forwardRef<
                   <TbPlus />
                 </Button>
                 <Button
-                  type={'icon-only'}
+                  variant={'icon-only'}
                   disabled={idx === 0 && actions.length === 1}
                   onClick={() => {
                     const newActions = actions.toSpliced(idx, 1);
@@ -191,8 +191,8 @@ const ClauseList = (props: ClauseListProps) => {
     <>
       {props.clauses.map((c, idx) => {
         return (
-          <div key={c.id} className={styles.ruleEditor__clause}>
-            <div className={styles.ruleEditorClause__select}>
+          <div key={c.id} className={styles.eClause}>
+            <div className={styles.eSelect}>
               <Select.Root
                 value={c.type ?? ''}
                 placeholder={'Select Rule'}
@@ -211,12 +211,12 @@ const ClauseList = (props: ClauseListProps) => {
               </Select.Root>
             </div>
 
-            <div className={styles.ruleEditorClause__props}>
+            <div className={styles.eProps}>
               {c.type === 'query' && (
                 <SyntaxHighlightingEditor
                   highlighter={jsonHighlighter}
                   rows={3}
-                  className={styles.ruleEditorClause__queryTextArea}
+                  className={styles.eQueryTextArea}
                   defaultValue={c.query ?? ''}
                   onKeyDown={e => {
                     // TODO: Why is this needed?
@@ -231,12 +231,12 @@ const ClauseList = (props: ClauseListProps) => {
                 />
               )}
               {c.type === 'any' && (
-                <div className={styles.ruleEditorClause__anyContainer}>
-                  <div className={styles.ruleEditorClause__anyLine}></div>
+                <div className={styles.eAnyContainer}>
+                  <div className={styles.eAnyLine}></div>
                 </div>
               )}
               {c.type === 'props' && (
-                <div className={styles.ruleEditorClause__propsRow}>
+                <div className={styles.ePropsRow}>
                   <TreeSelect.Root
                     value={c.path ?? ''}
                     onValueChange={v => {
@@ -313,9 +313,9 @@ const ClauseList = (props: ClauseListProps) => {
                 c.type !== 'comment' && <div></div>}
             </div>
 
-            <div className={styles.ruleEditorClause__buttons}>
+            <div className={styles.eButtons}>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx + 1, 0, {
                     id: newid()
@@ -326,7 +326,7 @@ const ClauseList = (props: ClauseListProps) => {
                 <TbPlus />
               </Button>
               <Button
-                type={'icon-only'}
+                variant={'icon-only'}
                 disabled={idx === 0 && props.clauses.length === 1}
                 onClick={() => {
                   const newClauses = props.clauses.toSpliced(idx, 1);
@@ -338,7 +338,7 @@ const ClauseList = (props: ClauseListProps) => {
             </div>
 
             {c.type === 'any' && (
-              <div className={styles.ruleEditor__subClause}>
+              <div className={styles.eSubClause}>
                 <ClauseList
                   clauses={c.clauses ?? [{ id: newid() }]}
                   onChange={newClauses => {

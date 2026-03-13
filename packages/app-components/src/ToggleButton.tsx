@@ -10,15 +10,11 @@ export const ToggleButton = (props: Props) => {
       multiple={false}
       value={[props.value.toString()]}
       onValueChange={value => props.onChange(value[0] === 'true')}
-      className={styles.cmpToggleButtonGroup}
+      className={styles.cToggleButtonGroup}
       disabled={props.disabled}
       {...extractDataAttributes(props)}
     >
-      <BaseUIToggle
-        className={styles.cmpToggleButtonGroupItem}
-        value={'true'}
-        {...extractDataAttributes(props)}
-      >
+      <BaseUIToggle className={styles.eItem} value={'true'} {...extractDataAttributes(props)}>
         {props.children}
       </BaseUIToggle>
     </BaseUIToggleGroup>

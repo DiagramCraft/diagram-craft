@@ -30,7 +30,7 @@ const Root = React.forwardRef<HTMLDivElement, RootProps>((props, ref) => {
     <TreeContext.Provider value={{ depth: 0 }}>
       <div
         {...PropsUtils.filterDomProperties(props)}
-        className={`${styles.cmpTree} ${props.className ?? ''}`}
+        className={`${styles.cTree} ${props.className ?? ''}`}
         ref={ref}
       >
         {props.children}
@@ -56,7 +56,7 @@ const Node = React.forwardRef<HTMLDivElement, NodeProps>((props, ref) => {
       <div
         ref={ref}
         {...PropsUtils.filterDomProperties(props)}
-        className={`${styles.cmpTreeNode} ${props.className ?? ''}`}
+        className={`${styles.eNode} ${props.className ?? ''}`}
         data-depth={ctx!.depth}
         onClick={props.onClick}
         style={{ cursor: props.onClick ? 'pointer' : 'default' }}
@@ -88,9 +88,9 @@ const NodeLabel = forwardRef<HTMLDivElement, NodeLabelProps>((props, ref) => {
     <div
       ref={ref}
       {...PropsUtils.filterDomProperties(props)}
-      className={`${styles.cmpTreeNodeLabel} ${props.className ?? ''}`}
+      className={`${styles.eLabel} ${props.className ?? ''}`}
     >
-      <div className={styles.cmpTreeNodeLabelToggle}>
+      <div className={styles.eToggle}>
         {ctx.hasChildren && !ctx.open && (
           <button type="button" onClick={() => ctx.setOpen!(true)}>
             <TbChevronRight />
@@ -107,11 +107,14 @@ const NodeLabel = forwardRef<HTMLDivElement, NodeLabelProps>((props, ref) => {
   );
 });
 
-const NodeCell = (props: { children: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+const NodeCell = (
+  props: { children: React.ReactNode; type?: 'action' } & React.HTMLAttributes<HTMLDivElement>
+) => {
   return (
     <div
       {...PropsUtils.filterDomProperties(props)}
-      className={`cmp-tree__node__cell ${props.className ?? ''}`}
+      className={`${styles.eCell} ${props.className ?? ''}`}
+      data-type={props.type ?? 'default'}
     >
       {props.children}
     </div>
@@ -124,7 +127,7 @@ const NodeLabelText = (
   return (
     <div
       {...PropsUtils.filterDomProperties(props)}
-      className={`${styles.cmpTreeNodeLabelText} ${props.className ?? ''}`}
+      className={`${styles.eText} ${props.className ?? ''}`}
     >
       {props.children}
     </div>
@@ -137,7 +140,7 @@ const NodeLabelIcon = (
   return (
     <div
       {...PropsUtils.filterDomProperties(props)}
-      className={`${styles.cmpTreeNodeLabelIcon} ${props.className ?? ''}`}
+      className={`${styles.eIcon} ${props.className ?? ''}`}
     >
       {props.children}
     </div>

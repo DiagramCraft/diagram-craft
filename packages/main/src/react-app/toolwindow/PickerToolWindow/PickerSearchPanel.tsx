@@ -7,6 +7,7 @@ import { useDocument } from '../../../application';
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { ObjectPickerPanel } from './ObjectPickerPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import styles from '../../ObjectPicker.module.css';
 
 export const PickerSearchPanel = () => {
   const ref = useRef<HTMLInputElement>(null);
@@ -58,14 +59,14 @@ export const PickerSearchPanel = () => {
             setSearch(ref.current?.value ?? '');
             ref.current?.blur();
           }}
-          type={'secondary'}
+          variant={'secondary'}
         >
           <TbSearch />
         </Button>
       </div>
 
       {!isEmptyString(search) && (
-        <div className={'cmp-object-picker'} style={{ marginTop: '0.75rem' }}>
+        <div className={styles.icObjectPicker} style={{ marginTop: '0.75rem' }}>
           <ObjectPickerPanel
             stencils={stencils}
             id={'search'}

@@ -169,11 +169,11 @@ export const PresentationMode = (props: Props) => {
   const currentStep = player1.currentStep;
 
   return (
-    <div className={`${styles.presentation}`} id={'presentation'}>
-      <div className={styles.presentationTools}>
+    <div className={`${styles.icPresentation}`} id={'presentation'}>
+      <div className={styles.eTools}>
         {!isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={() => {
               document.getElementById('presentation')?.requestFullscreen();
               setIsFullScreen(true);
@@ -184,7 +184,7 @@ export const PresentationMode = (props: Props) => {
         )}
         {isFullScreen && (
           <Button
-            type={'icon-only'}
+            variant={'icon-only'}
             onClick={async () => {
               try {
                 await document.exitFullscreen();
@@ -197,17 +197,17 @@ export const PresentationMode = (props: Props) => {
             <TbWindowMinimize />
           </Button>
         )}
-        <Button type={'icon-only'} onClick={handleClose}>
+        <Button variant={'icon-only'} onClick={handleClose}>
           <TbX />
         </Button>
       </div>
       {currentStep && (
-        <div className={styles.presentationHeader}>
-          <div className={styles.presentationHeaderTitle}>{currentStep.title}</div>
-          <div className={styles.presentationHeaderDescription}>{currentStep.description}</div>
+        <div className={styles.eHeader}>
+          <div className={styles.eTitle}>{currentStep.title}</div>
+          <div className={styles.eDescription}>{currentStep.description}</div>
         </div>
       )}
-      <div className={`${styles.presentationCanvas} light-theme`}>
+      <div className={`${styles.eCanvas} light-theme`}>
         <Canvas<InteractiveCanvasComponent, InteractiveCanvasProps>
           id={`presentation-canvas-other-canvas`}
           key={`presentation-canvas-other-${activeDiagram2.id}`}
@@ -225,26 +225,25 @@ export const PresentationMode = (props: Props) => {
           viewbox={activeDiagram1.viewBox}
           width={'100%'}
           height={'100%'}
-          className={styles.presentationHiddenCanvas}
         />
       </div>
-      <div className={styles.presentationControls}>
-        <div className={styles.presentationControlsInner}>
+      <div className={styles.eControls}>
+        <div className={styles.eControlsInner}>
           <Button
             onClick={handlePrevious}
-            type={'secondary'}
+            variant={'secondary'}
             disabled={player1.currentStepIndex <= 0}
           >
             <TbPlayerSkipBack />
           </Button>
           <Button
             onClick={handleNext}
-            type={'primary'}
+            variant={'primary'}
             disabled={player1.currentStepIndex >= props.story.steps.length - 1}
           >
             <TbPlayerSkipForward />
           </Button>
-          <div className={styles.presentationControlsProgress}>
+          <div className={styles.eProgress}>
             {player1.currentStepIndex >= 0 ? player1.currentStepIndex + 1 : 0} /{' '}
             {props.story.steps.length}
           </div>

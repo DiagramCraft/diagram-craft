@@ -1,92 +1,100 @@
-.data-tab__header {
+/**
+ *  DataTab - .icDataTab
+ *  | Header - .eHeader
+ *  | | Title - .eTitle
+ *  | Message [0..1] - .eMessage
+ *  | SearchControls - .eSearchControls
+ */
+.icDataTab {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  flex-direction: column;
+  gap: 1rem;
 
-.data-tab__title {
-  margin: 0;
-}
+  .eHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-.data-tab__add-button {
-  align-self: end;
-}
+    .eTitle {
+      margin: 0;
+    }
 
-.data-tab__message-box {
-  padding: 1rem;
-  text-align: left;
-  background-color: var(--panel-bg);
-  border-radius: 6px;
-  font-size: 11px;
-  border-left: 4px solid var(--error-fg);
+    .eAddBtn {
+      align-self: end;
+    }
+  }
 
-  p {
-    padding: 0;
-    margin: 0 0 0.5rem 0;
+  .eMessage {
+    padding: 1rem;
+    text-align: left;
+    background-color: var(--panel-bg);
+    border-radius: 6px;
+    font-size: 11px;
+    border-left: 4px solid var(--error-fg);
 
-    &:last-of-type {
-      margin-bottom: 0;
+    p {
+      padding: 0;
+      margin: 0 0 0.5rem 0;
+
+      &:last-of-type {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .eSearchControls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: end;
+    background-color: var(--panel-bg);
+    padding: 1rem;
+    border-radius: var(--cmp-radius);
+
+
+    .eFilterLabel {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 13px;
+    }
+
+    .eInputGroup {
+      display: flex;
+      gap: 0.5rem;
+
+      .eSearchInput {
+        flex: 1;
+      }
+    }
+  }
+
+  .eTable {
+    width: 100%;
+    border-collapse: collapse;
+
+    .eOverrideStatus {
+      &[data-status=modified] {
+        color: var(--warning-fg);
+        font-weight: 500;
+      }
+
+      &[data-status=error] {
+        color: var(--error-fg);
+        font-weight: 500;
+      }
+
+      &[data-status=na] {
+        color: var(--base-fg-more-dim);
+      }
+    }
+
+    .eActions {
+      display: flex;
+      gap: 4px;
+    }
+
+    input[type='checkbox'] {
+      cursor: pointer;
     }
   }
 }
 
-.data-tab__search-controls {
-  display: flex;
-  gap: 0.5rem;
-  align-items: end;
-  background-color: var(--panel-bg);
-  padding: 1rem;
-  border-radius: var(--cmp-radius);
-}
-
-
-.data-tab__filter-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 13px;
-}
-
-
-.data-tab__search-input-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.data-tab__search-input {
-  flex: 1;
-}
-
-.data-tab__empty-state-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-}
-
-.data-tab__table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-tab__table-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.data-tab__override-status[data-status=modified] {
-  color: var(--warning-fg);
-  font-weight: 500;
-}
-
-.data-tab__override-status[data-status=error] {
-  color: var(--error-fg);
-  font-weight: 500;
-}
-
-.data-tab__override-status[data-status=na] {
-  color: var(--base-fg-more-dim);
-}
-
-.data-tab__table input[type='checkbox'] {
-  cursor: pointer;
-}

@@ -8,6 +8,7 @@ import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDo
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { Scrollable } from '@diagram-craft/app-components/Scrollable';
+import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
 
 type Props = {
   title: string;
@@ -195,7 +196,7 @@ export const EditSchemaDialog = (props: Props) => {
           onChange={value => setName(value ?? '')}
           placeholder="Enter schema name"
         />
-        {errors.name && <div className="cmp-error">{errors.name}</div>}
+        {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
       </div>
 
       <div
@@ -210,7 +211,7 @@ export const EditSchemaDialog = (props: Props) => {
       >
         <label style={{ display: 'block' }}>Fields:</label>
 
-        {errors.fields && <div className="cmp-error">{errors.fields}</div>}
+        {errors.fields && <ErrorMessage>{errors.fields}</ErrorMessage>}
 
         <Scrollable
           style={{
@@ -254,9 +255,9 @@ export const EditSchemaDialog = (props: Props) => {
                       }
                     />
                     {errors[`field-${index}-id`] && (
-                      <div className="cmp-error" style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
+                      <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
                         {errors[`field-${index}-id`]}
-                      </div>
+                      </ErrorMessage>
                     )}
                   </div>
 
@@ -267,9 +268,9 @@ export const EditSchemaDialog = (props: Props) => {
                       placeholder="Field name"
                     />
                     {errors[`field-${index}-name`] && (
-                      <div className="cmp-error" style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
+                      <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
                         {errors[`field-${index}-name`]}
-                      </div>
+                      </ErrorMessage>
                     )}
                   </div>
 
@@ -312,7 +313,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </div>
 
                   <Button
-                    type="icon-only"
+                    variant="icon-only"
                     onClick={() => addFieldAfter(index)}
                     title="Add field below"
                   >
@@ -320,7 +321,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </Button>
 
                   <Button
-                    type="icon-only"
+                    variant="icon-only"
                     onClick={() => removeField(index)}
                     disabled={fields.length === 1}
                     title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
@@ -333,7 +334,7 @@ export const EditSchemaDialog = (props: Props) => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     <label style={{ display: 'block' }}>Options:</label>
                     {errors[`field-${index}-options`] && (
-                      <div className="cmp-error">{errors[`field-${index}-options`]}</div>
+                      <ErrorMessage>{errors[`field-${index}-options`]}</ErrorMessage>
                     )}
                     <div
                       style={{
@@ -362,12 +363,9 @@ export const EditSchemaDialog = (props: Props) => {
                               placeholder="Value"
                             />
                             {errors[`field-${index}-option-${optionIndex}-value`] && (
-                              <div
-                                className="cmp-error"
-                                style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
-                              >
+                              <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
                                 {errors[`field-${index}-option-${optionIndex}-value`]}
-                              </div>
+                              </ErrorMessage>
                             )}
                           </div>
                           <div style={{ flex: 2 }}>
@@ -384,16 +382,13 @@ export const EditSchemaDialog = (props: Props) => {
                               placeholder="Label"
                             />
                             {errors[`field-${index}-option-${optionIndex}-label`] && (
-                              <div
-                                className="cmp-error"
-                                style={{ fontSize: '0.8em', marginTop: '0.2rem' }}
-                              >
+                              <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
                                 {errors[`field-${index}-option-${optionIndex}-label`]}
-                              </div>
+                              </ErrorMessage>
                             )}
                           </div>
                           <Button
-                            type="icon-only"
+                            variant="icon-only"
                             onClick={() => {
                               const newOptions = [...field.options];
                               newOptions.splice(optionIndex + 1, 0, {
@@ -407,7 +402,7 @@ export const EditSchemaDialog = (props: Props) => {
                             <TbPlus />
                           </Button>
                           <Button
-                            type="icon-only"
+                            variant="icon-only"
                             onClick={() => {
                               const newOptions = field.options.filter((_, i) => i !== optionIndex);
                               updateField(field.id, { options: newOptions });
@@ -444,9 +439,9 @@ export const EditSchemaDialog = (props: Props) => {
                           ))}
                       </Select.Root>
                       {errors[`field-${index}-schemaId`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
+                        <ErrorMessage style={{ marginTop: '0.125rem' }}>
                           {errors[`field-${index}-schemaId`]}
-                        </div>
+                        </ErrorMessage>
                       )}
                     </div>
 
@@ -461,9 +456,9 @@ export const EditSchemaDialog = (props: Props) => {
                         placeholder="0"
                       />
                       {errors[`field-${index}-minCount`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.12rem' }}>
+                        <ErrorMessage style={{ marginTop: '0.12rem' }}>
                           {errors[`field-${index}-minCount`]}
-                        </div>
+                        </ErrorMessage>
                       )}
                     </div>
 
@@ -478,9 +473,9 @@ export const EditSchemaDialog = (props: Props) => {
                         placeholder="1"
                       />
                       {errors[`field-${index}-maxCount`] && (
-                        <div className="cmp-error" style={{ marginTop: '0.125rem' }}>
+                        <ErrorMessage style={{ marginTop: '0.125rem' }}>
                           {errors[`field-${index}-maxCount`]}
-                        </div>
+                        </ErrorMessage>
                       )}
                     </div>
                   </div>

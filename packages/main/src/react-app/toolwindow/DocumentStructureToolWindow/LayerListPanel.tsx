@@ -42,6 +42,7 @@ import {
   ModificationLayer
 } from '@diagram-craft/model/diagramLayerModification';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import styles from './StructureTree.module.css';
 
 const ELEMENT_INSTANCES = 'application/x-diagram-craft-element-instances';
 const LAYER_INSTANCES = 'application/x-diagram-craft-layer-instances';
@@ -128,7 +129,8 @@ const LayerEntry = (props: { layer: Layer }) => {
         <Tree.Node
           key={layer.id}
           isOpen={true}
-          className={diagram.activeLayer === layer ? 'cmp-layer-list__layer--selected' : ''}
+          className={styles.eNode}
+          data-selected={diagram.activeLayer === layer ? 'true' : 'false'}
           {...drag.eventHandlers}
           {...dropTarget.eventHandlers}
           onClick={() => {
@@ -149,7 +151,7 @@ const LayerEntry = (props: { layer: Layer }) => {
               {layer.name}
             </div>
           </Tree.NodeLabel>
-          <Tree.NodeCell className="cmp-tree__node__action">
+          <Tree.NodeCell type={'action'}>
             {layer.type !== 'reference' && layer.type !== 'rule' ? (
               <LockToggle layer={layer} diagram={diagram} />
             ) : (
@@ -176,7 +178,7 @@ const LayerEntry = (props: { layer: Layer }) => {
               {layer instanceof ModificationLayer && (
                 <div style={{ display: 'contents' }}>
                   {layer.modifications.length === 0 ? (
-                    <Tree.Node>
+                    <Tree.Node className={styles.eNode}>
                       <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
                         No modifications
                       </Tree.NodeLabel>
@@ -205,7 +207,7 @@ const LayerEntry = (props: { layer: Layer }) => {
           {layer instanceof ReferenceLayer && (
             <Tree.Children>
               <div style={{ display: 'contents' }}>
-                <Tree.Node>
+                <Tree.Node className={styles.eNode}>
                   <Tree.NodeLabel style={{ fontStyle: 'italic' }}>
                     <TbArrowNarrowRight /> {layer.referenceName()}
                   </Tree.NodeLabel>
@@ -234,6 +236,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
       element={
         <Tree.Node
           key={e.id}
+          className={styles.eNode}
           onClick={() => {
             const keys = [...props.layer.runRule(props.rule).keys()];
             for (const key of keys) {
@@ -249,7 +252,7 @@ const RuleEntry = (props: { rule: AdjustmentRule; layer: RuleLayer; diagram: Dia
           <Tree.NodeLabel>
             {icon} &nbsp;{shorten(e.name, 25)}
           </Tree.NodeLabel>
-          <Tree.NodeCell className="cmp-tree__node__action">
+          <Tree.NodeCell type={'action'}>
             <span
               style={{ cursor: 'pointer' }}
               onClick={e => {
@@ -304,6 +307,7 @@ const ModificationEntry = (props: {
   return (
     <Tree.Node
       key={m.id}
+      className={styles.eNode}
       onClick={() => {
         if (element) {
           addHighlight(element, 'search-match');
@@ -317,7 +321,7 @@ const ModificationEntry = (props: {
         <Tree.NodeLabelIcon>{icon}</Tree.NodeLabelIcon>
         <Tree.NodeLabelText>{element?.name ?? m.id}</Tree.NodeLabelText>
       </Tree.NodeLabel>
-      <Tree.NodeCell className="cmp-tree__node__action">
+      <Tree.NodeCell type={'action'}>
         <span
           style={{ cursor: 'pointer' }}
           onClick={e => {
@@ -394,6 +398,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
   return (
     <Tree.Node
       key={e.id}
+      className={styles.eNode}
       data-state={
         diagram.selection.elements.includes(e)
           ? 'on'
@@ -473,7 +478,7 @@ export const LayerListPanel = () => {
     >
       <Tree.Root
         ref={ref}
-        className={'cmp-layer-list'}
+        className={styles.icStructureTree}
         data-dragmimetype={'application/x-diagram-craft-element-instances'}
       >
         {layers.map(l => (

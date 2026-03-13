@@ -51,13 +51,13 @@ export const ToolDialog = (props: ToolDialogProps) => {
   // TODO: This is a bit ugly
   useLayoutEffect(() => {
     queueMicrotask(() => {
-      const toolDialogs = document.getElementsByClassName('toolDialog');
+      const toolDialogs = document.getElementsByClassName(styles.icToolDialog!);
       if (toolDialogs.length === 0) {
         return;
       }
 
       const toolDialog = toolDialogs[0] as HTMLDivElement;
-      const toolbarElement = mustExist(document.querySelector('#toolbar > .cmp-toolbar'));
+      const toolbarElement = mustExist(document.querySelector('#toolbar > div'));
       toolDialog.style.left = `${toolbarElement!.getClientRects()[0]!.x - 8}px`;
       toolDialog.style.top = `${toolbarElement!.getClientRects()[0]!.y}px`;
       toolDialog.style.width = `${toolbarElement?.clientWidth + 8}px`;
@@ -86,20 +86,19 @@ export const ToolDialog = (props: ToolDialogProps) => {
       onOpenChange={handleOpenChange}
     >
       <BaseUIAlertDialog.Portal container={portal}>
-        <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
-        <BaseUIAlertDialog.Viewport className={styles.toolDialog}>
-          <BaseUIAlertDialog.Popup initialFocus={false} className={styles.toolDialogContent}>
-            <BaseUIAlertDialog.Title className={styles.toolDialogTitle}>
+        <BaseUIAlertDialog.Viewport className={styles.icToolDialog}>
+          <BaseUIAlertDialog.Popup initialFocus={false} className={styles.eContent}>
+            <BaseUIAlertDialog.Title className={styles.eTitle}>
               {props.title}
             </BaseUIAlertDialog.Title>
             <BaseUIAlertDialog.Description
-              render={<div className={styles.toolDialogDescription}>{props.children}</div>}
+              render={<div className={styles.eDescription}>{props.children}</div>}
             />
 
             <Button style={{ marginLeft: 'auto' }} onClick={() => props.onOk()}>
               Ok
             </Button>
-            <Button type={'secondary'} onClick={() => props.onCancel()}>
+            <Button variant={'secondary'} onClick={() => props.onCancel()}>
               Cancel
             </Button>
           </BaseUIAlertDialog.Popup>

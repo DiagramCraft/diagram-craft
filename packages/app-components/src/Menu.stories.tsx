@@ -82,7 +82,7 @@ const MenuRoot = () => {
         </BaseUIMenu.Trigger>
         <BaseUIMenu.Portal container={portal}>
           <BaseUIMenu.Positioner>
-            <BaseUIMenu.Popup className={styles.cmpMenu}>
+            <BaseUIMenu.Popup className={styles.cMenu}>
               <Menu.Item>Basic</Menu.Item>
               <Menu.Item rightSlot={'Ctrl-X'}>With keybinding</Menu.Item>
               <Menu.Item rightSlot={<TbEye />}>With right icon</Menu.Item>

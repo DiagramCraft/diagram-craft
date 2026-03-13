@@ -19,14 +19,14 @@ type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
   args: {
-    type: 'primary',
+    variant: 'primary',
     children: ['Lorem'],
     onClick: () => {}
   }
 };
 export const PrimaryHover: Story = {
   args: {
-    'type': 'primary',
+    'variant': 'primary',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-hover': 'true'
@@ -34,7 +34,7 @@ export const PrimaryHover: Story = {
 };
 export const PrimaryFocus: Story = {
   args: {
-    'type': 'primary',
+    'variant': 'primary',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-focus': 'true'
@@ -42,7 +42,7 @@ export const PrimaryFocus: Story = {
 };
 export const PrimaryDisabled: Story = {
   args: {
-    type: 'primary',
+    variant: 'primary',
     children: ['Lorem'],
     onClick: () => {},
     disabled: true
@@ -51,14 +51,14 @@ export const PrimaryDisabled: Story = {
 
 export const Secondary: Story = {
   args: {
-    type: 'secondary',
+    variant: 'secondary',
     children: ['Lorem'],
     onClick: () => {}
   }
 };
 export const SecondaryHover: Story = {
   args: {
-    'type': 'secondary',
+    'variant': 'secondary',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-hover': 'true'
@@ -66,7 +66,7 @@ export const SecondaryHover: Story = {
 };
 export const SecondaryFocus: Story = {
   args: {
-    'type': 'secondary',
+    'variant': 'secondary',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-focus': 'true'
@@ -74,7 +74,7 @@ export const SecondaryFocus: Story = {
 };
 export const SecondaryDisabled: Story = {
   args: {
-    type: 'secondary',
+    variant: 'secondary',
     children: ['Lorem'],
     onClick: () => {},
     disabled: true
@@ -83,14 +83,14 @@ export const SecondaryDisabled: Story = {
 
 export const Danger: Story = {
   args: {
-    type: 'danger',
+    variant: 'danger',
     children: ['Lorem'],
     onClick: () => {}
   }
 };
 export const DangerHover: Story = {
   args: {
-    'type': 'danger',
+    'variant': 'danger',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-hover': 'true'
@@ -98,7 +98,7 @@ export const DangerHover: Story = {
 };
 export const DangerFocus: Story = {
   args: {
-    'type': 'danger',
+    'variant': 'danger',
     'children': ['Lorem'],
     'onClick': () => {},
     'data-focus': 'true'
@@ -106,7 +106,7 @@ export const DangerFocus: Story = {
 };
 export const DangerDisabled: Story = {
   args: {
-    type: 'danger',
+    variant: 'danger',
     children: ['Lorem'],
     onClick: () => {},
     disabled: true
@@ -115,7 +115,7 @@ export const DangerDisabled: Story = {
 
 export const IconOnly: Story = {
   args: {
-    type: 'icon-only',
+    variant: 'icon-only',
     children: [<TbBold />],
     onClick: () => {}
   }

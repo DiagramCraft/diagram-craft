@@ -8,6 +8,7 @@ import { coalesce } from '@diagram-craft/utils/strings';
 import { Diagram } from '@diagram-craft/model/diagram';
 import React from 'react';
 import type { Property } from '@diagram-craft/model/property';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const DiagramList = (props: { list: readonly Diagram[]; level: number }) => {
   return (
@@ -37,9 +38,9 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
   const diagram = useDiagram();
 
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Type:</div>
-      <div className={'cmp-labeled-table__value'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Type:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={type}
           render={props => (
@@ -56,21 +57,21 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
             </Select.Root>
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
       {type.val === 'url' && (
         <>
-          <div className={'cmp-labeled-table__label'}>URL:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label>URL:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <PropertyEditor property={url} render={props => <TextInput {...props} />} />
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
 
       {type.val === 'diagram' && (
         <>
-          <div className={'cmp-labeled-table__label'}>Diagram:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label>Diagram:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <PropertyEditor
               property={url}
               render={props => (
@@ -79,14 +80,14 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
                 </Select.Root>
               )}
             />
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
 
       {type.val === 'layer' && (
         <>
-          <div className={'cmp-labeled-table__label'}>Layer:</div>
-          <div className={'cmp-labeled-table__value'}>
+          <KeyValueTable.Label>Layer:</KeyValueTable.Label>
+          <KeyValueTable.Value>
             <PropertyEditor
               property={url}
               render={props => (
@@ -99,10 +100,10 @@ export const NodeActionPropertiesPanelForm = ({ type, url }: FormProps) => {
                 </Select.Root>
               )}
             />
-          </div>
+          </KeyValueTable.Value>
         </>
       )}
-    </div>
+    </KeyValueTable.Root>
   );
 };
 

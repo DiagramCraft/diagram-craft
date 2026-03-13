@@ -1,34 +1,34 @@
-.comments-tool-window {
+.icCommentsToolWindow {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
 
-.comments-tool-window__no-comments {
-  text-align: center;
-  color: var(--base-fg-dim);
-  padding: 0.25rem 0;
-}
-
-.comments-tool-window__group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.comments-tool-window__group-title {
-  font-weight: bold;
-  color: var(--base-fg-dim);
-}
-
-.comments-tool-window__thread {
-  margin-bottom: 16px;
-
-  &:last-of-type {
-    margin-bottom: 0;
+  .eNoComments {
+    text-align: center;
+    color: var(--base-fg-dim);
+    padding: 0.25rem 0;
   }
-}
 
-.comments-tool-window__nested-reply {
-  margin-top: 8px;
+  .eGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .eTitle {
+      font-weight: bold;
+      color: var(--base-fg-dim);
+    }
+
+    .eThread {
+      margin-bottom: 16px;
+
+      .eNestedReply {
+        margin-top: 8px;
+      }
+
+      &:last-of-type {
+        margin-bottom: 0;
+      }
+    }
+  }
 }

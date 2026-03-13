@@ -7,6 +7,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const LayoutElementPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -58,65 +59,61 @@ export const LayoutElementPanel = (props: Props) => {
       title={'Layout Properties'}
       hasCheckbox={false}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Width</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div className={'util-hstack'}>
-            <NumberInput
-              value={widthMin.val}
-              onChange={widthMin.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="0"
-              style={{ width: '76px' }}
-            />
-            <div>-</div>
-            <NumberInput
-              value={widthMax.val}
-              onChange={widthMax.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="∞"
-              style={{ width: '76px' }}
-            />
-          </div>
-        </div>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Width</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <NumberInput
+            value={widthMin.val}
+            onChange={widthMin.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="0"
+            style={{ width: '76px' }}
+          />
+          <div>-</div>
+          <NumberInput
+            value={widthMax.val}
+            onChange={widthMax.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="∞"
+            style={{ width: '76px' }}
+          />
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Height</div>
-        <div className={'cmp-labeled-table__value'}>
-          <div className={'util-hstack'}>
-            <NumberInput
-              value={heightMin.val}
-              onChange={heightMin.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="0"
-              style={{ width: '76px' }}
-            />
-            <div>-</div>
-            <NumberInput
-              value={heightMax.val}
-              onChange={heightMax.set}
-              defaultUnit="px"
-              min={0}
-              placeholder="∞"
-              style={{ width: '76px' }}
-            />
-          </div>
-        </div>
+        <KeyValueTable.Label>Height</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
+          <NumberInput
+            value={heightMin.val}
+            onChange={heightMin.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="0"
+            style={{ width: '76px' }}
+          />
+          <div>-</div>
+          <NumberInput
+            value={heightMax.val}
+            onChange={heightMax.set}
+            defaultUnit="px"
+            min={0}
+            placeholder="∞"
+            style={{ width: '76px' }}
+          />
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Aspect Ratio</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Aspect Ratio</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <Checkbox value={preserveAspectRatio.val} onChange={preserveAspectRatio.set} />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Absolute</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Absolute</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <Checkbox value={isAbsolute.val} onChange={isAbsolute.set} />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Grow</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Grow</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             value={grow.val}
             onChange={grow.set}
@@ -124,10 +121,10 @@ export const LayoutElementPanel = (props: Props) => {
             step={1}
             style={{ width: '60px' }}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Shrink</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Shrink</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             value={shrink.val}
             onChange={shrink.set}
@@ -135,8 +132,8 @@ export const LayoutElementPanel = (props: Props) => {
             step={1}
             style={{ width: '60px' }}
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

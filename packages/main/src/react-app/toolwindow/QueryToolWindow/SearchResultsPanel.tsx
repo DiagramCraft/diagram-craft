@@ -59,7 +59,7 @@ export const SearchResultsPanel = ({
           <a
             onClick={() => setViewMode(viewMode === 'text' ? 'preview' : 'text')}
             style={{
-              color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--base-fg-more-dim'
+              color: viewMode === 'preview' ? 'var(--accent-fg)' : 'var(--base-fg-more-dim)'
             }}
             title={viewMode === 'text' ? 'Switch to preview mode' : 'Switch to text mode'}
           >
@@ -68,55 +68,57 @@ export const SearchResultsPanel = ({
         ) : undefined
       }
     >
-      {(results.length === 0 || searchText.trim() === '') && (
-        <div style={{ fontSize: '11px', color: '#666', marginBottom: '0.5rem' }}>
-          {results.length > 0
-            ? `${results.length} result${results.length !== 1 ? 's' : ''}`
-            : searchText.trim()
-              ? 'No results found'
-              : 'Enter text to search'}
-        </div>
-      )}
+      <div className={styles.icSearchResultsPanel}>
+        {(results.length === 0 || searchText.trim() === '') && (
+          <div style={{ fontSize: '11px', color: '#666', marginBottom: '0.5rem' }}>
+            {results.length > 0
+              ? `${results.length} result${results.length !== 1 ? 's' : ''}`
+              : searchText.trim()
+                ? 'No results found'
+                : 'Enter text to search'}
+          </div>
+        )}
 
-      {viewMode === 'text' ? (
-        <div className={styles.searchResultList}>
-          {results.map(element => (
-            <div
-              key={element.id}
-              className={styles.searchResult}
-              onClick={() => onElementClick(element)}
-              onMouseEnter={() => {
-                addHighlight(element, Highlights.NODE__HIGHLIGHT);
-              }}
-              onMouseLeave={() => {
-                removeHighlight(element, Highlights.NODE__HIGHLIGHT);
-              }}
-            >
-              <div>
-                <span className={styles.searchResultIcon}>{getElementIcon(element)}</span>
-                <span className={styles.searchResultText}>
-                  {element.name || `${element.id.substring(0, 8)}...`}
-                </span>
+        {viewMode === 'text' ? (
+          <div className={styles.eResultList}>
+            {results.map(element => (
+              <div
+                key={element.id}
+                className={styles.eResult}
+                onClick={() => onElementClick(element)}
+                onMouseEnter={() => {
+                  addHighlight(element, Highlights.NODE__HIGHLIGHT);
+                }}
+                onMouseLeave={() => {
+                  removeHighlight(element, Highlights.NODE__HIGHLIGHT);
+                }}
+              >
+                <div>
+                  <span className={styles.eIcon}>{getElementIcon(element)}</span>
+                  <span className={styles.eText}>
+                    {element.name || `${element.id.substring(0, 8)}...`}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={`${styles.searchResultGrid} light-theme`}>
-          {results.map(element => (
-            <div
-              key={element.id}
-              className={styles.searchResultPreview}
-              onClick={() => onElementClick(element)}
-              onMouseEnter={() => addHighlight(element, Highlights.NODE__HIGHLIGHT)}
-              onMouseLeave={() => removeHighlight(element, Highlights.NODE__HIGHLIGHT)}
-              title={element.name || `Element ${element.id.substring(0, 8)}...`}
-            >
-              <ElementPreview element={element} size={32} />
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className={`${styles.eResultGrid} light-theme`}>
+            {results.map(element => (
+              <div
+                key={element.id}
+                className={styles.eResultEntry}
+                onClick={() => onElementClick(element)}
+                onMouseEnter={() => addHighlight(element, Highlights.NODE__HIGHLIGHT)}
+                onMouseLeave={() => removeHighlight(element, Highlights.NODE__HIGHLIGHT)}
+                title={element.name || `Element ${element.id.substring(0, 8)}...`}
+              >
+                <ElementPreview element={element} size={32} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </ToolWindowPanel>
   );
 };

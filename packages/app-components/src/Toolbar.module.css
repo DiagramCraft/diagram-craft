@@ -1,12 +1,17 @@
-.cmp-toolbar {
+/**
+ *  Toolbar - .cToolbar
+ *  | Button [1..*] - .eButton
+ *  | DropdownButton [1..*] - .eDropdownButton
+ *  | Separator [1..*] - .eSeparator
+ */
+:global(.cToolbar) {
   display: flex;
   padding: 4px 0 0 2px;
   width: 100%;
   max-width: 100%;
   min-width: min-content;
 
-
-  .cmp-toolbar__button {
+  .eButton {
     flex: 0 0 auto;
     color: var(--cmp-fg);
     background-color: transparent;
@@ -20,43 +25,29 @@
     justify-content: center;
     margin-left: 2px;
 
-    /* Note, this is a bit of a hack to make some icon details red */
-
-    .svg__remove {
-      path:nth-child(3), path:nth-child(4) {
-        stroke: #BB0000;
-      }
-    }
-
-    .svg__insert {
-      path:nth-child(3), path:nth-child(4) {
-        stroke: #00BB00;
-      }
-    }
-
     &:disabled > svg > path:nth-child(n + 2) {
       stroke: currentColor !important;
     }
   }
 
-  .cmp-toolbar__button[data-state='on'],
-  .cmp-toolbar__button[data-pressed] {
+  .eButton[data-state='on'],
+  .eButton[data-pressed] {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
-  .cmp-toolbar__button[data-state='on'] + .cmp-toolbar__button--more,
-  .cmp-toolbar__button[data-pressed] + .cmp-toolbar__button--more {
+  .eButton[data-state='on'] + .eDropdownButton,
+  .eButton[data-pressed] + .eDropdownButton {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
-  &:has(+ .cmp-toolbar__button--more) {
+  &:has(+ .eDropdownButton) {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
-  
-  .cmp-toolbar__button--more {
+
+  .eDropdownButton {
     width: 10px;
     margin-left: -2px;
     margin-right: 2px;
@@ -71,29 +62,29 @@
     }
   }
 
-  .cmp-toolbar__button:hover,
-  .cmp-toolbar__button[data-hover='true'] {
+  .eButton:hover,
+  .eButton[data-hover='true'] {
     color: var(--accent-fg);
     background-color: var(--accent-bg);
   }
 
-  .cmp-toolbar__button:disabled {
+  .eButton:disabled {
     color: var(--cmp-fg-disabled);
     /* TODO: Is there a better way to disable hover when in disabled state */
     pointer-events: none;
   }
 
-  .cmp-toolbar__button:first-child {
+  .eButton:first-child {
     margin-left: 0;
   }
 
-  .cmp-toolbar__separator {
+  .eSeparator {
     width: 1px;
     background-color: var(--cmp-border);
     margin: 0 10px 4px 10px;
   }
 
-  .cmp-select-trigger + .cmp-toolbar__separator {
+  .cSelectTrigger + .eSeparator {
     margin-left: 12px;
   }
 
@@ -107,8 +98,7 @@
     flex-direction: column;
     padding: 0 !important;
 
-
-    .cmp-toolbar__button {
+    .eButton {
       width: 25px;
       height: 25px;
       flex: 0 0 auto;
@@ -127,13 +117,29 @@
     overflow: auto;
     flex-wrap: nowrap;
 
-    .cmp-toolbar__button {
+    .eButton {
       padding: 15px 10px;
       margin-right: 2px;
     }
 
-    .cmp-toolbar__separator {
+    .eSeparator {
       margin: 0 10px;
     }
+  }
+
+  div:has(> :global(.cSelectTrigger)) {
+    margin-top: -2px;
+  }
+
+  :global(.cSelectTrigger) {
+    margin: 0 0 0 4px;
+    border-color: transparent;
+    font-size: 10px;
+  }
+
+  div[data-field-state='set'],
+  button[data-field-state='set'],
+  input[type="checkbox"][data-field-state='set'] {
+    border: 1px solid transparent !important;
   }
 }

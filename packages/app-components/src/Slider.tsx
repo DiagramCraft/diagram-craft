@@ -5,7 +5,7 @@ import { Slider as BaseUISlider } from '@base-ui/react/slider';
 
 export const Slider = (props: Props) => {
   return (
-    <div className={styles.cmpSlider} {...extractMouseEvents(props)}>
+    <div className={styles.cSlider} {...extractMouseEvents(props)}>
       <BaseUISlider.Root
         defaultValue={props.value}
         value={props.value}
@@ -15,11 +15,11 @@ export const Slider = (props: Props) => {
         disabled={props.disabled || props.isIndeterminate}
         onValueChange={v => props.onChange(v)}
       >
-        <BaseUISlider.Control className={styles.cmpSliderSlider}>
-          <BaseUISlider.Track className={styles.cmpSliderTrack}>
-            <BaseUISlider.Indicator className={styles.cmpSliderRange} />
+        <BaseUISlider.Control className={styles.eSlider}>
+          <BaseUISlider.Track className={styles.eTrack}>
+            <BaseUISlider.Indicator className={styles.eIndicator} />
             <BaseUISlider.Thumb
-              className={styles.cmpSliderThumb}
+              className={styles.eThumb}
               {...extractDataAttributes(props, ['thumb-hover', 'thumb-focus'])}
             />
           </BaseUISlider.Track>

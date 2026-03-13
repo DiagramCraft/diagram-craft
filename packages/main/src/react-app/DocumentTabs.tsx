@@ -12,6 +12,7 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
 import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
 import { mustExist } from '@diagram-craft/utils/assert';
+import styles from './DocumentTabs.module.css';
 
 const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
 
@@ -116,7 +117,7 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
   return (
     <BaseUITabs.Tab
       key={d.id}
-      className="cmp-document-tabs__tab-trigger util-vcenter"
+      className={styles.eTab}
       value={d.id}
       id={`tab-${d.id}`}
       onDoubleClick={() => {
@@ -185,7 +186,7 @@ export const DocumentTabs = (props: Props) => {
   });
 
   return (
-    <div className={'cmp-document-tabs'}>
+    <div className={styles.icDocumentTabs}>
       <BaseUITabs.Root
         value={selection}
         onValueChange={d => {
@@ -194,7 +195,7 @@ export const DocumentTabs = (props: Props) => {
       >
         <BaseUITabs.List
           ref={tabsListRef}
-          className="cmp-document-tabs__tabs"
+          className={styles.eList}
           aria-label="Diagrams in document"
         >
           {props.document.diagrams.map(d => (
@@ -203,7 +204,7 @@ export const DocumentTabs = (props: Props) => {
         </BaseUITabs.List>
       </BaseUITabs.Root>
       <button
-        className={'cmp-document-tabs__add'}
+        className={styles.eAddBtn}
         type="button"
         onClick={() => application.actions['DIAGRAM_ADD']?.execute({})}
       >

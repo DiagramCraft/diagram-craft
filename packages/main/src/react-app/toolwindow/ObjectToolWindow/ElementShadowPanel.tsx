@@ -8,6 +8,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   diagram: Diagram;
@@ -29,9 +30,9 @@ export const ElementShadowPanelForm = ({
   blur
 }: FormProps) => {
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value stack={'horizontal'}>
         <PropertyEditor
           property={color}
           render={props => (
@@ -52,9 +53,10 @@ export const ElementShadowPanelForm = ({
             <NumberInput {...props} style={{ width: '45px' }} min={0} max={100} defaultUnit={'%'} />
           )}
         />
-      </div>
-      <div className={'cmp-labeled-table__label'}>Position:</div>
-      <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      </KeyValueTable.Value>
+
+      <KeyValueTable.Label>Position:</KeyValueTable.Label>
+      <KeyValueTable.Value stack={'horizontal'}>
         <PropertyEditor
           property={x}
           render={p => <NumberInput {...p} style={{ width: '45px' }} defaultUnit={'px'} />}
@@ -67,8 +69,8 @@ export const ElementShadowPanelForm = ({
           property={blur}
           render={p => <NumberInput {...p} min={0} style={{ width: '45px' }} defaultUnit={'px'} />}
         />
-      </div>
-    </div>
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
   );
 };
 

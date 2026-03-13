@@ -17,6 +17,8 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { findEntryBySchema, hasDataForSchema } from '@diagram-craft/canvas-app/externalDataHelpers';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DataFields } from './DataFields';
+import { LinkButton } from '@diagram-craft/app-components/Button';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const ExtendedDataTab = () => {
   const $d = useDiagram();
@@ -145,8 +147,6 @@ export const ExtendedDataTab = () => {
     )
   ).filter((schema): schema is string => schema !== undefined);
 
-  if ($d.selection.elements.length !== 1) return null;
-
   const mustHaveSchemas = new Set<string>();
   $d.selection.elements
     .filter(isNode)
@@ -156,13 +156,13 @@ export const ExtendedDataTab = () => {
   return (
     <>
       <ToolWindow.TabActions>
-        <a
-          className={'cmp-button cmp-button--icon-only'}
+        <LinkButton
+          variant={'icon-only'}
           style={{ color: !editMode ? 'var(--accent-fg)' : undefined }}
           onClick={() => setEditMode(v => !v)}
         >
           {editMode ? <TbFilterOff /> : <TbFilter />}
-        </a>
+        </LinkButton>
       </ToolWindow.TabActions>
       <ToolWindow.TabContent>
         <ToolWindowPanel
@@ -171,167 +171,164 @@ export const ExtendedDataTab = () => {
           mode={'headless-no-padding'}
           style={{ padding: '0', borderBottom: 'none' }}
         >
-          <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
-            {/* Show all schemas, but conditionally render content */}
-            {$d.document.data.db.schemas
-              .filter(schema => {
-                const isSchemaEnabled = enabledSchemas.includes(schema.id);
-                const metadata = $d.document.data.getSchemaMetadata(schema.id);
-                const isAvailableForLocalData = metadata.availableForElementLocalData ?? false;
-                return isSchemaEnabled || isAvailableForLocalData;
-              })
-              .map(schema => {
-                const isSchemaEnabled = enabledSchemas.includes(schema.id);
-                const isExternal = $d.selection.elements.some(
-                  e => e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
-                );
-                const isExternalSchema = schema.providerId !== 'document';
+          {$d.selection.elements.length !== 1 && ''}
+          {$d.selection.elements.length === 1 && (
+            <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
+              {/* Show all schemas, but conditionally render content */}
+              {$d.document.data.db.schemas
+                .filter(schema => {
+                  const isSchemaEnabled = enabledSchemas.includes(schema.id);
+                  const metadata = $d.document.data.getSchemaMetadata(schema.id);
+                  const isAvailableForLocalData = metadata.availableForElementLocalData ?? false;
+                  return isSchemaEnabled || isAvailableForLocalData;
+                })
+                .map(schema => {
+                  const isSchemaEnabled = enabledSchemas.includes(schema.id);
+                  const isExternal = $d.selection.elements.some(
+                    e =>
+                      e.metadata.data?.data?.find(d => d.schema === schema.id)?.type === 'external'
+                  );
+                  const isExternalSchema = schema.providerId !== 'document';
 
-                if (!editMode && !isSchemaEnabled) return null;
-                return (
-                  <Accordion.Item key={schema.id} value={schema.id}>
-                    <Accordion.ItemHeader>
-                      <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
-                        {editMode && (
-                          <input
-                            className="cmp-accordion__enabled"
-                            type={'checkbox'}
-                            disabled={isSchemaEnabled && mustHaveSchemas.has(schema.id)}
-                            checked={isSchemaEnabled}
-                            onChange={e => {
-                              const isChecked = e.target.checked;
-                              const accordionItem = e.target.closest(
-                                '.cmp-accordion__item'
-                              ) as HTMLElement;
-                              const accordionContent = accordionItem.querySelector(
-                                '.cmp-accordion__content'
-                              ) as HTMLElement;
-                              const accordionHeader = accordionItem.querySelector(
-                                '.cmp-accordion__header'
-                              ) as HTMLElement;
+                  if (!editMode && !isSchemaEnabled) return null;
+                  return (
+                    <Accordion.Item key={schema.id} value={schema.id}>
+                      <Accordion.ItemHeader>
+                        <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
+                          {editMode && (
+                            <input
+                              type={'checkbox'}
+                              disabled={isSchemaEnabled && mustHaveSchemas.has(schema.id)}
+                              checked={isSchemaEnabled}
+                              onChange={e => {
+                                const isChecked = e.target.checked;
 
-                              if (isChecked) {
-                                accordionItem.dataset.state = 'open';
-                                accordionContent.dataset.state = 'open';
-                                accordionHeader.dataset.state = 'open';
-                                addSchemaToSelection(schema.id);
-                              } else {
-                                // Check if any element has data for this schema
-                                const hasData = $d.selection.elements.some(el =>
-                                  hasDataForSchema(el, schema.id)
-                                );
+                                const { accordionItem, accordionContent, accordionHeader } =
+                                  Accordion.getAccordion(e.target);
 
-                                if (hasData) {
-                                  // Show confirmation dialog
-                                  application.ui.showDialog(
-                                    new MessageDialogCommand(
-                                      {
-                                        title: 'Disable schema',
-                                        message: `This will remove all data for "${schema.name}" from the selected element(s). Are you sure?`,
-                                        okLabel: 'Remove',
-                                        okType: 'danger',
-                                        cancelLabel: 'Cancel'
-                                      },
-                                      () => {
-                                        accordionItem.dataset.state = 'closed';
-                                        accordionContent.dataset.state = 'closed';
-                                        accordionHeader.dataset.state = 'closed';
-                                        removeSchemaFromSelection(schema.id);
-                                        redraw();
-                                      },
-                                      () => {
-                                        // On cancel, reset the checkbox
-                                        e.target.checked = true;
-                                        redraw();
-                                      }
-                                    )
-                                  );
+                                if (isChecked) {
+                                  accordionItem.dataset.state = 'open';
+                                  accordionContent.dataset.state = 'open';
+                                  accordionHeader.dataset.state = 'open';
+                                  addSchemaToSelection(schema.id);
                                 } else {
-                                  accordionItem.dataset.state = 'closed';
-                                  accordionContent.dataset.state = 'closed';
-                                  accordionHeader.dataset.state = 'closed';
-                                  removeSchemaFromSelection(schema.id);
+                                  // Check if any element has data for this schema
+                                  const hasData = $d.selection.elements.some(el =>
+                                    hasDataForSchema(el, schema.id)
+                                  );
+
+                                  if (hasData) {
+                                    // Show confirmation dialog
+                                    application.ui.showDialog(
+                                      new MessageDialogCommand(
+                                        {
+                                          title: 'Disable schema',
+                                          message: `This will remove all data for "${schema.name}" from the selected element(s). Are you sure?`,
+                                          okLabel: 'Remove',
+                                          okType: 'danger',
+                                          cancelLabel: 'Cancel'
+                                        },
+                                        () => {
+                                          accordionItem.dataset.state = 'closed';
+                                          accordionContent.dataset.state = 'closed';
+                                          accordionHeader.dataset.state = 'closed';
+                                          removeSchemaFromSelection(schema.id);
+                                          redraw();
+                                        },
+                                        () => {
+                                          // On cancel, reset the checkbox
+                                          e.target.checked = true;
+                                          redraw();
+                                        }
+                                      )
+                                    );
+                                  } else {
+                                    accordionItem.dataset.state = 'closed';
+                                    accordionContent.dataset.state = 'closed';
+                                    accordionHeader.dataset.state = 'closed';
+                                    removeSchemaFromSelection(schema.id);
+                                  }
                                 }
-                              }
-                            }}
-                            onClick={e => e.stopPropagation()}
-                          />
-                        )}
-
-                        <span>{schema.name}</span>
-                      </div>
-                      <Accordion.ItemHeaderButtons>
-                        {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            style={{ marginRight: '0.5rem' }}
-                            onClick={() => editExternalData(schema.id)}
-                            title="Edit external data"
-                          >
-                            <TbPencil />
-                          </a>
-                        )}
-                        {isExternal && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            onClick={() => clearExternalLinkage(schema.id)}
-                            title="Unlink external data"
-                            style={{ color: 'var(--accent-fg)' }}
-                          >
-                            <TbLinkOff />
-                          </a>
-                        )}
-                        {!isExternal && isExternalSchema && (
-                          <a
-                            className={'cmp-button cmp-button--icon-only'}
-                            onClick={() => addExternalLinkage(schema)}
-                            title="Link to external data"
-                          >
-                            <TbLink />
-                          </a>
-                        )}
-                      </Accordion.ItemHeaderButtons>
-                    </Accordion.ItemHeader>
-                    <Accordion.ItemContent forceMount={true}>
-                      <div className={'cmp-labeled-table'}>
-                        <DataFields schema={schema} disabled={isExternal} />
-                      </div>
-                    </Accordion.ItemContent>
-                  </Accordion.Item>
-                );
-              })}
-
-            {customDataKeys.length > 0 && (
-              <Accordion.Item value={'_custom'}>
-                <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
-                <Accordion.ItemContent>
-                  <div className={'cmp-labeled-table'}>
-                    {customDataKeys.map(k => {
-                      const v = unique(
-                        $d.selection.elements.map(
-                          e => e.metadata.data?.customData?.[k]?.toString() ?? ''
-                        )
-                      );
-
-                      return (
-                        <React.Fragment key={k}>
-                          <div className={'cmp-labeled-table__label util-a-top-center'}>{k}:</div>
-                          <div className={'cmp-labeled-table__value'}>
-                            <TextArea
-                              value={v[0] ?? ''}
-                              isIndeterminate={v.length > 1}
-                              style={{ height: '40px' }}
-                              onChange={v => changeCustomCallback(k, v)}
+                              }}
+                              onClick={e => e.stopPropagation()}
                             />
-                          </div>
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                </Accordion.ItemContent>
-              </Accordion.Item>
-            )}
-          </Accordion.Root>
+                          )}
+
+                          <span>{schema.name}</span>
+                        </div>
+                        <Accordion.ItemHeaderButtons>
+                          {isExternal && (
+                            <LinkButton
+                              variant={'icon-only'}
+                              style={{ marginRight: '0.5rem' }}
+                              onClick={() => editExternalData(schema.id)}
+                              title="Edit external data"
+                            >
+                              <TbPencil />
+                            </LinkButton>
+                          )}
+                          {isExternal && (
+                            <LinkButton
+                              variant={'icon-only'}
+                              onClick={() => clearExternalLinkage(schema.id)}
+                              title="Unlink external data"
+                              style={{ color: 'var(--accent-fg)' }}
+                            >
+                              <TbLinkOff />
+                            </LinkButton>
+                          )}
+                          {!isExternal && isExternalSchema && (
+                            <LinkButton
+                              variant={'icon-only'}
+                              onClick={() => addExternalLinkage(schema)}
+                              title="Link to external data"
+                            >
+                              <TbLink />
+                            </LinkButton>
+                          )}
+                        </Accordion.ItemHeaderButtons>
+                      </Accordion.ItemHeader>
+                      <Accordion.ItemContent forceMount={true}>
+                        <KeyValueTable.Root>
+                          <DataFields schema={schema} disabled={isExternal} />
+                        </KeyValueTable.Root>
+                      </Accordion.ItemContent>
+                    </Accordion.Item>
+                  );
+                })}
+
+              {customDataKeys.length > 0 && (
+                <Accordion.Item value={'_custom'}>
+                  <Accordion.ItemHeader>Custom data</Accordion.ItemHeader>
+                  <Accordion.ItemContent>
+                    <KeyValueTable.Root>
+                      {customDataKeys.map(k => {
+                        const v = unique(
+                          $d.selection.elements.map(
+                            e => e.metadata.data?.customData?.[k]?.toString() ?? ''
+                          )
+                        );
+
+                        return (
+                          <React.Fragment key={k}>
+                            <KeyValueTable.Label valign={'top'}>{k}:</KeyValueTable.Label>
+                            <KeyValueTable.Value>
+                              <TextArea
+                                value={v[0] ?? ''}
+                                isIndeterminate={v.length > 1}
+                                style={{ height: '40px' }}
+                                onChange={v => changeCustomCallback(k, v)}
+                              />
+                            </KeyValueTable.Value>
+                          </React.Fragment>
+                        );
+                      })}
+                    </KeyValueTable.Root>
+                  </Accordion.ItemContent>
+                </Accordion.Item>
+              )}
+            </Accordion.Root>
+          )}
         </ToolWindowPanel>
       </ToolWindow.TabContent>
       <EditItemDialog

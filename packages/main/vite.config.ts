@@ -29,7 +29,6 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
     css: {
       modules: {
         exportGlobals: true,
-        scopeBehaviour: 'global',
         localsConvention: 'camelCase'
       }
     },

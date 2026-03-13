@@ -8,6 +8,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import React, { useCallback } from 'react';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const DataField = (props: {
   field: DataSchemaField;
@@ -16,8 +17,8 @@ const DataField = (props: {
   onChange: (v: boolean | string | undefined) => void;
 }) => (
   <React.Fragment>
-    <dt>{props.field.name}:</dt>
-    <dd data-type={props.field.type} data-label={props.field.name}>
+    <KeyValueTable.Label valign={'top'}>{props.field.name}:</KeyValueTable.Label>
+    <KeyValueTable.Value data-type={props.field.type} data-label={props.field.name}>
       <div style={{ display: 'inline-block' }}>
         {props.field.type === 'text' && (
           <TextInput
@@ -60,7 +61,7 @@ const DataField = (props: {
           </Select.Root>
         )}
       </div>
-    </dd>
+    </KeyValueTable.Value>
   </React.Fragment>
 );
 
@@ -91,7 +92,7 @@ export const DataFields = (props: { schema: DataSchema; disabled?: boolean }) =>
   );
 
   return (
-    <dl>
+    <>
       {props.schema.fields.map(field => {
         const values = unique(
           $d.selection.elements.map(e => {
@@ -114,6 +115,6 @@ export const DataFields = (props: { schema: DataSchema; disabled?: boolean }) =>
           />
         );
       })}
-    </dl>
+    </>
   );
 };

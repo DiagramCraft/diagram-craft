@@ -17,6 +17,8 @@ import {
   jsonHighlighter,
   SyntaxHighlightingEditor
 } from '@diagram-craft/app-components/SyntaxHighlightingEditor';
+import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
+import styles from '../QueryResponse.module.css';
 
 const replacer = (key: string, value: unknown) => {
   // Skip private properties (starting with _)
@@ -163,14 +165,14 @@ export const DJQLSearchTab = () => {
               }}
             >
               <Button
-                type={'secondary'}
+                variant={'secondary'}
                 onClick={() => {
                   setExpanded([]);
                 }}
               >
                 Save as...
               </Button>
-              <Button type={'secondary'} onClick={() => exportToFile()}>
+              <Button variant={'secondary'} onClick={() => exportToFile()}>
                 Export
               </Button>
               <a
@@ -203,12 +205,12 @@ export const DJQLSearchTab = () => {
             id={'response'}
             title={`Query Response ${res ? `(${res.length} hits)` : 0}`}
           >
-            <div className={'cmp-query-response'}>
-              {!!error && <div className={'cmp-error'}>{error}</div>}
+            <div className={styles.icQueryResponse}>
+              {!!error && <ErrorMessage>{error}</ErrorMessage>}
               {res?.map((e, idx) => (
                 <div
                   key={idx}
-                  className={`cmp-query-response__item ${expanded.includes(idx) ? 'cmp-query-response__item--expanded' : ''}`}
+                  className={`${styles.eItem} ${expanded.includes(idx) ? styles.eItemExpanded : ''}`}
                   style={{
                     cursor: 'pointer'
                   }}
@@ -243,11 +245,11 @@ export const DJQLSearchTab = () => {
                         gap: '0.25rem'
                       }}
                     >
-                      <Button type={'icon-only'}>
+                      <Button variant={'icon-only'}>
                         <TbArrowDownRight />
                       </Button>
                       <Button
-                        type={'icon-only'}
+                        variant={'icon-only'}
                         onClick={ev => {
                           navigator.clipboard.writeText(
                             JSON.stringify(e, replacer, expanded.includes(idx) ? 2 : undefined)

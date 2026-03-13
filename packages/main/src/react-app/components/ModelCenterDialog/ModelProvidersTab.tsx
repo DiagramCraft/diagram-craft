@@ -29,9 +29,9 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
   const [dataUrl, setDataUrl] = useState<string>(props.provider.dataUrl || '');
   const [schemaUrl, setSchemaUrl] = useState<string>(props.provider.schemaUrl || '');
   return (
-    <div className={styles.modelProvidersTabStack}>
-      <div className={styles.modelProvidersTabSettingsGroup}>
-        <label className={styles.modelProvidersTabSettingsLabel}>{'Data URL'}:</label>
+    <div className={styles.eFieldStack}>
+      <div className={styles.eSettingsGroup}>
+        <label className={styles.eLabel}>{'Data URL'}:</label>
         <TextInput
           type="text"
           value={dataUrl}
@@ -41,8 +41,8 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
           }}
         />
       </div>
-      <div className={styles.modelProvidersTabSettingsGroup}>
-        <label className={styles.modelProvidersTabSettingsLabel}>{'Schema URL'}:</label>
+      <div className={styles.eSettingsGroup}>
+        <label className={styles.eLabel}>{'Schema URL'}:</label>
         <TextInput
           value={schemaUrl}
           onChange={v => {
@@ -58,9 +58,9 @@ const UrlDataProviderSettings = (props: ProviderSettingsProps<UrlDataProvider>) 
 const RESTDataProviderSettings = (props: ProviderSettingsProps<RESTDataProvider>) => {
   const [baseUrl, setBaseUrl] = useState<string>(props.provider.baseUrl || '');
   return (
-    <div className={styles.modelProvidersTabStack}>
-      <div className={styles.modelProvidersTabSettingsGroup}>
-        <label className={styles.modelProvidersTabSettingsLabel}>{'Base URL'}:</label>
+    <div className={styles.eFieldStack}>
+      <div className={styles.eSettingsGroup}>
+        <label className={styles.eLabel}>{'Base URL'}:</label>
         <TextInput
           type="text"
           value={baseUrl}
@@ -231,20 +231,20 @@ export const ModelProvidersTab = () => {
   };
 
   return (
-    <>
-      <div className={styles.modelProvidersTabStack}>
-        <div className={styles.modelProvidersTabHeader}>
-          <p className={styles.modelProvidersTabTitle}>Model Providers</p>
-          <div className={styles.modelProvidersTabHeaderActions}>
+    <div className={styles.icModelProvidersTab}>
+      <div className={styles.eFieldStack}>
+        <div className={styles.eTabHeader}>
+          <p className={styles.eTitle}>Model Providers</p>
+          <div className={styles.eActions}>
             <Button
-              type="secondary"
+              variant="secondary"
               onClick={handleRefreshAll}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
               <TbRefresh /> Refresh All
             </Button>
             <Button
-              type="secondary"
+              variant="secondary"
               onClick={handleAddProvider}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -253,20 +253,26 @@ export const ModelProvidersTab = () => {
           </div>
         </div>
 
-        {errorMessage && <div className={styles.modelProvidersTabErrorMessage}>{errorMessage}</div>}
+        {errorMessage && (
+          <div className={styles.icMessage} data-type="error">
+            {errorMessage}
+          </div>
+        )}
         {successMessage && (
-          <div className={styles.modelProvidersTabSuccessMessage}>{successMessage}</div>
+          <div className={styles.icMessage} data-type="success">
+            {successMessage}
+          </div>
         )}
 
         {providers.length === 0 ? (
-          <div className={styles.modelProvidersTabEmptyState}>
+          <div className={styles.eEmptyState}>
             <p>No providers configured</p>
-            <Button type="primary" onClick={handleAddProvider}>
+            <Button variant="primary" onClick={handleAddProvider}>
               <TbPlus /> Add Your First Provider
             </Button>
           </div>
         ) : (
-          <table className={styles.modelProvidersTabTable}>
+          <table className={styles.eTable}>
             <thead>
               <tr>
                 <th>ID</th>
@@ -282,9 +288,9 @@ export const ModelProvidersTab = () => {
                   <td>{getProviderTypeName(providerWithId.provider.providerId)}</td>
                   <td>{getProviderConfigDisplay(providerWithId.provider)}</td>
                   <td>
-                    <div className={styles.modelProvidersTabTableActions}>
+                    <div className={styles.eActions}>
                       <Button
-                        type="icon-only"
+                        variant="icon-only"
                         onClick={() => handleEditProvider(providerWithId)}
                         title="Edit provider"
                         disabled={providerWithId.isFirst}
@@ -293,7 +299,7 @@ export const ModelProvidersTab = () => {
                       </Button>
                       {!providerWithId.isFirst && (
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => handleDeleteProvider(providerWithId)}
                           title="Delete provider"
                         >
@@ -319,7 +325,7 @@ export const ModelProvidersTab = () => {
           onCancel={() => setEditingProvider({ open: false })}
         />
       )}
-    </>
+    </div>
   );
 };
 
@@ -370,6 +376,7 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
       title={props.isNew ? 'Add Provider' : 'Edit Provider'}
       open={props.open}
       onClose={props.onCancel}
+      className={styles.icProvidersEditDialog}
       buttons={[
         {
           label: props.isNew ? 'Add' : 'Save',
@@ -383,9 +390,9 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
         }
       ]}
     >
-      <div className={styles.modelProvidersTabDialogContent}>
-        <div className={styles.modelProvidersTabProviderGroup}>
-          <label className={styles.modelProvidersTabProviderLabel}>Provider name:</label>
+      <div className={styles.eContent}>
+        <div className={styles.eGroup}>
+          <label className={styles.eLabel}>Provider name:</label>
           <TextInput
             value={id}
             onChange={v => {
@@ -395,15 +402,19 @@ const ProviderEditDialog = (props: ProviderEditDialogProps) => {
             disabled={!props.isNew}
           />
           {isIdTaken && (
-            <div className={styles.modelProvidersTabErrorMessage}>This name is already taken</div>
+            <div className={styles.icMessage} data-type={'error'}>
+              This name is already taken
+            </div>
           )}
           {edited && id.trim() === '' && (
-            <div className={styles.modelProvidersTabErrorMessage}>Provider name is required</div>
+            <div className={styles.icMessage} data-type={'error'}>
+              Provider name is required
+            </div>
           )}
         </div>
 
-        <div className={styles.modelProvidersTabProviderGroup}>
-          <label className={styles.modelProvidersTabProviderLabel}>Provider Type:</label>
+        <div className={styles.eGroup}>
+          <label className={styles.eLabel}>Provider Type:</label>
           <Select.Root value={selectedProviderId} onChange={v => v && handleProviderTypeChange(v)}>
             <Select.Item value={UrlDataProviderId}>URL</Select.Item>
             <Select.Item value={RestDataProviderId}>REST API</Select.Item>

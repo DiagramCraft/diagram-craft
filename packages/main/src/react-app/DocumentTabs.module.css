@@ -1,0 +1,80 @@
+.icDocumentTabs {
+  overflow: hidden;
+  display: flex;
+  max-width: 100%;
+
+  > div:first-child {
+    max-width: calc(100% - 50px);
+    overflow: scroll;
+    scrollbar-width: none;
+  }
+
+  .eList {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    background-color: var(--panel-bg);
+
+
+    .eTab {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      color: var(--panel-fg);
+      background-color: transparent;
+      border: none;
+      border-right: 1px solid var(--cmp-border);
+      border-bottom: 2px solid transparent;
+      min-width: max-content;
+      padding: 0;
+
+      &:last-child {
+        border-right-width: 0;
+      }
+
+      & > div {
+        padding: 1px 8px 2px 8px;
+        min-width: max-content;
+        display: flex;
+        align-items: center;
+      }
+
+      &:hover {
+        background-color: var(--cmp-bg-hover);
+      }
+
+      &[data-active] {
+        color: var(--cmp-fg);
+        border-bottom: 2px solid var(--accent-chroma);
+      }
+
+      &[draggable="true"] {
+        cursor: grab;
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      &[data-pendingdrop="before"] {
+        border-left: 2px solid var(--cmp-fg);
+      }
+
+      &[data-pendingdrop="after"] {
+        border-right: 2px solid var(--cmp-fg);
+      }
+    }
+  }
+
+  .eAddBtn {
+    background-color: transparent;
+    border-right: 1px solid var(--cmp-border);
+    border-left: 1px solid var(--cmp-border);
+    color: var(--panel-fg);
+
+    &:hover {
+      background-color: var(--cmp-bg-hover);
+      color: var(--accent-fg-hover);
+    }
+  }
+}

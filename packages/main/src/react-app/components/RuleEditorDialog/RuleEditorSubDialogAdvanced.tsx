@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import type { SubRuleEditorDialogRef } from './RuleEditorDialog';
 import type { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import type { EditorTypes } from './editors';
@@ -63,108 +63,100 @@ export const RuleEditorSubDialogAdvanced = forwardRef<
   };
 
   return (
-    <div style={{ marginTop: '0.5rem', display: 'grid', gap: '0.25rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.25rem' }}>
-        <h4 className={styles.ruleEditor__sectionTitle} style={{ margin: 0 }}>
-          Triggers
-        </h4>
-        <Button type={'icon-only'} onClick={addTrigger} style={{ marginLeft: 'auto' }}>
+    <div className={styles.icRuleEditorSubDialogAdvanced}>
+      <div className={styles.eHeader}>
+        <h4 className={styles.eTitle}>Triggers</h4>
+        <Button variant={'icon-only'} onClick={addTrigger} style={{ marginLeft: 'auto' }}>
           <TbPlus /> Add
         </Button>
       </div>
-      {triggers.length === 0 && (
-        <div style={{ color: 'var(--base-fg-dim)' }}>No triggers defined</div>
-      )}
-      {triggers.map((trigger, idx) => (
-        <div key={idx} className={styles.ruleEditor__clause}>
-          <div className={styles.ruleEditorClause__select}>
-            <Select.Root
-              value={trigger.type}
-              onChange={type => {
-                if (type === 'interval') {
-                  updateTrigger(idx, { type: 'interval', interval: 15 });
-                } else if (type === 'element') {
-                  updateTrigger(idx, { type: 'element', elementType: 'node' });
-                } else if (type === 'data') {
-                  updateTrigger(idx, { type: 'data', schema: '' });
-                }
-              }}
-            >
-              <Select.Item value={'interval'}>Interval</Select.Item>
-              <Select.Item value={'element'}>Element</Select.Item>
-              <Select.Item value={'data'}>Data</Select.Item>
-            </Select.Root>
-          </div>
+      {triggers.length === 0 && <div className={styles.eEmpty}>No triggers defined</div>}
 
-          <div className={styles.ruleEditorClause__props}>
-            {trigger.type === 'interval' && (
-              <div className={styles.ruleEditorClause__propsRow}>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <TextInput
-                    type="number"
-                    value={trigger.interval.toString()}
-                    onChange={v => {
-                      const interval = parseInt(v ?? '', 10);
-                      if (!Number.isNaN(interval)) {
-                        updateTrigger(idx, { type: 'interval', interval });
-                      }
-                    }}
-                  />
-                  <span>&nbsp;s</span>
+      <div className={styles.eTriggers}>
+        {triggers.map((trigger, idx) => (
+          <div key={idx} className={styles.eClause}>
+            <div className={styles.eSelect}>
+              <Select.Root
+                value={trigger.type}
+                onChange={type => {
+                  if (type === 'interval') {
+                    updateTrigger(idx, { type: 'interval', interval: 15 });
+                  } else if (type === 'element') {
+                    updateTrigger(idx, { type: 'element', elementType: 'node' });
+                  } else if (type === 'data') {
+                    updateTrigger(idx, { type: 'data', schema: '' });
+                  }
+                }}
+              >
+                <Select.Item value={'interval'}>Interval</Select.Item>
+                <Select.Item value={'element'}>Element</Select.Item>
+                <Select.Item value={'data'}>Data</Select.Item>
+              </Select.Root>
+            </div>
+
+            <div className={styles.eProps}>
+              {trigger.type === 'interval' && (
+                <div className={styles.ePropsRow}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <TextInput
+                      type="number"
+                      value={trigger.interval.toString()}
+                      onChange={v => {
+                        const interval = parseInt(v ?? '', 10);
+                        if (!Number.isNaN(interval)) {
+                          updateTrigger(idx, { type: 'interval', interval });
+                        }
+                      }}
+                    />
+                    <span>&nbsp;s</span>
+                  </div>
                 </div>
-              </div>
-            )}
-            {trigger.type === 'element' && (
-              <div className={styles.ruleEditorClause__propsRow}>
-                <Select.Root
-                  value={trigger.elementType}
-                  onChange={elementType => {
-                    updateTrigger(idx, {
-                      type: 'element',
-                      elementType: elementType as 'edge' | 'node'
-                    });
-                  }}
-                >
-                  <Select.Item value={'node'}>Node</Select.Item>
-                  <Select.Item value={'edge'}>Edge</Select.Item>
-                </Select.Root>
-              </div>
-            )}
-            {trigger.type === 'data' && (
-              <div className={styles.ruleEditorClause__propsRow}>
-                <Select.Root
-                  value={trigger.schema}
-                  placeholder="Select schema"
-                  onChange={schemaId => {
-                    updateTrigger(idx, { type: 'data', schema: schemaId ?? '' });
-                  }}
-                >
-                  {diagram.document.data.db.schemas.map(schema => (
-                    <Select.Item key={schema.id} value={schema.id}>
-                      {schema.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </div>
-            )}
-          </div>
+              )}
+              {trigger.type === 'element' && (
+                <div className={styles.ePropsRow}>
+                  <Select.Root
+                    value={trigger.elementType}
+                    onChange={elementType => {
+                      updateTrigger(idx, {
+                        type: 'element',
+                        elementType: elementType as 'edge' | 'node'
+                      });
+                    }}
+                  >
+                    <Select.Item value={'node'}>Node</Select.Item>
+                    <Select.Item value={'edge'}>Edge</Select.Item>
+                  </Select.Root>
+                </div>
+              )}
+              {trigger.type === 'data' && (
+                <div className={styles.ePropsRow}>
+                  <Select.Root
+                    value={trigger.schema}
+                    placeholder="Select schema"
+                    onChange={schemaId => {
+                      updateTrigger(idx, { type: 'data', schema: schemaId ?? '' });
+                    }}
+                  >
+                    {diagram.document.data.db.schemas.map(schema => (
+                      <Select.Item key={schema.id} value={schema.id}>
+                        {schema.name}
+                      </Select.Item>
+                    ))}
+                  </Select.Root>
+                </div>
+              )}
+            </div>
 
-          <div className={styles.ruleEditorClause__buttons}>
-            <Button type={'icon-only'} onClick={() => removeTrigger(idx)}>
-              <TbTrash />
-            </Button>
+            <div className={styles.eButtons}>
+              <Button variant={'icon-only'} onClick={() => removeTrigger(idx)}>
+                <TbTrash />
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '0.5rem',
-          marginTop: '0.25rem'
-        }}
-      >
+      <div className={styles.eCode}>
         <div>
           Code:
           <SyntaxHighlightingEditor
@@ -179,15 +171,13 @@ export const RuleEditorSubDialogAdvanced = forwardRef<
               }
             }}
           />
-          <div
-            style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-          >
+          <div className={styles.eButtons}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input type="checkbox" checked={debug} onChange={e => setDebug(e.target.checked)} />
               Debug mode
             </label>
             <div style={{ marginLeft: 'auto' }}>
-              <Button type={'secondary'} onClick={() => run()}>
+              <Button variant={'secondary'} onClick={() => run()}>
                 Run...
               </Button>
             </div>

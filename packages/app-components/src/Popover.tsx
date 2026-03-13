@@ -33,15 +33,15 @@ const Content = React.forwardRef<HTMLDivElement, ContentProps>((props, forwarded
       <BaseUIPopover.Positioner sideOffset={(props.sideOffset ?? 0) + 6} anchor={props.anchor}>
         <BaseUIPopover.Viewport>
           <BaseUIPopover.Popup
-            className={`${styles.cmpPopover} ${props.className ?? ''}`}
+            className={`${styles.cPopover} ${props.className ?? ''}`}
             ref={forwardedRef}
             initialFocus={props.focus !== undefined ? props.focus : false}
           >
-            <BaseUIPopover.Arrow className={styles.cmpPopoverArrow} />
+            <BaseUIPopover.Arrow className={styles.eArrow} />
 
             {props.children}
 
-            <BaseUIPopover.Close className={styles.cmpPopoverClose} aria-label="Close">
+            <BaseUIPopover.Close className={styles.eClose} aria-label="Close">
               <TbX />
             </BaseUIPopover.Close>
           </BaseUIPopover.Popup>

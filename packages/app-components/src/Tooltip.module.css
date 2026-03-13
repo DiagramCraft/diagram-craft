@@ -1,6 +1,10 @@
-.cmp-tooltip {
+/**
+ *  Tooltip - .cTooltip
+ *  | Arrow - .eArrow
+ */
+.cTooltip {
   border-radius: var(--cmp-radius);
-  padding: 10px 10px;
+  padding: 10px;
   font-size: 11px;
   background-color: var(--panel-bg);
   color: var(--panel-fg);
@@ -8,13 +12,13 @@
   box-shadow: var(--popover-shadow);
   user-select: none;
 
-  animation-name: overlayShow;
+  animation-name: tooltipShow;
   animation-duration: 250ms;
   will-change: opacity;
 
   z-index: 500;
 
-  .cmp-tooltip__arrow {
+  .eArrow {
     background: transparent;
 
     width: 0;
@@ -24,11 +28,17 @@
 
     border-bottom: 5px solid var(--panel-bg);
 
-    display: flex;
-
     &[data-side='bottom'] {
       top: -5px;
-      rotate: 0deg;
     }
+  }
+}
+
+@keyframes tooltipShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

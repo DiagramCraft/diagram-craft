@@ -113,13 +113,13 @@ export const SchemasTab = () => {
   const canMutateSchemas = db && providers.some(p => db.isSchemasEditable(p.id));
 
   return (
-    <>
-      <div className={styles.schemasTabHeader}>
-        <p className={styles.schemasTabTitle}>Schemas</p>
+    <div className={styles.icSchemasTab}>
+      <div className={styles.eHeader}>
+        <p className={styles.eTitle}>Schemas</p>
         {providers.length > 0 && (
           <MenuButton.Root>
             <MenuButton.Trigger
-              type="secondary"
+              variant="secondary"
               disabled={!canMutateSchemas}
               style={{ display: 'flex', gap: '0.25rem' }}
             >
@@ -141,16 +141,16 @@ export const SchemasTab = () => {
       </div>
 
       {!canMutateSchemas && (
-        <div className={styles.schemasTabMessageBox}>
+        <div className={styles.eMessage}>
           <p>The current data provider does not support schema management.</p>
           <p>Switch to a different provider (like REST API) to manage schemas.</p>
         </div>
       )}
 
       {providers.length > 0 && (
-        <div className={styles.schemasTabFilterControls}>
-          <div className={styles.schemasTabFilterGroup}>
-            <label className={styles.schemasTabFilterLabel}>Filter by Provider:</label>
+        <div className={styles.eFilterControls}>
+          <div className={styles.eGroup}>
+            <label className={styles.eLabel}>Filter by Provider:</label>
             <Select.Root
               value={selectedProviderId}
               onChange={v => setSelectedProviderId(v ?? 'all')}
@@ -168,7 +168,7 @@ export const SchemasTab = () => {
       )}
 
       {schemas.length === 0 && canMutateSchemas && (
-        <div className={styles.schemasTabMessageBox}>
+        <div className={styles.eMessage}>
           {db.schemas.length === 0 ? (
             <p>No schemas defined yet</p>
           ) : (
@@ -178,7 +178,7 @@ export const SchemasTab = () => {
       )}
 
       {schemas.length > 0 && (
-        <table className={styles.schemasTabTable}>
+        <table className={styles.eTable}>
           <thead>
             <tr>
               <th>Name</th>
@@ -221,9 +221,9 @@ export const SchemasTab = () => {
                   </td>
                   {canMutateSchemas && (
                     <td>
-                      <div className={styles.schemasTabTableActions}>
+                      <div className={styles.eActions}>
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => setEditSchemaDialog({ open: true, schema })}
                           title="Edit schema"
                           disabled={!db.isSchemasEditable(schema.providerId)}
@@ -231,7 +231,7 @@ export const SchemasTab = () => {
                           <TbPencil />
                         </Button>
                         <Button
-                          type="icon-only"
+                          variant="icon-only"
                           onClick={() => handleDeleteSchema(schema)}
                           title="Delete schema"
                           disabled={!db.isSchemasEditable(schema.providerId)}
@@ -266,6 +266,6 @@ export const SchemasTab = () => {
         availableSchemas={schemas}
         document={document}
       />
-    </>
+    </div>
   );
 };

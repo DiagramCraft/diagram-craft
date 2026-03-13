@@ -1,4 +1,12 @@
-.cmp-text-area {
+/**
+ *  TextArea - .cTextArea
+ *  | TextArea - .eTextArea
+ *  | Maximize - .eMaximize
+ *
+ *  TextAreaMaximizedDialog - .cTextAreaMaximizedDialog
+ */
+.cTextArea {
+  position: relative;
   border-radius: var(--cmp-radius);
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
@@ -6,24 +14,7 @@
   padding: 1px 0 0 3px;
   line-height: 1;
 
-  &:focus-within,
-  &:has(*[data-focus="true"]) {
-    box-shadow: var(--cmp-border-shadow-focus) !important;
-  }
-
-  &[data-error='true'] {
-    color: var(--error-fg);
-
-    > textarea {
-      color: var(--error-fg);
-    }
-  }
-
-  &:has(> textarea:disabled) {
-    border-color: transparent;
-  }
-
-  > textarea {
+  .eTextArea {
     color: var(--panel-fg);
     border: none;
     background: none;
@@ -39,55 +30,91 @@
       color: var(--cmp-fg-disabled);
     }
   }
-}
 
-.cmp-text-area__resize {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: 0.125rem;
-  background: transparent;
-  color: var(--cmp-fg-dimmed);
-  display: flex;
-  align-Items: center;
-  justify-content: center;
-  z-index: 200;
-  cursor: pointer;
+  .eMaximize {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.125rem;
+    background: transparent;
+    color: var(--cmp-fg-dimmed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: pointer;
 
-  &:hover {
-    color: var(--cmp-fg);
+    &:hover {
+      color: var(--cmp-fg);
+    }
+  }
+
+  &:focus-within,
+  &:has(*[data-focus="true"]) {
+    box-shadow: var(--cmp-border-shadow-focus) !important;
+  }
+
+  &[data-error='true'] {
+    color: var(--error-fg);
+
+    > textarea {
+      color: var(--error-fg);
+    }
+  }
+
+  &:has(> .eTextArea:disabled) {
+    border-color: transparent;
   }
 }
 
-.cmp-text-area__max_dialog {
-  .cmp-dialog__content {
-    max-width: 100vw;
-    max-height: 100vh;
 
+.cTextAreaMaximizedDialog {
+  .eDialog {
+    background: var(--base-bg);
+
+    position: fixed;
     left: 0;
+    /* TODO: Replace with anchor positioning */
     top: 46px;
     bottom: 0;
     right: 0;
     transform: none;
 
-    & > div {
+    padding: 1rem 1rem 4rem 1rem;
+
+    .eContent {
       height: 100%;
 
+      .cTextArea {
+        height: 100%;
+      }
     }
 
-    textarea {
+    & > div {
+      height: 100%;
+    }
+
+    .eTextArea {
       height: calc(100% - 5px) !important;
     }
 
-    animation: none;
-    padding: 10px 15px 80px 15px;
-  }
+    .eButtons {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.75rem;
 
-  .cmp-dialog__description {
-    height: 100%;
-  }
+      button {
+        padding: 0 1.25rem;
+        font-weight: 500;
+        height: 35px;
+        outline: none;
 
-  .cmp-dialog__description > * {
-    height: 100%;
+        border-radius: 4px;
+        color: var(--base-fg-dim);
+        background-color: var(--panel-bg);
+
+        border: 1px solid var(--cmp-border);
+      }
+    }
   }
 }

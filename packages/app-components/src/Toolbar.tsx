@@ -9,7 +9,7 @@ const Root = (props: RootProps) => {
     <BaseUIToolbar.Root
       id={props.id}
       data-direction={props.direction}
-      className={styles.cmpToolbar}
+      className={styles.cToolbar}
       data-size={props.size ?? 'default'}
       style={props.style}
     >
@@ -29,8 +29,8 @@ type RootProps = {
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwardedRef) => {
   return (
     <BaseUIToolbar.Button
-      {...PropsUtils.filter(props, 'isOverflow')}
-      className={`${styles.cmpToolbarButton} ${props.isOverflow ? styles.cmpToolbarButtonMore : ''} ${props.className ?? ''}`}
+      {...PropsUtils.filter(props, 'isDropdown')}
+      className={`${styles.eButton} ${props.isDropdown ? styles.eDropdownButton : ''} ${props.className ?? ''}`}
       ref={forwardedRef}
     >
       {props.children}
@@ -40,14 +40,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, forwarde
 
 type ButtonProps = {
   children: React.ReactNode;
-  isOverflow?: boolean;
+  isDropdown?: boolean;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const ToggleItem = React.forwardRef<HTMLButtonElement, ToggleItemProps>((props, forwardedRef) => {
   return (
     <ToggleButtonGroup.Item
       {...props}
-      className={styles.cmpToolbarButton}
+      className={styles.eButton}
       value={props.value}
       ref={forwardedRef}
     >
@@ -85,7 +85,7 @@ type ToggleGroupProps =
     };
 
 const Separator = (props: SeparatorProps) => {
-  return <BaseUIToolbar.Separator {...props} className={styles.cmpToolbarSeparator} />;
+  return <BaseUIToolbar.Separator {...props} className={styles.eSeparator} />;
 };
 
 type SeparatorProps = React.HTMLAttributes<HTMLDivElement>;

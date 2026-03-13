@@ -1,0 +1,36 @@
+.icRuler {
+  background-color: var(--panel-bg);
+  z-index: 1;
+
+  & > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    image-rendering: crisp-edges;
+
+    .eSvgLbl {
+      fill: var(--base-fg-dim);
+      font-size: 6px;
+      text-anchor: middle;
+      dominant-baseline: mathematical;
+    }
+
+    .eSvgTick {
+      stroke: var(--base-fg-more-dim);
+      stroke-width: 1;
+    }
+
+    .eSvgSelection {
+      stroke: var(--base-fg-more-dim);
+      fill: rgba(0, 0, 0, 0.25);
+      stroke-width: 1;
+    }
+
+    .eSvgCursor {
+      stroke: var(--accent-fg);
+      stroke-width: 1;
+    }
+  }
+}

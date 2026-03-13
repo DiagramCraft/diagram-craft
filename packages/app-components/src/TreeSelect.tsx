@@ -52,7 +52,7 @@ const Root = (props: RootProps) => {
   return (
     <MenuButton.Root open={props.open}>
       <MenuButton.Trigger
-        className={selectStyles.cmpSelectTrigger}
+        className={selectStyles.cSelectTrigger}
         {...extractDataAttributes(props)}
         disabled={props.disabled}
       >
@@ -61,7 +61,7 @@ const Root = (props: RootProps) => {
         ) : (
           (valueLabel ?? props.placeholder ?? '')
         )}
-        <div className={selectStyles.cmpSelectTriggerIcon}>
+        <div className={selectStyles.eIcon}>
           <TbDots />
         </div>
       </MenuButton.Trigger>

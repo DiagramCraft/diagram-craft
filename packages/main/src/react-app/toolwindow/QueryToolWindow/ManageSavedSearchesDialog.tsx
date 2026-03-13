@@ -60,7 +60,7 @@ const SavedSearchList = ({ type, title }: { type: QueryType; title: string }) =>
             </div>
             <Button
               onClick={() => handleRemove(entry)}
-              type={'icon-only'}
+              variant={'icon-only'}
               style={{ color: 'var(--error-fg)' }}
               title={`Remove "${entry.label}"`}
             >

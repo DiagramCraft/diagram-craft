@@ -8,6 +8,7 @@ import { TbBaseline, TbPalette } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
+import toolbarStyles from '@diagram-craft/app-components/Toolbar.module.css';
 
 export const ElementStylesheetToolbarButton = (props: Props) => {
   const $d = useDiagram();
@@ -43,7 +44,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   ) {
     return (
       <>
-        <div className={'cmp-toolbar__button'}>
+        <div className={toolbarStyles.eButton}>
           <TbPalette />
         </div>
         <PropertyEditor
@@ -59,7 +60,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
           )}
         />
 
-        <div className={'cmp-toolbar__button'} style={{ marginLeft: '0.5rem' }}>
+        <div className={toolbarStyles.eButton} style={{ marginLeft: '0.5rem' }}>
           <TbBaseline />
         </div>
         <PropertyEditor
@@ -81,7 +82,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   } else {
     return (
       <>
-        <div className={'cmp-toolbar__button'}>
+        <div className={toolbarStyles.eButton}>
           <TbPalette />
         </div>
         <PropertyEditor

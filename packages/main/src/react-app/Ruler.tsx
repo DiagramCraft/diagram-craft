@@ -7,6 +7,7 @@ import { UserState } from '../UserState';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { GuideCreateDrag } from '@diagram-craft/canvas/drag/guideDrag';
 import { round } from '@diagram-craft/utils/math';
+import styles from './Ruler.module.css';
 
 type Tick = {
   pos: number;
@@ -30,7 +31,7 @@ const roundTicks = (ticks: Tick[]) => {
   }
 };
 
-export const Ruler = ({ orientation }: Props) => {
+export const Ruler = ({ orientation, id }: Props) => {
   const diagram = useDiagram();
   const viewbox = diagram.viewBox;
 
@@ -117,12 +118,12 @@ export const Ruler = ({ orientation }: Props) => {
     roundTicks(ticks);
 
     return (
-      <div id={'ruler-h'} className={'cmp-ruler dark-theme'}>
+      <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'horizontal'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
               key={tick.lbl}
-              className={'svg-tick'}
+              className={styles.eSvgTick}
               x1={tick.pos}
               y1={-1}
               x2={tick.pos}
@@ -133,13 +134,13 @@ export const Ruler = ({ orientation }: Props) => {
           {ticks
             .filter((_, idx) => idx % 10 === 0)
             .map(tick => (
-              <text key={tick.lbl} className={'svg-lbl'} x={tick.pos} y={9}>
+              <text key={tick.lbl} className={styles.eSvgLbl} x={tick.pos} y={9}>
                 {tick.lbl}
               </text>
             ))}
 
-          <rect ref={selRef} className={'svg-selection'} y={-1} height={16} />
-          <line ref={cursorRef} className={'svg-cursor'} y1={-1} y2={8} />
+          <rect ref={selRef} className={styles.eSvgSelection} y={-1} height={16} />
+          <line ref={cursorRef} className={styles.eSvgCursor} y1={-1} y2={8} />
         </svg>
       </div>
     );
@@ -152,12 +153,12 @@ export const Ruler = ({ orientation }: Props) => {
     roundTicks(ticks);
 
     return (
-      <div id={'ruler-v'} className={'cmp-ruler dark-theme'}>
+      <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'vertical'}>
         <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
           {ticks.map((tick, idx) => (
             <line
               key={tick.lbl}
-              className={'svg-tick'}
+              className={styles.eSvgTick}
               x1={-1}
               y1={tick.pos}
               x2={idx % 5 === 0 ? 6 : 3}
@@ -170,7 +171,7 @@ export const Ruler = ({ orientation }: Props) => {
             .map(tick => (
               <text
                 key={tick.lbl}
-                className={'svg-lbl'}
+                className={styles.eSvgLbl}
                 x={9}
                 y={tick.pos}
                 transform={`rotate(-90,9,${tick.pos})`}
@@ -179,8 +180,8 @@ export const Ruler = ({ orientation }: Props) => {
               </text>
             ))}
 
-          <rect ref={selRef} className={'svg-selection'} x={-1} width={16} />
-          <line ref={cursorRef} className={'svg-cursor'} x1={-1} x2={8} />
+          <rect ref={selRef} className={styles.eSvgSelection} x={-1} width={16} />
+          <line ref={cursorRef} className={styles.eSvgCursor} x1={-1} x2={8} />
         </svg>
       </div>
     );
@@ -188,5 +189,6 @@ export const Ruler = ({ orientation }: Props) => {
 };
 
 type Props = {
+  id?: string;
   orientation: 'horizontal' | 'vertical';
 };

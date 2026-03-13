@@ -151,7 +151,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
 
   return (
     <MenuButton.Root>
-      <MenuButton.Trigger type={'icon-only'}>
+      <MenuButton.Trigger variant={'icon-only'}>
         <TbDots />
       </MenuButton.Trigger>
       <MenuButton.Menu>

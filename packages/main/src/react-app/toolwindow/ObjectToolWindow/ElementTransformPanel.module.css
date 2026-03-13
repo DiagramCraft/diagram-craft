@@ -1,0 +1,39 @@
+.eElementTransformPanel {
+  .eGraphics {
+    width: 3rem;
+    height: 3rem;
+
+    .eRect {
+      fill: transparent;
+      stroke: var(--panel-fg);
+      stroke-width: 0.02;
+      stroke-dasharray: 0.05 0.05;
+    }
+
+    .eNode {
+      fill: var(--panel-bg);
+      stroke: var(--panel-fg);
+      stroke-width: 0.02;
+      cursor: pointer;
+
+      &[data-active="true"] {
+        stroke: var(--accent-fg-hover);
+        fill: var(--accent-fg-hover);
+      }
+    }
+  }
+
+  .eInputs {
+    display: grid;
+    grid-template-areas: "x w" "y h" "r aspect-ratio";
+    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    row-gap: 0.5rem;
+    column-gap: 0.3em;
+
+    input {
+      width: 100%;
+    }
+  }
+}

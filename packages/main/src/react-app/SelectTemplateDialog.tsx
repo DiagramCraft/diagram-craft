@@ -10,6 +10,7 @@ import { useDocument } from '../application';
 import type { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
+import styles from './ObjectPicker.module.css';
 
 const TEMPLATE_CACHE = new Map<string, DiagramElement>();
 
@@ -65,7 +66,7 @@ export const SelectTemplateDialog = (props: Props) => {
       <div style={{ padding: '1rem 0' }}>
         <label style={{ display: 'block', marginBottom: '0.5rem' }}>{props.label}</label>
         <div
-          className={'cmp-object-picker'}
+          className={styles.icObjectPicker}
           style={{
             border: '1px solid var(--cmp-border)',
             borderRadius: 'var(--cmp-radius)',

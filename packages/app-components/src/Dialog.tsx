@@ -44,9 +44,7 @@ export const DialogContextProvider = (props: DialogProviderProps) => {
 const DialogButton = (props: Button) => {
   if (props.type === 'cancel') {
     return (
-      <BaseUIAlertDialog.Close
-        className={`${styles.cmpDialogButton} ${styles.cmpDialogButtonSecondary}`}
-      >
+      <BaseUIAlertDialog.Close className={styles.eButton} data-variant={'secondary'}>
         {props.label}
       </BaseUIAlertDialog.Close>
     );
@@ -54,7 +52,8 @@ const DialogButton = (props: Button) => {
     return (
       <button
         type="button"
-        className={`${styles.cmpDialogButton} cmp-dialog__button--${props.type}`}
+        className={styles.eButton}
+        data-variant={props.type}
         onClick={props.onClick}
       >
         {props.label}
@@ -118,19 +117,19 @@ export const Dialog = (props: Props) => {
       onOpenChange={handleOpenChange}
     >
       <BaseUIAlertDialog.Portal container={portal} className={props.className}>
-        <BaseUIAlertDialog.Backdrop className={styles.cmpDialogOverlay} />
-        <BaseUIAlertDialog.Viewport className={styles.cmpDialogContent}>
+        <BaseUIAlertDialog.Backdrop className={styles.cDialogBackdrop} />
+        <BaseUIAlertDialog.Viewport className={styles.cDialog}>
           <BaseUIAlertDialog.Popup initialFocus={true}>
             <BaseUIAlertDialog.Title
-              className={styles.cmpDialogTitle}
+              className={styles.eTitle}
               render={p => <div {...p}>{props.title}</div>}
             />
             <BaseUIAlertDialog.Description
-              className={styles.cmpDialogDescription}
+              className={styles.eContent}
               render={p => <div {...p}>{props.children}</div>}
             />
 
-            <div style={{ display: 'flex', gap: 25, justifyContent: 'flex-end' }}>
+            <div className={styles.eButtons}>
               {props.buttons.map(btn => (
                 <DialogButton key={btn.label} {...btn} />
               ))}

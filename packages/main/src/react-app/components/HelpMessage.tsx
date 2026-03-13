@@ -14,9 +14,9 @@ export const HelpMessage = (props: Props) => {
   });
 
   return (
-    <div id="help" className={styles.cmpHelp}>
+    <div id="help" className={styles.icHelp}>
       <div>{props.helpState.help?.message}</div>
-      <Button type={'icon-only'} onClick={() => application.actions['TOGGLE_HELP']?.execute()}>
+      <Button variant={'icon-only'} onClick={() => application.actions['TOGGLE_HELP']?.execute()}>
         <TbX />
       </Button>
     </div>

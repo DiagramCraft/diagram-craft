@@ -5,6 +5,7 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
 import { PropertyEditor } from '../../components/PropertyEditor';
 import type { Property } from '@diagram-craft/model/property';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type IndicatorFormProps = {
   shape: Property<string>;
@@ -23,9 +24,9 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
 
   const $cfg = useConfiguration();
   return (
-    <div className={'cmp-labeled-table'}>
-      <div className={'cmp-labeled-table__label'}>Type:</div>
-      <div className={'cmp-labeled-table__value util-vcenter'}>
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Type:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={props.shape}
           render={props => (
@@ -40,10 +41,10 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
             </Select.Root>
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Color:</div>
-      <div className={'cmp-labeled-table__value util-vcenter'}>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value>
         <PropertyEditor
           property={props.color}
           render={props => (
@@ -56,11 +57,10 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
             />
           )}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Size:</div>
-      <div
-        className={'cmp-labeled-table__value util-vcenter'}
+      <KeyValueTable.Label>Size:</KeyValueTable.Label>
+      <KeyValueTable.Value
         style={{ display: 'grid', gridTemplateColumns: '4rem 4rem', gap: '0.25rem' }}
       >
         <PropertyEditor
@@ -72,10 +72,10 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
           property={props.height}
           render={props => <NumberInput {...props} disabled={$p.isReadOnly} label={'h'} />}
         />
-      </div>
+      </KeyValueTable.Value>
 
-      <div className={'cmp-labeled-table__label'}>Position:</div>
-      <div className={'cmp-labeled-table__value util-vcenter'}>
+      <KeyValueTable.Label valign={'top'}>Position:</KeyValueTable.Label>
+      <KeyValueTable.Value stack={'vertical'}>
         <PropertyEditor
           property={props.position as Property<string>}
           render={props => (
@@ -92,23 +92,10 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
             </Select.Root>
           )}
         />
-      </div>
-
-      <div className={'cmp-labeled-table__label'}></div>
-      <div
-        className={'cmp-labeled-table__value util-vcenter'}
-        style={{ display: 'grid', gridTemplateColumns: '4rem 4rem', gap: '0.25rem' }}
-      >
         <PropertyEditor
           property={props.offset}
           render={props => <NumberInput {...props} disabled={$p.isReadOnly} label="Δ" />}
         />
-      </div>
-      <div className={'cmp-labeled-table__label'}></div>
-      <div
-        className={'cmp-labeled-table__value util-vcenter'}
-        style={{ display: 'grid', gridTemplateColumns: '4rem 4rem', gap: '0.25rem' }}
-      >
         <PropertyEditor
           property={props.direction as Property<string>}
           render={props => (
@@ -120,7 +107,7 @@ export const IndicatorForm = (props: IndicatorFormProps) => {
             </Select.Root>
           )}
         />
-      </div>
-    </div>
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
   );
 };

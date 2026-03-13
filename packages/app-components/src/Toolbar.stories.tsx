@@ -37,7 +37,7 @@ export const Primary: Story = {
       <Toolbar.Button key={3} value={'cog'}>
         <TbBasketCog />
       </Toolbar.Button>,
-      <Toolbar.Button key={5} value={'overflow'} isOverflow>
+      <Toolbar.Button key={5} value={'overflow'} isDropdown>
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
@@ -66,7 +66,7 @@ export const Focus: Story = {
       <Toolbar.Button key={3} value={'cog'} data-focus={'true'}>
         <TbBasketCog />
       </Toolbar.Button>,
-      <Toolbar.Button key={5} value={'overflow'} isOverflow>
+      <Toolbar.Button key={5} value={'overflow'} isDropdown>
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
@@ -95,7 +95,7 @@ export const Hover: Story = {
       <Toolbar.Button key={3} value={'cog'}>
         <TbBasketCog />
       </Toolbar.Button>,
-      <Toolbar.Button key={5} value={'overflow'} isOverflow>
+      <Toolbar.Button key={5} value={'overflow'} isDropdown>
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,
@@ -124,7 +124,7 @@ export const Disabled: Story = {
       <Toolbar.Button key={3} value={'cog'}>
         <TbBasketCog />
       </Toolbar.Button>,
-      <Toolbar.Button key={5} value={'overflow'} isOverflow>
+      <Toolbar.Button key={5} value={'overflow'} isDropdown>
         <TbChevronDown />
       </Toolbar.Button>,
       <Toolbar.Separator key={6} />,

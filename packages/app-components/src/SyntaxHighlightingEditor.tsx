@@ -132,20 +132,21 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     const highlightedLines = (props.highlighter ? props.highlighter(lines) : lines).map(
       (l, idx) => {
         const error = props.errors?.get(idx);
-        return `<span class="${error ? 'syntax-error' : ''}">${l}</span>`;
+        return `<span class="${error ? styles.syntaxError : ''}">${l}</span>`;
       }
     );
 
     const inner = (
       <div
         ref={containerRef}
-        className={`${styles.cmpSyntaxHighlightingEditor} ${props.className ?? ''}`}
+        className={`${styles.cSyntaxHighlightingEditor} ${props.className ?? ''}`}
         {...extractDataAttributes(props)}
         style={props.style ?? {}}
         data-rows={props.rows ?? 10}
       >
         <textarea
           ref={textareaRef}
+          className={styles.eEditor}
           spellCheck={false}
           disabled={props.disabled}
           onKeyDown={onKeydown}
@@ -163,7 +164,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           value={value}
         />
 
-        <pre className={styles.syntaxHighlighter} ref={preElementRef}>
+        <pre className={styles.eHighlightedText} ref={preElementRef}>
           <code
             ref={codeElementRef}
             dangerouslySetInnerHTML={{
@@ -174,7 +175,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
 
         {tooltip && (
           <div
-            className={styles.tooltip}
+            className={styles.eTooltip}
             style={{ left: `${tooltip.x}px`, top: `${tooltip.y + 20}px` }}
           >
             {tooltip.message}
@@ -182,11 +183,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
         )}
 
         {!maximized && (
-          <button
-            onClick={() => setMaximized(true)}
-            type={'button'}
-            className={textAreaStyles.cmpTextAreaResize}
-          >
+          <button onClick={() => setMaximized(true)} type={'button'} className={styles.eMaximize}>
             <TbArrowsDiagonal />
           </button>
         )}
@@ -196,7 +193,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     if (maximized) {
       return (
         <Dialog
-          className={textAreaStyles.cmpTextAreaMaxDialog}
+          className={textAreaStyles.cTextAreaMaximizedDialog}
           title=""
           open={true}
           buttons={[
@@ -234,10 +231,10 @@ export const jsonHighlighter = (lines: string[]): string[] => {
   return lines.map(line => {
     // Simple highlighting: keywords in blue, strings in green
     return line
-      .replace(/"([^"]*)"/g, '<span class="syntax-string">"$1"</span>')
-      .replace(/\}/g, '<span class="syntax-bracket">}</span>')
-      .replace(/\{/g, '<span class="syntax-bracket">{</span>')
-      .replace(/\]/g, '<span class="syntax-bracket">]</span>')
-      .replace(/\[/g, '<span class="syntax-bracket">[</span>');
+      .replace(/"([^"]*)"/g, `<span class="${styles.syntaxString}">"$1"</span>`)
+      .replace(/\}/g, `<span class="${styles.syntaxBracket}">}</span>`)
+      .replace(/\{/g, `<span class="${styles.syntaxBracket}">{</span>`)
+      .replace(/\]/g, `<span class="${styles.syntaxBracket}">]</span>`)
+      .replace(/\[/g, `<span class="${styles.syntaxBracket}">[</span>`);
   });
 };

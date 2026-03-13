@@ -184,7 +184,6 @@ export const NamedIndicatorPanel = (_props: { mode?: 'accordion' | 'panel' }) =>
                     <Accordion.ItemHeader>
                       <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
                         <input
-                          className="cmp-accordion__enabled"
                           type={'checkbox'}
                           checked={
                             indicators.val[k]?.enabled ??

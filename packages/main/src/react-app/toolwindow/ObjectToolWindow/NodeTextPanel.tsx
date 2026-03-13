@@ -29,6 +29,7 @@ import type { Property } from '@diagram-craft/model/property';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { unique } from '@diagram-craft/utils/array';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type FormProps = {
   diagram: Diagram;
@@ -138,9 +139,9 @@ export const NodeTextPanelForm = ({
 
   return (
     <>
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Font:</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Font:</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
           <PropertyEditor
             property={fontSize}
             render={props => (
@@ -159,10 +160,10 @@ export const NodeTextPanelForm = ({
               </Select.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div></div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+        <KeyValueTable.Label />
+        <KeyValueTable.Value stack={'horizontal'}>
           <PropertyEditor
             property={format}
             render={props => (
@@ -196,10 +197,10 @@ export const NodeTextPanelForm = ({
               </ToggleButtonGroup.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Color:</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Color:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={color}
             render={props => (
@@ -217,10 +218,10 @@ export const NodeTextPanelForm = ({
             )}
             renderValue={props => <ColorPreview {...props} />}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Align:</div>
-        <div className={'cmp-labeled-table__value util-vcenter util-hstack'}>
+        <KeyValueTable.Label>Align:</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'horizontal'}>
           <PropertyEditor
             property={align as Property<string>}
             render={props => (
@@ -254,15 +255,10 @@ export const NodeTextPanelForm = ({
               </ToggleButtonGroup.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div
-          className={'cmp-labeled-table__label'}
-          style={{ alignSelf: 'start', marginTop: '0.25rem' }}
-        >
-          Spacing:
-        </div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label valign={'top'}>Spacing:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <div
             style={{
               display: 'grid',
@@ -320,9 +316,10 @@ export const NodeTextPanelForm = ({
               )}
             />
           </div>
-        </div>
-        <div className={'cmp-labeled-table__label'}>Position</div>
-        <div className={'cmp-labeled-table__value'}>
+        </KeyValueTable.Value>
+
+        <KeyValueTable.Label>Position</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={position}
             render={props => (
@@ -339,10 +336,10 @@ export const NodeTextPanelForm = ({
               </Select.Root>
             )}
           />
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Width</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Width</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <PropertyEditor
             property={width}
             render={props => (
@@ -354,30 +351,32 @@ export const NodeTextPanelForm = ({
               />
             )}
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
 
       <div style={{ marginTop: '0.5rem' }}></div>
-      <Collapsible label={'Advanced'}>
-        <div className={'cmp-labeled-table'}>
-          <div className={'cmp-labeled-table__label'}>Line height:</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor
-              property={lineHeight}
-              formatValue={v => round(v * 100)}
-              storeValue={v => v / 100}
-              render={props => (
-                <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
-              )}
-            />
-          </div>
+      <KeyValueTable.FullRow>
+        <Collapsible label={'Advanced'}>
+          <KeyValueTable.Root>
+            <KeyValueTable.Label>Line height:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={lineHeight}
+                formatValue={v => round(v * 100)}
+                storeValue={v => v / 100}
+                render={props => (
+                  <NumberInput {...props} defaultUnit={'%'} min={0} style={{ width: '45px' }} />
+                )}
+              />
+            </KeyValueTable.Value>
 
-          <div className={'cmp-labeled-table__label'}>Auto Shrink</div>
-          <div className={'cmp-labeled-table__value'}>
-            <PropertyEditor property={shrink} render={props => <Checkbox {...props} />} />
-          </div>
-        </div>
-      </Collapsible>
+            <KeyValueTable.Label>Auto Shrink</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor property={shrink} render={props => <Checkbox {...props} />} />
+            </KeyValueTable.Value>
+          </KeyValueTable.Root>
+        </Collapsible>
+      </KeyValueTable.FullRow>
     </>
   );
 };

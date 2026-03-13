@@ -12,6 +12,7 @@ import { PropertyEditor } from '../../components/PropertyEditor';
 import { useDiagram } from '../../../application';
 import type { Property } from '@diagram-craft/model/property';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const NodeTablePropertiesPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -33,7 +34,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={def.name} id={'custom'}>
-      <div className={'cmp-labeled-table'}>
+      <KeyValueTable.Root>
         {Object.entries(customProperties.entries).map(([key, value]) => {
           if (value.type === 'delimiter') return <div key={key}></div>;
 
@@ -44,8 +45,8 @@ export const NodeTablePropertiesPanel = (props: Props) => {
           if (value.type === 'number') {
             return (
               <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
+                <KeyValueTable.Label>{value.label}:</KeyValueTable.Label>
+                <KeyValueTable.Value>
                   {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
                   <PropertyEditor<any>
                     property={prop}
@@ -61,24 +62,24 @@ export const NodeTablePropertiesPanel = (props: Props) => {
                       />
                     )}
                   />
-                </div>
+                </KeyValueTable.Value>
               </React.Fragment>
             );
           } else if (value.type === 'boolean') {
             return (
               <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
+                <KeyValueTable.Label>{value.label}:</KeyValueTable.Label>
+                <KeyValueTable.Value>
                   {/* biome-ignore lint/suspicious/noExplicitAny: false positive */}
                   <PropertyEditor<any> property={prop} render={props => <Checkbox {...props} />} />
-                </div>
+                </KeyValueTable.Value>
               </React.Fragment>
             );
           } else if (value.type === 'select') {
             return (
               <React.Fragment key={key}>
-                <div className={'cmp-labeled-table__label'}>{value.label}:</div>
-                <div className={'cmp-labeled-table__value'}>
+                <KeyValueTable.Label>{value.label}:</KeyValueTable.Label>
+                <KeyValueTable.Value>
                   <PropertyEditor
                     property={prop as Property<string>}
                     render={props => (
@@ -91,12 +92,12 @@ export const NodeTablePropertiesPanel = (props: Props) => {
                       </Select.Root>
                     )}
                   />
-                </div>
+                </KeyValueTable.Value>
               </React.Fragment>
             );
           }
         })}
-      </div>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

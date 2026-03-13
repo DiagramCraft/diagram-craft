@@ -14,7 +14,9 @@ export const enablePropertyEditorTooltip = () => {
 
 export const disablePropertyEditorTooltip = () => {
   const stylesheet = document.styleSheets[0]!;
-  hidePopupRuleId.push(stylesheet.insertRule('.cmp-tooltip { display: none !important; }', 0));
+  hidePopupRuleId.push(
+    stylesheet.insertRule(`.${styles.cTooltip} { display: none !important; }`, 0)
+  );
 };
 
 export const Tooltip = (props: Props) => {
@@ -24,9 +26,9 @@ export const Tooltip = (props: Props) => {
         <BaseUITooltip.Trigger render={props.element} />
         <BaseUITooltip.Portal>
           <BaseUITooltip.Positioner sideOffset={5} side={'bottom'}>
-            <BaseUITooltip.Popup className={styles.cmpTooltip}>
+            <BaseUITooltip.Popup className={styles.cTooltip}>
               {props.message}
-              <BaseUITooltip.Arrow className={styles.cmpTooltipArrow} />
+              <BaseUITooltip.Arrow className={styles.eArrow} />
             </BaseUITooltip.Popup>
           </BaseUITooltip.Positioner>
         </BaseUITooltip.Portal>

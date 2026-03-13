@@ -12,6 +12,7 @@ import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import styles from './StructureTree.module.css';
 
 type Relation = 'before' | 'after';
 
@@ -83,7 +84,7 @@ const DiagramTreeNodeItem = (props: {
   const dnd = useDiagramReorderDnD(props.node);
 
   return (
-    <Tree.Node key={props.node.id} isOpen={true} {...dnd.eventHandlers}>
+    <Tree.Node key={props.node.id} isOpen={true} {...dnd.eventHandlers} className={styles.eNode}>
       <DocumentsContextMenu
         diagramId={props.node.id}
         element={
@@ -119,6 +120,7 @@ const RootDiagramNode = (props: {
   return (
     <Tree.Node
       key={props.node.id}
+      className={styles.eNode}
       isOpen={true}
       data-state={props.activeDiagramId === props.node.id ? 'on' : 'off'}
       {...dnd.eventHandlers}
@@ -170,7 +172,7 @@ export const DocumentPanel = () => {
       style={{ padding: '0.25rem 0' }}
     >
       <div className="cmp-document-list">
-        <Tree.Root>
+        <Tree.Root className={styles.icStructureTree}>
           {document.diagrams.map(node => (
             <RootDiagramNode
               key={node.id}

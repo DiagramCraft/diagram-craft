@@ -26,7 +26,7 @@ export const StoryToolWindow = () => {
       <ToolWindow.Root id={'stories'} defaultTab={'stories'}>
         <ToolWindow.Tab id={'stories'} title={'Stories'}>
           <ToolWindow.TabActions>
-            <Button type={'icon-only'} onClick={() => setShowNewStoryDialog(true)}>
+            <Button variant={'icon-only'} onClick={() => setShowNewStoryDialog(true)}>
               <TbPlus />
             </Button>
           </ToolWindow.TabActions>

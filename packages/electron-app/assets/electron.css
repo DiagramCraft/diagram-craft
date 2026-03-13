@@ -11,7 +11,7 @@
   }
 }
 
-#menu ._menu-button {
+#menu #menu-button {
   > * {
     display: none !important;
   }
@@ -24,37 +24,37 @@
 #menu {
   padding-top: 2px;
 
-  ._tools {
-    .cmp-toolbar__button[data-pressed] {
+  #tools {
+    .cToolbar > div > button[data-pressed] {
       background-color: #4F4F4F !important;
       color: #F3F3F3 !important;
     }
   }
 
-  .cmp-toolbar__button[data-pressed] {
+  .cToolbar > div > button[data-pressed] {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
   }
 
-  .cmp-toolbar__button:hover, .cmp-toolbar__button:focus {
+  .cToolbar > div > button:hover, .cToolbar > div > button:focus {
     background-color: #4F4F4F !important;
     color: #F3F3F3 !important;
     box-shadow: none !important;
   }
 
-  .cmp-toolbar__button:focus:not(:hover) {
+  .cToolbar > div > button:focus:not(:hover) {
     background-color: transparent !important;
   }
 
-  .cmp-toolbar__separator {
+  .cToolbar > [role="separator"] {
     background-color: #3F3F3F !important;
   }
 }
 
-body.fullscreen #menu ._menu-button {
+body.fullscreen #menu #menu-button {
   display: none;
 }
 
-body.fullscreen ._tools {
+body.fullscreen #tools {
   margin-left: 0.4rem;
 }

@@ -1,4 +1,4 @@
-.preview {
+.icPreview {
   position: absolute;
   background: var(--canvas-bg2);
   top: 10px;
@@ -10,7 +10,7 @@
     stroke: transparent;
   }
 
-  .preview__tools {
+  .eTools {
     position: absolute;
     right: 15px;
     top: 10px;
@@ -28,7 +28,7 @@
     z-index: 1000;
   }
 
-  .preview__canvas {
+  .eCanvas {
     position: absolute;
     left: 0;
     top: 0;

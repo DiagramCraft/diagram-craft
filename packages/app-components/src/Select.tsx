@@ -32,7 +32,7 @@ const Root = (props: RootProps) => {
       }}
     >
       <BaseUISelect.Trigger
-        className={styles.cmpSelectTrigger}
+        className={styles.cSelectTrigger}
         {...extractDataAttributes(props)}
         {...extractMouseEvents(props)}
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
@@ -48,15 +48,15 @@ const Root = (props: RootProps) => {
             (values.find(v => v.value === props.value)!.label ?? props.value ?? '')
           )}
         </BaseUISelect.Value>
-        <BaseUISelect.Icon className={styles.cmpSelectTriggerIcon}>
+        <BaseUISelect.Icon className={styles.eIcon}>
           <TbChevronDown />
         </BaseUISelect.Icon>
       </BaseUISelect.Trigger>
 
       <BaseUISelect.Portal container={portal}>
         <BaseUISelect.Positioner>
-          <BaseUISelect.Popup className={styles.cmpSelectContent}>
-            <BaseUISelect.List className={styles.cmpSelectContentViewpoint}>
+          <BaseUISelect.Popup className={styles.cSelectContent}>
+            <BaseUISelect.List className={styles.eList}>
               <BaseUISelect.Group>{props.children}</BaseUISelect.Group>
             </BaseUISelect.List>
           </BaseUISelect.Popup>
@@ -80,7 +80,7 @@ type RootProps = {
 const Item = (props: ItemProps) => {
   return (
     <BaseUISelect.Item
-      className={styles.cmpSelectContentItem}
+      className={styles.eItem}
       key={props.value}
       value={props.value}
       disabled={props.disabled ?? false}
@@ -89,8 +89,8 @@ const Item = (props: ItemProps) => {
       onPointerLeave={e => e.stopPropagation()}
       onPointerMove={e => e.stopPropagation()}
     >
-      <BaseUISelect.ItemText>{props.children}</BaseUISelect.ItemText>
-      <BaseUISelect.ItemIndicator className={styles.cmpSelectContentItemIndicator}>
+      <BaseUISelect.ItemText className={styles.eItemText}>{props.children}</BaseUISelect.ItemText>
+      <BaseUISelect.ItemIndicator className={styles.eItemIndicator}>
         <TbCheck />
       </BaseUISelect.ItemIndicator>
     </BaseUISelect.Item>

@@ -6,6 +6,7 @@ import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const NodeTableDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -66,9 +67,9 @@ export const NodeTableDimensionsPanel = (props: Props) => {
 
   return (
     <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Dimensions'} id={'dimensions'}>
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label'}>Rows:</div>
-        <div className={'cmp-labeled-table__value'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label>Rows:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             value={rows}
             min={1}
@@ -77,9 +78,10 @@ export const NodeTableDimensionsPanel = (props: Props) => {
             style={{ width: '50px' }}
             onChange={ev => updateRows(ev ?? 1)}
           />
-        </div>
-        <div className={'cmp-labeled-table__label'}>Columns:</div>
-        <div className={'cmp-labeled-table__value'}>
+        </KeyValueTable.Value>
+
+        <KeyValueTable.Label>Columns:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             value={columns}
             min={1}
@@ -88,8 +90,8 @@ export const NodeTableDimensionsPanel = (props: Props) => {
             style={{ width: '50px' }}
             onChange={ev => updateColumns(ev ?? 1)}
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

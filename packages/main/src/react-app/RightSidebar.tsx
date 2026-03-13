@@ -1,4 +1,4 @@
-import { SideBar, SideBarBottomToolbar, SideBarPage } from './SideBar';
+import { Sidebar, SidebarBottomToolbar, SidebarPage } from './Sidebar';
 import {
   TbDatabaseEdit,
   TbHelpSquare,
@@ -18,38 +18,39 @@ import { ActionTooltip } from './components/ActionTooltip';
 
 export const RightSidebar = () => {
   return (
-    <SideBar
+    <Sidebar
+      id={'right-sidebar'}
       side={'right'}
       bottom={
-        <SideBarBottomToolbar>
+        <SidebarBottomToolbar>
           <ActionToggleButton action={'TOGGLE_HELP'}>
             <TbHelpSquare size={'17.5px'} />
           </ActionToggleButton>
-        </SideBarBottomToolbar>
+        </SidebarBottomToolbar>
       }
     >
-      <SideBarPage icon={TbPalette} tooltip={<ActionTooltip action={'SIDEBAR_STYLE'} />}>
+      <SidebarPage icon={TbPalette} tooltip={<ActionTooltip action={'SIDEBAR_STYLE'} />}>
         <ObjectToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbInfoCircle} tooltip={<ActionTooltip action={'SIDEBAR_INFO'} />}>
+      </SidebarPage>
+      <SidebarPage icon={TbInfoCircle} tooltip={<ActionTooltip action={'SIDEBAR_INFO'} />}>
         <ObjectInfoToolWindow />
-      </SideBarPage>
-      <SideBarPage icon={TbDatabaseEdit} tooltip={<ActionTooltip action={'SIDEBAR_DATA'} />}>
+      </SidebarPage>
+      <SidebarPage icon={TbDatabaseEdit} tooltip={<ActionTooltip action={'SIDEBAR_DATA'} />}>
         <ObjectDataToolWindow />
-      </SideBarPage>
-      <SideBarPage
+      </SidebarPage>
+      <SidebarPage
         icon={TbMessageCircle}
         extra={<CommentsToolWindowBadge />}
         tooltip={<ActionTooltip action={'SIDEBAR_COMMENT'} />}
       >
         <CommentsToolWindow />
-      </SideBarPage>
-      <SideBarPage
+      </SidebarPage>
+      <SidebarPage
         icon={TbListDetails}
         tooltip={<ActionTooltip action={'SIDEBAR_STYLE_OVERVIEW'} />}
       >
         <StyleOverviewToolWindow />
-      </SideBarPage>
-    </SideBar>
+      </SidebarPage>
+    </Sidebar>
   );
 };

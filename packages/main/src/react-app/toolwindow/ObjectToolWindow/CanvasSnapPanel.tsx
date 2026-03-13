@@ -3,6 +3,7 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ActionCheckbox } from '../../components/ActionCheckbox';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 export const CanvasSnapPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -18,9 +19,9 @@ export const CanvasSnapPanel = (props: Props) => {
       value={!!enabled.val}
       onChange={enabled.set}
     >
-      <div className={'cmp-labeled-table'}>
-        <div className={'cmp-labeled-table__label util-a-top'}>Snap:</div>
-        <div className={'cmp-labeled-table__value util-vstack'}>
+      <KeyValueTable.Root>
+        <KeyValueTable.Label valign={'top'}>Snap:</KeyValueTable.Label>
+        <KeyValueTable.Value stack={'vertical'}>
           <div className={'util-vcenter util-vgap util-font-body'}>
             <ActionCheckbox action={'TOGGLE_MAGNET_TYPE_GRID'}>Snap to grid</ActionCheckbox>
           </div>
@@ -45,10 +46,10 @@ export const CanvasSnapPanel = (props: Props) => {
               Snap to object distance
             </ActionCheckbox>
           </div>
-        </div>
+        </KeyValueTable.Value>
 
-        <div className={'cmp-labeled-table__label'}>Threshold:</div>
-        <div className={'cmp-labeled-table__value'}>
+        <KeyValueTable.Label>Threshold:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <NumberInput
             style={{ width: '45px' }}
             value={threshold.val.toString()}
@@ -56,8 +57,8 @@ export const CanvasSnapPanel = (props: Props) => {
             validUnits={['px']}
             defaultUnit={'px'}
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
     </ToolWindowPanel>
   );
 };

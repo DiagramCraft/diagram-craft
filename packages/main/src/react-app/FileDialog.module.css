@@ -1,7 +1,24 @@
-.cmp-file-dialog {
+.icFileDialog {
   width: 100%;
 
-  .cmp-file-dialog__list {
+  .ePath {
+    margin-bottom: 0.5rem;
+
+    & > a {
+      color: var(--base-fg-dim);
+      margin-right: 0.25rem;
+
+      &:hover {
+        color: var(--accent-fg);
+      }
+
+      &:not(:first-child) {
+        margin-left: 0.25rem;
+      }
+    }
+  }
+
+  .eList {
     background-color: var(--base-bg);
     border: 1px solid var(--panel-border);
     border-radius: var(--cmp-radius);
@@ -27,23 +44,6 @@
         &:hover {
           color: var(--accent-fg);
         }
-      }
-    }
-  }
-
-  .cmp-file-dialog__path {
-    margin-bottom: 0.5rem;
-
-    & > a {
-      color: var(--base-fg-dim);
-      margin-right: 0.25rem;
-
-      &:hover {
-        color: var(--accent-fg);
-      }
-
-      &:not(:first-child) {
-        margin-left: 0.25rem;
       }
     }
   }

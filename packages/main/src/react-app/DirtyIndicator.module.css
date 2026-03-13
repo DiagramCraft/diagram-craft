@@ -1,4 +1,4 @@
-.cmp-dirty-indicator {
+.icDirtyIndicator {
   color: var(--base-fg-more-dim);
   display: flex;
   align-items: center;
@@ -8,14 +8,14 @@
     color: var(--base-fg-more-dim);
   }
 
-  .cmp-dirty-indicator__text {
+  .eText {
     display: inline;
   }
 }
 
 @media (max-width: 1000px) {
-  .cmp-dirty-indicator {
-    .cmp-dirty-indicator__text {
+  .icDirtyIndicator {
+    .eText {
       display: none;
     }
   }

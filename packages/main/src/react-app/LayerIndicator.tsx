@@ -16,6 +16,7 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { ActionMenuItem } from './components/ActionMenuItem';
 import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
+import styles from './LayerIndicator.module.css';
 
 export const LayerIndicator = () => {
   const redraw = useRedraw();
@@ -31,7 +32,7 @@ export const LayerIndicator = () => {
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <button type={'button'} className="cmp-layer-indicator">
+          <button type={'button'} className={styles.isLayerIndicator}>
             {diagram.activeLayer.type === 'regular' ? (
               <TbStack2 />
             ) : diagram.activeLayer.type === 'reference' ? (
@@ -54,7 +55,7 @@ export const LayerIndicator = () => {
             />
 
             {diagram.activeLayer.isLocked() && (
-              <div className={'cmp-layer-indicator__lock'}>
+              <div className={styles.eLock}>
                 <TbLock />
               </div>
             )}

@@ -11,6 +11,7 @@ import { unique } from '@diagram-craft/utils/array';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DataFields } from './DataFields';
 import React from 'react';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 type ObjectNamePanelProps = {
   mode: 'accordion' | 'panel' | 'headless';
@@ -66,17 +67,18 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
         <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>Basic Info</div>
       )}
 
-      <div className={'cmp-labeled-table'}>
+      <KeyValueTable.Root>
         {!hasOtherName && (
           <React.Fragment>
-            <div className={'cmp-labeled-table__label util-a-top-center'}>Name:</div>
-            <div className={'cmp-labeled-table__value'}>
+            <KeyValueTable.Label>Name:</KeyValueTable.Label>
+            <KeyValueTable.Value>
               <TextInput value={name.val} onChange={v => name.set(v)} />
-            </div>
+            </KeyValueTable.Value>
           </React.Fragment>
         )}
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Tags:</div>
-        <div className={'cmp-labeled-table__value'}>
+
+        <KeyValueTable.Label>Tags:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <MultiSelect
             selectedValues={selectedTags}
             availableItems={availableTags}
@@ -85,24 +87,25 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
             isIndeterminate={isIndeterminate}
             placeholder="Add tags..."
           />
-        </div>
-        <div className={'cmp-labeled-table__label util-a-top-center'}>Tooltip:</div>
-        <div className={'cmp-labeled-table__value'}>
+        </KeyValueTable.Value>
+
+        <KeyValueTable.Label valign={'top'}>Tooltip:</KeyValueTable.Label>
+        <KeyValueTable.Value>
           <TextArea
             value={tooltip.val}
             onChange={v => tooltip.set(v)}
             style={{ minHeight: '60px' }}
             placeholder="Enter tooltip text..."
           />
-        </div>
-      </div>
+        </KeyValueTable.Value>
+      </KeyValueTable.Root>
 
       {[...(mustHaveSchemas ?? [])].map(s => (
         <div key={s.id} style={{ marginTop: '1rem' }}>
           <div style={{ color: 'var(--panel-fg)', marginBottom: '0.5rem' }}>{s.name}</div>
-          <div className={'cmp-labeled-table cmp-labeled-table--inline'}>
+          <KeyValueTable.Root type="inline">
             <DataFields schema={s} />
-          </div>
+          </KeyValueTable.Root>
         </div>
       ))}
     </ToolWindowPanel>

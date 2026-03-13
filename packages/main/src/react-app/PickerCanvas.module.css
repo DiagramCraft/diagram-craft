@@ -1,4 +1,4 @@
-.pickerCanvasPreview {
+.icPickerCanvasPreview {
   position: absolute;
   width: 100px;
   height: 110px;
@@ -17,6 +17,18 @@
   box-shadow: hsl(206 22% 7% / 35%) 0 10px 38px -10px, hsl(206 22% 7% / 20%) 0 10px 20px -15px;
 }
 
-.pickerCanvas {
+.icPickerCanvas {
   --stroke-dash-zoom: 0.5;
+}
+
+.uScaleStrokes {
+  svg {
+    * {
+      vector-effect: initial;
+
+      path {
+        vector-effect: initial;
+      }
+    }
+  }
 }
