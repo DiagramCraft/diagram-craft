@@ -1,0 +1,30 @@
+/* TODO: Can we avoid having a shared .module.css files */
+.icObjectPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+
+  & svg {
+    margin: 0.2rem;
+    display: block;
+    cursor: pointer;
+
+    * {
+      vector-effect: non-scaling-stroke;
+
+      path {
+        vector-effect: non-scaling-stroke;
+      }
+    }
+  }
+
+  &:global(.scale-strokes) svg {
+    * {
+      vector-effect: initial;
+
+      path {
+        vector-effect: initial;
+      }
+    }
+  }
+}

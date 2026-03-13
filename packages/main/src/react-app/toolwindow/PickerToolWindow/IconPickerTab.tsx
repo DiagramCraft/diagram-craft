@@ -20,6 +20,7 @@ import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { IconPickerDrag } from './iconPickerDrag';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import objectPickerStyles from '../../ObjectPicker.module.css';
 
 const service: IconService = new IconifyIconService();
 
@@ -44,7 +45,10 @@ const IconGrid = (props: {
   }, []);
 
   return (
-    <div className={`cmp-object-picker ${styles.eGrid}`} onMouseLeave={onMouseLeave}>
+    <div
+      className={`${objectPickerStyles.icObjectPicker} ${styles.eGrid}`}
+      onMouseLeave={onMouseLeave}
+    >
       {hover &&
         createPortal(
           <div className={styles.eIconTooltip} style={{ left: hover.x + 40, top: hover.y }}>

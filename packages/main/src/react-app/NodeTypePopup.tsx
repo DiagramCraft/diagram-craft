@@ -19,6 +19,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { LineEndIcon } from './icons/LineEndIcon';
 import styles from './NodeTypePopup.module.css';
+import objectPickerStyles from './ObjectPicker.module.css';
 
 // This is here to avoid creating all thumbnails on initial load
 // We cannot simply rely on props.isOpen to determine if thumbnails should be created
@@ -137,7 +138,7 @@ export const NodeTypePopup = (props: Props) => {
       >
         <Popover.Content className={styles.icNodeTypePopup} sideOffset={5} anchor={anchorRef}>
           <div
-            className={'cmp-object-picker'}
+            className={objectPickerStyles.icObjectPicker}
             style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
           >
             <div

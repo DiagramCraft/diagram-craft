@@ -24,6 +24,7 @@ import { flattenIcons, type CollectionInfo } from '@diagram-craft/canvas-app/ico
 import { Select } from '@diagram-craft/app-components/Select';
 import { range } from '@diagram-craft/utils/array';
 import { safeSplit } from '@diagram-craft/utils/safe';
+import objectPickerStyles from './ObjectPicker.module.css';
 
 const SIZE = 35;
 
@@ -175,7 +176,9 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
       </div>
 
       <div className={styles.eIconGrid}>
-        <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.eIconGridInner}`}>
+        <div
+          className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.eIconGridInner}`}
+        >
           {pageIcons.map(icon => {
             const [prefix, name] = safeSplit(icon, ':', 2, 2);
             return (
@@ -270,7 +273,9 @@ export const ShapeSelectDialog = (props: Props) => {
 
   const tabContent: Record<ShapeSelectTab, JSX.Element> = {
     recent: (
-      <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.icRecentStencils}`}>
+      <div
+        className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icRecentStencils}`}
+      >
         {recentStencils.map(stencilId => {
           const stencil = stencilRegistry.getStencil(stencilId);
           if (!stencil) return null;
@@ -302,7 +307,9 @@ export const ShapeSelectDialog = (props: Props) => {
             Search
           </Button>
         </div>
-        <div className={`cmp-object-picker cmp-shape-select-dialog ${styles.icSearchResults}`}>
+        <div
+          className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icSearchResults}`}
+        >
           {!isEmptyString(search) &&
             stencils.map(stencil => (
               <StencilView

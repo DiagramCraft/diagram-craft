@@ -46,6 +46,7 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import styles from '../QueryResponse.module.css';
+import objectPickerStyles from '../../ObjectPicker.module.css';
 
 const NODE_CACHE = new Map<string, DiagramElement>();
 const PICKER_CANVAS_SIZE = 42;
@@ -287,7 +288,7 @@ const DataProviderGridView = (props: DataViewProps) => {
         </div>
       }
     >
-      <div className={'cmp-object-picker'}>
+      <div className={objectPickerStyles.icObjectPicker}>
         {data.map(item => (
           <TemplateGridItem
             key={item._uid}
@@ -370,7 +371,7 @@ const DataProviderListView = (props: DataViewProps) => {
 
                           {dataTemplates.length > 0 && (
                             <div
-                              className={'cmp-object-picker'}
+                              className={objectPickerStyles.icObjectPicker}
                               style={{
                                 border: '1px solid var(--cmp-border)',
                                 borderRadius: 'var(--cmp-radius)',
