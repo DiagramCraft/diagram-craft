@@ -13,13 +13,14 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
-import { serializeDiagramElement } from '@diagram-craft/model/serialization/serialize';
-import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
-import { ElementLookup } from '@diagram-craft/model/elementLookup';
+import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
+import { Box } from '@diagram-craft/geometry/box';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
+import {
+  addStencilStylesToDocument,
+  type StencilElements
+} from '@diagram-craft/model/stencilRegistry';
 
 declare global {
   namespace DiagramCraft {
@@ -48,7 +49,6 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
         id: 'shapeSelect',
         props: {
           title: 'Change shape',
-          excludeMultiElementStencils: true,
           tabs: ['recent', 'search']
         },
         onOk: ({ id, type }: { id: string; type: 'stencil' | 'icon' }) => {
@@ -59,41 +59,29 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);
 
-          const { elements } = stencil.forPicker(diagram.document.registry);
-          assert.arrayWithExactlyOneElement(elements);
-          const source = elements[0]!;
-          if (!isNode(source)) throw new VerifyNotReached();
+          const stencilElements = stencil.forCanvas(diagram.document.registry);
+          assert.true(stencilElements.elements.length > 0);
 
           UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+            addStencilStylesToDocument(stencil, diagram.document, uow);
+
             for (const e of diagram.selection.elements) {
               if (isNode(e)) {
-                e.changeNodeType(source.nodeType, uow);
-
-                e.updateProps(props => {
-                  for (const k of getTypedKeys(props)) {
-                    delete props[k];
-                  }
-                  const storedProps = deepClone(source.storedProps);
-                  for (const k of getTypedKeys(storedProps)) {
-                    // @ts-expect-error
-                    props[k] = storedProps[k];
-                  }
-                }, uow);
-
-                // Add any source children
-                const serialized: Array<SerializedElement> = [];
-                source.children.forEach(c => {
-                  serialized.push(serializeDiagramElement(c));
-                });
-
-                deserializeDiagramElements(
-                  serialized,
-                  e.diagram.activeLayer as RegularLayer,
-                  uow,
-                  e,
-                  new ElementLookup<DiagramNode>(),
-                  new ElementLookup<DiagramEdge>()
-                );
+                if (stencilElements.elements.length === 1) {
+                  this.changeNodeToSingleElementStencil(
+                    e,
+                    diagram.activeLayer as RegularLayer,
+                    stencilElements,
+                    uow
+                  );
+                } else {
+                  this.changeNodeToGroupStencil(
+                    e,
+                    diagram.activeLayer as RegularLayer,
+                    stencilElements,
+                    uow
+                  );
+                }
 
                 /**
                  * Rendering logic assumes all node types remains as-is, when
@@ -127,6 +115,62 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
     } else {
       performChangeShape();
     }
+  }
+
+  private changeNodeToSingleElementStencil(
+    node: DiagramNode,
+    layer: RegularLayer,
+    stencilElements: StencilElements,
+    uow: UnitOfWork
+  ) {
+    const source = stencilElements.elements[0]!;
+    if (!isNode(source)) throw new VerifyNotReached();
+
+    node.changeNodeType(source.nodeType, uow);
+
+    node.updateProps(props => {
+      for (const k of getTypedKeys(props)) {
+        delete props[k];
+      }
+      const storedProps = deepClone(source.storedProps);
+      for (const k of getTypedKeys(storedProps)) {
+        // @ts-expect-error
+        props[k] = storedProps[k];
+      }
+    }, uow);
+
+    const children = cloneElements(source.children, layer);
+    node.setChildren(children, uow);
+  }
+
+  private changeNodeToGroupStencil(
+    node: DiagramNode,
+    layer: RegularLayer,
+    stencilElements: StencilElements,
+    uow: UnitOfWork
+  ) {
+    const targetBounds = node.bounds;
+
+    node.changeNodeType('group', uow);
+    node.updateProps(props => {
+      for (const k of getTypedKeys(props)) {
+        delete props[k];
+      }
+    }, uow);
+
+    const children = cloneElements(stencilElements.elements, layer);
+    node.setChildren(children, uow);
+
+    const sourceBounds = Box.boundingBox(children.map(e => e.bounds));
+    assignNewBounds(
+      children,
+      { x: targetBounds.x, y: targetBounds.y },
+      {
+        x: targetBounds.w / (sourceBounds.w === 0 ? 1 : sourceBounds.w),
+        y: targetBounds.h / (sourceBounds.h === 0 ? 1 : sourceBounds.h)
+      },
+      uow
+    );
   }
 }
 
