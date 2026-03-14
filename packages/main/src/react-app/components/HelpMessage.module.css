@@ -1,6 +1,7 @@
 .icHelp {
-  opacity: 0;
+  opacity: 1;
   position: absolute;
+  z-index: 100;
   left: calc(var(--left-indent) + 5.5rem);
   bottom: 3rem;
   right: calc(var(--right-indent) + 5.5rem);
@@ -23,6 +24,6 @@
     position: absolute;
     right: 0.55rem;
     top: 0.2rem;
-    cursor: hand;
+    cursor: pointer;
   }
 }

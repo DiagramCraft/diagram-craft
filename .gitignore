@@ -26,6 +26,7 @@ AGENTS.md
 packages/main/public/diagrams
 packages/main/public/img
 packages/main/public/stencils
+packages/main/public/Test*
 
 # Editor directories and files
 .tsimp
