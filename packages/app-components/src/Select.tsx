@@ -9,12 +9,10 @@ import { Select as BaseUISelect } from '@base-ui/react/select';
 const Root = (props: RootProps) => {
   const portal = usePortal();
 
-  const values =
-    React.Children.map(props.children, e => {
-      // biome-ignore lint/suspicious/noExplicitAny: We know this is an Item
-      const props = (e as any).props as ItemProps;
-      return { value: props.value, label: props.children };
-    }) ?? [];
+  const values = React.Children.toArray(props.children).flatMap(child => {
+    if (!React.isValidElement<ItemProps>(child)) return [];
+    return [{ value: child.props.value, label: child.props.children }];
+  });
 
   const hasValue = values.some(v => v.value === props.value);
 
