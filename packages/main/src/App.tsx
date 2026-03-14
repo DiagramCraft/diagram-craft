@@ -746,7 +746,7 @@ export const App = (props: {
 
                   <NodeTypePopup
                     {...popoverState}
-                    onClose={() => setPopoverState(NodeTypePopup.INITIAL_STATE)}
+                    onClose={() => setPopoverState(s => ({ ...s, isOpen: false }))}
                   />
                 </div>
 

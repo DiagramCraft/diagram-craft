@@ -29,6 +29,8 @@ let hasBeenOpen = false;
 export const NodeTypePopup = (props: Props) => {
   const diagram = useDiagram();
   const anchorRef = useRef<HTMLDivElement>(null);
+  const preferredSide =
+    typeof window === 'undefined' || props.position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
 
   hasBeenOpen ||= props.isOpen;
 
@@ -136,7 +138,14 @@ export const NodeTypePopup = (props: Props) => {
           }
         }}
       >
-        <Popover.Content className={styles.icNodeTypePopup} sideOffset={5} anchor={anchorRef}>
+        <Popover.Content
+          className={styles.icNodeTypePopup}
+          sideOffset={5}
+          side={preferredSide}
+          arrow={false}
+          collisionAvoidance={{ side: 'none', align: 'shift', fallbackAxisSide: 'none' }}
+          anchor={anchorRef}
+        >
           <div
             className={objectPickerStyles.icObjectPicker}
             style={{ marginTop: '0.1rem', border: '1px solid transparent' }}
@@ -156,8 +165,8 @@ export const NodeTypePopup = (props: Props) => {
             >
               <LineEndIcon />
             </div>
-            {diagramsAndNodes.map(([stencil, d], idx) => (
-              <div key={idx} style={{ background: 'transparent' }}>
+            {diagramsAndNodes.map(([stencil, d]) => (
+              <div key={stencil.id} style={{ background: 'transparent' }}>
                 <PickerCanvas
                   name={d.name}
                   size={size}

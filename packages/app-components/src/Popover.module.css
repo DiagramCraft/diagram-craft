@@ -23,15 +23,36 @@
   height: var(--popup-height, auto);
 
   .eArrow {
+    --_size: 5px;
+
     background: transparent;
 
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
+    width: 0;
+    height: 0;
 
-    border-bottom: 5px solid var(--panel-bg);
+    border-left: var(--_size) solid transparent;
+    border-right: var(--_size) solid transparent;
+    border-bottom: var(--_size) solid var(--panel-bg);
+
+    display: flex;
+
+    &[data-side='top'] {
+      bottom: calc(-1 * var(--_size) + 1px);
+      rotate: 180deg;
+    }
 
     &[data-side='bottom'] {
-      top: -5px;
+      top: calc(-1 * var(--_size) + 1px);
+    }
+
+    &[data-side='left'] {
+      right: calc(-1 * var(--_size) - 1px);
+      rotate: 90deg;
+    }
+
+    &[data-side='right'] {
+      left: calc(-1 * var(--_size) - 1px);
+      rotate: -90deg;
     }
   }
 
