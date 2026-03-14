@@ -69,15 +69,19 @@ export const EditSchemaDialog = (props: Props) => {
       name: `Field ${fieldNumber}`,
       type: 'text'
     };
-    setFields(fields.toSpliced(index + 1, 0, newField));
+    setFields(currentFields => currentFields.toSpliced(index + 1, 0, newField));
   };
 
   const removeField = (index: number) => {
-    setFields(fields.toSpliced(index, 1));
+    setFields(currentFields => currentFields.toSpliced(index, 1));
   };
 
-  const updateField = (fieldId: string, updates: Partial<DataSchemaField>) => {
-    setFields(fields.map(f => (f.id === fieldId ? ({ ...f, ...updates } as DataSchemaField) : f)));
+  const updateField = (fieldIndex: number, updates: Partial<DataSchemaField>) => {
+    setFields(currentFields =>
+      currentFields.map((field, index) =>
+        index === fieldIndex ? ({ ...field, ...updates } as DataSchemaField) : field
+      )
+    );
   };
 
   const validateSchema = (): boolean => {
@@ -232,7 +236,7 @@ export const EditSchemaDialog = (props: Props) => {
 
             return (
               <div
-                key={field.id}
+                key={index}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -245,7 +249,7 @@ export const EditSchemaDialog = (props: Props) => {
                   <div style={{ flex: 1 }}>
                     <TextInput
                       value={field.id}
-                      onChange={value => updateField(field.id, { id: value ?? '' })}
+                      onChange={value => updateField(index, { id: value ?? '' })}
                       placeholder="Field ID"
                       disabled={isFieldIdReadOnly}
                       title={
@@ -264,7 +268,7 @@ export const EditSchemaDialog = (props: Props) => {
                   <div style={{ flex: 2 }}>
                     <TextInput
                       value={field.name}
-                      onChange={value => updateField(field.id, { name: value ?? '' })}
+                      onChange={value => updateField(index, { name: value ?? '' })}
                       placeholder="Field name"
                     />
                     {errors[`field-${index}-name`] && (
@@ -285,14 +289,14 @@ export const EditSchemaDialog = (props: Props) => {
                           | 'boolean'
                           | 'select';
                         if (newType === 'reference') {
-                          updateField(field.id, {
+                          updateField(index, {
                             type: newType,
                             schemaId: props.availableSchemas?.[0]?.id ?? '',
                             minCount: 0,
                             maxCount: 1
                           });
                         } else if (newType === 'select') {
-                          updateField(field.id, {
+                          updateField(index, {
                             type: newType,
                             options: [
                               { value: 'option1', label: 'Option 1' },
@@ -300,7 +304,7 @@ export const EditSchemaDialog = (props: Props) => {
                             ]
                           });
                         } else {
-                          updateField(field.id, { type: newType });
+                          updateField(index, { type: newType });
                         }
                       }}
                     >
@@ -358,7 +362,7 @@ export const EditSchemaDialog = (props: Props) => {
                                   ...newOptions[optionIndex]!,
                                   value: value ?? ''
                                 };
-                                updateField(field.id, { options: newOptions });
+                                updateField(index, { options: newOptions });
                               }}
                               placeholder="Value"
                             />
@@ -377,7 +381,7 @@ export const EditSchemaDialog = (props: Props) => {
                                   ...newOptions[optionIndex]!,
                                   label: value ?? ''
                                 };
-                                updateField(field.id, { options: newOptions });
+                                updateField(index, { options: newOptions });
                               }}
                               placeholder="Label"
                             />
@@ -395,7 +399,7 @@ export const EditSchemaDialog = (props: Props) => {
                                 value: `option${field.options.length + 1}`,
                                 label: `Option ${field.options.length + 1}`
                               });
-                              updateField(field.id, { options: newOptions });
+                              updateField(index, { options: newOptions });
                             }}
                             title="Add option below"
                           >
@@ -405,7 +409,7 @@ export const EditSchemaDialog = (props: Props) => {
                             variant="icon-only"
                             onClick={() => {
                               const newOptions = field.options.filter((_, i) => i !== optionIndex);
-                              updateField(field.id, { options: newOptions });
+                              updateField(index, { options: newOptions });
                             }}
                             disabled={field.options.length === 1}
                             title={
@@ -428,7 +432,7 @@ export const EditSchemaDialog = (props: Props) => {
                       <label style={{ display: 'block' }}>Referenced Schema:</label>
                       <Select.Root
                         value={field.schemaId}
-                        onChange={value => updateField(field.id, { schemaId: value ?? '' })}
+                        onChange={value => updateField(index, { schemaId: value ?? '' })}
                       >
                         {props.availableSchemas
                           ?.filter(s => s.id !== props.schema?.id)
@@ -451,7 +455,7 @@ export const EditSchemaDialog = (props: Props) => {
                         type="number"
                         value={field.minCount.toString()}
                         onChange={value =>
-                          updateField(field.id, { minCount: parseInt(value ?? '0', 10) || 0 })
+                          updateField(index, { minCount: parseInt(value ?? '0', 10) || 0 })
                         }
                         placeholder="0"
                       />
@@ -468,7 +472,7 @@ export const EditSchemaDialog = (props: Props) => {
                         type="number"
                         value={field.maxCount.toString()}
                         onChange={value =>
-                          updateField(field.id, { maxCount: parseInt(value ?? '1', 10) || 1 })
+                          updateField(index, { maxCount: parseInt(value ?? '1', 10) || 1 })
                         }
                         placeholder="1"
                       />
