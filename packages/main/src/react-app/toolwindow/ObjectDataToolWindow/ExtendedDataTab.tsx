@@ -2,7 +2,7 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { useApplication, useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEventListener } from '../../hooks/useEventListener';
@@ -31,6 +31,7 @@ export const ExtendedDataTab = () => {
   }>({ open: false });
 
   const [editMode, setEditMode] = useState(true);
+  const [openItems, setOpenItems] = useState<string[]>([]);
 
   useEventListener($d.selection, 'change', redraw);
   useEventListener($d, 'diagramChange', redraw);
@@ -153,6 +154,34 @@ export const ExtendedDataTab = () => {
     .flatMap(e => e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas)
     .forEach(s => mustHaveSchemas.add(s.id));
 
+  const enabledSchemasKey = enabledSchemas.join('\0');
+  const customDataKeysKey = customDataKeys.join('\0');
+
+  useEffect(() => {
+    if ($d.selection.elements.length !== 1) {
+      setOpenItems([]);
+      return;
+    }
+
+    const hasCustomData = customDataKeys.length > 0;
+
+    setOpenItems(prev => {
+      const next = prev.filter(item => {
+        if (item === '_custom') return hasCustomData;
+        return true;
+      });
+
+      if (hasCustomData) next.push('_custom');
+      next.push(...enabledSchemas);
+
+      const normalized = unique(next);
+      return prev.length === normalized.length &&
+        prev.every((item, index) => item === normalized[index])
+        ? prev
+        : normalized;
+    });
+  }, [$d.selection.elements.length, customDataKeysKey, enabledSchemasKey]);
+
   return (
     <>
       <ToolWindow.TabActions>
@@ -173,7 +202,7 @@ export const ExtendedDataTab = () => {
         >
           {$d.selection.elements.length !== 1 && ''}
           {$d.selection.elements.length === 1 && (
-            <Accordion.Root type={'multiple'} defaultValue={['_custom', ...enabledSchemas]}>
+            <Accordion.Root type={'multiple'} value={openItems} onValueChange={setOpenItems}>
               {/* Show all schemas, but conditionally render content */}
               {$d.document.data.db.schemas
                 .filter(schema => {
@@ -203,13 +232,8 @@ export const ExtendedDataTab = () => {
                               onChange={e => {
                                 const isChecked = e.target.checked;
 
-                                const { accordionItem, accordionContent, accordionHeader } =
-                                  Accordion.getAccordion(e.target);
-
                                 if (isChecked) {
-                                  accordionItem.dataset.state = 'open';
-                                  accordionContent.dataset.state = 'open';
-                                  accordionHeader.dataset.state = 'open';
+                                  setOpenItems(prev => unique([...prev, schema.id]));
                                   addSchemaToSelection(schema.id);
                                 } else {
                                   // Check if any element has data for this schema
@@ -229,23 +253,19 @@ export const ExtendedDataTab = () => {
                                           cancelLabel: 'Cancel'
                                         },
                                         () => {
-                                          accordionItem.dataset.state = 'closed';
-                                          accordionContent.dataset.state = 'closed';
-                                          accordionHeader.dataset.state = 'closed';
+                                          setOpenItems(prev =>
+                                            prev.filter(item => item !== schema.id)
+                                          );
                                           removeSchemaFromSelection(schema.id);
                                           redraw();
                                         },
                                         () => {
-                                          // On cancel, reset the checkbox
-                                          e.target.checked = true;
                                           redraw();
                                         }
                                       )
                                     );
                                   } else {
-                                    accordionItem.dataset.state = 'closed';
-                                    accordionContent.dataset.state = 'closed';
-                                    accordionHeader.dataset.state = 'closed';
+                                    setOpenItems(prev => prev.filter(item => item !== schema.id));
                                     removeSchemaFromSelection(schema.id);
                                   }
                                 }
