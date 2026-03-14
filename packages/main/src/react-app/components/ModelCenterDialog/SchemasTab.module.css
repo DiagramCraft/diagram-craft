@@ -1,4 +1,8 @@
 .icSchemasTab {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
   .eHeader {
     display: flex;
     justify-content: space-between;
