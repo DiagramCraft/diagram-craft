@@ -1,5 +1,6 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Data } from '@diagram-craft/model/dataProvider';
 import {
   decodeDataReferences,
@@ -172,6 +173,12 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
         {schema.fields.map(field => (
           <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
             <label>{field.name}:</label>
+            {field.type === 'text' && (
+              <TextInput
+                value={(formData[field.id] as string | undefined) ?? ''}
+                onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
+              />
+            )}
             {field.type === 'reference' && (
               <ReferenceFieldEditor
                 field={field}
