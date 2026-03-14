@@ -34,30 +34,32 @@ export const CommentToolbarButton = () => {
   const tooltipMessage = selElement ? `Comments for ${selElement.type}` : 'Comments for diagram';
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      <Tooltip
-        message={tooltipMessage}
-        element={
-          <Toolbar.Button onClick={() => application.actions.COMMENT_ADD!.execute()}>
-            <TbMessageCircle />
-          </Toolbar.Button>
-        }
-      />
-      {commentCount > 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-1px',
-            right: '-1px',
-            backgroundColor: 'var(--highlight-reverse-bg)',
-            color: 'var(--highlight-reverse-fg)',
-            borderRadius: '50%',
-            width: '8px',
-            height: '8px',
-            border: '1px solid var(--panel-bg)'
-          }}
-        ></div>
-      )}
-    </div>
+    <Tooltip
+      message={tooltipMessage}
+      element={
+        <Toolbar.Button
+          onClick={() => application.actions.COMMENT_ADD!.execute()}
+          style={{ position: 'relative' }}
+        >
+          <TbMessageCircle />
+          {commentCount > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '0',
+                right: '0',
+                backgroundColor: 'var(--highlight-reverse-bg)',
+                color: 'var(--highlight-reverse-fg)',
+                borderRadius: '50%',
+                width: '6px',
+                height: '6px',
+                border: '1px solid var(--panel-bg)',
+                pointerEvents: 'none'
+              }}
+            ></div>
+          )}
+        </Toolbar.Button>
+      }
+    />
   );
 };
