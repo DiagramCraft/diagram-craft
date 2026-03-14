@@ -1,9 +1,8 @@
 /**
  *  TextArea - .cTextArea
  *  | TextArea - .eTextArea
- *  | Maximize - .eMaximize
  *
- *  TextAreaMaximizedDialog - .cTextAreaMaximizedDialog
+ *  TextAreaMaximizedContent - .cTextAreaMaximizedContent
  */
 .cTextArea {
   position: relative;
@@ -31,24 +30,6 @@
     }
   }
 
-  .eMaximize {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    padding: 0.125rem;
-    background: transparent;
-    color: var(--cmp-fg-dimmed);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    cursor: pointer;
-
-    &:hover {
-      color: var(--cmp-fg);
-    }
-  }
-
   &:focus-within,
   &:has(*[data-focus="true"]) {
     box-shadow: var(--cmp-border-shadow-focus) !important;
@@ -68,53 +49,12 @@
 }
 
 
-.cTextAreaMaximizedDialog {
-  .eDialog {
-    background: var(--base-bg);
+.cTextAreaMaximizedContent {
+  .cTextArea {
+    height: 100%;
+  }
 
-    position: fixed;
-    left: 0;
-    /* TODO: Replace with anchor positioning */
-    top: 46px;
-    bottom: 0;
-    right: 0;
-    transform: none;
-
-    padding: 1rem 1rem 4rem 1rem;
-
-    .eContent {
-      height: 100%;
-
-      .cTextArea {
-        height: 100%;
-      }
-    }
-
-    & > div {
-      height: 100%;
-    }
-
-    .eTextArea {
-      height: calc(100% - 5px) !important;
-    }
-
-    .eButtons {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 0.75rem;
-
-      button {
-        padding: 0 1.25rem;
-        font-weight: 500;
-        height: 35px;
-        outline: none;
-
-        border-radius: 4px;
-        color: var(--base-fg-dim);
-        background-color: var(--panel-bg);
-
-        border: 1px solid var(--cmp-border);
-      }
-    }
+  .eTextArea {
+    height: calc(100% - 5px) !important;
   }
 }
