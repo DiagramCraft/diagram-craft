@@ -52,7 +52,7 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           tabs: ['recent', 'search']
         },
         onOk: ({ id, type }: { id: string; type: 'stencil' | 'icon' }) => {
-          assert.false(type === 'stencil');
+          assert.true(type === 'stencil');
 
           const stencil = document.registry.stencils.getStencil(id);
 
