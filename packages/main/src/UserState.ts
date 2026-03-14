@@ -40,7 +40,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelRight = state.panelRight;
     this.#panelLeftWidth = state.panelLeftWidth ?? 248;
     this.#panelRightWidth = state.panelRightWidth ?? 248;
-    this.#showHelp = state.showHelp;
+    this.#showHelp = state.showHelp ?? true;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
     this.#recentFiles = state.recentFiles ?? [];
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
