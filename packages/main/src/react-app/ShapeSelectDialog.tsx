@@ -239,6 +239,17 @@ export const ShapeSelectDialog = (props: Props) => {
   const [search, setSearch] = useState('');
   const [stencils, setStencils] = useState<Stencil[]>([]);
 
+  const shouldIncludeStencil = useCallback(
+    (stencil: Stencil) => {
+      const { elements } = stencil.forPicker(document.registry);
+
+      if (elements.length === 1 && !props.includeEdges && isEdge(elements[0])) return false;
+
+      return true;
+    },
+    [document.registry, props.includeEdges]
+  );
+
   const doSearch = useCallback(
     (query: string) => {
       setSearch(query);
@@ -257,14 +268,7 @@ export const ShapeSelectDialog = (props: Props) => {
   const recentStencils = document.props.recentStencils.stencils.filter(s => {
     const stencil = stencilRegistry.getStencil(s)!;
     if (!stencil) return false;
-
-    const { elements } = stencil.forPicker(document.registry);
-
-    if (props.excludeMultiElementStencils && elements.length > 1) return false;
-
-    if (elements.length === 1 && !props.includeEdges && isEdge(elements[0])) return false;
-
-    return true;
+    return shouldIncludeStencil(stencil);
   });
 
   const activeTabs = props.tabs ?? ['recent', 'search', 'icons'];
@@ -309,7 +313,7 @@ export const ShapeSelectDialog = (props: Props) => {
           className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icSearchResults}`}
         >
           {!isEmptyString(search) &&
-            stencils.map(stencil => (
+            stencils.filter(shouldIncludeStencil).map(stencil => (
               <StencilView
                 key={stencil.id}
                 stencil={stencil}
@@ -364,7 +368,6 @@ type Props = {
   onOk: (data: ShapeSelectResult) => void;
   onCancel?: () => void;
   title: string;
-  excludeMultiElementStencils?: boolean;
   includeEdges?: boolean;
   tabs?: ShapeSelectTab[];
 };
