@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
-import textAreaStyles from './TextArea.module.css';
 import { assert } from '@diagram-craft/utils/assert';
 import { Browser } from '@diagram-craft/utils/browser';
-import { TbArrowsDiagonal } from 'react-icons/tb';
-import { Dialog } from './Dialog';
+import { MaximizedTextDialog } from './MaximizedTextDialog';
+import { MaximizeButton } from './MaximizeButton';
 
 export namespace SyntaxHighlightingEditor {
   export type Ref = {
@@ -182,31 +181,20 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           </div>
         )}
 
-        {!maximized && (
-          <button onClick={() => setMaximized(true)} type={'button'} className={styles.eMaximize}>
-            <TbArrowsDiagonal />
-          </button>
-        )}
+        {!maximized && <MaximizeButton onClick={() => setMaximized(true)} />}
       </div>
     );
 
     if (maximized) {
       return (
-        <Dialog
-          className={textAreaStyles.cTextAreaMaximizedDialog}
-          title=""
-          open={true}
-          buttons={[
-            {
-              type: 'cancel',
-              label: 'Ok',
-              onClick: () => setMaximized(false)
-            }
-          ]}
+        <MaximizedTextDialog
+          open={maximized}
           onClose={() => setMaximized(false)}
+          contentClassName={styles.cSyntaxHighlightingEditorMaximizedContent}
+          showCloseButton={false}
         >
           {inner}
-        </Dialog>
+        </MaximizedTextDialog>
       );
     }
     return <div>{inner}</div>;

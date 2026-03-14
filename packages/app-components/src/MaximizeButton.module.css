@@ -1,0 +1,17 @@
+.cMaximizeButton {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  padding: 0.125rem;
+  background: transparent;
+  color: var(--cmp-fg-dimmed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--cmp-fg);
+  }
+}
