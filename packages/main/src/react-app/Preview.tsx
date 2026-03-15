@@ -22,7 +22,7 @@ type Props = {
   onClose: () => void;
 };
 
-export const Preview = (props: Props) => {
+export const Preview = ({ onClose }: Props) => {
   const application = useApplication();
   const diagram = useDiagram();
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -35,14 +35,14 @@ export const Preview = (props: Props) => {
   useEffect(() => {
     const cb = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        props.onClose();
+        onClose();
       }
     };
     document.addEventListener('keydown', cb);
     return () => {
       document.removeEventListener('keydown', cb);
     };
-  }, [props.onClose]);
+  }, [onClose]);
 
   const OFFSET = 40;
 
@@ -126,7 +126,7 @@ export const Preview = (props: Props) => {
             } catch (_e) {
               // Ignore
             }
-            props.onClose();
+            onClose();
           }}
         >
           <TbX />

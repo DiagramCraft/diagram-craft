@@ -25,14 +25,20 @@ type SearchToolMenuProps = {
   getScope: () => string;
 };
 
-export const SearchToolMenu = (props: SearchToolMenuProps) => {
+export const SearchToolMenu = ({
+  type,
+  onQuerySelect,
+  getLabel,
+  getQuery,
+  getScope
+}: SearchToolMenuProps) => {
   const application = useApplication();
   const redraw = useRedraw();
   const document = useDocument();
   const { switchTab } = useToolWindowControls();
   const { setDjqlQuery } = useQueryToolWindowContext();
-  const history = document.props.query.history.filter(h => h.type === props.type);
-  const saved = document.props.query.saved.filter(r => r.type === props.type);
+  const history = document.props.query.history.filter(h => h.type === type);
+  const saved = document.props.query.saved.filter(r => r.type === type);
   const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
 
   const saveSearch = useCallback(() => {
@@ -40,7 +46,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
       id: 'stringInput',
       props: {
         title: 'Save search',
-        value: props.getLabel(),
+        value: getLabel(),
         description:
           'Enter a name for this search. This will be used to identify the search in the saved searches list.',
         label: 'Name',
@@ -48,18 +54,18 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         type: 'string'
       },
       onOk: value => {
-        const query = props.getQuery();
-        const scope = props.getScope();
-        document.props.query.addSaved(props.type, value, scope, query);
+        const query = getQuery();
+        const scope = getScope();
+        document.props.query.addSaved(type, value, scope, query);
         redraw();
       }
     });
-  }, [props.getQuery, application, document, props, redraw]);
+  }, [application, document, getLabel, getQuery, getScope, redraw, type]);
 
   const createRuleClausesFromSearch = useCallback((): ElementSearchClause[] => {
-    const query = props.getQuery();
+    const query = getQuery();
 
-    switch (props.type) {
+    switch (type) {
       case 'simple':
         if (!query.trim()) return [];
         return [
@@ -98,7 +104,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
       default:
         return VERIFY_NOT_REACHED();
     }
-  }, [props.type, props.getQuery]);
+  }, [getQuery, type]);
 
   const createRuleLayer = useCallback(() => {
     const clauses = createRuleClausesFromSearch();
@@ -109,7 +115,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
 
     const rule: AdjustmentRule = {
       id: newid(),
-      name: `Rule from ${props.getLabel()}`,
+      name: `Rule from ${getLabel()}`,
       type: 'node',
       clauses: clauses,
       actions: []
@@ -125,15 +131,15 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         });
       })
     );
-  }, [createRuleClausesFromSearch, props.getLabel, application]);
+  }, [application, createRuleClausesFromSearch, getLabel]);
 
   const convertToDJQL = useCallback(() => {
-    const query = props.getQuery();
-    const scope = props.getScope();
+    const query = getQuery();
+    const scope = getScope();
 
     let djqlQuery: string;
 
-    switch (props.type) {
+    switch (type) {
       case 'simple':
         djqlQuery = convertSimpleSearchToDJQL(query);
         break;
@@ -147,7 +153,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
     document.props.query.addHistory('djql', djqlQuery, scope, djqlQuery);
     setDjqlQuery(djqlQuery, scope);
     switchTab('djql');
-  }, [props, document, setDjqlQuery, switchTab]);
+  }, [document, getQuery, getScope, setDjqlQuery, switchTab, type]);
 
   return (
     <MenuButton.Root>
@@ -157,7 +163,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
       <MenuButton.Menu>
         <Menu.SubMenu disabled={history.length === 0} label={'Recent Searches'}>
           {history.map(({ scope, value, label }) => (
-            <Menu.Item key={value} onClick={() => props.onQuerySelect(scope, value)}>
+            <Menu.Item key={value} onClick={() => onQuerySelect(scope, value)}>
               {label}
             </Menu.Item>
           ))}
@@ -165,7 +171,7 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         <Menu.Separator />
         <Menu.SubMenu label={'Saved Searches'} disabled={saved.length === 0}>
           {saved.map(({ scope, value, label }) => (
-            <Menu.Item key={value} onClick={() => props.onQuerySelect(scope, value)}>
+            <Menu.Item key={value} onClick={() => onQuerySelect(scope, value)}>
               {label}
             </Menu.Item>
           ))}
@@ -173,14 +179,14 @@ export const SearchToolMenu = (props: SearchToolMenuProps) => {
         <Menu.Item onClick={saveSearch}>Save Search</Menu.Item>
         <Menu.Item onClick={() => setIsManageDialogOpen(true)}>Manage Saved Searches</Menu.Item>
         <Menu.Separator />
-        {props.type !== 'djql' && <Menu.Item onClick={convertToDJQL}>Convert to DJQL</Menu.Item>}
+        {type !== 'djql' && <Menu.Item onClick={convertToDJQL}>Convert to DJQL</Menu.Item>}
         <Menu.Item onClick={createRuleLayer}>Create Rule Layer</Menu.Item>
       </MenuButton.Menu>
 
       <ManageSavedSearchesDialog
         open={isManageDialogOpen}
         onClose={() => setIsManageDialogOpen(false)}
-        initialSearchType={props.type}
+        initialSearchType={type}
       />
     </MenuButton.Root>
   );

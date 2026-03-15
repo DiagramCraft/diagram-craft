@@ -4,15 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import {
-  addStencilStylesToDocument,
-  applyStencilToNode
-} from '@diagram-craft/model/stencilUtils';
-import {
-  copyStyles,
-  Stencil,
-  stencilScaleStrokes
-} from '@diagram-craft/model/stencilRegistry';
+import { addStencilStylesToDocument, applyStencilToNode } from '@diagram-craft/model/stencilUtils';
+import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -29,17 +22,17 @@ import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 // as props.isOpen will be false during the closing animation of the popover
 let hasBeenOpen = false;
 
-export const NodeTypePopup = (props: Props) => {
+export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
   const diagram = useDiagram();
   const anchorRef = useRef<HTMLDivElement>(null);
   const preferredSide =
-    typeof window === 'undefined' || props.position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
+    typeof window === 'undefined' || position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
 
-  hasBeenOpen ||= props.isOpen;
+  hasBeenOpen ||= isOpen;
 
   const addNode = useCallback(
     (stencil: Stencil) => {
-      const node = mustExist(diagram.nodeLookup.get(props.nodeId));
+      const node = mustExist(diagram.nodeLookup.get(nodeId));
       const layer = node.layer;
       assertRegularLayer(layer);
 
@@ -53,15 +46,15 @@ export const NodeTypePopup = (props: Props) => {
 
       diagram.document.props.recentStencils.register(stencil.id);
 
-      props.onClose();
+      onClose();
     },
-    [diagram, props]
+    [diagram, nodeId, onClose]
   );
 
   const keepOnlyEdge = useCallback(() => {
-    const node = mustExist(diagram.nodeLookup.get(props.nodeId));
-    const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
-    const diagramPoint = diagram.viewBox.toDiagramPoint(props.position);
+    const node = mustExist(diagram.nodeLookup.get(nodeId));
+    const edge = mustExist(diagram.edgeLookup.get(edgeId));
+    const diagramPoint = diagram.viewBox.toDiagramPoint(position);
 
     UnitOfWork.executeWithUndo(diagram, 'Keep edge only', uow => {
       edge.setEnd(new FreeEndpoint(diagramPoint), uow);
@@ -73,8 +66,8 @@ export const NodeTypePopup = (props: Props) => {
     diagram.undoManager.add(new CompoundUndoableAction(actions));
     diagram.undoManager.setMark();
 
-    props.onClose();
-  }, [diagram, props]);
+    onClose();
+  }, [diagram, edgeId, nodeId, onClose, position]);
 
   const size = 30;
 
@@ -111,16 +104,16 @@ export const NodeTypePopup = (props: Props) => {
   }, [diagramsAndNodes]);
 
   useEffect(() => {
-    if (!props.isOpen) return;
+    if (!isOpen) return;
 
     const timeoutId = window.setTimeout(() => {
-      props.onClose();
+      onClose();
     }, 3000);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [props.isOpen, props.onClose]);
+  }, [isOpen, onClose]);
 
   if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 
@@ -130,15 +123,15 @@ export const NodeTypePopup = (props: Props) => {
         ref={anchorRef}
         style={{
           position: 'absolute',
-          left: `${props.position.x}px`,
-          top: `${props.position.y}px`
+          left: `${position.x}px`,
+          top: `${position.y}px`
         }}
       ></div>
       <Popover.Root
-        open={props.isOpen}
+        open={isOpen}
         onOpenChange={s => {
           if (!s) {
-            props.onClose();
+            onClose();
           }
         }}
       >

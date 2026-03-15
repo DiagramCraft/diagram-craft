@@ -10,22 +10,26 @@ type LayoutForceDirectedActionDialogProps = {
   onChange: (state: LayoutForceDirectedActionArgs) => void;
 };
 
-export const LayoutForceDirectedActionDialog = (props: LayoutForceDirectedActionDialogProps) => {
+export const LayoutForceDirectedActionDialog = ({
+  onCancel,
+  onApply,
+  onChange
+}: LayoutForceDirectedActionDialogProps) => {
   const [springStrength, setSpringStrength] = useState(0.5);
   const [repulsionStrength, setRepulsionStrength] = useState(1.0);
   const [idealEdgeLength, setIdealEdgeLength] = useState(100);
   const [iterations] = useState(300);
 
   useEffect(() => {
-    props.onChange({ springStrength, repulsionStrength, idealEdgeLength, iterations });
-  }, [springStrength, repulsionStrength, idealEdgeLength, iterations, props.onChange]);
+    onChange({ springStrength, repulsionStrength, idealEdgeLength, iterations });
+  }, [idealEdgeLength, iterations, onChange, repulsionStrength, springStrength]);
 
   return (
     <ToolDialog
       open={true}
       title={'Force-Directed'}
-      onCancel={props.onCancel}
-      onOk={() => props.onApply({ springStrength, repulsionStrength, idealEdgeLength, iterations })}
+      onCancel={onCancel}
+      onOk={() => onApply({ springStrength, repulsionStrength, idealEdgeLength, iterations })}
     >
       <div style={{ marginLeft: '0.5rem' }}>Spring:</div>
       <NumberInput
