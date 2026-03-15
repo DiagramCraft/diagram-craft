@@ -13,7 +13,6 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilUtils';
-export { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 
 export type StencilElements = {
   bounds: Box;

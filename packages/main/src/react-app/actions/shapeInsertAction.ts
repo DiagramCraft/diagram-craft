@@ -6,7 +6,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { addStencilStylesToDocument } from '@diagram-craft/model/stencilRegistry';
+import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';

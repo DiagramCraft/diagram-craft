@@ -1,12 +1,12 @@
 import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
-  addStencilStylesToDocument,
   copyStyles,
   Stencil,
   StencilPackage,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
+import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';

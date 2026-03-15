@@ -8,11 +8,11 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  addStencilStylesToDocument,
   copyStyles,
   Stencil,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
+import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { createThumbnailFromStencil } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { isEdge } from '@diagram-craft/model/diagramElement';

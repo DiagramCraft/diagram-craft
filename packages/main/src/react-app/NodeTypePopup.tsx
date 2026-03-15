@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { applyStencilToNode } from '@diagram-craft/model/stencilUtils';
 import {
   addStencilStylesToDocument,
+  applyStencilToNode
+} from '@diagram-craft/model/stencilUtils';
+import {
   copyStyles,
   Stencil,
   stencilScaleStrokes
