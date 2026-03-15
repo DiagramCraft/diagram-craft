@@ -1,17 +1,18 @@
 import { PickerCanvas } from './PickerCanvas';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { useCallback, useEffect, useRef } from 'react';
-import { Point } from '@diagram-craft/geometry/point';
+import { FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
   addStencilStylesToDocument,
+  applyStencilToNode
+} from '@diagram-craft/model/stencilUtils';
+import {
   copyStyles,
   Stencil,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { useDiagram } from '../application';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -20,6 +21,8 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { LineEndIcon } from './icons/LineEndIcon';
 import styles from './NodeTypePopup.module.css';
 import objectPickerStyles from './ObjectPicker.module.css';
+import type { Point } from '@diagram-craft/geometry/point';
+import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 // This is here to avoid creating all thumbnails on initial load
 // We cannot simply rely on props.isOpen to determine if thumbnails should be created
@@ -36,36 +39,18 @@ export const NodeTypePopup = (props: Props) => {
 
   const addNode = useCallback(
     (stencil: Stencil) => {
-      const sourceNode = mustExist(diagram.nodeLookup.get(props.nodeId));
-      const diagramPosition = diagram.viewBox.toDiagramPoint(props.position);
-
-      const dimension = 50;
-      const nodePosition = Point.subtract(diagramPosition, Point.of(dimension / 2, dimension / 2));
-
-      const layer = diagram.activeLayer;
+      const node = mustExist(diagram.nodeLookup.get(props.nodeId));
+      const layer = node.layer;
       assertRegularLayer(layer);
 
-      const registry = diagram.document.registry;
-
-      UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
-        const els = cloneElements(stencil.forPicker(registry).elements, layer, uow);
-        assert.arrayWithExactlyOneElement(els);
-        const node = els[0]! as DiagramNode;
-
-        layer.addElement(node, uow);
-
-        assignNewBounds([node], nodePosition, { x: 1, y: 1 }, uow);
-        node.updateMetadata(meta => {
-          meta.style = sourceNode.metadata.style ?? diagram.document.styles.activeNodeStylesheet.id;
-          meta.textStyle =
-            sourceNode.metadata.textStyle ?? diagram.document.styles.activeTextStylesheet.id;
-        }, uow);
-
-        const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
-        edge.setEnd(new AnchorEndpoint(node, 'c'), uow);
-
-        uow.diagram.undoManager.getToMark().forEach(a => uow.add(a));
+      UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+        applyStencilToNode(diagram, node, layer, stencil, uow);
       });
+
+      const actions = diagram.undoManager.getToMark();
+      diagram.undoManager.add(new CompoundUndoableAction(actions));
+      diagram.undoManager.setMark();
+
       diagram.document.props.recentStencils.register(stencil.id);
 
       props.onClose();
@@ -73,15 +58,23 @@ export const NodeTypePopup = (props: Props) => {
     [diagram, props]
   );
 
-  const undo = useCallback(() => {
-    const edge = diagram.edgeLookup.get(props.edgeId);
-    assert.present(edge);
-    UnitOfWork.execute(diagram, uow => {
-      assertRegularLayer(edge.layer);
-      edge.layer.removeElement(edge, uow);
+  const keepOnlyEdge = useCallback(() => {
+    const node = mustExist(diagram.nodeLookup.get(props.nodeId));
+    const edge = mustExist(diagram.edgeLookup.get(props.edgeId));
+    const diagramPoint = diagram.viewBox.toDiagramPoint(props.position);
+
+    UnitOfWork.executeWithUndo(diagram, 'Keep edge only', uow => {
+      edge.setEnd(new FreeEndpoint(diagramPoint), uow);
+      node.layer.removeElement(node, uow);
+      uow.select(diagram, [edge]);
     });
-    diagram.selection.clear();
-  }, [diagram, props.edgeId]);
+
+    const actions = diagram.undoManager.getToMark();
+    diagram.undoManager.add(new CompoundUndoableAction(actions));
+    diagram.undoManager.setMark();
+
+    props.onClose();
+  }, [diagram, props]);
 
   const size = 30;
 
@@ -117,6 +110,18 @@ export const NodeTypePopup = (props: Props) => {
     };
   }, [diagramsAndNodes]);
 
+  useEffect(() => {
+    if (!props.isOpen) return;
+
+    const timeoutId = window.setTimeout(() => {
+      props.onClose();
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [props.isOpen, props.onClose]);
+
   if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 
   return (
@@ -133,7 +138,6 @@ export const NodeTypePopup = (props: Props) => {
         open={props.isOpen}
         onOpenChange={s => {
           if (!s) {
-            undo();
             props.onClose();
           }
         }}
@@ -161,7 +165,7 @@ export const NodeTypePopup = (props: Props) => {
                 justifyContent: 'center',
                 borderRadius: 'var(--cmp-radius)'
               }}
-              onClick={() => props.onClose()}
+              onClick={keepOnlyEdge}
             >
               <LineEndIcon />
             </div>
@@ -186,15 +190,15 @@ export const NodeTypePopup = (props: Props) => {
 NodeTypePopup.INITIAL_STATE = {
   position: { x: 600, y: 200 },
   isOpen: false,
-  edgeId: '',
-  nodeId: ''
+  nodeId: '',
+  edgeId: ''
 };
 
 export type NodeTypePopupState = {
   position: Point;
   isOpen: boolean;
-  edgeId: string;
   nodeId: string;
+  edgeId: string;
 };
 
 type Props = NodeTypePopupState & {

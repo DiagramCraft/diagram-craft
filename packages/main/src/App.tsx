@@ -196,13 +196,13 @@ export const App = (props: {
         contextMenuTarget.current = { type, ...args, pos: point };
       });
     },
-    showNodeLinkPopup: (point: Point, sourceNodeId: string, edgId: string) => {
+    showNodeLinkPopup: (point: Point, nodeId: string, edgeId: string) => {
       const screenPoint = $d.viewBox.toScreenPoint(point);
       setPopoverState({
         isOpen: true,
         position: screenPoint,
-        nodeId: sourceNodeId,
-        edgeId: edgId
+        nodeId,
+        edgeId
       });
     },
     showDialog: (dialog: DialogCommand<unknown, unknown>) => {

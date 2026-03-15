@@ -224,25 +224,6 @@ export const addStencil = (
   }
 };
 
-export const addStencilStylesToDocument = (
-  stencil: Stencil,
-  document: DiagramDocument,
-  uow: UnitOfWork
-) => {
-  const styleManager = document.styles;
-  for (const style of stencil.styles ?? []) {
-    if (styleManager.get(style.id) === undefined) {
-      const stylesheet = Stylesheet.fromSnapshot(
-        style.type,
-        style,
-        styleManager.crdt.factory,
-        styleManager
-      );
-      styleManager.addStylesheet(style.id, stylesheet, uow);
-    }
-  }
-};
-
 export const copyStyles = (target: Diagram, sourceDoc: DiagramDocument, uow: UnitOfWork) => {
   const targetDoc = target.document;
   const styles = sourceDoc.styles;

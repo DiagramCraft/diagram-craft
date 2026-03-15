@@ -10,6 +10,7 @@ import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { Box } from '@diagram-craft/geometry/box';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
@@ -129,6 +130,35 @@ export const createLinkedNode = (
 
     nodeLayer.addElement(edge, uow);
 
+    uow.select(diagram, [newNode]);
+
+    return newNode;
+  });
+};
+
+// Creates a temporary linked duplicate at a specific drop point so the popup can
+// either keep it, change its shape, or remove it and leave only the edge.
+export const createProvisionalLinkedNode = (
+  sourceNode: DiagramNode,
+  edge: DiagramEdge,
+  position: Point
+) => {
+  const diagram = sourceNode.diagram;
+
+  return UnitOfWork.executeWithUndo(diagram, 'Link to new node', uow => {
+    const layer = sourceNode.layer;
+    assertRegularLayer(layer);
+
+    const newNode = sourceNode.duplicate();
+    layer.addElement(newNode, uow);
+
+    const targetX = position.x - newNode.bounds.w / 2;
+    const targetY = position.y - newNode.bounds.h / 2;
+    const dx = targetX - newNode.bounds.x;
+    const dy = targetY - newNode.bounds.y;
+    newNode.transform([new Translation({ x: dx, y: dy })], uow);
+
+    edge.setEnd(new AnchorEndpoint(newNode, 'c'), uow);
     uow.select(diagram, [newNode]);
 
     return newNode;

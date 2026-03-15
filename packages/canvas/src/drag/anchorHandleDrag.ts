@@ -9,7 +9,7 @@ import { Direction } from '@diagram-craft/geometry/direction';
 import { Context } from '../context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { createLinkedNode } from '../linkedNode';
+import { createLinkedNode, createProvisionalLinkedNode } from '../linkedNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 
 export class AnchorHandleDrag extends Drag {
@@ -73,15 +73,22 @@ export class AnchorHandleDrag extends Drag {
 
     this.delegate.onDragEnd();
 
+    let newNodeId: string | undefined;
+
+    // In case we have connected to an existing node, we don't need to show the popup
+    if (!this.edge.end.isConnected) {
+      const newNode = createProvisionalLinkedNode(this.node, this.edge, this.edge.end.position);
+      newNodeId = newNode.id;
+    }
+
     const previousActions = diagram.undoManager.getToMark();
     diagram.undoManager.setMark();
     diagram.undoManager.add(new CompoundUndoableAction(previousActions));
 
-    // In case we have connected to an existing node, we don't need to show the popup
-    if (this.edge.end.isConnected) return;
+    if (newNodeId === undefined) return;
 
     /** @see NodeTypePopup */
-    this.context.ui.showNodeLinkPopup(this.edge.end.position, this.node.id, this.edge.id);
+    this.context.ui.showNodeLinkPopup(this.edge.end.position, newNodeId, this.edge.id);
   }
 
   cancel() {

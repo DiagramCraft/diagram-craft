@@ -21,9 +21,10 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { Context } from '@diagram-craft/canvas/context';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
 
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   onDragEnd() {
@@ -31,12 +32,22 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
 
     // Only if holding shift and not being over an element
     if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
-      this.context.ui.showNodeLinkPopup(
-        this.point!,
-        (this.edge.start as ConnectedEndpoint).node.id,
-        this.edge.id
-      );
+      // TODO: Guard the free-start case here. EdgeTool can still start from empty canvas,
+      //       so this cast is unsafe when shift-dragging from a non-connected start point.
+      const start = mustExist(this.edge.start as ConnectedEndpoint);
+      const newNode = createProvisionalLinkedNode(start.node, this.edge, this.point!);
+      const point = this.point!;
+      const nodeId = newNode.id;
+
+      // Base UI popover dismissal still considers the current pointer interaction active.
+      // Delaying to the next macrotask avoids immediate outside-press dismissal.
+      setTimeout(() => {
+        this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id);
+      }, 0);
     }
+
+    const undoManager = this.edge.diagram.undoManager;
+    undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
   }
 }
 
@@ -87,10 +98,6 @@ export class EdgeTool extends AbstractTool {
     this.resetTool();
 
     const drag = new EdgeToolEdgeEndpointMoveDrag(this.diagram, this.edge, 'end', this.context);
-    drag.on('dragEnd', () => {
-      // Coalesce the element add and edge endpoint move into one undoable action
-      undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
-    });
 
     DRAG_DROP_MANAGER.initiate(drag, () => {
       const edge = this.edge;
