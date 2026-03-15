@@ -4,23 +4,15 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { assert, mustExist, VerifyNotReached } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
-import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
-import { Box } from '@diagram-craft/geometry/box';
-import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import {
-  addStencilStylesToDocument,
-  type StencilElements
-} from '@diagram-craft/model/stencilRegistry';
+import { applyStencilToNode } from '@diagram-craft/model/stencilUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -58,41 +50,12 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
 
           assert.present(stencil);
           assertRegularLayer(diagram.activeLayer);
-
-          const stencilElements = stencil.forCanvas(diagram.document.registry);
-          assert.true(stencilElements.elements.length > 0);
+          const layer = diagram.activeLayer;
 
           UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
-            addStencilStylesToDocument(stencil, diagram.document, uow);
-
             for (const e of diagram.selection.elements) {
               if (isNode(e)) {
-                if (stencilElements.elements.length === 1) {
-                  this.changeNodeToSingleElementStencil(
-                    e,
-                    diagram.activeLayer as RegularLayer,
-                    stencilElements,
-                    uow
-                  );
-                } else {
-                  this.changeNodeToGroupStencil(
-                    e,
-                    diagram.activeLayer as RegularLayer,
-                    stencilElements,
-                    uow
-                  );
-                }
-
-                /**
-                 * Rendering logic assumes all node types remains as-is, when
-                 * changing a node type, we need to force redraw the diagram.
-                 */
-                uow.on('after', 'undo', 'forceRedraw', () => {
-                  diagram.emit('diagramChange');
-                });
-                uow.on('after', 'redo', 'forceRedraw', () => {
-                  diagram.emit('diagramChange');
-                });
+                applyStencilToNode(diagram, e, layer, stencil, uow);
               }
             }
           });
@@ -117,61 +80,6 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
     }
   }
 
-  private changeNodeToSingleElementStencil(
-    node: DiagramNode,
-    layer: RegularLayer,
-    stencilElements: StencilElements,
-    uow: UnitOfWork
-  ) {
-    const source = stencilElements.elements[0]!;
-    if (!isNode(source)) throw new VerifyNotReached();
-
-    node.changeNodeType(source.nodeType, uow);
-
-    node.updateProps(props => {
-      for (const k of getTypedKeys(props)) {
-        delete props[k];
-      }
-      const storedProps = deepClone(source.storedProps);
-      for (const k of getTypedKeys(storedProps)) {
-        // @ts-expect-error
-        props[k] = storedProps[k];
-      }
-    }, uow);
-
-    const children = cloneElements(source.children, layer);
-    node.setChildren(children, uow);
-  }
-
-  private changeNodeToGroupStencil(
-    node: DiagramNode,
-    layer: RegularLayer,
-    stencilElements: StencilElements,
-    uow: UnitOfWork
-  ) {
-    const targetBounds = node.bounds;
-
-    node.changeNodeType('group', uow);
-    node.updateProps(props => {
-      for (const k of getTypedKeys(props)) {
-        delete props[k];
-      }
-    }, uow);
-
-    const children = cloneElements(stencilElements.elements, layer);
-    node.setChildren(children, uow);
-
-    const sourceBounds = Box.boundingBox(children.map(e => e.bounds));
-    assignNewBounds(
-      children,
-      { x: targetBounds.x, y: targetBounds.y },
-      {
-        x: targetBounds.w / (sourceBounds.w === 0 ? 1 : sourceBounds.w),
-        y: targetBounds.h / (sourceBounds.h === 0 ? 1 : sourceBounds.h)
-      },
-      uow
-    );
-  }
 }
 
 export class SelectionChangeToContainerAction extends AbstractSelectionAction<Application> {

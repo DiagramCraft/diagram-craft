@@ -13,6 +13,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilUtils';
+export { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 
 export type StencilElements = {
   bounds: Box;
@@ -221,25 +222,6 @@ export const addStencil = (
     pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
   } else {
     pkg.stencils.push(stencil);
-  }
-};
-
-export const addStencilStylesToDocument = (
-  stencil: Stencil,
-  document: DiagramDocument,
-  uow: UnitOfWork
-) => {
-  const styleManager = document.styles;
-  for (const style of stencil.styles ?? []) {
-    if (styleManager.get(style.id) === undefined) {
-      const stylesheet = Stylesheet.fromSnapshot(
-        style.type,
-        style,
-        styleManager.crdt.factory,
-        styleManager
-      );
-      styleManager.addStylesheet(style.id, stylesheet, uow);
-    }
   }
 };
 
