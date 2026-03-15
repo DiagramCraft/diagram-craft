@@ -101,22 +101,17 @@ export class IconRoundedRectNodeDefinition extends ShapeNodeDefinition {
         validate: v => v < def.bounds.h / 2 && v < def.bounds.w / 2
       }),
       p.icon(def, 'Icon', 'custom.iconRoundedRect.icon'),
-      p.select(
-        def,
-        'Icon Position',
-        'custom.iconRoundedRect.iconPosition',
-        [
-          { value: 'nw', label: 'Top Left' },
-          { value: 'n', label: 'Top Center' },
-          { value: 'ne', label: 'Top Right' },
-          { value: 'w', label: 'Middle Left' },
-          { value: 'c', label: 'Center' },
-          { value: 'e', label: 'Middle Right' },
-          { value: 'sw', label: 'Bottom Left' },
-          { value: 's', label: 'Bottom Center' },
-          { value: 'se', label: 'Bottom Right' }
-        ]
-      ),
+      p.select(def, 'Icon Position', 'custom.iconRoundedRect.iconPosition', [
+        { value: 'nw', label: 'Top Left' },
+        { value: 'n', label: 'Top Center' },
+        { value: 'ne', label: 'Top Right' },
+        { value: 'w', label: 'Middle Left' },
+        { value: 'c', label: 'Center' },
+        { value: 'e', label: 'Middle Right' },
+        { value: 'sw', label: 'Bottom Left' },
+        { value: 's', label: 'Bottom Center' },
+        { value: 'se', label: 'Bottom Right' }
+      ]),
       p.number(def, 'Icon Size', 'custom.iconRoundedRect.iconSize', {
         maxValue: 200,
         unit: 'px'
@@ -168,11 +163,7 @@ class IconRoundedRectComponent extends BaseNodeComponent<IconRoundedRectNodeDefi
       );
       const distance = Math.max(0, p.x - rotatedCorner.x);
       if (distance < props.node.bounds.w / 2 && distance < props.node.bounds.h / 2) {
-        props.node.updateCustomProps(
-          'iconRoundedRect',
-          props => (props.radius = distance),
-          uow
-        );
+        props.node.updateCustomProps('iconRoundedRect', props => (props.radius = distance), uow);
       }
       return `Radius: ${round(props.node.renderProps.custom.iconRoundedRect.radius)}px`;
     });
@@ -189,7 +180,13 @@ class IconRoundedRectComponent extends BaseNodeComponent<IconRoundedRectNodeDefi
       const color = iconColor || strokeColor;
       const processedSvg = icon.replace(/currentColor/g, color);
 
-      const { x, y } = getIconCoords(props.node.bounds, iconPosition, iconSize, iconPaddingX, iconPaddingY);
+      const { x, y } = getIconCoords(
+        props.node.bounds,
+        iconPosition,
+        iconSize,
+        iconPaddingX,
+        iconPaddingY
+      );
       const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
 
       shapeBuilder.add(

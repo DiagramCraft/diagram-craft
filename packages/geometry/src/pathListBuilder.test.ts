@@ -375,9 +375,7 @@ describe('PathListBuilder.fromString - smooth cubic curves', () => {
 
   it('handles S command without preceding cubic command', () => {
     // When S is not preceded by C or S, first control point should be current point
-    const path = PathListBuilder.fromString('M 0 0 L 10 10 S 15 15 20 20')
-      .getPaths()
-      .singular();
+    const path = PathListBuilder.fromString('M 0 0 L 10 10 S 15 15 20 20').getPaths().singular();
 
     expect(path.segments).toHaveLength(2);
     expect(path.segments[1]).toBeInstanceOf(CubicSegment);

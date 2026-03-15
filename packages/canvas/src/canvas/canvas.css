@@ -22,7 +22,8 @@
         line-height: 1.1;
       }
 
-      small, p {
+      small,
+      p {
         display: block;
         margin-top: 0;
         margin-bottom: 0.5rem;
@@ -39,7 +40,6 @@
   .svg-node__text {
     white-space: nowrap !important;
     width: fit-content !important;
-
   }
 }
 

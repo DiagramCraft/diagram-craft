@@ -109,7 +109,12 @@ describe('extractMaximalTree', () => {
     const result = extractMaximalTree(graph, 'A');
 
     expect(result).toBeDefined();
-    expect(result!.children.get('A')?.map(v => v.id).sort()).toEqual(['B', 'C']);
+    expect(
+      result!.children
+        .get('A')
+        ?.map(v => v.id)
+        .sort()
+    ).toEqual(['B', 'C']);
     expect(result!.children.get('B')?.map(v => v.id)).toEqual(['D']);
     expect(result!.children.get('C')).toEqual([]);
     expect(result!.children.get('D')).toEqual([]);

@@ -12,13 +12,16 @@ const getNumericAttr = (el: Element, attr: string) => {
 
 const getTextNodesInEl = (el: Node) => {
   const childNodes: Array<Node> = [...el.childNodes];
-  return childNodes.reduce((acc, node): Array<Node> => {
-    return node.nodeType === 3
-      ? acc.concat(node)
-      : node.childNodes.length
-        ? acc.concat(getTextNodesInEl(node))
-        : acc;
-  }, [] as Array<Node>);
+  return childNodes.reduce(
+    (acc, node): Array<Node> => {
+      return node.nodeType === 3
+        ? acc.concat(node)
+        : node.childNodes.length
+          ? acc.concat(getTextNodesInEl(node))
+          : acc;
+    },
+    [] as Array<Node>
+  );
 };
 
 const stylesToNotCopy = {

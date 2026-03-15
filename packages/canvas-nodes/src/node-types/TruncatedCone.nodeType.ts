@@ -116,7 +116,13 @@ export class TruncatedConeNodeDefinition extends ShapeNodeDefinition {
       const baseSize = sizeNorm * bounds.h;
       const centerX = bounds.x + bounds.w / 2;
 
-      shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, getTextBounds(props.node));
+      shapeBuilder.text(
+        this,
+        '1',
+        props.node.getText(),
+        props.nodeProps.text,
+        getTextBounds(props.node)
+      );
 
       // Control point for depth (size) - on the base ellipse
       shapeBuilder.controlPoint(
@@ -152,9 +158,21 @@ export class TruncatedConeNodeDefinition extends ShapeNodeDefinition {
 
     return [
       { id: '1', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: '2', start: _p(0.5 + halfWidthAtMiddle, 0.5), type: 'point', isPrimary: true, normal: 0 },
+      {
+        id: '2',
+        start: _p(0.5 + halfWidthAtMiddle, 0.5),
+        type: 'point',
+        isPrimary: true,
+        normal: 0
+      },
       { id: '3', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: '4', start: _p(0.5 - halfWidthAtMiddle, 0.5), type: 'point', isPrimary: true, normal: Math.PI },
+      {
+        id: '4',
+        start: _p(0.5 - halfWidthAtMiddle, 0.5),
+        type: 'point',
+        isPrimary: true,
+        normal: Math.PI
+      },
       { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
     ];
   }
