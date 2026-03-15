@@ -163,7 +163,9 @@ export const ExtendedDataTab = () => {
       return;
     }
 
-    const hasCustomData = customDataKeys.length > 0;
+    const hasCustomData = customDataKeysKey.length > 0;
+    const enabledSchemasForOpenItems =
+      enabledSchemasKey.length > 0 ? enabledSchemasKey.split('\0') : [];
 
     setOpenItems(prev => {
       const next = prev.filter(item => {
@@ -172,7 +174,7 @@ export const ExtendedDataTab = () => {
       });
 
       if (hasCustomData) next.push('_custom');
-      next.push(...enabledSchemas);
+      next.push(...enabledSchemasForOpenItems);
 
       const normalized = unique(next);
       return prev.length === normalized.length &&

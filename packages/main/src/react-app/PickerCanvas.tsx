@@ -29,8 +29,9 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
   const r = useRef<string>('');
   const [preview, setPreview] = useState<DiagramDocument | undefined>(undefined);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to clear preview when diagram changes
   useEffect(() => {
-    if (preview) setPreview(undefined);
+    setPreview(undefined);
   }, [diagram]);
 
   const getPreviewDiagram = async () => {
