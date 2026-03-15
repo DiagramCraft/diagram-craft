@@ -108,6 +108,18 @@ export const NodeTypePopup = (props: Props) => {
     };
   }, [diagramsAndNodes]);
 
+  useEffect(() => {
+    if (!props.isOpen) return;
+
+    const timeoutId = window.setTimeout(() => {
+      props.onClose();
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [props.isOpen, props.onClose]);
+
   if (!(diagram.activeLayer instanceof RegularLayer)) return <div></div>;
 
   return (
