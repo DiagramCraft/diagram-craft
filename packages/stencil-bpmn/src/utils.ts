@@ -135,7 +135,13 @@ export const getIcon = (s: string) => {
 
   const [x, y, w, h] = safeSplit($root.getAttribute('viewBox') ?? '0 0 10 10', ' ', 4, 4);
   const icon = {
-    viewbox: { x: parseInt(x), y: parseInt(y), w: parseInt(w), h: parseInt(h), r: 0 },
+    viewbox: {
+      x: parseInt(x, 10),
+      y: parseInt(y, 10),
+      w: parseInt(w, 10),
+      h: parseInt(h, 10),
+      r: 0
+    },
     pathList: PathListBuilder.fromString(paths.join(' ')).getPaths(),
     fill: $root.getAttribute('fill') ?? undefined
   };

@@ -10,12 +10,12 @@ const AUTOSAVE_FILENAME = 'diagram-craft-autosave.json';
 const getAutosaveDirectory = (): string => {
   const userDataPath = app.getPath('userData');
   const autosaveDir = join(userDataPath, 'autosave');
-  
+
   // Ensure directory exists
   if (!existsSync(autosaveDir)) {
     mkdirSync(autosaveDir, { recursive: true });
   }
-  
+
   return autosaveDir;
 };
 
@@ -37,7 +37,7 @@ export const autosaveHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('autosave:load', async (_event) => {
+    ipcMain.handle('autosave:load', async _event => {
       try {
         const filePath = getAutosaveFilePath();
         if (!existsSync(filePath)) {
@@ -53,7 +53,7 @@ export const autosaveHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('autosave:exists', (_event) => {
+    ipcMain.handle('autosave:exists', _event => {
       try {
         const filePath = getAutosaveFilePath();
         return existsSync(filePath);
@@ -63,7 +63,7 @@ export const autosaveHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('autosave:clear', async (_event) => {
+    ipcMain.handle('autosave:clear', async _event => {
       try {
         const filePath = getAutosaveFilePath();
         try {

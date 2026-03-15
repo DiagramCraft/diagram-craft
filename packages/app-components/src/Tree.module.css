@@ -18,7 +18,7 @@
 
   .eNode {
     position: relative;
-    grid-column: 1/4;
+    grid-column: 1 / 4;
     display: grid;
     grid-template-columns: subgrid;
     grid-template-rows: subgrid;
@@ -84,11 +84,11 @@
       border-bottom: none;
     }
 
-    &[data-state='on'] {
+    &[data-state="on"] {
       color: var(--accent-fg);
     }
 
-    &[data-state='child'] {
+    &[data-state="child"] {
       color: var(--accent-fg);
 
       .eLabel {

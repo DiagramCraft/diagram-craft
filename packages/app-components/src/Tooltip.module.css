@@ -28,7 +28,7 @@
 
     border-bottom: 5px solid var(--panel-bg);
 
-    &[data-side='bottom'] {
+    &[data-side="bottom"] {
       top: -5px;
     }
   }

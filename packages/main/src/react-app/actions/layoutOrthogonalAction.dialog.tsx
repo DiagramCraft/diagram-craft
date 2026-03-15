@@ -3,7 +3,10 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { useEffect, useState } from 'react';
 import { ToggleButtonGroup } from '@diagram-craft/app-components/ToggleButtonGroup';
 import { TbArrowDown, TbArrowLeft, TbArrowRight, TbArrowUp } from 'react-icons/tb';
-import type { LayoutOrthogonalActionArgs, LayoutOrthogonalActionDirection } from './layoutOrthogonalAction';
+import type {
+  LayoutOrthogonalActionArgs,
+  LayoutOrthogonalActionDirection
+} from './layoutOrthogonalAction';
 
 type LayoutOrthogonalActionDialogProps = {
   onCancel: () => void;
@@ -11,20 +14,24 @@ type LayoutOrthogonalActionDialogProps = {
   onChange: (state: LayoutOrthogonalActionArgs) => void;
 };
 
-export const LayoutOrthogonalActionDialog = (props: LayoutOrthogonalActionDialogProps) => {
+export const LayoutOrthogonalActionDialog = ({
+  onCancel,
+  onApply,
+  onChange
+}: LayoutOrthogonalActionDialogProps) => {
   const [gap, setGap] = useState(45);
   const [direction, setDirection] = useState<LayoutOrthogonalActionDirection>('down');
 
   useEffect(() => {
-    props.onChange({ gap, direction });
-  }, [gap, direction, props.onChange]);
+    onChange({ gap, direction });
+  }, [direction, gap, onChange]);
 
   return (
     <ToolDialog
       open={true}
       title={'Orthogonal Layout'}
-      onCancel={props.onCancel}
-      onOk={() => props.onApply({ gap, direction })}
+      onCancel={onCancel}
+      onOk={() => onApply({ gap, direction })}
     >
       <div style={{ marginLeft: '0.5rem' }}>Gap:</div>
       <NumberInput value={gap} onChange={v => setGap(v ?? 0)} size={6} />

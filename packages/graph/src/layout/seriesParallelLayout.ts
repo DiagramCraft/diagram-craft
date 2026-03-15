@@ -295,8 +295,12 @@ const decomposeSeriesParallel = <V, E, VK, EK>(
     dfs2(seriesVertex);
 
     // Create subgraphs
-    const verts1 = Array.from(vertices1).map(id => graph.getVertex(id)!).filter(v => v);
-    const verts2 = Array.from(vertices2).map(id => graph.getVertex(id)!).filter(v => v);
+    const verts1 = Array.from(vertices1)
+      .map(id => graph.getVertex(id)!)
+      .filter(v => v);
+    const verts2 = Array.from(vertices2)
+      .map(id => graph.getVertex(id)!)
+      .filter(v => v);
 
     const subgraph1 = graph.subgraph(verts1, edges1);
     const subgraph2 = graph.subgraph(verts2, edges2);
@@ -562,7 +566,11 @@ export const layoutSeriesParallel = <V = unknown, E = unknown, VK = string, EK =
   }
 
   // Compute layout from decomposition
-  const positions = computeLayoutFromDecomposition(decomposition, horizontalSpacing, verticalSpacing);
+  const positions = computeLayoutFromDecomposition(
+    decomposition,
+    horizontalSpacing,
+    verticalSpacing
+  );
 
   // Apply direction transformation
   return transformPositions(positions, direction);

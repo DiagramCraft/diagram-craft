@@ -30,13 +30,13 @@
     }
   }
 
-  .eButton[data-state='on'],
+  .eButton[data-state="on"],
   .eButton[data-pressed] {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
   }
 
-  .eButton[data-state='on'] + .eDropdownButton,
+  .eButton[data-state="on"] + .eDropdownButton,
   .eButton[data-pressed] + .eDropdownButton {
     color: var(--accent-fg);
     background-color: var(--cmp-bg);
@@ -63,7 +63,7 @@
   }
 
   .eButton:hover,
-  .eButton[data-hover='true'] {
+  .eButton[data-hover="true"] {
     color: var(--accent-fg);
     background-color: var(--accent-bg);
   }
@@ -88,13 +88,13 @@
     margin-left: 12px;
   }
 
-  > div[role='group'] {
+  > div[role="group"] {
     display: contents;
   }
 
   /* Variants */
 
-  &[data-direction='vertical'] {
+  &[data-direction="vertical"] {
     flex-direction: column;
     padding: 0 !important;
 
@@ -108,12 +108,12 @@
     }
   }
 
-  &:not([data-size='large']) {
+  &:not([data-size="large"]) {
     overflow: hidden;
     flex-wrap: wrap;
   }
 
-  &[data-size='large'] {
+  &[data-size="large"] {
     overflow: auto;
     flex-wrap: nowrap;
 
@@ -137,9 +137,9 @@
     font-size: 10px;
   }
 
-  div[data-field-state='set'],
-  button[data-field-state='set'],
-  input[type="checkbox"][data-field-state='set'] {
+  div[data-field-state="set"],
+  button[data-field-state="set"],
+  input[type="checkbox"][data-field-state="set"] {
     border: 1px solid transparent !important;
   }
 }

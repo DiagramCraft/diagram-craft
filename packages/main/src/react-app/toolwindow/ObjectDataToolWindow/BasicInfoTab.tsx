@@ -54,7 +54,12 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
           ...$d.selection.elements
             .filter(isNode)
             .map(e => new Set(e.getDefinition().getCustomPropertyDefinitions(e).dataSchemas))
-            .reduce((acc, set) => new Set([...acc].filter(x => set.has(x))))
+            .reduce((acc, set) => {
+              for (const schema of acc) {
+                if (!set.has(schema)) acc.delete(schema);
+              }
+              return acc;
+            })
             .entries()
         ].map(([k]) => $d.document.data.db.getSchema(k.id))
       : [];

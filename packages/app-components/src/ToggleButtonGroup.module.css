@@ -34,7 +34,7 @@
     }
 
     &:hover,
-    &[data-hover='true'] {
+    &[data-hover="true"] {
       background-color: var(--accent-bg);
       color: var(--accent-fg);
     }
@@ -57,7 +57,7 @@
     }
   }
 
-  &:not(:has(*[data-state='off'])):not(:has(*:nth-child(2))) {
+  &:not(:has(*[data-state="off"])):not(:has(*:nth-child(2))) {
     border: 1px solid var(--cmp-border-focus);
   }
 }

@@ -18,9 +18,7 @@ import { NodeFillToolbarButton } from '../toolwindow/ObjectToolWindow/NodeFillTo
 import { NodeStrokeToolbarButton } from '../toolwindow/ObjectToolWindow/NodeStrokeToolbarButton';
 import { EdgeLineToolbarButton } from '../toolwindow/ObjectToolWindow/EdgeLineToolbarButton';
 import { ElementShadowToolbarButton } from '../toolwindow/ObjectToolWindow/ElementShadowToolbarButton';
-import {
-  ElementCustomPropertiesToolbarButton
-} from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
+import { ElementCustomPropertiesToolbarButton } from '../toolwindow/ObjectToolWindow/ElementCustomPropertiesToolbarButton';
 import { CanvasGridToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGridToolbarButton';
 import { CanvasSnapToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasSnapToolbarButton';
 import { CanvasGuidesToolbarButton } from '../toolwindow/ObjectToolWindow/CanvasGuidesToolbarButton';
@@ -46,7 +44,6 @@ export const ContextSpecificToolbar = () => {
 
   useEventListener(diagram.selection, 'add', callback);
   useEventListener(diagram.selection, 'remove', callback);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
   useEffect(callback, [callback]);
 
   const isNodeSelection =
@@ -61,74 +58,74 @@ export const ContextSpecificToolbar = () => {
     <Toolbar.Root>
       {isTextSelection && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
 
-          <ElementTextFontToolbarButton/>
-          <ElementTextFontSizeToolbarButton/>
+          <ElementTextFontToolbarButton />
+          <ElementTextFontSizeToolbarButton />
 
-          <Toolbar.Separator style={{ marginRight: '-5px', backgroundColor: 'transparent' }}/>
+          <Toolbar.Separator style={{ marginRight: '-5px', backgroundColor: 'transparent' }} />
 
           <ActionToggleButton action={'TEXT_BOLD'}>
-            <TbBold/>
+            <TbBold />
           </ActionToggleButton>
           <ActionToggleButton action={'TEXT_ITALIC'}>
-            <TbItalic/>
+            <TbItalic />
           </ActionToggleButton>
           <ActionToggleButton action={'TEXT_UNDERLINE'}>
-            <TbUnderline/>
+            <TbUnderline />
           </ActionToggleButton>
-          <ElementTextToolbarButton/>
+          <ElementTextToolbarButton />
         </>
       )}
 
       {!isTextSelection && (isNodeSelection || isMixedSelection) && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
 
-          <NodeFillToolbarButton/>
-          <NodeStrokeToolbarButton/>
+          <NodeFillToolbarButton />
+          <NodeStrokeToolbarButton />
         </>
       )}
 
       {isEdgeSelection && (
         <>
-          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType}/>
+          <ElementStylesheetToolbarButton selectionType={selectionType} nodeType={nodeType} />
 
-          <EdgeLineToolbarButton/>
+          <EdgeLineToolbarButton />
           <ActionToolbarButton action={'EDGE_FLIP'}>
-            <TbArrowsExchange2/>
+            <TbArrowsExchange2 />
           </ActionToolbarButton>
-          <ElementShadowToolbarButton/>
+          <ElementShadowToolbarButton />
         </>
       )}
 
       {isNodeSelection && !isTextSelection && (
         <>
-          <ElementTextToolbarButton/>
-          <ElementShadowToolbarButton/>
-          <ElementCustomPropertiesToolbarButton/>
+          <ElementTextToolbarButton />
+          <ElementShadowToolbarButton />
+          <ElementCustomPropertiesToolbarButton />
         </>
       )}
 
-      {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator/>}
+      {(isNodeSelection || isMixedSelection || isEdgeSelection) && <Toolbar.Separator />}
 
-      <CanvasGridToolbarButton/>
+      <CanvasGridToolbarButton />
 
-      <CanvasGuidesToolbarButton/>
+      <CanvasGuidesToolbarButton />
 
-      <CanvasSnapToolbarButton/>
+      <CanvasSnapToolbarButton />
 
       <ActionToggleButton action={'TOGGLE_RULER'}>
-        <TbRuler/>
+        <TbRuler />
       </ActionToggleButton>
 
       <ActionToggleButton action={'TOGGLE_CONTAINER_BORDER'}>
-        <TbBorderOuter/>
+        <TbBorderOuter />
       </ActionToggleButton>
 
-      <Toolbar.Separator/>
+      <Toolbar.Separator />
 
-      <CommentToolbarButton/>
+      <CommentToolbarButton />
     </Toolbar.Root>
   );
 };

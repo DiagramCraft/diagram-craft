@@ -147,7 +147,7 @@ const applyRounding = (
       if (previous instanceof LineSegment && current instanceof LineSegment) {
         if (!Point.isEqual(previous.end, current.start)) continue;
 
-        let maxRounding = ensureConsistentRounding
+        const maxRounding = ensureConsistentRounding
           ? Math.min(...maxRoundingByPair)
           : maxRoundingByPair[pairIdx++]!;
 

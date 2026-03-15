@@ -29,7 +29,7 @@ export const FileDialog = (props: Props) => {
   }, [path]);
 
   const mode = props.mode ?? 'open';
-  const isValidFilename = filename.trim().length > 0 && !/[\/\\]/.test(filename);
+  const isValidFilename = filename.trim().length > 0 && !/[/\\]/.test(filename);
 
   const handleSave = () => {
     if (!isValidFilename) return;

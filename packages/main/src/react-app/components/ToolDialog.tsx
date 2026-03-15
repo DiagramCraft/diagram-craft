@@ -14,7 +14,7 @@ type ToolDialogProps = {
   open: boolean;
 };
 
-export const ToolDialog = (props: ToolDialogProps) => {
+export const ToolDialog = ({ title, children, onOk, onCancel, open }: ToolDialogProps) => {
   const portal = usePortal();
   const dialogContext = useDialogContext();
   const isOpenRef = useRef(false);
@@ -28,13 +28,13 @@ export const ToolDialog = (props: ToolDialogProps) => {
     } else if (!open && isOpen) {
       dialogContext.onDialogHide();
       isOpenRef.current = false;
-      props.onCancel();
+      onCancel();
     }
   };
 
   // Handle initial mount with open=true
   useEffect(() => {
-    if (props.open && !isOpenRef.current) {
+    if (open && !isOpenRef.current) {
       dialogContext.onDialogShow();
       isOpenRef.current = true;
     }
@@ -46,7 +46,7 @@ export const ToolDialog = (props: ToolDialogProps) => {
         isOpenRef.current = false;
       }
     };
-  }, [props.open, dialogContext]);
+  }, [open, dialogContext]);
 
   // TODO: This is a bit ugly
   useLayoutEffect(() => {
@@ -66,39 +66,33 @@ export const ToolDialog = (props: ToolDialogProps) => {
   });
 
   useEffect(() => {
-    if (!props.open) return;
+    if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        props.onOk();
+        onOk();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [props.open, props.onOk]);
+  }, [open, onOk]);
 
   return (
-    <BaseUIAlertDialog.Root
-      open={props.open}
-      defaultOpen={props.open}
-      onOpenChange={handleOpenChange}
-    >
+    <BaseUIAlertDialog.Root open={open} defaultOpen={open} onOpenChange={handleOpenChange}>
       <BaseUIAlertDialog.Portal container={portal}>
         <BaseUIAlertDialog.Viewport className={styles.icToolDialog}>
           <BaseUIAlertDialog.Popup initialFocus={false} className={styles.eContent}>
-            <BaseUIAlertDialog.Title className={styles.eTitle}>
-              {props.title}
-            </BaseUIAlertDialog.Title>
+            <BaseUIAlertDialog.Title className={styles.eTitle}>{title}</BaseUIAlertDialog.Title>
             <BaseUIAlertDialog.Description
-              render={<div className={styles.eDescription}>{props.children}</div>}
+              render={<div className={styles.eDescription}>{children}</div>}
             />
 
-            <Button style={{ marginLeft: 'auto' }} onClick={() => props.onOk()}>
+            <Button style={{ marginLeft: 'auto' }} onClick={() => onOk()}>
               Ok
             </Button>
-            <Button variant={'secondary'} onClick={() => props.onCancel()}>
+            <Button variant={'secondary'} onClick={() => onCancel()}>
               Cancel
             </Button>
           </BaseUIAlertDialog.Popup>

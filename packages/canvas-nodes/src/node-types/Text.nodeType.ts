@@ -62,7 +62,9 @@ const toColumnsHTML = (text: string, split: string, columnWidths: string): strin
     .filter(l => l.trim() !== '');
 
   const dest: string[] = [];
-  dest.push(`<div style="display: grid; column-gap: 0.25rem; grid-template-columns: ${templateColumns};">`);
+  dest.push(
+    `<div style="display: grid; column-gap: 0.25rem; grid-template-columns: ${templateColumns};">`
+  );
   for (const line of lines) {
     const parts = splitWithDelimiter(line, split, numCols);
     for (const part of parts) {

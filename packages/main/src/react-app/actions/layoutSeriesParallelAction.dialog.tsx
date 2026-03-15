@@ -14,22 +14,24 @@ type LayoutSeriesParallelActionDialogProps = {
   onChange: (state: LayoutSeriesParallelActionArgs) => void;
 };
 
-export const LayoutSeriesParallelActionDialog = (
-  props: LayoutSeriesParallelActionDialogProps
-) => {
+export const LayoutSeriesParallelActionDialog = ({
+  onCancel,
+  onApply,
+  onChange
+}: LayoutSeriesParallelActionDialogProps) => {
   const [gap, setGap] = useState(45);
   const [direction, setDirection] = useState<LayoutSeriesParallelActionDirection>('down');
 
   useEffect(() => {
-    props.onChange({ gap, direction });
-  }, [gap, direction, props.onChange]);
+    onChange({ gap, direction });
+  }, [direction, gap, onChange]);
 
   return (
     <ToolDialog
       open={true}
       title={'Series-Parallel'}
-      onCancel={props.onCancel}
-      onOk={() => props.onApply({ gap, direction })}
+      onCancel={onCancel}
+      onOk={() => onApply({ gap, direction })}
     >
       <div style={{ marginLeft: '0.5rem' }}>Gap:</div>
       <NumberInput value={gap} onChange={v => setGap(v ?? 0)} size={6} />

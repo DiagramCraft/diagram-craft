@@ -161,9 +161,15 @@ describe('Graph traversal algorithms', () => {
       graph.addEdge({ id: 'AB', from: 'A', to: 'B', weight: 1, data: undefined });
       graph.addEdge({ id: 'BC', from: 'B', to: 'C', weight: 1, data: undefined });
 
-      const fromA = Array.from(dfs(graph, 'A')).map(r => r.vertex.id).sort();
-      const fromB = Array.from(dfs(graph, 'B')).map(r => r.vertex.id).sort();
-      const fromC = Array.from(dfs(graph, 'C')).map(r => r.vertex.id).sort();
+      const fromA = Array.from(dfs(graph, 'A'))
+        .map(r => r.vertex.id)
+        .sort();
+      const fromB = Array.from(dfs(graph, 'B'))
+        .map(r => r.vertex.id)
+        .sort();
+      const fromC = Array.from(dfs(graph, 'C'))
+        .map(r => r.vertex.id)
+        .sort();
 
       expect(fromA).toEqual(['A', 'B', 'C']);
       expect(fromB).toEqual(['A', 'B', 'C']);

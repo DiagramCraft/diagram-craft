@@ -29,7 +29,11 @@ const getMagnetTypes = (selectedMagnetTypes: string[]) => ({
   size: selectedMagnetTypes.includes('size')
 });
 
-export const AutoAlignActionDialog = (props: AutoAlignActionDialogProps) => {
+export const AutoAlignActionDialog = ({
+  onCancel,
+  onApply,
+  onChange
+}: AutoAlignActionDialogProps) => {
   const [threshold, setThreshold] = useState(10);
   const [selectedModes, setSelectedModes] = useState<string[]>(['move', 'resize']);
   const [selectedMagnetTypes, setSelectedMagnetTypes] = useState<string[]>(['grid']);
@@ -45,17 +49,15 @@ export const AutoAlignActionDialog = (props: AutoAlignActionDialogProps) => {
           : 'move';
 
   useEffect(() => {
-    props.onChange({ threshold, magnetTypes: getMagnetTypes(selectedMagnetTypes), mode });
-  }, [threshold, selectedMagnetTypes, mode, props.onChange]);
+    onChange({ threshold, magnetTypes: getMagnetTypes(selectedMagnetTypes), mode });
+  }, [mode, onChange, selectedMagnetTypes, threshold]);
 
   return (
     <ToolDialog
       open={true}
       title={'Auto-Align'}
-      onCancel={props.onCancel}
-      onOk={() =>
-        props.onApply({ threshold, magnetTypes: getMagnetTypes(selectedMagnetTypes), mode })
-      }
+      onCancel={onCancel}
+      onOk={() => onApply({ threshold, magnetTypes: getMagnetTypes(selectedMagnetTypes), mode })}
     >
       <div style={{ marginLeft: '0.5rem' }}>Distance:</div>
       <NumberInput value={threshold} onChange={v => setThreshold(v ?? 10)} size={6} />

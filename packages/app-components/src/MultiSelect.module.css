@@ -119,7 +119,6 @@
     }
   }
 
-
   &:focus-within,
   &:has(*[data-focus="true"]) {
     box-shadow: var(--cmp-border-shadow-focus) !important;
@@ -180,7 +179,6 @@
     color: var(--cmp-fg-disabled);
   }
 }
-
 
 /* Responsive behavior for smaller containers */
 @container (max-width: 300px) {

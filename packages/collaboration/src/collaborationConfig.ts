@@ -4,10 +4,15 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from './noopCrdt';
 
 export const CollaborationConfig: {
   isNoOp: boolean;
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  CRDTRoot: new (...args: any[]) => CRDTRoot;
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  CRDTMap: new (...args: any[]) => CRDTMap<any>;
+  CRDTRoot: new (
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    ...args: any[]
+  ) => CRDTRoot;
+  CRDTMap: new (
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    ...args: any[]
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+  ) => CRDTMap<any>;
   Backend: CollaborationBackend;
 } = {
   isNoOp: true,

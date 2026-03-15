@@ -11,20 +11,24 @@ type LayoutLayeredActionDialogProps = {
   onChange: (state: LayoutLayeredActionArgs) => void;
 };
 
-export const LayoutLayeredActionDialog = (props: LayoutLayeredActionDialogProps) => {
+export const LayoutLayeredActionDialog = ({
+  onCancel,
+  onApply,
+  onChange
+}: LayoutLayeredActionDialogProps) => {
   const [gap, setGap] = useState(45);
   const [direction, setDirection] = useState<LayoutLayeredActionDirection>('down');
 
   useEffect(() => {
-    props.onChange({ gap, direction });
-  }, [gap, direction, props.onChange]);
+    onChange({ gap, direction });
+  }, [direction, gap, onChange]);
 
   return (
     <ToolDialog
       open={true}
       title={'Layered Layout'}
-      onCancel={props.onCancel}
-      onOk={() => props.onApply({ gap, direction })}
+      onCancel={onCancel}
+      onOk={() => onApply({ gap, direction })}
     >
       <div style={{ marginLeft: '0.5rem' }}>Gap:</div>
       <NumberInput value={gap} onChange={v => setGap(v ?? 0)} size={6} />

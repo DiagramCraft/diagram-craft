@@ -43,10 +43,10 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   overlayComponent = CollapsibleOverlayComponent;
   additionalFillCount = 1;
 
-  // biome-ignore lint/suspicious/noExplicitAny: allows subclassing with a different component
   constructor(
     type = 'umlClass',
     name = 'UML Class',
+    // biome-ignore lint/suspicious/noExplicitAny: allows subclassing with a different component
     component: NodeShapeConstructor<any> = UMLClassComponent
   ) {
     super(type, name, component);

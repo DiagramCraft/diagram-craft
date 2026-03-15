@@ -1,5 +1,7 @@
 :root {
-  font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+  font-family:
+    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol" !important;
 }
 
 #menu {
@@ -26,19 +28,20 @@
 
   #tools {
     .cToolbar > div > button[data-pressed] {
-      background-color: #4F4F4F !important;
-      color: #F3F3F3 !important;
+      background-color: #4f4f4f !important;
+      color: #f3f3f3 !important;
     }
   }
 
   .cToolbar > div > button[data-pressed] {
-    background-color: #4F4F4F !important;
-    color: #F3F3F3 !important;
+    background-color: #4f4f4f !important;
+    color: #f3f3f3 !important;
   }
 
-  .cToolbar > div > button:hover, .cToolbar > div > button:focus {
-    background-color: #4F4F4F !important;
-    color: #F3F3F3 !important;
+  .cToolbar > div > button:hover,
+  .cToolbar > div > button:focus {
+    background-color: #4f4f4f !important;
+    color: #f3f3f3 !important;
     box-shadow: none !important;
   }
 
@@ -47,7 +50,7 @@
   }
 
   .cToolbar > [role="separator"] {
-    background-color: #3F3F3F !important;
+    background-color: #3f3f3f !important;
   }
 }
 

@@ -83,7 +83,7 @@ const hideActive = () => {
   active.style.opacity = '0';
 };
 
-export const PresentationMode = (props: Props) => {
+export const PresentationMode = ({ onClose, story }: Props) => {
   const application = useApplication();
   const doc = useDocument();
   const redraw = useRedraw();
@@ -99,15 +99,15 @@ export const PresentationMode = (props: Props) => {
   const [player2] = useState(() => new StoryPlayer(doc2, setActiveDiagram2));
 
   useEffect(() => {
-    player1.loadStory(props.story);
+    player1.loadStory(story);
     player1.start(activeDiagram1);
 
-    player2.loadStory(props.story);
+    player2.loadStory(story);
     player2.start(activeDiagram2);
 
     setUpdateCounter(c => c + 1);
     showActive(true);
-  }, [activeDiagram1, activeDiagram2, player1, player2, props.story]);
+  }, [activeDiagram1, activeDiagram2, player1, player2, story]);
 
   const handleClose = useCallback(async () => {
     try {
@@ -115,18 +115,18 @@ export const PresentationMode = (props: Props) => {
     } catch (_e) {
       // Ignore
     }
-    props.onClose();
-  }, [props.onClose]);
+    onClose();
+  }, [onClose]);
 
   const handleNext = useCallback(() => {
-    if (player1.currentStepIndex < props.story.steps.length - 1) {
+    if (player1.currentStepIndex < story.steps.length - 1) {
       player2.goToStep(player1.currentStepIndex);
       hideActive();
       player1.goToStep(player1.currentStepIndex + 1);
       redraw();
       setTimeout(() => showActive());
     }
-  }, [player1, player2, props.story.steps.length, redraw]);
+  }, [player1, player2, redraw, story.steps.length]);
 
   const handlePrevious = useCallback(() => {
     if (player1.currentStepIndex > 0) {
@@ -239,13 +239,13 @@ export const PresentationMode = (props: Props) => {
           <Button
             onClick={handleNext}
             variant={'primary'}
-            disabled={player1.currentStepIndex >= props.story.steps.length - 1}
+            disabled={player1.currentStepIndex >= story.steps.length - 1}
           >
             <TbPlayerSkipForward />
           </Button>
           <div className={styles.eProgress}>
             {player1.currentStepIndex >= 0 ? player1.currentStepIndex + 1 : 0} /{' '}
-            {props.story.steps.length}
+            {story.steps.length}
           </div>
         </div>
       </div>

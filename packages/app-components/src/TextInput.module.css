@@ -57,7 +57,7 @@
     box-shadow: var(--cmp-border-shadow-focus) !important;
   }
 
-  &[data-error='true'] {
+  &[data-error="true"] {
     color: var(--error-fg);
 
     .eInput {

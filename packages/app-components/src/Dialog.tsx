@@ -62,7 +62,7 @@ const DialogButton = (props: Button) => {
   }
 };
 
-export const Dialog = (props: Props) => {
+export const Dialog = ({ open, onClose, title, children, buttons, className }: Props) => {
   const portal = usePortal();
   const dialogContext = useDialogContext();
   const isOpenRef = useRef(false);
@@ -76,13 +76,13 @@ export const Dialog = (props: Props) => {
     } else if (!open && isOpen) {
       dialogContext.onDialogHide();
       isOpenRef.current = false;
-      props.onClose();
+      onClose();
     }
   };
 
   // Handle initial mount with open=true
   useEffect(() => {
-    if (props.open && !isOpenRef.current) {
+    if (open && !isOpenRef.current) {
       dialogContext.onDialogShow();
       isOpenRef.current = true;
     }
@@ -94,43 +94,39 @@ export const Dialog = (props: Props) => {
         isOpenRef.current = false;
       }
     };
-  }, [props.open, dialogContext]);
+  }, [open, dialogContext]);
 
   useEffect(() => {
-    if (!props.open) return;
+    if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        props.onClose();
+        onClose();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [props.open, props.onClose]);
+  }, [open, onClose]);
 
   return (
-    <BaseUIAlertDialog.Root
-      open={props.open}
-      defaultOpen={props.open}
-      onOpenChange={handleOpenChange}
-    >
-      <BaseUIAlertDialog.Portal container={portal} className={props.className}>
+    <BaseUIAlertDialog.Root open={open} defaultOpen={open} onOpenChange={handleOpenChange}>
+      <BaseUIAlertDialog.Portal container={portal} className={className}>
         <BaseUIAlertDialog.Backdrop className={styles.cDialogBackdrop} />
         <BaseUIAlertDialog.Viewport className={styles.cDialog}>
           <BaseUIAlertDialog.Popup initialFocus={true}>
             <BaseUIAlertDialog.Title
               className={styles.eTitle}
-              render={p => <div {...p}>{props.title}</div>}
+              render={p => <div {...p}>{title}</div>}
             />
             <BaseUIAlertDialog.Description
               className={styles.eContent}
-              render={p => <div {...p}>{props.children}</div>}
+              render={p => <div {...p}>{children}</div>}
             />
 
             <div className={styles.eButtons}>
-              {props.buttons.map(btn => (
+              {buttons.map(btn => (
                 <DialogButton key={btn.label} {...btn} />
               ))}
             </div>

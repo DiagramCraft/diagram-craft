@@ -31,7 +31,7 @@ const DataField = (props: {
           <Checkbox
             value={props.value.length > 1 ? false : props.value[0]?.toString() === 'true'}
             disabled={props.disabled}
-            onChange={v => props.onChange(v ? true : false)}
+            onChange={v => props.onChange(!!v)}
           />
         )}
         {props.field.type === 'longtext' && (

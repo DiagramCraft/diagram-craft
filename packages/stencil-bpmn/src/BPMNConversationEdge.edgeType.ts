@@ -29,7 +29,7 @@ export class BPMNConversationEdgeDefinition extends ShapeEdgeDefinition {
       const offset2 = path.offset(-width / 2);
 
       const d = deepMerge({}, props, {
-        // @ts-ignore
+        // @ts-expect-error
         fill: {
           color: 'transparent'
         }

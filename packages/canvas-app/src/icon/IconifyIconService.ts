@@ -6,12 +6,12 @@ export class IconifyIconService implements IconService {
   readonly #svgCache = new Map<string, Promise<string>>();
   async getCollections(): Promise<Record<string, CollectionInfo>> {
     const res = await fetch(`${BASE_URL}/collections`);
-    return await res.json() as Promise<Record<string, CollectionInfo>>;
+    return (await res.json()) as Promise<Record<string, CollectionInfo>>;
   }
 
   async getCollectionIcons(prefix: string): Promise<CollectionIcons> {
     const res = await fetch(`${BASE_URL}/collection?prefix=${encodeURIComponent(prefix)}`);
-    return await res.json() as Promise<CollectionIcons>;
+    return (await res.json()) as Promise<CollectionIcons>;
   }
 
   async searchIcons(query: string, limit = 200): Promise<SearchResult> {
@@ -29,7 +29,10 @@ export class IconifyIconService implements IconService {
     const key = `${prefix}:${icon}`;
     if (!this.#svgCache.has(key)) {
       const url = this.getIconUrl(prefix, icon, 'currentColor');
-      this.#svgCache.set(key, fetch(url).then(r => r.text()));
+      this.#svgCache.set(
+        key,
+        fetch(url).then(r => r.text())
+      );
     }
     return this.#svgCache.get(key)!;
   }
