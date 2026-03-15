@@ -99,7 +99,6 @@
   &:focus-within {
     border-color: var(--accent-border);
   }
-
 }
 
 .cSyntaxHighlightingEditorMaximizedContent {
