@@ -31,11 +31,11 @@
     align-items: center;
     justify-content: center;
 
-    &[data-label-length='2'] {
+    &[data-label-length="2"] {
       width: 2ch;
     }
 
-    &[data-label-length='3'] {
+    &[data-label-length="3"] {
       width: 3ch;
     }
   }
@@ -54,10 +54,10 @@
     &:disabled {
       color: var(--cmp-fg-disabled);
     }
-
   }
 
-  .eBtnUp, .eBtnDown {
+  .eBtnUp,
+  .eBtnDown {
     width: 13px;
     display: none;
     align-items: center;
@@ -103,7 +103,7 @@
     box-shadow: var(--cmp-border-shadow-focus) !important;
   }
 
-  &[data-error='true'] {
+  &[data-error="true"] {
     color: var(--error-fg);
 
     .eInput {
@@ -115,5 +115,3 @@
     border-color: transparent;
   }
 }
-
-

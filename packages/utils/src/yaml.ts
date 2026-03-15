@@ -109,7 +109,7 @@ const needsQuoting = (str: string): boolean => {
   if (str === '') return true;
   if (/^[\d.+-]/.test(str) && !Number.isNaN(Number(str))) return true;
   if (/^(true|false|null|yes|no|on|off)$/i.test(str)) return true;
-  if (/[:#\[\]{}&*!|>'"%@`]/.test(str)) return true;
+  if (/[:#[\]{}&*!|>'"%@`]/.test(str)) return true;
   if (/^\s|\s$/.test(str)) return true;
   return str.includes('\n');
 };

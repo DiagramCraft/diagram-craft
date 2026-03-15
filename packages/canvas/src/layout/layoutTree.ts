@@ -6,7 +6,7 @@ import type { NodeDefinition } from '@diagram-craft/model/elementDefinitionRegis
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { deepClone } from '@diagram-craft/utils/object';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 
 /**
  * Layout direction for arranging children in a container.

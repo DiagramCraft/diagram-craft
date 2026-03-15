@@ -72,9 +72,6 @@
       position: relative;
       user-select: none;
 
-      .eItemText {
-      }
-
       .eItemIndicator {
         position: absolute;
         left: 0;

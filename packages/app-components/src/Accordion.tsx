@@ -103,8 +103,12 @@ type ItemContentProps = {
 
 const getAccordion = (e: HTMLElement) => {
   const accordionItem = e.closest(`.${mustExist(styles.eItem)}`) as HTMLElement;
-  const accordionContent = accordionItem.querySelector(`.${mustExist(styles.eContent)}`) as HTMLElement;
-  const accordionHeader = accordionItem.querySelector(`.${mustExist(styles.eHeader)}`) as HTMLElement;
+  const accordionContent = accordionItem.querySelector(
+    `.${mustExist(styles.eContent)}`
+  ) as HTMLElement;
+  const accordionHeader = accordionItem.querySelector(
+    `.${mustExist(styles.eHeader)}`
+  ) as HTMLElement;
 
   return { accordionItem, accordionContent, accordionHeader };
 };

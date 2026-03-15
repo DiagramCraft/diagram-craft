@@ -60,7 +60,7 @@
       background-color: var(--accent-bg-selected);
     }
 
-    &[data-type='submenu-trigger'][data-popup-open] {
+    &[data-type="submenu-trigger"][data-popup-open] {
       background-color: var(--accent-bg-selected);
       color: var(--panel-fg);
     }
@@ -95,21 +95,21 @@
 
     display: flex;
 
-    &[data-side='top'] {
+    &[data-side="top"] {
       bottom: calc(-1 * var(--_size) + 1px);
       rotate: 180deg;
     }
 
-    &[data-side='bottom'] {
+    &[data-side="bottom"] {
       top: calc(-1 * var(--_size) + 1px);
     }
 
-    &[data-side='left'] {
+    &[data-side="left"] {
       right: calc(-1 * var(--_size) - 1px);
       rotate: 90deg;
     }
 
-    &[data-side='right'] {
+    &[data-side="right"] {
       left: calc(-1 * var(--_size) - 1px);
       rotate: -90deg;
     }
