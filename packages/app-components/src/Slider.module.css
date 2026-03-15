@@ -41,12 +41,12 @@
         border-radius: 10px;
 
         &:hover,
-        &[data-thumb-hover='true'] {
+        &[data-thumb-hover="true"] {
           background-color: var(--panel-fg);
         }
 
         &:focus,
-        &[data-thumb-focus='true'] {
+        &[data-thumb-focus="true"] {
           outline: none;
           background-color: var(--panel-fg);
         }

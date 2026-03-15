@@ -50,7 +50,6 @@ export const makePropertyHook = <
       else return setValue(value as unknown as TValue);
     };
     subscribe(diagram, handler);
-    // biome-ignore lint/correctness/useExhaustiveDependencies: this is correct
     useEffect(handler, [defaultValue, diagram, path]);
 
     const accessor = new DynamicAccessor<TObj>();
