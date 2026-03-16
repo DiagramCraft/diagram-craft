@@ -11,7 +11,7 @@ import {
   FreeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
-import { DiagramElement, findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
+import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { getAnchorPosition, getClosestAnchor } from '@diagram-craft/model/anchor';
 import { Box } from '@diagram-craft/geometry/box';
@@ -22,7 +22,7 @@ import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
-import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import { resolveEdgeEndpointTarget } from './edgeEndpointTarget';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
@@ -51,15 +51,12 @@ export class EdgeEndpointMoveDrag extends Drag {
     this.snapManager = SnapManager.create(this.diagram);
   }
 
-  onDragEnter({ id }: DragEvents.DragEnter): void {
+  onDragEnter({ id, offset }: DragEvents.DragEnter): void {
     if (id === this.edge.id) return;
     if (!id) return;
 
-    let el = this.diagram.lookup(id)!;
-
-    while (this.isSelectParent(el) && el.parent !== undefined) {
-      el = el.parent;
-    }
+    const hovered = this.diagram.lookup(id)!;
+    const el = resolveEdgeEndpointTarget(hovered, offset);
 
     this.hoverElement = el.id;
 
@@ -317,12 +314,4 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
   }
 
-  private isSelectParent(el: DiagramElement) {
-    const parent = el.parent;
-    if (!parent) return false;
-    if (!isNode(parent)) return false;
-
-    const def = parent.getDefinition();
-    return def.hasFlag(NodeFlags.ChildrenSelectParent);
-  }
 }
