@@ -22,6 +22,13 @@ import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
 import { VNode } from '@diagram-craft/canvas/component/vdom';
 import { Box } from '@diagram-craft/geometry/box';
 import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
+import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
+import {
+  preparePortLayoutTree,
+  snapPortsInLayoutTree,
+  classifyPortChildren
+} from '@diagram-craft/stencil-uml/common/umlPortLayout';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -80,6 +87,33 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
       Point.of(node.bounds.x + node.bounds.w, node.bounds.y + titleSize)
     );
   }
+
+  layoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    this.applyLayoutToChildrenRecursively(node, uow);
+
+    if (this.getCollapsibleProps(node).mode === 'collapsed') {
+      return;
+    }
+
+    let layoutRoot = node;
+    while (
+      layoutRoot.parent &&
+      isNode(layoutRoot.parent) &&
+      layoutRoot.parent.getDefinition().hasFlag(NodeFlags.ChildrenCanHaveLayout)
+    ) {
+      layoutRoot = layoutRoot.parent;
+    }
+
+    uow.on('before', 'commit', `layout/${layoutRoot.id}`, () => {
+      const layoutTree = buildLayoutTree(layoutRoot);
+      // UML ports participate in rendering and hit testing as children, but not in the
+      // class compartment flow layout. They are snapped to the host border afterwards.
+      preparePortLayoutTree(layoutRoot, layoutTree);
+      layoutChildren(layoutTree);
+      snapPortsInLayoutTree(layoutRoot, layoutTree);
+      applyLayoutTree(layoutRoot, layoutTree, uow);
+    });
+  }
 }
 
 export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition> {
@@ -124,6 +158,9 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
     const childrenVisible =
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
     if (childrenVisible) {
+      const { ports, regularChildren } = classifyPortChildren(props.node);
+      const compartments = regularChildren.toSorted((a, b) => a.bounds.y - b.bounds.y);
+
       builder.add(
         svg.line({
           x1: bounds.x,
@@ -136,9 +173,8 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
 
       let h = 0;
       const children: VNode[] = [];
-      const childrenInOrder = props.node.children.toSorted((a, b) => a.bounds.y - b.bounds.y);
-      for (let i = 0; i < childrenInOrder.length; i++) {
-        const child = childrenInOrder[i]!;
+      for (let i = 0; i < compartments.length; i++) {
+        const child = compartments[i]!;
         children.push(
           svg.g(
             { transform: Transforms.rotateBack(props.node.bounds) },
@@ -147,7 +183,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
         );
         h += child.bounds.h;
 
-        if (i < childrenInOrder.length - 1) {
+        if (i < compartments.length - 1) {
           children.push(
             svg.line({
               x1: bounds.x,
@@ -159,6 +195,16 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
           );
         }
       }
+
+      for (const port of ports) {
+        children.push(
+          svg.g(
+            { transform: Transforms.rotateBack(props.node.bounds) },
+            renderElement(this, port, props)
+          )
+        );
+      }
+
       builder.add(svg.g({}, ...children));
     }
 

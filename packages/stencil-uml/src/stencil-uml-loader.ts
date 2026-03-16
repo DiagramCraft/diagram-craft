@@ -3,6 +3,7 @@ import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
 import { UMLFrameNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLFrame.nodeType';
+import { UMLPortNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLPort.nodeType';
 import { UMLRectNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLRect.nodeType';
 import { UMLUseCaseNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLUseCase.nodeType';
 import { UMLPackageNodeDefinition } from '@diagram-craft/stencil-uml/package/UMLPackage.nodeType';
@@ -18,6 +19,7 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLClassNodeDefinition());
   nodes.register(new UMLClassTemplateNodeDefinition());
   nodes.register(new UMLFrameNodeDefinition());
+  nodes.register(new UMLPortNodeDefinition());
   nodes.register(new UMLRectNodeDefinition());
   nodes.register(new UMLUseCaseNodeDefinition());
   nodes.register(new UMLActorNodeDefinition());

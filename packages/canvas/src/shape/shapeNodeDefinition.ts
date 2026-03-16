@@ -301,7 +301,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     this.layoutChildren(node, uow);
   }
 
-  protected layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
+  protected applyLayoutToChildrenRecursively(node: DiagramNode, uow: UnitOfWork): void {
     for (const child of node.children) {
       if (isNode(child)) {
         const def = child.getDefinition();
@@ -310,6 +310,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
         }
       }
     }
+  }
+
+  protected layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
+    this.applyLayoutToChildrenRecursively(node, uow);
   }
 
   protected ensureSchema(diagram: Diagram, schemaName: string, schemaDef: DataSchema) {
