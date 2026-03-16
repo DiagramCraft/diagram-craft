@@ -27,4 +27,28 @@ stencils:
         texts:
           text: "Label"
         tags:
-
+  - id: 'uml-common-port'
+    name: Port
+    elements:
+      - id: umlport01
+        type: node
+        nodeType: umlPort
+        bounds:
+          x: 0
+          y: 0
+          w: 16
+          h: 16
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 0
+            bottom: 0
+            left: 0
+            right: 0
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
