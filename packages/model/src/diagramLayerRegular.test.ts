@@ -6,6 +6,7 @@ import { Diagram } from './diagram';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import { standardTestModel } from '@diagram-craft/model/test-support/collaborationModelTestUtils';
+import { AnchorEndpoint } from './endpoint';
 
 describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
   beforeEach(backend.beforeEach);
@@ -182,6 +183,36 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       if (layer2) expect(layer2.elements.length).toEqual(0);
     });
 
+    it('should undo removing a node that an edge was connected to', () => {
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
+
+      const start = layer1.addNode({ id: 'start' });
+      const end = layer1.addNode({ id: 'end' });
+      const edge = layer1.addEdge({ id: 'edge' });
+
+      UnitOfWork.execute(diagram1, uow => {
+        edge.setStart(new AnchorEndpoint(start, 'c'), uow);
+        edge.setEnd(new AnchorEndpoint(end, 'c'), uow);
+      });
+      UnitOfWork.executeWithUndo(diagram1, 'Remove element', uow => layer1.removeElement(end, uow));
+
+      expect(() => diagram1.undoManager.undo()).not.toThrow();
+
+      const restoredEdge = diagram1.edgeLookup.get(edge.id)!;
+      const restoredEnd = diagram1.nodeLookup.get(end.id)!;
+      expect(restoredEdge.end).toBeInstanceOf(AnchorEndpoint);
+      expect((restoredEdge.end as AnchorEndpoint).node).toBe(restoredEnd);
+      expect(restoredEnd.edges.map(e => e.id)).toContain(edge.id);
+
+      if (diagram2) {
+        const replicatedEdge = diagram2.edgeLookup.get(edge.id)!;
+        const replicatedEnd = diagram2.nodeLookup.get(end.id)!;
+        expect(replicatedEdge.end).toBeInstanceOf(AnchorEndpoint);
+        expect((replicatedEdge.end as AnchorEndpoint).node).toBe(replicatedEnd);
+        expect(replicatedEnd.edges.map(e => e.id)).toContain(edge.id);
+      }
+    });
+
     it('should remove group', () => {
       const { diagram1, diagram2, layer1, layer2 } = standardTestModel(backend);
 
@@ -221,6 +252,45 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       diagram1.undoManager.redo();
       expect(layer1.elements.length).toEqual(0);
       if (layer2) expect(layer2.elements.length).toEqual(0);
+    });
+
+    it('should undo removing a group with a descendant connected edge', () => {
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
+
+      const group = ElementFactory.emptyNode('group', layer1);
+      const child = ElementFactory.emptyNode('child', layer1);
+      const target = layer1.addNode({ id: 'target' });
+      const edge = layer1.addEdge({ id: 'edge' });
+
+      UnitOfWork.execute(diagram1, uow => {
+        group.changeNodeType('group', uow);
+        layer1.addElement(group, uow);
+        group.addChild(child, uow);
+        edge.setStart(new AnchorEndpoint(child, 'c'), uow);
+        edge.setEnd(new AnchorEndpoint(target, 'c'), uow);
+      });
+
+      UnitOfWork.executeWithUndo(diagram1, 'Remove group', uow => layer1.removeElement(group, uow));
+
+      expect(() => diagram1.undoManager.undo()).not.toThrow();
+
+      const restoredChild = diagram1.nodeLookup.get(child.id)!;
+      const restoredTarget = diagram1.nodeLookup.get(target.id)!;
+      const restoredEdge = diagram1.edgeLookup.get(edge.id)!;
+      expect(restoredEdge.start).toBeInstanceOf(AnchorEndpoint);
+      expect((restoredEdge.start as AnchorEndpoint).node).toBe(restoredChild);
+      expect(restoredEdge.end).toBeInstanceOf(AnchorEndpoint);
+      expect((restoredEdge.end as AnchorEndpoint).node).toBe(restoredTarget);
+
+      if (diagram2) {
+        const replicatedChild = diagram2.nodeLookup.get(child.id)!;
+        const replicatedTarget = diagram2.nodeLookup.get(target.id)!;
+        const replicatedEdge = diagram2.edgeLookup.get(edge.id)!;
+        expect(replicatedEdge.start).toBeInstanceOf(AnchorEndpoint);
+        expect((replicatedEdge.start as AnchorEndpoint).node).toBe(replicatedChild);
+        expect(replicatedEdge.end).toBeInstanceOf(AnchorEndpoint);
+        expect((replicatedEdge.end as AnchorEndpoint).node).toBe(replicatedTarget);
+      }
     });
   });
 

@@ -171,6 +171,10 @@ export class ModificationLayer extends Layer<ModificationLayer> {
   }
 
   removeElement(el: DiagramElement, uow: UnitOfWork) {
+    if (isNode(el)) {
+      el._disconnectAttachedEdges(uow);
+    }
+
     this.modifyRemove(el.id, uow);
     uow.removeElement(el, this, this.#modifications.size - 1);
   }

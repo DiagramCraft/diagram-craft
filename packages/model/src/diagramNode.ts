@@ -163,6 +163,7 @@ export interface DiagramNode extends DiagramElement {
 
   _removeEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
   _addEdge(anchor: string | undefined, edge: DiagramEdge, uow: UnitOfWork): void;
+  _disconnectAttachedEdges(uow: UnitOfWork): void;
   _getAnchorPosition(anchor: string): Point;
   _getPositionInBounds(p: Point, respectRotation?: boolean): Point;
 
@@ -648,6 +649,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    if (isNode(child)) {
+      child._disconnectAttachedEdges(uow);
+    }
+
     super.removeChild(child, uow);
 
     uow.on('before', 'commit', `onChildChanged/${this.id}`, () => {
@@ -878,7 +883,17 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     }
   }
 
-  _onDetach(uow: UnitOfWork) {
+  _onDetach(_uow: UnitOfWork) {
+    // Node-specific detach has no side effects beyond the explicit removal flow.
+  }
+
+  _disconnectAttachedEdges(uow: UnitOfWork) {
+    for (const child of this.children) {
+      if (isNode(child)) {
+        child._disconnectAttachedEdges(uow);
+      }
+    }
+
     // "Detach" any edges that connects to this node
     for (const anchor of this.#edges.keys) {
       for (const id of this.#edges.get(anchor) ?? []) {
