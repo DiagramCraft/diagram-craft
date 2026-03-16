@@ -10,6 +10,7 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 
 type ActorType = 'regular' | 'business';
 
@@ -30,6 +31,12 @@ registerCustomNodeDefaults('umlActor', {
 export class UMLActorNodeDefinition extends SimpleShapeNodeDefinition {
   constructor() {
     super('umlActor', 'UML Actor');
+  }
+
+  getHitArea(node: DiagramNode) {
+    const pathBuilder = new PathListBuilder();
+    PathBuilderHelper.rect(pathBuilder, node.bounds);
+    return pathBuilder.getPaths();
   }
 
   getCustomPropertyDefinitions(node: DiagramNode) {

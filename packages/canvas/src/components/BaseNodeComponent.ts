@@ -56,7 +56,8 @@ export type BaseShapeBuildShapeProps = {
 };
 
 export class BaseNodeComponent<
-  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'hasFlag'> = ShapeNodeDefinition
+  T extends Pick<ShapeNodeDefinition, 'getBoundingPathBuilder' | 'getHitArea' | 'hasFlag'> =
+    ShapeNodeDefinition
 > extends Component<NodeComponentProps> {
   constructor(protected readonly def: T) {
     super();
@@ -227,6 +228,21 @@ export class BaseNodeComponent<
     }
 
     const shapeVNodes = [...shapeBuilder.nodes];
+    const hitArea = this.def.getHitArea(props.element);
+
+    if (hitArea !== undefined) {
+      shapeVNodes.unshift(
+        svg.path({
+          d: hitArea.asSvgPath(),
+          class: 'svg-node__hit-area svg-node',
+          style: 'fill: transparent; stroke: transparent; pointer-events: all;',
+          on: {
+            mousedown: onMouseDown,
+            dblclick: onDoubleClick ?? shapeBuilder.makeOnDblclickHandle()
+          }
+        })
+      );
+    }
 
     if (isSingleSelected && props.context.tool.get() === 'move') {
       for (const cp of shapeBuilder.controlPoints) {

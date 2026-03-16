@@ -3,10 +3,18 @@ import {
   SimpleShapeNodeDefinitionProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 
 export class UmlActor extends SimpleShapeNodeDefinition {
   constructor() {
     super('mxgraph.umlActor', 'UML Actor');
+  }
+
+  getHitArea(node: DiagramNode) {
+    const pathBuilder = new PathListBuilder();
+    PathBuilderHelper.rect(pathBuilder, node.bounds);
+    return pathBuilder.getPaths();
   }
 
   buildShape(props: SimpleShapeNodeDefinitionProps, shapeBuilder: ShapeBuilder): void {
