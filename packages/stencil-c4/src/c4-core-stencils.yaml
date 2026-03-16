@@ -31,9 +31,6 @@ stencils:
             right: 0
             bottom: 0
 
-    settings:
-      scaleStrokes: true
-
     elements:
       - id: jppt3rq
         type: node
@@ -49,6 +46,9 @@ stencils:
           custom:
             roundedRect:
               radius: 10
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -59,9 +59,6 @@ stencils:
   - id: 'c4-core-person'
     stencil: Person
     styles: *c4-styles
-
-    settings:
-      scaleStrokes: true
 
     elements:
       - id: 10cmsfz
@@ -77,6 +74,9 @@ stencils:
         props:
           text:
             top: 12
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -86,8 +86,6 @@ stencils:
 
   - id: 'c4-core-data-store'
     stencil: Data Store
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: esmm16v
@@ -104,6 +102,9 @@ stencils:
           custom:
             cylinder:
               size: 18
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -113,8 +114,6 @@ stencils:
 
   - id: 'c4-core-folder'
     stencil: Folder
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: kn7nao0
@@ -128,6 +127,9 @@ stencils:
           r: 0
         children: [ ]
         props: { }
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -137,8 +139,6 @@ stencils:
 
   - id: 'c4-core-bucket'
     stencil: Bucket
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: 8cxofss
@@ -151,6 +151,9 @@ stencils:
           h: 140
           r: 0
         children: [ ]
+        pickerProps:
+          stroke:
+            width: 1.5
         props:
           custom:
             truncatedCone:
@@ -167,8 +170,6 @@ stencils:
 
   - id: 'c4-core-module'
     stencil: Module
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: ltbe77f
@@ -188,6 +189,9 @@ stencils:
               jettyHeight: 15
           text:
             left: 24
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -196,8 +200,6 @@ stencils:
         tags:
   - id: 'c4-core-cli'
     stencil: CLI
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: 1cxyn6m
@@ -211,6 +213,9 @@ stencils:
           r: 0
         children: [ ]
         props: { }
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: c4-element
           textStyle: c4-element-text
@@ -219,8 +224,6 @@ stencils:
         tags:
   - id: 'c4-core-window'
     stencil: Window
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: utbr5su
@@ -233,6 +236,9 @@ stencils:
           h: 140
           r: 0
         children: [ ]
+        pickerProps:
+          stroke:
+            width: 1.5
         props: { }
         metadata:
           style: c4-element
@@ -243,8 +249,6 @@ stencils:
 
   - id: 'c4-core-relationship'
     stencil: Relationship
-    settings:
-      scaleStrokes: true
     styles:
       - id: 'c4-edge'
         name: 'C4 Edge'
@@ -287,6 +291,12 @@ stencils:
             timeOffset: 0.5
         waypoints: [ ]
         props: { }
+        pickerProps:
+          stroke:
+            width: 1
+          arrow:
+            end:
+              size: 200
         metadata:
           style: c4-edge
         children:
@@ -311,8 +321,6 @@ stencils:
 
   - id: 'c4-core-expanded-container'
     name: Expanded Container
-    settings:
-      scaleStrokes: true
     styles: *c4-styles
     elements:
       - id: 4qxyhta
@@ -325,6 +333,9 @@ stencils:
           h: 274.5
           r: 0
         children: [ ]
+        pickerProps:
+          stroke:
+            width: 1.5
         props:
           custom:
             roundedRect:
@@ -343,8 +354,6 @@ stencils:
 
   - id: 'c4-core-expanded-container-dashed'
     name: Expanded Container Dashed
-    settings:
-      scaleStrokes: true
     elements:
       - id: ns7fj2j
         type: node
@@ -368,6 +377,9 @@ stencils:
             pattern: DASHED
           fill:
             enabled: false
+        pickerProps:
+          stroke:
+            width: 1.5
         metadata:
           style: default
           textStyle: c4-element-text
