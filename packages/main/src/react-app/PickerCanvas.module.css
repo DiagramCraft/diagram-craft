@@ -24,10 +24,10 @@
 .uScaleStrokes {
   svg {
     * {
-      vector-effect: initial;
+      vector-effect: initial !important;
 
       path {
-        vector-effect: initial;
+        vector-effect: initial !important;
       }
     }
   }
