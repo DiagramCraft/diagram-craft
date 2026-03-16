@@ -36,10 +36,10 @@ stencils:
         bounds:
           x: 0
           y: 0
-          w: 16
-          h: 16
+          w: 10
+          h: 10
           r: 0
-        children: [ ]
+        children: [ ]x1
         props:
           text:
             top: 0

@@ -71,8 +71,10 @@ export abstract class LayoutCapableShapeNodeDefinition
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
+    if (node.children.length === 0) return;
+
     // First layout all children
-    super.layoutChildren(node, uow);
+    this.applyLayoutToChildrenRecursively(node, uow);
 
     if (this.getCollapsibleProps(node).mode === 'collapsed') {
       return;
