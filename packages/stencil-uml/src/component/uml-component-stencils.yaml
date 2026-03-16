@@ -1,0 +1,95 @@
+stencils:
+  - id: 'uml-component-provided-interface'
+    name: Provided Interface
+    elements:
+      - id: umlprovidedinterface01
+        type: node
+        nodeType: umlProvidedInterface
+        bounds:
+          x: 0
+          y: 0
+          w: 14
+          h: 14
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 8
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 200
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+  - id: 'uml-component-required-interface'
+    name: Required Interface
+    elements:
+      - id: umlrequiredinterface01
+        type: node
+        nodeType: umlRequiredInterface
+        bounds:
+          x: 0
+          y: 0
+          w: 18
+          h: 18
+          r: 0
+        children: [ ]
+        props:
+          fill:
+            enabled: false
+          custom:
+            umlRequiredInterface:
+              direction: e
+          text:
+            top: 8
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 200
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+  - id: 'uml-component-required-interface-west'
+    name: Required Interface (West)
+    elements:
+      - id: umlrequiredinterface02
+        type: node
+        nodeType: umlRequiredInterface
+        bounds:
+          x: 0
+          y: 0
+          w: 18
+          h: 18
+          r: 0
+        children: [ ]
+        props:
+          fill:
+            enabled: false
+          custom:
+            umlRequiredInterface:
+              direction: w
+          text:
+            top: 8
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 200
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
