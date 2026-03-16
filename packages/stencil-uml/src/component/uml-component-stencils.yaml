@@ -110,6 +110,47 @@ stencils:
         texts:
           text: "<div><span style=\"font-style: normal;\">UserService</span></div>"
         tags:
+  - id: 'uml-component-simple-with-interface'
+    name: Simple Component with Interface
+    elements:
+      - id: oolk6to
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.49999999999997
+          h: 46.99181229793533
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlClass:
+              size: 24
+              stereotypeIcon: component
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+          anchors:
+            type: shape-defaults
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal;\">UserService</span></div>"
+        tags:
       - id: 0lii1ss
         type: node
         nodeType: umlRequiredInterface
