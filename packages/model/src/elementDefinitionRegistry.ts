@@ -399,6 +399,7 @@ export interface NodeDefinition {
   getCustomPropertyDefinitions(node: DiagramNode): CustomPropertyDefinition;
 
   getBoundingPath(node: DiagramNode): PathList;
+  getHitArea(node: DiagramNode): PathList | undefined;
 
   // This returns anchors in local coordinates [0-1], [0-1]
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;

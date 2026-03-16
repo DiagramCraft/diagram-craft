@@ -212,6 +212,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return pb.getPaths();
   }
 
+  getHitArea(_node: DiagramNode): PathList | undefined {
+    return undefined;
+  }
+
   getCustomPropertyDefinitions(_node: DiagramNode): CustomPropertyDefinition {
     return new CustomPropertyDefinition(() => []);
   }
