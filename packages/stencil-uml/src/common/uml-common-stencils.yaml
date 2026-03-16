@@ -39,7 +39,7 @@ stencils:
           w: 10
           h: 10
           r: 0
-        children: [ ]x1
+        children: [ ]
         props:
           text:
             top: 0
