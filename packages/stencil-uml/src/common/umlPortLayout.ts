@@ -2,11 +2,11 @@ import { LayoutNode } from '@diagram-craft/canvas/layout/layoutTree';
 import { clamp } from '@diagram-craft/utils/math';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { mustExist } from '@diagram-craft/utils/assert';
 
 const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
-const isPortHost = (n: DiagramNode) => n.getDefinition() instanceof UMLClassNodeDefinition;
+const PORT_HOST_NODE_TYPES = new Set(['umlClass', 'umlStructuredClassifier']);
+const isPortHost = (n: DiagramNode) => PORT_HOST_NODE_TYPES.has(n.nodeType);
 
 export const classifyPortChildren = (node: DiagramNode) => {
   const ports: DiagramNode[] = [];

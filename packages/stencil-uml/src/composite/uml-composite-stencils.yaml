@@ -1,0 +1,31 @@
+stencils:
+  - id: 'uml-composite-structured-classifier'
+    name: Structured Classifier
+    elements:
+      - id: umlstructuredclassifier01
+        type: node
+        nodeType: umlStructuredClassifier
+        bounds:
+          x: 0
+          y: 0
+          w: 220
+          h: 160
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlStructuredClassifier:
+              size: 24
+          text:
+            align: center
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+            bold: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "Structured Classifier"
+        tags:
