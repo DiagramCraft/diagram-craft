@@ -2,6 +2,8 @@ import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDe
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
+import { UMLProvidedInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLProvidedInterface.nodeType';
+import { UMLRequiredInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLRequiredInterface.nodeType';
 import { UMLStructuredClassifierNodeDefinition } from '@diagram-craft/stencil-uml/composite/UMLStructuredClassifier.nodeType';
 import { UMLFrameNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLFrame.nodeType';
 import { UMLPortNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLPort.nodeType';
@@ -12,6 +14,7 @@ import { UMLPackageTemplateNodeDefinition } from '@diagram-craft/stencil-uml/pac
 import { UMLActorNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLActor.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import classStencils from './class/uml-class-stencils.yaml';
+import componentStencils from './component/uml-component-stencils.yaml';
 import compositeStencils from './composite/uml-composite-stencils.yaml';
 import commonStencils from './common/uml-common-stencils.yaml';
 import packageStencils from './package/uml-package-stencils.yaml';
@@ -28,6 +31,8 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLActorNodeDefinition());
   nodes.register(new UMLPackageNodeDefinition());
   nodes.register(new UMLPackageTemplateNodeDefinition());
+  nodes.register(new UMLProvidedInterfaceNodeDefinition());
+  nodes.register(new UMLRequiredInterfaceNodeDefinition());
 };
 
 export const loadUMLStencils = async (registry: Registry) => {
@@ -40,6 +45,7 @@ export const loadUMLStencils = async (registry: Registry) => {
     subPackages: [
       { id: 'common', name: 'Common', stencils: [] },
       { id: 'class', name: 'Class Diagrams', stencils: [] },
+      { id: 'component', name: 'Component Diagrams', stencils: [] },
       { id: 'composite', name: 'Composite Diagrams', stencils: [] },
       { id: 'use-case', name: 'Use-Case Diagrams', stencils: [] },
       { id: 'package', name: 'Package Diagrams', stencils: [] }
@@ -64,6 +70,15 @@ export const loadUMLStencils = async (registry: Registry) => {
   loadStencilsFromYaml(classStencils).forEach(s => {
     umlStencils.stencils.push(s);
     umlStencils.subPackages!.find(p => p.id === 'class')?.stencils.push(s);
+  });
+
+  /* *********************************************************************** */
+  /* COMPONENT PACKAGE                                                       */
+  /* *********************************************************************** */
+
+  loadStencilsFromYaml(componentStencils).forEach(s => {
+    umlStencils.stencils.push(s);
+    umlStencils.subPackages!.find(p => p.id === 'component')?.stencils.push(s);
   });
 
   /* *********************************************************************** */
