@@ -1,5 +1,5 @@
 import { Layer, LayerCRDT } from './diagramLayer';
-import { DiagramElement, type DiagramElementCRDT } from './diagramElement';
+import { DiagramElement, isNode, type DiagramElementCRDT } from './diagramElement';
 import type { Diagram } from './diagram';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
@@ -159,6 +159,10 @@ export class RegularLayer extends Layer<RegularLayer> {
 
   removeElement(element: DiagramElement, uow: UnitOfWork) {
     assert.true(this.#elements.has(element.id));
+
+    if (isNode(element)) {
+      element._disconnectAttachedEdges(uow);
+    }
 
     uow.executeRemove(element, this, this.#elements.getIndex(element.id), () => {
       element._detach(() => this.#elements.remove(element.id), uow);

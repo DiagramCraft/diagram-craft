@@ -258,6 +258,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
     this.delegate._addEdge(anchor, edge, uow);
   }
 
+  _disconnectAttachedEdges(uow: UnitOfWork): void {
+    this.delegate._disconnectAttachedEdges(uow);
+  }
+
   _getAnchorPosition(anchor: string): Point {
     return this.delegate._getAnchorPosition(anchor);
   }

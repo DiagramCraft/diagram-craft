@@ -587,6 +587,10 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   }
 
   removeChild(child: DiagramElement, uow: UnitOfWork) {
+    if (isNode(child)) {
+      child._disconnectAttachedEdges(uow);
+    }
+
     super.removeChild(child, uow);
     this.syncLabelNodesBasedOnChildren(uow);
   }

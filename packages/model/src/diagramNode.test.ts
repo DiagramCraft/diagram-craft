@@ -364,6 +364,38 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
         expect(uow.contains(child, 'remove')).toBe(true);
       });
     });
+
+    it('should undo removing a child group with a descendant connected edge', () => {
+      const group = model.layer1.createNode({ id: 'group' });
+      const grandchild = model.layer1.createNode({ id: 'grandchild' });
+      const target = model.layer1.addNode({ id: 'target' });
+      const edge = model.layer1.addEdge({ id: 'edge' });
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        group.changeNodeType('group', uow);
+        node1.addChild(group, uow);
+        group.addChild(grandchild, uow);
+        edge.setStart(new AnchorEndpoint(grandchild, 'c'), uow);
+        edge.setEnd(new AnchorEndpoint(target, 'c'), uow);
+      });
+
+      UnitOfWork.executeWithUndo(model.diagram1, 'Remove', uow => node1.removeChild(group, uow));
+
+      expect(() => model.diagram1.undoManager.undo()).not.toThrow();
+
+      const restoredGroup = model.diagram1.nodeLookup.get(group.id)!;
+      const restoredGrandchild = model.diagram1.nodeLookup.get(grandchild.id)!;
+      expect(restoredGroup.children.map(c => c.id)).toContain(grandchild.id);
+      expect(edge.start).toBeInstanceOf(AnchorEndpoint);
+      expect((edge.start as AnchorEndpoint).node).toBe(restoredGrandchild);
+
+      if (model.doc2) {
+        const replicatedEdge = model.diagram2!.edgeLookup.get(edge.id)!;
+        const replicatedGrandchild = model.diagram2!.nodeLookup.get(grandchild.id)!;
+        expect(replicatedEdge.start).toBeInstanceOf(AnchorEndpoint);
+        expect((replicatedEdge.start as AnchorEndpoint).node).toBe(replicatedGrandchild);
+      }
+    });
   });
 
   describe('setChildren', () => {
