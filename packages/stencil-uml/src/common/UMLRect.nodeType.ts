@@ -7,6 +7,27 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
+import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import {
+  getStereotypeIconTextProps,
+  renderStereotypeIcon,
+  UML_STEREOTYPE_ICON_OPTIONS,
+  UmlStereotypeIcon
+} from '@diagram-craft/stencil-uml/common/stereotypeIcon';
+
+declare global {
+  namespace DiagramCraft {
+    interface CustomNodePropsExtensions {
+      umlRect?: {
+        stereotypeIcon?: UmlStereotypeIcon;
+      };
+    }
+  }
+}
+
+registerCustomNodeDefaults('umlRect', {
+  stereotypeIcon: 'empty'
+});
 
 export class UMLRectNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
@@ -22,8 +43,10 @@ export class UMLRectNodeDefinition extends LayoutCapableShapeNodeDefinition {
     });
   }
 
-  getCustomPropertyDefinitions(_def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(_ => []);
+  getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Stereotype Icon', 'custom.umlRect.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS)
+    ]);
   }
 }
 
@@ -32,7 +55,19 @@ export class UMLRectComponent extends BaseNodeComponent<UMLRectNodeDefinition> {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
 
-    builder.text(this, '1', props.node.getText(), props.nodeProps.text, props.node.bounds);
+    const stereotypeIcon = props.nodeProps.custom.umlRect.stereotypeIcon ?? 'empty';
+    const icon = renderStereotypeIcon(props.node.bounds, stereotypeIcon, props.nodeProps);
+    if (icon) {
+      builder.add(icon);
+    }
+
+    builder.text(
+      this,
+      '1',
+      props.node.getText(),
+      getStereotypeIconTextProps(props.nodeProps.text, stereotypeIcon),
+      props.node.bounds
+    );
 
     if (this.def.shouldRenderChildren(props.node)) {
       builder.add(renderChildren(this, props.node, props));

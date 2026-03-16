@@ -1,12 +1,189 @@
 stencils:
+  - id: 'uml-component-full'
+    name: Full Component
+    elements:
+      - id: xrg6yfx
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 175.00000000000003
+          h: 84
+          r: 0
+          _discriminator:
+        children:
+          - id: 4pn7bxk
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 24
+              w: 175.00000000000003
+              h: 60
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 6
+                top: 6
+                right: 6
+                bottom: 6
+                shrink: true
+              capabilities:
+                adjustSizeBasedOnText: true
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "<b>&lt;&lt;provided interfaces&gt;&gt;</b><div>&nbsp; IUserServices</div><div><b>&lt;&lt;required interfaces&gt;&gt;</b></div><div>&nbsp; IAddressValidation</div>"
+            tags:
+        props:
+          custom:
+            umlClass:
+              size: 24
+              stereotypeIcon: component
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Component
+        tags:
+  - id: 'uml-component-simple'
+    name: Simple Component
+    elements:
+      - id: oolk6to
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 152.49999999999997
+          h: 46.99181229793533
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlClass:
+              size: 24
+              stereotypeIcon: component
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+          anchors:
+            type: shape-defaults
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal;\">UserService</span></div>"
+        tags:
+      - id: 0lii1ss
+        type: node
+        nodeType: umlRequiredInterface
+        bounds:
+          x: 180
+          y: 14.49590614896772
+          w: 18
+          h: 18
+          r: 0
+        children: [ ]
+        props:
+          fill:
+            enabled: false
+          custom:
+            umlRequiredInterface:
+              direction: w
+          text:
+            top: 8
+            bottom: 0
+            left: 0
+            right: 0
+            valign: top
+            position: s
+            width: 200
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+      - id: tssou6j
+        type: edge
+        start:
+          anchor: 1000_500
+          node:
+            id: oolk6to
+          position:
+            x: 152.49999999999997
+            y: 23.495906148967666
+          offset:
+            x: 0
+            y: 0
+        end:
+          anchor: m
+          node:
+            id: 0lii1ss
+          position:
+            x: 180
+            y: 23.49590614896772
+          offset:
+            x: 0
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            width: 1
+            pattern: SOLID
+          arrow:
+            end:
+              type: NONE
+        metadata:
+          style: c4-edge
+        children: [ ]
+        tags:
+
   - id: 'uml-component-provided-interface'
     name: Provided Interface
     elements:
-      - id: umlprovidedinterface01
+      - id: 9ug4rjk
         type: node
         nodeType: umlProvidedInterface
         bounds:
-          x: 0
+          x: 20
           y: 0
           w: 14
           h: 14
@@ -27,10 +204,40 @@ stencils:
         texts:
           text: ""
         tags:
+      - id: bkcq5qu
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 7
+        end:
+          anchor: w
+          node:
+            id: 9ug4rjk
+          position:
+            x: 20
+            y: 7
+          offset:
+            x: 0
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            width: 1
+            pattern: SOLID
+          arrow:
+            end:
+              type: NONE
+        metadata:
+          style: c4-edge
+        children: [ ]
+        tags:
+
   - id: 'uml-component-required-interface'
     name: Required Interface
     elements:
-      - id: umlrequiredinterface01
+      - id: eahi25i
         type: node
         nodeType: umlRequiredInterface
         bounds:
@@ -60,14 +267,44 @@ stencils:
         texts:
           text: ""
         tags:
+      - id: r9wia5j
+        type: edge
+        start:
+          anchor: m
+          node:
+            id: eahi25i
+          position:
+            x: 18
+            y: 9
+          offset:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 38
+            y: 9
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            width: 1
+            pattern: SOLID
+          arrow:
+            end:
+              type: NONE
+        metadata:
+          style: c4-edge
+        children: [ ]
+        tags:
+
   - id: 'uml-component-required-interface-west'
     name: Required Interface (West)
     elements:
-      - id: umlrequiredinterface02
+      - id: b0cpadh
         type: node
         nodeType: umlRequiredInterface
         bounds:
-          x: 0
+          x: 19
           y: 0
           w: 18
           h: 18
@@ -92,4 +329,33 @@ stencils:
           textStyle: default-text-default
         texts:
           text: ""
+        tags:
+      - id: bj7d95s
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 9
+        end:
+          anchor: m
+          node:
+            id: b0cpadh
+          position:
+            x: 19
+            y: 9.000000000000002
+          offset:
+            x: 0
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          stroke:
+            width: 1
+            pattern: SOLID
+          arrow:
+            end:
+              type: NONE
+        metadata:
+          style: c4-edge
+        children: [ ]
         tags:

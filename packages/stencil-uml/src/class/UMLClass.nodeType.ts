@@ -29,6 +29,12 @@ import {
   snapPortsInLayoutTree,
   classifyPortChildren
 } from '@diagram-craft/stencil-uml/common/umlPortLayout';
+import {
+  getStereotypeIconTextProps,
+  renderStereotypeIcon,
+  UML_STEREOTYPE_ICON_OPTIONS,
+  UmlStereotypeIcon
+} from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -37,13 +43,15 @@ declare global {
     interface CustomNodePropsExtensions {
       umlClass?: {
         size?: number;
+        stereotypeIcon?: UmlStereotypeIcon;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('umlClass', {
-  size: DEFAULT_TITLE_SIZE
+  size: DEFAULT_TITLE_SIZE,
+  stereotypeIcon: 'empty'
 });
 
 export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -75,7 +83,8 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(_p => [
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Stereotype Icon', 'custom.umlClass.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS),
       ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
@@ -134,6 +143,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
     const bounds = props.node.bounds;
 
     const titleSize = props.nodeProps.custom.umlClass.size ?? DEFAULT_TITLE_SIZE;
+    const stereotypeIcon = props.nodeProps.custom.umlClass.stereotypeIcon ?? 'empty';
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
@@ -208,11 +218,21 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
       builder.add(svg.g({}, ...children));
     }
 
+    const icon = renderStereotypeIcon(
+      { ...bounds, h: childrenVisible ? titleSize : bounds.h },
+      stereotypeIcon,
+      nodeProps,
+      -0.5
+    );
+    if (icon) {
+      builder.add(icon);
+    }
+
     builder.text(
       this,
       '1',
       props.node.getText(),
-      nodeProps.text,
+      getStereotypeIconTextProps(nodeProps.text, stereotypeIcon),
       { ...bounds, h: childrenVisible ? titleSize : bounds.h },
       (size: Extent) =>
         UnitOfWork.execute(props.node.diagram, uow => {
