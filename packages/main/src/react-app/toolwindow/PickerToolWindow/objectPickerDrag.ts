@@ -14,6 +14,7 @@ import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { copyStyles, StencilStyle } from '@diagram-craft/model/stencilRegistry';
 import { AbstractPickerDrag } from './abstractPickerDrag';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 export class ObjectPickerDrag extends AbstractPickerDrag {
   constructor(
@@ -24,7 +25,24 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     readonly styles: Array<StencilStyle>,
     context: Context
   ) {
-    super(event, diagram, context);
+    const sourceBounds = Box.boundingBox(source.map(e => e.bounds));
+    const svgElement =
+      event.target instanceof Element ? (event.target.closest('svg') as SVGSVGElement | null) : null;
+
+    const dragOffset = svgElement
+      ? (() => {
+          // Preserve the pointer's relative position inside the picked stencil so the
+          // element enters the canvas under the cursor instead of snapping to center.
+          const localPoint = EventHelper.pointWithRespectTo(event, svgElement);
+          const diagramPoint = source[0]!.diagram.viewBox.toDiagramPoint(localPoint);
+          return Point.of(
+            clamp(diagramPoint.x - sourceBounds.x, 0, sourceBounds.w),
+            clamp(diagramPoint.y - sourceBounds.y, 0, sourceBounds.h)
+          );
+        })()
+      : Point.of(sourceBounds.w / 2, sourceBounds.h / 2);
+
+    super(event, diagram, context, dragOffset);
     this.addDragImage({ x: event.clientX, y: event.clientY });
   }
 

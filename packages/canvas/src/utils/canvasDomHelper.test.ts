@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, test } from 'vitest';
 import { CanvasDomHelper } from './canvasDomHelper';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
@@ -96,6 +98,41 @@ describe('CanvasDomHelper', () => {
       expect(nodeId).toMatch(/^node-/);
       expect(edgeId).toMatch(/^edge-/);
       expect(nodeId).not.toBe(edgeId);
+    });
+  });
+
+  describe('canvasElement', () => {
+    test('returns the editable canvas ancestor for nested svg elements', () => {
+      const canvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      canvas.classList.add('editable-canvas');
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+      canvas.appendChild(group);
+      group.appendChild(path);
+      document.body.appendChild(canvas);
+
+      expect(CanvasDomHelper.canvasElement(path)).toBe(canvas);
+    });
+
+    test('returns the editable canvas ancestor for text node targets', () => {
+      const canvas = document.createElement('div');
+      canvas.classList.add('editable-canvas');
+      const child = document.createElement('span');
+      const text = document.createTextNode('label');
+
+      canvas.appendChild(child);
+      child.appendChild(text);
+      document.body.appendChild(canvas);
+
+      expect(CanvasDomHelper.canvasElement(text)).toBe(canvas);
+    });
+
+    test('returns undefined when target is outside an editable canvas', () => {
+      const element = document.createElement('div');
+      document.body.appendChild(element);
+
+      expect(CanvasDomHelper.canvasElement(element)).toBeUndefined();
     });
   });
 });

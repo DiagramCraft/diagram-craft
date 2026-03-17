@@ -27,7 +27,7 @@ export class IconPickerDrag extends AbstractPickerDrag {
     diagram: Diagram,
     context: Context
   ) {
-    super(event, diagram, context);
+    super(event, diagram, context, Point.of(WIDTH / 2, HEIGHT / 2));
 
     svgPromise.then(content => (this.#svgContent = content));
     this.addDragImage({ x: event.clientX, y: event.clientY });

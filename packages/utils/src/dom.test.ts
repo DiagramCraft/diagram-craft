@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { getAncestorWithClass, sanitizeHtml, setPosition } from './dom';
+import { getAncestorWithClass, resolveTargetElement, sanitizeHtml, setPosition } from './dom';
 
 describe('setPosition', () => {
   it('should set the correct left and top styles on the element', () => {
@@ -72,6 +72,39 @@ describe('getAncestorWithClass', () => {
     const isolatedElement = document.createElement('div');
 
     expect(getAncestorWithClass(isolatedElement, 'some-class')).toBeUndefined();
+  });
+});
+
+describe('resolveTargetElement', () => {
+  it('returns the same element when the target is an html element', () => {
+    const element = document.createElement('div');
+
+    expect(resolveTargetElement(element)).toBe(element);
+  });
+
+  it('returns the same element when the target is an svg element', () => {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+    expect(resolveTargetElement(element)).toBe(element);
+  });
+
+  it('returns the parent element when the target is a text node', () => {
+    const parent = document.createElement('div');
+    const textNode = document.createTextNode('label');
+    parent.appendChild(textNode);
+
+    expect(resolveTargetElement(textNode)).toBe(parent);
+  });
+
+  it('returns null when the node has no parent element', () => {
+    const textNode = document.createTextNode('orphan');
+
+    expect(resolveTargetElement(textNode)).toBeNull();
+  });
+
+  it('returns null for null and non-dom targets', () => {
+    expect(resolveTargetElement(null)).toBeNull();
+    expect(resolveTargetElement({} as EventTarget)).toBeNull();
   });
 });
 

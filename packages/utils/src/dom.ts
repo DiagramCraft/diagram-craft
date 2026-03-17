@@ -3,9 +3,10 @@
  *
  * @example
  * ```ts
- * import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
+ * import { getAncestorWithClass, resolveTargetElement, setPosition } from '@diagram-craft/utils/dom';
  *
  * const container = getAncestorWithClass(element, 'container');
+ * const target = resolveTargetElement(event.target);
  * setPosition(tooltip, { x: 100, y: 200 });
  * ```
  *
@@ -34,6 +35,35 @@ export const getAncestorWithClass = (
 ) => {
   const c = el?.closest(`.${className}`);
   return c === null ? undefined : c;
+};
+
+/**
+ * Resolves arbitrary DOM event targets to an actual element node.
+ *
+ * Drag and pointer events can report text nodes or other non-element targets.
+ * This helper normalizes those values so callers can safely inspect attributes,
+ * ids, classes, and ancestor relationships.
+ *
+ * @param target - The raw event target to normalize
+ * @returns The target itself when it is already an element, the parent element
+ * for non-element DOM nodes, or `null` when no element can be resolved
+ *
+ * @example
+ * ```ts
+ * const element = resolveTargetElement(event.target);
+ * if (element?.id === 'node-123') {
+ *   // Handle the node hit
+ * }
+ * ```
+ */
+export const resolveTargetElement = (target: EventTarget | null): HTMLElement | SVGElement | null => {
+  if (typeof target !== 'object' || target === null) return null;
+  if (target instanceof HTMLElement || target instanceof SVGElement) return target;
+  if (target instanceof Node) {
+    const parent = target.parentElement;
+    return parent === null ? null : (parent as HTMLElement | SVGElement);
+  }
+  return null;
 };
 
 /**

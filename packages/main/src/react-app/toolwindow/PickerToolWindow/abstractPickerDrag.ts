@@ -3,27 +3,38 @@ import { DiagramElement, transformElements } from '@diagram-craft/model/diagramE
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Context } from '@diagram-craft/canvas/context';
 import { _p, Point } from '@diagram-craft/geometry/point';
-import { DRAG_DROP_MANAGER, DragEvents } from '@diagram-craft/canvas/dragDropManager';
-import { getAncestorWithClass, setPosition } from '@diagram-craft/utils/dom';
+import {
+  DRAG_DROP_MANAGER,
+  DragEvents,
+  resolveCanvasDragElementId
+} from '@diagram-craft/canvas/dragDropManager';
+import { setPosition } from '@diagram-craft/utils/dom';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Translation } from '@diagram-craft/geometry/transform';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 
 enum State {
   INSIDE,
   OUTSIDE
 }
 
+const getCanvasSVGElement = (event: { target: EventTarget }) => {
+  return CanvasDomHelper.canvasElement(event.target) as HTMLElement;
+};
+
 export abstract class AbstractPickerDrag extends AbstractMoveDrag {
   readonly #originalSelectionState: readonly DiagramElement[];
+  readonly #dragOffset: Point;
   #state: State = State.OUTSIDE;
   #dragImage: HTMLElement | undefined;
   protected _elements: DiagramElement[] = [];
 
-  protected constructor(event: MouseEvent, diagram: Diagram, context: Context) {
-    super(diagram, Point.ORIGIN, event, context);
+  protected constructor(event: MouseEvent, diagram: Diagram, context: Context, dragOffset: Point) {
+    super(diagram, dragOffset, event, context);
     this.isGlobal = true;
+    this.#dragOffset = dragOffset;
     this.#originalSelectionState = diagram.selection.elements;
     this.context.help.push('AddDrag', 'Add element. Shift - constrain, Option - free');
     document.body.classList.add('no-select');
@@ -37,7 +48,11 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
   onDrag(event: DragEvents.DragStart) {
     if (this.isCanvasEvent(event.target)) {
-      super.onDrag(event);
+      const svgElement = getCanvasSVGElement(event);
+      const pointInSvgElement = EventHelper.pointWithRespectTo(event.offset, svgElement);
+      const diagramPoint = this.diagram.viewBox.toDiagramPoint(pointInSvgElement);
+
+      super.onDrag(new DragEvents.DragStart(diagramPoint, event.modifiers, event.target));
     } else {
       if (this.#dragImage) {
         setPosition(this.#dragImage, event.offset);
@@ -69,10 +84,7 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
   }
 
   onDragEnter(event: DragEvents.DragEnter) {
-    const svgElement = getAncestorWithClass(
-      event.target as HTMLElement,
-      'editable-canvas'
-    ) as HTMLElement;
+    const svgElement = getCanvasSVGElement(event);
     if (svgElement) {
       this.onStateChange(State.INSIDE, event.offset, svgElement);
     } else {
@@ -88,6 +100,30 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     if (this.isCanvasEvent(event.target)) {
       super.onDragLeave(event);
     }
+  }
+
+  override resolveDragTarget(
+    point: Point,
+    fallbackTarget: EventTarget
+  ): { target: EventTarget; id?: string } {
+    // During picker drags, the dragged preview can sit on top of the real canvas target.
+    // Scan the full hit stack and return the first non-selected diagram element, with the
+    // canvas itself as a fallback when we are only over background.
+    const elements = document.elementsFromPoint(point.x, point.y);
+    const selectionIds = new Set(this.diagram.selection.elements.map(e => e.id));
+
+    for (const element of elements) {
+      if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) continue;
+
+      // Try to extract node or edge id - and stop in case the id
+      // is not part of the selection
+      const id = resolveCanvasDragElementId(element);
+      if (id && !selectionIds.has(id)) {
+        return { target: element, id };
+      }
+    }
+
+    return super.resolveDragTarget(point, fallbackTarget);
   }
 
   onKeyDown(event: KeyboardEvent) {
@@ -139,7 +175,7 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
       this.removeDragImage();
       const pointInSvgElement = EventHelper.pointWithRespectTo(point, svgElement!);
       const diagramPoint = this.diagram.viewBox.toDiagramPoint(pointInSvgElement);
-      this.addElement(diagramPoint);
+      this.addElement(Point.subtract(diagramPoint, this.#dragOffset));
     } else {
       this.removeElement();
       this.diagram.selection.clear();
@@ -148,6 +184,6 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
   }
 
   private isCanvasEvent(element: EventTarget): boolean {
-    return this.#state === State.INSIDE && (element as HTMLElement).tagName === 'svg';
+    return this.#state === State.INSIDE && !!CanvasDomHelper.canvasElement(element);
   }
 }

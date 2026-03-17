@@ -1,5 +1,36 @@
 import { Point } from '@diagram-craft/geometry/point';
 import { EventEmitter } from '@diagram-craft/utils/event';
+import { resolveTargetElement } from '@diagram-craft/utils/dom';
+import { CanvasDomHelper } from './utils/canvasDomHelper';
+
+const removeSuffix = (s: string) => {
+  return s.replace(/---.+$/, '');
+};
+
+// Resolve a canvas DOM hit back to a diagram element id, while ignoring non-canvas
+// hits and stripping redraw suffixes added to DOM ids.
+export const resolveCanvasDragElementId = (target: EventTarget | null) => {
+  const targetElement = resolveTargetElement(target);
+  const canvasElement = CanvasDomHelper.canvasElement(target);
+  if (!canvasElement) return undefined;
+
+  let element =
+    targetElement?.closest('.svg-hover-overlay')?.parentElement ?? targetElement;
+  while (element) {
+    if (element.id.startsWith('node-')) {
+      return removeSuffix(element.id.slice('node-'.length));
+    }
+    if (element.id.startsWith('edge-')) {
+      return removeSuffix(element.id.slice('edge-'.length));
+    }
+    element = element.parentElement;
+  }
+  return undefined;
+};
+
+const resolveTargetAtPoint = (point: Point) => {
+  return document.elementFromPoint(point.x, point.y);
+};
 
 export type Modifiers = {
   shiftKey: boolean;
@@ -23,8 +54,19 @@ export const bindDocumentDragAndDrop = () => {
     const drag = DRAG_DROP_MANAGER.current();
     if (!drag || !drag.isGlobal) return;
 
+    const point = { x: event.clientX, y: event.clientY };
+    const initialTarget = resolveTargetAtPoint(point) ?? event.target!;
+
     drag.onDrag(
-      new DragEvents.DragStart({ x: event.clientX, y: event.clientY }, event, event.currentTarget!)
+      new DragEvents.DragStart(point, event, initialTarget)
+    );
+
+    const { target: hoverTarget, id: resolvedHoverId } = drag.resolveDragTarget(
+      point,
+      initialTarget
+    );
+    drag.onDragEnter(
+      new DragEvents.DragEnter(point, hoverTarget, resolvedHoverId)
     );
   });
   document.addEventListener('mouseup', event => {
@@ -37,22 +79,8 @@ export const bindDocumentDragAndDrop = () => {
       return;
     }
 
-    drag.onDragEnd(new DragEvents.DragEnd(event.currentTarget!));
+    drag.onDragEnd(new DragEvents.DragEnd(event.target!));
     DRAG_DROP_MANAGER.clear();
-  });
-  document.addEventListener('mouseout', event => {
-    const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
-
-    drag.onDragLeave(new DragEvents.DragLeave(event.target!));
-  });
-  document.addEventListener('mouseover', event => {
-    const drag = DRAG_DROP_MANAGER.current();
-    if (!drag || !drag.isGlobal) return;
-
-    drag.onDragEnter(
-      new DragEvents.DragEnter({ x: event.clientX, y: event.clientY }, event.target!)
-    );
   });
   document.addEventListener('keydown', event => {
     const drag = DRAG_DROP_MANAGER.current();
@@ -135,6 +163,11 @@ export abstract class Drag extends EventEmitter<{
   onDragEnter(_event: DragEvents.DragEnter): void {}
 
   onDragLeave(_event: DragEvents.DragLeave): void {}
+
+  resolveDragTarget(point: Point, fallbackTarget: EventTarget): { target: EventTarget; id?: string } {
+    const target = resolveTargetAtPoint(point) ?? fallbackTarget;
+    return { target, id: resolveCanvasDragElementId(target) };
+  }
 
   setState(state: State) {
     this.#state = state;
