@@ -36,6 +36,11 @@
   }
 }
 
+.svg-drag-disable-pointer-events,
+.svg-drag-disable-pointer-events * {
+  pointer-events: none !important;
+}
+
 .svg-edge-container {
   .svg-node__text {
     white-space: nowrap !important;

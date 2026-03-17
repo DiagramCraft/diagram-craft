@@ -33,7 +33,7 @@ const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
     const $el = CanvasDomHelper.elementElement(e)!;
     if (!$el) continue;
-    $el.style.pointerEvents = '';
+    $el.classList.remove('svg-drag-disable-pointer-events');
     if (isNode(e)) enablePointerEvents(e.children);
   }
 };
@@ -42,7 +42,7 @@ const disablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
     const $el = CanvasDomHelper.elementElement(e)!;
     if (!$el) continue;
-    $el.style.pointerEvents = 'none';
+    $el.classList.add('svg-drag-disable-pointer-events');
     if (isNode(e)) disablePointerEvents(e.children);
   }
 };
@@ -57,6 +57,7 @@ export abstract class AbstractMoveDrag extends Drag {
   #snapAngle?: Axis;
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
+  #disablePointerEventsFrame: number | undefined = undefined;
 
   protected dragStarted = false;
   protected uow: UnitOfWork;
@@ -74,24 +75,48 @@ export abstract class AbstractMoveDrag extends Drag {
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
-    if (!id) return;
-
-    const selection = this.diagram.selection;
-
-    const hover = this.diagram.lookup(id);
-
-    if (hover !== this.#currentElement) {
+    if (!id) {
       this.clearHighlight();
-    }
-
-    // Need to filter any edges that are connected to the current selection
-    if (isEdge(hover) && selection.elements.some(e => isNode(e) && e.edges.includes(hover))) {
       this.#currentElement = undefined;
       return;
     }
 
-    if (hover !== this.#currentElement) {
-      this.#currentElement = hover;
+    const selection = this.diagram.selection;
+    const hover = this.diagram.lookup(id);
+    if (!hover) {
+      this.clearHighlight();
+      this.#currentElement = undefined;
+      return;
+    }
+
+    // Normalize child hits to the effective drop receiver so the highlight matches
+    // the element that would actually handle the drop.
+    const dropTarget =
+      getElementAndAncestors(hover).find(
+        element =>
+          !selection.elements.includes(element) &&
+          (isEdge(element) || (isNode(element) && !!element.getDefinition().onDrop))
+      ) ?? hover;
+
+    if (
+      dropTarget &&
+      getElementAndAncestors(dropTarget).some(element => selection.elements.includes(element))
+    ) {
+      return;
+    }
+
+    // Need to filter any edges that are connected to the current selection
+    if (
+      isEdge(dropTarget) &&
+      selection.elements.some(e => isNode(e) && e.edges.includes(dropTarget))
+    ) {
+      this.#currentElement = undefined;
+      return;
+    }
+
+    if (dropTarget !== this.#currentElement) {
+      this.clearHighlight();
+      this.#currentElement = dropTarget;
       this.setHighlight();
     }
   }
@@ -118,7 +143,7 @@ export abstract class AbstractMoveDrag extends Drag {
     // Disable pointer events on the first onDrag event
     if (!this.dragStarted) {
       this.dragStarted = true;
-      disablePointerEvents(selection.elements);
+      this.scheduleDisablePointerEvents(selection.elements);
     }
 
     // Determine the delta between the current mouse position and the original mouse position
@@ -181,6 +206,10 @@ export abstract class AbstractMoveDrag extends Drag {
     SnapMarkers.get(this.diagram).clear();
 
     this.clearHighlight();
+    if (this.#disablePointerEventsFrame !== undefined) {
+      cancelAnimationFrame(this.#disablePointerEventsFrame);
+      this.#disablePointerEventsFrame = undefined;
+    }
     enablePointerEvents(selection.elements);
 
     this.uow.compact();
@@ -309,6 +338,19 @@ export abstract class AbstractMoveDrag extends Drag {
               { key: '2', label: 'Attach as label', isActive: lastState === 2 }
             ]
           : []
+    });
+  }
+
+  private scheduleDisablePointerEvents(elements: ReadonlyArray<DiagramElement>) {
+    if (this.#disablePointerEventsFrame !== undefined) {
+      cancelAnimationFrame(this.#disablePointerEventsFrame);
+    }
+
+    // Picker drags can create the selection model before its DOM nodes are mounted.
+    // Deferring by a frame makes the pointer-event suppression line up with the rendered SVG.
+    this.#disablePointerEventsFrame = requestAnimationFrame(() => {
+      this.#disablePointerEventsFrame = undefined;
+      disablePointerEvents(elements);
     });
   }
 }

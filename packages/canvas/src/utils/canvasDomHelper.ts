@@ -2,6 +2,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { getAncestorWithClass, resolveTargetElement } from '@diagram-craft/utils/dom';
 
 /**
  * Helper utilities for managing DOM IDs of diagram elements.
@@ -64,5 +65,16 @@ export const CanvasDomHelper = {
    */
   elementElement(element: DiagramElement): HTMLElement | null {
     return document.getElementById(CanvasDomHelper.elementId(element));
+  },
+
+  /**
+   * Resolve an event target to the editable canvas element that contains it.
+   */
+  canvasElement(target: EventTarget | null): HTMLElement | SVGElement | undefined {
+    const targetElement = resolveTargetElement(target);
+    const canvasElement = getAncestorWithClass(targetElement ?? undefined, 'editable-canvas');
+    return canvasElement instanceof HTMLElement || canvasElement instanceof SVGElement
+      ? canvasElement
+      : undefined;
   }
 };
