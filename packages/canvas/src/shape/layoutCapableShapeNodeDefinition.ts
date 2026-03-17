@@ -47,6 +47,7 @@ export interface LayoutCapableShapeNodeDefinitionInterface extends NodeDefinitio
     top: number;
     bottom: number;
   };
+  getLayoutableChildren(node: DiagramNode): ReadonlyArray<DiagramNode>;
 }
 
 export abstract class LayoutCapableShapeNodeDefinition
@@ -116,6 +117,10 @@ export abstract class LayoutCapableShapeNodeDefinition
 
   getContainerPadding(_node: DiagramNode) {
     return { left: 0, right: 0, top: 0, bottom: 0 };
+  }
+
+  getLayoutableChildren(node: DiagramNode): ReadonlyArray<DiagramNode> {
+    return node.children.filter(isNode);
   }
 
   /**

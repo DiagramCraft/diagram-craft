@@ -14,8 +14,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
@@ -24,11 +23,19 @@ import { Box } from '@diagram-craft/geometry/box';
 import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
+import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import {
+  classifyPortChildren,
+  isUMLPortNode,
   preparePortLayoutTree,
-  snapPortsInLayoutTree,
-  classifyPortChildren
+  snapPortsInLayoutTree
 } from '@diagram-craft/stencil-uml/common/umlPortLayout';
+import {
+  getStereotypeIconTextProps,
+  renderStereotypeIcon,
+  UML_STEREOTYPE_ICON_OPTIONS,
+  UmlStereotypeIcon
+} from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -37,13 +44,15 @@ declare global {
     interface CustomNodePropsExtensions {
       umlClass?: {
         size?: number;
+        stereotypeIcon?: UmlStereotypeIcon;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('umlClass', {
-  size: DEFAULT_TITLE_SIZE
+  size: DEFAULT_TITLE_SIZE,
+  stereotypeIcon: 'empty'
 });
 
 export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -74,8 +83,18 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
     return { top: titleSize, bottom: 0, right: 0, left: 0 };
   }
 
+  getLayoutableChildren(node: DiagramNode): ReadonlyArray<DiagramNode> {
+    return classifyPortChildren(node).regularChildren;
+  }
+
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(_p => [
+    return new CustomPropertyDefinition(p => [
+      p.select(
+        def,
+        'Stereotype Icon',
+        'custom.umlClass.stereotypeIcon',
+        UML_STEREOTYPE_ICON_OPTIONS
+      ),
       ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
@@ -86,6 +105,19 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
       Point.of(node.bounds.x, node.bounds.y),
       Point.of(node.bounds.x + node.bounds.w, node.bounds.y + titleSize)
     );
+  }
+
+  protected transformChildren(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    const hasScale = transforms.some(t => t instanceof Scale);
+
+    for (const child of node.children) {
+      if (hasScale && isUMLPortNode(child)) continue;
+      child.transform(transforms, uow, true);
+    }
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -117,23 +149,12 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
 }
 
 export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition> {
-  getPathBuilder(node: DiagramNode) {
-    const bounds = node.bounds;
-
-    return new PathListBuilder()
-      .withTransform(fromUnitLCS(bounds))
-      .moveTo(_p(0, 0))
-      .lineTo(_p(1, 0))
-      .lineTo(_p(1, 1))
-      .lineTo(_p(0, 1))
-      .lineTo(_p(0, 0));
-  }
-
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const nodeProps = props.nodeProps;
     const bounds = props.node.bounds;
 
     const titleSize = props.nodeProps.custom.umlClass.size ?? DEFAULT_TITLE_SIZE;
+    const stereotypeIcon = props.nodeProps.custom.umlClass.stereotypeIcon ?? 'empty';
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
@@ -157,42 +178,46 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
 
     const childrenVisible =
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
+    const hasNonPortChildren = props.node.children.some(child => !isUMLPortNode(child));
     if (childrenVisible) {
       const { ports, regularChildren } = classifyPortChildren(props.node);
       const compartments = regularChildren.toSorted((a, b) => a.bounds.y - b.bounds.y);
 
-      builder.add(
-        svg.line({
-          x1: bounds.x,
-          y1: bounds.y + titleSize,
-          x2: bounds.x + bounds.w,
-          y2: bounds.y + titleSize,
-          stroke: props.nodeProps.stroke.color
-        })
-      );
-
-      let h = 0;
       const children: VNode[] = [];
-      for (let i = 0; i < compartments.length; i++) {
-        const child = compartments[i]!;
-        children.push(
-          svg.g(
-            { transform: Transforms.rotateBack(props.node.bounds) },
-            renderElement(this, child, props)
-          )
-        );
-        h += child.bounds.h;
 
-        if (i < compartments.length - 1) {
+      if (compartments.length > 0) {
+        builder.add(
+          svg.line({
+            x1: bounds.x,
+            y1: bounds.y + titleSize,
+            x2: bounds.x + bounds.w,
+            y2: bounds.y + titleSize,
+            stroke: props.nodeProps.stroke.color
+          })
+        );
+
+        let h = 0;
+        for (let i = 0; i < compartments.length; i++) {
+          const child = compartments[i]!;
           children.push(
-            svg.line({
-              x1: bounds.x,
-              y1: bounds.y + titleSize + h,
-              x2: bounds.x + bounds.w,
-              y2: bounds.y + titleSize + h,
-              stroke: props.nodeProps.stroke.color
-            })
+            svg.g(
+              { transform: Transforms.rotateBack(props.node.bounds) },
+              renderElement(this, child, props)
+            )
           );
+          h += child.bounds.h;
+
+          if (i < compartments.length - 1) {
+            children.push(
+              svg.line({
+                x1: bounds.x,
+                y1: bounds.y + titleSize + h,
+                x2: bounds.x + bounds.w,
+                y2: bounds.y + titleSize + h,
+                stroke: props.nodeProps.stroke.color
+              })
+            );
+          }
         }
       }
 
@@ -208,12 +233,22 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
       builder.add(svg.g({}, ...children));
     }
 
+    const icon = renderStereotypeIcon(
+      { ...bounds, h: childrenVisible ? titleSize : bounds.h },
+      stereotypeIcon,
+      nodeProps,
+      -0.5
+    );
+    if (icon) {
+      builder.add(icon);
+    }
+
     builder.text(
       this,
       '1',
       props.node.getText(),
-      nodeProps.text,
-      { ...bounds, h: childrenVisible ? titleSize : bounds.h },
+      getStereotypeIconTextProps(nodeProps.text, stereotypeIcon),
+      { ...bounds, h: childrenVisible && hasNonPortChildren ? titleSize : bounds.h },
       (size: Extent) =>
         UnitOfWork.execute(props.node.diagram, uow => {
           uow.metadata.nonDirty = true;

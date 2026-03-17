@@ -294,9 +294,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       return;
     }
 
-    for (const child of node.children) {
-      child.transform(transforms, uow, true);
-    }
+    this.transformChildren(transforms, node, uow);
 
     this.layoutChildren(node, uow);
   }
@@ -313,6 +311,20 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
           def.layoutChildren(child, uow);
         }
       }
+    }
+  }
+
+  /**
+   * Hook for node types that need to exclude or special-case certain children
+   * when a parent transform is propagated, e.g. UML ports during resize.
+   */
+  protected transformChildren(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    for (const child of node.children) {
+      child.transform(transforms, uow, true);
     }
   }
 

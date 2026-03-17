@@ -138,6 +138,10 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
       top: containerPadding.top + extraPadding.top,
       bottom: containerPadding.bottom + extraPadding.bottom
     };
+
+    if (def.getLayoutableChildren(node).length === 0) {
+      containerInstructions.enabled = false;
+    }
   }
 
   // Calculate relative bounds

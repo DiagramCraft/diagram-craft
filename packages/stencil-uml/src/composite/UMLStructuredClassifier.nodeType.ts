@@ -26,10 +26,18 @@ import {
 } from '@diagram-craft/canvas/layout/layoutTree';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import {
+  isUMLPortNode,
   preparePortLayoutTree,
   snapPortsInLayoutTree
 } from '@diagram-craft/stencil-uml/common/umlPortLayout';
+import {
+  getStereotypeIconTextProps,
+  renderStereotypeIcon,
+  UML_STEREOTYPE_ICON_OPTIONS,
+  UmlStereotypeIcon
+} from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -38,13 +46,15 @@ declare global {
     interface CustomNodePropsExtensions {
       umlStructuredClassifier?: {
         size?: number;
+        stereotypeIcon?: UmlStereotypeIcon;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('umlStructuredClassifier', {
-  size: DEFAULT_TITLE_SIZE
+  size: DEFAULT_TITLE_SIZE,
+  stereotypeIcon: 'empty'
 });
 
 const findChildLayout = (layoutNode: LayoutNode, childId: string) =>
@@ -99,7 +109,13 @@ export class UMLStructuredClassifierNodeDefinition extends LayoutCapableShapeNod
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(_p => [
+    return new CustomPropertyDefinition(p => [
+      p.select(
+        def,
+        'Stereotype Icon',
+        'custom.umlStructuredClassifier.stereotypeIcon',
+        UML_STEREOTYPE_ICON_OPTIONS
+      ),
       ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
@@ -110,6 +126,19 @@ export class UMLStructuredClassifierNodeDefinition extends LayoutCapableShapeNod
       Point.of(node.bounds.x, node.bounds.y),
       Point.of(node.bounds.x + node.bounds.w, node.bounds.y + titleSize)
     );
+  }
+
+  protected transformChildren(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    const hasScale = transforms.some(t => t instanceof Scale);
+
+    for (const child of node.children) {
+      if (hasScale && isUMLPortNode(child)) continue;
+      child.transform(transforms, uow, true);
+    }
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
@@ -144,6 +173,7 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
     const nodeProps = props.nodeProps;
     const bounds = props.node.bounds;
     const titleSize = nodeProps.custom.umlStructuredClassifier.size ?? DEFAULT_TITLE_SIZE;
+    const stereotypeIcon = nodeProps.custom.umlStructuredClassifier.stereotypeIcon ?? 'empty';
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
@@ -179,11 +209,16 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
       builder.add(renderChildren(this, props.node, props));
     }
 
+    const icon = renderStereotypeIcon({ ...bounds, h: titleSize }, stereotypeIcon, nodeProps);
+    if (icon) {
+      builder.add(icon);
+    }
+
     builder.text(
       this,
       '1',
       props.node.getText(),
-      nodeProps.text,
+      getStereotypeIconTextProps(nodeProps.text, stereotypeIcon),
       { ...bounds, h: titleSize },
       (size: Extent) =>
         UnitOfWork.execute(props.node.diagram, uow => {

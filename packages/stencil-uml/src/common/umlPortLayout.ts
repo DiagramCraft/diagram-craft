@@ -4,7 +4,8 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { mustExist } from '@diagram-craft/utils/assert';
 
-const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
+export const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
+
 const PORT_HOST_NODE_TYPES = new Set(['umlClass', 'umlStructuredClassifier']);
 const isPortHost = (n: DiagramNode) => PORT_HOST_NODE_TYPES.has(n.nodeType);
 
