@@ -27,6 +27,7 @@ import {
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { mustExist } from '@diagram-craft/utils/assert';
 import {
+  isUMLPortNode,
   preparePortLayoutTree,
   snapPortsInLayoutTree
 } from '@diagram-craft/stencil-uml/common/umlPortLayout';
@@ -124,6 +125,17 @@ export class UMLStructuredClassifierNodeDefinition extends LayoutCapableShapeNod
       Point.of(node.bounds.x, node.bounds.y),
       Point.of(node.bounds.x + node.bounds.w, node.bounds.y + titleSize)
     );
+  }
+
+  protected transformChildren(
+    transforms: ReadonlyArray<import('@diagram-craft/geometry/transform').Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    for (const child of node.children) {
+      if (isUMLPortNode(child)) continue;
+      child.transform(transforms, uow, true);
+    }
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

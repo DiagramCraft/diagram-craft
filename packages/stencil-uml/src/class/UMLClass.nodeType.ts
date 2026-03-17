@@ -102,6 +102,17 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
     );
   }
 
+  protected transformChildren(
+    transforms: ReadonlyArray<import('@diagram-craft/geometry/transform').Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    for (const child of node.children) {
+      if (isUMLPortNode(child)) continue;
+      child.transform(transforms, uow, true);
+    }
+  }
+
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {
     this.applyLayoutToChildrenRecursively(node, uow);
 
