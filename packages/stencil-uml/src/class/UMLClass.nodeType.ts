@@ -82,6 +82,10 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
     return { top: titleSize, bottom: 0, right: 0, left: 0 };
   }
 
+  getLayoutableChildren(node: DiagramNode): ReadonlyArray<DiagramNode> {
+    return classifyPortChildren(node).regularChildren;
+  }
+
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return new CustomPropertyDefinition(p => [
       p.select(

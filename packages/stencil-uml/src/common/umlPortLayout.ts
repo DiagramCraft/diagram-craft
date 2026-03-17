@@ -63,19 +63,6 @@ const snapPortToBorder = (portLayout: LayoutNode, hostLayout: LayoutNode) => {
 
 export const preparePortLayoutTree = (node: DiagramNode, layoutNode: LayoutNode) => {
   if (isPortHost(node)) {
-    const { regularChildren } = classifyPortChildren(node);
-
-    if (
-      node.nodeType === 'umlClass' &&
-      regularChildren.length === 0 &&
-      layoutNode.containerInstructions !== undefined
-    ) {
-      layoutNode.containerInstructions = {
-        ...layoutNode.containerInstructions,
-        enabled: false
-      };
-    }
-
     // Ports should keep their dragged position until we snap them to the host border,
     // so exclude them from the container's normal child flow layout.
     for (const child of node.children) {
