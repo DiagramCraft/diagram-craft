@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { _test, cloneElements } from './diagramElementUtils';
+import { assignNewIdsToSerializedElements, cloneElements } from './diagramElementUtils';
 import type { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
@@ -23,7 +23,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      _test.assignNewIdsToSerializedElements([node]);
+      assignNewIdsToSerializedElements([node]);
 
       // Verify
       expect(node.id).not.toBe('old-id');
@@ -59,7 +59,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      _test.assignNewIdsToSerializedElements([parentNode]);
+      assignNewIdsToSerializedElements([parentNode]);
 
       // Verify
       expect(parentNode.id).not.toBe('parent-id');
@@ -78,7 +78,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      _test.assignNewIdsToSerializedElements([edge]);
+      assignNewIdsToSerializedElements([edge]);
 
       // Verify
       expect(edge.id).not.toBe('old-id');
@@ -122,7 +122,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      const mapping = _test.assignNewIdsToSerializedElements([node1, node2, edge]);
+      const mapping = assignNewIdsToSerializedElements([node1, node2, edge]);
 
       // Verify
       expect(node1.id).not.toBe('node-1');
@@ -168,7 +168,7 @@ describe('cloneHelper', () => {
       };
 
       // Act
-      _test.assignNewIdsToSerializedElements([node1, edge]);
+      assignNewIdsToSerializedElements([node1, edge]);
 
       // Verify
       // Start endpoint should still reference the cloned node

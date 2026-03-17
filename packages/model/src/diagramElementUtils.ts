@@ -14,7 +14,7 @@ import { ElementLookup } from './elementLookup';
 import { groupBy } from '@diagram-craft/utils/array';
 import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './serialization/utils';
 
-const assignNewIdsToSerializedElements = (
+export const assignNewIdsToSerializedElements = (
   elements: ReadonlyArray<SerializedNode | SerializedEdge>
 ): Map<string, string> => {
   const nodeIdMapping = new Map<string, string>();
@@ -156,8 +156,4 @@ export const assignNewBounds = (
     }
   };
   process(elements, Box.boundingBox(elements.map(e => e.bounds)));
-};
-
-export const _test = {
-  assignNewIdsToSerializedElements
 };

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TestDiagramBuilder, TestModel } from '../test-support/testModel';
 import { serializeDiagramDocument } from './serialize';
 import { deserializeDiagramDocument } from './deserialize';
@@ -25,6 +25,62 @@ const getModificationLayer = (diagram: Diagram) => {
 };
 
 describe('deserializeDiagramDocument', () => {
+  describe('duplicate ids', () => {
+    it('should warn for each duplicate element id in regular layers', async () => {
+      const originalDoc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(originalDoc, 'diagram-1');
+      const layer = diagram.newLayer();
+
+      layer.addNode({ id: 'shared-id' });
+      layer.addEdge({ id: 'shared-edge-id' });
+      originalDoc.addDiagram(diagram);
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+      serialized.diagrams[0]?.layers.forEach(layer => {
+        if (layer.layerType !== 'regular' && layer.layerType !== 'basic') return;
+
+        layer.elements = [
+          ...layer.elements,
+          {
+            type: 'edge',
+            id: 'shared-id',
+            start: { position: { x: 0, y: 0 } },
+            end: { position: { x: 10, y: 10 } },
+            props: {},
+            metadata: {},
+            tags: []
+          },
+          {
+            type: 'edge',
+            id: 'shared-edge-id',
+            start: { position: { x: 20, y: 20 } },
+            end: { position: { x: 30, y: 30 } },
+            props: {},
+            metadata: {},
+            tags: []
+          }
+        ];
+      });
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+      const newDoc = TestModel.newDocument();
+      await expect(
+        deserializeDiagramDocument(serialized, newDoc, (d, doc) => new TestDiagramBuilder(doc, d.id))
+      ).rejects.toThrow();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Diagram "diagram-1" contains duplicate element id "shared-edge-id"'
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Diagram "diagram-1" contains duplicate element id "shared-id"'
+      );
+      expect(warnSpy).toHaveBeenCalledTimes(2);
+
+      warnSpy.mockRestore();
+    });
+  });
+
   describe('tags', () => {
     it('should round-trip tags correctly for nodes and edges', async () => {
       // Setup
