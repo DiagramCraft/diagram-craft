@@ -322,6 +322,32 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 const deserializeStylesheet = (s: SerializedStylesheet, styles: DiagramStyles) =>
   Stylesheet.fromSnapshot(s.type, s, styles.crdt.factory, styles);
 
+const collectDuplicateElementIds = (diagram: SerializedDiagram) => {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  const visitElements = (elements: ReadonlyArray<SerializedElement>) => {
+    for (const element of elements) {
+      if (seen.has(element.id)) {
+        duplicates.add(element.id);
+      } else {
+        seen.add(element.id);
+      }
+
+      if ((element.children ?? []).length > 0) {
+        visitElements(element.children ?? []);
+      }
+    }
+  };
+
+  for (const layer of diagram.layers) {
+    if (layer.layerType !== 'regular' && layer.layerType !== 'basic') continue;
+    visitElements(layer.elements);
+  }
+
+  return Array.from(duplicates).sort();
+};
+
 const deserializeDiagrams = async <T extends Diagram>(
   doc: DiagramDocument,
   diagrams: ReadonlyArray<SerializedDiagram>,
@@ -329,6 +355,10 @@ const deserializeDiagrams = async <T extends Diagram>(
 ) => {
   const dest: T[] = [];
   for (const $d of diagrams) {
+    for (const duplicateElementId of collectDuplicateElementIds($d)) {
+      console.warn(`Diagram "${$d.id}" contains duplicate element id "${duplicateElementId}"`);
+    }
+
     const nodeLookup = new ElementLookup<DiagramNode>();
     const edgeLookup = new ElementLookup<DiagramEdge>();
 
