@@ -252,7 +252,7 @@ stencils:
             x: 0
             y: 7
         end:
-          anchor: w
+          anchor: c
           node:
             id: 9ug4rjk
           position:

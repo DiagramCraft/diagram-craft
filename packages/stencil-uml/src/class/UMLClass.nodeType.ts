@@ -14,8 +14,7 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderElement } from '@diagram-craft/canvas/components/renderElement';
 import { Extent } from '@diagram-craft/geometry/extent';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { _p, Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { Transforms } from '@diagram-craft/canvas/component/vdom-svg';
@@ -25,10 +24,10 @@ import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefin
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import {
-  preparePortLayoutTree,
-  snapPortsInLayoutTree,
   classifyPortChildren,
-  isUMLPortNode
+  isUMLPortNode,
+  preparePortLayoutTree,
+  snapPortsInLayoutTree
 } from '@diagram-craft/stencil-uml/common/umlPortLayout';
 import {
   getStereotypeIconTextProps,
@@ -132,18 +131,6 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
 }
 
 export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition> {
-  getPathBuilder(node: DiagramNode) {
-    const bounds = node.bounds;
-
-    return new PathListBuilder()
-      .withTransform(fromUnitLCS(bounds))
-      .moveTo(_p(0, 0))
-      .lineTo(_p(1, 0))
-      .lineTo(_p(1, 1))
-      .lineTo(_p(0, 1))
-      .lineTo(_p(0, 0));
-  }
-
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const nodeProps = props.nodeProps;
     const bounds = props.node.bounds;

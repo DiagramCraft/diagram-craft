@@ -4,7 +4,8 @@ import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { mustExist } from '@diagram-craft/utils/assert';
 
-const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
+export const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
+
 const PORT_HOST_NODE_TYPES = new Set(['umlClass', 'umlStructuredClassifier']);
 const isPortHost = (n: DiagramNode) => PORT_HOST_NODE_TYPES.has(n.nodeType);
 
@@ -62,6 +63,19 @@ const snapPortToBorder = (portLayout: LayoutNode, hostLayout: LayoutNode) => {
 
 export const preparePortLayoutTree = (node: DiagramNode, layoutNode: LayoutNode) => {
   if (isPortHost(node)) {
+    const { regularChildren } = classifyPortChildren(node);
+
+    if (
+      node.nodeType === 'umlClass' &&
+      regularChildren.length === 0 &&
+      layoutNode.containerInstructions !== undefined
+    ) {
+      layoutNode.containerInstructions = {
+        ...layoutNode.containerInstructions,
+        enabled: false
+      };
+    }
+
     // Ports should keep their dragged position until we snap them to the host border,
     // so exclude them from the container's normal child flow layout.
     for (const child of node.children) {
