@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { TextPasteHandler } from './clipboardPasteHandlers';
+import { ElementsPasteHandler, TextPasteHandler } from './clipboardPasteHandlers';
 import {
   TestDiagramBuilder,
   TestLayerBuilder,
@@ -148,5 +148,64 @@ describe('TextPasteHandler', () => {
     const secondNode = layer.elements.filter(isNode)[1]!;
     expect(secondNode.bounds.x).toBe(100);
     expect(secondNode.bounds.y).toBe(100);
+  });
+});
+
+describe('ElementsPasteHandler', () => {
+  let diagram: TestDiagramBuilder;
+  let layer: TestLayerBuilder;
+  let handler: ElementsPasteHandler;
+
+  const createMockContext = (point = { x: 100, y: 100 }): BaseActionArgs =>
+    ({
+      point,
+      source: 'mouse'
+    }) as BaseActionArgs;
+
+  beforeEach(() => {
+    diagram = TestModel.newDiagram();
+    layer = diagram.newLayer();
+    handler = new ElementsPasteHandler();
+  });
+
+  test('should assign new ids to pasted child elements in a hierarchy', async () => {
+    const serializedElements = [
+      {
+        type: 'node',
+        nodeType: 'group',
+        id: 'parent-id',
+        bounds: { x: 10, y: 20, w: 200, h: 100, r: 0 },
+        props: {},
+        metadata: {},
+        texts: {},
+        children: [
+          {
+            type: 'node',
+            nodeType: 'rect',
+            id: 'child-id',
+            bounds: { x: 30, y: 40, w: 50, h: 40, r: 0 },
+            props: {},
+            metadata: {},
+            texts: {}
+          }
+        ]
+      }
+    ];
+
+    const blob = new Blob([JSON.stringify(serializedElements)], {
+      type: 'application/x-diagram-craft-selection'
+    });
+
+    await handler.paste(blob, diagram, layer, createMockContext({ x: 200, y: 200 }));
+
+    expect(layer.elements).toHaveLength(1);
+
+    const pastedParent = layer.elements[0]!;
+    expect(isNode(pastedParent)).toBe(true);
+    expect(pastedParent.id).not.toBe('parent-id');
+
+    const pastedChild = pastedParent.children[0]!;
+    expect(isNode(pastedChild)).toBe(true);
+    expect(pastedChild.id).not.toBe('child-id');
   });
 });

@@ -12,6 +12,7 @@ import { isSerializedEndpointFree } from '@diagram-craft/model/serialization/uti
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
+import { assignNewIdsToSerializedElements } from '@diagram-craft/model/diagramElementUtils';
 
 /* This contains paste handlers which are the code that is executed once
  * an item is pasted. Depending on the type of item pasted (image, node, etc)
@@ -163,14 +164,10 @@ export class ElementsPasteHandler extends PasteHandler {
     }
     point ??= context.point!;
 
-    const nodeIdMapping = new Map<string, string>();
+    assignNewIdsToSerializedElements(elements);
 
     for (const e of elements) {
       if (e.type === 'node' || e.type === 'delegating-node') {
-        const newId = newid();
-        nodeIdMapping.set(e.id, newId);
-        e.id = newId;
-
         const adjustPosition = this.adjustPosition(e.bounds, point, bounds);
         e.bounds = {
           ...e.bounds,
@@ -178,33 +175,11 @@ export class ElementsPasteHandler extends PasteHandler {
           y: adjustPosition.y
         };
       } else if (e.type === 'edge' || e.type === 'delegating-edge') {
-        e.id = newid();
         if (isSerializedEndpointFree(e.start)) {
           e.start.position = this.adjustPosition(e.start.position, point, bounds);
         }
         if (isSerializedEndpointFree(e.end)) {
           e.end.position = this.adjustPosition(e.end.position, point, bounds);
-        }
-      }
-    }
-
-    for (const e of elements) {
-      if (e.type === 'edge') {
-        if ('node' in e.start) {
-          const newId = nodeIdMapping.get(e.start.node.id);
-          if (newId) {
-            e.start.node = { id: newId };
-          } else {
-            e.start = { position: e.start.position! };
-          }
-        }
-        if ('node' in e.end) {
-          const newId = nodeIdMapping.get(e.end.node.id);
-          if (newId) {
-            e.end.node = { id: newId };
-          } else {
-            e.end = { position: e.end.position! };
-          }
         }
       }
     }
