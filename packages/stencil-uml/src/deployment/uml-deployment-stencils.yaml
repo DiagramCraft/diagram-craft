@@ -1,0 +1,40 @@
+stencils:
+  - id: 'uml-deployment-artifact'
+    name: Artifact
+    elements:
+      - id: 2c6zsla
+        type: node
+        nodeType: umlClass
+        bounds:
+          x: 0
+          y: 0
+          w: 126.24999999999997
+          h: 46.99181229793534
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlClass:
+              size: 36
+              stereotypeIcon: artifact
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            top: 6
+            bottom: 6
+            bold: true
+            left: 6
+            right: 6
+            italic: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;artifact&gt;&gt;</span></div><span style=\"font-style: normal;\">web-app.war</span>"
+        tags:
