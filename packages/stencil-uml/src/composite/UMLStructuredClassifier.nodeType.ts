@@ -26,6 +26,7 @@ import {
 } from '@diagram-craft/canvas/layout/layoutTree';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
 import { mustExist } from '@diagram-craft/utils/assert';
+import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import {
   isUMLPortNode,
   preparePortLayoutTree,
@@ -128,12 +129,14 @@ export class UMLStructuredClassifierNodeDefinition extends LayoutCapableShapeNod
   }
 
   protected transformChildren(
-    transforms: ReadonlyArray<import('@diagram-craft/geometry/transform').Transform>,
+    transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
     uow: UnitOfWork
   ): void {
+    const hasScale = transforms.some(t => t instanceof Scale);
+
     for (const child of node.children) {
-      if (isUMLPortNode(child)) continue;
+      if (hasScale && isUMLPortNode(child)) continue;
       child.transform(transforms, uow, true);
     }
   }

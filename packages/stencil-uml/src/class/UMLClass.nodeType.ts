@@ -23,6 +23,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { NodeShapeConstructor } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { applyLayoutTree, buildLayoutTree } from '@diagram-craft/canvas/layout/layoutTree';
 import { layoutChildren } from '@diagram-craft/canvas/layout/layout';
+import { Scale, Transform } from '@diagram-craft/geometry/transform';
 import {
   classifyPortChildren,
   isUMLPortNode,
@@ -107,12 +108,14 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   protected transformChildren(
-    transforms: ReadonlyArray<import('@diagram-craft/geometry/transform').Transform>,
+    transforms: ReadonlyArray<Transform>,
     node: DiagramNode,
     uow: UnitOfWork
   ): void {
+    const hasScale = transforms.some(t => t instanceof Scale);
+
     for (const child of node.children) {
-      if (isUMLPortNode(child)) continue;
+      if (hasScale && isUMLPortNode(child)) continue;
       child.transform(transforms, uow, true);
     }
   }
