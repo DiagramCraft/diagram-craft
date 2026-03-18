@@ -33,7 +33,7 @@ import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EdgeTransformPanel } from './EdgeTransformPanel';
-import { canTransformEdge } from './edgeTransform';
+import { canTransformEdge } from '@diagram-craft/model/edgeTransform';
 
 type Type =
   | 'diagram'

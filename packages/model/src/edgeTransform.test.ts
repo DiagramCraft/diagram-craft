@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { TestModel } from './test-support/testModel';
+import { UnitOfWork } from './unitOfWork';
+import { AnchorEndpoint, FreeEndpoint } from './endpoint';
 import {
   applyEdgeTransform,
   canTransformEdge,
   getEdgeRotation,
   getEdgeTransformBounds
 } from './edgeTransform';
-import { Angle } from '@diagram-craft/geometry/angle';
 import { Point } from '@diagram-craft/geometry/point';
+import { Angle } from '@diagram-craft/geometry/angle';
 
 describe('edgeTransform', () => {
   test('translates a free-free edge including waypoints', () => {

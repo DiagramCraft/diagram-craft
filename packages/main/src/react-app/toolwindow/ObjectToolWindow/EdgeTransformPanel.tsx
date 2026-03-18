@@ -10,7 +10,7 @@ import {
   canTransformEdge,
   getEdgeRotation,
   getEdgeTransformBounds
-} from './edgeTransform';
+} from '@diagram-craft/model/edgeTransform';
 import {
   getBoundsFromTransformedBounds,
   getTransformedBounds,
