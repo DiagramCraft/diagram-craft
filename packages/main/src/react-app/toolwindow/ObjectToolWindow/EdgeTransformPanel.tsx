@@ -32,16 +32,23 @@ export const EdgeTransformPanel = (props: Props) => {
   useEventListener(diagram.selection, 'change', redraw);
   useEventListener(diagram, 'elementChange', redraw);
 
-  if (diagram.selection.type !== 'single-edge') return null;
-  const edge = diagram.selection.edges[0];
-  if (edge === undefined || !canTransformEdge(edge)) return null;
+  const selection = diagram.selection;
+  if (selection.type !== 'single-edge' && selection.type !== 'edges') return null;
 
-  const currentBounds = getEdgeTransformBounds(edge);
-  if (currentBounds === undefined) return null;
+  const edge = selection.type === 'single-edge' ? selection.edges[0] : undefined;
+  const editable = edge !== undefined && canTransformEdge(edge);
+  const baseBounds =
+    editable && edge !== undefined
+      ? getEdgeTransformBounds(edge)
+      : selection.isEdgesOnly()
+        ? selection.bounds
+        : undefined;
+
+  if (baseBounds === undefined) return null;
 
   const transformedBounds = {
-    ...getTransformedBounds(currentBounds, origin),
-    r: getEdgeRotation(edge)
+    ...getTransformedBounds(baseBounds, origin),
+    r: edge ? getEdgeRotation(edge) : baseBounds.r
   };
 
   const updateBounds = (nextBounds: Box) => {
@@ -49,7 +56,7 @@ export const EdgeTransformPanel = (props: Props) => {
     if (selection.type !== 'single-edge') return;
 
     const edge = selection.edges[0];
-    if (edge === undefined) return;
+    if (edge === undefined || !canTransformEdge(edge)) return;
 
     const currentBounds = getEdgeTransformBounds(edge);
     if (currentBounds === undefined) return;
@@ -87,6 +94,18 @@ export const EdgeTransformPanel = (props: Props) => {
         setOrigin={setOrigin}
         lockAspectRatio={lockAspectRatio}
         setLockAspectRatio={setLockAspectRatio}
+        readOnly={!editable}
+        disabled={
+          editable
+            ? undefined
+            : {
+                x: true,
+                y: true,
+                w: true,
+                h: true,
+                r: true
+              }
+        }
         onBoundsChange={updateBounds}
       />
     </ToolWindowPanel>

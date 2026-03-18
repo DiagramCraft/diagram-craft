@@ -18,6 +18,7 @@ type Props = {
   setOrigin: (origin: TransformOrigin) => void;
   lockAspectRatio: boolean;
   setLockAspectRatio: (value: boolean) => void;
+  readOnly?: boolean;
   disabled?: {
     x?: boolean;
     y?: boolean;
@@ -35,6 +36,7 @@ export const TransformPanelForm = ({
   setOrigin,
   lockAspectRatio,
   setLockAspectRatio,
+  readOnly = false,
   disabled,
   onBoundsChange,
   extraRows
@@ -55,7 +57,10 @@ export const TransformPanelForm = ({
                 cx={0.1 + v.x * 0.8}
                 cy={0.1 + v.y * 0.8}
                 r={0.08}
-                onClick={() => setOrigin(k as TransformOrigin)}
+                onClick={() => {
+                  if (readOnly) return;
+                  setOrigin(k as TransformOrigin);
+                }}
               />
             ))}
           </svg>
@@ -132,7 +137,11 @@ export const TransformPanelForm = ({
             </div>
 
             <div style={{ gridArea: 'aspect-ratio', justifySelf: 'end' }}>
-              <ToggleButton value={lockAspectRatio} onChange={setLockAspectRatio}>
+              <ToggleButton
+                value={lockAspectRatio}
+                disabled={readOnly}
+                onChange={setLockAspectRatio}
+              >
                 <TbAspectRatio />
               </ToggleButton>
             </div>

@@ -33,7 +33,6 @@ import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EdgeTransformPanel } from './EdgeTransformPanel';
-import { canTransformEdge } from '@diagram-craft/model/edgeTransform';
 
 type Type =
   | 'diagram'
@@ -51,7 +50,7 @@ const TABS: Record<Type, TabType[]> = {
   'diagram': ['canvas', 'grid'],
   'node': ['style', 'text', 'arrange', 'advanced'],
   'single-edge': ['style', 'arrange'],
-  'edge': ['style'],
+  'edge': ['style', 'arrange'],
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
   'table': ['table', 'arrange', 'advanced'],
@@ -64,7 +63,6 @@ export const ObjectToolWindow = () => {
 
   const [type, setType] = useState<Type>('diagram');
   const [edgeSupportsFill, setEdgeSupportsFill] = useState(false);
-  const [edgeCanTransform, setEdgeCanTransform] = useState(false);
 
   const callback = () => {
     if (
@@ -80,7 +78,7 @@ export const ObjectToolWindow = () => {
     } else if (diagram.selection.type === 'mixed') {
       setType('mixed');
     } else if (diagram.selection.type === 'single-edge') {
-      setType(canTransformEdge(diagram.selection.edges[0]!) ? 'single-edge' : 'edge');
+      setType('single-edge');
     } else if (diagram.selection.type === 'single-label-node') {
       setType('single-label-node');
     } else if (diagram.selection.isNodesOnly()) {
@@ -94,9 +92,6 @@ export const ObjectToolWindow = () => {
     setEdgeSupportsFill(
       diagram.selection.isEdgesOnly() &&
         diagram.selection.edges.every(e => e.getDefinition().hasFlag(EdgeFlags.StyleFill))
-    );
-    setEdgeCanTransform(
-      diagram.selection.type === 'single-edge' && canTransformEdge(diagram.selection.edges[0]!)
     );
   };
   useEventListener(diagram.selection, 'change', callback);
@@ -205,14 +200,18 @@ export const ObjectToolWindow = () => {
             <Accordion.Root
               type="multiple"
               defaultValue={
-                edgeCanTransform
+                type === 'single-edge' || type === 'edge'
                   ? ['transform']
                   : ['transform', 'layout-container', 'layout-element']
               }
             >
-              {type === 'single-edge' ? <EdgeTransformPanel /> : <NodeTransformPanel />}
-              {type !== 'single-edge' && <LayoutContainerPanel />}
-              {type !== 'single-edge' && <LayoutElementPanel />}
+              {type === 'single-edge' || type === 'edge' ? (
+                <EdgeTransformPanel />
+              ) : (
+                <NodeTransformPanel />
+              )}
+              {type !== 'single-edge' && type !== 'edge' && <LayoutContainerPanel />}
+              {type !== 'single-edge' && type !== 'edge' && <LayoutElementPanel />}
             </Accordion.Root>
           </ToolWindow.TabContent>
         </ToolWindow.Tab>
