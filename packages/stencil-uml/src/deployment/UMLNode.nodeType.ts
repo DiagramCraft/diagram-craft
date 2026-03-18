@@ -15,15 +15,20 @@ import {
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Point, _p } from '@diagram-craft/geometry/point';
-import * as svg from '@diagram-craft/canvas/component/vdom-svg';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import { resolveCssColor } from '@diagram-craft/utils/dom';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
+import {
+  renderStereotypeIconInBounds,
+  UML_STEREOTYPE_ICON_OPTIONS,
+  UmlStereotypeIcon
+} from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 
 declare global {
   namespace DiagramCraft {
     interface CustomNodePropsExtensions {
       umlNode?: {
+        stereotypeIcon?: UmlStereotypeIcon;
         icon?: string;
       };
     }
@@ -31,6 +36,7 @@ declare global {
 }
 
 registerCustomNodeDefaults('umlNode', {
+  stereotypeIcon: 'empty',
   icon: ''
 });
 
@@ -106,7 +112,10 @@ export class UMLNodeNodeDefinition extends ShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode) {
-    return new CustomPropertyDefinition(p => [p.icon(def, 'Icon', 'custom.umlNode.icon')]);
+    return new CustomPropertyDefinition(p => [
+      p.select(def, 'Stereotype Icon', 'custom.umlNode.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS),
+      p.icon(def, 'Custom Icon', 'custom.umlNode.icon')
+    ]);
   }
 }
 
@@ -144,25 +153,18 @@ class UMLNodeComponent extends BaseNodeComponent<UMLNodeNodeDefinition> {
     side.close();
     shapeBuilder.path(side.getPaths().all());
 
-    const icon = props.nodeProps.custom.umlNode?.icon ?? '';
-    if (icon !== '') {
+    const stereotypeIcon = props.nodeProps.custom.umlNode?.stereotypeIcon ?? 'empty';
+    if (stereotypeIcon !== 'empty') {
       const diagramElement = CanvasDomHelper.diagramElement(props.node.diagram);
       const color = resolveCssColor(props.nodeProps.stroke.color, [diagramElement, document.body]);
       const iconBounds = getIconBounds(bounds);
-      const processedSvg = icon.replace(/currentColor/g, color);
-      const href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
-
-      shapeBuilder.add(
-        svg.image({
-          href,
-          x: iconBounds.x,
-          y: iconBounds.y,
-          width: iconBounds.w,
-          height: iconBounds.h,
-          preserveAspectRatio: 'xMidYMid meet',
-          style: 'pointer-events: none;'
-        })
-      );
+      const icon = renderStereotypeIconInBounds(iconBounds, stereotypeIcon, props.nodeProps, {
+        customIcon: props.nodeProps.custom.umlNode?.icon ?? '',
+        resolvedColor: color
+      });
+      if (icon) {
+        shapeBuilder.add(icon);
+      }
     }
 
     shapeBuilder.text(this, '1', props.node.getText(), props.nodeProps.text, frontFaceBounds);

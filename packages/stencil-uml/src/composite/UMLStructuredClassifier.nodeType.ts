@@ -38,6 +38,8 @@ import {
   UML_STEREOTYPE_ICON_OPTIONS,
   UmlStereotypeIcon
 } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import { resolveCssColor } from '@diagram-craft/utils/dom';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -47,6 +49,7 @@ declare global {
       umlStructuredClassifier?: {
         size?: number;
         stereotypeIcon?: UmlStereotypeIcon;
+        icon?: string;
       };
     }
   }
@@ -54,7 +57,8 @@ declare global {
 
 registerCustomNodeDefaults('umlStructuredClassifier', {
   size: DEFAULT_TITLE_SIZE,
-  stereotypeIcon: 'empty'
+  stereotypeIcon: 'empty',
+  icon: ''
 });
 
 const findChildLayout = (layoutNode: LayoutNode, childId: string) =>
@@ -116,6 +120,7 @@ export class UMLStructuredClassifierNodeDefinition extends LayoutCapableShapeNod
         'custom.umlStructuredClassifier.stereotypeIcon',
         UML_STEREOTYPE_ICON_OPTIONS
       ),
+      p.icon(def, 'Custom Icon', 'custom.umlStructuredClassifier.icon'),
       ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
@@ -174,6 +179,7 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
     const bounds = props.node.bounds;
     const titleSize = nodeProps.custom.umlStructuredClassifier.size ?? DEFAULT_TITLE_SIZE;
     const stereotypeIcon = nodeProps.custom.umlStructuredClassifier.stereotypeIcon ?? 'empty';
+    const customIcon = nodeProps.custom.umlStructuredClassifier.icon ?? '';
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
@@ -209,7 +215,13 @@ export class UMLStructuredClassifierComponent extends BaseNodeComponent<UMLStruc
       builder.add(renderChildren(this, props.node, props));
     }
 
-    const icon = renderStereotypeIcon({ ...bounds, h: titleSize }, stereotypeIcon, nodeProps);
+    const icon = renderStereotypeIcon({ ...bounds, h: titleSize }, stereotypeIcon, nodeProps, 0, {
+      customIcon,
+      resolvedColor: resolveCssColor(nodeProps.stroke.color, [
+        CanvasDomHelper.diagramElement(props.node.diagram),
+        document.body
+      ])
+    });
     if (icon) {
       builder.add(icon);
     }

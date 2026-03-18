@@ -36,6 +36,8 @@ import {
   UML_STEREOTYPE_ICON_OPTIONS,
   UmlStereotypeIcon
 } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import { resolveCssColor } from '@diagram-craft/utils/dom';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -45,6 +47,7 @@ declare global {
       umlClass?: {
         size?: number;
         stereotypeIcon?: UmlStereotypeIcon;
+        icon?: string;
       };
     }
   }
@@ -52,7 +55,8 @@ declare global {
 
 registerCustomNodeDefaults('umlClass', {
   size: DEFAULT_TITLE_SIZE,
-  stereotypeIcon: 'empty'
+  stereotypeIcon: 'empty',
+  icon: ''
 });
 
 export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -95,6 +99,7 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
         'custom.umlClass.stereotypeIcon',
         UML_STEREOTYPE_ICON_OPTIONS
       ),
+      p.icon(def, 'Custom Icon', 'custom.umlClass.icon'),
       ...super.getCollapsiblePropertyDefinitions(def).entries
     ]);
   }
@@ -155,6 +160,7 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
 
     const titleSize = props.nodeProps.custom.umlClass.size ?? DEFAULT_TITLE_SIZE;
     const stereotypeIcon = props.nodeProps.custom.umlClass.stereotypeIcon ?? 'empty';
+    const customIcon = props.nodeProps.custom.umlClass.icon ?? '';
 
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
     builder.boundaryPath(boundary.all());
@@ -237,7 +243,14 @@ export class UMLClassComponent extends BaseNodeComponent<UMLClassNodeDefinition>
       { ...bounds, h: childrenVisible ? titleSize : bounds.h },
       stereotypeIcon,
       nodeProps,
-      -0.5
+      -0.5,
+      {
+        customIcon,
+        resolvedColor: resolveCssColor(nodeProps.stroke.color, [
+          CanvasDomHelper.diagramElement(props.node.diagram),
+          document.body
+        ])
+      }
     );
     if (icon) {
       builder.add(icon);
