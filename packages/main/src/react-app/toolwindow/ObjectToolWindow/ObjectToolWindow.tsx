@@ -3,7 +3,7 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { EdgeLinePanel } from './EdgeLinePanel';
 import { NodeFillPanel } from './NodeFillPanel';
 import { NodeTextPanel } from './NodeTextPanel';
-import { ElementTransformPanel } from './ElementTransformPanel';
+import { NodeTransformPanel } from './NodeTransformPanel';
 import { ElementCustomPropertiesPanel } from './ElementCustomPropertiesPanel';
 import { ElementShadowPanel } from './ElementShadowPanel';
 import { CanvasPanel } from './CanvasPanel';
@@ -32,15 +32,25 @@ import { ToolWindow } from '../ToolWindow';
 import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
+import { EdgeTransformPanel } from './EdgeTransformPanel';
 
-type Type = 'diagram' | 'mixed' | 'single-label-node' | 'node' | 'edge' | 'table' | 'table-cell';
+type Type =
+  | 'diagram'
+  | 'mixed'
+  | 'single-edge'
+  | 'single-label-node'
+  | 'node'
+  | 'edge'
+  | 'table'
+  | 'table-cell';
 
 type TabType = 'canvas' | 'style' | 'table' | 'cell' | 'text' | 'arrange' | 'advanced' | 'grid';
 
 const TABS: Record<Type, TabType[]> = {
   'diagram': ['canvas', 'grid'],
   'node': ['style', 'text', 'arrange', 'advanced'],
-  'edge': ['style'],
+  'single-edge': ['style', 'arrange'],
+  'edge': ['style', 'arrange'],
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
   'table': ['table', 'arrange', 'advanced'],
@@ -67,6 +77,8 @@ export const ObjectToolWindow = () => {
       setType('table-cell');
     } else if (diagram.selection.type === 'mixed') {
       setType('mixed');
+    } else if (diagram.selection.type === 'single-edge') {
+      setType('single-edge');
     } else if (diagram.selection.type === 'single-label-node') {
       setType('single-label-node');
     } else if (diagram.selection.isNodesOnly()) {
@@ -131,7 +143,7 @@ export const ObjectToolWindow = () => {
                 </>
               )}
 
-              {type === 'edge' && (
+              {(type === 'edge' || type === 'single-edge') && (
                 <>
                   <ElementStylesheetPanel type={'edge'} />
                   {edgeSupportsFill && <NodeFillPanel />}
@@ -187,11 +199,19 @@ export const ObjectToolWindow = () => {
           <ToolWindow.TabContent>
             <Accordion.Root
               type="multiple"
-              defaultValue={['transform', 'layout-container', 'layout-element']}
+              defaultValue={
+                type === 'single-edge' || type === 'edge'
+                  ? ['transform']
+                  : ['transform', 'layout-container', 'layout-element']
+              }
             >
-              <ElementTransformPanel />
-              <LayoutContainerPanel />
-              <LayoutElementPanel />
+              {type === 'single-edge' || type === 'edge' ? (
+                <EdgeTransformPanel />
+              ) : (
+                <NodeTransformPanel />
+              )}
+              {type !== 'single-edge' && type !== 'edge' && <LayoutContainerPanel />}
+              {type !== 'single-edge' && type !== 'edge' && <LayoutElementPanel />}
             </Accordion.Root>
           </ToolWindow.TabContent>
         </ToolWindow.Tab>
