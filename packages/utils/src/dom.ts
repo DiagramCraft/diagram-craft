@@ -56,7 +56,9 @@ export const getAncestorWithClass = (
  * }
  * ```
  */
-export const resolveTargetElement = (target: EventTarget | null): HTMLElement | SVGElement | null => {
+export const resolveTargetElement = (
+  target: EventTarget | null
+): HTMLElement | SVGElement | null => {
   if (typeof target !== 'object' || target === null) return null;
   if (target instanceof HTMLElement || target instanceof SVGElement) return target;
   if (target instanceof Node) {
@@ -114,7 +116,17 @@ export const sanitizeHtml = (html: string): string => {
   const doc = parser.parseFromString(html, 'text/html');
 
   // Remove dangerous tags
-  const dangerousTags = ['script', 'iframe', 'object', 'embed', 'link', 'style', 'form', 'svg', 'meta'];
+  const dangerousTags = [
+    'script',
+    'iframe',
+    'object',
+    'embed',
+    'link',
+    'style',
+    'form',
+    'svg',
+    'meta'
+  ];
   dangerousTags.forEach(tag => {
     const elements = doc.querySelectorAll(tag);
     elements.forEach(el => el.remove());
@@ -145,4 +157,47 @@ export const sanitizeHtml = (html: string): string => {
   });
 
   return doc.body.innerHTML;
+};
+
+/**
+ * Resolves a CSS color string that may reference a custom property via `var(...)`.
+ *
+ * The helper tries each provided element in order and returns the first non-empty
+ * value for the referenced CSS variable. This lets callers control fallback scope
+ * explicitly, for example `[element, document.body]`.
+ *
+ * If the color is not a CSS variable reference, the input is returned unchanged.
+ * If no candidate element resolves the variable, the inline fallback from
+ * `var(--name, fallback)` is returned when present; otherwise the original color
+ * string is returned unchanged.
+ *
+ * @param color - A plain color or `var(--token[, fallback])` expression
+ * @param elementsToTry - Candidate elements to query with `getComputedStyle`, in priority order
+ * @returns The resolved concrete color value, the CSS fallback value, or the original input
+ *
+ * @example
+ * ```ts
+ * const color = resolveCssColor('var(--canvas-fg)', [diagramElement, document.body]);
+ * ```
+ */
+export const resolveCssColor = (
+  color: string,
+  elementsToTry: ReadonlyArray<HTMLElement | null | undefined>
+) => {
+  const match = color.match(/^var\(\s*(--[^,\s)]+)\s*(?:,\s*([^)]+))?\)$/);
+  if (!match || typeof document === 'undefined') {
+    return color;
+  }
+
+  const [, variableName, fallback] = match;
+  for (const element of elementsToTry) {
+    const resolved = element
+      ? getComputedStyle(element).getPropertyValue(variableName!).trim()
+      : '';
+    if (resolved !== '') {
+      return resolved;
+    }
+  }
+
+  return fallback?.trim() ?? color;
 };

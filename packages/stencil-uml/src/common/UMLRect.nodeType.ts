@@ -8,6 +8,8 @@ import {
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import { resolveCssColor } from '@diagram-craft/utils/dom';
 import {
   getStereotypeIconTextProps,
   renderStereotypeIcon,
@@ -20,13 +22,15 @@ declare global {
     interface CustomNodePropsExtensions {
       umlRect?: {
         stereotypeIcon?: UmlStereotypeIcon;
+        icon?: string;
       };
     }
   }
 }
 
 registerCustomNodeDefaults('umlRect', {
-  stereotypeIcon: 'empty'
+  stereotypeIcon: 'empty',
+  icon: ''
 });
 
 export class UMLRectNodeDefinition extends LayoutCapableShapeNodeDefinition {
@@ -45,7 +49,8 @@ export class UMLRectNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
     return new CustomPropertyDefinition(p => [
-      p.select(def, 'Stereotype Icon', 'custom.umlRect.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS)
+      p.select(def, 'Stereotype Icon', 'custom.umlRect.stereotypeIcon', UML_STEREOTYPE_ICON_OPTIONS),
+      p.icon(def, 'Custom Icon', 'custom.umlRect.icon')
     ]);
   }
 }
@@ -56,7 +61,12 @@ export class UMLRectComponent extends BaseNodeComponent<UMLRectNodeDefinition> {
     builder.boundaryPath(boundary.all());
 
     const stereotypeIcon = props.nodeProps.custom.umlRect.stereotypeIcon ?? 'empty';
-    const icon = renderStereotypeIcon(props.node.bounds, stereotypeIcon, props.nodeProps);
+    const customIcon = props.nodeProps.custom.umlRect.icon ?? '';
+    const diagramElement = CanvasDomHelper.diagramElement(props.node.diagram);
+    const icon = renderStereotypeIcon(props.node.bounds, stereotypeIcon, props.nodeProps, 0, {
+      customIcon,
+      resolvedColor: resolveCssColor(props.nodeProps.stroke.color, [diagramElement, document.body])
+    });
     if (icon) {
       builder.add(icon);
     }
