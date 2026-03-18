@@ -288,6 +288,134 @@ describe('UMLLifelineExecution', () => {
     expect(edge2.end).toBeInstanceOf(PointInNodeEndpoint);
   });
 
+  test('shrinks the opposite execution when resizing a linked execution upward from below', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 100, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 130, w: 10, h: 60, r: 0 }
+    });
+
+    const edge1 = layer.addEdge({
+      startNodeId: a.id,
+      startAnchor: 'r3',
+      endNodeId: b.id,
+      endAnchor: 'tl'
+    });
+    const edge2 = layer.addEdge({
+      startNodeId: b.id,
+      startAnchor: 'bl',
+      endNodeId: a.id,
+      endAnchor: 'r6'
+    });
+
+    const before = { x: 100, y: 100, w: 10, h: 100, r: 0 };
+    const after = { x: 100, y: 100, w: 10, h: 70, r: 0 };
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([a], TransformFactory.fromTo(before, after), uow);
+    });
+
+    expect(a.bounds).toEqual(after);
+    expect(b.bounds.x).toBe(200);
+    expect(b.bounds.y).toBeCloseTo(123.33333333333334);
+    expect(b.bounds.w).toBe(10);
+    expect(b.bounds.h).toBeCloseTo(35);
+    expect(b.bounds.r).toBe(0);
+    expect(edge1.start.position.y).toBe(edge1.end.position.y);
+    expect(edge2.start.position.y).toBe(edge2.end.position.y);
+  });
+
+  test('shrinks the opposite execution when the resized root already uses right-side point endpoints', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 120, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 120, w: 10, h: 90, r: 0 }
+    });
+
+    const edge1 = layer.addEdge({
+      startNodeId: a.id,
+      startAnchor: 'r3',
+      endNodeId: b.id,
+      endAnchor: 'tl'
+    });
+    const edge2 = layer.addEdge({
+      startNodeId: b.id,
+      startAnchor: 'bl',
+      endNodeId: a.id,
+      endAnchor: 'r6'
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([b], [new Translation({ x: 0, y: 10 })], uow);
+    });
+
+    expect(edge1.start).toBeInstanceOf(PointInNodeEndpoint);
+    expect(edge2.end).toBeInstanceOf(PointInNodeEndpoint);
+
+    const before = { ...a.bounds };
+    const after = { ...a.bounds, h: 85 };
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([a], TransformFactory.fromTo(before, after), uow);
+    });
+
+    expect(a.bounds).toEqual(after);
+    expect(b.bounds.h).toBeLessThan(100);
+    expect(edge1.start.position.y).toBe(edge1.end.position.y);
+    expect(edge2.start.position.y).toBe(edge2.end.position.y);
+  });
+
+  test('does not shrink a dependent execution below the minimum height', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 70, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 120, w: 10, h: 60, r: 0 }
+    });
+
+    const edge1 = layer.addEdge({
+      startNodeId: a.id,
+      startAnchor: 'r3',
+      endNodeId: b.id,
+      endAnchor: 'tl'
+    });
+    const edge2 = layer.addEdge({
+      startNodeId: b.id,
+      startAnchor: 'bl',
+      endNodeId: a.id,
+      endAnchor: 'r6'
+    });
+
+    const before = { x: 100, y: 100, w: 10, h: 70, r: 0 };
+    const after = { x: 100, y: 100, w: 10, h: 50, r: 0 };
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([a], TransformFactory.fromTo(before, after), uow);
+    });
+
+    expect(a.bounds).toEqual(after);
+    expect(b.bounds.h).toBe(25);
+    expect(edge1.start.position.y).toBe(edge1.end.position.y);
+    expect(edge2.start.position.y).not.toBe(edge2.end.position.y);
+  });
+
   test('ignores linked edges that do not use anchor endpoints on both executions', async () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);

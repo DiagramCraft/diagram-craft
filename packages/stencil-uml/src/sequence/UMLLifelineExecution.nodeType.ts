@@ -41,7 +41,7 @@ export const UML_EXECUTION_DEFAULT_WIDTH = 10;
 export const UML_EXECUTION_DEFAULT_HEIGHT = 40;
 export const UML_EXECUTION_DEFAULT_TOP_GAP = 10;
 export const UML_EXECUTION_NEST_OFFSET = 8;
-const UML_EXECUTION_MIN_HEIGHT = 0.1;
+const UML_EXECUTION_MIN_HEIGHT = 25;
 const UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING = 10;
 
 const isExecutionNode = (element: DiagramElement): element is DiagramNode =>
@@ -99,6 +99,20 @@ const isFlexibleRightSideEndpoint = (endpoint: AnchorEndpoint | PointInNodeEndpo
   }
 
   return endpoint.ref?.x === 1 && endpoint.offset.x === 0;
+};
+
+const clampFlexibleRightSideYWithinBounds = (bounds: Box, targetY: number) =>
+  Math.min(
+    Math.max(targetY, bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING),
+    bounds.y + bounds.h - UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
+  );
+
+const clampDependentHeight = (currentHeight: number, proposedHeight: number) => {
+  if (proposedHeight >= currentHeight) {
+    return proposedHeight;
+  }
+
+  return Math.max(proposedHeight, Math.min(currentHeight, UML_EXECUTION_MIN_HEIGHT));
 };
 
 const setEdgeEndpoint = (
@@ -178,13 +192,25 @@ const resizeExecutionForEndpoint = (
   uow: UnitOfWork
 ) => {
   const previousBounds = node.bounds;
+  console.log('resize for endpoint', {
+    edgeId: edge.id,
+    nodeId: node.id,
+    endpoint:
+      endpoint instanceof AnchorEndpoint
+        ? endpoint.anchorId
+        : endpoint.ref?.x === 1
+          ? 'right-point'
+          : 'point',
+    targetY,
+    previousBounds
+  });
   if (isFlexibleRightSideEndpoint(endpoint)) {
     const effectiveTargetY = Math.max(
       targetY,
       node.bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
     );
     const requiredHeight = Math.max(
-      UML_EXECUTION_MIN_HEIGHT,
+      0.1,
       effectiveTargetY - node.bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
     );
     if (requiredHeight > node.bounds.h) {
@@ -211,7 +237,7 @@ const resizeExecutionForEndpoint = (
 
   if (endpoint.anchorId === 'tl') {
     const bottom = node.bounds.y + node.bounds.h;
-    const nextHeight = Math.max(UML_EXECUTION_MIN_HEIGHT, bottom - targetY);
+    const nextHeight = clampDependentHeight(node.bounds.h, bottom - targetY);
     const nextY = bottom - nextHeight;
 
     node.setBounds(
@@ -229,7 +255,7 @@ const resizeExecutionForEndpoint = (
     return undefined;
   }
 
-  const nextHeight = Math.max(UML_EXECUTION_MIN_HEIGHT, (targetY - node.bounds.y) / normalizedY);
+  const nextHeight = clampDependentHeight(node.bounds.h, (targetY - node.bounds.y) / normalizedY);
   node.setBounds(
     {
       ...node.bounds,
@@ -260,7 +286,13 @@ const cascadeExecutionResize = (
     }
 
     const previousAnchorY = getEndpointYForBounds(linked.ownEndpoint, currentPreviousBounds);
-    const targetY = linked.ownEndpoint.position.y;
+    const unclampedTargetY = linked.ownEndpoint.position.y;
+    const targetY = isFlexibleRightSideEndpoint(linked.ownEndpoint)
+      ? clampFlexibleRightSideYWithinBounds(currentNode.bounds, unclampedTargetY)
+      : unclampedTargetY;
+    if (targetY !== unclampedTargetY) {
+      setEdgeEndpoint(edge, currentNode, linked.ownEndpoint, targetY, uow);
+    }
     console.log('consider edge', {
       edgeId: edge.id,
       nodeId: currentNode.id,
@@ -289,8 +321,10 @@ const cascadeExecutionResize = (
     const skipBecauseOtherAdjusted =
       uow.metadata.umlExecutionCascadeAdjusted?.has(linked.otherNode.id) ?? false;
     const skipBecausePath = path.has(linked.otherNode.id);
+    const skipBecauseOtherIsRoot = transformRoots.has(linked.otherNode.id);
 
     if (
+      !transformRoots.has(currentNode.id) &&
       isFlexibleRightSideEndpoint(linked.ownEndpoint) &&
       (skipBecauseOtherAdjusted || skipBecausePath)
     ) {
@@ -307,11 +341,24 @@ const cascadeExecutionResize = (
       continue;
     }
 
-    if (
-      !skipBecauseBothRoots &&
-      isFlexibleRightSideEndpoint(linked.otherEndpoint) &&
-      (skipBecauseOtherAdjusted || skipBecausePath)
-    ) {
+    if (skipBecauseOtherIsRoot) {
+      console.log('skip edge: other node is a direct transform root', {
+        edgeId: edge.id,
+        nodeId: currentNode.id,
+        otherNodeId: linked.otherNode.id
+      });
+      continue;
+    }
+
+    if (!skipBecauseBothRoots && (skipBecauseOtherAdjusted || skipBecausePath)) {
+      console.log('resize already-adjusted dependent', {
+        edgeId: edge.id,
+        nodeId: currentNode.id,
+        otherNodeId: linked.otherNode.id,
+        targetY,
+        skipBecauseOtherAdjusted,
+        skipBecausePath
+      });
       resizeExecutionForEndpoint(edge, linked.otherNode, linked.otherEndpoint, targetY, uow);
       continue;
     }
