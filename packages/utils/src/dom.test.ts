@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { getAncestorWithClass, resolveTargetElement, sanitizeHtml, setPosition } from './dom';
+import {
+  getAncestorWithClass,
+  resolveCssColor,
+  resolveTargetElement,
+  sanitizeHtml,
+  setPosition
+} from './dom';
 
 describe('setPosition', () => {
   it('should set the correct left and top styles on the element', () => {
@@ -105,6 +111,43 @@ describe('resolveTargetElement', () => {
   it('returns null for null and non-dom targets', () => {
     expect(resolveTargetElement(null)).toBeNull();
     expect(resolveTargetElement({} as EventTarget)).toBeNull();
+  });
+});
+
+describe('resolveCssColor', () => {
+  it('returns the first resolved CSS variable value from the provided elements', () => {
+    const first = document.createElement('div');
+    const second = document.createElement('div');
+    first.style.setProperty('--canvas-fg', '#111111');
+    second.style.setProperty('--canvas-fg', '#222222');
+
+    document.body.appendChild(first);
+    document.body.appendChild(second);
+
+    expect(resolveCssColor('var(--canvas-fg)', [first, second])).toBe('#111111');
+  });
+
+  it('falls through to later elements when earlier ones do not resolve the variable', () => {
+    const first = document.createElement('div');
+    const second = document.createElement('div');
+    second.style.setProperty('--canvas-fg', '#222222');
+
+    document.body.appendChild(first);
+    document.body.appendChild(second);
+
+    expect(resolveCssColor('var(--canvas-fg)', [first, second])).toBe('#222222');
+  });
+
+  it('uses the CSS variable fallback when no provided element resolves it', () => {
+    expect(resolveCssColor('var(--canvas-fg, #333333)', [undefined, null])).toBe('#333333');
+  });
+
+  it('returns the original variable expression when nothing resolves and no fallback is provided', () => {
+    expect(resolveCssColor('var(--canvas-fg)', [undefined, null])).toBe('var(--canvas-fg)');
+  });
+
+  it('returns the input unchanged for non-variable colors', () => {
+    expect(resolveCssColor('#abcdef', [document.body])).toBe('#abcdef');
   });
 });
 

@@ -11,7 +11,6 @@ import { PathList } from '@diagram-craft/geometry/pathList';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
-const D = 0.5 - Math.SQRT1_2 / 2;
 
 export class UMLProvidedInterfaceNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -25,13 +24,9 @@ export class UMLProvidedInterfaceNodeDefinition extends ShapeNodeDefinition {
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {
     return [
       { start: _p(0.5, 0), id: 'n', type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { start: _p(1 - D, D), id: 'ne', type: 'point', isPrimary: true, normal: -Math.PI / 4 },
       { start: _p(1, 0.5), id: 'e', type: 'point', isPrimary: true, normal: 0 },
-      { start: _p(1 - D, 1 - D), id: 'se', type: 'point', isPrimary: true, normal: Math.PI / 4 },
       { start: _p(0.5, 1), id: 's', type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { start: _p(D, 1 - D), id: 'sw', type: 'point', isPrimary: true, normal: (3 * Math.PI) / 4 },
       { start: _p(0, 0.5), id: 'w', type: 'point', isPrimary: true, normal: Math.PI },
-      { start: _p(D, D), id: 'nw', type: 'point', isPrimary: true, normal: (-3 * Math.PI) / 4 },
       { start: _p(0.5, 0.5), clip: true, id: 'c', type: 'center' }
     ];
   }

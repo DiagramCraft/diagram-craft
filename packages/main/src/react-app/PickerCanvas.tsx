@@ -100,7 +100,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             style={{ left: hover.x + 40, top: hover.y }}
           >
             <Canvas<StaticCanvasComponent, StaticCanvasProps>
-              id={`picker-canvas-portal-${props.diagram.id}`}
+              id={`picker-canvas-portal-${preview.diagrams[0]!.id}`}
               context={application}
               width={80}
               height={80}

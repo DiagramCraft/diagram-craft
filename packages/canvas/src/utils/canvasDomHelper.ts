@@ -17,6 +17,13 @@ export const CanvasDomHelper = {
   },
 
   /**
+   * Get the DOM ID for a diagram container element
+   */
+  pickerDiagramId(diagram: Diagram): string[] {
+    return [`picker-canvas-${diagram.id}`, `picker-canvas-portal-${diagram.id}`];
+  },
+
+  /**
    * Get the DOM ID for a node element
    */
   nodeId(node: DiagramNode): string {
@@ -43,7 +50,13 @@ export const CanvasDomHelper = {
    * Get the DOM element for a diagram container
    */
   diagramElement(diagram: Diagram): HTMLElement | null {
-    return document.getElementById(CanvasDomHelper.diagramId(diagram));
+    return (
+      document.getElementById(CanvasDomHelper.diagramId(diagram)) ??
+      CanvasDomHelper.pickerDiagramId(diagram)
+        .map(id => document.getElementById(id))
+        .find(e => e) ??
+      null
+    );
   },
 
   /**
