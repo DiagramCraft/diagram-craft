@@ -148,6 +148,27 @@ describe('UMLLifeline', () => {
     expect(execution.bounds).toEqual({ x: 255, y: 140, w: 10, h: 40, r: 0 });
   });
 
+  test('adds destroy markers on the lifeline at the dropped vertical position', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const lifeline = layer.addNode({
+      type: 'umlLifeline',
+      bounds: { x: 154, y: 130, w: 12, h: 190, r: 0 }
+    });
+    const destroy = layer.addNode({
+      type: 'umlDestroy',
+      bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      new UMLLifelineNodeDefinition().onDrop({ x: 160, y: 210 }, lifeline, [destroy], uow, 'default');
+    });
+
+    expect(destroy.parent).toBe(lifeline);
+    expect(destroy.bounds).toEqual({ x: 155, y: 205, w: 10, h: 10, r: 0 });
+  });
+
   test('uses the expected nine execution anchors', async () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);

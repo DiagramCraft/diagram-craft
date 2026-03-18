@@ -45,6 +45,25 @@ const getHeadChild = (node: DiagramNode) => getNodeChildren(node)[0];
 
 const getLineChild = (node: DiagramNode) => getNodeChildren(node)[1];
 
+const placeDestroyOnLifeline = (
+  lifeline: DiagramNode,
+  destroy: DiagramNode,
+  uow: UnitOfWork,
+  y?: number
+) => {
+  const nextX = lifeline.bounds.x + (lifeline.bounds.w - destroy.bounds.w) / 2;
+  const nextY = y ?? destroy.bounds.y;
+
+  destroy.setBounds(
+    {
+      ...destroy.bounds,
+      x: nextX,
+      y: nextY
+    },
+    uow
+  );
+};
+
 const getLocalCoordinateSpace = (node: DiagramNode): Box => ({
   x: 0,
   y: 0,
@@ -231,7 +250,7 @@ export class UMLLifelineNodeDefinition extends ShapeNodeDefinition {
   }
 
   onDrop(
-    _coord: Point,
+    coord: Point,
     node: DiagramNode,
     elements: ReadonlyArray<DiagramElement>,
     uow: UnitOfWork,
@@ -241,22 +260,40 @@ export class UMLLifelineNodeDefinition extends ShapeNodeDefinition {
       (element): element is DiagramNode =>
         isNode(element) && element.nodeType === 'umlLifelineExecution'
     );
-    if (executions.length === 0) return;
+    if (executions.length > 0) {
+      node.diagram.moveElement(executions, uow, node.layer, {
+        relation: 'on',
+        element: node
+      });
 
-    node.diagram.moveElement(executions, uow, node.layer, {
+      for (const execution of executions) {
+        placeExecutionOnParent(node, execution, uow, { assignDefaultY: true });
+      }
+    }
+
+    const destroys = elements.filter(
+      (element): element is DiagramNode => isNode(element) && element.nodeType === 'umlDestroy'
+    );
+    if (destroys.length === 0) return;
+
+    node.diagram.moveElement(destroys, uow, node.layer, {
       relation: 'on',
       element: node
     });
 
-    for (const execution of executions) {
-      placeExecutionOnParent(node, execution, uow, { assignDefaultY: true });
+    for (const destroy of destroys) {
+      placeDestroyOnLifeline(node, destroy, uow, coord.y - destroy.bounds.h / 2);
     }
   }
 
   protected layoutChildren(node: DiagramNode, uow: UnitOfWork): void {
     for (const child of node.children) {
-      if (!isNode(child) || child.nodeType !== 'umlLifelineExecution') continue;
-      placeExecutionOnParent(node, child, uow);
+      if (!isNode(child)) continue;
+      if (child.nodeType === 'umlLifelineExecution') {
+        placeExecutionOnParent(node, child, uow);
+      } else if (child.nodeType === 'umlDestroy') {
+        placeDestroyOnLifeline(node, child, uow);
+      }
     }
   }
 }
