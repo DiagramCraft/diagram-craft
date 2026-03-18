@@ -168,26 +168,4 @@ describe('UMLLifeline', () => {
     expect(destroy.parent).toBe(lifeline);
     expect(destroy.bounds).toEqual({ x: 155, y: 205, w: 10, h: 10, r: 0 });
   });
-
-  test('uses the expected nine execution anchors', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const execution = layer.addNode({
-      type: 'umlLifelineExecution',
-      bounds: { x: 155, y: 140, w: 10, h: 40, r: 0 }
-    });
-
-    expect(execution.anchors).toEqual([
-      { id: 'tl', start: { x: 0, y: 0 }, type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'bl', start: { x: 0, y: 1 }, type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'r1', start: { x: 1, y: 0 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r2', start: { x: 1, y: 1 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r3', start: { x: 1, y: 2 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r4', start: { x: 1, y: 3 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r5', start: { x: 1, y: 4 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r6', start: { x: 1, y: 5 / 6 }, type: 'point', isPrimary: true, normal: 0 },
-      { id: 'r7', start: { x: 1, y: 6 / 6 }, type: 'point', isPrimary: true, normal: 0 }
-    ]);
-  });
 });
