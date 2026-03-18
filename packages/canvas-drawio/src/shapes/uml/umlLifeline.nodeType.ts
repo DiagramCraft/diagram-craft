@@ -20,12 +20,13 @@ declare global {
     interface CustomNodePropsExtensions {
       umlLifeline?: {
         participant?: string;
+        headH?: number;
       };
     }
   }
 }
 
-registerCustomNodeDefaults('umlLifeline', { participant: '' });
+registerCustomNodeDefaults('umlLifeline', { participant: '', headH: 40 });
 
 export class UmlLifeline extends SimpleShapeNodeDefinition {
   constructor() {
