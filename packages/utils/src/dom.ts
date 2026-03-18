@@ -191,7 +191,9 @@ export const resolveCssColor = (
 
   const [, variableName, fallback] = match;
   for (const element of elementsToTry) {
-    const resolved = element ? getComputedStyle(element).getPropertyValue(variableName!).trim() : '';
+    const resolved = element
+      ? getComputedStyle(element).getPropertyValue(variableName!).trim()
+      : '';
     if (resolved !== '') {
       return resolved;
     }
