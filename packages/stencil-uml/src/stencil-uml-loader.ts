@@ -13,6 +13,7 @@ import { UMLPackageNodeDefinition } from '@diagram-craft/stencil-uml/package/UML
 import { UMLPackageTemplateNodeDefinition } from '@diagram-craft/stencil-uml/package/UMLPackageTemplate.nodeType';
 import { UMLActorNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLActor.nodeType';
 import { UMLArtifactNodeDefinition } from '@diagram-craft/stencil-uml/deployment/UMLArtifact.nodeType';
+import { UMLNodeNodeDefinition } from '@diagram-craft/stencil-uml/deployment/UMLNode.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import classStencils from './class/uml-class-stencils.yaml';
 import componentStencils from './component/uml-component-stencils.yaml';
@@ -36,6 +37,7 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLProvidedInterfaceNodeDefinition());
   nodes.register(new UMLRequiredInterfaceNodeDefinition());
   nodes.register(new UMLArtifactNodeDefinition());
+  nodes.register(new UMLNodeNodeDefinition());
 };
 
 export const loadUMLStencils = async (registry: Registry) => {
