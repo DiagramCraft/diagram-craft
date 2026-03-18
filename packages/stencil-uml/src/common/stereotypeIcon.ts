@@ -3,7 +3,7 @@ import { VNode } from '@diagram-craft/canvas/component/vdom';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { Box } from '@diagram-craft/geometry/box';
 
-export type UmlStereotypeIcon = 'empty' | 'component' | 'artifact' | 'custom';
+export type UmlStereotypeIcon = 'empty' | 'component' | 'artifact' | 'entity' | 'custom';
 
 const STEREOTYPE_ICON_SIZE = 14;
 const STEREOTYPE_ICON_PADDING = 6;
@@ -12,6 +12,7 @@ export const UML_STEREOTYPE_ICON_OPTIONS: Array<{ value: UmlStereotypeIcon; labe
   { value: 'empty', label: 'Empty' },
   { value: 'component', label: 'Component' },
   { value: 'artifact', label: 'Artifact' },
+  { value: 'entity', label: 'Entity' },
   { value: 'custom', label: 'Custom' }
 ];
 
@@ -47,17 +48,37 @@ const getBuiltInStereotypeIconChildren = (
           'stroke-width': strokeWidth
         })
       ]
-    : stereotypeIcon === 'artifact'
-      ? [
-          svg.path({
-            'd':
-              'M 2.333,0 L 9.667,0 L 12.667,3 L 12.667,14 L 2.333,14 Z M 9.667,0 L 9.667,3 L 12.667,3',
+      : stereotypeIcon === 'artifact'
+        ? [
+            svg.path({
+              'd':
+                'M 2.333,0 L 9.667,0 L 12.667,3 L 12.667,14 L 2.333,14 Z M 9.667,0 L 9.667,3 L 12.667,3',
             'fill': fillColor,
             'stroke': color,
             'stroke-width': strokeWidth,
-            'stroke-linejoin': 'round'
-          })
-        ]
+              'stroke-linejoin': 'round'
+            })
+          ]
+        : stereotypeIcon === 'entity'
+          ? [
+              svg.circle({
+                cx: 7,
+                cy: 5.5,
+                r: 4.5,
+                fill: 'none',
+                stroke: color,
+                'stroke-width': strokeWidth
+              }),
+              svg.line({
+                x1: 2.5,
+                y1: 10,
+                x2: 11.5,
+                y2: 10,
+                stroke: color,
+                'stroke-width': strokeWidth,
+                'stroke-linecap': 'round'
+              })
+            ]
       : undefined;
 };
 

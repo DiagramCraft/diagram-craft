@@ -13,7 +13,6 @@ import {
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { LocalCoordinateSystem } from '@diagram-craft/geometry/lcs';
 import { Point, _p } from '@diagram-craft/geometry/point';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import { resolveCssColor } from '@diagram-craft/utils/dom';
@@ -23,6 +22,8 @@ import {
   UML_STEREOTYPE_ICON_OPTIONS,
   UmlStereotypeIcon
 } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
+import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   namespace DiagramCraft {
@@ -81,23 +82,23 @@ export class UMLNodeNodeDefinition extends ShapeNodeDefinition {
     this.setFlags({
       [NodeFlags.StyleRounding]: false,
       [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenTransformScaleX]: false,
+      [NodeFlags.ChildrenTransformScaleY]: false,
       [NodeFlags.ChildrenSelectParent]: false
     });
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
     const depth = getCubeDepth(def.bounds);
-    const sizePct = depth / Math.min(def.bounds.w, def.bounds.h);
-    const lcs = new LocalCoordinateSystem(Box.withoutRotation(def.bounds), [0, 1], [0, 1], false);
+    const bounds = Box.withoutRotation(def.bounds);
 
     return new PathListBuilder()
-      .withTransform(lcs.toGlobalTransforms)
-      .moveTo(0, sizePct)
-      .lineTo(sizePct, 0)
-      .lineTo(1, 0)
-      .lineTo(1, 1 - sizePct)
-      .lineTo(1 - sizePct, 1)
-      .lineTo(0, 1)
+      .moveTo(bounds.x, bounds.y + depth)
+      .lineTo(bounds.x + depth, bounds.y)
+      .lineTo(bounds.x + bounds.w, bounds.y)
+      .lineTo(bounds.x + bounds.w, bounds.y + bounds.h - depth)
+      .lineTo(bounds.x + bounds.w - depth, bounds.y + bounds.h)
+      .lineTo(bounds.x, bounds.y + bounds.h)
       .close();
   }
 
@@ -117,39 +118,57 @@ export class UMLNodeNodeDefinition extends ShapeNodeDefinition {
       p.icon(def, 'Custom Icon', 'custom.umlNode.icon')
     ]);
   }
+
+  onDrop(
+    _coord: Point,
+    node: DiagramNode,
+    elements: ReadonlyArray<DiagramElement>,
+    uow: UnitOfWork,
+    _operation: string
+  ) {
+    node.diagram.moveElement(elements, uow, node.layer, {
+      relation: 'on',
+      element: node
+    });
+  }
 }
 
 class UMLNodeComponent extends BaseNodeComponent<UMLNodeNodeDefinition> {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
     const bounds = props.node.bounds;
     const depth = getCubeDepth(bounds);
-    const sizePct = depth / Math.min(bounds.w, bounds.h);
     const frontFaceBounds = getFrontFaceBounds(bounds);
-    const lcs = new LocalCoordinateSystem(Box.withoutRotation(bounds), [0, 1], [0, 1], false);
+    const unrotatedBounds = Box.withoutRotation(bounds);
 
     shapeBuilder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all());
 
-    const front = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
-    front.moveTo(Point.of(0, sizePct));
-    front.lineTo(Point.of(1 - sizePct, sizePct));
-    front.lineTo(Point.of(1 - sizePct, 1));
-    front.lineTo(Point.of(0, 1));
+    const front = new PathListBuilder();
+    front.moveTo(Point.of(unrotatedBounds.x, unrotatedBounds.y + depth));
+    front.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth));
+    front.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + unrotatedBounds.h));
+    front.lineTo(Point.of(unrotatedBounds.x, unrotatedBounds.y + unrotatedBounds.h));
     front.close();
     shapeBuilder.path(front.getPaths().all());
 
-    const top = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
-    top.moveTo(Point.of(sizePct, 0));
-    top.lineTo(Point.of(1, 0));
-    top.lineTo(Point.of(1 - sizePct, sizePct));
-    top.lineTo(Point.of(0, sizePct));
+    const top = new PathListBuilder();
+    top.moveTo(Point.of(unrotatedBounds.x + depth, unrotatedBounds.y));
+    top.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w, unrotatedBounds.y));
+    top.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth));
+    top.lineTo(Point.of(unrotatedBounds.x, unrotatedBounds.y + depth));
     top.close();
     shapeBuilder.path(top.getPaths().all());
 
-    const side = new PathListBuilder().withTransform(lcs.toGlobalTransforms);
-    side.moveTo(Point.of(1 - sizePct, sizePct));
-    side.lineTo(Point.of(1, 0));
-    side.lineTo(Point.of(1, 1 - sizePct));
-    side.lineTo(Point.of(1 - sizePct, 1));
+    const side = new PathListBuilder();
+    side.moveTo(
+      Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + depth)
+    );
+    side.lineTo(Point.of(unrotatedBounds.x + unrotatedBounds.w, unrotatedBounds.y));
+    side.lineTo(
+      Point.of(unrotatedBounds.x + unrotatedBounds.w, unrotatedBounds.y + unrotatedBounds.h - depth)
+    );
+    side.lineTo(
+      Point.of(unrotatedBounds.x + unrotatedBounds.w - depth, unrotatedBounds.y + unrotatedBounds.h)
+    );
     side.close();
     shapeBuilder.path(side.getPaths().all());
 
