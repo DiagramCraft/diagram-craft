@@ -20,14 +20,50 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { deepClone } from '@diagram-craft/utils/object';
 
+/**
+ * Execution cascade behavior:
+ *
+ * - A direct vertical move or resize of an execution may resize connected executions in the same UOW.
+ * - Dependents are never translated independently; they are only resized.
+ * - Pure horizontal moves are ignored.
+ * - If two connected executions are both directly transformed in the same UOW, the shared edge is not
+ *   cascaded.
+ * - Circular paths are stopped by tracking which nodes were already adjusted during the current cascade.
+ *
+ * Connection rules:
+ *
+ * - `tl` and `bl` stay as fixed semantic anchors on the left edge.
+ * - Right-side execution connections may slide vertically and are rewritten as right-edge
+ *   `PointInNodeEndpoint`s when needed.
+ * - Right-side connections must stay at least `UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING` away from the
+ *   top and bottom corners.
+ * - Dependent executions may shrink, but never below `UML_EXECUTION_MIN_HEIGHT`. If that floor prevents
+ *   all constraints from being satisfied, the blocked edge is allowed to become non-horizontal.
+ *
+ * Algorithm:
+ *
+ * - `onTransform(...)` records the first meaningful `prevBounds` and the latest `newBounds` for each
+ *   directly transformed execution in `uow.metadata`.
+ * - A single `before commit` hook runs once per UOW, filters out pure horizontal moves, and treats the
+ *   remaining changed executions as cascade roots.
+ * - For each traversed edge, the current node endpoint's previous Y is compared with its current Y. If
+ *   the endpoint moved, that Y is propagated to the opposite endpoint.
+ * - The dependent node is resized from the anchor that is already connected:
+ *   `tl` resizes from the top, `bl` and right-side anchors resize from below, and flexible right-side
+ *   endpoints may be retargeted along the right edge.
+ * - Nodes already adjusted earlier in the same root traversal may still be resized again so later
+ *   constraints can refine them, but direct transform roots remain authoritative and are not rewritten
+ *   by dependents.
+ */
+
+type UMLExecutionTransformChange = {
+  nodeId: string;
+  prevBounds: Box;
+  newBounds: Box;
+}
+
 declare global {
   namespace DiagramCraft {
-    interface UMLExecutionTransformChange {
-      nodeId: string;
-      prevBounds: Box;
-      newBounds: Box;
-    }
-
     interface UnitOfWorkMetadata {
       umlExecutionTransformChanges?: Map<string, UMLExecutionTransformChange>;
       umlExecutionCascadeActive?: boolean;
