@@ -1,0 +1,122 @@
+stencils:
+  - id: 'uml-sequence-lifeline'
+    name: Lifeline
+    elements:
+      - id: umllifeline-container01
+        type: node
+        nodeType: umlLifelineContainer
+        bounds:
+          x: 0
+          y: 0
+          w: 120
+          h: 220
+          r: 0
+        children:
+          - id: umllifeline-head01
+            type: node
+            nodeType: umlRect
+            bounds:
+              x: 0
+              y: 0
+              w: 120
+              h: 28
+              r: 0
+            children: [ ]
+            props:
+              text:
+                top: 4
+                bottom: 4
+                left: 6
+                right: 6
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "Participant"
+            tags:
+          - id: umllifeline-body01
+            type: node
+            nodeType: umlLifeline
+            bounds:
+              x: 54
+              y: 28
+              w: 12
+              h: 192
+              r: 0
+            children: [ ]
+            props:
+              fill:
+                enabled: false
+              capabilities:
+                editable: false
+                resizable:
+                  horizontal: false
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: ""
+            tags:
+        props:
+          fill:
+            enabled: false
+          capabilities:
+            editable: false
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+  - id: 'uml-sequence-execution'
+    name: Execution
+    elements:
+      - id: umllifelineexecution01
+        type: node
+        nodeType: umlLifelineExecution
+        bounds:
+          x: 0
+          y: 0
+          w: 10
+          h: 40
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 0
+            bottom: 0
+            left: 0
+            right: 0
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
+  - id: 'uml-sequence-destroy'
+    name: Destroy
+    elements:
+      - id: umldestroy01
+        type: node
+        nodeType: umlDestroy
+        bounds:
+          x: 0
+          y: 0
+          w: 10
+          h: 10
+          r: 0
+        children: [ ]
+        props:
+          stroke:
+            width: 2
+          text:
+            top: 0
+            bottom: 0
+            left: 0
+            right: 0
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags:
