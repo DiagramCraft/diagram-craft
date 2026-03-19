@@ -80,6 +80,7 @@ export const UML_EXECUTION_DEFAULT_TOP_GAP = 10;
 export const UML_EXECUTION_NEST_OFFSET = 8;
 const NODE_MIN_HEIGHT = 25;
 const RIGHT_CORNER_PADDING = 10;
+const RIGHT_ANCHOR_COUNT = 7;
 
 const isExecutionNode = (element: DiagramElement | undefined): element is DiagramNode =>
   !!element && isNode(element) && element.nodeType === 'umlLifelineExecution';
@@ -90,8 +91,10 @@ const isConnected = (e: Endpoint): e is ConnectedEndpoint => e instanceof Connec
 
 const isFullyConnected = (edge: DiagramEdge) => isConnected(edge.start) && isConnected(edge.end);
 
-// TODO: We should keep number of right anchors as a constant
-const isRightSideAnchor = (anchorId: string) => /^r[1-7]$/.test(anchorId);
+const isRightSideAnchor = (anchorId: string) =>
+  /^r\d+$/.test(anchorId) &&
+  Number(anchorId.slice(1)) >= 1 &&
+  Number(anchorId.slice(1)) <= RIGHT_ANCHOR_COUNT;
 
 const isConnectedToRightSide = (endpoint: ConnectedEndpoint) => {
   if (endpoint instanceof AnchorEndpoint) {
@@ -109,8 +112,7 @@ const getNormalizedYForAnchor = (anchorId: string) => {
 
   assert.true(isRightSideAnchor(anchorId));
 
-  // TODO: We should keep number of right anchors as a constant
-  return (Number(anchorId.slice(1)) - 1) / 6;
+  return (Number(anchorId.slice(1)) - 1) / (RIGHT_ANCHOR_COUNT - 1);
 };
 
 const getYForEndpoint = (endpoint: ConnectedEndpoint, bounds: Box): number | undefined => {
@@ -197,7 +199,6 @@ const adjustRightSideEndpoint = (
 
 const adjustLeftSideEndpoint = (endpoint: AnchorEndpoint, targetY: number, uow: UnitOfWork) => {
   const bounds = endpoint.node.bounds;
-  const normalizedY = getNormalizedYForAnchor(endpoint.anchorId);
 
   if (endpoint.anchorId === 'tl') {
     const h = clampDependentHeight(bounds.h, bounds.h + (bounds.y - targetY));
@@ -205,8 +206,7 @@ const adjustLeftSideEndpoint = (endpoint: AnchorEndpoint, targetY: number, uow: 
     endpoint.node.setBounds({ ...bounds, y, h }, uow);
     return bounds;
   } else if (endpoint.anchorId === 'bl') {
-    // TODO: This calculation is a bit weird - deserves an explanation or a rewrite into a more obvious form
-    const h = clampDependentHeight(bounds.h, (targetY - bounds.y) / normalizedY);
+    const h = clampDependentHeight(bounds.h, targetY - bounds.y);
     endpoint.node.setBounds({ ...bounds, h }, uow);
     return bounds;
   } else {
@@ -232,9 +232,10 @@ const adjustEndpoint = (
 const getAndAdjustTargetY = (edge: DiagramEdge, endpoint: ConnectedEndpoint, uow: UnitOfWork) => {
   const ypos = endpoint.position.y;
   if (isConnectedToRightSide(endpoint)) {
-    // TODO: Is this really needed, or will this adjustment still be done later on?
     const adjusted = clampRightSideAnchorWithinBounds(endpoint.node.bounds, ypos);
     if (!isSame(adjusted, ypos)) {
+      // Direct transform roots may already use flexible right-side endpoints. If the root shrinks,
+      // the endpoint itself may need to slide inward before we compare its previous and current Y.
       setRightSideEndpoint(endpoint, edge, adjusted, uow);
     }
     return adjusted;
@@ -261,7 +262,7 @@ const cascadeExecutionResize = (
 
     const previousAnchorY = getYForEndpoint(own, currentPreviousBounds);
     const targetY = getAndAdjustTargetY(edge, own, uow);
-    if (previousAnchorY && isSame(previousAnchorY, targetY)) continue;
+    if (previousAnchorY !== undefined && isSame(previousAnchorY, targetY)) continue;
 
     const skipBecauseOtherAdjusted = adjusted.has(other.node.id);
     const skipBecauseOtherPath = path.has(other.node.id);
