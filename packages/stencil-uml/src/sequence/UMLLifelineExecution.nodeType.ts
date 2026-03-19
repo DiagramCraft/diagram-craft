@@ -10,22 +10,28 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { Point, _p } from '@diagram-craft/geometry/point';
+import { _p, Point } from '@diagram-craft/geometry/point';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { Anchor } from '@diagram-craft/model/anchor';
-import { AnchorEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
+import {
+  AnchorEndpoint,
+  ConnectedEndpoint,
+  Endpoint,
+  PointInNodeEndpoint
+} from '@diagram-craft/model/endpoint';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { deepClone } from '@diagram-craft/utils/object';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { isSame } from '@diagram-craft/utils/math';
 
 /**
  * Execution cascade behavior:
  *
  * - A direct vertical move or resize of an execution may resize connected executions in the same UOW.
  * - Dependents are never translated independently; they are only resized.
- * - Pure horizontal moves are ignored.
  * - If two connected executions are both directly transformed in the same UOW, the shared edge is not
  *   cascaded.
  * - Circular paths are stopped by tracking which nodes were already adjusted during the current cascade.
@@ -44,8 +50,7 @@ import { deepClone } from '@diagram-craft/utils/object';
  *
  * - `onTransform(...)` records the first meaningful `prevBounds` and the latest `newBounds` for each
  *   directly transformed execution in `uow.metadata`.
- * - A single `before commit` hook runs once per UOW, filters out pure horizontal moves, and treats the
- *   remaining changed executions as cascade roots.
+ * - A single `before commit` hook runs once per UOW and treats the changed executions as cascade roots.
  * - For each traversed edge, the current node endpoint's previous Y is compared with its current Y. If
  *   the endpoint moved, that Y is propagated to the opposite endpoint.
  * - The dependent node is resized from the anchor that is already connected:
@@ -60,7 +65,7 @@ type UMLExecutionTransformChange = {
   nodeId: string;
   prevBounds: Box;
   newBounds: Box;
-}
+};
 
 declare global {
   namespace DiagramCraft {
@@ -73,70 +78,64 @@ declare global {
 
 export const UML_EXECUTION_DEFAULT_TOP_GAP = 10;
 export const UML_EXECUTION_NEST_OFFSET = 8;
-const UML_EXECUTION_MIN_HEIGHT = 25;
-const UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING = 10;
+const NODE_MIN_HEIGHT = 25;
+const RIGHT_CORNER_PADDING = 10;
 
-const isExecutionNode = (element: DiagramElement): element is DiagramNode =>
-  isNode(element) && element.nodeType === 'umlLifelineExecution';
+const isExecutionNode = (element: DiagramElement | undefined): element is DiagramNode =>
+  !!element && isNode(element) && element.nodeType === 'umlLifelineExecution';
 
 const getExecutionChildren = (node: DiagramNode) => node.children.filter(isExecutionNode);
 
-const getExecutionAnchorY = (anchorId: string) => {
+const isConnected = (e: Endpoint): e is ConnectedEndpoint => e instanceof ConnectedEndpoint;
+
+const isFullyConnected = (edge: DiagramEdge) => isConnected(edge.start) && isConnected(edge.end);
+
+// TODO: We should keep number of right anchors as a constant
+const isRightSideAnchor = (anchorId: string) => /^r[1-7]$/.test(anchorId);
+
+const isConnectedToRightSide = (endpoint: ConnectedEndpoint) => {
+  if (endpoint instanceof AnchorEndpoint) {
+    return isRightSideAnchor(endpoint.anchorId);
+  } else if (endpoint instanceof PointInNodeEndpoint) {
+    return endpoint.ref?.x === 1 && endpoint.offset.x === 0;
+  } else {
+    VERIFY_NOT_REACHED();
+  }
+};
+
+const getNormalizedYForAnchor = (anchorId: string) => {
   if (anchorId === 'tl') return 0;
   if (anchorId === 'bl') return 1;
 
-  const match = /^r([1-7])$/.exec(anchorId);
-  if (!match) return undefined;
+  assert.true(isRightSideAnchor(anchorId));
 
-  return (Number(match[1]) - 1) / 6;
+  // TODO: We should keep number of right anchors as a constant
+  return (Number(anchorId.slice(1)) - 1) / 6;
 };
 
-const isRightExecutionAnchor = (anchorId: string) => /^r[1-7]$/.test(anchorId);
-
-const getEndpointYForBounds = (
-  endpoint: AnchorEndpoint | PointInNodeEndpoint,
-  bounds: Box
-): number | undefined => {
+const getYForEndpoint = (endpoint: ConnectedEndpoint, bounds: Box): number | undefined => {
   if (endpoint instanceof AnchorEndpoint) {
-    const normalizedY = getExecutionAnchorY(endpoint.anchorId);
-    if (normalizedY === undefined) return undefined;
+    const normalizedY = getNormalizedYForAnchor(endpoint.anchorId);
     return bounds.y + bounds.h * normalizedY;
-  }
+  } else if (endpoint instanceof PointInNodeEndpoint) {
+    // endpoint is now PointInNodeEndpoint
+    if (endpoint.ref) {
+      const refY = bounds.y + endpoint.ref.y * bounds.h;
+      const offsetY =
+        endpoint.offsetType === 'absolute' ? endpoint.offset.y : endpoint.offset.y * bounds.h;
+      return refY + offsetY;
+    }
 
-  if (endpoint.ref) {
-    const refY = bounds.y + endpoint.ref.y * bounds.h;
-    const offsetY =
-      endpoint.offsetType === 'absolute' ? endpoint.offset.y : endpoint.offset.y * bounds.h;
-    return refY + offsetY;
+    return undefined;
+  } else {
+    VERIFY_NOT_REACHED();
   }
-
-  return undefined;
 };
 
-const isPureHorizontalMove = (newBounds: Box, prevBounds: Box) =>
-  newBounds.x !== prevBounds.x &&
-  newBounds.y === prevBounds.y &&
-  newBounds.w === prevBounds.w &&
-  newBounds.h === prevBounds.h &&
-  newBounds.r === prevBounds.r;
-
-const isSupportedExecutionEndpoint = (
-  endpoint: DiagramEdge['start']
-): endpoint is AnchorEndpoint | PointInNodeEndpoint =>
-  endpoint instanceof AnchorEndpoint || endpoint instanceof PointInNodeEndpoint;
-
-const isFlexibleRightSideEndpoint = (endpoint: AnchorEndpoint | PointInNodeEndpoint) => {
-  if (endpoint instanceof AnchorEndpoint) {
-    return isRightExecutionAnchor(endpoint.anchorId);
-  }
-
-  return endpoint.ref?.x === 1 && endpoint.offset.x === 0;
-};
-
-const clampFlexibleRightSideYWithinBounds = (bounds: Box, targetY: number) =>
+const clampRightSideAnchorWithinBounds = (bounds: Box, targetY: number) =>
   Math.min(
-    Math.max(targetY, bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING),
-    bounds.y + bounds.h - UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
+    Math.max(targetY, bounds.y + RIGHT_CORNER_PADDING),
+    bounds.y + bounds.h - RIGHT_CORNER_PADDING
   );
 
 const clampDependentHeight = (currentHeight: number, proposedHeight: number) => {
@@ -144,162 +143,104 @@ const clampDependentHeight = (currentHeight: number, proposedHeight: number) => 
     return proposedHeight;
   }
 
-  return Math.max(proposedHeight, Math.min(currentHeight, UML_EXECUTION_MIN_HEIGHT));
+  return Math.max(proposedHeight, Math.min(currentHeight, NODE_MIN_HEIGHT));
 };
 
-const setFlexibleRightSideEndpoint = (
+const setRightSideEndpoint = (
+  existing: ConnectedEndpoint,
   edge: DiagramEdge,
-  endpointNode: DiagramNode,
-  endpoint: AnchorEndpoint | PointInNodeEndpoint,
   targetY: number,
   uow: UnitOfWork
 ) => {
-  const nextEndpoint = new PointInNodeEndpoint(
-    endpointNode,
+  const newEndpoint = new PointInNodeEndpoint(
+    existing.node,
     _p(1, 0),
-    _p(0, targetY - endpointNode.bounds.y),
+    _p(0, targetY - existing.node.bounds.y),
     'absolute'
   );
 
-  if (edge.start === endpoint) {
-    edge.setStart(nextEndpoint, uow);
-  } else if (edge.end === endpoint) {
-    edge.setEnd(nextEndpoint, uow);
+  if (edge.start === existing) {
+    edge.setStart(newEndpoint, uow);
+  } else if (edge.end === existing) {
+    edge.setEnd(newEndpoint, uow);
   }
 };
 
-const getLinkedExecutionEndpoint = (edge: DiagramEdge, node: DiagramNode) => {
-  if (!isSupportedExecutionEndpoint(edge.start) || !isSupportedExecutionEndpoint(edge.end)) {
-    return;
-  }
-  if (!isExecutionNode(edge.start.node) || !isExecutionNode(edge.end.node)) {
-    return;
-  }
+const getDirectionalEndpointPair = (edge: DiagramEdge, node: DiagramNode) => {
+  if (!isConnected(edge.start) || !isConnected(edge.end)) VERIFY_NOT_REACHED();
 
   if (edge.start.node === node) {
-    return {
-      ownEndpoint: edge.start,
-      otherEndpoint: edge.end,
-      otherNode: edge.end.node
-    };
+    return { own: edge.start, other: edge.end };
+  } else if (edge.end.node === node) {
+    return { own: edge.end, other: edge.start };
+  } else {
+    VERIFY_NOT_REACHED();
   }
-
-  if (edge.end.node === node) {
-    return {
-      ownEndpoint: edge.end,
-      otherEndpoint: edge.start,
-      otherNode: edge.start.node
-    };
-  }
-  return undefined;
 };
 
-const retargetFlexibleRightSideEndpoint = (
+const adjustRightSideEndpoint = (
   edge: DiagramEdge,
-  node: DiagramNode,
-  endpoint: AnchorEndpoint | PointInNodeEndpoint,
+  endpoint: ConnectedEndpoint,
   targetY: number,
   uow: UnitOfWork
 ) => {
-  const previousBounds = node.bounds;
-  if (isFlexibleRightSideEndpoint(endpoint)) {
-    const effectiveTargetY = Math.max(
-      targetY,
-      node.bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
-    );
-    const requiredHeight = Math.max(
-      0.1,
-      effectiveTargetY - node.bounds.y + UML_EXECUTION_RIGHT_SIDE_CORNER_PADDING
-    );
-    if (requiredHeight > node.bounds.h) {
-      node.setBounds(
-        {
-          ...node.bounds,
-          h: requiredHeight
-        },
-        uow
-      );
-    }
-    setFlexibleRightSideEndpoint(edge, node, endpoint, effectiveTargetY, uow);
-    return previousBounds;
+  const bounds = endpoint.node.bounds;
+
+  const effectiveTargetY = Math.max(targetY, bounds.y + RIGHT_CORNER_PADDING);
+  const requiredHeight = Math.max(0.1, effectiveTargetY - bounds.y + RIGHT_CORNER_PADDING);
+  if (requiredHeight > bounds.h) {
+    endpoint.node.setBounds({ ...bounds, h: requiredHeight }, uow);
   }
-  return undefined;
+  setRightSideEndpoint(endpoint, edge, effectiveTargetY, uow);
+  return bounds;
 };
 
-const resizeExecutionFromAnchor = (
-  node: DiagramNode,
-  endpoint: AnchorEndpoint,
-  targetY: number,
-  uow: UnitOfWork
-) => {
-  const previousBounds = node.bounds;
-  if (!(endpoint instanceof AnchorEndpoint)) {
-    return undefined;
-  }
-
-  const normalizedY = getExecutionAnchorY(endpoint.anchorId);
-  if (normalizedY === undefined) {
-    return undefined;
-  }
+const adjustLeftSideEndpoint = (endpoint: AnchorEndpoint, targetY: number, uow: UnitOfWork) => {
+  const bounds = endpoint.node.bounds;
+  const normalizedY = getNormalizedYForAnchor(endpoint.anchorId);
 
   if (endpoint.anchorId === 'tl') {
-    const bottom = node.bounds.y + node.bounds.h;
-    const nextHeight = clampDependentHeight(node.bounds.h, bottom - targetY);
-    const nextY = bottom - nextHeight;
-
-    node.setBounds(
-      {
-        ...node.bounds,
-        y: nextY,
-        h: nextHeight
-      },
-      uow
-    );
-    return previousBounds;
+    const h = clampDependentHeight(bounds.h, bounds.h + (bounds.y - targetY));
+    const y = bounds.y + (bounds.h - h);
+    endpoint.node.setBounds({ ...bounds, y, h }, uow);
+    return bounds;
+  } else if (endpoint.anchorId === 'bl') {
+    // TODO: This calculation is a bit weird - deserves an explanation or a rewrite into a more obvious form
+    const h = clampDependentHeight(bounds.h, (targetY - bounds.y) / normalizedY);
+    endpoint.node.setBounds({ ...bounds, h }, uow);
+    return bounds;
+  } else {
+    VERIFY_NOT_REACHED();
   }
-
-  const nextHeight = clampDependentHeight(node.bounds.h, (targetY - node.bounds.y) / normalizedY);
-  node.setBounds(
-    {
-      ...node.bounds,
-      h: nextHeight
-    },
-    uow
-  );
-  return previousBounds;
 };
 
-const resizeExecutionForEndpoint = (
+const adjustEndpoint = (
   edge: DiagramEdge,
-  node: DiagramNode,
-  endpoint: AnchorEndpoint | PointInNodeEndpoint,
+  endpoint: ConnectedEndpoint,
   targetY: number,
   uow: UnitOfWork
 ) => {
-  return (
-    retargetFlexibleRightSideEndpoint(edge, node, endpoint, targetY, uow) ??
-    (endpoint instanceof AnchorEndpoint
-      ? resizeExecutionFromAnchor(node, endpoint, targetY, uow)
-      : undefined)
-  );
+  if (isConnectedToRightSide(endpoint)) {
+    return adjustRightSideEndpoint(edge, endpoint, targetY, uow);
+  } else if (endpoint instanceof AnchorEndpoint) {
+    return adjustLeftSideEndpoint(endpoint, targetY, uow);
+  } else {
+    return undefined;
+  }
 };
 
-const getAdjustedTargetY = (
-  edge: DiagramEdge,
-  node: DiagramNode,
-  endpoint: AnchorEndpoint | PointInNodeEndpoint,
-  uow: UnitOfWork
-) => {
-  const rawTargetY = endpoint.position.y;
-  if (!isFlexibleRightSideEndpoint(endpoint)) {
-    return rawTargetY;
+const getAndAdjustTargetY = (edge: DiagramEdge, endpoint: ConnectedEndpoint, uow: UnitOfWork) => {
+  const ypos = endpoint.position.y;
+  if (isConnectedToRightSide(endpoint)) {
+    // TODO: Is this really needed, or will this adjustment still be done later on?
+    const adjusted = clampRightSideAnchorWithinBounds(endpoint.node.bounds, ypos);
+    if (!isSame(adjusted, ypos)) {
+      setRightSideEndpoint(endpoint, edge, adjusted, uow);
+    }
+    return adjusted;
+  } else {
+    return ypos;
   }
-
-  const adjustedTargetY = clampFlexibleRightSideYWithinBounds(node.bounds, rawTargetY);
-  if (adjustedTargetY !== rawTargetY) {
-    setFlexibleRightSideEndpoint(edge, node, endpoint, adjustedTargetY, uow);
-  }
-  return adjustedTargetY;
 };
 
 const cascadeExecutionResize = (
@@ -313,33 +254,25 @@ const cascadeExecutionResize = (
   let currentPreviousBounds = previousBounds;
   const isCurrentNodeRoot = transformRoots.has(currentNode.id);
   for (const edge of currentNode.edges) {
-    const linked = getLinkedExecutionEndpoint(edge, currentNode);
-    if (!linked) {
-      continue;
-    }
+    if (!isFullyConnected(edge)) continue;
 
-    const previousAnchorY = getEndpointYForBounds(linked.ownEndpoint, currentPreviousBounds);
-    const targetY = getAdjustedTargetY(edge, currentNode, linked.ownEndpoint, uow);
-    if (previousAnchorY === targetY) {
-      continue;
-    }
+    const { own, other } = getDirectionalEndpointPair(edge, currentNode);
+    if (!isExecutionNode(own.node) || !isExecutionNode(other.node)) continue;
 
-    const skipBecauseOtherAdjusted = adjusted.has(linked.otherNode.id);
-    const skipBecausePath = path.has(linked.otherNode.id);
-    const skipBecauseOtherIsRoot = transformRoots.has(linked.otherNode.id);
+    const previousAnchorY = getYForEndpoint(own, currentPreviousBounds);
+    const targetY = getAndAdjustTargetY(edge, own, uow);
+    if (previousAnchorY && isSame(previousAnchorY, targetY)) continue;
+
+    const skipBecauseOtherAdjusted = adjusted.has(other.node.id);
+    const skipBecauseOtherPath = path.has(other.node.id);
+    const skipBecauseOtherIsRoot = transformRoots.has(other.node.id);
 
     if (
       !isCurrentNodeRoot &&
-      isFlexibleRightSideEndpoint(linked.ownEndpoint) &&
-      (skipBecauseOtherAdjusted || skipBecausePath)
+      isConnectedToRightSide(own) &&
+      (skipBecauseOtherAdjusted || skipBecauseOtherPath)
     ) {
-      const currentNodePreviousBounds = resizeExecutionForEndpoint(
-        edge,
-        currentNode,
-        linked.ownEndpoint,
-        linked.otherEndpoint.position.y,
-        uow
-      );
+      const currentNodePreviousBounds = adjustEndpoint(edge, own, other.position.y, uow);
       if (currentNodePreviousBounds) {
         currentPreviousBounds = currentNodePreviousBounds;
       }
@@ -350,26 +283,27 @@ const cascadeExecutionResize = (
       continue;
     }
 
-    if (skipBecauseOtherAdjusted || skipBecausePath) {
-      resizeExecutionForEndpoint(edge, linked.otherNode, linked.otherEndpoint, targetY, uow);
+    if (skipBecauseOtherAdjusted || skipBecauseOtherPath) {
+      adjustEndpoint(edge, other, targetY, uow);
       continue;
     }
 
-    const dependentPreviousBounds = resizeExecutionForEndpoint(
-      edge,
-      linked.otherNode,
-      linked.otherEndpoint,
-      targetY,
-      uow
-    );
+    const dependentPreviousBounds = adjustEndpoint(edge, other, targetY, uow);
     if (!dependentPreviousBounds) {
       continue;
     }
 
-    path.add(linked.otherNode.id);
-    adjusted.add(linked.otherNode.id);
-    cascadeExecutionResize(linked.otherNode, transformRoots, adjusted, uow, path, dependentPreviousBounds);
-    path.delete(linked.otherNode.id);
+    path.add(other.node.id);
+    adjusted.add(other.node.id);
+    cascadeExecutionResize(
+      other.node,
+      transformRoots,
+      adjusted,
+      uow,
+      path,
+      dependentPreviousBounds
+    );
+    path.delete(other.node.id);
   }
 };
 
@@ -379,9 +313,7 @@ const registerExecutionTransformChange = (
   newBounds: Box,
   uow: UnitOfWork
 ) => {
-  if (Box.isEqual(prevBounds, newBounds)) {
-    return;
-  }
+  if (Box.isEqual(prevBounds, newBounds)) return;
 
   uow.metadata.umlExecutionTransformChanges ??= new Map();
   const existing = uow.metadata.umlExecutionTransformChanges.get(node.id);
@@ -399,34 +331,32 @@ const registerExecutionTransformChange = (
 };
 
 const commitUmlExecutionCascade = (uow: UnitOfWork) => {
-  if (uow.metadata.umlExecutionCascadeActive) {
-    return;
-  }
+  if (uow.metadata.umlExecutionCascadeActive) return;
 
-  const changes = [...(uow.metadata.umlExecutionTransformChanges?.values() ?? [])].filter(
-    change => !isPureHorizontalMove(change.newBounds, change.prevBounds)
-  );
-  if (changes.length === 0) {
-    return;
-  }
+  const changes = [...(uow.metadata.umlExecutionTransformChanges?.values() ?? [])];
+  if (changes.length === 0) return;
 
   const transformRoots = new Set(changes.map(change => change.nodeId));
-  const previousActive = uow.metadata.umlExecutionCascadeActive;
-  uow.metadata.umlExecutionCascadeActive = true;
   const adjusted = new Set<string>();
 
+  uow.metadata.umlExecutionCascadeActive = true;
   try {
     for (const change of changes) {
       const node = uow.diagram.lookup(change.nodeId);
-      if (!node || !isExecutionNode(node)) {
-        continue;
-      }
+      if (!isExecutionNode(node)) continue;
 
       adjusted.add(node.id);
-      cascadeExecutionResize(node, transformRoots, adjusted, uow, new Set([node.id]), change.prevBounds);
+      cascadeExecutionResize(
+        node,
+        transformRoots,
+        adjusted,
+        uow,
+        new Set([node.id]),
+        change.prevBounds
+      );
     }
   } finally {
-    uow.metadata.umlExecutionCascadeActive = previousActive;
+    uow.metadata.umlExecutionCascadeActive = false;
     uow.metadata.umlExecutionTransformChanges = undefined;
   }
 };
