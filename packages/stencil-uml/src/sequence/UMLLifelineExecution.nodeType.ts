@@ -111,15 +111,13 @@ const clampDependentHeight = (currentHeight: number, proposedHeight: number) => 
   return Math.max(proposedHeight, Math.min(currentHeight, UML_EXECUTION_MIN_HEIGHT));
 };
 
-const setEdgeEndpoint = (
+const setFlexibleRightSideEndpoint = (
   edge: DiagramEdge,
   endpointNode: DiagramNode,
   endpoint: AnchorEndpoint | PointInNodeEndpoint,
   targetY: number,
   uow: UnitOfWork
 ) => {
-  if (!isFlexibleRightSideEndpoint(endpoint)) return;
-
   const nextEndpoint = new PointInNodeEndpoint(
     endpointNode,
     _p(1, 0),
@@ -157,10 +155,10 @@ const getLinkedExecutionEndpoint = (edge: DiagramEdge, node: DiagramNode) => {
       otherNode: edge.start.node
     };
   }
-
+  return undefined;
 };
 
-const resizeExecutionForEndpoint = (
+const retargetFlexibleRightSideEndpoint = (
   edge: DiagramEdge,
   node: DiagramNode,
   endpoint: AnchorEndpoint | PointInNodeEndpoint,
@@ -186,10 +184,19 @@ const resizeExecutionForEndpoint = (
         uow
       );
     }
-    setEdgeEndpoint(edge, node, endpoint, effectiveTargetY, uow);
+    setFlexibleRightSideEndpoint(edge, node, endpoint, effectiveTargetY, uow);
     return previousBounds;
   }
+  return undefined;
+};
 
+const resizeExecutionFromAnchor = (
+  node: DiagramNode,
+  endpoint: AnchorEndpoint,
+  targetY: number,
+  uow: UnitOfWork
+) => {
+  const previousBounds = node.bounds;
   if (!(endpoint instanceof AnchorEndpoint)) {
     return undefined;
   }
@@ -215,10 +222,6 @@ const resizeExecutionForEndpoint = (
     return previousBounds;
   }
 
-  if (normalizedY === 0) {
-    return undefined;
-  }
-
   const nextHeight = clampDependentHeight(node.bounds.h, (targetY - node.bounds.y) / normalizedY);
   node.setBounds(
     {
@@ -230,6 +233,39 @@ const resizeExecutionForEndpoint = (
   return previousBounds;
 };
 
+const resizeExecutionForEndpoint = (
+  edge: DiagramEdge,
+  node: DiagramNode,
+  endpoint: AnchorEndpoint | PointInNodeEndpoint,
+  targetY: number,
+  uow: UnitOfWork
+) => {
+  return (
+    retargetFlexibleRightSideEndpoint(edge, node, endpoint, targetY, uow) ??
+    (endpoint instanceof AnchorEndpoint
+      ? resizeExecutionFromAnchor(node, endpoint, targetY, uow)
+      : undefined)
+  );
+};
+
+const getAdjustedTargetY = (
+  edge: DiagramEdge,
+  node: DiagramNode,
+  endpoint: AnchorEndpoint | PointInNodeEndpoint,
+  uow: UnitOfWork
+) => {
+  const rawTargetY = endpoint.position.y;
+  if (!isFlexibleRightSideEndpoint(endpoint)) {
+    return rawTargetY;
+  }
+
+  const adjustedTargetY = clampFlexibleRightSideYWithinBounds(node.bounds, rawTargetY);
+  if (adjustedTargetY !== rawTargetY) {
+    setFlexibleRightSideEndpoint(edge, node, endpoint, adjustedTargetY, uow);
+  }
+  return adjustedTargetY;
+};
+
 const cascadeExecutionResize = (
   currentNode: DiagramNode,
   transformRoots: Set<string>,
@@ -239,6 +275,7 @@ const cascadeExecutionResize = (
   previousBounds: Box
 ) => {
   let currentPreviousBounds = previousBounds;
+  const isCurrentNodeRoot = transformRoots.has(currentNode.id);
   for (const edge of currentNode.edges) {
     const linked = getLinkedExecutionEndpoint(edge, currentNode);
     if (!linked) {
@@ -246,25 +283,17 @@ const cascadeExecutionResize = (
     }
 
     const previousAnchorY = getEndpointYForBounds(linked.ownEndpoint, currentPreviousBounds);
-    const unclampedTargetY = linked.ownEndpoint.position.y;
-    const targetY = isFlexibleRightSideEndpoint(linked.ownEndpoint)
-      ? clampFlexibleRightSideYWithinBounds(currentNode.bounds, unclampedTargetY)
-      : unclampedTargetY;
-    if (targetY !== unclampedTargetY) {
-      setEdgeEndpoint(edge, currentNode, linked.ownEndpoint, targetY, uow);
-    }
+    const targetY = getAdjustedTargetY(edge, currentNode, linked.ownEndpoint, uow);
     if (previousAnchorY === targetY) {
       continue;
     }
 
-    const skipBecauseBothRoots =
-      transformRoots.size > 1 && transformRoots.has(linked.otherNode.id);
     const skipBecauseOtherAdjusted = adjusted.has(linked.otherNode.id);
     const skipBecausePath = path.has(linked.otherNode.id);
     const skipBecauseOtherIsRoot = transformRoots.has(linked.otherNode.id);
 
     if (
-      !transformRoots.has(currentNode.id) &&
+      !isCurrentNodeRoot &&
       isFlexibleRightSideEndpoint(linked.ownEndpoint) &&
       (skipBecauseOtherAdjusted || skipBecausePath)
     ) {
@@ -285,18 +314,8 @@ const cascadeExecutionResize = (
       continue;
     }
 
-    if (!skipBecauseBothRoots && (skipBecauseOtherAdjusted || skipBecausePath)) {
+    if (skipBecauseOtherAdjusted || skipBecausePath) {
       resizeExecutionForEndpoint(edge, linked.otherNode, linked.otherEndpoint, targetY, uow);
-      continue;
-    }
-
-    if (skipBecauseBothRoots) {
-      continue;
-    }
-    if (skipBecauseOtherAdjusted) {
-      continue;
-    }
-    if (skipBecausePath) {
       continue;
     }
 
