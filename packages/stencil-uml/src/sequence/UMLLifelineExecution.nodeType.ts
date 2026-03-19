@@ -30,15 +30,11 @@ declare global {
 
     interface UnitOfWorkMetadata {
       umlExecutionTransformChanges?: Map<string, UMLExecutionTransformChange>;
-      umlExecutionCascadeAdjusted?: Set<string>;
       umlExecutionCascadeActive?: boolean;
-      umlExecutionCascadeRegistered?: boolean;
     }
   }
 }
 
-export const UML_EXECUTION_DEFAULT_WIDTH = 10;
-export const UML_EXECUTION_DEFAULT_HEIGHT = 40;
 export const UML_EXECUTION_DEFAULT_TOP_GAP = 10;
 export const UML_EXECUTION_NEST_OFFSET = 8;
 const UML_EXECUTION_MIN_HEIGHT = 25;
@@ -140,23 +136,9 @@ const setEdgeEndpoint = (
 
 const getLinkedExecutionEndpoint = (edge: DiagramEdge, node: DiagramNode) => {
   if (!isSupportedExecutionEndpoint(edge.start) || !isSupportedExecutionEndpoint(edge.end)) {
-    console.log('skip edge: endpoints are not anchor endpoints', {
-      edgeId: edge.id,
-      nodeId: node.id,
-      startEndpointType: edge.start.constructor.name,
-      endEndpointType: edge.end.constructor.name
-    });
     return;
   }
   if (!isExecutionNode(edge.start.node) || !isExecutionNode(edge.end.node)) {
-    console.log('skip edge: endpoints are not both execution nodes', {
-      edgeId: edge.id,
-      nodeId: node.id,
-      startNodeId: edge.start.node.id,
-      startNodeType: edge.start.node.nodeType,
-      endNodeId: edge.end.node.id,
-      endNodeType: edge.end.node.nodeType
-    });
     return;
   }
 
@@ -176,12 +158,6 @@ const getLinkedExecutionEndpoint = (edge: DiagramEdge, node: DiagramNode) => {
     };
   }
 
-  console.log('skip edge: current node is not attached to edge endpoint', {
-    edgeId: edge.id,
-    nodeId: node.id,
-    startNodeId: edge.start.node.id,
-    endNodeId: edge.end.node.id
-  });
 };
 
 const resizeExecutionForEndpoint = (
@@ -192,18 +168,6 @@ const resizeExecutionForEndpoint = (
   uow: UnitOfWork
 ) => {
   const previousBounds = node.bounds;
-  console.log('resize for endpoint', {
-    edgeId: edge.id,
-    nodeId: node.id,
-    endpoint:
-      endpoint instanceof AnchorEndpoint
-        ? endpoint.anchorId
-        : endpoint.ref?.x === 1
-          ? 'right-point'
-          : 'point',
-    targetY,
-    previousBounds
-  });
   if (isFlexibleRightSideEndpoint(endpoint)) {
     const effectiveTargetY = Math.max(
       targetY,
@@ -269,16 +233,12 @@ const resizeExecutionForEndpoint = (
 const cascadeExecutionResize = (
   currentNode: DiagramNode,
   transformRoots: Set<string>,
+  adjusted: Set<string>,
   uow: UnitOfWork,
   path: Set<string>,
   previousBounds: Box
 ) => {
   let currentPreviousBounds = previousBounds;
-  console.log('process', currentNode.id, {
-    edgeCount: currentNode.edges.length,
-    previousBounds: currentPreviousBounds,
-    currentBounds: currentNode.bounds
-  });
   for (const edge of currentNode.edges) {
     const linked = getLinkedExecutionEndpoint(edge, currentNode);
     if (!linked) {
@@ -293,33 +253,13 @@ const cascadeExecutionResize = (
     if (targetY !== unclampedTargetY) {
       setEdgeEndpoint(edge, currentNode, linked.ownEndpoint, targetY, uow);
     }
-    console.log('consider edge', {
-      edgeId: edge.id,
-      nodeId: currentNode.id,
-      otherNodeId: linked.otherNode.id,
-      ownAnchorId:
-        linked.ownEndpoint instanceof AnchorEndpoint ? linked.ownEndpoint.anchorId : 'right-point',
-      otherEndpointType:
-        linked.otherEndpoint instanceof AnchorEndpoint ? linked.otherEndpoint.anchorId : 'right-point',
-      previousAnchorY,
-      targetY
-    });
     if (previousAnchorY === targetY) {
-      console.log('skip edge: own anchor did not move', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        ownAnchorId:
-          linked.ownEndpoint instanceof AnchorEndpoint ? linked.ownEndpoint.anchorId : 'right-point',
-        previousAnchorY,
-        targetY
-      });
       continue;
     }
 
     const skipBecauseBothRoots =
       transformRoots.size > 1 && transformRoots.has(linked.otherNode.id);
-    const skipBecauseOtherAdjusted =
-      uow.metadata.umlExecutionCascadeAdjusted?.has(linked.otherNode.id) ?? false;
+    const skipBecauseOtherAdjusted = adjusted.has(linked.otherNode.id);
     const skipBecausePath = path.has(linked.otherNode.id);
     const skipBecauseOtherIsRoot = transformRoots.has(linked.otherNode.id);
 
@@ -342,49 +282,21 @@ const cascadeExecutionResize = (
     }
 
     if (skipBecauseOtherIsRoot) {
-      console.log('skip edge: other node is a direct transform root', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        otherNodeId: linked.otherNode.id
-      });
       continue;
     }
 
     if (!skipBecauseBothRoots && (skipBecauseOtherAdjusted || skipBecausePath)) {
-      console.log('resize already-adjusted dependent', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        otherNodeId: linked.otherNode.id,
-        targetY,
-        skipBecauseOtherAdjusted,
-        skipBecausePath
-      });
       resizeExecutionForEndpoint(edge, linked.otherNode, linked.otherEndpoint, targetY, uow);
       continue;
     }
 
     if (skipBecauseBothRoots) {
-      console.log('skip edge: both nodes are roots', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        otherNodeId: linked.otherNode.id
-      });
       continue;
     }
     if (skipBecauseOtherAdjusted) {
-      console.log('skip edge: other node already adjusted', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        otherNodeId: linked.otherNode.id
-      });
       continue;
     }
     if (skipBecausePath) {
-      console.log('skip edge: other node already in recursion path', {
-        edgeId: edge.id,
-        nodeId: currentNode.id,
-        otherNodeId: linked.otherNode.id
-      });
       continue;
     }
 
@@ -400,8 +312,8 @@ const cascadeExecutionResize = (
     }
 
     path.add(linked.otherNode.id);
-    uow.metadata.umlExecutionCascadeAdjusted?.add(linked.otherNode.id);
-    cascadeExecutionResize(linked.otherNode, transformRoots, uow, path, dependentPreviousBounds);
+    adjusted.add(linked.otherNode.id);
+    cascadeExecutionResize(linked.otherNode, transformRoots, adjusted, uow, path, dependentPreviousBounds);
     path.delete(linked.otherNode.id);
   }
 };
@@ -428,17 +340,11 @@ const registerExecutionTransformChange = (
     });
   }
 
-  if (uow.metadata.umlExecutionCascadeRegistered) {
-    return;
-  }
-
-  uow.metadata.umlExecutionCascadeRegistered = true;
   uow.on('before', 'commit', 'umlExecutionCascade', commitUmlExecutionCascade);
 };
 
 const commitUmlExecutionCascade = (uow: UnitOfWork) => {
   if (uow.metadata.umlExecutionCascadeActive) {
-    console.log('skip commit hook: cascade already active');
     return;
   }
 
@@ -446,40 +352,27 @@ const commitUmlExecutionCascade = (uow: UnitOfWork) => {
     change => !isPureHorizontalMove(change.newBounds, change.prevBounds)
   );
   if (changes.length === 0) {
-    console.log('skip commit hook: no relevant transform changes');
     return;
   }
 
   const transformRoots = new Set(changes.map(change => change.nodeId));
-  console.log('start commit-phase cascade', [...transformRoots].join(', '));
   const previousActive = uow.metadata.umlExecutionCascadeActive;
-  const previousAdjusted = uow.metadata.umlExecutionCascadeAdjusted;
   uow.metadata.umlExecutionCascadeActive = true;
-  uow.metadata.umlExecutionCascadeAdjusted = new Set();
+  const adjusted = new Set<string>();
 
   try {
     for (const change of changes) {
       const node = uow.diagram.lookup(change.nodeId);
       if (!node || !isExecutionNode(node)) {
-        console.log('skip root: node missing or no longer an execution', {
-          nodeId: change.nodeId
-        });
         continue;
       }
 
-      uow.metadata.umlExecutionCascadeAdjusted.add(node.id);
-      console.log('cascade from root', {
-        nodeId: node.id,
-        bounds: node.bounds
-      });
-      cascadeExecutionResize(node, transformRoots, uow, new Set([node.id]), change.prevBounds);
+      adjusted.add(node.id);
+      cascadeExecutionResize(node, transformRoots, adjusted, uow, new Set([node.id]), change.prevBounds);
     }
   } finally {
-    console.log('finish commit-phase cascade');
     uow.metadata.umlExecutionCascadeActive = previousActive;
-    uow.metadata.umlExecutionCascadeAdjusted = previousAdjusted;
     uow.metadata.umlExecutionTransformChanges = undefined;
-    uow.metadata.umlExecutionCascadeRegistered = false;
   }
 };
 
@@ -567,8 +460,6 @@ export class UMLLifelineExecutionNodeDefinition extends ShapeNodeDefinition {
     prevBounds: Box,
     uow: UnitOfWork
   ): void {
-    console.log(Box.toString(prevBounds), Box.toString(newBounds));
-
     super.onTransform(_transforms, node, newBounds, prevBounds, uow);
     if (uow.metadata.umlExecutionCascadeActive) {
       return;
