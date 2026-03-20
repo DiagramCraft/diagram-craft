@@ -113,9 +113,9 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   onDragEnd(): void {
     if (this.shouldAttachToPoint()) {
-      this.attachToPoint(this.point!);
+      this.attachToPoint(this.point!, 'commit');
     } else {
-      this.attachToClosestAnchor(this.point!);
+      this.attachToClosestAnchor(this.point!, 'commit');
     }
 
     if (this.hoverElement) {
@@ -198,7 +198,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     this.uow.abort();
   }
 
-  private attachToClosestAnchor(p: Point) {
+  private attachToClosestAnchor(p: Point, phase: AttachEdgeContext['phase'] = 'drag') {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
@@ -209,7 +209,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
-        this.tryAttachEndpoint(hoverNode, new AnchorEndpoint(hoverNode, a.anchor.id), 'anchor', p);
+        this.tryAttachEndpoint(hoverNode, new AnchorEndpoint(hoverNode, a.anchor.id), 'anchor', p, undefined, phase);
       } else {
         const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
 
@@ -229,7 +229,8 @@ export class EdgeEndpointMoveDrag extends Drag {
           new AnchorEndpoint(hoverNode, a.anchor.id, offset),
           'anchor',
           p,
-          'anchor-edge'
+          'anchor-edge',
+          phase
         );
       }
     } else {
@@ -239,7 +240,8 @@ export class EdgeEndpointMoveDrag extends Drag {
         new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
         'boundary',
         p,
-        'edge'
+        'edge',
+        phase
       );
     }
   }
@@ -248,7 +250,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     return this.modifiers?.metaKey;
   }
 
-  private attachToPoint(p: Point) {
+  private attachToPoint(p: Point, phase: AttachEdgeContext['phase'] = 'drag') {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
@@ -260,7 +262,8 @@ export class EdgeEndpointMoveDrag extends Drag {
       new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
       'point',
       p,
-      'point'
+      'point',
+      phase
     );
   }
 
@@ -269,9 +272,11 @@ export class EdgeEndpointMoveDrag extends Drag {
     endpoint: Endpoint,
     mode: AttachEdgeContext['mode'],
     coord: Point,
-    highlightArg?: string
+    highlightArg?: string,
+    phase: AttachEdgeContext['phase'] = 'drag'
   ) {
     const attachContext: AttachEdgeContext = {
+      phase,
       mode,
       end: this.type,
       coord,

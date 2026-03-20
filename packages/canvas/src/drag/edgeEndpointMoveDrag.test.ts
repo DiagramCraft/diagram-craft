@@ -65,6 +65,24 @@ class ReplaceAttachNodeDefinition extends RectNodeDefinition {
   }
 }
 
+class PhaseCaptureNodeDefinition extends RectNodeDefinition {
+  phases: AttachEdgeContext['phase'][] = [];
+
+  constructor(type = 'attach-phase-capture') {
+    super(type, 'Attach Phase Capture');
+  }
+
+  onAttachEdge(
+    _node: DiagramNode,
+    _edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined {
+    this.phases.push(context.phase);
+    return endpoint;
+  }
+}
+
 const createContext = (): Context =>
   ({
     model: {} as Context['model'],
@@ -244,5 +262,16 @@ describe('EdgeEndpointMoveDrag', () => {
 
     expect(edge.end).toBeInstanceOf(PointInNodeEndpoint);
     expect((edge.end as PointInNodeEndpoint).offsetType).toBe('absolute');
+  });
+
+  test('passes drag during preview and commit on drag end', () => {
+    const definition = new PhaseCaptureNodeDefinition();
+
+    attachEndToNodeBoundary('attach-phase-capture', {}, diagram => {
+      diagram.document.registry.nodes.register(definition);
+    });
+
+    expect(definition.phases).toContain('drag');
+    expect(definition.phases.at(-1)).toBe('commit');
   });
 });

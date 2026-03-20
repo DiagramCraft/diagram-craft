@@ -438,6 +438,7 @@ export interface NodeDefinition {
 }
 
 export type AttachEdgeContext = {
+  phase: 'drag' | 'commit';
   mode: 'anchor' | 'boundary' | 'point';
   end: 'start' | 'end';
   coord: Point;

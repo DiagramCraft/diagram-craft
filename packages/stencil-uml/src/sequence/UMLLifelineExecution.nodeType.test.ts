@@ -6,6 +6,7 @@ import { Translation, TransformFactory } from '@diagram-craft/geometry/transform
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { UMLLifelineExecutionNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifelineExecution.nodeType';
 
 describe('UMLLifelineExecution', () => {
   test('uses the expected nine execution anchors', async () => {
@@ -28,6 +29,37 @@ describe('UMLLifelineExecution', () => {
       { id: 'r6', start: { x: 1, y: 5 / 6 }, type: 'point', isPrimary: true, normal: 0 },
       { id: 'r7', start: { x: 1, y: 6 / 6 }, type: 'point', isPrimary: true, normal: 0 }
     ]);
+  });
+
+  test('converts attached point endpoints to absolute offsets', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const execution = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 155, y: 140, w: 10, h: 40, r: 0 }
+    });
+    const edge = layer.addEdge();
+    const endpoint = new PointInNodeEndpoint(execution, undefined, { x: 1, y: 0.5 }, 'relative');
+
+    const resolved = new UMLLifelineExecutionNodeDefinition().onAttachEdge(
+      execution,
+      edge,
+      endpoint,
+      {
+        phase: 'commit',
+        mode: 'point',
+        end: 'end',
+        coord: endpoint.position,
+        modifiers: { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+      }
+    );
+
+    expect(resolved).toBeInstanceOf(PointInNodeEndpoint);
+    expect((resolved as PointInNodeEndpoint).offsetType).toBe('absolute');
+    expect((resolved as PointInNodeEndpoint).ref).toEqual({ x: 1, y: 0 });
+    expect((resolved as PointInNodeEndpoint).offset).toEqual({ x: 0, y: 20 });
+    expect((resolved as PointInNodeEndpoint).position).toEqual(endpoint.position);
   });
 
   test('resizes a linked execution after a vertical move to keep the edge horizontal', async () => {

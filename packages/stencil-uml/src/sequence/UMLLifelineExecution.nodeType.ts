@@ -5,6 +5,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import {
+  AttachEdgeContext,
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -588,6 +589,30 @@ export class UMLLifelineExecutionNodeDefinition extends ShapeNodeDefinition {
     }
 
     registerExecutionTransformChange(node, prevBounds, newBounds, uow);
+  }
+
+  override onAttachEdge(
+    node: DiagramNode,
+    _edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined {
+    if (context.phase !== 'commit') {
+      return endpoint;
+    }
+
+    if (!(endpoint instanceof PointInNodeEndpoint) || endpoint.node !== node) {
+      return endpoint;
+    }
+
+    const position = endpoint.position;
+    const rotated = Point.rotateAround(position, -node.bounds.r, Box.center(node.bounds));
+    const normalizedX = (rotated.x - node.bounds.x) / node.bounds.w;
+    const attachToRightSide = normalizedX >= 0.5;
+    const ref = attachToRightSide ? _p(1, 0) : _p(0, 0);
+    const offset = _p(0, rotated.y - node.bounds.y);
+
+    return new PointInNodeEndpoint(node, ref, offset, 'absolute');
   }
 
   getCustomPropertyDefinitions(_def: DiagramNode) {
