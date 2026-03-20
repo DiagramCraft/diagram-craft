@@ -15,6 +15,7 @@ import { DynamicAccessor, PropPath } from '@diagram-craft/utils/propertyPath';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
+import type { Endpoint } from './endpoint';
 
 export type NodeFlag = string & { __brand: 'nodeFlag' };
 
@@ -404,6 +405,13 @@ export interface NodeDefinition {
   // This returns anchors in local coordinates [0-1], [0-1]
   getAnchors(node: DiagramNode): ReadonlyArray<Anchor>;
 
+  onAttachEdge(
+    node: DiagramNode,
+    edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined;
+
   onChildChanged(node: DiagramNode, uow: UnitOfWork): void;
 
   onTransform(
@@ -428,6 +436,18 @@ export interface NodeDefinition {
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }
+
+export type AttachEdgeContext = {
+  mode: 'anchor' | 'boundary' | 'point';
+  end: 'start' | 'end';
+  coord: Point;
+  modifiers: {
+    shiftKey: boolean;
+    altKey: boolean;
+    metaKey: boolean;
+    ctrlKey: boolean;
+  };
+};
 
 const missing = new Set();
 if (typeof window !== 'undefined') {
