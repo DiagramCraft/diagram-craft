@@ -169,7 +169,7 @@ const dragAcrossNodes = (
       target
     )
   );
-  drag.onDragLeave(new DragEvents.DragLeave(firstPoint, target, allowedNode.id));
+  drag.onDragLeave(new DragEvents.DragLeave(target, allowedNode.id));
   drag.onDragEnter(new DragEvents.DragEnter(secondPoint, target, rejectingNode.id));
   drag.onDrag(
     new DragEvents.DragStart(
