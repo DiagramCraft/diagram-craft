@@ -4,6 +4,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -23,6 +24,7 @@ import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
 import { resolveEdgeEndpointTarget } from './edgeEndpointTarget';
+import type { AttachEdgeContext } from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
@@ -207,8 +209,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
-        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id));
-        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor');
+        this.tryAttachEndpoint(hoverNode, new AnchorEndpoint(hoverNode, a.anchor.id), 'anchor', p);
       } else {
         const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
 
@@ -223,15 +224,23 @@ export class EdgeEndpointMoveDrag extends Drag {
         if (Point.distance(pp, p) > 10) return;
 
         const offset = this.calculateOffset(pp, ref, hoverNode.bounds);
-        addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'anchor-edge');
-        this.setEndpoint(new AnchorEndpoint(hoverNode, a.anchor.id, offset));
+        this.tryAttachEndpoint(
+          hoverNode,
+          new AnchorEndpoint(hoverNode, a.anchor.id, offset),
+          'anchor',
+          p,
+          'anchor-edge'
+        );
       }
     } else {
-      addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'edge');
-
       const offset = this.calculateOffset(a.point, hoverNode.bounds, hoverNode.bounds);
-
-      this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'));
+      this.tryAttachEndpoint(
+        hoverNode,
+        new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+        'boundary',
+        p,
+        'edge'
+      );
     }
   }
 
@@ -245,11 +254,49 @@ export class EdgeEndpointMoveDrag extends Drag {
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
     assert.present(hoverNode);
 
-    addHighlight(hoverNode, Highlights.NODE__EDGE_CONNECT, 'point');
-
     const offset = this.calculateOffset(p, hoverNode.bounds, hoverNode.bounds);
+    this.tryAttachEndpoint(
+      hoverNode,
+      new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+      'point',
+      p,
+      'point'
+    );
+  }
 
-    this.setEndpoint(new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'));
+  private tryAttachEndpoint(
+    node: DiagramNode,
+    endpoint: Endpoint,
+    mode: AttachEdgeContext['mode'],
+    coord: Point,
+    highlightArg?: string
+  ) {
+    const attachContext: AttachEdgeContext = {
+      mode,
+      end: this.type,
+      coord,
+      modifiers: {
+        shiftKey: this.modifiers?.shiftKey ?? false,
+        altKey: this.modifiers?.altKey ?? false,
+        metaKey: this.modifiers?.metaKey ?? false,
+        ctrlKey: this.modifiers?.ctrlKey ?? false
+      }
+    };
+
+    const resolvedEndpoint = node.getDefinition().onAttachEdge(
+      node,
+      this.edge,
+      endpoint,
+      attachContext
+    );
+    if (!resolvedEndpoint) {
+      removeHighlight(node, Highlights.NODE__EDGE_CONNECT);
+      this.setEndpoint(new FreeEndpoint(coord));
+      return;
+    }
+
+    addHighlight(node, Highlights.NODE__EDGE_CONNECT, highlightArg);
+    this.setEndpoint(resolvedEndpoint);
   }
 
   private calculateOffset(p: Point, ref: Point, bounds: Box) {

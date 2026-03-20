@@ -4,6 +4,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { Point } from '@diagram-craft/geometry/point';
 import {
+  AttachEdgeContext,
   CustomPropertyDefinition,
   NodeDefinition,
   NodeFlag,
@@ -20,6 +21,8 @@ import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { Endpoint } from '@diagram-craft/model/endpoint';
 
 export type NodeShapeConstructor<T extends ShapeNodeDefinition> = {
   new (shapeNodeDefinition: T): BaseNodeComponent<T>;
@@ -214,6 +217,15 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getHitArea(_node: DiagramNode): PathList | undefined {
     return undefined;
+  }
+
+  onAttachEdge(
+    _node: DiagramNode,
+    _edge: DiagramEdge,
+    endpoint: Endpoint,
+    _context: AttachEdgeContext
+  ): Endpoint | undefined {
+    return endpoint;
   }
 
   getCustomPropertyDefinitions(_node: DiagramNode): CustomPropertyDefinition {
