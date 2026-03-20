@@ -7,8 +7,6 @@ import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { mustExist } from '@diagram-craft/utils/assert';
 import { _p } from '@diagram-craft/geometry/point';
 import {
   CustomPropertyDefinition,
@@ -53,27 +51,26 @@ const getIconBounds = (bounds: Box): Box => {
   };
 };
 
-const templatePaths = PathListBuilder.fromString(
-  `
-      M 0 0
-      L 7 0
-      L 10 2.5
-      L 10 10
-      L 0 10
-      Z
-    `
-).getPaths();
+const getFoldSize = (bounds: Box) => Math.max(1, Math.min(bounds.w, bounds.h) * 0.25);
 
-const foldPaths = PathListBuilder.fromString(
-  `
-      M 7 0
-      L 7 2.5
-      L 10 2.5
-    `
-).getPaths();
+const buildArtifactPathBuilder = (bounds: Box) => {
+  const foldSize = getFoldSize(bounds);
+  return new PathListBuilder()
+    .moveTo(_p(bounds.x, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w - foldSize, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + foldSize))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h))
+    .lineTo(_p(bounds.x, bounds.y + bounds.h))
+    .close();
+};
 
-const pathBounds = templatePaths.bounds();
-const path = mustExist(templatePaths.all()[0]);
+const buildFoldPathBuilder = (bounds: Box) => {
+  const foldSize = getFoldSize(bounds);
+  return new PathListBuilder()
+    .moveTo(_p(bounds.x + bounds.w - foldSize, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w - foldSize, bounds.y + foldSize))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + foldSize));
+};
 
 const getPageContentBounds = (bounds: Box) =>
   Box.fromCorners(
@@ -90,8 +87,7 @@ export class UMLArtifactNodeDefinition extends ShapeNodeDefinition {
   }
 
   getBoundingPathBuilder(def: DiagramNode) {
-    const t = TransformFactory.fromTo(pathBounds, Box.withoutRotation(def.bounds));
-    return PathListBuilder.fromPath(path).withTransform(t);
+    return buildArtifactPathBuilder(Box.withoutRotation(def.bounds));
   }
 
   getShapeAnchors(_def: DiagramNode): Anchor[] {
@@ -124,9 +120,7 @@ class UMLArtifactComponent extends BaseNodeComponent<UMLArtifactNodeDefinition> 
 
     shapeBuilder.boundaryPath(def.getBoundingPathBuilder(props.node).getPaths().all());
     shapeBuilder.path(
-      PathListBuilder.fromPath(mustExist(foldPaths.all()[0]))
-        .getPaths(TransformFactory.fromTo(pathBounds, Box.withoutRotation(bounds)))
-        .all(),
+      buildFoldPathBuilder(Box.withoutRotation(bounds)).getPaths().all(),
       undefined,
       {
         style: { fill: 'none' }

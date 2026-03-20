@@ -4,7 +4,10 @@ import {
   BaseShapeBuildShapeProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
-import { CustomPropertyDefinition, NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
+import {
+  CustomPropertyDefinition,
+  NodeFlags
+} from '@diagram-craft/model/elementDefinitionRegistry';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
@@ -73,10 +76,16 @@ const getLocalCoordinateSpace = (node: DiagramNode): Box => ({
 });
 
 const getLocalChildBounds = (node: DiagramNode, child: DiagramNode) =>
-  Transform.box(child.bounds, ...TransformFactory.fromTo(node.bounds, getLocalCoordinateSpace(node)));
+  Transform.box(
+    child.bounds,
+    ...TransformFactory.fromTo(node.bounds, getLocalCoordinateSpace(node))
+  );
 
 const getGlobalBounds = (node: DiagramNode, localBounds: Box) =>
-  Transform.box(localBounds, ...TransformFactory.fromTo(getLocalCoordinateSpace(node), node.bounds));
+  Transform.box(
+    localBounds,
+    ...TransformFactory.fromTo(getLocalCoordinateSpace(node), node.bounds)
+  );
 
 export class UMLLifelineContainerNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -97,35 +106,8 @@ export class UMLLifelineContainerNodeDefinition extends ShapeNodeDefinition {
     });
   }
 
-  getShapeAnchors(node: DiagramNode): Anchor[] {
-    const head = getHeadChild(node);
-    const localHeadBounds = head
-      ? getLocalChildBounds(node, head)
-      : { x: 0, y: 0, w: node.bounds.w, h: DEFAULT_HEAD_H, r: 0 };
-
-    const headLeft = localHeadBounds.x / node.bounds.w;
-    const headRight = (localHeadBounds.x + localHeadBounds.w) / node.bounds.w;
-    const headCenterY = (localHeadBounds.y + localHeadBounds.h / 2) / node.bounds.h;
-    const headBottomY = (localHeadBounds.y + localHeadBounds.h) / node.bounds.h;
-
-    return [
-      { id: 'top', start: _p(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
-      { id: 'left', start: _p(headLeft, headCenterY), type: 'point', isPrimary: true, normal: Math.PI },
-      { id: 'right', start: _p(headRight, headCenterY), type: 'point', isPrimary: true, normal: 0 },
-      {
-        id: 'lifeline',
-        type: 'edge',
-        start: _p(0.5, headBottomY),
-        end: _p(0.5, 1),
-        clip: false,
-        directions: [
-          [0, 0],
-          [Math.PI, Math.PI]
-        ]
-      },
-      { id: 'bottom', start: _p(0.5, 1), type: 'point', isPrimary: true, normal: Math.PI / 2 },
-      { id: 'c', start: _p(0.5, 0.5), clip: true, type: 'center' }
-    ];
+  override getAnchors(_node: DiagramNode): Anchor[] {
+    return [];
   }
 
   getCustomPropertyDefinitions(_def: DiagramNode) {
@@ -183,13 +165,15 @@ export class UMLLifelineContainerNodeDefinition extends ShapeNodeDefinition {
     });
     line.setBounds(nextLineBounds, uow);
     if (!Box.isEqual(previousLineBounds, nextLineBounds)) {
-      line.getDefinition().onTransform(
-        TransformFactory.fromTo(previousLineBounds, nextLineBounds),
-        line,
-        nextLineBounds,
-        previousLineBounds,
-        uow
-      );
+      line
+        .getDefinition()
+        .onTransform(
+          TransformFactory.fromTo(previousLineBounds, nextLineBounds),
+          line,
+          nextLineBounds,
+          previousLineBounds,
+          uow
+        );
     }
   }
 }
@@ -210,6 +194,7 @@ export class UMLLifelineNodeDefinition extends ShapeNodeDefinition {
       [NodeFlags.AnchorsBoundary]: false,
       [NodeFlags.AnchorsConfigurable]: false,
       [NodeFlags.ChildrenAllowed]: true,
+      [NodeFlags.ChildrenSelectParent]: false,
       [NodeFlags.ChildrenTransformScaleX]: false,
       [NodeFlags.ChildrenTransformScaleY]: false
     });
@@ -267,7 +252,7 @@ export class UMLLifelineNodeDefinition extends ShapeNodeDefinition {
       });
 
       for (const execution of executions) {
-        placeExecutionOnParent(node, execution, uow, { assignDefaultY: true });
+        placeExecutionOnParent(node, execution, uow);
       }
     }
 
@@ -300,7 +285,11 @@ export class UMLLifelineNodeDefinition extends ShapeNodeDefinition {
 
 class UMLLifelineComponent extends BaseNodeComponent<UMLLifelineNodeDefinition> {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
-    builder.boundaryPath(this.def.getBoundingPathBuilder(props.node).getPaths().all(), props.nodeProps, undefined);
+    builder.boundaryPath(
+      this.def.getBoundingPathBuilder(props.node).getPaths().all(),
+      props.nodeProps,
+      undefined
+    );
     builder.add(renderChildren(this, props.node, props));
   }
 }

@@ -275,3 +275,328 @@ stencils:
         texts:
           text: Finished
         tags:
+
+  - id: 'uml-sequence-combined-alt'
+    name: Alt
+    elements:
+      - id: rsn1l8z
+        type: node
+        nodeType: umlFrame
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 80
+          r: 0
+        children:
+          - id: eglnk02
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 40
+              w: 135.8298118722925
+              h: 40
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p>[condition 2]</p>"
+            tags:
+          - id: 32syfrw
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 0
+              w: 135.8298118722925
+              h: 40
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p>[condition 1]</p>"
+            tags:
+        props:
+          custom:
+            umlFrame:
+              labelH: 20
+              labelW: 54.17018812770748
+              hasCompartments: true
+          text:
+            top: 4
+            bottom: 4
+            left: 6
+            right: 6
+          fill:
+            enabled: false
+          additionalFills:
+            - enabled: true
+              color: var(--canvas-bg2)
+        pickerProps:
+          additionalFills:
+            - enabled: false
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<b>alt</b>"
+        tags:
+
+  - id: 'uml-sequence-combined-opt'
+    name: Opt
+    elements:
+      - id: ye9tw8q
+        type: node
+        nodeType: umlFrame
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 40
+          r: 0
+          _discriminator:
+        children:
+          - id: qhvocm6
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 0
+              w: 135.8298118722925
+              h: 40
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p>[condition]</p>"
+            tags:
+        props:
+          custom:
+            umlFrame:
+              labelH: 20
+              labelW: 54.17018812770748
+              hasCompartments: true
+          text:
+            top: 4
+            bottom: 4
+            left: 6
+            right: 6
+          fill:
+            enabled: false
+          additionalFills:
+            - enabled: true
+              color: var(--canvas-bg2)
+        pickerProps:
+          additionalFills:
+            - enabled: false
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<b>opt</b>"
+        tags:
+
+  - id: 'uml-sequence-combined-loop'
+    name: Loop
+    elements:
+      - id: q9bqs5u
+        type: node
+        nodeType: umlFrame
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 40
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlFrame:
+              labelH: 20
+              labelW: 54.17018812770748
+              hasCompartments: true
+          text:
+            top: 4
+            bottom: 4
+            left: 6
+            right: 6
+          fill:
+            enabled: false
+          additionalFills:
+            - enabled: true
+              color: white
+        pickerProps:
+          additionalFills:
+            - enabled: false
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<b>loop</b>"
+        tags:
+
+  - id: 'uml-sequence-combined-par'
+    name: Parallel
+    elements:
+      - id: a8mhn1n
+        type: node
+        nodeType: umlFrame
+        bounds:
+          x: 0
+          y: 0
+          w: 200
+          h: 140
+          r: 0
+        children:
+          - id: hdga39s
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 46.666666666666664
+              w: 135.8298118722925
+              h: 46.66666666666667
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p><br></p>"
+            tags:
+          - id: uc05ho8
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 0
+              w: 135.8298118722925
+              h: 46.66666666666667
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p><br></p>"
+            tags:
+          - id: 7robw07
+            type: node
+            nodeType: text
+            bounds:
+              x: 64.17018812770749
+              y: 93.33333333333334
+              w: 135.8298118722925
+              h: 46.66666666666665
+              r: 0
+            children: [ ]
+            props:
+              stroke:
+                enabled: false
+              fill:
+                enabled: false
+              text:
+                align: left
+                left: 0
+                top: 4
+                right: 0
+                bottom: 0
+                valign: top
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: "<p><br></p>"
+            tags:
+        props:
+          custom:
+            umlFrame:
+              labelH: 20
+              labelW: 54.17018812770748
+              hasCompartments: true
+          text:
+            top: 4
+            bottom: 4
+            left: 6
+            right: 6
+          fill:
+            enabled: false
+          additionalFills:
+            - enabled: true
+              color: white
+        pickerProps:
+          additionalFills:
+            - enabled: false
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<b>par</b>"
+        tags:

@@ -4,7 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 import { Translation, TransformFactory } from '@diagram-craft/geometry/transform';
 import { transformElements } from '@diagram-craft/model/diagramElement';
-import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 
 describe('UMLLifelineExecution', () => {
@@ -50,6 +50,48 @@ describe('UMLLifelineExecution', () => {
 
     expect(source.bounds).toEqual({ x: 100, y: 110, w: 10, h: 40, r: 0 });
     expect(dependent.bounds).toEqual({ x: 200, y: 70, w: 10, h: 60, r: 0 });
+  });
+
+  test('resizes a linked execution when both lifelines are inside a frame', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const frame = layer.addNode({
+      type: 'umlFrame',
+      bounds: { x: 50, y: 40, w: 320, h: 260, r: 0 }
+    });
+    const sourceLifeline = layer.createNode({
+      type: 'umlLifeline',
+      bounds: { x: 120, y: 80, w: 12, h: 180, r: 0 }
+    });
+    const dependentLifeline = layer.createNode({
+      type: 'umlLifeline',
+      bounds: { x: 240, y: 80, w: 12, h: 180, r: 0 }
+    });
+    const source = layer.createNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 121, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const dependent = layer.createNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 241, y: 70, w: 10, h: 50, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      frame.addChild(sourceLifeline, uow);
+      frame.addChild(dependentLifeline, uow);
+      sourceLifeline.addChild(source, uow);
+      dependentLifeline.addChild(dependent, uow);
+    });
+
+    layer.addEdge({ startNodeId: source.id, startAnchor: 'r4', endNodeId: dependent.id, endAnchor: 'bl' });
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
+    });
+
+    expect(source.bounds).toEqual({ x: 121, y: 110, w: 10, h: 40, r: 0 });
+    expect(dependent.bounds).toEqual({ x: 241, y: 70, w: 10, h: 60, r: 0 });
   });
 
   test('cascades through a chain of linked executions', async () => {
@@ -207,6 +249,28 @@ describe('UMLLifelineExecution', () => {
     });
 
     expect(dependent.bounds).toEqual({ x: 200, y: 130, w: 10, h: 30, r: 0 });
+  });
+
+  test('does not apply right-corner padding when the connection uses the top-right anchor', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const source = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const dependent = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
+    });
+    layer.addEdge({ startNodeId: source.id, startAnchor: 'r1', endNodeId: dependent.id, endAnchor: 'bl' });
+
+    UnitOfWork.execute(diagram, uow => {
+      transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
+    });
+
+    expect(source.bounds).toEqual({ x: 100, y: 110, w: 10, h: 40, r: 0 });
+    expect(dependent.bounds).toEqual({ x: 200, y: 70, w: 10, h: 40, r: 0 });
   });
 
   test('propagates from the changed anchor when opposite links connect the same two executions', async () => {
@@ -442,5 +506,34 @@ describe('UMLLifelineExecution', () => {
     });
 
     expect(dependent.bounds).toEqual({ x: 200, y: 70, w: 10, h: 50, r: 0 });
+  });
+
+  test('resizes a dependent execution connected by a right-edge point endpoint', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const source = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const dependent = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
+    });
+
+    const edge = ElementFactory.edge({
+      id: 'right-edge-point-endpoint',
+      start: new AnchorEndpoint(source, 'bl'),
+      end: new PointInNodeEndpoint(dependent, undefined, { x: 1, y: 0.6 }, 'relative'),
+      layer
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      layer.addElement(edge, uow);
+      transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
+    });
+
+    expect(dependent.bounds).toEqual({ x: 200, y: 70, w: 10, h: 90, r: 0 });
+    expect(edge.end.position.y).toBe(edge.start.position.y);
   });
 });
