@@ -3,6 +3,7 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import {
+  AttachEdgeContext,
   CustomPropertyDefinition,
   CustomPropertyDefinitionEntry,
   NodeFlags
@@ -14,6 +15,8 @@ import { type PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import { CollapsibleOverlayComponent } from '../shape/collapsible';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { Endpoint } from '@diagram-craft/model/endpoint';
 
 declare global {
   namespace DiagramCraft {
@@ -75,6 +78,20 @@ export class ContainerNodeDefinition extends LayoutCapableShapeNodeDefinition {
     } else {
       return super.getAnchors(node);
     }
+  }
+
+  onAttachEdge(
+    node: DiagramNode,
+    edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined {
+    const shape = getShape(node);
+    if (shape) {
+      return shape.onAttachEdge(node, edge, endpoint, context);
+    }
+
+    return super.onAttachEdge(node, edge, endpoint, context);
   }
 }
 
