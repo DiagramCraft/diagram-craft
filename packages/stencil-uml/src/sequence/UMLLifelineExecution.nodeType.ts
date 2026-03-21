@@ -158,9 +158,41 @@ class ExecutionCascade {
     const isCurrentNodeRoot = this.transformRoots.has(currentNode.id);
 
     let prevBounds = prevBoundsArg;
+    logExecutionCascade('node-edges', {
+      nodeId: currentNode.id,
+      isRoot: isCurrentNodeRoot,
+      edgeIds: currentNode.edges.map(edge => edge.id),
+      edges: currentNode.edges.map(edge => ({
+        edgeId: edge.id,
+        startNodeId: isConnected(edge.start) ? edge.start.node.id : undefined,
+        startType:
+          edge.start instanceof AnchorEndpoint
+            ? `anchor:${edge.start.anchorId}`
+            : edge.start instanceof PointInNodeEndpoint
+              ? `point:${edge.start.offsetType}`
+              : 'free',
+        endNodeId: isConnected(edge.end) ? edge.end.node.id : undefined,
+        endType:
+          edge.end instanceof AnchorEndpoint
+            ? `anchor:${edge.end.anchorId}`
+            : edge.end instanceof PointInNodeEndpoint
+              ? `point:${edge.end.offsetType}`
+              : 'free'
+      })),
+      path: [...path]
+    });
     for (const edge of currentNode.edges.filter(isFullyConnected)) {
       const [own, other] = this.getEndpointPair(edge, currentNode);
-      if (!isExecutionNode(own.node) || !isExecutionNode(other.node)) continue;
+      if (!isExecutionNode(own.node) || !isExecutionNode(other.node)) {
+        logExecutionCascade('skip:not-execution-pair', {
+          edgeId: edge.id,
+          ownNodeId: own.node.id,
+          ownNodeType: own.node.nodeType,
+          otherNodeId: other.node.id,
+          otherNodeType: other.node.nodeType
+        });
+        continue;
+      }
 
       const previousAnchorY = this.getYPositionForEndpoint(own, prevBounds);
       const targetY = this.getAndAdjustTargetY(edge, own, this.uow);

@@ -30,7 +30,7 @@ class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    if (context.mode !== 'boundary' || !(endpoint instanceof PointInNodeEndpoint)) return endpoint;
+    if (context.type !== 'boundary' || !(endpoint instanceof PointInNodeEndpoint)) return endpoint;
     return new PointInNodeEndpoint(endpoint.node, endpoint.ref, endpoint.offset, 'absolute');
   }
 }
@@ -46,7 +46,7 @@ class RejectAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    return context.mode === 'boundary' ? undefined : endpoint;
+    return context.type === 'boundary' ? undefined : endpoint;
   }
 }
 
@@ -61,7 +61,7 @@ class ReplaceAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    return context.mode === 'boundary' ? new AnchorEndpoint(node, 'c') : endpoint;
+    return context.type === 'boundary' ? new AnchorEndpoint(node, 'c') : endpoint;
   }
 }
 
@@ -256,7 +256,9 @@ describe('EdgeEndpointMoveDrag', () => {
         custom: { container: { shape: 'attach-delegated' } }
       },
       diagram => {
-        diagram.document.registry.nodes.register(new AbsoluteAttachNodeDefinition('attach-delegated'));
+        diagram.document.registry.nodes.register(
+          new AbsoluteAttachNodeDefinition('attach-delegated')
+        );
       }
     );
 
@@ -272,6 +274,6 @@ describe('EdgeEndpointMoveDrag', () => {
     });
 
     expect(definition.phases).toContain('drag');
-    expect(definition.phases.at(-1)).toBe('commit');
+    expect(definition.phases.at(-1)).toBe('dragEnd');
   });
 });

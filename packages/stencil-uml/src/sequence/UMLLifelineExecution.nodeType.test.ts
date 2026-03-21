@@ -48,9 +48,9 @@ describe('UMLLifelineExecution', () => {
       endpoint,
       {
         phase: 'commit',
-        mode: 'point',
+        type: 'point',
         end: 'end',
-        coord: endpoint.position,
+        point: endpoint.position,
         modifiers: { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
       }
     );
@@ -74,7 +74,12 @@ describe('UMLLifelineExecution', () => {
       type: 'umlLifelineExecution',
       bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
     });
-    layer.addEdge({ startNodeId: source.id, startAnchor: 'r4', endNodeId: dependent.id, endAnchor: 'bl' });
+    layer.addEdge({
+      startNodeId: source.id,
+      startAnchor: 'r4',
+      endNodeId: dependent.id,
+      endAnchor: 'bl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
@@ -116,7 +121,12 @@ describe('UMLLifelineExecution', () => {
       dependentLifeline.addChild(dependent, uow);
     });
 
-    layer.addEdge({ startNodeId: source.id, startAnchor: 'r4', endNodeId: dependent.id, endAnchor: 'bl' });
+    layer.addEdge({
+      startNodeId: source.id,
+      startAnchor: 'r4',
+      endNodeId: dependent.id,
+      endAnchor: 'bl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
@@ -130,9 +140,18 @@ describe('UMLLifelineExecution', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);
 
-    const a = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 } });
-    const b = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 } });
-    const c = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 300, y: 45, w: 10, h: 50, r: 0 } });
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
+    });
+    const c = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 300, y: 45, w: 10, h: 50, r: 0 }
+    });
     layer.addEdge({ startNodeId: a.id, startAnchor: 'r4', endNodeId: b.id, endAnchor: 'bl' });
     layer.addEdge({ startNodeId: b.id, startAnchor: 'r4', endNodeId: c.id, endAnchor: 'bl' });
 
@@ -195,7 +214,12 @@ describe('UMLLifelineExecution', () => {
       type: 'umlLifelineExecution',
       bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
     });
-    layer.addEdge({ startNodeId: source.id, startAnchor: 'r4', endNodeId: dependent.id, endAnchor: 'bl' });
+    layer.addEdge({
+      startNodeId: source.id,
+      startAnchor: 'r4',
+      endNodeId: dependent.id,
+      endAnchor: 'bl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([source], [new Translation({ x: 25, y: 0 })], uow);
@@ -208,8 +232,14 @@ describe('UMLLifelineExecution', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);
 
-    const a = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 } });
-    const b = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 } });
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
+    });
     layer.addEdge({ startNodeId: a.id, startAnchor: 'r4', endNodeId: b.id, endAnchor: 'bl' });
 
     UnitOfWork.execute(diagram, uow => {
@@ -224,8 +254,14 @@ describe('UMLLifelineExecution', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);
 
-    const a = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 10, y: 10, w: 10, h: 40, r: 0 } });
-    const b = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 60, y: 30, w: 10, h: 50, r: 0 } });
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 10, y: 10, w: 10, h: 40, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 60, y: 30, w: 10, h: 50, r: 0 }
+    });
     layer.addEdge({ startNodeId: a.id, startAnchor: 'r4', endNodeId: b.id, endAnchor: 'bl' });
 
     const before = { x: 0, y: 0, w: 100, h: 100, r: 0 };
@@ -243,12 +279,36 @@ describe('UMLLifelineExecution', () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);
 
-    const a = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 } });
-    const b = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 } });
-    const c = layer.addNode({ type: 'umlLifelineExecution', bounds: { x: 300, y: 45, w: 10, h: 50, r: 0 } });
-    const edgeAB = layer.addEdge({ startNodeId: a.id, startAnchor: 'r4', endNodeId: b.id, endAnchor: 'bl' });
-    const edgeBC = layer.addEdge({ startNodeId: b.id, startAnchor: 'r4', endNodeId: c.id, endAnchor: 'bl' });
-    const edgeCA = layer.addEdge({ startNodeId: c.id, startAnchor: 'r4', endNodeId: a.id, endAnchor: 'bl' });
+    const a = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 100, y: 100, w: 10, h: 40, r: 0 }
+    });
+    const b = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
+    });
+    const c = layer.addNode({
+      type: 'umlLifelineExecution',
+      bounds: { x: 300, y: 45, w: 10, h: 50, r: 0 }
+    });
+    const edgeAB = layer.addEdge({
+      startNodeId: a.id,
+      startAnchor: 'r4',
+      endNodeId: b.id,
+      endAnchor: 'bl'
+    });
+    const edgeBC = layer.addEdge({
+      startNodeId: b.id,
+      startAnchor: 'r4',
+      endNodeId: c.id,
+      endAnchor: 'bl'
+    });
+    const edgeCA = layer.addEdge({
+      startNodeId: c.id,
+      startAnchor: 'r4',
+      endNodeId: a.id,
+      endAnchor: 'bl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([a], [new Translation({ x: 0, y: 10 })], uow);
@@ -274,7 +334,12 @@ describe('UMLLifelineExecution', () => {
       type: 'umlLifelineExecution',
       bounds: { x: 200, y: 120, w: 10, h: 40, r: 0 }
     });
-    layer.addEdge({ startNodeId: source.id, startAnchor: 'r4', endNodeId: dependent.id, endAnchor: 'tl' });
+    layer.addEdge({
+      startNodeId: source.id,
+      startAnchor: 'r4',
+      endNodeId: dependent.id,
+      endAnchor: 'tl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([source], [new Translation({ x: 0, y: 10 })], uow);
@@ -295,7 +360,12 @@ describe('UMLLifelineExecution', () => {
       type: 'umlLifelineExecution',
       bounds: { x: 200, y: 70, w: 10, h: 50, r: 0 }
     });
-    layer.addEdge({ startNodeId: source.id, startAnchor: 'r1', endNodeId: dependent.id, endAnchor: 'bl' });
+    layer.addEdge({
+      startNodeId: source.id,
+      startAnchor: 'r1',
+      endNodeId: dependent.id,
+      endAnchor: 'bl'
+    });
 
     UnitOfWork.execute(diagram, uow => {
       transformElements([source], [new Translation({ x: 0, y: 10 })], uow);

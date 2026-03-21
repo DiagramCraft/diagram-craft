@@ -437,11 +437,13 @@ export interface NodeDefinition {
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
 }
 
+export type AttachPhase = 'drag' | 'dragEnd';
+
 export type AttachEdgeContext = {
-  phase: 'drag' | 'commit';
-  mode: 'anchor' | 'boundary' | 'point';
+  phase: AttachPhase;
+  type: 'anchor' | 'boundary' | 'point';
   end: 'start' | 'end';
-  coord: Point;
+  point: Point;
   modifiers: {
     shiftKey: boolean;
     altKey: boolean;
