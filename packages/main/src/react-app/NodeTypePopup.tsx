@@ -8,15 +8,8 @@ import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import {
-  addStencilStylesToDocument,
-  applyStencilToNode
-} from '@diagram-craft/model/stencilUtils';
-import {
-  copyStyles,
-  Stencil,
-  stencilScaleStrokes
-} from '@diagram-craft/model/stencilRegistry';
+import { addStencilStylesToDocument, applyStencilToNode } from '@diagram-craft/model/stencilUtils';
+import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { CompoundUndoableAction, type UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
@@ -25,30 +18,62 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDiagram } from '../application';
 import { useEventListener } from './hooks/useEventListener';
 import { createPreview } from './toolwindow/StyleOverviewToolWindow/stylesPanelUtils';
-import {
-  getRecentEdgeStylesheetIds,
-  getNodeStencilIds,
-  NO_SHAPE_ID
-} from './NodeTypePopup.utils';
 import styles from './NodeTypePopup.module.css';
 import objectPickerStyles from './ObjectPicker.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
 
-const combineUndoActionsFromDepth = (diagram: Diagram, undoDepth: number) => {
-  const actions: UndoableAction[] = [];
-  while (diagram.undoManager.undoableActions.length > undoDepth) {
-    actions.unshift(diagram.undoManager.undoableActions.pop()!);
+const EDGE_LIMIT = 8;
+const NODE_LIMIT = 16;
+const REQUIRED_NODE_STENCIL_IDS = ['default@@text', 'default@@rect'];
+
+const NODE_LINK_POPUP_MARK = 'node-link-popup';
+const NO_SHAPE_ID = '__no_shape__';
+
+export const markStartOfNodeLinkPopup = (
+  diagram: Diagram,
+  pendingUndoableActions: UndoableAction[]
+) => {
+  diagram.undoManager.setMark(NODE_LINK_POPUP_MARK);
+  if (pendingUndoableActions.length > 0) {
+    diagram.undoManager.add(new CompoundUndoableAction(pendingUndoableActions));
   }
+};
+
+const combineUndoActionsFromMark = (diagram: Diagram) => {
+  const actions: UndoableAction[] = diagram.undoManager.getToMark(NODE_LINK_POPUP_MARK);
   if (actions.length > 0) {
     diagram.undoManager.add(new CompoundUndoableAction(actions));
   }
 };
 
-const undoToDepth = (diagram: Diagram, undoDepth: number) => {
-  while (diagram.undoManager.undoableActions.length > undoDepth) {
-    diagram.undoManager.undo();
-  }
+const getRecentEdgeStylesheetIds = (
+  recentIds: ReadonlyArray<string>,
+  allIds: ReadonlyArray<string>,
+  activeId?: string
+) => {
+  const availableIds = Array.from(new Set(allIds.filter(Boolean)));
+  if (availableIds.length <= EDGE_LIMIT) return availableIds;
+
+  const lruIds = Array.from(new Set([...recentIds.filter(Boolean), activeId].filter(Boolean)));
+  return Array.from(new Set([...lruIds, ...availableIds])).slice(0, EDGE_LIMIT);
+};
+
+const getNodeStencilIds = (
+  recentIds: readonly string[],
+  allIds: readonly string[],
+  basicShapeIds: readonly string[]
+) => {
+  const pinnedIds = [NO_SHAPE_ID, ...REQUIRED_NODE_STENCIL_IDS];
+  const availableIds = Array.from(
+    new Set(allIds.filter(Boolean).filter(id => !REQUIRED_NODE_STENCIL_IDS.includes(id)))
+  );
+  const recentAvailableIds = recentIds.filter(id => availableIds.includes(id));
+  const basicAvailableIds = basicShapeIds.filter(id => availableIds.includes(id));
+
+  return Array.from(
+    new Set([...pinnedIds, ...recentAvailableIds, ...basicAvailableIds, ...availableIds])
+  ).slice(0, NODE_LIMIT);
 };
 
 const buildStencilPreview = (stencil: Stencil, diagram: Diagram) => {
@@ -88,29 +113,37 @@ const isPickerNodeStencil = (stencil: Stencil, diagram: Diagram) => {
   }
 };
 
-export const NodeTypePopup = ({
-  position,
-  isOpen,
-  nodeId,
+type CloseMode = 'commit' | 'cancel' | 'idle';
+
+const useNodeTypePopupController = ({
+  diagram,
   edgeId,
-  mode,
-  undoDepth,
+  initialNodeId,
+  isOpen,
+  position,
+  hasProvisionalNode,
   onClose
-}: Props) => {
-  const diagram = useDiagram();
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const closeModeRef = useRef<'idle' | 'commit' | 'cancel'>('idle');
-  const preferredSide =
-    typeof window === 'undefined' || position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
+}: {
+  diagram: Diagram;
+  edgeId: string;
+  initialNodeId: string | undefined;
+  isOpen: boolean;
+  position: Point;
+  hasProvisionalNode: boolean;
+  onClose: () => void;
+}) => {
+  const stencilRegistry = diagram.document.registry.stencils;
+  const recentStencils = diagram.document.props.recentStencils;
+  const recentEdgeStylesheets = diagram.document.props.recentEdgeStylesheets;
+  const closeModeRef = useRef<CloseMode>('idle');
   const [selectedEdgeStylesheetId, setSelectedEdgeStylesheetId] = useState<string | undefined>(
     undefined
   );
   const [selectedNodeStencilId, setSelectedNodeStencilId] = useState<string | undefined>(undefined);
-  const [currentNodeId, setCurrentNodeId] = useState(nodeId);
-  const [stencilRegistryVersion, setStencilRegistryVersion] = useState(0);
+  const [currentNodeId, setCurrentNodeId] = useState<string | undefined>(initialNodeId);
 
   const close = useCallback(
-    (mode: 'commit' | 'cancel' | 'idle' = 'idle') => {
+    (mode: CloseMode = 'idle') => {
       closeModeRef.current = mode;
       onClose();
     },
@@ -118,14 +151,14 @@ export const NodeTypePopup = ({
   );
 
   const cancelCreation = useCallback(() => {
-    undoToDepth(diagram, undoDepth);
+    diagram.undoManager.undoToMark(NODE_LINK_POPUP_MARK);
     close('cancel');
-  }, [close, diagram, undoDepth]);
+  }, [close, diagram]);
 
   const finalizeChange = useCallback(() => {
-    combineUndoActionsFromDepth(diagram, undoDepth);
+    combineUndoActionsFromMark(diagram);
     close('commit');
-  }, [close, diagram, undoDepth]);
+  }, [close, diagram]);
 
   const applyEdgeStylesheet = useCallback(
     (stylesheetId: string) => {
@@ -150,13 +183,14 @@ export const NodeTypePopup = ({
         applyStencilToNode(diagram, node, layer, stencil, uow);
       });
 
-      diagram.document.props.recentStencils.register(stencil.id);
+      recentStencils.register(stencil.id);
     },
-    [diagram]
+    [diagram, recentStencils]
   );
 
   const keepOnlyEdge = useCallback(() => {
-    const node = mustExist(diagram.nodeLookup.get(currentNodeId));
+    const nodeId = mustExist(currentNodeId);
+    const node = mustExist(diagram.nodeLookup.get(nodeId));
     const edge = mustExist(diagram.edgeLookup.get(edgeId));
     const diagramPoint = diagram.viewBox.toDiagramPoint(position);
 
@@ -165,15 +199,14 @@ export const NodeTypePopup = ({
       node.layer.removeElement(node, uow);
       uow.select(diagram, [edge]);
     });
-    setCurrentNodeId('');
+    setCurrentNodeId(undefined);
   }, [currentNodeId, diagram, edgeId, position]);
 
   const recreateProvisionalNode = useCallback(() => {
     const edge = mustExist(diagram.edgeLookup.get(edgeId));
     if (!(edge.start instanceof ConnectedEndpoint)) return undefined;
 
-    const sourceNode = edge.start.node;
-    const recreatedNode = createProvisionalLinkedNode(sourceNode, edge, edge.end.position);
+    const recreatedNode = createProvisionalLinkedNode(edge.start.node, edge, edge.end.position);
     setCurrentNodeId(recreatedNode.id);
     return recreatedNode.id;
   }, [diagram, edgeId]);
@@ -189,15 +222,15 @@ export const NodeTypePopup = ({
         return;
       }
 
-      const stencil = diagram.document.registry.stencils.getStencil(stencilId);
+      const stencil = stencilRegistry.getStencil(stencilId);
       if (!stencil) return;
 
-      const targetNodeId = currentNodeId || recreateProvisionalNode();
+      const targetNodeId = currentNodeId ?? recreateProvisionalNode();
       if (!targetNodeId) return;
 
       applyStencil(stencil, targetNodeId);
     },
-    [applyStencil, currentNodeId, diagram.document.registry.stencils, keepOnlyEdge, recreateProvisionalNode]
+    [applyStencil, currentNodeId, keepOnlyEdge, recreateProvisionalNode, stencilRegistry]
   );
 
   const applyEdgeSelection = useCallback(
@@ -210,54 +243,108 @@ export const NodeTypePopup = ({
 
   const applySelectionsAndClose = useCallback(() => {
     if (selectedEdgeStylesheetId) {
-      diagram.document.props.recentEdgeStylesheets.register(selectedEdgeStylesheetId);
+      recentEdgeStylesheets.register(selectedEdgeStylesheetId);
     }
 
-    if (mode === 'mixed' && selectedNodeStencilId && selectedNodeStencilId !== NO_SHAPE_ID) {
-      diagram.document.props.recentStencils.register(selectedNodeStencilId);
+    if (hasProvisionalNode && selectedNodeStencilId && selectedNodeStencilId !== NO_SHAPE_ID) {
+      recentStencils.register(selectedNodeStencilId);
     }
 
     finalizeChange();
   }, [
-    diagram.document.props.recentEdgeStylesheets,
-    diagram.document.props.recentStencils,
     finalizeChange,
-    mode,
+    hasProvisionalNode,
+    recentEdgeStylesheets,
+    recentStencils,
     selectedEdgeStylesheetId,
     selectedNodeStencilId
   ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    closeModeRef.current = 'idle';
+    setCurrentNodeId(initialNodeId);
+    setSelectedEdgeStylesheetId(undefined);
+    setSelectedNodeStencilId(undefined);
+  }, [initialNodeId, isOpen]);
+
+  return {
+    applyEdgeSelection,
+    applyNodeSelection,
+    applySelectionsAndClose,
+    cancelCreation,
+    closeModeRef,
+    selectedEdgeStylesheetId,
+    selectedNodeStencilId
+  };
+};
+
+export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
+  const diagram = useDiagram();
+  const hasProvisionalNode = nodeId !== undefined;
+  const stencilRegistry = diagram.document.registry.stencils;
+  const styleManager = diagram.document.styles;
+  const recentStencils = diagram.document.props.recentStencils;
+  const recentEdgeStylesheets = diagram.document.props.recentEdgeStylesheets;
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const preferredSide =
+    typeof window === 'undefined' || position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
+  const [stencilRegistryVersion, setStencilRegistryVersion] = useState(0);
+  const {
+    applyEdgeSelection,
+    applyNodeSelection,
+    applySelectionsAndClose,
+    cancelCreation,
+    closeModeRef,
+    selectedEdgeStylesheetId,
+    selectedNodeStencilId
+  } = useNodeTypePopupController({
+    diagram,
+    edgeId,
+    initialNodeId: nodeId,
+    isOpen,
+    position,
+    hasProvisionalNode,
+    onClose
+  });
 
   const onStencilRegistryChange = useCallback(() => {
     setStencilRegistryVersion(version => version + 1);
   }, []);
 
-  useEventListener(diagram.document.registry.stencils, 'change', onStencilRegistryChange);
+  useEventListener(stencilRegistry, 'change', onStencilRegistryChange);
 
   const edgeStylesheets = useMemo(() => {
     const ids = getRecentEdgeStylesheetIds(
       diagram.document.props.recentEdgeStylesheets.stylesheets,
-      diagram.document.styles.edgeStyles.map(s => s.id),
-      diagram.document.styles.activeEdgeStylesheet.id
+      styleManager.edgeStyles.map(s => s.id),
+      styleManager.activeEdgeStylesheet.id
     );
 
     return ids
-      .map(id => diagram.document.styles.getEdgeStyle(id))
+      .map(id => styleManager.getEdgeStyle(id))
       .filter((stylesheet): stylesheet is EdgeStylesheet => stylesheet !== undefined);
-  }, [diagram]);
+  }, [
+    recentEdgeStylesheets,
+    styleManager,
+    styleManager.activeEdgeStylesheet.id,
+    styleManager.edgeStyles
+  ]);
 
   const nodeStencils = useMemo(() => {
-    if (mode === 'edges-only') return [];
+    if (!hasProvisionalNode) return [];
 
-    const allStencils = diagram.document.registry.stencils
+    const allStencils = stencilRegistry
       .getStencils()
       .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(sp => sp.stencils) ?? [])])
       .filter(stencil => isPickerNodeStencil(stencil, diagram));
-    const basicShapeStencilIds = diagram.document.registry.stencils
+    const basicShapeStencilIds = stencilRegistry
       .get('default')
       .stencils.filter(stencil => isPickerNodeStencil(stencil, diagram))
       .map(stencil => stencil.id);
     const stencilIds = getNodeStencilIds(
-      diagram.document.props.recentStencils.stencils,
+      recentStencils.stencils,
       allStencils.map(stencil => stencil.id),
       basicShapeStencilIds
     );
@@ -267,7 +354,7 @@ export const NodeTypePopup = ({
           return { id, kind: 'no-shape' as const };
         }
 
-        const stencil = diagram.document.registry.stencils.getStencil(id);
+        const stencil = stencilRegistry.getStencil(id);
         if (!stencil) return undefined;
         return { id, kind: 'stencil' as const, stencil };
       })
@@ -278,7 +365,7 @@ export const NodeTypePopup = ({
           | { id: string; kind: 'no-shape' }
           | { id: string; kind: 'stencil'; stencil: Stencil } => e !== undefined
       );
-  }, [diagram, mode, stencilRegistryVersion]);
+  }, [diagram, hasProvisionalNode, recentStencils, stencilRegistry, stencilRegistryVersion]);
 
   const edgePreviewDiagrams = useMemo(
     () =>
@@ -292,7 +379,9 @@ export const NodeTypePopup = ({
   const nodePreviewDiagrams = useMemo(
     () =>
       nodeStencils.map(item =>
-        item.kind === 'stencil' ? { ...item, diagram: buildStencilPreview(item.stencil, diagram) } : item
+        item.kind === 'stencil'
+          ? { ...item, diagram: buildStencilPreview(item.stencil, diagram) }
+          : item
       ),
     [diagram, nodeStencils]
   );
@@ -309,22 +398,13 @@ export const NodeTypePopup = ({
   }, [edgePreviewDiagrams, nodePreviewDiagrams]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !hasProvisionalNode) return;
 
-    closeModeRef.current = 'idle';
-    setCurrentNodeId(nodeId);
-    setSelectedEdgeStylesheetId(undefined);
-    setSelectedNodeStencilId(undefined);
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen || mode === 'edges-only') return;
-
-    for (const pkg of diagram.document.registry.stencils.getStencils()) {
+    for (const pkg of stencilRegistry.getStencils()) {
       if (pkg.stencils.length > 0 || (pkg.subPackages?.length ?? 0) > 0) continue;
-      void diagram.document.registry.stencils.loadStencilPackage(pkg.id);
+      void stencilRegistry.loadStencilPackage(pkg.id);
     }
-  }, [diagram.document.registry.stencils, isOpen, mode]);
+  }, [hasProvisionalNode, isOpen, stencilRegistry]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -367,7 +447,7 @@ export const NodeTypePopup = ({
       >
         <Popover.Content
           className={`${styles.icNodeTypePopup} ${
-            mode === 'edges-only' ? styles.eEdgeOnlyPopup : ''
+            !hasProvisionalNode ? styles.eEdgeOnlyPopup : ''
           }`}
           sideOffset={5}
           side={preferredSide}
@@ -382,7 +462,6 @@ export const NodeTypePopup = ({
                 {edgePreviewDiagrams.map(({ stylesheet, diagram: preview }) => (
                   <div
                     key={stylesheet.id}
-                    role="button"
                     tabIndex={0}
                     className={styles.ePickerItem}
                     title={stylesheet.name}
@@ -401,7 +480,7 @@ export const NodeTypePopup = ({
               </div>
             </div>
 
-            {mode === 'mixed' && (
+            {hasProvisionalNode && (
               <div className={styles.eSection}>
                 <div className={styles.eHeading}>Nodes</div>
                 <div className={`${objectPickerStyles.icObjectPicker} ${styles.eNodeGrid}`}>
@@ -409,8 +488,6 @@ export const NodeTypePopup = ({
                     item.kind === 'no-shape' ? (
                       <div
                         key={item.id}
-                        role="button"
-                        tabIndex={0}
                         className={styles.ePickerItem}
                         title="No shape"
                         data-selected={selectedNodeStencilId === item.id}
@@ -423,8 +500,6 @@ export const NodeTypePopup = ({
                     ) : (
                       <div
                         key={item.stencil.id}
-                        role="button"
-                        tabIndex={0}
                         className={styles.ePickerItem}
                         title={item.stencil.name}
                         data-selected={selectedNodeStencilId === item.stencil.id}
@@ -463,21 +538,23 @@ export const NodeTypePopup = ({
 NodeTypePopup.INITIAL_STATE = {
   position: { x: 600, y: 200 },
   isOpen: false,
-  nodeId: '',
-  edgeId: '',
-  mode: 'mixed' as const,
-  undoDepth: 0
+  nodeId: undefined,
+  edgeId: ''
 };
 
 export type NodeTypePopupState = {
   position: Point;
   isOpen: boolean;
-  nodeId: string;
+  nodeId: string | undefined;
   edgeId: string;
-  mode: 'mixed' | 'edges-only';
-  undoDepth: number;
 };
 
 type Props = NodeTypePopupState & {
   onClose: () => void;
+};
+
+export const _test = {
+  NO_SHAPE_ID,
+  getRecentEdgeStylesheetIds,
+  getNodeStencilIds
 };

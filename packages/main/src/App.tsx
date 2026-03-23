@@ -12,7 +12,12 @@ import { Ruler } from './react-app/Ruler';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
-import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
+import {
+  markStartOfNodeLinkPopup,
+  NodeTypePopup,
+  NodeTypePopupState
+} from './react-app/NodeTypePopup';
+import { type UndoableAction } from '@diagram-craft/model/undoManager';
 import { MessageDialog } from './react-app/components/MessageDialog';
 import {
   canvasDragOverHandler,
@@ -198,19 +203,18 @@ export const App = (props: {
     },
     showNodeLinkPopup: (
       point: Point,
-      nodeId: string,
+      nodeId: string | undefined,
       edgeId: string,
-      mode: 'mixed' | 'edges-only',
-      undoDepth: number
+      pendingUndoableActions: UndoableAction[]
     ) => {
+      markStartOfNodeLinkPopup(application.current.model.activeDiagram, pendingUndoableActions);
+
       const screenPoint = $d.viewBox.toScreenPoint(point);
       setPopoverState({
         isOpen: true,
         position: screenPoint,
         nodeId,
-        edgeId,
-        mode,
-        undoDepth
+        edgeId
       });
     },
     showDialog: (dialog: DialogCommand<unknown, unknown>) => {

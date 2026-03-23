@@ -66,7 +66,11 @@ describe('deserializeDiagramDocument', () => {
 
       const newDoc = TestModel.newDocument();
       await expect(
-        deserializeDiagramDocument(serialized, newDoc, (d, doc) => new TestDiagramBuilder(doc, d.id))
+        deserializeDiagramDocument(
+          serialized,
+          newDoc,
+          (d, doc) => new TestDiagramBuilder(doc, d.id)
+        )
       ).rejects.toThrow();
 
       expect(warnSpy).toHaveBeenCalledWith(
@@ -241,7 +245,7 @@ describe('deserializeDiagramDocument', () => {
 
       const serialized = await serializeDiagramDocument(originalDoc);
 
-      expect(serialized.props?.edgeStylesheets).toEqual(['edge-style-2', 'edge-style-1']);
+      expect(serialized.props?.recentEdgeStylesheets).toEqual(['edge-style-2', 'edge-style-1']);
 
       const newDoc = TestModel.newDocument();
       await deserializeDiagramDocument(

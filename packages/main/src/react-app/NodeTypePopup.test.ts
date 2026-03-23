@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import {
+import { _test } from './NodeTypePopup';
+
+const {
   getRecentEdgeStylesheetIds,
   getNodeStencilIds,
-  getRecentNodeStencilIds,
   NO_SHAPE_ID
-} from './NodeTypePopup.utils';
+} = _test;
 
 describe('NodeTypePopup helpers', () => {
   describe('getRecentEdgeStylesheetIds', () => {
@@ -26,49 +27,6 @@ describe('NodeTypePopup helpers', () => {
           'j'
         )
       ).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
-    });
-  });
-
-  describe('getRecentNodeStencilIds', () => {
-    it('should always include no shape, text and rect first', () => {
-      expect(getRecentNodeStencilIds([]).slice(0, 3)).toEqual([
-        NO_SHAPE_ID,
-        'default@@text',
-        'default@@rect'
-      ]);
-    });
-
-    it('should dedupe defaults from recents and cap the result', () => {
-      const ids = getRecentNodeStencilIds([
-        'default@@text',
-        'x1',
-        'x2',
-        'x3',
-        'x4',
-        'x5',
-        'x6',
-        'x7',
-        'x8',
-        'x9',
-        'x10',
-        'x11',
-        'x12',
-        'x13',
-        'x14',
-        'x15',
-        'x16',
-        'x17'
-      ]);
-
-      expect(ids).toHaveLength(17);
-      expect(ids).toContain(NO_SHAPE_ID);
-      expect(ids.slice(0, 5)).toEqual([
-        NO_SHAPE_ID,
-        'default@@text',
-        'default@@rect',
-        'x1',
-        'x2'
-      ]);
     });
   });
 

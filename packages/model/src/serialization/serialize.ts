@@ -42,7 +42,7 @@ export const serializeDiagramDocument = async (
         saved: document.props.query.saved
       },
       stencils: document.props.recentStencils.stencils,
-      edgeStylesheets: document.props.recentEdgeStylesheets.stylesheets
+      recentEdgeStylesheets: document.props.recentEdgeStylesheets.stylesheets
     },
     data: {
       providers: document.data.providers.map(p => ({

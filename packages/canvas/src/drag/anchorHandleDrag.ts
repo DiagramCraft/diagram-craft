@@ -14,7 +14,6 @@ import {
   createLinkedNodeFromSource,
   createProvisionalLinkedNode
 } from '../linkedNode';
-import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import type { AnchorHandleDragSource } from './anchorHandleDragSource';
 
 const makeEndpoint = (node: DiagramNode, source: AnchorHandleDragSource) => {
@@ -93,18 +92,13 @@ export class AnchorHandleDrag extends Drag {
     }
 
     const previousActions = diagram.undoManager.getToMark();
-    diagram.undoManager.setMark();
-    diagram.undoManager.add(new CompoundUndoableAction(previousActions));
-
-    const undoDepth = diagram.undoManager.undoableActions.length - 1;
 
     /** @see NodeTypePopup */
     this.context.ui.showNodeLinkPopup(
       this.edge.end.position,
-      newNodeId ?? '',
+      newNodeId,
       this.edge.id,
-      newNodeId === undefined ? 'edges-only' : 'mixed',
-      undoDepth
+      previousActions
     );
   }
 
