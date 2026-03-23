@@ -27,7 +27,6 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { deepClone } from '@diagram-craft/utils/object';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { clamp, isSame } from '@diagram-craft/utils/math';
-import { isDebug } from '@diagram-craft/utils/debug';
 
 type UMLExecutionTransformChange = {
   nodeId: string;
@@ -50,11 +49,6 @@ const NEST_OFFSET = 8;
 const NODE_MIN_HEIGHT = 25;
 const RIGHT_CORNER_PADDING = 10;
 
-declare global {
-  // biome-ignore lint/style/noNamespace: augment global scope for an opt-in debug toggle
-  var __diagramCraftDebugUmlExecutionCascade: boolean | undefined;
-}
-
 const isConnected = (e: Endpoint): e is ConnectedEndpoint => e instanceof ConnectedEndpoint;
 
 const isFullyConnected = (edge: DiagramEdge) => isConnected(edge.start) && isConnected(edge.end);
@@ -66,29 +60,6 @@ const isRightSideAnchor = (anchorId: string) =>
   /^r\d+$/.test(anchorId) &&
   Number(anchorId.slice(1)) >= 1 &&
   Number(anchorId.slice(1)) <= RIGHT_ANCHOR_COUNT;
-
-const isExecutionCascadeDebugEnabled = () => {
-  if (isDebug()) return true;
-  return globalThis.__diagramCraftDebugUmlExecutionCascade === true;
-};
-
-const logExecutionCascade = (...args: ReadonlyArray<unknown>) => {
-  if (!isExecutionCascadeDebugEnabled()) return;
-  console.log('[UMLExecutionCascade]', ...args);
-};
-
-const describeEndpoint = (endpoint: ConnectedEndpoint) => {
-  if (endpoint instanceof AnchorEndpoint) {
-    return `${endpoint.node.id}:${endpoint.anchorId}`;
-  }
-
-  if (endpoint instanceof PointInNodeEndpoint) {
-    const ref = endpoint.ref ? `${endpoint.ref.x},${endpoint.ref.y}` : 'none';
-    return `${endpoint.node.id}:point(ref=${ref},offset=${endpoint.offset.x},${endpoint.offset.y},${endpoint.offsetType})`;
-  }
-
-  VERIFY_NOT_REACHED();
-};
 
 /**
  * Execution cascade behavior:
@@ -132,23 +103,10 @@ class ExecutionCascade {
   ) {}
 
   run(changes: UMLExecutionTransformChange[]) {
-    logExecutionCascade(
-      'run',
-      changes.map(change => ({
-        nodeId: change.nodeId,
-        prevBounds: change.prevBounds,
-        newBounds: change.newBounds
-      }))
-    );
-
     for (const change of changes) {
       const node = this.uow.diagram.lookup(change.nodeId);
       if (!isExecutionNode(node)) continue;
 
-      logExecutionCascade('root', node.id, {
-        prevBounds: change.prevBounds,
-        newBounds: change.newBounds
-      });
       this.adjusted.add(node.id);
       this.cascadeExecutionResize(node, new Set([node.id]), change.prevBounds);
     }
@@ -158,60 +116,15 @@ class ExecutionCascade {
     const isCurrentNodeRoot = this.transformRoots.has(currentNode.id);
 
     let prevBounds = prevBoundsArg;
-    logExecutionCascade('node-edges', {
-      nodeId: currentNode.id,
-      isRoot: isCurrentNodeRoot,
-      edgeIds: currentNode.edges.map(edge => edge.id),
-      edges: currentNode.edges.map(edge => ({
-        edgeId: edge.id,
-        startNodeId: isConnected(edge.start) ? edge.start.node.id : undefined,
-        startType:
-          edge.start instanceof AnchorEndpoint
-            ? `anchor:${edge.start.anchorId}`
-            : edge.start instanceof PointInNodeEndpoint
-              ? `point:${edge.start.offsetType}`
-              : 'free',
-        endNodeId: isConnected(edge.end) ? edge.end.node.id : undefined,
-        endType:
-          edge.end instanceof AnchorEndpoint
-            ? `anchor:${edge.end.anchorId}`
-            : edge.end instanceof PointInNodeEndpoint
-              ? `point:${edge.end.offsetType}`
-              : 'free'
-      })),
-      path: [...path]
-    });
     for (const edge of currentNode.edges.filter(isFullyConnected)) {
       const [own, other] = this.getEndpointPair(edge, currentNode);
-      if (!isExecutionNode(own.node) || !isExecutionNode(other.node)) {
-        logExecutionCascade('skip:not-execution-pair', {
-          edgeId: edge.id,
-          ownNodeId: own.node.id,
-          ownNodeType: own.node.nodeType,
-          otherNodeId: other.node.id,
-          otherNodeType: other.node.nodeType
-        });
-        continue;
-      }
+      if (!isExecutionNode(own.node) || !isExecutionNode(other.node)) continue;
 
       const previousAnchorY = this.getYPositionForEndpoint(own, prevBounds);
       const targetY = this.getAndAdjustTargetY(edge, own, this.uow);
 
-      logExecutionCascade('edge', {
-        edgeId: edge.id,
-        currentNode: currentNode.id,
-        own: describeEndpoint(own),
-        other: describeEndpoint(other),
-        previousAnchorY,
-        targetY,
-        path: [...path]
-      });
-
       // No vertical movement on this endpoint means there is nothing to propagate through this edge.
-      if (previousAnchorY !== undefined && isSame(previousAnchorY, targetY)) {
-        logExecutionCascade('skip:no-vertical-change', edge.id);
-        continue;
-      }
+      if (previousAnchorY !== undefined && isSame(previousAnchorY, targetY)) continue;
 
       if (
         !isCurrentNodeRoot &&
@@ -226,12 +139,6 @@ class ExecutionCascade {
           other.position.y,
           this.uow
         );
-        logExecutionCascade('adjust-own-right-side', {
-          edgeId: edge.id,
-          nodeId: currentNode.id,
-          targetY: other.position.y,
-          previousBounds: currentNodePreviousBounds
-        });
         if (currentNodePreviousBounds) {
           prevBounds = currentNodePreviousBounds;
         }
@@ -240,42 +147,23 @@ class ExecutionCascade {
 
       if (this.transformRoots.has(other.node.id)) {
         // Shared edges between directly transformed executions are intentionally ignored.
-        logExecutionCascade('skip:other-is-root', edge.id, other.node.id);
         continue;
       }
 
       if (this.adjusted.has(other.node.id) || path.has(other.node.id)) {
         // The other node was already touched earlier in this traversal, so update it in place but
         // do not recurse into it again.
-        logExecutionCascade('adjust-in-place', {
-          edgeId: edge.id,
-          nodeId: other.node.id,
-          targetY
-        });
         this.adjustEndpoint(edge, other, targetY, this.uow);
         continue;
       }
 
       // First time we touch this dependent node: resize it and continue the cascade from there.
       const dependentPrevBounds = this.adjustEndpoint(edge, other, targetY, this.uow);
-      if (!dependentPrevBounds) {
-        logExecutionCascade('skip:no-adjustment', {
-          edgeId: edge.id,
-          nodeId: other.node.id,
-          targetY
-        });
-        continue;
-      }
+      if (!dependentPrevBounds) continue;
 
       path.add(other.node.id);
       try {
         this.adjusted.add(other.node.id);
-        logExecutionCascade('recurse', {
-          edgeId: edge.id,
-          from: currentNode.id,
-          to: other.node.id,
-          previousBounds: dependentPrevBounds
-        });
         this.cascadeExecutionResize(other.node, path, dependentPrevBounds);
       } finally {
         path.delete(other.node.id);
@@ -413,15 +301,6 @@ class ExecutionCascade {
 
     const effectiveTargetY = Math.max(targetY, bounds.y + cornerPadding);
     const requiredHeight = Math.max(0.1, effectiveTargetY - bounds.y + cornerPadding);
-    logExecutionCascade('adjust-right-side', {
-      edgeId: edge.id,
-      endpoint: describeEndpoint(endpoint),
-      bounds,
-      cornerPadding,
-      targetY,
-      effectiveTargetY,
-      requiredHeight
-    });
     if (requiredHeight > bounds.h) {
       endpoint.node.setBounds({ ...bounds, h: requiredHeight }, uow);
     }
@@ -440,24 +319,10 @@ class ExecutionCascade {
     if (endpoint.anchorId === 'tl') {
       const h = clampDependentHeight(bounds.h, bounds.h + (bounds.y - targetY));
       const y = bounds.y + (bounds.h - h);
-      logExecutionCascade('adjust-left-side', {
-        endpoint: describeEndpoint(endpoint),
-        mode: 'top',
-        bounds,
-        targetY,
-        nextBounds: { ...bounds, y, h }
-      });
       endpoint.node.setBounds({ ...bounds, y, h }, uow);
       return bounds;
     } else if (endpoint.anchorId === 'bl') {
       const h = clampDependentHeight(bounds.h, targetY - bounds.y);
-      logExecutionCascade('adjust-left-side', {
-        endpoint: describeEndpoint(endpoint),
-        mode: 'bottom',
-        bounds,
-        targetY,
-        nextBounds: { ...bounds, h }
-      });
       endpoint.node.setBounds({ ...bounds, h }, uow);
       return bounds;
     } else {
@@ -514,11 +379,6 @@ const commitUmlExecutionCascade = (uow: UnitOfWork) => {
 
   const changes = [...(uow.metadata.umlExecutionTransformChanges?.values() ?? [])];
   if (changes.length === 0) return;
-
-  logExecutionCascade('commit', {
-    changeCount: changes.length,
-    nodeIds: changes.map(change => change.nodeId)
-  });
 
   const cascade = new ExecutionCascade(new Set(changes.map(change => change.nodeId)), uow);
 
@@ -629,7 +489,7 @@ export class UMLLifelineExecutionNodeDefinition extends ShapeNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    if (context.phase !== 'commit') {
+    if (context.phase !== 'dragEnd') {
       return endpoint;
     }
 

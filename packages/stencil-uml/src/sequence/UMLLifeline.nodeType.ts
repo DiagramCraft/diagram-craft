@@ -11,7 +11,7 @@ import {
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { Point, _p } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { Transform, TransformFactory, Translation } from '@diagram-craft/geometry/transform';
 import { Anchor } from '@diagram-craft/model/anchor';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';

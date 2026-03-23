@@ -266,7 +266,7 @@ describe('EdgeEndpointMoveDrag', () => {
     expect((edge.end as PointInNodeEndpoint).offsetType).toBe('absolute');
   });
 
-  test('passes drag during preview and commit on drag end', () => {
+  test('passes drag during preview and dragEnd on drag end', () => {
     const definition = new PhaseCaptureNodeDefinition();
 
     attachEndToNodeBoundary('attach-phase-capture', {}, diagram => {

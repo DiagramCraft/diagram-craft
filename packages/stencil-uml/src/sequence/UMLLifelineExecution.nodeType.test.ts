@@ -47,7 +47,7 @@ describe('UMLLifelineExecution', () => {
       edge,
       endpoint,
       {
-        phase: 'commit',
+        phase: 'dragEnd',
         type: 'point',
         end: 'end',
         point: endpoint.position,
