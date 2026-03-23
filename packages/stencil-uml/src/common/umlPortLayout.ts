@@ -7,7 +7,9 @@ import { mustExist } from '@diagram-craft/utils/assert';
 export const isUMLPortNode = (e: DiagramElement) => isNode(e) && e.nodeType === 'umlPort';
 
 const PORT_HOST_NODE_TYPES = new Set(['umlClass', 'umlStructuredClassifier']);
-const isPortHost = (n: DiagramNode) => PORT_HOST_NODE_TYPES.has(n.nodeType);
+const isPortHost = (n: DiagramNode) =>
+  PORT_HOST_NODE_TYPES.has(n.nodeType) ||
+  (n.nodeType === 'umlFrame' && (n.renderProps.custom.umlFrame?.hasCompartments ?? false));
 
 export const classifyPortChildren = (node: DiagramNode) => {
   const ports: DiagramNode[] = [];

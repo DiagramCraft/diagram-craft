@@ -4,7 +4,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
@@ -24,7 +23,10 @@ import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
 import { resolveEdgeEndpointTarget } from './edgeEndpointTarget';
-import type { AttachEdgeContext } from '@diagram-craft/model/elementDefinitionRegistry';
+import type {
+  AttachEdgeContext,
+  AttachPhase
+} from '@diagram-craft/model/elementDefinitionRegistry';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
@@ -113,9 +115,9 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   onDragEnd(): void {
     if (this.shouldAttachToPoint()) {
-      this.attachToPoint(this.point!);
+      this.attachToPoint(this.point!, 'dragEnd');
     } else {
-      this.attachToClosestAnchor(this.point!);
+      this.attachToClosestAnchor(this.point!, 'dragEnd');
     }
 
     if (this.hoverElement) {
@@ -198,7 +200,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     this.uow.abort();
   }
 
-  private attachToClosestAnchor(p: Point) {
+  private attachToClosestAnchor(p: Point, phase: AttachPhase = 'drag') {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
@@ -209,7 +211,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     if (a.anchor) {
       if (a.anchor.type !== 'edge') {
-        this.tryAttachEndpoint(hoverNode, new AnchorEndpoint(hoverNode, a.anchor.id), 'anchor', p);
+        this.attach('anchor', p, new AnchorEndpoint(hoverNode, a.anchor.id), phase);
       } else {
         const ref = Box.fromOffset(hoverNode.bounds, a.anchor.start);
 
@@ -224,21 +226,21 @@ export class EdgeEndpointMoveDrag extends Drag {
         if (Point.distance(pp, p) > 10) return;
 
         const offset = this.calculateOffset(pp, ref, hoverNode.bounds);
-        this.tryAttachEndpoint(
-          hoverNode,
-          new AnchorEndpoint(hoverNode, a.anchor.id, offset),
+        this.attach(
           'anchor',
           p,
+          new AnchorEndpoint(hoverNode, a.anchor.id, offset),
+          phase,
           'anchor-edge'
         );
       }
     } else {
       const offset = this.calculateOffset(a.point, hoverNode.bounds, hoverNode.bounds);
-      this.tryAttachEndpoint(
-        hoverNode,
-        new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+      this.attach(
         'boundary',
         p,
+        new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+        phase,
         'edge'
       );
     }
@@ -248,33 +250,36 @@ export class EdgeEndpointMoveDrag extends Drag {
     return this.modifiers?.metaKey;
   }
 
-  private attachToPoint(p: Point) {
+  private attachToPoint(p: Point, phase: AttachPhase = 'drag') {
     if (!this.hoverElement || !this.diagram.nodeLookup.has(this.hoverElement)) return;
 
     const hoverNode = this.diagram.nodeLookup.get(this.hoverElement);
     assert.present(hoverNode);
 
     const offset = this.calculateOffset(p, hoverNode.bounds, hoverNode.bounds);
-    this.tryAttachEndpoint(
-      hoverNode,
-      new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+    this.attach(
       'point',
       p,
+      new PointInNodeEndpoint(hoverNode, undefined, offset, 'relative'),
+      phase,
       'point'
     );
   }
 
-  private tryAttachEndpoint(
-    node: DiagramNode,
-    endpoint: Endpoint,
-    mode: AttachEdgeContext['mode'],
-    coord: Point,
+  private attach(
+    type: AttachEdgeContext['type'],
+    point: Point,
+    endpoint: ConnectedEndpoint,
+    phase: AttachPhase,
     highlightArg?: string
   ) {
+    const node = endpoint.node;
+
     const attachContext: AttachEdgeContext = {
-      mode,
+      phase,
+      type: type,
       end: this.type,
-      coord,
+      point,
       modifiers: {
         shiftKey: this.modifiers?.shiftKey ?? false,
         altKey: this.modifiers?.altKey ?? false,
@@ -283,15 +288,13 @@ export class EdgeEndpointMoveDrag extends Drag {
       }
     };
 
-    const resolvedEndpoint = node.getDefinition().onAttachEdge(
-      node,
-      this.edge,
-      endpoint,
-      attachContext
-    );
+    const resolvedEndpoint = node
+      .getDefinition()
+      .onAttachEdge(node, this.edge, endpoint, attachContext);
+
     if (!resolvedEndpoint) {
       removeHighlight(node, Highlights.NODE__EDGE_CONNECT);
-      this.setEndpoint(new FreeEndpoint(coord));
+      this.setEndpoint(new FreeEndpoint(point));
       return;
     }
 
@@ -360,5 +363,4 @@ export class EdgeEndpointMoveDrag extends Drag {
       targetParent.addChild(this.edge, this.uow);
     }
   }
-
 }

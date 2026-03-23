@@ -61,7 +61,7 @@ describe('UMLLifeline', () => {
     expect(line.bounds).toEqual({ x: 154, y: 130, w: 12, h: 190, r: 0 });
   });
 
-  test('adds executions on the lifeline with a default vertical offset', async () => {
+  test('adds executions on the lifeline while preserving their vertical position', async () => {
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     await registerUMLNodes(diagram.document.registry.nodes);
 
@@ -71,15 +71,21 @@ describe('UMLLifeline', () => {
     });
     const execution = layer.addNode({
       type: 'umlLifelineExecution',
-      bounds: { x: 0, y: 0, w: 10, h: 40, r: 0 }
+      bounds: { x: 40, y: 210, w: 10, h: 40, r: 0 }
     });
 
     UnitOfWork.execute(diagram, uow => {
-      new UMLLifelineNodeDefinition().onDrop({ x: 0, y: 0 }, lifeline, [execution], uow, 'default');
+      new UMLLifelineNodeDefinition().onDrop(
+        { x: 160, y: 210 },
+        lifeline,
+        [execution],
+        uow,
+        'default'
+      );
     });
 
     expect(execution.parent).toBe(lifeline);
-    expect(execution.bounds).toEqual({ x: 155, y: 140, w: 10, h: 40, r: 0 });
+    expect(execution.bounds).toEqual({ x: 155, y: 210, w: 10, h: 40, r: 0 });
   });
 
   test('nests executions slightly to the right of their parent execution', async () => {
@@ -134,7 +140,13 @@ describe('UMLLifeline', () => {
       container.addChild(head, uow);
       container.addChild(lifeline, uow);
       lifeline.addChild(execution, uow);
-      new UMLLifelineNodeDefinition().onDrop({ x: 0, y: 0 }, lifeline, [execution], uow, 'default');
+      new UMLLifelineNodeDefinition().onDrop(
+        { x: 160, y: 160 },
+        lifeline,
+        [execution],
+        uow,
+        'default'
+      );
     });
 
     UnitOfWork.execute(diagram, uow => {
@@ -145,7 +157,7 @@ describe('UMLLifeline', () => {
     });
 
     expect(lifeline.bounds).toEqual({ x: 254, y: 130, w: 12, h: 190, r: 0 });
-    expect(execution.bounds).toEqual({ x: 255, y: 140, w: 10, h: 40, r: 0 });
+    expect(execution.bounds).toEqual({ x: 255, y: 130, w: 10, h: 40, r: 0 });
   });
 
   test('adds destroy markers on the lifeline at the dropped vertical position', async () => {

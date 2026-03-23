@@ -30,7 +30,7 @@ class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    if (context.mode !== 'boundary' || !(endpoint instanceof PointInNodeEndpoint)) return endpoint;
+    if (context.type !== 'boundary' || !(endpoint instanceof PointInNodeEndpoint)) return endpoint;
     return new PointInNodeEndpoint(endpoint.node, endpoint.ref, endpoint.offset, 'absolute');
   }
 }
@@ -46,7 +46,7 @@ class RejectAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    return context.mode === 'boundary' ? undefined : endpoint;
+    return context.type === 'boundary' ? undefined : endpoint;
   }
 }
 
@@ -61,7 +61,25 @@ class ReplaceAttachNodeDefinition extends RectNodeDefinition {
     endpoint: Endpoint,
     context: AttachEdgeContext
   ): Endpoint | undefined {
-    return context.mode === 'boundary' ? new AnchorEndpoint(node, 'c') : endpoint;
+    return context.type === 'boundary' ? new AnchorEndpoint(node, 'c') : endpoint;
+  }
+}
+
+class PhaseCaptureNodeDefinition extends RectNodeDefinition {
+  phases: AttachEdgeContext['phase'][] = [];
+
+  constructor(type = 'attach-phase-capture') {
+    super(type, 'Attach Phase Capture');
+  }
+
+  onAttachEdge(
+    _node: DiagramNode,
+    _edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined {
+    this.phases.push(context.phase);
+    return endpoint;
   }
 }
 
@@ -238,11 +256,24 @@ describe('EdgeEndpointMoveDrag', () => {
         custom: { container: { shape: 'attach-delegated' } }
       },
       diagram => {
-        diagram.document.registry.nodes.register(new AbsoluteAttachNodeDefinition('attach-delegated'));
+        diagram.document.registry.nodes.register(
+          new AbsoluteAttachNodeDefinition('attach-delegated')
+        );
       }
     );
 
     expect(edge.end).toBeInstanceOf(PointInNodeEndpoint);
     expect((edge.end as PointInNodeEndpoint).offsetType).toBe('absolute');
+  });
+
+  test('passes drag during preview and dragEnd on drag end', () => {
+    const definition = new PhaseCaptureNodeDefinition();
+
+    attachEndToNodeBoundary('attach-phase-capture', {}, diagram => {
+      diagram.document.registry.nodes.register(definition);
+    });
+
+    expect(definition.phases).toContain('drag');
+    expect(definition.phases.at(-1)).toBe('dragEnd');
   });
 });

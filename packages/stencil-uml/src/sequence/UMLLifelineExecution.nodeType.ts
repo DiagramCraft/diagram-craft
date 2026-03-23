@@ -5,6 +5,7 @@ import {
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
 import {
+  AttachEdgeContext,
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
@@ -158,9 +159,7 @@ class ExecutionCascade {
 
       // First time we touch this dependent node: resize it and continue the cascade from there.
       const dependentPrevBounds = this.adjustEndpoint(edge, other, targetY, this.uow);
-      if (!dependentPrevBounds) {
-        continue;
-      }
+      if (!dependentPrevBounds) continue;
 
       path.add(other.node.id);
       try {
@@ -176,10 +175,42 @@ class ExecutionCascade {
     if (endpoint instanceof AnchorEndpoint) {
       return isRightSideAnchor(endpoint.anchorId);
     } else if (endpoint instanceof PointInNodeEndpoint) {
-      return endpoint.ref?.x === 1 && endpoint.offset.x === 0;
+      if (endpoint.ref) {
+        return endpoint.ref.x === 1 && endpoint.offset.x === 0;
+      }
+
+      if (endpoint.offsetType === 'relative') {
+        return isSame(endpoint.offset.x, 1);
+      }
+
+      return isSame(endpoint.offset.x, endpoint.node.bounds.w);
     } else {
       VERIFY_NOT_REACHED();
     }
+  }
+
+  private hasCornerRightSideAnchorPadding(endpoint: ConnectedEndpoint) {
+    if (endpoint instanceof AnchorEndpoint) {
+      return endpoint.anchorId !== 'r1' && endpoint.anchorId !== `r${RIGHT_ANCHOR_COUNT}`;
+    }
+
+    if (endpoint instanceof PointInNodeEndpoint) {
+      if (endpoint.ref) {
+        const normalizedY =
+          endpoint.offsetType === 'absolute'
+            ? endpoint.ref.y + endpoint.offset.y / endpoint.node.bounds.h
+            : endpoint.ref.y + endpoint.offset.y;
+        return !isSame(normalizedY, 0) && !isSame(normalizedY, 1);
+      }
+
+      const normalizedY =
+        endpoint.offsetType === 'absolute'
+          ? endpoint.offset.y / endpoint.node.bounds.h
+          : endpoint.offset.y;
+      return !isSame(normalizedY, 0) && !isSame(normalizedY, 1);
+    }
+
+    VERIFY_NOT_REACHED();
   }
 
   private getNormalizedYForAnchor(anchorId: string) {
@@ -266,9 +297,10 @@ class ExecutionCascade {
     uow: UnitOfWork
   ) {
     const bounds = endpoint.node.bounds;
+    const cornerPadding = this.hasCornerRightSideAnchorPadding(endpoint) ? RIGHT_CORNER_PADDING : 0;
 
-    const effectiveTargetY = Math.max(targetY, bounds.y + RIGHT_CORNER_PADDING);
-    const requiredHeight = Math.max(0.1, effectiveTargetY - bounds.y + RIGHT_CORNER_PADDING);
+    const effectiveTargetY = Math.max(targetY, bounds.y + cornerPadding);
+    const requiredHeight = Math.max(0.1, effectiveTargetY - bounds.y + cornerPadding);
     if (requiredHeight > bounds.h) {
       endpoint.node.setBounds({ ...bounds, h: requiredHeight }, uow);
     }
@@ -301,10 +333,11 @@ class ExecutionCascade {
   private getAndAdjustTargetY(edge: DiagramEdge, endpoint: ConnectedEndpoint, uow: UnitOfWork) {
     const ypos = endpoint.position.y;
     if (this.isConnectedToRightSide(endpoint)) {
+      const cornerPadding = this.hasCornerRightSideAnchorPadding(endpoint) ? RIGHT_CORNER_PADDING : 0;
       const adjusted = clamp(
         ypos,
-        endpoint.node.bounds.y + RIGHT_CORNER_PADDING,
-        endpoint.node.bounds.y + endpoint.node.bounds.h - RIGHT_CORNER_PADDING
+        endpoint.node.bounds.y + cornerPadding,
+        endpoint.node.bounds.y + endpoint.node.bounds.h - cornerPadding
       );
       if (!isSame(adjusted, ypos)) {
         // Direct transform roots may already use flexible right-side endpoints. If the root shrinks,
@@ -386,10 +419,9 @@ export const placeExecutionOnParent = (
   uow: UnitOfWork,
   opts?: { assignDefaultY?: boolean }
 ) => {
-  const currentY =
-    child.parent === parent && child.bounds.y < parent.bounds.y
-      ? parent.bounds.y + child.bounds.y
-      : child.bounds.y;
+  const hasParentLocalBounds =
+    child.parent === parent && child.bounds.x < parent.bounds.x && child.bounds.y < parent.bounds.y;
+  const currentY = hasParentLocalBounds ? parent.bounds.y + child.bounds.y : child.bounds.y;
   const nextX =
     parent.nodeType === 'umlLifeline'
       ? parent.bounds.x + (parent.bounds.w - child.bounds.w) / 2
@@ -449,6 +481,30 @@ export class UMLLifelineExecutionNodeDefinition extends ShapeNodeDefinition {
     }
 
     registerExecutionTransformChange(node, prevBounds, newBounds, uow);
+  }
+
+  override onAttachEdge(
+    node: DiagramNode,
+    _edge: DiagramEdge,
+    endpoint: Endpoint,
+    context: AttachEdgeContext
+  ): Endpoint | undefined {
+    if (context.phase !== 'dragEnd') {
+      return endpoint;
+    }
+
+    if (!(endpoint instanceof PointInNodeEndpoint) || endpoint.node !== node) {
+      return endpoint;
+    }
+
+    const position = endpoint.position;
+    const rotated = Point.rotateAround(position, -node.bounds.r, Box.center(node.bounds));
+    const normalizedX = (rotated.x - node.bounds.x) / node.bounds.w;
+    const attachToRightSide = normalizedX >= 0.5;
+    const ref = attachToRightSide ? _p(1, 0) : _p(0, 0);
+    const offset = _p(0, rotated.y - node.bounds.y);
+
+    return new PointInNodeEndpoint(node, ref, offset, 'absolute');
   }
 
   getCustomPropertyDefinitions(_def: DiagramNode) {

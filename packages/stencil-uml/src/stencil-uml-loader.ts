@@ -20,6 +20,7 @@ import {
 } from '@diagram-craft/stencil-uml/sequence/UMLLifeline.nodeType';
 import { UMLLifelineExecutionNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifelineExecution.nodeType';
 import { UMLDestroyNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDestroy.nodeType';
+import { UMLDurationConstraintNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDurationConstraint.nodeType';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import classStencils from './class/uml-class-stencils.yaml';
 import componentStencils from './component/uml-component-stencils.yaml';
@@ -49,6 +50,7 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLLifelineNodeDefinition());
   nodes.register(new UMLLifelineExecutionNodeDefinition());
   nodes.register(new UMLDestroyNodeDefinition());
+  nodes.register(new UMLDurationConstraintNodeDefinition());
 };
 
 export const loadUMLStencils = async (registry: Registry) => {
