@@ -84,6 +84,7 @@ export const NodeTypePopup = ({
 }: Props) => {
   const diagram = useDiagram();
   const anchorRef = useRef<HTMLDivElement>(null);
+  const closeModeRef = useRef<'idle' | 'commit' | 'cancel'>('idle');
   const preferredSide =
     typeof window === 'undefined' || position.y <= window.innerHeight / 2 ? 'bottom' : 'top';
   const [selectedEdgeStylesheetId, setSelectedEdgeStylesheetId] = useState<string | undefined>(
@@ -91,17 +92,23 @@ export const NodeTypePopup = ({
   );
   const [selectedNodeStencilId, setSelectedNodeStencilId] = useState<string | undefined>(undefined);
 
-  const close = useCallback(() => onClose(), [onClose]);
+  const close = useCallback(
+    (mode: 'commit' | 'cancel' | 'idle' = 'idle') => {
+      closeModeRef.current = mode;
+      onClose();
+    },
+    [onClose]
+  );
 
   const cancelCreation = useCallback(() => {
     undoToDepth(diagram, undoDepth);
-    onClose();
-  }, [diagram, onClose, undoDepth]);
+    close('cancel');
+  }, [close, diagram, undoDepth]);
 
   const finalizeChange = useCallback(() => {
     combineUndoActionsFromDepth(diagram, undoDepth);
-    onClose();
-  }, [diagram, onClose, undoDepth]);
+    close('commit');
+  }, [close, diagram, undoDepth]);
 
   const applyEdgeStylesheet = useCallback(
     (stylesheetId: string) => {
@@ -239,6 +246,12 @@ export const NodeTypePopup = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    closeModeRef.current = 'idle';
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -268,7 +281,11 @@ export const NodeTypePopup = ({
       <Popover.Root
         open={isOpen}
         onOpenChange={s => {
-          if (!s) close();
+          if (s) return;
+
+          if (closeModeRef.current === 'idle') {
+            cancelCreation();
+          }
         }}
       >
         <Popover.Content
