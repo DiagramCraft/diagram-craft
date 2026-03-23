@@ -29,6 +29,7 @@ import {
   NO_SHAPE_ID
 } from './NodeTypePopup.utils';
 import styles from './NodeTypePopup.module.css';
+import objectPickerStyles from './ObjectPicker.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
 
@@ -344,11 +345,12 @@ export const NodeTypePopup = ({
           <div className={styles.eColumns}>
             <div className={styles.eSection}>
               <div className={styles.eHeading}>Edges</div>
-              <div className={styles.eEdgeGrid}>
+              <div className={`${objectPickerStyles.icObjectPicker} ${styles.eEdgeGrid}`}>
                 {edgePreviewDiagrams.map(({ stylesheet, diagram: preview }) => (
-                  <button
+                  <div
                     key={stylesheet.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     className={styles.ePickerItem}
                     title={stylesheet.name}
                     data-selected={selectedEdgeStylesheetId === stylesheet.id}
@@ -361,7 +363,7 @@ export const NodeTypePopup = ({
                       onMouseDown={() => applyEdgeSelection(stylesheet.id)}
                       showHover={false}
                     />
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -369,12 +371,13 @@ export const NodeTypePopup = ({
             {mode === 'mixed' && (
               <div className={styles.eSection}>
                 <div className={styles.eHeading}>Nodes</div>
-                <div className={styles.eNodeGrid}>
+                <div className={`${objectPickerStyles.icObjectPicker} ${styles.eNodeGrid}`}>
                   {nodePreviewDiagrams.map(item =>
                     item.kind === 'no-shape' ? (
-                      <button
+                      <div
                         key={item.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         className={styles.ePickerItem}
                         title="No shape"
                         data-selected={selectedNodeStencilId === item.id}
@@ -383,11 +386,12 @@ export const NodeTypePopup = ({
                         <div className={styles.eIconTile}>
                           <LineEndIcon />
                         </div>
-                      </button>
+                      </div>
                     ) : (
-                      <button
+                      <div
                         key={item.stencil.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         className={styles.ePickerItem}
                         title={item.stencil.name}
                         data-selected={selectedNodeStencilId === item.stencil.id}
@@ -401,7 +405,7 @@ export const NodeTypePopup = ({
                           scaleStrokes={stencilScaleStrokes(item.stencil)}
                           showHover={false}
                         />
-                      </button>
+                      </div>
                     )
                   )}
                 </div>
@@ -412,6 +416,9 @@ export const NodeTypePopup = ({
           <div className={styles.eFooter}>
             <Button variant={'primary'} onClick={applySelectionsAndClose}>
               Ok
+            </Button>
+            <Button variant={'secondary'} onClick={cancelCreation}>
+              Cancel
             </Button>
           </div>
         </Popover.Content>
