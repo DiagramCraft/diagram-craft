@@ -69,6 +69,9 @@ export const applyStencilToNode = (
   }
 
   // Rendering logic assumes node types stay stable, so changing it needs a forced redraw.
+  uow.on('after', 'commit', 'forceRedraw', () => {
+    diagram.emit('diagramChange');
+  });
   uow.on('after', 'undo', 'forceRedraw', () => {
     diagram.emit('diagramChange');
   });

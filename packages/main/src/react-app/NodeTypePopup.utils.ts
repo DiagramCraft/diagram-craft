@@ -22,3 +22,18 @@ export const getRecentNodeStencilIds = (recentIds: readonly string[]) => {
   const ids = [NO_SHAPE_ID, ...REQUIRED_NODE_STENCIL_IDS, ...recentIds];
   return Array.from(new Set(ids)).slice(0, NODE_LIMIT + 1);
 };
+
+export const getNodeStencilIds = (
+  recentIds: readonly string[],
+  allIds: readonly string[]
+) => {
+  const availableIds = Array.from(
+    new Set(allIds.filter(Boolean).filter(id => !REQUIRED_NODE_STENCIL_IDS.includes(id)))
+  );
+
+  if (availableIds.length + 1 + REQUIRED_NODE_STENCIL_IDS.length <= NODE_LIMIT + 1) {
+    return [NO_SHAPE_ID, ...REQUIRED_NODE_STENCIL_IDS, ...availableIds];
+  }
+
+  return getRecentNodeStencilIds(recentIds);
+};

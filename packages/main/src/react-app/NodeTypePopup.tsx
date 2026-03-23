@@ -4,7 +4,7 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
-import { FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -25,11 +25,12 @@ import { useDiagram } from '../application';
 import { createPreview } from './toolwindow/StyleOverviewToolWindow/stylesPanelUtils';
 import {
   getRecentEdgeStylesheetIds,
-  getRecentNodeStencilIds,
+  getNodeStencilIds,
   NO_SHAPE_ID
 } from './NodeTypePopup.utils';
 import styles from './NodeTypePopup.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
+import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
 
 const combineUndoActionsFromDepth = (diagram: Diagram, undoDepth: number) => {
   const actions: UndoableAction[] = [];
@@ -91,6 +92,7 @@ export const NodeTypePopup = ({
     undefined
   );
   const [selectedNodeStencilId, setSelectedNodeStencilId] = useState<string | undefined>(undefined);
+  const [currentNodeId, setCurrentNodeId] = useState(nodeId);
 
   const close = useCallback(
     (mode: 'commit' | 'cancel' | 'idle' = 'idle') => {
@@ -119,15 +121,13 @@ export const NodeTypePopup = ({
           meta.style = stylesheetId;
         }, uow);
       });
-
-      diagram.document.props.recentEdgeStylesheets.register(stylesheetId);
     },
     [diagram, edgeId]
   );
 
   const applyStencil = useCallback(
-    (stencil: Stencil) => {
-      const node = mustExist(diagram.nodeLookup.get(nodeId));
+    (stencil: Stencil, targetNodeId: string) => {
+      const node = mustExist(diagram.nodeLookup.get(targetNodeId));
       const layer = node.layer;
       assertRegularLayer(layer);
 
@@ -137,11 +137,11 @@ export const NodeTypePopup = ({
 
       diagram.document.props.recentStencils.register(stencil.id);
     },
-    [diagram, nodeId]
+    [diagram]
   );
 
   const keepOnlyEdge = useCallback(() => {
-    const node = mustExist(diagram.nodeLookup.get(nodeId));
+    const node = mustExist(diagram.nodeLookup.get(currentNodeId));
     const edge = mustExist(diagram.edgeLookup.get(edgeId));
     const diagramPoint = diagram.viewBox.toDiagramPoint(position);
 
@@ -150,31 +150,63 @@ export const NodeTypePopup = ({
       node.layer.removeElement(node, uow);
       uow.select(diagram, [edge]);
     });
-  }, [diagram, edgeId, nodeId, position]);
+    setCurrentNodeId('');
+  }, [currentNodeId, diagram, edgeId, position]);
+
+  const recreateProvisionalNode = useCallback(() => {
+    const edge = mustExist(diagram.edgeLookup.get(edgeId));
+    if (!(edge.start instanceof ConnectedEndpoint)) return undefined;
+
+    const sourceNode = edge.start.node;
+    const recreatedNode = createProvisionalLinkedNode(sourceNode, edge, edge.end.position);
+    setCurrentNodeId(recreatedNode.id);
+    return recreatedNode.id;
+  }, [diagram, edgeId]);
+
+  const applyNodeSelection = useCallback(
+    (stencilId: string) => {
+      setSelectedNodeStencilId(stencilId);
+
+      if (stencilId === NO_SHAPE_ID) {
+        if (currentNodeId) {
+          keepOnlyEdge();
+        }
+        return;
+      }
+
+      const stencil = diagram.document.registry.stencils.getStencil(stencilId);
+      if (!stencil) return;
+
+      const targetNodeId = currentNodeId || recreateProvisionalNode();
+      if (!targetNodeId) return;
+
+      applyStencil(stencil, targetNodeId);
+    },
+    [applyStencil, currentNodeId, diagram.document.registry.stencils, keepOnlyEdge, recreateProvisionalNode]
+  );
+
+  const applyEdgeSelection = useCallback(
+    (stylesheetId: string) => {
+      setSelectedEdgeStylesheetId(stylesheetId);
+      applyEdgeStylesheet(stylesheetId);
+    },
+    [applyEdgeStylesheet]
+  );
 
   const applySelectionsAndClose = useCallback(() => {
     if (selectedEdgeStylesheetId) {
-      applyEdgeStylesheet(selectedEdgeStylesheetId);
+      diagram.document.props.recentEdgeStylesheets.register(selectedEdgeStylesheetId);
     }
 
-    if (mode === 'mixed' && selectedNodeStencilId) {
-      if (selectedNodeStencilId === NO_SHAPE_ID) {
-        keepOnlyEdge();
-      } else {
-        const stencil = diagram.document.registry.stencils.getStencil(selectedNodeStencilId);
-        if (stencil) {
-          applyStencil(stencil);
-        }
-      }
+    if (mode === 'mixed' && selectedNodeStencilId && selectedNodeStencilId !== NO_SHAPE_ID) {
+      diagram.document.props.recentStencils.register(selectedNodeStencilId);
     }
 
     finalizeChange();
   }, [
-    applyEdgeStylesheet,
-    applyStencil,
-    diagram.document.registry.stencils,
+    diagram.document.props.recentEdgeStylesheets,
+    diagram.document.props.recentStencils,
     finalizeChange,
-    keepOnlyEdge,
     mode,
     selectedEdgeStylesheetId,
     selectedNodeStencilId
@@ -195,7 +227,15 @@ export const NodeTypePopup = ({
   const nodeStencils = useMemo(() => {
     if (mode === 'edges-only') return [];
 
-    const stencilIds = getRecentNodeStencilIds(diagram.document.props.recentStencils.stencils);
+    const stencilIds = getNodeStencilIds(
+      diagram.document.props.recentStencils.stencils,
+      diagram.document.registry.stencils
+        .getStencils()
+        .flatMap(pkg => [
+          ...pkg.stencils.map(s => s.id),
+          ...(pkg.subPackages?.flatMap(sp => sp.stencils.map(s => s.id)) ?? [])
+        ])
+    );
     return stencilIds
       .map(id => {
         if (id === NO_SHAPE_ID) {
@@ -247,6 +287,9 @@ export const NodeTypePopup = ({
     if (!isOpen) return;
 
     closeModeRef.current = 'idle';
+    setCurrentNodeId(nodeId);
+    setSelectedEdgeStylesheetId(undefined);
+    setSelectedNodeStencilId(undefined);
   }, [isOpen]);
 
   useEffect(() => {
@@ -309,13 +352,13 @@ export const NodeTypePopup = ({
                     className={styles.ePickerItem}
                     title={stylesheet.name}
                     data-selected={selectedEdgeStylesheetId === stylesheet.id}
-                    onClick={() => setSelectedEdgeStylesheetId(stylesheet.id)}
+                    onClick={() => applyEdgeSelection(stylesheet.id)}
                   >
                     <PickerCanvas
                       name={stylesheet.name}
                       size={34}
                       diagram={preview}
-                      onMouseDown={() => setSelectedEdgeStylesheetId(stylesheet.id)}
+                      onMouseDown={() => applyEdgeSelection(stylesheet.id)}
                       showHover={false}
                     />
                   </button>
@@ -335,7 +378,7 @@ export const NodeTypePopup = ({
                         className={styles.ePickerItem}
                         title="No shape"
                         data-selected={selectedNodeStencilId === item.id}
-                        onClick={() => setSelectedNodeStencilId(item.id)}
+                        onClick={() => applyNodeSelection(item.id)}
                       >
                         <div className={styles.eIconTile}>
                           <LineEndIcon />
@@ -348,13 +391,13 @@ export const NodeTypePopup = ({
                         className={styles.ePickerItem}
                         title={item.stencil.name}
                         data-selected={selectedNodeStencilId === item.stencil.id}
-                        onClick={() => setSelectedNodeStencilId(item.stencil.id)}
+                        onClick={() => applyNodeSelection(item.stencil.id)}
                       >
                         <PickerCanvas
                           name={item.stencil.name}
                           size={34}
                           diagram={item.diagram}
-                          onMouseDown={() => setSelectedNodeStencilId(item.stencil.id)}
+                          onMouseDown={() => applyNodeSelection(item.stencil.id)}
                           scaleStrokes={stencilScaleStrokes(item.stencil)}
                           showHover={false}
                         />

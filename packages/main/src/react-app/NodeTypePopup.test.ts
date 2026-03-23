@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getRecentEdgeStylesheetIds,
+  getNodeStencilIds,
   getRecentNodeStencilIds,
   NO_SHAPE_ID
 } from './NodeTypePopup.utils';
@@ -67,6 +68,45 @@ describe('NodeTypePopup helpers', () => {
         'default@@rect',
         'x1',
         'x2'
+      ]);
+    });
+  });
+
+  describe('getNodeStencilIds', () => {
+    it('should show all available shapes when there are 16 or fewer', () => {
+      expect(
+        getNodeStencilIds([], ['default@@text', 'default@@rect', 'a', 'b', 'c'])
+      ).toEqual([NO_SHAPE_ID, 'default@@text', 'default@@rect', 'a', 'b', 'c']);
+    });
+
+    it('should fall back to recents when there are more than 16 shapes', () => {
+      const allIds = [
+        'default@@text',
+        'default@@rect',
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i',
+        'j',
+        'k',
+        'l',
+        'm',
+        'n',
+        'o'
+      ];
+
+      expect(getNodeStencilIds(['m', 'l', 'k'], allIds).slice(0, 6)).toEqual([
+        NO_SHAPE_ID,
+        'default@@text',
+        'default@@rect',
+        'm',
+        'l',
+        'k'
       ]);
     });
   });
