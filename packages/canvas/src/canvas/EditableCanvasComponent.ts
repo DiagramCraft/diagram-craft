@@ -432,21 +432,15 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     ]);
   }
 
-  private updateModifiers(e: { shiftKey: boolean; altKey: boolean; metaKey: boolean; ctrlKey: boolean }) {
-    const next = {
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      metaKey: e.metaKey,
-      ctrlKey: e.ctrlKey
-    };
+  private updateModifiers(e: Modifiers) {
     const curr = this.modifiers.get();
     if (
-      next.shiftKey !== curr.shiftKey ||
-      next.altKey !== curr.altKey ||
-      next.metaKey !== curr.metaKey ||
-      next.ctrlKey !== curr.ctrlKey
+      e.shiftKey !== curr.shiftKey ||
+      e.altKey !== curr.altKey ||
+      e.metaKey !== curr.metaKey ||
+      e.ctrlKey !== curr.ctrlKey
     ) {
-      this.modifiers.set(next);
+      this.modifiers.set({ ...e });
     }
   }
 
