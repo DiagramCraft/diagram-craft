@@ -50,6 +50,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "skott": "^0.35.7",
+    "syncpack": "^12.4.0",
     "tsx": "^4.20.6",
     "typedoc": "^0.28.17",
     "typedoc-github-theme": "^0.4.0",
