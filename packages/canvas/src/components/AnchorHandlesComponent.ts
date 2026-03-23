@@ -59,8 +59,11 @@ export class AnchorHandlesComponent extends Component<Props> {
     onEvent(props.point, 'change', () => {
       if (!this.hoverNode || !isNode(this.hoverNode)) return;
 
-      // If we are within the bounds of the hovered element, we don't ever reset the state'
-      if (this.hoverNode.id === props.hoverElement.get()) return;
+      // While directly hovering the node, keep redrawing so projected handles track the cursor.
+      if (this.hoverNode.id === props.hoverElement.get()) {
+        this.redraw();
+        return;
+      }
 
       let minDistance = Infinity;
       const node = this.hoverNode;
