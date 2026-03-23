@@ -5,7 +5,7 @@ import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { RectNodeDefinition } from '../node-types/Rect.nodeType';
-import { projectToDynamicHandle } from './anchorHandleDragSource';
+import { projectToPointHandle } from './anchorHandleDragSource';
 
 class NoBoundaryRectNodeDefinition extends RectNodeDefinition {
   constructor() {
@@ -51,7 +51,7 @@ describe('resolveProjectedSourceHandle', () => {
 
     expect(node.anchors.some(anchor => anchor.type === 'edge')).toBe(true);
 
-    const handle = projectToDynamicHandle(
+    const handle = projectToPointHandle(
       node,
       { x: 65, y: 24 },
       { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
@@ -72,7 +72,7 @@ describe('resolveProjectedSourceHandle', () => {
     });
 
     expect(
-      projectToDynamicHandle(
+      projectToPointHandle(
         node,
         { x: 50, y: 20 },
         {
@@ -84,7 +84,7 @@ describe('resolveProjectedSourceHandle', () => {
       )
     ).toBeUndefined();
 
-    const handle = projectToDynamicHandle(
+    const handle = projectToPointHandle(
       node,
       { x: 50, y: 20 },
       { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }
@@ -106,7 +106,7 @@ describe('resolveProjectedSourceHandle', () => {
       }
     });
 
-    const handle = projectToDynamicHandle(
+    const handle = projectToPointHandle(
       node,
       { x: 50, y: 20 },
       { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }

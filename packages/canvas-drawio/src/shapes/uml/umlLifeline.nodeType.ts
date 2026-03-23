@@ -51,7 +51,8 @@ export class UmlLifeline extends SimpleShapeNodeDefinition {
         directions: [
           [0, 0],
           [Math.PI, Math.PI]
-        ]
+        ],
+        normal: 0
       }
     ];
   }

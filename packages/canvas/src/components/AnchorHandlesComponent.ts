@@ -8,7 +8,7 @@ import { MoveDrag } from '../drag/moveDrag';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { AnchorHandleDrag } from '../drag/anchorHandleDrag';
-import { projectToDynamicHandle } from '../drag/anchorHandleDragSource';
+import { projectToPointHandle } from '../drag/anchorHandleDragSource';
 import { Zoom } from './zoom';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Point } from '@diagram-craft/geometry/point';
@@ -129,7 +129,7 @@ export class AnchorHandlesComponent extends Component<Props> {
         shouldScale && a.type !== 'center'
           ? Point.add(p1, Vector.fromPolar(normalInEffect ?? 0, z.num(SCALE)))
           : p1;
-      const normalEndpoint = Point.add(p, Vector.fromPolar(normalInEffect ?? 0, z.num(10, 7)));
+      const normalEndpoint = Point.add(p, Vector.fromPolar(normalInEffect ?? 0, z.num(15, 7)));
 
       if (a.type !== 'center') {
         transformedChildren.push(
@@ -181,13 +181,32 @@ export class AnchorHandlesComponent extends Component<Props> {
 
     const isDirectlyHoveringNode = props.hoverElement.get() === node.id;
     const projectedHandle = isDirectlyHoveringNode
-      ? projectToDynamicHandle(node, props.point.get(), props.modifiers.get())
+      ? projectToPointHandle(node, props.point.get(), props.modifiers.get())
       : undefined;
 
     if (projectedHandle) {
+      if (projectedHandle.type === 'edge-anchor') {
+        const halfSpan = z.num(15, 10);
+        const markerAngle = projectedHandle.normal ?? 0;
+        const from = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, -halfSpan));
+        const to = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, halfSpan));
+
+        children.push(
+          svg.line({
+            'x1': from.x,
+            'y1': from.y,
+            'x2': to.x,
+            'y2': to.y,
+            'stroke': 'var(--accent-9)',
+            'stroke-width': z.num(1),
+            'stroke-linecap': 'round'
+          })
+        );
+      }
+
       const normalEndpoint = Point.add(
         projectedHandle.point,
-        Vector.fromPolar(projectedHandle.normal ?? 0, z.num(10, 7))
+        Vector.fromPolar(projectedHandle.normal ?? 0, z.num(15, 7))
       );
 
       children.push(

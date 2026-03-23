@@ -19,7 +19,7 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { AnchorHandleDrag } from './anchorHandleDrag';
-import { projectToDynamicHandle } from './anchorHandleDragSource';
+import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 
@@ -314,7 +314,7 @@ describe('EdgeEndpointMoveDrag', () => {
       })
     );
 
-    const projected = projectToDynamicHandle(
+    const projected = projectToPointHandle(
       node,
       { x: 40, y: 10 },
       { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
@@ -351,7 +351,7 @@ describe('EdgeEndpointMoveDrag', () => {
       }
     });
 
-    const projected = projectToDynamicHandle(
+    const projected = projectToPointHandle(
       node,
       { x: 50, y: 10 },
       { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }
@@ -397,7 +397,7 @@ describe('EdgeEndpointMoveDrag', () => {
       })
     );
 
-    const projected = projectToDynamicHandle(
+    const projected = projectToPointHandle(
       node,
       { x: 40, y: 10 },
       { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
@@ -431,7 +431,7 @@ describe('EdgeEndpointMoveDrag', () => {
       }
     });
 
-    const projected = projectToDynamicHandle(
+    const projected = projectToPointHandle(
       node,
       { x: 50, y: 10 },
       { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }

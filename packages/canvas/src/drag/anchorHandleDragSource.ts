@@ -44,7 +44,7 @@ type BoundaryProjection = {
   offset: TimeOffsetOnSegment & LengthOffsetOnPath;
 };
 
-export const projectToDynamicHandle = (
+export const projectToPointHandle = (
   node: DiagramNode,
   point: Point,
   modifiers: Modifiers
