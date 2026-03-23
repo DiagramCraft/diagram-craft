@@ -30,6 +30,14 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   onDragEnd() {
     super.onDragEnd();
 
+    let popupState:
+      | {
+          point: Point;
+          nodeId: string;
+          mode: 'mixed' | 'edges-only';
+        }
+      | undefined;
+
     // Only if holding shift and not being over an element
     if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
       // TODO: Guard the free-start case here. EdgeTool can still start from empty canvas,
@@ -41,13 +49,29 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
 
       // Base UI popover dismissal still considers the current pointer interaction active.
       // Delaying to the next macrotask avoids immediate outside-press dismissal.
-      setTimeout(() => {
-        this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id);
-      }, 0);
+      popupState = { point, nodeId, mode: 'mixed' };
+    } else if (this.modifiers?.shiftKey && this.edge.end.isConnected) {
+      popupState = { point: this.edge.end.position, nodeId: '', mode: 'edges-only' };
     }
 
     const undoManager = this.edge.diagram.undoManager;
     undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
+
+    if (popupState) {
+      const undoDepth = undoManager.undoableActions.length - 1;
+
+      // Base UI popover dismissal still considers the current pointer interaction active.
+      // Delaying to the next macrotask avoids immediate outside-press dismissal.
+      setTimeout(() => {
+        this.context.ui.showNodeLinkPopup(
+          popupState.point,
+          popupState.nodeId,
+          this.edge.id,
+          popupState.mode,
+          undoDepth
+        );
+      }, 0);
+    }
   }
 }
 

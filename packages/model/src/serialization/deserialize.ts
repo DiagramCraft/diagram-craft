@@ -293,6 +293,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props.stencils);
     }
+    if (document.props?.edgeStylesheets) {
+      doc.props.recentEdgeStylesheets.set(document.props.edgeStylesheets);
+    }
 
     if (document.stories) {
       for (const story of document.stories) {

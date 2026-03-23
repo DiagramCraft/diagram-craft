@@ -233,6 +233,30 @@ describe('deserializeDiagramDocument', () => {
     });
   });
 
+  describe('document props', () => {
+    it('should round-trip recent edge stylesheets', async () => {
+      const originalDoc = TestModel.newDocument();
+      originalDoc.props.recentEdgeStylesheets.register('edge-style-1');
+      originalDoc.props.recentEdgeStylesheets.register('edge-style-2');
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+
+      expect(serialized.props?.edgeStylesheets).toEqual(['edge-style-2', 'edge-style-1']);
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id)
+      );
+
+      expect(newDoc.props.recentEdgeStylesheets.stylesheets).toEqual([
+        'edge-style-2',
+        'edge-style-1'
+      ]);
+    });
+  });
+
   describe('comments', () => {
     it('should serialize and deserialize comments correctly', async () => {
       // Setup

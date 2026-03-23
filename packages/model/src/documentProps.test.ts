@@ -56,9 +56,62 @@ describe.each(Backends.all())('RecentStencils [%s]', (_name, backend) => {
     doc1.props.recentStencils.set(initialStencils);
 
     // Verify
-    expect(doc1.props.recentStencils.stencils).toEqual(initialStencils.toReversed());
+    expect(doc1.props.recentStencils.stencils).toEqual(initialStencils);
     if (doc2) {
-      expect(doc2.props.recentStencils.stencils).toEqual(initialStencils.toReversed());
+      expect(doc2.props.recentStencils.stencils).toEqual(initialStencils);
+    }
+  });
+});
+
+describe.each(Backends.all())('RecentEdgeStylesheets [%s]', (_name, backend) => {
+  it('should initialize with an empty list', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+
+    expect(documentProps.recentEdgeStylesheets.stylesheets).toEqual([]);
+  });
+
+  it('should register a new stylesheet', () => {
+    const { doc1, doc2 } = standardTestModel(backend);
+
+    const stylesheetId = 'edge-style-1';
+    doc1.props.recentEdgeStylesheets.register(stylesheetId);
+
+    expect(doc1.props.recentEdgeStylesheets.stylesheets).toEqual([stylesheetId]);
+    if (doc2) {
+      expect(doc2.props.recentEdgeStylesheets.stylesheets).toEqual([stylesheetId]);
+    }
+  });
+
+  it('should not register duplicate stylesheets', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+
+    documentProps.recentEdgeStylesheets.register('edge-style-1');
+    documentProps.recentEdgeStylesheets.register('edge-style-1');
+
+    expect(documentProps.recentEdgeStylesheets.stylesheets).toEqual(['edge-style-1']);
+  });
+
+  it('should keep only the most recent 30 stylesheets', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+
+    for (let i = 0; i < 35; i++) {
+      documentProps.recentEdgeStylesheets.register(`edge-style-${i}`);
+    }
+
+    expect(documentProps.recentEdgeStylesheets.stylesheets).toHaveLength(30);
+    expect(documentProps.recentEdgeStylesheets.stylesheets[0]).toBe('edge-style-34');
+    expect(documentProps.recentEdgeStylesheets.stylesheets.at(-1)).toBe('edge-style-5');
+  });
+
+  it('should initialize stylesheets using set method', () => {
+    const { doc1, doc2 } = standardTestModel(backend);
+
+    const initialStylesheets = ['e-3', 'e-2', 'e-1'];
+    doc1.props.recentEdgeStylesheets.set(initialStylesheets);
+
+    expect(doc1.props.recentEdgeStylesheets.stylesheets).toEqual(initialStylesheets);
+    if (doc2) {
+      expect(doc2.props.recentEdgeStylesheets.stylesheets).toEqual(initialStylesheets);
     }
   });
 });

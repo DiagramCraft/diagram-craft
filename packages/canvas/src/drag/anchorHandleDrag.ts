@@ -96,10 +96,16 @@ export class AnchorHandleDrag extends Drag {
     diagram.undoManager.setMark();
     diagram.undoManager.add(new CompoundUndoableAction(previousActions));
 
-    if (newNodeId === undefined) return;
+    const undoDepth = diagram.undoManager.undoableActions.length - 1;
 
     /** @see NodeTypePopup */
-    this.context.ui.showNodeLinkPopup(this.edge.end.position, newNodeId, this.edge.id);
+    this.context.ui.showNodeLinkPopup(
+      this.edge.end.position,
+      newNodeId ?? '',
+      this.edge.id,
+      newNodeId === undefined ? 'edges-only' : 'mixed',
+      undoDepth
+    );
   }
 
   cancel() {

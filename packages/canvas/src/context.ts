@@ -18,7 +18,13 @@ export interface UIActions {
     args: ContextMenus[T]
   ) => void;
 
-  showNodeLinkPopup: (point: Point, nodeId: string, edgeId: string) => void;
+  showNodeLinkPopup: (
+    point: Point,
+    nodeId: string,
+    edgeId: string,
+    mode: 'mixed' | 'edges-only',
+    undoDepth: number
+  ) => void;
 
   /**
    * Show dialog using centralized dialog system. Dialogs must be registered in App.tsx.
