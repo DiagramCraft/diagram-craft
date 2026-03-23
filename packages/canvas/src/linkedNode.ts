@@ -6,7 +6,7 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Translation } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
-import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { Box } from '@diagram-craft/geometry/box';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
@@ -15,9 +15,16 @@ import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 const OFFSET = 100;
 const SECONDARY_OFFSET = 20;
 
-export const createLinkedNode = (
+export const createLinkedNode = (node: DiagramNode, anchor: string, direction: Direction) =>
+  createLinkedNodeFromSource(
+    node,
+    { point: node._getAnchorPosition(anchor), endpoint: () => new AnchorEndpoint(node, anchor) },
+    direction
+  );
+
+export const createLinkedNodeFromSource = (
   node: DiagramNode,
-  sourceAnchorId: string,
+  source: { point: Point; endpoint: () => AnchorEndpoint | PointInNodeEndpoint },
   direction: Direction
 ) => {
   const diagram = node.diagram;
@@ -47,10 +54,7 @@ export const createLinkedNode = (
     let distance = Number.MAX_SAFE_INTEGER;
     let shortest: Anchor | undefined;
     for (const anchor of newNode.anchors) {
-      const d = Point.distance(
-        node._getAnchorPosition(sourceAnchorId),
-        newNode._getAnchorPosition(anchor.id)
-      );
+      const d = Point.distance(source.point, newNode._getAnchorPosition(anchor.id));
       if (d < distance) {
         distance = d;
         shortest = anchor;
@@ -119,7 +123,7 @@ export const createLinkedNode = (
     }
 
     const edge = ElementFactory.edge({
-      start: new AnchorEndpoint(node, sourceAnchorId),
+      start: source.endpoint(),
       end: new AnchorEndpoint(newNode, shortest.id),
       props: additionalStyles,
       metadata: {

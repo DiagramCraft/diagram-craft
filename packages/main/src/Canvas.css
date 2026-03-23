@@ -302,6 +302,7 @@
     fill: var(--accent-3);
     stroke: var(--accent-9);
     stroke-width: calc(1 * var(--zoom));
+    cursor: move;
   }
 
   .svg-node__anchor {

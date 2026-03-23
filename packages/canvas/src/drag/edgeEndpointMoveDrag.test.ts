@@ -18,6 +18,10 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { AnchorHandleDrag } from './anchorHandleDrag';
+import { projectToPointHandle } from './anchorHandleDragSource';
+import { Point } from '@diagram-craft/geometry/point';
+import type { Anchor } from '@diagram-craft/model/anchor';
 
 class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
   constructor(type = 'attach-absolute') {
@@ -82,6 +86,28 @@ class PhaseCaptureNodeDefinition extends RectNodeDefinition {
     return endpoint;
   }
 }
+
+const withEdgeAnchor = (node: DiagramNode) => {
+  const anchors = [
+    {
+      id: 'top-edge',
+      type: 'edge',
+      start: Point.of(0, 0),
+      end: Point.of(1, 0),
+      normal: -Math.PI / 2,
+      isPrimary: true,
+      clip: false
+    },
+    { id: 'c', start: Point.of(0.5, 0.5), clip: true, type: 'center' }
+  ] satisfies Anchor[];
+
+  Object.defineProperty(node, 'anchors', {
+    configurable: true,
+    get: () => anchors
+  });
+  node.getAnchor = (anchor: string) => anchors.find(a => a.id === anchor) ?? anchors[0]!;
+  return node;
+};
 
 const createContext = (): Context =>
   ({
@@ -275,5 +301,166 @@ describe('EdgeEndpointMoveDrag', () => {
 
     expect(definition.phases).toContain('drag');
     expect(definition.phases.at(-1)).toBe('dragEnd');
+  });
+
+  test('starts anchor-handle drags from a projected edge anchor source', () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+      })
+    );
+
+    const projected = projectToPointHandle(
+      node,
+      { x: 40, y: 10 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+
+    expect(projected?.type).toBe('edge-anchor');
+    if (!projected || projected.type !== 'edge-anchor') throw new Error('Expected edge anchor');
+
+    const drag = new AnchorHandleDrag(node, projected, projected.point, createContext());
+
+    drag.onDrag(
+      new DragEvents.DragStart(
+        { x: 180, y: 20 },
+        { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+        document.createElement('div')
+      )
+    );
+    drag.onDragEnd();
+
+    expect(drag.edge.start).toBeInstanceOf(AnchorEndpoint);
+    expect((drag.edge.start as AnchorEndpoint).anchorId).toBe(projected.anchorId);
+    expect((drag.edge.start as AnchorEndpoint).offset).toEqual(projected.offset);
+  });
+
+  test('starts anchor-handle drags from a synthetic boundary source', () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const node = layer.addNode({
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+      props: {
+        anchors: { type: 'none' }
+      }
+    });
+
+    const projected = projectToPointHandle(
+      node,
+      { x: 50, y: 10 },
+      { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }
+    );
+
+    expect(projected?.type).toBe('boundary-point');
+    if (!projected || projected.type !== 'boundary-point')
+      throw new Error('Expected boundary handle');
+
+    const drag = new AnchorHandleDrag(
+      node,
+      {
+        type: 'boundary-point',
+        offset: projected.offset,
+        normal: projected.normal,
+        point: projected.point
+      },
+      projected.point,
+      createContext()
+    );
+
+    drag.onDrag(
+      new DragEvents.DragStart(
+        { x: 180, y: 20 },
+        { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+        document.createElement('div')
+      )
+    );
+    drag.onDragEnd();
+
+    expect(drag.edge.start).toBeInstanceOf(PointInNodeEndpoint);
+    expect((drag.edge.start as PointInNodeEndpoint).offset).toEqual(projected.offset);
+  });
+
+  test('short drag from a projected edge anchor still creates a linked node', () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+      })
+    );
+
+    const projected = projectToPointHandle(
+      node,
+      { x: 40, y: 10 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+    if (!projected || projected.type !== 'edge-anchor') throw new Error('Expected edge anchor');
+
+    const drag = new AnchorHandleDrag(node, projected, projected.point, createContext());
+
+    drag.onDragEnd();
+
+    const createdEdge = layer.elements.find(
+      element => element !== drag.edge && 'start' in element && 'end' in element
+    ) as DiagramEdge | undefined;
+    const createdNode = layer.elements.find(
+      element => element !== node && 'nodeType' in element
+    ) as DiagramNode | undefined;
+
+    expect(createdEdge?.start).toBeInstanceOf(AnchorEndpoint);
+    expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);
+  });
+
+  test('short drag from a synthetic boundary source still creates a linked node', () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const node = layer.addNode({
+      type: 'rect',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+      props: {
+        anchors: { type: 'none' }
+      }
+    });
+
+    const projected = projectToPointHandle(
+      node,
+      { x: 50, y: 10 },
+      { shiftKey: false, altKey: false, metaKey: true, ctrlKey: false }
+    );
+    if (!projected || projected.type !== 'boundary-point')
+      throw new Error('Expected boundary handle');
+
+    const drag = new AnchorHandleDrag(
+      node,
+      {
+        type: 'boundary-point',
+        offset: projected.offset,
+        normal: projected.normal,
+        point: projected.point
+      },
+      projected.point,
+      createContext()
+    );
+
+    drag.onDragEnd();
+
+    const createdEdge = layer.elements.find(
+      element => element !== drag.edge && 'start' in element && 'end' in element
+    ) as DiagramEdge | undefined;
+    const createdNode = layer.elements.find(
+      element => element !== node && 'nodeType' in element
+    ) as DiagramNode | undefined;
+
+    expect(createdEdge?.start).toBeInstanceOf(PointInNodeEndpoint);
+    expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);
   });
 });
