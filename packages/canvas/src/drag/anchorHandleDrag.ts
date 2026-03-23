@@ -3,14 +3,29 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { EdgeEndpointMoveDrag } from './edgeEndpointMoveDrag';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
-import { AnchorEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { Context } from '../context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { createLinkedNode, createProvisionalLinkedNode } from '../linkedNode';
+import {
+  createLinkedNode,
+  createLinkedNodeFromSource,
+  createProvisionalLinkedNode
+} from '../linkedNode';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
+import type { AnchorHandleDragSource } from './anchorHandleDragSource';
+
+const makeEndpoint = (node: DiagramNode, source: AnchorHandleDragSource) => {
+  if (source.type === 'anchor') {
+    return new AnchorEndpoint(node, source.anchorId);
+  } else if (source.type === 'edge-anchor') {
+    return new AnchorEndpoint(node, source.anchorId, source.offset);
+  } else {
+    return new PointInNodeEndpoint(node, undefined, source.offset, 'relative');
+  }
+};
 
 export class AnchorHandleDrag extends Drag {
   edge: DiagramEdge;
@@ -18,7 +33,7 @@ export class AnchorHandleDrag extends Drag {
 
   constructor(
     private readonly node: DiagramNode,
-    private readonly anchorId: string,
+    private readonly source: AnchorHandleDragSource,
     private readonly point: Point,
     private readonly context: Context
   ) {
@@ -29,7 +44,7 @@ export class AnchorHandleDrag extends Drag {
     assertRegularLayer(layer);
 
     this.edge = ElementFactory.edge({
-      start: new AnchorEndpoint(this.node, this.anchorId),
+      start: makeEndpoint(this.node, this.source),
       end: new FreeEndpoint(diagram.viewBox.toDiagramPoint(this.point)),
       metadata: {
         style: diagram.document.styles.activeEdgeStylesheet.id
@@ -62,11 +77,7 @@ export class AnchorHandleDrag extends Drag {
       UnitOfWork.execute(this.node.diagram, uow => this.edge.layer.removeElement(this.edge, uow));
       diagram.selection.setElements([]);
 
-      createLinkedNode(
-        this.node,
-        this.anchorId,
-        Direction.fromAngle(this.node.getAnchor(this.anchorId).normal ?? 0, true)
-      );
+      this.createLinkedNodeForShortDrag();
 
       return;
     }
@@ -107,5 +118,34 @@ export class AnchorHandleDrag extends Drag {
 
   onDragLeave(event: DragEvents.DragLeave) {
     this.delegate.onDragLeave(event);
+  }
+
+  private createLinkedNodeForShortDrag() {
+    switch (this.source.type) {
+      case 'anchor':
+        createLinkedNode(
+          this.node,
+          this.source.anchorId,
+          Direction.fromAngle(
+            this.source.normal ?? this.node.getAnchor(this.source.anchorId).normal ?? 0,
+            true
+          )
+        );
+        break;
+
+      case 'edge-anchor':
+      case 'boundary-point': {
+        const endpoint = makeEndpoint(this.node, this.source);
+
+        createLinkedNodeFromSource(
+          this.node,
+          {
+            point: this.source.point ?? endpoint.position,
+            endpoint: () => endpoint
+          },
+          Direction.fromAngle(this.source.normal ?? 0, true)
+        );
+      }
+    }
   }
 }

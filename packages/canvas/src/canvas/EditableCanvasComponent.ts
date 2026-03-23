@@ -79,6 +79,12 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
   private tool: Tool | undefined;
 
   private point: Observable<Point> = new Observable({ x: 0, y: 0 });
+  private modifiers: Observable<Modifiers> = new Observable<Modifiers>({
+    shiftKey: false,
+    altKey: false,
+    metaKey: false,
+    ctrlKey: false
+  });
 
   private hoverElement = new Observable<string | undefined>(undefined);
 
@@ -137,6 +143,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
 
     createEffect(() => {
       const cb = (e: KeyboardEvent) => {
+        this.updateModifiers(e);
+
         if (props.context.actionState.get() === 'disabled') return;
 
         const target = e.target as HTMLElement | undefined;
@@ -168,7 +176,10 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
     }, [diagram]);
 
     createEffect(() => {
-      const cb = (e: KeyboardEvent) => this.tool?.onKeyUp(e);
+      const cb = (e: KeyboardEvent) => {
+        this.updateModifiers(e);
+        this.tool?.onKeyUp(e);
+      };
       document.addEventListener('keyup', cb);
       return () => document.removeEventListener('keyup', cb);
     }, [diagram]);
@@ -405,7 +416,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             ? this.subComponent($cmp(AnchorHandlesComponent), {
                 ...canvasState,
                 hoverElement: this.hoverElement,
-                point: this.point
+                point: this.point,
+                modifiers: this.modifiers
               })
             : svg.g({}),
 
@@ -418,6 +430,24 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
         ]
       )
     ]);
+  }
+
+  private updateModifiers(e: { shiftKey: boolean; altKey: boolean; metaKey: boolean; ctrlKey: boolean }) {
+    const next = {
+      shiftKey: e.shiftKey,
+      altKey: e.altKey,
+      metaKey: e.metaKey,
+      ctrlKey: e.ctrlKey
+    };
+    const curr = this.modifiers.get();
+    if (
+      next.shiftKey !== curr.shiftKey ||
+      next.altKey !== curr.altKey ||
+      next.metaKey !== curr.metaKey ||
+      next.ctrlKey !== curr.ctrlKey
+    ) {
+      this.modifiers.set(next);
+    }
   }
 
   private updateToolClassOnSvg(s: ToolType) {
