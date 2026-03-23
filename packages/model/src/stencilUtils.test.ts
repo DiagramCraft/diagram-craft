@@ -132,5 +132,26 @@ describe('stencilUtils', () => {
 
       expect(parent.nodeType).not.toBe('group');
     });
+
+    test('sets default text when changing a node to the text stencil', () => {
+      const diagram = TestModel.newDiagram();
+      const layer = diagram.newLayer();
+      const node = layer.addNode({
+        id: 'source',
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 120, h: 80, r: 0 }
+      });
+
+      const stencil = mustExist(diagram.document.registry.stencils.getStencil('default@@text'));
+      assertRegularLayer(diagram.activeLayer);
+      const activeLayer = diagram.activeLayer;
+
+      UnitOfWork.execute(diagram, uow => {
+        applyStencilToNode(diagram, node, activeLayer, stencil, uow);
+      });
+
+      expect(node.nodeType).toBe('text');
+      expect(node.getText()).toBe('Text');
+    });
   });
 });

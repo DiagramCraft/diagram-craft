@@ -75,11 +75,11 @@ describe('NodeTypePopup helpers', () => {
   describe('getNodeStencilIds', () => {
     it('should show all available shapes when there are 16 or fewer', () => {
       expect(
-        getNodeStencilIds([], ['default@@text', 'default@@rect', 'a', 'b', 'c'])
+        getNodeStencilIds([], ['default@@text', 'default@@rect', 'a', 'b', 'c'], ['a', 'b', 'c'])
       ).toEqual([NO_SHAPE_ID, 'default@@text', 'default@@rect', 'a', 'b', 'c']);
     });
 
-    it('should fall back to recents when there are more than 16 shapes', () => {
+    it('should cap the result at 16 and prioritize recents plus basic shapes', () => {
       const allIds = [
         'default@@text',
         'default@@rect',
@@ -100,13 +100,25 @@ describe('NodeTypePopup helpers', () => {
         'o'
       ];
 
-      expect(getNodeStencilIds(['m', 'l', 'k'], allIds).slice(0, 6)).toEqual([
+      expect(
+        getNodeStencilIds(['m', 'l', 'k'], allIds, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+      ).toEqual([
         NO_SHAPE_ID,
         'default@@text',
         'default@@rect',
         'm',
         'l',
-        'k'
+        'k',
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i',
+        'j'
       ]);
     });
   });

@@ -18,6 +18,8 @@ import { Stylesheet } from './diagramStyles';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
 
+const DEFAULT_TEXT_NODE_CONTENT = 'Text';
+
 type MakeStencilNodeOptsProps = (t: 'picker' | 'canvas') => Partial<NodeProps | EdgeProps>;
 
 export type MakeStencilNodeOpts = {
@@ -66,6 +68,10 @@ export const applyStencilToNode = (
     changeNodeToSingleElementStencil(node, layer, stencilElements, uow);
   } else {
     changeNodeToGroupStencil(node, layer, stencilElements, uow);
+  }
+
+  if (node.nodeType === 'text' && node.getText().trim() === '') {
+    node.setText(DEFAULT_TEXT_NODE_CONTENT, uow);
   }
 
   // Rendering logic assumes node types stay stable, so changing it needs a forced redraw.

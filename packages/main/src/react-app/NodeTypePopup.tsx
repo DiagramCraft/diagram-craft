@@ -20,8 +20,10 @@ import {
 import { CompoundUndoableAction, type UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDiagram } from '../application';
+import { useEventListener } from './hooks/useEventListener';
 import { createPreview } from './toolwindow/StyleOverviewToolWindow/stylesPanelUtils';
 import {
   getRecentEdgeStylesheetIds,
@@ -75,6 +77,17 @@ const buildEdgePreview = (stylesheet: EdgeStylesheet, diagram: Diagram) => {
   return preview;
 };
 
+const isPickerNodeStencil = (stencil: Stencil, diagram: Diagram) => {
+  try {
+    const preview = stencil.forPicker(diagram.document.registry);
+    const isSingleNode = preview.elements.length === 1 && isNode(preview.elements[0]);
+    preview.diagram.document.release();
+    return isSingleNode;
+  } catch {
+    return false;
+  }
+};
+
 export const NodeTypePopup = ({
   position,
   isOpen,
@@ -94,6 +107,7 @@ export const NodeTypePopup = ({
   );
   const [selectedNodeStencilId, setSelectedNodeStencilId] = useState<string | undefined>(undefined);
   const [currentNodeId, setCurrentNodeId] = useState(nodeId);
+  const [stencilRegistryVersion, setStencilRegistryVersion] = useState(0);
 
   const close = useCallback(
     (mode: 'commit' | 'cancel' | 'idle' = 'idle') => {
@@ -213,6 +227,12 @@ export const NodeTypePopup = ({
     selectedNodeStencilId
   ]);
 
+  const onStencilRegistryChange = useCallback(() => {
+    setStencilRegistryVersion(version => version + 1);
+  }, []);
+
+  useEventListener(diagram.document.registry.stencils, 'change', onStencilRegistryChange);
+
   const edgeStylesheets = useMemo(() => {
     const ids = getRecentEdgeStylesheetIds(
       diagram.document.props.recentEdgeStylesheets.stylesheets,
@@ -228,14 +248,18 @@ export const NodeTypePopup = ({
   const nodeStencils = useMemo(() => {
     if (mode === 'edges-only') return [];
 
+    const allStencils = diagram.document.registry.stencils
+      .getStencils()
+      .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(sp => sp.stencils) ?? [])])
+      .filter(stencil => isPickerNodeStencil(stencil, diagram));
+    const basicShapeStencilIds = diagram.document.registry.stencils
+      .get('default')
+      .stencils.filter(stencil => isPickerNodeStencil(stencil, diagram))
+      .map(stencil => stencil.id);
     const stencilIds = getNodeStencilIds(
       diagram.document.props.recentStencils.stencils,
-      diagram.document.registry.stencils
-        .getStencils()
-        .flatMap(pkg => [
-          ...pkg.stencils.map(s => s.id),
-          ...(pkg.subPackages?.flatMap(sp => sp.stencils.map(s => s.id)) ?? [])
-        ])
+      allStencils.map(stencil => stencil.id),
+      basicShapeStencilIds
     );
     return stencilIds
       .map(id => {
@@ -254,7 +278,7 @@ export const NodeTypePopup = ({
           | { id: string; kind: 'no-shape' }
           | { id: string; kind: 'stencil'; stencil: Stencil } => e !== undefined
       );
-  }, [diagram, mode]);
+  }, [diagram, mode, stencilRegistryVersion]);
 
   const edgePreviewDiagrams = useMemo(
     () =>
@@ -292,6 +316,15 @@ export const NodeTypePopup = ({
     setSelectedEdgeStylesheetId(undefined);
     setSelectedNodeStencilId(undefined);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || mode === 'edges-only') return;
+
+    for (const pkg of diagram.document.registry.stencils.getStencils()) {
+      if (pkg.stencils.length > 0 || (pkg.subPackages?.length ?? 0) > 0) continue;
+      void diagram.document.registry.stencils.loadStencilPackage(pkg.id);
+    }
+  }, [diagram.document.registry.stencils, isOpen, mode]);
 
   useEffect(() => {
     if (!isOpen) return;

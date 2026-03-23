@@ -25,15 +25,18 @@ export const getRecentNodeStencilIds = (recentIds: readonly string[]) => {
 
 export const getNodeStencilIds = (
   recentIds: readonly string[],
-  allIds: readonly string[]
+  allIds: readonly string[],
+  basicShapeIds: readonly string[]
 ) => {
+  const pinnedIds = [NO_SHAPE_ID, ...REQUIRED_NODE_STENCIL_IDS];
   const availableIds = Array.from(
     new Set(allIds.filter(Boolean).filter(id => !REQUIRED_NODE_STENCIL_IDS.includes(id)))
   );
+  const recentAvailableIds = recentIds.filter(id => availableIds.includes(id));
+  const basicAvailableIds = basicShapeIds.filter(id => availableIds.includes(id));
 
-  if (availableIds.length + 1 + REQUIRED_NODE_STENCIL_IDS.length <= NODE_LIMIT + 1) {
-    return [NO_SHAPE_ID, ...REQUIRED_NODE_STENCIL_IDS, ...availableIds];
-  }
-
-  return getRecentNodeStencilIds(recentIds);
+  return Array.from(new Set([...pinnedIds, ...recentAvailableIds, ...basicAvailableIds, ...availableIds])).slice(
+    0,
+    NODE_LIMIT
+  );
 };
