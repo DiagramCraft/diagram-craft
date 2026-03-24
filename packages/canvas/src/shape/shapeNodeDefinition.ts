@@ -41,16 +41,6 @@ export type TextHandlers = {
   inline?: TextHandler;
 };
 
-declare global {
-  namespace DiagramCraft {
-    interface CustomNodePropsExtensions {
-      nodeLink?: {
-        options?: string;
-      };
-    }
-  }
-}
-
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   private flags: Record<NodeFlag, boolean> = {};
 
@@ -132,7 +122,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
   }
 
   getNodeLinkOptions(node: DiagramNode): NodeLinkOptions | undefined {
-    const serialized = node.renderProps.custom.nodeLink?.options;
+    const serialized = node.metadata.nodeLink;
     if (!serialized) return undefined;
 
     try {
@@ -140,6 +130,17 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     } catch {
       return undefined;
     }
+  }
+
+  setNodeLinkOptions(node: DiagramNode, options: NodeLinkOptions | undefined, uow: UnitOfWork): void {
+    node.updateMetadata(metadata => {
+      if (options === undefined) {
+        delete metadata.nodeLink;
+        return;
+      }
+
+      metadata.nodeLink = JSON.stringify(options);
+    }, uow);
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {

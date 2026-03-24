@@ -39,19 +39,18 @@ export type Stencil = {
   };
 };
 
+export type StencilSubPackage = {
+  id: string;
+  name: string;
+  stencils: Array<Stencil>;
+};
 export type StencilPackage = {
   id?: string;
   stencils: Array<Stencil>;
   type: 'default' | string;
 
-  subPackages?: Array<{
-    id: string;
-    name: string;
-    stencils: Array<Stencil>;
-  }>;
+  subPackages?: Array<StencilSubPackage>;
 };
-
-export type StencilSubPackage = NonNullable<StencilPackage['subPackages']>[number];
 
 export type StencilStyle = {
   id: string;
@@ -113,7 +112,7 @@ export type StencilEvents = {
   change: { stencilRegistry: StencilRegistry };
 };
 
-const DELIMITER = '@@';
+export const STENCIL_ID_DELIMITER = '@@';
 
 export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, RegisteredStencilPackage>();
@@ -125,14 +124,14 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
     pkg.subPackages?.forEach(sp =>
       sp.stencils.forEach(s => {
-        s.id = id + DELIMITER + sp.id + DELIMITER + s.id;
+        s.id = id + STENCIL_ID_DELIMITER + sp.id + STENCIL_ID_DELIMITER + s.id;
         subpackageStencils.add(s);
       })
     );
 
     pkg.stencils.forEach(s => {
       if (subpackageStencils.has(s)) return;
-      s.id = id + DELIMITER + s.id;
+      s.id = id + STENCIL_ID_DELIMITER + s.id;
     });
 
     this.stencils.set(id, { id, name, ...pkg });
@@ -158,8 +157,8 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   }
 
   getStencil(id: string) {
-    if (id.includes(DELIMITER)) {
-      const [pkgId] = safeSplit(id, DELIMITER, 2);
+    if (id.includes(STENCIL_ID_DELIMITER)) {
+      const [pkgId] = safeSplit(id, STENCIL_ID_DELIMITER, 2);
       return this.get(pkgId).stencils.find(s => s.id === id);
     } else {
       return this.stencils
@@ -200,10 +199,14 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
 /* Helpers ************************************************************************** */
 
-export const getStencilSubPackage = (pkg: StencilPackage, subpackageId: string): StencilSubPackage => {
+export const getStencilSubPackage = (
+  pkg: StencilPackage,
+  subpackageId: string
+): StencilSubPackage => {
   return mustExist(pkg.subPackages?.find(p => p.id === subpackageId));
 };
 
+// TODO: Change signature such the pkg is the first argument
 export const addStencilToSubpackage = (
   subpackage: string,
   pkg: StencilPackage,

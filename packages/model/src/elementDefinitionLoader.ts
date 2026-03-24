@@ -1,9 +1,10 @@
-import type { Stencil, StencilPackage, StencilSubPackage } from './stencilRegistry';
 import {
-  NODE_LINK_POPUP_NO_SHAPE_ID,
-  type NodeLinkAllowedCombination,
-  type NodeLinkOptions
-} from '@diagram-craft/canvas/context';
+  type Stencil,
+  STENCIL_ID_DELIMITER,
+  type StencilPackage,
+  type StencilSubPackage
+} from './stencilRegistry';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/canvas/context';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { SerializedElement } from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';
@@ -37,32 +38,25 @@ const mergePickerProps = (
 };
 
 export const loadStencilsFromYaml = (
-// biome-ignore lint/suspicious/noExplicitAny: false positive
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
   stencils: any,
   pkg?: StencilPackage,
   subPackage?: StencilSubPackage
 ) => {
   const dest: Array<Stencil> = [];
-  const stencilIdsInFile = new Set<string>(stencils.stencils.map((stencil: { id: string }) => stencil.id));
+  const stencilIdsInFile = new Set<string>(
+    stencils.stencils.map((stencil: { id: string }) => stencil.id)
+  );
 
   const qualifyStencilId = (id: string) => {
     if (id === NODE_LINK_POPUP_NO_SHAPE_ID) return id;
-    if (id.includes('@@')) return id;
+    if (id.includes(STENCIL_ID_DELIMITER)) return id;
     if (!stencilIdsInFile.has(id)) return id;
     if (!pkg?.id) return id;
-    if (subPackage) return `${pkg.id}@@${subPackage.id}@@${id}`;
-    return `${pkg.id}@@${id}`;
+    if (subPackage)
+      return `${pkg.id}${STENCIL_ID_DELIMITER}${subPackage.id}${STENCIL_ID_DELIMITER}${id}`;
+    return `${pkg.id}${STENCIL_ID_DELIMITER}${id}`;
   };
-
-  const resolveAllowedCombination = (
-    combination: NodeLinkAllowedCombination
-  ): NodeLinkAllowedCombination => ({
-    ...combination,
-    nodeStencilId:
-      combination.nodeStencilId === undefined
-        ? undefined
-        : qualifyStencilId(combination.nodeStencilId)
-  });
 
   const resolveNodeLinkOptions = (
     nodeLinkOptions: NodeLinkOptions | undefined
@@ -72,7 +66,10 @@ export const loadStencilsFromYaml = (
     return {
       ...nodeLinkOptions,
       nodeStencilIds: nodeLinkOptions.nodeStencilIds?.map(qualifyStencilId),
-      allowedCombinations: nodeLinkOptions.allowedCombinations?.map(resolveAllowedCombination)
+      allowedCombinations: nodeLinkOptions.allowedCombinations?.map(c => ({
+        ...c,
+        nodeStencilId: c.nodeStencilId === undefined ? undefined : qualifyStencilId(c.nodeStencilId)
+      }))
     };
   };
 

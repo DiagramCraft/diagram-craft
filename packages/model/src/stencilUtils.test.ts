@@ -178,6 +178,12 @@ describe('stencilUtils', () => {
         applyStencilToNode(diagram, node, activeLayer, stencil, uow);
       });
 
+      expect(node.metadata.nodeLink).toBe(
+        JSON.stringify({
+          nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+          edgeStylesheetIds: ['default-edge']
+        })
+      );
       expect(node.getDefinition()).toBeInstanceOf(ShapeNodeDefinition);
       expect((node.getDefinition() as ShapeNodeDefinition).getNodeLinkOptions(node)).toEqual({
         nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],

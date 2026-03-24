@@ -38,8 +38,6 @@ import {
 } from '@diagram-craft/stencil-uml/common/stereotypeIcon';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import { resolveCssColor } from '@diagram-craft/utils/dom';
-import { NodeLinkOptions } from '@diagram-craft/canvas/context';
-import { layoutTree } from '@diagram-craft/graph/layout/treeLayout';
 
 const DEFAULT_TITLE_SIZE = 20;
 
@@ -125,15 +123,6 @@ export class UMLClassNodeDefinition extends LayoutCapableShapeNodeDefinition {
       if (hasScale && isUMLPortNode(child)) continue;
       child.transform(transforms, uow, true);
     }
-  }
-
-  getNodeLinkOptions(_node: DiagramNode): NodeLinkOptions | undefined {
-    return super.getNodeLinkOptions(_node) ?? {
-      nodeStencilIds: [
-        'uml@@class@@uml-class-abstract-class',
-        'uml@@class@@uml-class-class'
-      ]
-    };
   }
 
   layoutChildren(node: DiagramNode, uow: UnitOfWork) {

@@ -170,7 +170,6 @@ export const ObjectPickerPanel = (props: Props) => {
               {group.stencils.map(s => (
                 <div
                   key={s.stencilDiagram.id}
-                  data-stencil-id={s.stencil.id}
                   style={{ background: 'transparent' }}
                   data-width={s.stencilDiagram.viewBox.dimensions.w}
                 >

@@ -73,16 +73,7 @@ export const applyStencilToNode = (
 
   const definition = node.getDefinition();
   if (definition instanceof ShapeNodeDefinition) {
-    node.updateProps(props => {
-      props.custom ??= {};
-
-      if (stencil.nodeLinkOptions === undefined) {
-        delete props.custom.nodeLink;
-        return;
-      }
-
-      props.custom.nodeLink = { options: JSON.stringify(stencil.nodeLinkOptions) };
-    }, uow);
+    definition.setNodeLinkOptions(node, stencil.nodeLinkOptions, uow);
   }
 
   if (node.nodeType === 'text' && node.getText().trim() === '') {
