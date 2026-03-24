@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useLayoutEffect, useRef } from 'react';
 import { usePortal } from '@diagram-craft/app-components/PortalContext';
 import { useDialogContext } from '@diagram-craft/app-components/Dialog';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { AlertDialog as BaseUIAlertDialog } from '@base-ui-components/react/alert-dialog';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
 
 type ToolDialogProps = {
   title: string;

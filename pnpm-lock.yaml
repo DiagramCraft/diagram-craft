@@ -302,9 +302,9 @@ importers:
 
   packages/main:
     dependencies:
-      '@base-ui-components/react':
-        specifier: 1.0.0-rc.0
-        version: 1.0.0-rc.0(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@base-ui/react':
+        specifier: 1.1.0
+        version: 1.1.0(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@diagram-craft/app-components':
         specifier: workspace:^
         version: link:../app-components
@@ -393,6 +393,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.1
         version: 18.3.7(@types/react@18.3.23)
+      '@vitejs/devtools':
+        specifier: ^0.1.10
+        version: 0.1.10(@pnpm/logger@1001.0.1)(typescript@5.9.3)(vite@8.0.2)
       '@vitejs/plugin-react':
         specifier: ^6.0.1
         version: 6.0.1(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))
@@ -662,29 +665,6 @@ packages:
   '@babel/types@7.29.0':
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
-
-  '@base-ui-components/react@1.0.0-rc.0':
-    resolution: {integrity: sha512-9lhUFbJcbXvc9KulLev1WTFxS/alJRBWDH/ibKSQaNvmDwMFS2gKp1sTeeldYSfKuS/KC1w2MZutc0wHu2hRHQ==}
-    engines: {node: '>=14.0.0'}
-    deprecated: Package was renamed to @base-ui/react
-    peerDependencies:
-      '@types/react': ^17 || ^18 || ^19
-      react: ^17 || ^18 || ^19
-      react-dom: ^17 || ^18 || ^19
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-
-  '@base-ui-components/utils@0.2.2':
-    resolution: {integrity: sha512-rNJCD6TFy3OSRDKVHJDzLpxO3esTV1/drRtWNUpe7rCpPN9HZVHUCuP+6rdDYDGWfXnQHbqi05xOyRP2iZAlkw==}
-    deprecated: Package was renamed to @base-ui/utils
-    peerDependencies:
-      '@types/react': ^17 || ^18 || ^19
-      react: ^17 || ^18 || ^19
-      react-dom: ^17 || ^18 || ^19
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   '@base-ui/react@1.1.0':
     resolution: {integrity: sha512-ikcJRNj1mOiF2HZ5jQHrXoVoHcNHdBU5ejJljcBl+VTLoYXR6FidjTN86GjO6hyshi6TZFuNvv0dEOgaOFv6Lw==}
@@ -1029,14 +1009,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@floating-ui/core@1.7.3':
-    resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
-
   '@floating-ui/core@1.7.5':
     resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
-
-  '@floating-ui/dom@1.7.4':
-    resolution: {integrity: sha512-OOchDgh4F2CchOX94cRVqhvy7b3AFb+/rQXyswmzmGakRfkMgoWVjfnLWkRirfLEfuD4ysVW16eXzwt3jHIzKA==}
 
   '@floating-ui/dom@1.7.6':
     resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
@@ -1046,9 +1020,6 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
-
-  '@floating-ui/utils@0.2.10':
-    resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
@@ -1270,6 +1241,10 @@ packages:
 
   '@pnpm/graceful-fs@1000.1.0':
     resolution: {integrity: sha512-EsMX4slK0qJN2AR0/AYohY5m0HQNYGMNe+jhN74O994zp22/WbX+PbkIKyw3UQn39yQm2+z6SgwklDxbeapsmQ==}
+    engines: {node: '>=18.12'}
+
+  '@pnpm/logger@1001.0.1':
+    resolution: {integrity: sha512-gdwlAMXC4Wc0s7Dmg/4wNybMEd/4lSd9LsXQxeg/piWY0PPXjgz1IXJWnVScx6dZRaaodWP3c1ornrw8mZdFZw==}
     engines: {node: '>=18.12'}
 
   '@pnpm/manifest-utils@1002.0.4':
@@ -2162,6 +2137,9 @@ packages:
   bluebird@3.7.2:
     resolution: {integrity: sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==}
 
+  bole@5.0.28:
+    resolution: {integrity: sha512-l+yybyZLV7zTD6EuGxoXsilpER1ctMCpdOqjSYNigJJma39ha85fzCtYccPx06oR1u7uCQLOcUAFFzvfXVBmuQ==}
+
   boolean@3.2.0:
     resolution: {integrity: sha512-d0II/GO9uf9lfUHH2BQsjxzRJZBdsjgsBiW4BvhWk/3qoKwQFjIDVN19PfX8F2D/r9PCMTtLWjYVCFrpeYUzsw==}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
@@ -2847,6 +2825,9 @@ packages:
   fast-json-stable-stringify@2.1.0:
     resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
 
+  fast-safe-stringify@2.1.1:
+    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
+
   fastq@1.19.1:
     resolution: {integrity: sha512-GwLTyxkCXjXbxqIhTsMI2Nui8huMPtnxg7krajPJAjnEG/iiOS7i+zCtWGZR9G0NBKbXKh6X9m9UIsYX/N6vvQ==}
 
@@ -3154,6 +3135,9 @@ packages:
   indent-string@4.0.0:
     resolution: {integrity: sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==}
     engines: {node: '>=8'}
+
+  individual@3.0.0:
+    resolution: {integrity: sha512-rUY5vtT748NMRbEMrTNiFfy29BgGZwGXUi2NFUVMWQrogSLzlJvQV9eeMWi+g1aVaQ53tpyLAQtd5x/JH0Nh1g==}
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
@@ -4699,9 +4683,6 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  tabbable@6.3.0:
-    resolution: {integrity: sha512-EIHvdY5bPLuWForiR/AN2Bxngzpuwn1is4asboytXtpTgsArc+WmSJKVLlhdh71u7jFcryDqB2A8lQvj78MkyQ==}
-
   tabbable@6.4.0:
     resolution: {integrity: sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==}
 
@@ -5510,7 +5491,6 @@ snapshots:
   '@babel/parser@7.29.2':
     dependencies:
       '@babel/types': 7.29.0
-    optional: true
 
   '@babel/runtime@7.28.4': {}
 
@@ -5558,39 +5538,13 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
-    optional: true
-
-  '@base-ui-components/react@1.0.0-rc.0(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@babel/runtime': 7.28.4
-      '@base-ui-components/utils': 0.2.2(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@floating-ui/react-dom': 2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@floating-ui/utils': 0.2.10
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      reselect: 5.1.1
-      tabbable: 6.3.0
-      use-sync-external-store: 1.6.0(react@18.3.1)
-    optionalDependencies:
-      '@types/react': 18.3.23
-
-  '@base-ui-components/utils@0.2.2(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@babel/runtime': 7.28.4
-      '@floating-ui/utils': 0.2.10
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      reselect: 5.1.1
-      use-sync-external-store: 1.6.0(react@18.3.1)
-    optionalDependencies:
-      '@types/react': 18.3.23
 
   '@base-ui/react@1.1.0(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@base-ui/utils': 0.2.4(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@floating-ui/react-dom': 2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@floating-ui/utils': 0.2.10
+      '@floating-ui/utils': 0.2.11
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       reselect: 5.1.1
@@ -5602,7 +5556,7 @@ snapshots:
   '@base-ui/utils@0.2.4(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.28.4
-      '@floating-ui/utils': 0.2.10
+      '@floating-ui/utils': 0.2.11
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       reselect: 5.1.1
@@ -5912,36 +5866,22 @@ snapshots:
   '@esbuild/win32-x64@0.25.12':
     optional: true
 
-  '@floating-ui/core@1.7.3':
-    dependencies:
-      '@floating-ui/utils': 0.2.10
-
   '@floating-ui/core@1.7.5':
     dependencies:
       '@floating-ui/utils': 0.2.11
-    optional: true
-
-  '@floating-ui/dom@1.7.4':
-    dependencies:
-      '@floating-ui/core': 1.7.3
-      '@floating-ui/utils': 0.2.10
 
   '@floating-ui/dom@1.7.6':
     dependencies:
       '@floating-ui/core': 1.7.5
       '@floating-ui/utils': 0.2.11
-    optional: true
 
   '@floating-ui/react-dom@2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@floating-ui/dom': 1.7.4
+      '@floating-ui/dom': 1.7.6
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@floating-ui/utils@0.2.10': {}
-
-  '@floating-ui/utils@0.2.11':
-    optional: true
+  '@floating-ui/utils@0.2.11': {}
 
   '@gerrit0/mini-shiki@3.19.0':
     dependencies:
@@ -5951,8 +5891,7 @@ snapshots:
       '@shikijs/types': 3.19.0
       '@shikijs/vscode-textmate': 10.0.2
 
-  '@gwhitney/detect-indent@7.0.1':
-    optional: true
+  '@gwhitney/detect-indent@7.0.1': {}
 
   '@hapi/address@5.1.1':
     dependencies:
@@ -6138,39 +6077,42 @@ snapshots:
     dependencies:
       playwright: 1.56.1
 
-  '@pnpm/constants@1001.3.1':
-    optional: true
+  '@pnpm/constants@1001.3.1': {}
 
-  '@pnpm/core-loggers@1001.0.9':
+  '@pnpm/core-loggers@1001.0.9(@pnpm/logger@1001.0.1)':
     dependencies:
+      '@pnpm/logger': 1001.0.1
       '@pnpm/types': 1001.3.0
-    optional: true
 
   '@pnpm/error@1000.0.5':
     dependencies:
       '@pnpm/constants': 1001.3.1
-    optional: true
 
   '@pnpm/graceful-fs@1000.1.0':
     dependencies:
       graceful-fs: 4.2.11
-    optional: true
 
-  '@pnpm/manifest-utils@1002.0.4':
+  '@pnpm/logger@1001.0.1':
     dependencies:
-      '@pnpm/core-loggers': 1001.0.9
+      bole: 5.0.28
+      split2: 4.2.0
+
+  '@pnpm/manifest-utils@1002.0.4(@pnpm/logger@1001.0.1)':
+    dependencies:
+      '@pnpm/core-loggers': 1001.0.9(@pnpm/logger@1001.0.1)
       '@pnpm/error': 1000.0.5
+      '@pnpm/logger': 1001.0.1
       '@pnpm/semver.peer-range': 1000.0.0
       '@pnpm/types': 1001.3.0
       semver: 7.7.3
-    optional: true
 
-  '@pnpm/read-project-manifest@1001.2.5':
+  '@pnpm/read-project-manifest@1001.2.5(@pnpm/logger@1001.0.1)':
     dependencies:
       '@gwhitney/detect-indent': 7.0.1
       '@pnpm/error': 1000.0.5
       '@pnpm/graceful-fs': 1000.1.0
-      '@pnpm/manifest-utils': 1002.0.4
+      '@pnpm/logger': 1001.0.1
+      '@pnpm/manifest-utils': 1002.0.4(@pnpm/logger@1001.0.1)
       '@pnpm/text.comments-parser': 1000.0.0
       '@pnpm/types': 1001.3.0
       '@pnpm/write-project-manifest': 1000.0.16
@@ -6180,20 +6122,16 @@ snapshots:
       parse-json: 5.2.0
       read-yaml-file: 2.1.0
       strip-bom: 4.0.0
-    optional: true
 
   '@pnpm/semver.peer-range@1000.0.0':
     dependencies:
       semver: 7.7.3
-    optional: true
 
   '@pnpm/text.comments-parser@1000.0.0':
     dependencies:
       strip-comments-strings: 1.2.0
-    optional: true
 
-  '@pnpm/types@1001.3.0':
-    optional: true
+  '@pnpm/types@1001.3.0': {}
 
   '@pnpm/write-project-manifest@1000.0.16':
     dependencies:
@@ -6202,19 +6140,16 @@ snapshots:
       json5: 2.2.3
       write-file-atomic: 5.0.1
       write-yaml-file: 5.0.0
-    optional: true
 
   '@polka/url@0.5.0': {}
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@publint/pack@0.1.4':
-    optional: true
+  '@publint/pack@0.1.4': {}
 
   '@quansync/fs@1.0.0':
     dependencies:
       quansync: 1.0.0
-    optional: true
 
   '@radix-ui/colors@3.0.0': {}
 
@@ -6265,8 +6200,7 @@ snapshots:
   '@rolldown/binding-win32-x64-msvc@1.0.0-rc.11':
     optional: true
 
-  '@rolldown/debug@1.0.0-rc.11':
-    optional: true
+  '@rolldown/debug@1.0.0-rc.11': {}
 
   '@rolldown/pluginutils@1.0.0-rc.11': {}
 
@@ -6683,12 +6617,11 @@ snapshots:
     transitivePeerDependencies:
       - typescript
       - ws
-    optional: true
 
-  '@vitejs/devtools-rolldown@0.1.10(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(vue@3.5.30(typescript@5.9.3))':
+  '@vitejs/devtools-rolldown@0.1.10(@pnpm/logger@1001.0.1)(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(vue@3.5.30(typescript@5.9.3))':
     dependencies:
       '@floating-ui/dom': 1.7.6
-      '@pnpm/read-project-manifest': 1001.2.5
+      '@pnpm/read-project-manifest': 1001.2.5(@pnpm/logger@1001.0.1)
       '@rolldown/debug': 1.0.0-rc.11
       '@vitejs/devtools-kit': 0.1.10(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(ws@8.18.3)
       '@vitejs/devtools-rpc': 0.1.10(typescript@5.9.3)(ws@8.18.3)
@@ -6739,7 +6672,6 @@ snapshots:
       - utf-8-validate
       - vite
       - vue
-    optional: true
 
   '@vitejs/devtools-rpc@0.1.10(typescript@5.9.3)(ws@8.18.3)':
     dependencies:
@@ -6752,12 +6684,11 @@ snapshots:
       ws: 8.18.3
     transitivePeerDependencies:
       - typescript
-    optional: true
 
-  '@vitejs/devtools@0.1.10(typescript@5.9.3)(vite@8.0.2)':
+  '@vitejs/devtools@0.1.10(@pnpm/logger@1001.0.1)(typescript@5.9.3)(vite@8.0.2)':
     dependencies:
       '@vitejs/devtools-kit': 0.1.10(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(ws@8.18.3)
-      '@vitejs/devtools-rolldown': 0.1.10(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(vue@3.5.30(typescript@5.9.3))
+      '@vitejs/devtools-rolldown': 0.1.10(@pnpm/logger@1001.0.1)(typescript@5.9.3)(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))(vue@3.5.30(typescript@5.9.3))
       '@vitejs/devtools-rpc': 0.1.10(typescript@5.9.3)(ws@8.18.3)
       birpc: 4.0.0
       cac: 7.0.0
@@ -6798,7 +6729,6 @@ snapshots:
       - typescript
       - uploadthing
       - utf-8-validate
-    optional: true
 
   '@vitejs/plugin-react@6.0.1(vite@8.0.2(@types/node@22.18.0)(@vitejs/devtools@0.1.10)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.1))':
     dependencies:
@@ -6906,7 +6836,6 @@ snapshots:
       entities: 7.0.1
       estree-walker: 2.0.2
       source-map-js: 1.2.1
-    optional: true
 
   '@vue/compiler-dom@3.5.22':
     dependencies:
@@ -6917,7 +6846,6 @@ snapshots:
     dependencies:
       '@vue/compiler-core': 3.5.30
       '@vue/shared': 3.5.30
-    optional: true
 
   '@vue/compiler-sfc@3.5.22':
     dependencies:
@@ -6942,7 +6870,6 @@ snapshots:
       magic-string: 0.30.21
       postcss: 8.5.8
       source-map-js: 1.2.1
-    optional: true
 
   '@vue/compiler-ssr@3.5.22':
     dependencies:
@@ -6953,18 +6880,15 @@ snapshots:
     dependencies:
       '@vue/compiler-dom': 3.5.30
       '@vue/shared': 3.5.30
-    optional: true
 
   '@vue/reactivity@3.5.30':
     dependencies:
       '@vue/shared': 3.5.30
-    optional: true
 
   '@vue/runtime-core@3.5.30':
     dependencies:
       '@vue/reactivity': 3.5.30
       '@vue/shared': 3.5.30
-    optional: true
 
   '@vue/runtime-dom@3.5.30':
     dependencies:
@@ -6972,19 +6896,16 @@ snapshots:
       '@vue/runtime-core': 3.5.30
       '@vue/shared': 3.5.30
       csstype: 3.2.3
-    optional: true
 
   '@vue/server-renderer@3.5.30(vue@3.5.30(typescript@5.9.3))':
     dependencies:
       '@vue/compiler-ssr': 3.5.30
       '@vue/shared': 3.5.30
       vue: 3.5.30(typescript@5.9.3)
-    optional: true
 
   '@vue/shared@3.5.22': {}
 
-  '@vue/shared@3.5.30':
-    optional: true
+  '@vue/shared@3.5.30': {}
 
   '@xmldom/xmldom@0.8.11': {}
 
@@ -7022,8 +6943,7 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  acorn@8.16.0:
-    optional: true
+  acorn@8.16.0: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -7060,14 +6980,12 @@ snapshots:
 
   ansi-styles@5.2.0: {}
 
-  ansis@4.2.0:
-    optional: true
+  ansis@4.2.0: {}
 
   anymatch@3.1.3:
     dependencies:
       normalize-path: 3.0.0
       picomatch: 2.3.1
-    optional: true
 
   app-builder-bin@4.0.0: {}
 
@@ -7266,8 +7184,7 @@ snapshots:
       require-from-string: 2.0.2
     optional: true
 
-  birpc@4.0.0:
-    optional: true
+  birpc@4.0.0: {}
 
   bl@4.1.0:
     dependencies:
@@ -7280,6 +7197,11 @@ snapshots:
       bluebird: 3.7.2
 
   bluebird@3.7.2: {}
+
+  bole@5.0.28:
+    dependencies:
+      fast-safe-stringify: 2.1.1
+      individual: 3.0.0
 
   boolean@3.2.0:
     optional: true
@@ -7383,8 +7305,7 @@ snapshots:
 
   cac@6.7.14: {}
 
-  cac@7.0.0:
-    optional: true
+  cac@7.0.0: {}
 
   cacache@19.0.1:
     dependencies:
@@ -7472,7 +7393,6 @@ snapshots:
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.0.0
-    optional: true
 
   chownr@3.0.0: {}
 
@@ -7565,8 +7485,7 @@ snapshots:
 
   concat-map@0.0.1: {}
 
-  confbox@0.1.8:
-    optional: true
+  confbox@0.1.8: {}
 
   config-file-ts@0.2.6:
     dependencies:
@@ -7651,16 +7570,13 @@ snapshots:
 
   csstype@3.1.3: {}
 
-  csstype@3.2.3:
-    optional: true
+  csstype@3.2.3: {}
 
-  d3-path@3.1.0:
-    optional: true
+  d3-path@3.1.0: {}
 
   d3-shape@3.2.0:
     dependencies:
       d3-path: 3.1.0
-    optional: true
 
   data-urls@5.0.0:
     dependencies:
@@ -7789,8 +7705,7 @@ snapshots:
   detect-node@2.1.0:
     optional: true
 
-  diff@8.0.4:
-    optional: true
+  diff@8.0.4: {}
 
   digraph-js@2.2.4:
     dependencies:
@@ -7960,8 +7875,7 @@ snapshots:
 
   entities@6.0.1: {}
 
-  entities@7.0.1:
-    optional: true
+  entities@7.0.1: {}
 
   env-paths@2.2.1: {}
 
@@ -8148,6 +8062,8 @@ snapshots:
 
   fast-json-stable-stringify@2.1.0: {}
 
+  fast-safe-stringify@2.1.1: {}
+
   fastq@1.19.1:
     dependencies:
       reusify: 1.1.0
@@ -8271,8 +8187,7 @@ snapshots:
       hasown: 2.0.2
       math-intrinsics: 1.1.0
 
-  get-port-please@3.2.0:
-    optional: true
+  get-port-please@3.2.0: {}
 
   get-proto@1.0.1:
     dependencies:
@@ -8389,7 +8304,6 @@ snapshots:
       radix3: 1.1.2
       ufo: 1.6.3
       uncrypto: 0.1.3
-    optional: true
 
   h3@1.15.9:
     dependencies:
@@ -8504,8 +8418,7 @@ snapshots:
   immediate@3.3.0:
     optional: true
 
-  immer@11.1.4:
-    optional: true
+  immer@11.1.4: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -8515,6 +8428,8 @@ snapshots:
   imurmurhash@0.1.4: {}
 
   indent-string@4.0.0: {}
+
+  individual@3.0.0: {}
 
   inflight@1.0.6:
     dependencies:
@@ -8606,8 +8521,7 @@ snapshots:
     dependencies:
       is-extglob: 2.1.1
 
-  is-in-ssh@1.0.0:
-    optional: true
+  is-in-ssh@1.0.0: {}
 
   is-inside-container@1.0.0:
     dependencies:
@@ -8826,7 +8740,6 @@ snapshots:
     dependencies:
       picocolors: 1.1.1
       shell-quote: 1.8.3
-    optional: true
 
   lazy-val@1.0.5: {}
 
@@ -9161,8 +9074,7 @@ snapshots:
     dependencies:
       minipass: 7.1.3
 
-  mitt@2.1.0:
-    optional: true
+  mitt@2.1.0: {}
 
   mlly@1.8.2:
     dependencies:
@@ -9170,10 +9082,8 @@ snapshots:
       pathe: 2.0.3
       pkg-types: 1.3.1
       ufo: 1.6.3
-    optional: true
 
-  mri@1.2.0:
-    optional: true
+  mri@1.2.0: {}
 
   mrmime@2.0.1: {}
 
@@ -9217,8 +9127,7 @@ snapshots:
     dependencies:
       semver: 7.7.3
 
-  node-fetch-native@1.6.7:
-    optional: true
+  node-fetch-native@1.6.7: {}
 
   node-gyp-build@4.1.1:
     optional: true
@@ -9300,10 +9209,8 @@ snapshots:
       destr: 2.0.5
       node-fetch-native: 1.6.7
       ufo: 1.6.3
-    optional: true
 
-  ohash@2.0.11:
-    optional: true
+  ohash@2.0.11: {}
 
   on-headers@1.1.0: {}
 
@@ -9330,7 +9237,6 @@ snapshots:
       is-inside-container: 1.0.0
       powershell-utils: 0.1.0
       wsl-utils: 0.3.1
-    optional: true
 
   ora@5.4.1:
     dependencies:
@@ -9375,7 +9281,6 @@ snapshots:
   p-limit@7.3.0:
     dependencies:
       yocto-queue: 1.2.1
-    optional: true
 
   p-locate@6.0.0:
     dependencies:
@@ -9385,8 +9290,7 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  package-manager-detector@1.6.0:
-    optional: true
+  package-manager-detector@1.6.0: {}
 
   parent-module@1.0.1:
     dependencies:
@@ -9453,8 +9357,7 @@ snapshots:
 
   pend@1.2.0: {}
 
-  perfect-debounce@2.1.0:
-    optional: true
+  perfect-debounce@2.1.0: {}
 
   picocolors@1.1.1: {}
 
@@ -9473,7 +9376,6 @@ snapshots:
       confbox: 0.1.8
       mlly: 1.8.2
       pathe: 2.0.3
-    optional: true
 
   playwright-core@1.56.1: {}
 
@@ -9512,8 +9414,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  powershell-utils@0.1.0:
-    optional: true
+  powershell-utils@0.1.0: {}
 
   prettier@3.7.4: {}
 
@@ -9558,7 +9459,6 @@ snapshots:
       package-manager-detector: 1.6.0
       picocolors: 1.1.1
       sade: 1.8.1
-    optional: true
 
   pump@3.0.3:
     dependencies:
@@ -9571,8 +9471,7 @@ snapshots:
 
   pure-rand@6.1.0: {}
 
-  quansync@1.0.0:
-    optional: true
+  quansync@1.0.0: {}
 
   queue-microtask@1.2.3: {}
 
@@ -9665,8 +9564,7 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
-  readdirp@5.0.0:
-    optional: true
+  readdirp@5.0.0: {}
 
   recast@0.23.11:
     dependencies:
@@ -9833,7 +9731,6 @@ snapshots:
   sade@1.8.1:
     dependencies:
       mri: 1.2.0
-    optional: true
 
   safe-array-concat@1.1.3:
     dependencies:
@@ -9957,8 +9854,7 @@ snapshots:
 
   signal-exit@3.0.7: {}
 
-  signal-exit@4.1.0:
-    optional: true
+  signal-exit@4.1.0: {}
 
   simple-update-notifier@2.0.0:
     dependencies:
@@ -9975,7 +9871,6 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
-    optional: true
 
   sisteransi@1.0.5: {}
 
@@ -10059,8 +9954,7 @@ snapshots:
 
   spdx-license-ids@3.0.22: {}
 
-  split2@4.2.0:
-    optional: true
+  split2@4.2.0: {}
 
   sprintf-js@1.1.3:
     optional: true
@@ -10169,8 +10063,7 @@ snapshots:
 
   strip-bom@4.0.0: {}
 
-  strip-comments-strings@1.2.0:
-    optional: true
+  strip-comments-strings@1.2.0: {}
 
   strip-indent@3.0.0:
     dependencies:
@@ -10180,8 +10073,7 @@ snapshots:
     dependencies:
       min-indent: 1.0.1
 
-  structured-clone-es@2.0.0:
-    optional: true
+  structured-clone-es@2.0.0: {}
 
   sumchecker@3.0.1:
     dependencies:
@@ -10223,8 +10115,6 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  tabbable@6.3.0: {}
-
   tabbable@6.4.0: {}
 
   tar-stream@2.2.0:
@@ -10260,8 +10150,7 @@ snapshots:
 
   tinyexec@1.0.2: {}
 
-  tinyexec@1.0.4:
-    optional: true
+  tinyexec@1.0.4: {}
 
   tinyglobby@0.2.15:
     dependencies:
@@ -10421,7 +10310,6 @@ snapshots:
     dependencies:
       '@quansync/fs': 1.0.0
       quansync: 1.0.0
-    optional: true
 
   unconfig@7.5.0:
     dependencies:
@@ -10430,7 +10318,6 @@ snapshots:
       jiti: 2.6.1
       quansync: 1.0.0
       unconfig-core: 7.5.0
-    optional: true
 
   uncrypto@0.1.3: {}
 
@@ -10467,7 +10354,6 @@ snapshots:
       node-fetch-native: 1.6.7
       ofetch: 1.5.1
       ufo: 1.6.3
-    optional: true
 
   update-browserslist-db@1.1.3(browserslist@4.25.0):
     dependencies:
@@ -10490,7 +10376,6 @@ snapshots:
   valibot@1.3.1(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
-    optional: true
 
   validate-npm-package-license@3.0.4:
     dependencies:
@@ -10553,7 +10438,7 @@ snapshots:
       tinyglobby: 0.2.15
     optionalDependencies:
       '@types/node': 22.18.0
-      '@vitejs/devtools': 0.1.10(typescript@5.9.3)(vite@8.0.2)
+      '@vitejs/devtools': 0.1.10(@pnpm/logger@1001.0.1)(typescript@5.9.3)(vite@8.0.2)
       esbuild: 0.25.12
       fsevents: 2.3.3
       jiti: 2.6.1
@@ -10620,7 +10505,6 @@ snapshots:
     dependencies:
       mitt: 2.1.0
       vue: 3.5.30(typescript@5.9.3)
-    optional: true
 
   vue@3.5.30(typescript@5.9.3):
     dependencies:
@@ -10631,7 +10515,6 @@ snapshots:
       '@vue/shared': 3.5.30
     optionalDependencies:
       typescript: 5.9.3
-    optional: true
 
   w3c-xmlserializer@5.0.0:
     dependencies:
@@ -10745,13 +10628,11 @@ snapshots:
     dependencies:
       imurmurhash: 0.1.4
       signal-exit: 4.1.0
-    optional: true
 
   write-yaml-file@5.0.0:
     dependencies:
       js-yaml: 4.1.1
       write-file-atomic: 5.0.1
-    optional: true
 
   ws@8.18.2: {}
 
@@ -10765,7 +10646,6 @@ snapshots:
     dependencies:
       is-wsl: 3.1.0
       powershell-utils: 0.1.0
-    optional: true
 
   xml-name-validator@5.0.0: {}
 

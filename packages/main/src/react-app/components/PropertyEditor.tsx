@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import { useRedraw } from '../hooks/useRedraw';
 import styles from '@diagram-craft/app-components/Tooltip.module.css';
 import type { Property } from '@diagram-craft/model/property';
-import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip';
+import { Tooltip as BaseUITooltip } from '@base-ui/react/tooltip';
 
 export function PropertyEditor<T>(props: Props<T>) {
   const redraw = useRedraw();
