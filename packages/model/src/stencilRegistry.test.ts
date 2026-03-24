@@ -5,6 +5,7 @@ import {
   type Stencil,
   type StencilPackage
 } from './stencilRegistry';
+import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
 
 const makeStencil = (id: string, name = id): Stencil => ({
   id,
@@ -23,12 +24,13 @@ describe('StencilRegistry', () => {
     const registry = new StencilRegistry();
     const subpackageStencil = makeStencil('uml-class-class');
     const pkg: StencilPackage = {
+      id: 'uml',
       type: 'default',
       stencils: [],
       subPackages: [{ id: 'class', name: 'Class', stencils: [subpackageStencil] }]
     };
 
-    registry.register('uml', 'UML', pkg);
+    registry.register('UML', pkg);
 
     expect(subpackageStencil.id).toBe('uml@@class@@uml-class-class');
     expect(registry.getStencil('uml@@class@@uml-class-class')).toBe(subpackageStencil);
@@ -38,11 +40,12 @@ describe('StencilRegistry', () => {
     const registry = new StencilRegistry();
     const rootStencil = makeStencil('table');
     const pkg: StencilPackage = {
+      id: 'default',
       type: 'default',
       stencils: [rootStencil]
     };
 
-    registry.register('default', 'Default', pkg);
+    registry.register('Default', pkg);
 
     expect(rootStencil.id).toBe('default@@table');
     expect(registry.getStencil('default@@table')).toBe(rootStencil);
@@ -53,12 +56,13 @@ describe('StencilRegistry', () => {
     const rootStencil = makeStencil('root-shape', 'Root Shape');
     const subpackageStencil = makeStencil('class-shape', 'Class Shape');
     const pkg: StencilPackage = {
+      id: 'uml',
       type: 'default',
       stencils: [rootStencil],
       subPackages: [{ id: 'class', name: 'Class', stencils: [subpackageStencil] }]
     };
 
-    registry.register('uml', 'UML', pkg);
+    registry.register('UML', pkg);
 
     await expect(registry.search('UML')).resolves.toEqual([rootStencil, subpackageStencil]);
     await expect(registry.search('Class Shape')).resolves.toEqual([subpackageStencil]);
@@ -70,16 +74,44 @@ describe('StencilRegistry', () => {
     const rootStencil = makeStencil('root-shape');
     const subpackageStencil = makeStencil('class-shape');
     const pkg: StencilPackage = {
+      id: 'uml',
       type: 'default',
       stencils: [rootStencil],
       subPackages: [{ id: 'class', name: 'Class', stencils: [subpackageStencil] }]
     };
 
-    registry.register('uml', 'UML', pkg);
+    registry.register('UML', pkg);
 
     const registered = registry.get('uml');
     expect(registered.stencils).toEqual([rootStencil]);
     expect(registered.subPackages?.[0]?.stencils).toEqual([subpackageStencil]);
     expect(getStencilsInPackage(registered)).toHaveLength(2);
+  });
+
+  it('replaces a preregistered placeholder with the loaded package id and keeps an alias', async () => {
+    const registry = new StencilRegistry();
+    const pkg: StencilPackage = {
+      id: 'mxgraph.arrows',
+      type: 'drawioXml',
+      stencils: [makeStencil('arrow-right')]
+    };
+
+    registry.preRegister('Arrows', 'Arrows', async () => {
+      registry.register('Arrows', pkg, ['Arrows']);
+    });
+
+    await registry.loadStencilPackage('Arrows');
+
+    expect(registry.getStencils().map(s => s.id)).toEqual(['mxgraph.arrows']);
+    expect(registry.get('Arrows').id).toBe('mxgraph.arrows');
+    expect(registry.getStencil('mxgraph.arrows@@arrow-right')?.id).toBe(
+      'mxgraph.arrows@@arrow-right'
+    );
+  });
+
+  it('registers the built-in arrow package with an explicit id', () => {
+    const { stencils } = defaultRegistry();
+
+    expect(stencils.get('arrow').id).toBe('arrow');
   });
 });

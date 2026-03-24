@@ -104,7 +104,7 @@ export const defaultStencilRegistry = () => {
     type: 'default'
   };
 
-  const arrows: StencilPackage = { stencils: [], type: 'default' };
+  const arrows: StencilPackage = { id: 'arrow', stencils: [], type: 'default' };
 
   addStencil(defaults, new RectNodeDefinition());
   addStencil(defaults, new RoundedRectNodeDefinition(), {
@@ -182,8 +182,8 @@ export const defaultStencilRegistry = () => {
   // Edges
   addStencil(arrows, new BlockArrowEdgeDefinition());
 
-  stencilRegistry.register('default', 'Default', defaults);
-  stencilRegistry.register('arrow', 'Arrow', arrows);
+  stencilRegistry.register('Default', defaults);
+  stencilRegistry.register('Arrow', arrows);
   return stencilRegistry;
 };
 

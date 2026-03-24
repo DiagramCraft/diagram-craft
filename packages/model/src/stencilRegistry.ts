@@ -57,7 +57,8 @@ export type StencilSubPackage = {
   stencils: Array<Stencil>;
 };
 export type StencilPackage = {
-  id?: string;
+  id: string;
+  name?: string;
   stencils: Array<Stencil>;
   type: 'default' | string;
 
@@ -128,10 +129,12 @@ export const STENCIL_ID_DELIMITER = '@@';
 
 export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, RegisteredStencilPackage>();
+  private aliases = new Map<string, string>();
   private loaded = new Set<string>();
   private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
-  register(id: string, name: string, pkg: StencilPackage) {
+  register(name: string, pkg: StencilPackage, aliases: ReadonlyArray<string> = []) {
+    const id = pkg.id;
     pkg.subPackages?.forEach(sp =>
       sp.stencils.forEach(s => {
         s.id = id + STENCIL_ID_DELIMITER + sp.id + STENCIL_ID_DELIMITER + s.id;
@@ -142,7 +145,14 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       s.id = id + STENCIL_ID_DELIMITER + s.id;
     });
 
-    this.stencils.set(id, { id, name, ...pkg });
+    for (const alias of aliases) {
+      if (alias === id) continue;
+      this.aliases.set(alias, id);
+      this.stencils.delete(alias);
+      this.loaded.delete(alias);
+    }
+
+    this.stencils.set(id, { ...pkg, id, name: pkg.name ?? name });
     this.loaded.add(id);
 
     this.emitAsyncWithDebounce('change', { stencilRegistry: this });
@@ -157,6 +167,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   }
 
   async loadStencilPackage(id: string) {
+    id = this.resolveId(id);
     const pr = this.preRegistrations.find(p => p.id === id);
     if (!pr) return;
 
@@ -174,7 +185,7 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   }
 
   get(id: string): StencilPackage {
-    return this.stencils.get(id)!;
+    return this.stencils.get(this.resolveId(id))!;
   }
 
   getStencils() {
@@ -200,6 +211,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       }
     }
     return results;
+  }
+
+  private resolveId(id: string) {
+    return this.aliases.get(id) ?? id;
   }
 }
 
