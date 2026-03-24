@@ -67,7 +67,6 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
 
     return definition.getNodeLinkOptions(this.edge.start.node);
   }
-
 }
 
 export class EdgeTool extends AbstractTool {

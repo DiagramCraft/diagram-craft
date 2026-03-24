@@ -14,7 +14,7 @@ import { BarkerEntityTextNodeDefinition } from '@diagram-craft/stencil-data-mode
 import { BarkerEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntity.nodeType';
 import { IDEF1XEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XEntity.nodeType';
 import { IDEF1XCategoryDiscriminatorNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XCategoryDiscriminator.nodeType';
-import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { getStencilSubPackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new IEEntityTextNodeDefinition());
@@ -32,6 +32,7 @@ export const loadDataModellingStencils = async (registry: Registry) => {
   await registerDataModellingEdges(registry.edges);
 
   const dataModellingStencils: StencilPackage = {
+    id: 'data-modelling',
     stencils: [],
     type: 'default',
 
@@ -47,37 +48,33 @@ export const loadDataModellingStencils = async (registry: Registry) => {
   /* CHEN PACKAGE                                                            */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(chenStencils).forEach(s => {
-    dataModellingStencils.stencils.push(s);
-    dataModellingStencils.subPackages!.find(p => p.id === 'chen')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(chenStencils, dataModellingStencils, getStencilSubPackage(dataModellingStencils, 'chen'));
 
   /* *********************************************************************** */
   /* IE PACKAGE                                                              */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(ieStencils).forEach(s => {
-    dataModellingStencils.stencils.push(s);
-    dataModellingStencils.subPackages!.find(p => p.id === 'ie')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(ieStencils, dataModellingStencils, getStencilSubPackage(dataModellingStencils, 'ie'));
 
   /* *********************************************************************** */
   /* BARKER PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(barkerStencils).forEach(s => {
-    dataModellingStencils.stencils.push(s);
-    dataModellingStencils.subPackages!.find(p => p.id === 'barker')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(
+    barkerStencils,
+    dataModellingStencils,
+    getStencilSubPackage(dataModellingStencils, 'barker')
+  );
 
   /* *********************************************************************** */
   /* IDEF1X PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(idef1xStencils).forEach(s => {
-    dataModellingStencils.stencils.push(s);
-    dataModellingStencils.subPackages!.find(p => p.id === 'idef1x')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(
+    idef1xStencils,
+    dataModellingStencils,
+    getStencilSubPackage(dataModellingStencils, 'idef1x')
+  );
 
   return dataModellingStencils;
 };

@@ -1,4 +1,5 @@
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
+import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
@@ -24,6 +25,7 @@ export type StencilElements = {
 export type Stencil = {
   id: string;
   name?: string;
+  nodeLinkOptions?: NodeLinkOptions;
   forPicker: (registry: Registry) => StencilElements;
   forCanvas: (registry: Registry) => StencilElements;
   styles?: Array<StencilStyle>;
@@ -38,6 +40,7 @@ export type Stencil = {
 };
 
 export type StencilPackage = {
+  id?: string;
   stencils: Array<Stencil>;
   type: 'default' | string;
 
@@ -47,6 +50,8 @@ export type StencilPackage = {
     stencils: Array<Stencil>;
   }>;
 };
+
+export type StencilSubPackage = NonNullable<StencilPackage['subPackages']>[number];
 
 export type StencilStyle = {
   id: string;
@@ -116,10 +121,19 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
   register(id: string, name: string, pkg: StencilPackage) {
-    pkg.stencils.forEach(s => (s.id = id + DELIMITER + s.id));
+    const subpackageStencils = new Set<Stencil>();
+
     pkg.subPackages?.forEach(sp =>
-      sp.stencils.forEach(s => (s.id = id + DELIMITER + sp.id + DELIMITER + s.id))
+      sp.stencils.forEach(s => {
+        s.id = id + DELIMITER + sp.id + DELIMITER + s.id;
+        subpackageStencils.add(s);
+      })
     );
+
+    pkg.stencils.forEach(s => {
+      if (subpackageStencils.has(s)) return;
+      s.id = id + DELIMITER + s.id;
+    });
 
     this.stencils.set(id, { id, name, ...pkg });
     this.loaded.add(id);
@@ -186,6 +200,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
 /* Helpers ************************************************************************** */
 
+export const getStencilSubPackage = (pkg: StencilPackage, subpackageId: string): StencilSubPackage => {
+  return mustExist(pkg.subPackages?.find(p => p.id === subpackageId));
+};
+
 export const addStencilToSubpackage = (
   subpackage: string,
   pkg: StencilPackage,
@@ -218,7 +236,7 @@ export const addStencil = (
   };
 
   if (opts?.subPackage) {
-    pkg.subPackages!.find(p => p.id === opts.subPackage)!.stencils.push(stencil);
+    getStencilSubPackage(pkg, opts.subPackage).stencils.push(stencil);
   } else {
     pkg.stencils.push(stencil);
   }

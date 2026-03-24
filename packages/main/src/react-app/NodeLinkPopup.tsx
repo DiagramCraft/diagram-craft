@@ -420,28 +420,35 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
 
   useEventListener(stencilRegistry, 'change', redraw);
 
+  const baseEdgeStylesheetIds = useMemo(
+    () => getEdgeStylesheetIds(diagram, options),
+    [diagram, options]
+  );
+
+  const baseNodeStencilIds = useMemo(() => {
+    if (!hasProvisionalNode) return [];
+    return getNodeStencilIds(diagram, options);
+  }, [diagram, hasProvisionalNode, options]);
+
   const edgeStylesheets = useMemo(() => {
-    const baseIds = getEdgeStylesheetIds(diagram, options);
     const ids = hasProvisionalNode
       ? getVisibleEdgeStylesheetIds(
-          getNodeStencilIds(diagram, options),
-          baseIds,
+          baseNodeStencilIds,
+          baseEdgeStylesheetIds,
           selectedNode,
           options
         )
-      : baseIds;
+      : baseEdgeStylesheetIds;
 
     return ids.map(id => styleManager.getEdgeStyle(id)).filter(s => s !== undefined);
-  }, [diagram, hasProvisionalNode, options, selectedNode, styleManager]);
+  }, [baseEdgeStylesheetIds, baseNodeStencilIds, hasProvisionalNode, options, selectedNode, styleManager]);
 
   const nodeStencils = useMemo(() => {
     if (!hasProvisionalNode) return [];
 
-    const edgeStylesheetIds = getEdgeStylesheetIds(diagram, options);
-
     return getVisibleNodeStencilIds(
-      getNodeStencilIds(diagram, options),
-      edgeStylesheetIds,
+      baseNodeStencilIds,
+      baseEdgeStylesheetIds,
       selectedEdge,
       options
     )
@@ -453,7 +460,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
         return { id, kind: 'stencil' as const, stencil };
       })
       .filter(e => e !== undefined);
-  }, [diagram, hasProvisionalNode, options, selectedEdge, stencilRegistry]);
+  }, [baseEdgeStylesheetIds, baseNodeStencilIds, hasProvisionalNode, options, selectedEdge, stencilRegistry]);
 
   const edgePreviewDiagrams = useMemo(
     () =>

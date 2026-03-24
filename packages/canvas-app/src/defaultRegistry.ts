@@ -99,6 +99,7 @@ export const defaultStencilRegistry = () => {
   const stencilRegistry = new StencilRegistry();
 
   const defaults: StencilPackage = {
+    id: 'default',
     stencils: [],
     type: 'default'
   };
@@ -176,7 +177,7 @@ export const defaultStencilRegistry = () => {
   addStencil(arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
   addStencil(arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
-  defaults.stencils.push(...loadStencilsFromYaml(stencils));
+  loadStencilsFromYaml(stencils, defaults);
 
   // Edges
   addStencil(arrows, new BlockArrowEdgeDefinition());

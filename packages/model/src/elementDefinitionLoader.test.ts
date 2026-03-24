@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
 import { loadStencilsFromYaml } from './elementDefinitionLoader';
 import { TestModel } from './test-support/testModel';
 import { isNode } from './diagramElement';
@@ -96,5 +97,74 @@ describe('loadStencilsFromYaml', () => {
     expect(pickerChild.renderProps.fill.color).toBe('red');
     expect(pickerChild.renderProps.stroke.width).toBe(3);
     expect(pickerChild.renderProps.stroke.color).toBe('black');
+  });
+
+  test('resolves relative node link stencil references within the same yaml file', () => {
+    const pkg = {
+      id: 'uml',
+      stencils: [],
+      type: 'default' as const,
+      subPackages: [{ id: 'class', name: 'Class', stencils: [] }]
+    };
+    const subPackage = pkg.subPackages[0];
+    if (subPackage === undefined) throw new Error('Expected subpackage');
+
+    const [stencil] = loadStencilsFromYaml(
+      {
+        stencils: [
+          {
+            id: 'source',
+            name: 'Source',
+            settings: {
+              nodeLinkOptions: {
+                nodeStencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
+                allowedCombinations: [
+                  { nodeStencilId: 'target', edgeStylesheetId: 'edge-a' },
+                  { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+                ]
+              }
+            },
+            node: {
+              id: 'source-node',
+              type: 'node',
+              nodeType: 'rect',
+              bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+              props: {},
+              texts: { text: '' },
+              metadata: {}
+            }
+          },
+          {
+            id: 'target',
+            name: 'Target',
+            node: {
+              id: 'target-node',
+              type: 'node',
+              nodeType: 'rect',
+              bounds: { x: 0, y: 0, w: 80, h: 60, r: 0 },
+              props: {},
+              texts: { text: '' },
+              metadata: {}
+            }
+          }
+        ]
+      },
+      pkg,
+      subPackage
+    );
+
+    expect(stencil?.nodeLinkOptions).toEqual({
+      nodeStencilIds: [
+        'uml@@class@@target',
+        'external@@already-qualified',
+        NODE_LINK_POPUP_NO_SHAPE_ID
+      ],
+      allowedCombinations: [
+        { nodeStencilId: 'uml@@class@@target', edgeStylesheetId: 'edge-a' },
+        { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+      ]
+    });
+    expect(pkg.stencils).toHaveLength(2);
+    expect(subPackage.stencils).toHaveLength(2);
   });
 });
