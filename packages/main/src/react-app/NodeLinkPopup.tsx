@@ -10,7 +10,12 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { addStencilStylesToDocument, applyStencilToNode } from '@diagram-craft/model/stencilUtils';
-import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
+import {
+  copyStyles,
+  getStencilsInPackage,
+  Stencil,
+  stencilScaleStrokes
+} from '@diagram-craft/model/stencilRegistry';
 import { CompoundUndoableAction, type UndoableAction } from '@diagram-craft/model/undoManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
@@ -93,7 +98,7 @@ const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
   // All picker-compatible node stencils currently available in the document registry.
   const allIds = stencilRegistry
     .getStencils()
-    .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(sp => sp.stencils) ?? [])])
+    .flatMap(pkg => getStencilsInPackage(pkg))
     .filter(stencil => isPickerNodeStencil(stencil, diagram))
     .map(stencil => stencil.id);
 
