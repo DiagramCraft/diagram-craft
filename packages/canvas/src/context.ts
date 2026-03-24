@@ -6,6 +6,7 @@ import { ToolType } from './tool';
 import { Modifiers } from './dragDropManager';
 import type { Marquee } from './marquee';
 import type { ActionMap } from '@diagram-craft/canvas/action';
+import type { UndoableAction } from '@diagram-craft/model/undoManager';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
@@ -18,7 +19,12 @@ export interface UIActions {
     args: ContextMenus[T]
   ) => void;
 
-  showNodeLinkPopup: (point: Point, nodeId: string, edgeId: string) => void;
+  showNodeLinkPopup: (
+    point: Point,
+    nodeId: string | undefined,
+    edgeId: string,
+    pendingUndoableActions: UndoableAction[]
+  ) => void;
 
   /**
    * Show dialog using centralized dialog system. Dialogs must be registered in App.tsx.

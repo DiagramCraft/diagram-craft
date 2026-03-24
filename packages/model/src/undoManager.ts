@@ -74,11 +74,13 @@ export type UndoEvents = {
 };
 
 const MAX_HISTORY = 100;
+const MAX_HISTORY_WITH_MARKS = 10_000;
+const DEFAULT_MARK = '__default__';
 
 export class UndoManager extends EventEmitter<UndoEvents> implements Releasable {
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
-  mark: UndoableAction | undefined = undefined;
+  private readonly marks = new Map<string, UndoableAction | undefined>();
 
   constructor(private readonly diagram: Diagram) {
     super();
@@ -89,24 +91,30 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
 
   release() {}
 
-  setMark() {
-    this.mark = this.undoableActions.at(-1);
+  setMark(markName?: string) {
+    this.marks.set(markName ?? DEFAULT_MARK, this.undoableActions.at(-1));
   }
 
-  getToMark() {
+  getToMark(markName?: string) {
+    const resolvedMarkName = markName ?? DEFAULT_MARK;
+    const mark = this.marks.get(resolvedMarkName);
     const actions: UndoableAction[] = [];
-    while (this.undoableActions.at(-1) !== this.mark) {
+    while (this.undoableActions.at(-1) !== mark) {
       actions.push(this.undoableActions.pop()!);
     }
     actions.reverse();
+    this.marks.delete(resolvedMarkName);
 
     return actions;
   }
 
-  undoToMark() {
-    while (this.undoableActions.at(-1) !== this.mark) {
+  undoToMark(markName?: string) {
+    const resolvedMarkName = markName ?? DEFAULT_MARK;
+    const mark = this.marks.get(resolvedMarkName);
+    while (this.undoableActions.at(-1) !== mark) {
       this.undo();
     }
+    this.marks.delete(resolvedMarkName);
   }
 
   clearRedo() {
@@ -180,8 +188,16 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   }
 
   private prune() {
-    this.undoableActions = this.undoableActions.slice(-MAX_HISTORY);
+    // TODO: Make mark retention more deliberate if multiple long-lived named marks are introduced.
+    const maxUndoHistory = this.marks.size > 0 ? MAX_HISTORY_WITH_MARKS : MAX_HISTORY;
+    this.undoableActions = this.undoableActions.slice(-maxUndoHistory);
     this.redoableActions = this.redoableActions.slice(-MAX_HISTORY);
+    const remainingActions = new Set(this.undoableActions);
+    for (const [markName, action] of this.marks) {
+      if (action !== undefined && !remainingActions.has(action)) {
+        this.marks.delete(markName);
+      }
+    }
     this.emit('change');
   }
 }

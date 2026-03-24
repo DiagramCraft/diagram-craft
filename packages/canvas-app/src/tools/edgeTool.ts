@@ -30,6 +30,8 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   onDragEnd() {
     super.onDragEnd();
 
+    const undoManager = this.edge.diagram.undoManager;
+
     // Only if holding shift and not being over an element
     if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
       // TODO: Guard the free-start case here. EdgeTool can still start from empty canvas,
@@ -42,12 +44,13 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
       // Base UI popover dismissal still considers the current pointer interaction active.
       // Delaying to the next macrotask avoids immediate outside-press dismissal.
       setTimeout(() => {
-        this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id);
+        this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id, [
+          ...undoManager.getToMark()
+        ]);
       }, 0);
+    } else {
+      undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
     }
-
-    const undoManager = this.edge.diagram.undoManager;
-    undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
   }
 }
 

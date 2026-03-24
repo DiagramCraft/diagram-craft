@@ -125,31 +125,51 @@ class Query extends EventEmitter<{ change: EmptyObject }> {
 
 const MAX_LENGTH = 30;
 
-class RecentStencils {
-  #stencils: CRDTList<string>;
+class RecentItems {
+  #items: CRDTList<string>;
 
-  constructor(root: CRDTRoot) {
-    this.#stencils = root.getList('recentStencils');
+  constructor(root: CRDTRoot, key: string) {
+    this.#items = root.getList(key);
   }
 
   register(id: string) {
-    if (!this.#stencils.toArray().includes(id)) {
-      this.#stencils.insert(0, [id]);
+    if (!this.#items.toArray().includes(id)) {
+      this.#items.insert(0, [id]);
     }
-    while (this.#stencils.length > MAX_LENGTH) {
-      this.#stencils.delete(this.stencils.length - 1);
+    while (this.#items.length > MAX_LENGTH) {
+      this.#items.delete(this.items.length - 1);
     }
   }
 
-  set(stencils: readonly string[]) {
-    this.#stencils.clear();
-    for (const s of stencils) {
-      this.register(s);
+  set(items: readonly string[]) {
+    this.#items.clear();
+    for (const item of items.toReversed()) {
+      this.register(item);
     }
+  }
+
+  get items() {
+    return this.#items.toArray();
+  }
+}
+
+class RecentStencils extends RecentItems {
+  constructor(root: CRDTRoot) {
+    super(root, 'recentStencils');
   }
 
   get stencils() {
-    return this.#stencils.toArray();
+    return this.items;
+  }
+}
+
+class RecentEdgeStylesheets extends RecentItems {
+  constructor(root: CRDTRoot) {
+    super(root, 'recentEdgeStylesheets');
+  }
+
+  get stylesheets() {
+    return this.items;
   }
 }
 
@@ -161,10 +181,12 @@ class RecentStencils {
 export class DocumentProps implements Releasable {
   readonly query: Query;
   readonly recentStencils: RecentStencils;
+  readonly recentEdgeStylesheets: RecentEdgeStylesheets;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
     this.query = new Query(root, document);
     this.recentStencils = new RecentStencils(root);
+    this.recentEdgeStylesheets = new RecentEdgeStylesheets(root);
   }
 
   release() {}

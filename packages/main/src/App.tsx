@@ -12,7 +12,12 @@ import { Ruler } from './react-app/Ruler';
 import { ConfigurationContext } from './react-app/context/ConfigurationContext';
 import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
 import { LayerIndicator } from './react-app/LayerIndicator';
-import { NodeTypePopup, NodeTypePopupState } from './react-app/NodeTypePopup';
+import {
+  markStartOfNodeLinkPopup,
+  NodeLinkPopup,
+  NodeLinkPopupState
+} from './react-app/NodeLinkPopup';
+import { type UndoableAction } from '@diagram-craft/model/undoManager';
 import { MessageDialog } from './react-app/components/MessageDialog';
 import {
   canvasDragOverHandler,
@@ -196,7 +201,14 @@ export const App = (props: {
         contextMenuTarget.current = { type, ...args, pos: point };
       });
     },
-    showNodeLinkPopup: (point: Point, nodeId: string, edgeId: string) => {
+    showNodeLinkPopup: (
+      point: Point,
+      nodeId: string | undefined,
+      edgeId: string,
+      pendingUndoableActions: UndoableAction[]
+    ) => {
+      markStartOfNodeLinkPopup(application.current.model.activeDiagram, pendingUndoableActions);
+
       const screenPoint = $d.viewBox.toScreenPoint(point);
       setPopoverState({
         isOpen: true,
@@ -291,7 +303,7 @@ export const App = (props: {
 
   const [dirty, setDirty] = useState(false);
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
-  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
+  const [popoverState, setPopoverState] = useState<NodeLinkPopupState>(NodeLinkPopup.INITIAL_STATE);
   const [dialogStack, setDialogStack] = useState<DialogStackItem[]>([]);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
@@ -744,7 +756,7 @@ export const App = (props: {
                   <CanvasOutline />
                   <CanvasTooltip />
 
-                  <NodeTypePopup
+                  <NodeLinkPopup
                     {...popoverState}
                     onClose={() => setPopoverState(s => ({ ...s, isOpen: false }))}
                   />
