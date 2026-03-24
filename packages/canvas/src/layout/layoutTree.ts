@@ -145,15 +145,26 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
   }
 
   // Calculate relative bounds
-  const bounds = parentBounds
-    ? Box.asReadWrite({
-        x: node.bounds.x - parentBounds.x,
-        y: node.bounds.y - parentBounds.y,
-        w: node.bounds.w,
-        h: node.bounds.h,
-        r: node.bounds.r - parentBounds.r
-      })
-    : Box.asReadWrite({ ...node.bounds });
+  let relativeBounds: Box;
+  if (parentBounds) {
+    const childCenter = Box.center(node.bounds);
+    const parentCenter = Box.center(parentBounds);
+    const localCenter = Point.subtract(
+      Point.rotateAround(childCenter, -parentBounds.r, parentCenter),
+      Point.of(parentBounds.x, parentBounds.y)
+    );
+
+    relativeBounds = {
+      x: localCenter.x - node.bounds.w / 2,
+      y: localCenter.y - node.bounds.h / 2,
+      w: node.bounds.w,
+      h: node.bounds.h,
+      r: node.bounds.r - parentBounds.r
+    };
+  } else {
+    relativeBounds = { ...node.bounds };
+  }
+  const bounds = Box.asReadWrite(relativeBounds);
 
   // Build children recursively (only for DiagramNode children)
   const children: LayoutNode[] = node.children
@@ -197,12 +208,9 @@ const applyLayoutTreeRecursive = (
   // Convert relative bounds to absolute bounds
   let absoluteBounds: Box;
 
-  if (parentBounds && layout.layoutHasBeenApplied) {
-    // When the parent is rotated, we need to rotate the child's relative position
-    // by the parent's rotation before adding it to the parent's absolute position
-    // All rotations are around the center of the shape, so we rotate
-    // the center of the child around the parent's center and then adjust
-    // back to the top-left corner of the child's bounds.'
+  if (parentBounds && parentBounds.r !== 0) {
+    // Child bounds are stored in the parent's local coordinate space, so when the
+    // parent is rotated we must rotate the child's center back into world space.
     const rotatedPosition = Point.subtract(
       Point.rotateAround(
         Box.center(WritableBox.asBox(layout.bounds)),

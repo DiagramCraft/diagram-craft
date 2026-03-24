@@ -72,6 +72,7 @@ describe('UMLStructuredClassifier layout behavior', () => {
 
   test('moves ports with the structured classifier during rotation', async () => {
     const { diagram, host, port } = await setupStructuredClassifierWithPort();
+    const portBefore = { ...port.bounds };
     const transforms = TransformFactory.fromTo(host.bounds, {
       x: 100,
       y: 100,
@@ -82,6 +83,6 @@ describe('UMLStructuredClassifier layout behavior', () => {
 
     transformHost(diagram, host, transforms);
 
-    expect(port.bounds).toEqual({ x: 180, y: 175, w: 10, h: 10, r: Math.PI / 2 });
+    expect(port.bounds).toEqual(Transform.box(portBefore, ...transforms));
   });
 });

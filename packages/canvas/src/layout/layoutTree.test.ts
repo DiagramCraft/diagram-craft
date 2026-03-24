@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { buildLayoutTree, applyLayoutTree } from './layoutTree';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 
 describe('buildLayoutTree', () => {
   test('root node keeps absolute bounds', () => {
@@ -26,7 +28,7 @@ describe('buildLayoutTree', () => {
     expect(layoutTree.bounds.r).toBe(Math.PI / 6);
   });
 
-  test('child node has relative position to parent', () => {
+  test('child node has relative position in the parent local coordinate space', () => {
     const diagram = TestModel.newDiagram();
     const layer = diagram.newLayer();
     const parent = layer.addNode({
@@ -54,9 +56,13 @@ describe('buildLayoutTree', () => {
     expect(layoutTree.children).toHaveLength(1);
     const childLayout = layoutTree.children[0]!;
 
-    // Child position should be relative to parent
-    expect(childLayout.bounds.x).toBe(10); // 110 - 100
-    expect(childLayout.bounds.y).toBe(0); // 100 - 100
+    const expectedCenter = Point.subtract(
+      Point.rotateAround(Box.center(child.bounds), -parent.bounds.r, Box.center(parent.bounds)),
+      Point.of(parent.bounds.x, parent.bounds.y)
+    );
+
+    expect(childLayout.bounds.x).toBeCloseTo(expectedCenter.x - child.bounds.w / 2, 10);
+    expect(childLayout.bounds.y).toBeCloseTo(expectedCenter.y - child.bounds.h / 2, 10);
     expect(childLayout.bounds.w).toBe(40);
     expect(childLayout.bounds.h).toBe(20);
     expect(childLayout.bounds.r).toBeCloseTo(Math.PI / 18, 10); // 10 degrees (40 - 30)
@@ -88,8 +94,18 @@ describe('buildLayoutTree', () => {
 
     // Grandchild relative to child1
     const grandchildLayout = child1Layout.children[0]!;
-    expect(grandchildLayout.bounds.x).toBe(10); // 130 - 120
-    expect(grandchildLayout.bounds.y).toBe(10); // 140 - 130
+    const expectedGrandchildCenter = Point.subtract(
+      Point.rotateAround(Box.center(grandchild.bounds), -child1.bounds.r, Box.center(child1.bounds)),
+      Point.of(child1.bounds.x, child1.bounds.y)
+    );
+    expect(grandchildLayout.bounds.x).toBeCloseTo(
+      expectedGrandchildCenter.x - grandchild.bounds.w / 2,
+      10
+    );
+    expect(grandchildLayout.bounds.y).toBeCloseTo(
+      expectedGrandchildCenter.y - grandchild.bounds.h / 2,
+      10
+    );
     expect(grandchildLayout.bounds.r).toBeCloseTo(0.2, 10); // 0.7 - 0.5
   });
 });
@@ -160,5 +176,21 @@ describe('applyLayoutTree', () => {
 
     // Child should have absolute rotation = parent + relative
     expect(child.bounds.r).toBeCloseTo(Math.PI / 6 + Math.PI / 9, 10); // 30 + 20 = 50 degrees
+  });
+
+  test('round-trips rotated child positions through build/apply', () => {
+    const diagram = TestModel.newDiagram();
+    const layer = diagram.newLayer();
+    const parent = layer.addNode({ bounds: { x: 100, y: 100, w: 160, h: 80, r: Math.PI / 2 } });
+    const child = layer.createNode({ bounds: { x: 180, y: 215, w: 10, h: 10, r: Math.PI / 2 } });
+    const originalBounds = { ...child.bounds };
+
+    UnitOfWork.execute(diagram, uow => parent.addChild(child, uow));
+
+    const layoutTree = buildLayoutTree(parent);
+
+    UnitOfWork.execute(diagram, uow => applyLayoutTree(parent, layoutTree, uow));
+
+    expect(child.bounds).toEqual(originalBounds);
   });
 });

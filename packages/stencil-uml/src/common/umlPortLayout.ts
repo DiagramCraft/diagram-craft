@@ -35,6 +35,10 @@ const snapPortToBorder = (portLayout: LayoutNode, hostLayout: LayoutNode) => {
   const centerX = portLayout.bounds.x + portLayout.bounds.w / 2;
   const centerY = portLayout.bounds.y + portLayout.bounds.h / 2;
 
+  // Keep snapped ports aligned with the host's orientation. In layout coordinates,
+  // that means the port should have no additional local rotation.
+  portLayout.bounds.r = 0;
+
   // Preserve the user's intended side by snapping to the nearest host edge.
   const distances = [
     { edge: 'left', distance: Math.abs(centerX) },
