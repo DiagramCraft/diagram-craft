@@ -1,4 +1,4 @@
-import { Tabs as BaseUITabs } from '@base-ui-components/react/tabs';
+import { Tabs as BaseUITabs } from '@base-ui/react/tabs';
 import { useRedraw } from './hooks/useRedraw';
 import { useEventListener } from './hooks/useEventListener';
 import { TbFiles, TbPlus } from 'react-icons/tb';

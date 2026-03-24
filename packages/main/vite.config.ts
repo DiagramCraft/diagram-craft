@@ -8,10 +8,16 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
   const userConfig: UserConfig = {
     base: './',
     plugins: [react(), yaml()],
+    devtools: {
+      enabled: false
+    },
     build: {
       rolldownOptions: {
         transform: {},
         output: {
+          minify: {
+            compress: {}
+          },
           manualChunks: id => {
             if (id.includes('embeddable-jq')) {
               return 'embeddable-jq';
@@ -39,6 +45,8 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
     return userConfig;
   } else {
     userConfig.build!.rolldownOptions!.transform!.dropLabels = ['DEBUG'];
+    // @ts-ignore
+    userConfig.build!.rolldownOptions!.output!.minify!.compress!.dropLabels = ['DEBUG'];
     return userConfig;
   }
 });

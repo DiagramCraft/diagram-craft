@@ -8,7 +8,7 @@ import { DataTab } from './DataTab';
 import { SchemasTab } from './SchemasTab';
 import { ModelProvidersTab } from './ModelProvidersTab';
 import { DialogCommand } from '@diagram-craft/canvas/context';
-import { AlertDialog as BaseUIAlertDialog } from '@base-ui-components/react/alert-dialog';
+import { AlertDialog as BaseUIAlertDialog } from '@base-ui/react/alert-dialog';
 
 type Props = {
   open: boolean;
