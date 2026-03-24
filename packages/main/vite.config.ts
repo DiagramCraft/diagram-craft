@@ -1,18 +1,16 @@
 /// <reference types="vitest" />
 import { defineConfig, loadEnv, UserConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import * as path from 'node:path';
 import yaml from '@rollup/plugin-yaml';
 
 export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-
   // https://vitejs.dev/config/
   const userConfig: UserConfig = {
     base: './',
     plugins: [react(), yaml()],
     build: {
-      rollupOptions: {
+      rolldownOptions: {
+        transform: {},
         output: {
           manualChunks: id => {
             if (id.includes('embeddable-jq')) {
@@ -33,37 +31,14 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
       }
     },
     resolve: {
-      alias: {
-        '@diagram-craft/config': path.join(__dirname, env.APP_CONFIG ?? 'app.config.ts'),
-        '@diagram-craft/canvas': path.join(__dirname, '../../packages/canvas/src'),
-        '@diagram-craft/canvas-app': path.join(__dirname, '../../packages/canvas-app/src'),
-        '@diagram-craft/canvas-drawio': path.join(__dirname, '../../packages/canvas-drawio/src'),
-        '@diagram-craft/canvas-edges': path.join(__dirname, '../../packages/canvas-edges/src'),
-        '@diagram-craft/canvas-nodes': path.join(__dirname, '../../packages/canvas-nodes/src'),
-        '@diagram-craft/canvas-react': path.join(__dirname, '../../packages/canvas-react/src'),
-        '@diagram-craft/geometry': path.join(__dirname, '../../packages/geometry/src'),
-        '@diagram-craft/collaboration': path.join(__dirname, '../../packages/collaboration/src'),
-        '@diagram-craft/model': path.join(__dirname, '../../packages/model/src'),
-        '@diagram-craft/utils': path.join(__dirname, '../../packages/utils/src'),
-        '@diagram-craft/graph': path.join(__dirname, '../../packages/graph/src'),
-        '@diagram-craft/stencil-c4': path.join(__dirname, '../../packages/stencil-c4/src'),
-        '@diagram-craft/stencil-uml': path.join(__dirname, '../../packages/stencil-uml/src'),
-        '@diagram-craft/stencil-bpmn': path.join(__dirname, '../../packages/stencil-bpmn/src'),
-        '@diagram-craft/stencil-data-modelling': path.join(
-          __dirname,
-          '../../packages/stencil-data-modelling/src'
-        ),
-        '@diagram-craft/app-components': path.join(__dirname, '../../packages/app-components/src')
-      }
+      tsconfigPaths: true
     }
   };
 
   if (command === 'serve') {
     return userConfig;
   } else {
-    userConfig.esbuild ??= {
-      dropLabels: ['DEBUG']
-    };
+    userConfig.build!.rolldownOptions!.transform!.dropLabels = ['DEBUG'];
     return userConfig;
   }
 });

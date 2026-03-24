@@ -29,11 +29,11 @@
     "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/graph": "workspace:^",
     "@diagram-craft/markdown": "workspace:^",
-    "@diagram-craft/stencil-bpmn": "workspace:^",
-    "@diagram-craft/stencil-data-modelling": "workspace:^",
-    "@diagram-craft/stencil-c4": "workspace:^",
-    "@diagram-craft/stencil-uml": "workspace:^",
     "@diagram-craft/model": "workspace:^",
+    "@diagram-craft/stencil-bpmn": "workspace:^",
+    "@diagram-craft/stencil-c4": "workspace:^",
+    "@diagram-craft/stencil-data-modelling": "workspace:^",
+    "@diagram-craft/stencil-uml": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
     "embeddable-jq": "^1.0.4",
@@ -48,9 +48,9 @@
     "@storybook/react-vite": "^10.3.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "storybook": "^10.3.3",
-    "vite": ">=6.4.1",
-    "vitest": "^4.0.18"
+    "vite": ">=8.0.0",
+    "vitest": "^4.1.1"
   }
 }
