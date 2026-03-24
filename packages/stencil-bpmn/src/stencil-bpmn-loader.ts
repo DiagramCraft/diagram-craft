@@ -23,7 +23,11 @@ import bpmnCollaborationStencils from './bpmn-collaboration-stencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
-import { addStencilToSubpackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import {
+  addStencilToSubpackage,
+  getStencilSubPackage,
+  StencilPackage
+} from '@diagram-craft/model/stencilRegistry';
 
 export const registerBPMNNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new BPMNActivityNodeDefinition());
@@ -49,6 +53,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
   await registerBPMNEdges(registry.edges);
 
   const bpmnStencils: StencilPackage = {
+    id: 'bpmn2',
     stencils: [],
     type: 'default',
 
@@ -66,10 +71,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
   /* CORE PACKAGE                                                            */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnCoreStencils).forEach(s => {
-    bpmnStencils.stencils.push(s);
-    bpmnStencils.subPackages!.find(p => p.id === 'core')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(bpmnCoreStencils, bpmnStencils, getStencilSubPackage(bpmnStencils, 'core'));
 
   addStencilToSubpackage('core', bpmnStencils, new RoundedRectNodeDefinition(), {
     id: 'bpmn-group',
@@ -105,10 +107,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
   /* EDGES PACKAGE                                                           */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnEdgesStencils).forEach(s => {
-    bpmnStencils.stencils.push(s);
-    bpmnStencils.subPackages!.find(p => p.id === 'edges')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(bpmnEdgesStencils, bpmnStencils, getStencilSubPackage(bpmnStencils, 'edges'));
 
   addStencilToSubpackage('edges', bpmnStencils, new BPMNConversationEdgeDefinition(), {
     id: 'bpmn-conversation-edge',
@@ -243,10 +242,11 @@ export const loadBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  loadStencilsFromYaml(bpmnCollaborationStencils).forEach(s => {
-    bpmnStencils.stencils.push(s);
-    bpmnStencils.subPackages!.find(p => p.id === 'collaboration')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(
+    bpmnCollaborationStencils,
+    bpmnStencils,
+    getStencilSubPackage(bpmnStencils, 'collaboration')
+  );
 
   /* *********************************************************************** */
   /* PROCESS PACKAGE                                                         */
@@ -596,19 +596,21 @@ export const loadBPMNStencils = async (registry: Registry) => {
   /* CHOREOGRAPHY PACKAGE                                                    */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnChoreographyStencils).forEach(s => {
-    bpmnStencils.stencils.push(s);
-    bpmnStencils.subPackages!.find(p => p.id === 'choreography')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(
+    bpmnChoreographyStencils,
+    bpmnStencils,
+    getStencilSubPackage(bpmnStencils, 'choreography')
+  );
 
   /* *********************************************************************** */
   /* CHOREOGRAPHY ADVANCED PACKAGE                                           */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnChoreographyAdvancedStencils).forEach(s => {
-    bpmnStencils.stencils.push(s);
-    bpmnStencils.subPackages!.find(p => p.id === 'choreography-advanced')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(
+    bpmnChoreographyAdvancedStencils,
+    bpmnStencils,
+    getStencilSubPackage(bpmnStencils, 'choreography-advanced')
+  );
 
   addStencilToSubpackage(
     'choreography-advanced',

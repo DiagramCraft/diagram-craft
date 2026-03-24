@@ -22,6 +22,9 @@ import { AnchorHandleDrag } from './anchorHandleDrag';
 import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
+import type { NodeLinkOptions } from '../context';
+import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
+import { DRAG_DROP_MANAGER, DragDopManager } from '../dragDropManager';
 
 class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
   constructor(type = 'attach-absolute') {
@@ -84,6 +87,20 @@ class PhaseCaptureNodeDefinition extends RectNodeDefinition {
   ): Endpoint | undefined {
     this.phases.push(context.phase);
     return endpoint;
+  }
+}
+
+class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
+  constructor(type = 'link-popup-options') {
+    super(type, 'Link Popup Options');
+  }
+
+  getNodeLinkOptions(): NodeLinkOptions | undefined {
+    return {
+      nodeStencilIds: ['custom-node', 'default@@rect'],
+      edgeStylesheetIds: ['edge-2', 'default-edge'],
+      allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+    };
   }
 }
 
@@ -229,6 +246,7 @@ const dragAcrossNodes = (
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.useRealTimers();
 });
 
 describe('EdgeEndpointMoveDrag', () => {
@@ -462,5 +480,100 @@ describe('EdgeEndpointMoveDrag', () => {
 
     expect(createdEdge?.start).toBeInstanceOf(PointInNodeEndpoint);
     expect(createdNode?.bounds.y).toBeLessThan(node.bounds.y);
+  });
+
+  test('passes source node link popup options from anchor-handle drags', () => {
+    const context = createContext();
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+    diagram.document.registry.nodes.register(new LinkPopupOptionsNodeDefinition());
+
+    const node = layer.addNode({
+      type: 'link-popup-options',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
+
+    const drag = new AnchorHandleDrag(
+      node,
+      { type: 'anchor', anchorId: 'c', normal: 0, point: { x: 50, y: 50 } },
+      { x: 50, y: 50 },
+      context
+    );
+
+    drag.onDrag(
+      new DragEvents.DragStart(
+        { x: 180, y: 20 },
+        { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+        document.createElement('div')
+      )
+    );
+    drag.onDragEnd();
+
+    expect(context.ui.showNodeLinkPopup).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      drag.edge.id,
+      expect.any(Array),
+      {
+        nodeStencilIds: ['custom-node', 'default@@rect'],
+        edgeStylesheetIds: ['edge-2', 'default-edge'],
+        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+      }
+    );
+  });
+
+  test('passes source node link popup options from shift-drag edge tool flows', () => {
+    vi.useFakeTimers();
+
+    const context = createContext();
+    const dragManager = new DragDopManager();
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+    diagram.document.registry.nodes.register(new LinkPopupOptionsNodeDefinition());
+
+    const node = layer.addNode({
+      type: 'link-popup-options',
+      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
+    });
+
+    const tool = new EdgeTool(diagram, dragManager, null, context, vi.fn());
+    const target = document.createElement('div');
+
+    tool.onMouseOver(node.id, { x: 50, y: 50 }, target);
+    tool.onMouseMove(
+      { x: 50, y: 50 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+    tool.onMouseDown(
+      node.id,
+      { x: 50, y: 50 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+
+    const drag = DRAG_DROP_MANAGER.current();
+    expect(drag).toBeDefined();
+    if (!drag) throw new Error('Expected active drag');
+
+    drag.onDrag(
+      new DragEvents.DragStart(
+        { x: 180, y: 20 },
+        { shiftKey: true, altKey: false, metaKey: false, ctrlKey: false },
+        target
+      )
+    );
+    drag.onDragEnd(new DragEvents.DragEnd(target));
+    vi.runAllTimers();
+
+    expect(context.ui.showNodeLinkPopup).toHaveBeenCalledWith(
+      { x: 180, y: 20 },
+      expect.any(String),
+      expect.any(String),
+      expect.any(Array),
+      {
+        nodeStencilIds: ['custom-node', 'default@@rect'],
+        edgeStylesheetIds: ['edge-2', 'default-edge'],
+        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+      }
+    );
   });
 });

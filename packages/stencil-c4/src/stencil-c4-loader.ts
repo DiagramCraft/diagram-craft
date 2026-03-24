@@ -1,5 +1,5 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { getStencilSubPackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
 import c4CoreStencils from './c4-core-stencils.yaml';
 import c4OldStencils from './c4-old-stencils.yaml';
@@ -21,6 +21,7 @@ export const loadC4Stencils = async (registry: Registry) => {
   await registerC4Nodes(registry.nodes);
 
   const c4Stencils: StencilPackage = {
+    id: 'c4',
     stencils: [],
     type: 'default',
 
@@ -34,19 +35,13 @@ export const loadC4Stencils = async (registry: Registry) => {
   /* CORE PACKAGE                                                            */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(c4CoreStencils).forEach(s => {
-    c4Stencils.stencils.push(s);
-    c4Stencils.subPackages!.find(p => p.id === 'core')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(c4CoreStencils, c4Stencils, getStencilSubPackage(c4Stencils, 'core'));
 
   /* *********************************************************************** */
   /* OLD STYLE PACKAGE                                                       */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(c4OldStencils).forEach(s => {
-    c4Stencils.stencils.push(s);
-    c4Stencils.subPackages!.find(p => p.id === 'old')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(c4OldStencils, c4Stencils, getStencilSubPackage(c4Stencils, 'old'));
 
   return c4Stencils;
 };

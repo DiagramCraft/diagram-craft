@@ -4,6 +4,7 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/canvas/context';
 import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -30,7 +31,7 @@ const NODE_LIMIT = 16;
 const REQUIRED_NODE_STENCIL_IDS = ['default@@text', 'default@@rect'];
 
 const NODE_LINK_POPUP_MARK = 'node-link-popup';
-const NO_SHAPE_ID = '__no_shape__';
+const NO_SHAPE_ID = NODE_LINK_POPUP_NO_SHAPE_ID;
 
 export const markStartOfNodeLinkPopup = (diagram: Diagram, actions: UndoableAction[]) => {
   diagram.undoManager.setMark(NODE_LINK_POPUP_MARK);
@@ -46,7 +47,15 @@ const combineUndoActionsFromMark = (diagram: Diagram) => {
   }
 };
 
-const getRecentEdgeStylesheetIds = (diagram: Diagram) => {
+const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkOptions) => {
+  // An explicit list from the source node definition is treated as the exact menu.
+  // Unknown stylesheet ids are dropped instead of backfilling from defaults/recents.
+  if (options?.edgeStylesheetIds !== undefined) {
+    return options.edgeStylesheetIds.filter(
+      id => diagram.document.styles.getEdgeStyle(id) !== undefined
+    );
+  }
+
   // Edge stylesheet ids from the LRU-style document history.
   const recentIds = diagram.document.props.recentEdgeStylesheets.stylesheets;
 
@@ -68,7 +77,16 @@ const getRecentEdgeStylesheetIds = (diagram: Diagram) => {
   return unique([...lruIds, ...availableIds]).slice(0, EDGE_LIMIT);
 };
 
-const getNodeStencilIds = (diagram: Diagram) => {
+const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
+  // An explicit list from the source node definition is treated as the exact menu.
+  // Unknown stencil ids are dropped instead of backfilling from defaults/recents.
+  if (options?.nodeStencilIds !== undefined) {
+    return options.nodeStencilIds.filter(id => {
+      if (id === NO_SHAPE_ID) return true;
+      return diagram.document.registry.stencils.getStencil(id) !== undefined;
+    });
+  }
+
   const stencilRegistry = diagram.document.registry.stencils;
   const recentIds = diagram.document.props.recentStencils.stencils;
 
@@ -106,6 +124,77 @@ const getNodeStencilIds = (diagram: Diagram) => {
     0,
     NODE_LIMIT
   );
+};
+
+type NodeLinkPopupPair = {
+  nodeStencilId: string;
+  edgeStylesheetId: string;
+};
+
+const matchesAllowedCombination = (
+  pair: NodeLinkPopupPair,
+  combination: NonNullable<NodeLinkOptions['allowedCombinations']>[number]
+) => {
+  // Missing fields in the combination act as wildcards for that side.
+  return (
+    (combination.nodeStencilId === undefined || combination.nodeStencilId === pair.nodeStencilId) &&
+    (combination.edgeStylesheetId === undefined ||
+      combination.edgeStylesheetId === pair.edgeStylesheetId)
+  );
+};
+
+const getAllowedCombinations = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  options?: NodeLinkOptions
+) => {
+  // Start from the currently available popup ids only, so stale ids in
+  // allowedCombinations cannot reintroduce filtered-out stencil/style entries.
+  const pairs = nodeStencilIds.flatMap(nodeStencilId =>
+    edgeStylesheetIds.map(edgeStylesheetId => ({ nodeStencilId, edgeStylesheetId }))
+  );
+
+  if (options?.allowedCombinations === undefined) return pairs;
+
+  return pairs.filter(pair =>
+    options.allowedCombinations?.some(combination => matchesAllowedCombination(pair, combination))
+  );
+};
+
+const getVisibleEdgeStylesheetIds = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  selected: string | undefined,
+  options?: NodeLinkOptions
+) => {
+  if (options?.allowedCombinations === undefined) return edgeStylesheetIds;
+
+  // With combination constraints enabled, the edge column is filtered against the
+  // currently selected node. Without a node selection we show every edge style
+  // that participates in at least one allowed pair.
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
+    .filter(pair => selected === undefined || pair.nodeStencilId === selected)
+    .map(pair => pair.edgeStylesheetId);
+
+  return edgeStylesheetIds.filter(id => visibleIds.includes(id));
+};
+
+const getVisibleNodeStencilIds = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  selected: string | undefined,
+  options?: NodeLinkOptions
+) => {
+  if (options?.allowedCombinations === undefined) return nodeStencilIds;
+
+  // With combination constraints enabled, the node column is filtered against the
+  // currently selected edge style. Without an edge selection we show every stencil
+  // that participates in at least one allowed pair.
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
+    .filter(pair => selected === undefined || pair.edgeStylesheetId === selected)
+    .map(pair => pair.nodeStencilId);
+
+  return nodeStencilIds.filter(id => visibleIds.includes(id));
 };
 
 const buildStencilPreview = (stencil: Stencil, diagram: Diagram) => {
@@ -307,7 +396,7 @@ const useNodeLinkPopupController = ({
   };
 };
 
-export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
+export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClose }: Props) => {
   const diagram = useDiagram();
   const hasProvisionalNode = nodeId !== undefined;
   const stencilRegistry = diagram.document.registry.stencils;
@@ -335,16 +424,45 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
 
   useEventListener(stencilRegistry, 'change', redraw);
 
+  const baseEdgeStylesheetIds = useMemo(
+    () => getEdgeStylesheetIds(diagram, options),
+    [diagram, options]
+  );
+
+  const baseNodeStencilIds = useMemo(() => {
+    if (!hasProvisionalNode) return [];
+    return getNodeStencilIds(diagram, options);
+  }, [diagram, hasProvisionalNode, options]);
+
   const edgeStylesheets = useMemo(() => {
-    const ids = getRecentEdgeStylesheetIds(diagram);
+    const ids = hasProvisionalNode
+      ? getVisibleEdgeStylesheetIds(
+          baseNodeStencilIds,
+          baseEdgeStylesheetIds,
+          selectedNode,
+          options
+        )
+      : baseEdgeStylesheetIds;
 
     return ids.map(id => styleManager.getEdgeStyle(id)).filter(s => s !== undefined);
-  }, [diagram, styleManager]);
+  }, [
+    baseEdgeStylesheetIds,
+    baseNodeStencilIds,
+    hasProvisionalNode,
+    options,
+    selectedNode,
+    styleManager
+  ]);
 
   const nodeStencils = useMemo(() => {
     if (!hasProvisionalNode) return [];
 
-    return getNodeStencilIds(diagram)
+    return getVisibleNodeStencilIds(
+      baseNodeStencilIds,
+      baseEdgeStylesheetIds,
+      selectedEdge,
+      options
+    )
       .map(id => {
         if (id === NO_SHAPE_ID) return { id, kind: 'no-shape' as const };
 
@@ -353,7 +471,14 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
         return { id, kind: 'stencil' as const, stencil };
       })
       .filter(e => e !== undefined);
-  }, [diagram, hasProvisionalNode, stencilRegistry]);
+  }, [
+    baseEdgeStylesheetIds,
+    baseNodeStencilIds,
+    hasProvisionalNode,
+    options,
+    selectedEdge,
+    stencilRegistry
+  ]);
 
   const edgePreviewDiagrams = useMemo(
     () =>
@@ -526,7 +651,8 @@ NodeLinkPopup.INITIAL_STATE = {
   position: { x: 600, y: 200 },
   isOpen: false,
   nodeId: undefined,
-  edgeId: ''
+  edgeId: '',
+  options: undefined
 };
 
 export type NodeLinkPopupState = {
@@ -534,6 +660,7 @@ export type NodeLinkPopupState = {
   isOpen: boolean;
   nodeId: string | undefined;
   edgeId: string;
+  options?: NodeLinkOptions;
 };
 
 type Props = NodeLinkPopupState & {
@@ -542,6 +669,10 @@ type Props = NodeLinkPopupState & {
 
 export const _test = {
   NO_SHAPE_ID,
-  getRecentEdgeStylesheetIds,
-  getNodeStencilIds
+  getAllowedCombinations,
+  getDefaultEdgeStylesheetIds: (diagram: Diagram) => getEdgeStylesheetIds(diagram),
+  getEdgeStylesheetIds,
+  getNodeStencilIds,
+  getVisibleEdgeStylesheetIds,
+  getVisibleNodeStencilIds
 };

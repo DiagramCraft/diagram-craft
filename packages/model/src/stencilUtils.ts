@@ -1,5 +1,5 @@
 import { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
-import { NodeTexts, type DiagramNode } from '@diagram-craft/model/diagramNode';
+import { type DiagramNode, NodeTexts } from '@diagram-craft/model/diagramNode';
 import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -17,6 +17,7 @@ import type { Stencil, StencilElements } from './stencilRegistry';
 import { Stylesheet } from './diagramStyles';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const DEFAULT_TEXT_NODE_CONTENT = 'Text';
 
@@ -68,6 +69,11 @@ export const applyStencilToNode = (
     changeNodeToSingleElementStencil(node, layer, stencilElements, uow);
   } else {
     changeNodeToGroupStencil(node, layer, stencilElements, uow);
+  }
+
+  const definition = node.getDefinition();
+  if (definition instanceof ShapeNodeDefinition) {
+    definition.setNodeLinkOptions(node, stencil.nodeLinkOptions, uow);
   }
 
   if (node.nodeType === 'text' && node.getText().trim() === '') {

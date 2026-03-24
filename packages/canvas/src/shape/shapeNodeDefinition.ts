@@ -19,6 +19,7 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
+import type { NodeLinkOptions } from '../context';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -118,6 +119,28 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getTextHandler(_node: DiagramNode): TextHandlers {
     return ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS;
+  }
+
+  getNodeLinkOptions(node: DiagramNode): NodeLinkOptions | undefined {
+    const serialized = node.metadata.nodeLink;
+    if (!serialized) return undefined;
+
+    try {
+      return JSON.parse(serialized) as NodeLinkOptions;
+    } catch {
+      return undefined;
+    }
+  }
+
+  setNodeLinkOptions(node: DiagramNode, options: NodeLinkOptions | undefined, uow: UnitOfWork): void {
+    node.updateMetadata(metadata => {
+      if (options === undefined) {
+        delete metadata.nodeLink;
+        return;
+      }
+
+      metadata.nodeLink = JSON.stringify(options);
+    }, uow);
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {

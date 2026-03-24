@@ -1,5 +1,5 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { getStencilSubPackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
 import { UMLProvidedInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLProvidedInterface.nodeType';
@@ -57,6 +57,7 @@ export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLNodes(registry.nodes);
 
   const umlStencils: StencilPackage = {
+    id: 'uml',
     stencils: [],
     type: 'default',
 
@@ -76,10 +77,7 @@ export const loadUMLStencils = async (registry: Registry) => {
   /* COMMON PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(commonStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'common')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(commonStencils, umlStencils, getStencilSubPackage(umlStencils, 'common'));
 
   /* *********************************************************************** */
   /* CLASS PACKAGE                                                           */
@@ -87,64 +85,43 @@ export const loadUMLStencils = async (registry: Registry) => {
 
   //  addStencilToSubpackage('class', umlStencils, new UMLClassNodeDefinition());
 
-  loadStencilsFromYaml(classStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'class')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(classStencils, umlStencils, getStencilSubPackage(umlStencils, 'class'));
 
   /* *********************************************************************** */
   /* COMPONENT PACKAGE                                                       */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(componentStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'component')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(componentStencils, umlStencils, getStencilSubPackage(umlStencils, 'component'));
 
   /* *********************************************************************** */
   /* COMPOSITE PACKAGE                                                       */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(compositeStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'composite')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(compositeStencils, umlStencils, getStencilSubPackage(umlStencils, 'composite'));
 
   /* *********************************************************************** */
   /* PACKAGE PACKAGE                                                         */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(packageStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'package')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(packageStencils, umlStencils, getStencilSubPackage(umlStencils, 'package'));
 
   /* *********************************************************************** */
   /* USE CASE PACKAGE                                                        */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(useCaseStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'use-case')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(useCaseStencils, umlStencils, getStencilSubPackage(umlStencils, 'use-case'));
 
   /* *********************************************************************** */
   /* DEPLOYMENT PACKAGE                                                      */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(deploymentStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'deployment')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(deploymentStencils, umlStencils, getStencilSubPackage(umlStencils, 'deployment'));
 
   /* *********************************************************************** */
   /* SEQUENCE PACKAGE                                                        */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(sequenceStencils).forEach(s => {
-    umlStencils.stencils.push(s);
-    umlStencils.subPackages!.find(p => p.id === 'sequence')?.stencils.push(s);
-  });
+  loadStencilsFromYaml(sequenceStencils, umlStencils, getStencilSubPackage(umlStencils, 'sequence'));
 
   return umlStencils;
 };

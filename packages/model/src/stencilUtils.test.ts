@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { Box } from '@diagram-craft/geometry/box';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
 import type { Stencil } from './stencilRegistry';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
@@ -7,6 +8,7 @@ import { isNode } from './diagramElement';
 import { assertRegularLayer } from './diagramLayerUtils';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { applyStencilToNode } from './stencilUtils';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const getSingleElementStencil = (
   diagram: ReturnType<typeof TestModel.newDiagram>,
@@ -152,6 +154,41 @@ describe('stencilUtils', () => {
 
       expect(node.nodeType).toBe('text');
       expect(node.getText()).toBe('Text');
+    });
+
+    test('applies stencil node link options to the resulting node', () => {
+      const diagram = TestModel.newDiagram();
+      const layer = diagram.newLayer();
+      const node = layer.addNode({
+        id: 'source',
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 120, h: 80, r: 0 }
+      });
+
+      const stencil = getSingleElementStencil(diagram, node.nodeType);
+      stencil.nodeLinkOptions = {
+        nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+        edgeStylesheetIds: ['default-edge']
+      };
+
+      assertRegularLayer(diagram.activeLayer);
+      const activeLayer = diagram.activeLayer;
+
+      UnitOfWork.execute(diagram, uow => {
+        applyStencilToNode(diagram, node, activeLayer, stencil, uow);
+      });
+
+      expect(node.metadata.nodeLink).toBe(
+        JSON.stringify({
+          nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+          edgeStylesheetIds: ['default-edge']
+        })
+      );
+      expect(node.getDefinition()).toBeInstanceOf(ShapeNodeDefinition);
+      expect((node.getDefinition() as ShapeNodeDefinition).getNodeLinkOptions(node)).toEqual({
+        nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+        edgeStylesheetIds: ['default-edge']
+      });
     });
   });
 });

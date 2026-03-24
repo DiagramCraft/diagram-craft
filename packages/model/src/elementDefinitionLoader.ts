@@ -1,4 +1,10 @@
-import type { Stencil } from './stencilRegistry';
+import {
+  type Stencil,
+  STENCIL_ID_DELIMITER,
+  type StencilPackage,
+  type StencilSubPackage
+} from './stencilRegistry';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/canvas/context';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { SerializedElement } from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';
@@ -31,9 +37,42 @@ const mergePickerProps = (
   });
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: false positive
-export const loadStencilsFromYaml = (stencils: any) => {
+export const loadStencilsFromYaml = (
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  stencils: any,
+  pkg?: StencilPackage,
+  subPackage?: StencilSubPackage
+) => {
   const dest: Array<Stencil> = [];
+  const stencilIdsInFile = new Set<string>(
+    stencils.stencils.map((stencil: { id: string }) => stencil.id)
+  );
+
+  const qualifyStencilId = (id: string) => {
+    if (id === NODE_LINK_POPUP_NO_SHAPE_ID) return id;
+    if (id.includes(STENCIL_ID_DELIMITER)) return id;
+    if (!stencilIdsInFile.has(id)) return id;
+    if (!pkg?.id) return id;
+    if (subPackage)
+      return `${pkg.id}${STENCIL_ID_DELIMITER}${subPackage.id}${STENCIL_ID_DELIMITER}${id}`;
+    return `${pkg.id}${STENCIL_ID_DELIMITER}${id}`;
+  };
+
+  const resolveNodeLinkOptions = (
+    nodeLinkOptions: NodeLinkOptions | undefined
+  ): NodeLinkOptions | undefined => {
+    if (nodeLinkOptions === undefined) return undefined;
+
+    return {
+      ...nodeLinkOptions,
+      nodeStencilIds: nodeLinkOptions.nodeStencilIds?.map(qualifyStencilId),
+      allowedCombinations: nodeLinkOptions.allowedCombinations?.map(c => ({
+        ...c,
+        nodeStencilId: c.nodeStencilId === undefined ? undefined : qualifyStencilId(c.nodeStencilId)
+      }))
+    };
+  };
+
   for (const stencil of stencils.stencils) {
     const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
       const { diagram, layer } = StencilUtils.makeDiagram(registry);
@@ -70,6 +109,7 @@ export const loadStencilsFromYaml = (stencils: any) => {
     dest.push({
       id: stencil.id,
       name: stencil.name,
+      nodeLinkOptions: resolveNodeLinkOptions(stencil.settings?.nodeLinkOptions),
       styles: stencil.styles,
       settings: stencil.settings,
       forPicker: registry => mkNode(registry, 'picker'),
@@ -77,5 +117,14 @@ export const loadStencilsFromYaml = (stencils: any) => {
       type: 'yaml'
     });
   }
+
+  if (pkg) {
+    pkg.stencils.push(...dest);
+  }
+
+  if (subPackage) {
+    subPackage.stencils.push(...dest);
+  }
+
   return dest;
 };

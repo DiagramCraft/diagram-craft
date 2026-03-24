@@ -7,6 +7,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import {
   addHighlight,
@@ -25,6 +26,7 @@ import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
+import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   onDragEnd() {
@@ -44,13 +46,26 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
       // Base UI popover dismissal still considers the current pointer interaction active.
       // Delaying to the next macrotask avoids immediate outside-press dismissal.
       setTimeout(() => {
-        this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id, [
-          ...undoManager.getToMark()
-        ]);
+        this.context.ui.showNodeLinkPopup(
+          point,
+          nodeId,
+          this.edge.id,
+          [...undoManager.getToMark()],
+          this.getNodeLinkPopupOptions()
+        );
       }, 0);
     } else {
       undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));
     }
+  }
+
+  private getNodeLinkPopupOptions(): NodeLinkOptions | undefined {
+    if (!(this.edge.start instanceof ConnectedEndpoint)) return undefined;
+
+    const definition = this.edge.start.node.getDefinition();
+    if (!(definition instanceof ShapeNodeDefinition)) return undefined;
+
+    return definition.getNodeLinkOptions(this.edge.start.node);
   }
 }
 

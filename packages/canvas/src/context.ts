@@ -11,6 +11,19 @@ import type { UndoableAction } from '@diagram-craft/model/undoManager';
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
 
+export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
+
+export type NodeLinkAllowedCombination = {
+  nodeStencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
+  edgeStylesheetId?: string;
+};
+
+export type NodeLinkOptions = {
+  nodeStencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
+  edgeStylesheetIds?: ReadonlyArray<string>;
+  allowedCombinations?: ReadonlyArray<NodeLinkAllowedCombination>;
+};
+
 export interface UIActions {
   showContextMenu: <T extends keyof ContextMenus>(
     type: T,
@@ -23,7 +36,8 @@ export interface UIActions {
     point: Point,
     nodeId: string | undefined,
     edgeId: string,
-    pendingUndoableActions: UndoableAction[]
+    pendingUndoableActions: UndoableAction[],
+    options?: NodeLinkOptions
   ) => void;
 
   /**

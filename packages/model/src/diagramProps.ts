@@ -63,6 +63,14 @@ export type ElementMetadata = {
   name?: string;
   style?: string;
   textStyle?: string;
+
+  /**
+   * Serialized `NodeLinkOptions` for shape nodes.
+   *
+   * @see ShapeNodeDefinition.getNodeLinkOptions
+   * @see ShapeNodeDefinition.setNodeLinkOptions
+   */
+  nodeLink?: string;
   data?: {
     data?: Array<ElementDataEntry>;
     customData?: FlatObject;
