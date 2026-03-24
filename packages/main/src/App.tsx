@@ -14,9 +14,9 @@ import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/componen
 import { LayerIndicator } from './react-app/LayerIndicator';
 import {
   markStartOfNodeLinkPopup,
-  NodeTypePopup,
-  NodeTypePopupState
-} from './react-app/NodeTypePopup';
+  NodeLinkPopup,
+  NodeLinkPopupState
+} from './react-app/NodeLinkPopup';
 import { type UndoableAction } from '@diagram-craft/model/undoManager';
 import { MessageDialog } from './react-app/components/MessageDialog';
 import {
@@ -303,7 +303,7 @@ export const App = (props: {
 
   const [dirty, setDirty] = useState(false);
   const [hash, setHash] = useState(application.current.model.activeDocument.hash);
-  const [popoverState, setPopoverState] = useState<NodeTypePopupState>(NodeTypePopup.INITIAL_STATE);
+  const [popoverState, setPopoverState] = useState<NodeLinkPopupState>(NodeLinkPopup.INITIAL_STATE);
   const [dialogStack, setDialogStack] = useState<DialogStackItem[]>([]);
   const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
 
@@ -756,7 +756,7 @@ export const App = (props: {
                   <CanvasOutline />
                   <CanvasTooltip />
 
-                  <NodeTypePopup
+                  <NodeLinkPopup
                     {...popoverState}
                     onClose={() => setPopoverState(s => ({ ...s, isOpen: false }))}
                   />

@@ -20,7 +20,7 @@ import { useDiagram } from '../application';
 import { useEventListener } from './hooks/useEventListener';
 import { useRedraw } from './hooks/useRedraw';
 import { createPreview } from './toolwindow/StyleOverviewToolWindow/stylesPanelUtils';
-import styles from './NodeTypePopup.module.css';
+import styles from './NodeLinkPopup.module.css';
 import objectPickerStyles from './ObjectPicker.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
@@ -149,7 +149,7 @@ type CloseMode = 'commit' | 'cancel' | 'idle';
 
 // Owns the live popup interaction state: immediate preview updates, cancel/finalize,
 // and the provisional-node lifecycle when switching between a real shape and "no shape".
-const useNodeTypePopupController = ({
+const useNodeLinkPopupController = ({
   diagram,
   edgeId,
   initialNodeId,
@@ -307,7 +307,7 @@ const useNodeTypePopupController = ({
   };
 };
 
-export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
+export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
   const diagram = useDiagram();
   const hasProvisionalNode = nodeId !== undefined;
   const stencilRegistry = diagram.document.registry.stencils;
@@ -324,7 +324,7 @@ export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
     closeModeRef,
     selectedEdge,
     selectedNode
-  } = useNodeTypePopupController({
+  } = useNodeLinkPopupController({
     diagram,
     edgeId,
     initialNodeId: nodeId,
@@ -434,7 +434,7 @@ export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
         }}
       >
         <Popover.Content
-          className={`${styles.icNodeTypePopup} ${
+          className={`${styles.icNodeLinkPopup} ${
             !hasProvisionalNode ? styles.eEdgeOnlyPopup : ''
           }`}
           sideOffset={5}
@@ -522,21 +522,21 @@ export const NodeTypePopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
   );
 };
 
-NodeTypePopup.INITIAL_STATE = {
+NodeLinkPopup.INITIAL_STATE = {
   position: { x: 600, y: 200 },
   isOpen: false,
   nodeId: undefined,
   edgeId: ''
 };
 
-export type NodeTypePopupState = {
+export type NodeLinkPopupState = {
   position: Point;
   isOpen: boolean;
   nodeId: string | undefined;
   edgeId: string;
 };
 
-type Props = NodeTypePopupState & {
+type Props = NodeLinkPopupState & {
   onClose: () => void;
 };
 

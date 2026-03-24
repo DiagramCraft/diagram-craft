@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Diagram } from '@diagram-craft/model/diagram';
-import { _test } from './NodeTypePopup';
+import { _test } from './NodeLinkPopup';
 
 const {
   getRecentEdgeStylesheetIds,
@@ -8,7 +8,7 @@ const {
   NO_SHAPE_ID
 } = _test;
 
-describe('NodeTypePopup helpers', () => {
+describe('NodeLinkPopup helpers', () => {
   describe('getRecentEdgeStylesheetIds', () => {
     const makeDiagram = (
       recentIds: string[],
