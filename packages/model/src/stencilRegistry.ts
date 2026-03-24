@@ -114,10 +114,6 @@ export type StencilEvents = {
 
 export const STENCIL_ID_DELIMITER = '@@';
 
-export const getStencilsInPackage = (pkg: StencilPackage): Array<Stencil> => {
-  return [...pkg.stencils, ...(pkg.subPackages?.flatMap(subPackage => subPackage.stencils) ?? [])];
-};
-
 export class StencilRegistry extends EventEmitter<StencilEvents> {
   private stencils = new Map<string, RegisteredStencilPackage>();
   private loaded = new Set<string>();
@@ -196,6 +192,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 }
 
 /* Helpers ************************************************************************** */
+
+export const getStencilsInPackage = (pkg: StencilPackage): Array<Stencil> => {
+  return [...pkg.stencils, ...(pkg.subPackages?.flatMap(subPackage => subPackage.stencils) ?? [])];
+};
 
 export const getStencilSubPackage = (
   pkg: StencilPackage,
