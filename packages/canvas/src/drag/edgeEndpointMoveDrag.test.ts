@@ -22,7 +22,7 @@ import { AnchorHandleDrag } from './anchorHandleDrag';
 import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
-import type { NodeLinkPopupOptions } from '../shape/shapeNodeDefinition';
+import type { NodeLinkOptions } from '../context';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
 import { DRAG_DROP_MANAGER, DragDopManager } from '../dragDropManager';
 
@@ -95,7 +95,7 @@ class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
     super(type, 'Link Popup Options');
   }
 
-  getNodeLinkPopupOptions(): NodeLinkPopupOptions | undefined {
+  getNodeLinkOptions(): NodeLinkOptions | undefined {
     return {
       nodeStencilIds: ['custom-node', 'default@@rect'],
       edgeStylesheetIds: ['edge-2', 'default-edge'],
@@ -540,8 +540,15 @@ describe('EdgeEndpointMoveDrag', () => {
     const target = document.createElement('div');
 
     tool.onMouseOver(node.id, { x: 50, y: 50 }, target);
-    tool.onMouseMove({ x: 50, y: 50 }, { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false });
-    tool.onMouseDown(node.id, { x: 50, y: 50 }, { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false });
+    tool.onMouseMove(
+      { x: 50, y: 50 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+    tool.onMouseDown(
+      node.id,
+      { x: 50, y: 50 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
 
     const drag = DRAG_DROP_MANAGER.current();
     expect(drag).toBeDefined();

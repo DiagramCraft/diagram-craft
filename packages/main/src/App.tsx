@@ -17,7 +17,7 @@ import {
   NodeLinkPopup,
   NodeLinkPopupState
 } from './react-app/NodeLinkPopup';
-import type { NodeLinkPopupOptions } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
+import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
 import { type UndoableAction } from '@diagram-craft/model/undoManager';
 import { MessageDialog } from './react-app/components/MessageDialog';
 import {
@@ -207,7 +207,7 @@ export const App = (props: {
       nodeId: string | undefined,
       edgeId: string,
       pendingUndoableActions: UndoableAction[],
-      options?: NodeLinkPopupOptions
+      options?: NodeLinkOptions
     ) => {
       markStartOfNodeLinkPopup(application.current.model.activeDiagram, pendingUndoableActions);
 

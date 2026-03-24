@@ -4,6 +4,10 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
+import {
+  NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkOptions
+} from '@diagram-craft/canvas/context';
 import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -24,11 +28,6 @@ import styles from './NodeLinkPopup.module.css';
 import objectPickerStyles from './ObjectPicker.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
-import {
-  NODE_LINK_POPUP_NO_SHAPE_ID,
-  type NodeLinkPopupAllowedCombination,
-  type NodeLinkPopupOptions
-} from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const EDGE_LIMIT = 8;
 const NODE_LIMIT = 16;
@@ -113,7 +112,7 @@ const getDefaultNodeStencilIds = (diagram: Diagram) => {
   );
 };
 
-const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkPopupOptions) => {
+const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkOptions) => {
   if (options?.edgeStylesheetIds !== undefined) {
     return options.edgeStylesheetIds.filter(id => diagram.document.styles.getEdgeStyle(id) !== undefined);
   }
@@ -121,7 +120,7 @@ const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkPopupOptions) 
   return getDefaultEdgeStylesheetIds(diagram);
 };
 
-const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkPopupOptions) => {
+const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
   if (options?.nodeStencilIds !== undefined) {
     return options.nodeStencilIds.filter(id => {
       if (id === NO_SHAPE_ID) return true;
@@ -139,7 +138,7 @@ type NodeLinkPopupPair = {
 
 const matchesAllowedCombination = (
   pair: NodeLinkPopupPair,
-  combination: NodeLinkPopupAllowedCombination
+  combination: NonNullable<NodeLinkOptions['allowedCombinations']>[number]
 ) => {
   return (
     (combination.nodeStencilId === undefined || combination.nodeStencilId === pair.nodeStencilId) &&
@@ -151,7 +150,7 @@ const matchesAllowedCombination = (
 const getAllowedCombinations = (
   nodeStencilIds: ReadonlyArray<string>,
   edgeStylesheetIds: ReadonlyArray<string>,
-  options?: NodeLinkPopupOptions
+  options?: NodeLinkOptions
 ) => {
   const pairs = nodeStencilIds.flatMap(nodeStencilId =>
     edgeStylesheetIds.map(edgeStylesheetId => ({ nodeStencilId, edgeStylesheetId }))
@@ -168,7 +167,7 @@ const getVisibleEdgeStylesheetIds = (
   nodeStencilIds: ReadonlyArray<string>,
   edgeStylesheetIds: ReadonlyArray<string>,
   selectedNodeStencilId: string | undefined,
-  options?: NodeLinkPopupOptions
+  options?: NodeLinkOptions
 ) => {
   if (options?.allowedCombinations === undefined) return edgeStylesheetIds;
 
@@ -183,7 +182,7 @@ const getVisibleNodeStencilIds = (
   nodeStencilIds: ReadonlyArray<string>,
   edgeStylesheetIds: ReadonlyArray<string>,
   selectedEdgeStylesheetId: string | undefined,
-  options?: NodeLinkPopupOptions
+  options?: NodeLinkOptions
 ) => {
   if (options?.allowedCombinations === undefined) return nodeStencilIds;
 
@@ -636,7 +635,7 @@ export type NodeLinkPopupState = {
   isOpen: boolean;
   nodeId: string | undefined;
   edgeId: string;
-  options?: NodeLinkPopupOptions;
+  options?: NodeLinkOptions;
 };
 
 type Props = NodeLinkPopupState & {

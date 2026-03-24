@@ -19,6 +19,7 @@ import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { PathList } from '@diagram-craft/geometry/pathList';
 import type { Component } from '../component/component';
 import type { ActionMap } from '../action';
+import type { NodeLinkOptions } from '../context';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
@@ -38,19 +39,6 @@ export type TextHandlers = {
   format?: string;
   dialog: TextHandler;
   inline?: TextHandler;
-};
-
-export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
-
-export type NodeLinkPopupAllowedCombination = {
-  nodeStencilId?: string;
-  edgeStylesheetId?: string;
-};
-
-export type NodeLinkPopupOptions = {
-  nodeStencilIds?: ReadonlyArray<string>;
-  edgeStylesheetIds?: ReadonlyArray<string>;
-  allowedCombinations?: ReadonlyArray<NodeLinkPopupAllowedCombination>;
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {
@@ -133,7 +121,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
     return ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS;
   }
 
-  getNodeLinkPopupOptions(_node: DiagramNode): NodeLinkPopupOptions | undefined {
+  getNodeLinkOptions(_node: DiagramNode): NodeLinkOptions | undefined {
     return undefined;
   }
 

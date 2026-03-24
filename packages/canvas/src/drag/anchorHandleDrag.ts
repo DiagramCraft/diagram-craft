@@ -102,7 +102,7 @@ export class AnchorHandleDrag extends Drag {
       this.edge.id,
       previousActions,
       definition instanceof ShapeNodeDefinition
-        ? definition.getNodeLinkPopupOptions(this.node)
+        ? definition.getNodeLinkOptions(this.node)
         : undefined
     );
   }

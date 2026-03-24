@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Diagram } from '@diagram-craft/model/diagram';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
 import { _test } from './NodeLinkPopup';
 
 const {
@@ -8,9 +9,10 @@ const {
   getEdgeStylesheetIds,
   getNodeStencilIds,
   getVisibleEdgeStylesheetIds,
-  getVisibleNodeStencilIds,
-  NO_SHAPE_ID
+  getVisibleNodeStencilIds
 } = _test;
+
+const NO_SHAPE_ID = NODE_LINK_POPUP_NO_SHAPE_ID;
 
 describe('NodeLinkPopup helpers', () => {
   describe('getDefaultEdgeStylesheetIds', () => {
