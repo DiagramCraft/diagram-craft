@@ -145,7 +145,7 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
   }
 
   // Calculate relative bounds
-  let bounds: Box;
+  let relativeBounds: Box;
   if (parentBounds) {
     const childCenter = Box.center(node.bounds);
     const parentCenter = Box.center(parentBounds);
@@ -154,16 +154,17 @@ const buildLayoutTreeRecursive = (node: DiagramNode, parentBounds?: ParentBounds
       Point.of(parentBounds.x, parentBounds.y)
     );
 
-    bounds = Box.asReadWrite({
+    relativeBounds = {
       x: localCenter.x - node.bounds.w / 2,
       y: localCenter.y - node.bounds.h / 2,
       w: node.bounds.w,
       h: node.bounds.h,
       r: node.bounds.r - parentBounds.r
-    });
+    };
   } else {
-    bounds = Box.asReadWrite({ ...node.bounds });
+    relativeBounds = { ...node.bounds };
   }
+  const bounds = Box.asReadWrite(relativeBounds);
 
   // Build children recursively (only for DiagramNode children)
   const children: LayoutNode[] = node.children
