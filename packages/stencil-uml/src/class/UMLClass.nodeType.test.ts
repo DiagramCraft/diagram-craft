@@ -72,6 +72,7 @@ describe('UMLClass layout behavior', () => {
 
   test('moves ports with the class during rotation', async () => {
     const { diagram, host: umlClass, port } = await setupClassWithPort();
+    const portBefore = { ...port.bounds };
     const transforms = TransformFactory.fromTo(umlClass.bounds, {
       x: 100,
       y: 100,
@@ -82,6 +83,26 @@ describe('UMLClass layout behavior', () => {
 
     transformHost(diagram, umlClass, transforms);
 
-    expect(port.bounds).toEqual({ x: 180, y: 175, w: 10, h: 10, r: Math.PI / 2 });
+    expect(port.bounds).toEqual(Transform.box(portBefore, ...transforms));
+  });
+
+  test('aligns a dropped port rotation with an already rotated class', async () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    await registerUMLNodes(diagram.document.registry.nodes);
+
+    const umlClass = layer.addNode({
+      type: 'umlClass',
+      bounds: { x: 100, y: 100, w: 160, h: 80, r: Math.PI / 2 }
+    });
+    const port = layer.createNode({
+      type: 'umlPort',
+      bounds: { x: 180, y: 215, w: 10, h: 10, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      umlClass.addChild(port, uow);
+    });
+
+    expect(port.bounds.r).toBe(Math.PI / 2);
   });
 });
