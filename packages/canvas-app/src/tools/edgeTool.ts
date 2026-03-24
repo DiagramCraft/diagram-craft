@@ -7,7 +7,7 @@ import {
 } from '@diagram-craft/canvas/dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
+import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import {
   addHighlight,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from './stencilRegistry';
 import { loadStencilsFromYaml } from './elementDefinitionLoader';
 import { TestModel } from './test-support/testModel';
 import { isNode } from './diagramElement';

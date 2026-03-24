@@ -17,7 +17,6 @@ import type { Stencil, StencilElements } from './stencilRegistry';
 import { Stylesheet } from './diagramStyles';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
-import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const DEFAULT_TEXT_NODE_CONTENT = 'Text';
 
@@ -72,7 +71,7 @@ export const applyStencilToNode = (
   }
 
   const definition = node.getDefinition();
-  if (definition instanceof ShapeNodeDefinition) {
+  if (definition.setNodeLinkOptions !== undefined) {
     definition.setNodeLinkOptions(node, stencil.nodeLinkOptions, uow);
   }
 

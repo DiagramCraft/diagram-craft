@@ -4,7 +4,7 @@ import {
   type StencilPackage,
   type StencilSubPackage
 } from './stencilRegistry';
-import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/canvas/context';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from './stencilRegistry';
 import { deserializeDiagramElements } from './serialization/deserialize';
 import type { SerializedElement } from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';

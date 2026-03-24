@@ -6,23 +6,14 @@ import { ToolType } from './tool';
 import { Modifiers } from './dragDropManager';
 import type { Marquee } from './marquee';
 import type { ActionMap } from '@diagram-craft/canvas/action';
+import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
+import { NODE_LINK_POPUP_NO_SHAPE_ID as MODEL_NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/model/stencilRegistry';
 import type { UndoableAction } from '@diagram-craft/model/undoManager';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
 
-export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
-
-export type NodeLinkAllowedCombination = {
-  nodeStencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
-  edgeStylesheetId?: string;
-};
-
-export type NodeLinkOptions = {
-  nodeStencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
-  edgeStylesheetIds?: ReadonlyArray<string>;
-  allowedCombinations?: ReadonlyArray<NodeLinkAllowedCombination>;
-};
+export const NODE_LINK_POPUP_NO_SHAPE_ID = MODEL_NODE_LINK_POPUP_NO_SHAPE_ID;
 
 export interface UIActions {
   showContextMenu: <T extends keyof ContextMenus>(

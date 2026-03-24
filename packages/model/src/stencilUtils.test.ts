@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { Box } from '@diagram-craft/geometry/box';
-import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from './stencilRegistry';
 import type { Stencil } from './stencilRegistry';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';

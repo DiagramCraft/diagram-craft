@@ -15,7 +15,6 @@ import {
   createProvisionalLinkedNode
 } from '../linkedNode';
 import type { AnchorHandleDragSource } from './anchorHandleDragSource';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 
 const makeEndpoint = (node: DiagramNode, source: AnchorHandleDragSource) => {
   if (source.type === 'anchor') {
@@ -101,9 +100,7 @@ export class AnchorHandleDrag extends Drag {
       newNodeId,
       this.edge.id,
       previousActions,
-      definition instanceof ShapeNodeDefinition
-        ? definition.getNodeLinkOptions(this.node)
-        : undefined
+      definition.getNodeLinkOptions?.(this.node)
     );
   }
 

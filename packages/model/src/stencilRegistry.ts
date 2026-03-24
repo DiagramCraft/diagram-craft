@@ -1,5 +1,4 @@
 import { mustExist } from '@diagram-craft/utils/assert';
-import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
@@ -14,6 +13,19 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepEquals } from '@diagram-craft/utils/object';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilUtils';
+
+export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
+
+export type NodeLinkAllowedCombination = {
+  nodeStencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
+  edgeStylesheetId?: string;
+};
+
+export type NodeLinkOptions = {
+  nodeStencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
+  edgeStylesheetIds?: ReadonlyArray<string>;
+  allowedCombinations?: ReadonlyArray<NodeLinkAllowedCombination>;
+};
 
 export type StencilElements = {
   bounds: Box;
