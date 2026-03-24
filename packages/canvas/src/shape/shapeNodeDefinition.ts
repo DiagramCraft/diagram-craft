@@ -42,9 +42,15 @@ export type TextHandlers = {
 
 export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
 
+export type NodeLinkPopupAllowedCombination = {
+  nodeStencilId?: string;
+  edgeStylesheetId?: string;
+};
+
 export type NodeLinkPopupOptions = {
   nodeStencilIds?: ReadonlyArray<string>;
   edgeStylesheetIds?: ReadonlyArray<string>;
+  allowedCombinations?: ReadonlyArray<NodeLinkPopupAllowedCombination>;
 };
 
 export abstract class ShapeNodeDefinition implements NodeDefinition {

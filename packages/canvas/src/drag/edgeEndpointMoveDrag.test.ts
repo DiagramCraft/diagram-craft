@@ -98,7 +98,8 @@ class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
   getNodeLinkPopupOptions(): NodeLinkPopupOptions | undefined {
     return {
       nodeStencilIds: ['custom-node', 'default@@rect'],
-      edgeStylesheetIds: ['edge-2', 'default-edge']
+      edgeStylesheetIds: ['edge-2', 'default-edge'],
+      allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
     };
   }
 }
@@ -515,7 +516,8 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(Array),
       {
         nodeStencilIds: ['custom-node', 'default@@rect'],
-        edgeStylesheetIds: ['edge-2', 'default-edge']
+        edgeStylesheetIds: ['edge-2', 'default-edge'],
+        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
       }
     );
   });
@@ -562,7 +564,8 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(Array),
       {
         nodeStencilIds: ['custom-node', 'default@@rect'],
-        edgeStylesheetIds: ['edge-2', 'default-edge']
+        edgeStylesheetIds: ['edge-2', 'default-edge'],
+        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
       }
     );
   });

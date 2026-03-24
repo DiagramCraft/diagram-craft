@@ -3,9 +3,12 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import { _test } from './NodeLinkPopup';
 
 const {
+  getAllowedCombinations,
   getDefaultEdgeStylesheetIds,
   getEdgeStylesheetIds,
   getNodeStencilIds,
+  getVisibleEdgeStylesheetIds,
+  getVisibleNodeStencilIds,
   NO_SHAPE_ID
 } = _test;
 
@@ -178,6 +181,89 @@ describe('NodeLinkPopup helpers', () => {
           }
         )
       ).toEqual([]);
+    });
+  });
+
+  describe('allowed combinations', () => {
+    const nodeStencilIds = [NO_SHAPE_ID, 'a', 'b'];
+    const edgeStylesheetIds = ['edge-1', 'edge-2', 'edge-3'];
+
+    it('should allow all pairs when allowedCombinations is not provided', () => {
+      expect(getAllowedCombinations(nodeStencilIds, edgeStylesheetIds)).toHaveLength(9);
+    });
+
+    it('should restrict visible items to exact allowed pairs when provided', () => {
+      const options = {
+        allowedCombinations: [
+          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        ]
+      };
+
+      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
+        'a',
+        'b'
+      ]);
+      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
+        'edge-1',
+        'edge-2'
+      ]);
+    });
+
+    it('should narrow node choices using the selected edge stylesheet', () => {
+      const options = {
+        allowedCombinations: [
+          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        ]
+      };
+
+      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, 'edge-2', options)).toEqual([
+        'b'
+      ]);
+    });
+
+    it('should narrow edge choices using the selected node stencil', () => {
+      const options = {
+        allowedCombinations: [
+          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { nodeStencilId: 'a', edgeStylesheetId: 'edge-3' },
+          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        ]
+      };
+
+      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, 'a', options)).toEqual([
+        'edge-1',
+        'edge-3'
+      ]);
+    });
+
+    it('should support wildcard combinations', () => {
+      const options = {
+        allowedCombinations: [
+          { edgeStylesheetId: 'edge-1' },
+          { nodeStencilId: NO_SHAPE_ID, edgeStylesheetId: 'edge-2' }
+        ]
+      };
+
+      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
+        NO_SHAPE_ID,
+        'a',
+        'b'
+      ]);
+      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, NO_SHAPE_ID, options)).toEqual([
+        'edge-1',
+        'edge-2'
+      ]);
+    });
+
+    it('should return empty lists when no allowed combinations match the popup items', () => {
+      const options = {
+        allowedCombinations: [{ nodeStencilId: 'missing', edgeStylesheetId: 'edge-9' }]
+      };
+
+      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([]);
+      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([]);
     });
   });
 });

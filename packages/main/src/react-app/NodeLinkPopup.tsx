@@ -26,6 +26,7 @@ import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
 import {
   NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkPopupAllowedCombination,
   type NodeLinkPopupOptions
 } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
@@ -129,6 +130,68 @@ const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkPopupOptions) => 
   }
 
   return getDefaultNodeStencilIds(diagram);
+};
+
+type NodeLinkPopupPair = {
+  nodeStencilId: string;
+  edgeStylesheetId: string;
+};
+
+const matchesAllowedCombination = (
+  pair: NodeLinkPopupPair,
+  combination: NodeLinkPopupAllowedCombination
+) => {
+  return (
+    (combination.nodeStencilId === undefined || combination.nodeStencilId === pair.nodeStencilId) &&
+    (combination.edgeStylesheetId === undefined ||
+      combination.edgeStylesheetId === pair.edgeStylesheetId)
+  );
+};
+
+const getAllowedCombinations = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  options?: NodeLinkPopupOptions
+) => {
+  const pairs = nodeStencilIds.flatMap(nodeStencilId =>
+    edgeStylesheetIds.map(edgeStylesheetId => ({ nodeStencilId, edgeStylesheetId }))
+  );
+
+  if (options?.allowedCombinations === undefined) return pairs;
+
+  return pairs.filter(pair =>
+    options.allowedCombinations?.some(combination => matchesAllowedCombination(pair, combination))
+  );
+};
+
+const getVisibleEdgeStylesheetIds = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  selectedNodeStencilId: string | undefined,
+  options?: NodeLinkPopupOptions
+) => {
+  if (options?.allowedCombinations === undefined) return edgeStylesheetIds;
+
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
+    .filter(pair => selectedNodeStencilId === undefined || pair.nodeStencilId === selectedNodeStencilId)
+    .map(pair => pair.edgeStylesheetId);
+
+  return edgeStylesheetIds.filter(id => visibleIds.includes(id));
+};
+
+const getVisibleNodeStencilIds = (
+  nodeStencilIds: ReadonlyArray<string>,
+  edgeStylesheetIds: ReadonlyArray<string>,
+  selectedEdgeStylesheetId: string | undefined,
+  options?: NodeLinkPopupOptions
+) => {
+  if (options?.allowedCombinations === undefined) return nodeStencilIds;
+
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
+    .filter(pair => selectedEdgeStylesheetId === undefined || pair.edgeStylesheetId === selectedEdgeStylesheetId)
+    .map(pair => pair.nodeStencilId);
+
+  return nodeStencilIds.filter(id => visibleIds.includes(id));
 };
 
 const buildStencilPreview = (stencil: Stencil, diagram: Diagram) => {
@@ -359,15 +422,30 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
   useEventListener(stencilRegistry, 'change', redraw);
 
   const edgeStylesheets = useMemo(() => {
-    const ids = getEdgeStylesheetIds(diagram, options);
+    const baseIds = getEdgeStylesheetIds(diagram, options);
+    const ids = hasProvisionalNode
+      ? getVisibleEdgeStylesheetIds(
+          getNodeStencilIds(diagram, options),
+          baseIds,
+          selectedNode,
+          options
+        )
+      : baseIds;
 
     return ids.map(id => styleManager.getEdgeStyle(id)).filter(s => s !== undefined);
-  }, [diagram, options, styleManager]);
+  }, [diagram, hasProvisionalNode, options, selectedNode, styleManager]);
 
   const nodeStencils = useMemo(() => {
     if (!hasProvisionalNode) return [];
 
-    return getNodeStencilIds(diagram, options)
+    const edgeStylesheetIds = getEdgeStylesheetIds(diagram, options);
+
+    return getVisibleNodeStencilIds(
+      getNodeStencilIds(diagram, options),
+      edgeStylesheetIds,
+      selectedEdge,
+      options
+    )
       .map(id => {
         if (id === NO_SHAPE_ID) return { id, kind: 'no-shape' as const };
 
@@ -376,7 +454,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
         return { id, kind: 'stencil' as const, stencil };
       })
       .filter(e => e !== undefined);
-  }, [diagram, hasProvisionalNode, options, stencilRegistry]);
+  }, [diagram, hasProvisionalNode, options, selectedEdge, stencilRegistry]);
 
   const edgePreviewDiagrams = useMemo(
     () =>
@@ -567,7 +645,10 @@ type Props = NodeLinkPopupState & {
 
 export const _test = {
   NO_SHAPE_ID,
+  getAllowedCombinations,
   getDefaultEdgeStylesheetIds,
   getEdgeStylesheetIds,
-  getNodeStencilIds
+  getNodeStencilIds,
+  getVisibleEdgeStylesheetIds,
+  getVisibleNodeStencilIds
 };
