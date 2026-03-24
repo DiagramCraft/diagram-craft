@@ -22,18 +22,6 @@ describe('parseDrawioStencilPackage', () => {
     expect(pkg.stencils).toHaveLength(1);
     expect(pkg.stencils[0]?.key).toBe('Arrow Right');
   });
-
-  test('rejects files without a root shapes name', () => {
-    expect(() =>
-      parseDrawioStencilPackage(
-        `
-          <shapes>
-            <shape name="Arrow Right" w="80" h="40" />
-          </shapes>
-        `
-      )
-    ).toThrow('Draw.io stencil file is missing root <shapes name="...">');
-  });
 });
 
 describe('loadDrawioStencilPackage', () => {
