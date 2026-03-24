@@ -29,6 +29,7 @@ export class WaypointDeleteAction extends AbstractAction<WaypointDeleteActionArg
 
     const edge = this.context.model.activeDiagram.edgeLookup.get(context.id!);
     precondition.is.present(edge);
+    if (edge.waypoints.length === 0) return;
 
     const path = edge.path();
 
