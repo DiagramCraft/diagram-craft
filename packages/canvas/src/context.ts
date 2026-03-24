@@ -7,6 +7,7 @@ import { Modifiers } from './dragDropManager';
 import type { Marquee } from './marquee';
 import type { ActionMap } from '@diagram-craft/canvas/action';
 import type { UndoableAction } from '@diagram-craft/model/undoManager';
+import type { NodeLinkPopupOptions } from './shape/shapeNodeDefinition';
 
 export type OnMouseDown = (id: string, coord: Point, modifiers: Modifiers) => void;
 export type OnDoubleClick = (id: string, coord: Point) => void;
@@ -23,7 +24,8 @@ export interface UIActions {
     point: Point,
     nodeId: string | undefined,
     edgeId: string,
-    pendingUndoableActions: UndoableAction[]
+    pendingUndoableActions: UndoableAction[],
+    options?: NodeLinkPopupOptions
   ) => void;
 
   /**

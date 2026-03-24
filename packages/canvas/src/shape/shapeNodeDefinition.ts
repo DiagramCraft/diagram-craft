@@ -40,6 +40,13 @@ export type TextHandlers = {
   inline?: TextHandler;
 };
 
+export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
+
+export type NodeLinkPopupOptions = {
+  nodeStencilIds?: ReadonlyArray<string>;
+  edgeStylesheetIds?: ReadonlyArray<string>;
+};
+
 export abstract class ShapeNodeDefinition implements NodeDefinition {
   private flags: Record<NodeFlag, boolean> = {};
 
@@ -118,6 +125,10 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
 
   getTextHandler(_node: DiagramNode): TextHandlers {
     return ShapeNodeDefinition.DEFAULT_TEXT_HANDLERS;
+  }
+
+  getNodeLinkPopupOptions(_node: DiagramNode): NodeLinkPopupOptions | undefined {
+    return undefined;
   }
 
   protected getShapeAnchors(_node: DiagramNode): Anchor[] {

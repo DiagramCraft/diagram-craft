@@ -3,13 +3,14 @@ import type { Diagram } from '@diagram-craft/model/diagram';
 import { _test } from './NodeLinkPopup';
 
 const {
-  getRecentEdgeStylesheetIds,
+  getDefaultEdgeStylesheetIds,
+  getEdgeStylesheetIds,
   getNodeStencilIds,
   NO_SHAPE_ID
 } = _test;
 
 describe('NodeLinkPopup helpers', () => {
-  describe('getRecentEdgeStylesheetIds', () => {
+  describe('getDefaultEdgeStylesheetIds', () => {
     const makeDiagram = (
       recentIds: string[],
       allIds: string[],
@@ -24,22 +25,21 @@ describe('NodeLinkPopup helpers', () => {
           },
           styles: {
             edgeStyles: allIds.map(id => ({ id })),
-            activeEdgeStylesheet: { id: activeId }
+            activeEdgeStylesheet: { id: activeId },
+            getEdgeStyle: (id: string) => allIds.map(edgeId => ({ id: edgeId })).find(s => s.id === id)
           }
         }
       }) as unknown as Diagram;
 
     it('should show all edge stylesheets when there are 8 or fewer', () => {
-      expect(getRecentEdgeStylesheetIds(makeDiagram([], ['default-edge', 'edge-2', 'edge-3'], 'default-edge'))).toEqual([
-        'default-edge',
-        'edge-2',
-        'edge-3'
-      ]);
+      expect(
+        getDefaultEdgeStylesheetIds(makeDiagram([], ['default-edge', 'edge-2', 'edge-3'], 'default-edge'))
+      ).toEqual(['default-edge', 'edge-2', 'edge-3']);
     });
 
     it('should use LRU ordering when there are more than 8 edge stylesheets', () => {
       expect(
-        getRecentEdgeStylesheetIds(
+        getDefaultEdgeStylesheetIds(
           makeDiagram(
             ['a', 'b', 'a', 'c', 'd', 'e', 'f', 'g', 'h', 'i'],
             ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
@@ -47,6 +47,22 @@ describe('NodeLinkPopup helpers', () => {
           )
         )
       ).toEqual(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']);
+    });
+
+    it('should use exact custom edge stylesheet ids in order and skip missing ids', () => {
+      expect(
+        getEdgeStylesheetIds(makeDiagram([], ['edge-1', 'edge-2', 'edge-3'], 'edge-1'), {
+          edgeStylesheetIds: ['edge-3', 'missing', 'edge-1']
+        })
+      ).toEqual(['edge-3', 'edge-1']);
+    });
+
+    it('should allow custom edge stylesheet ids to produce an empty popup section', () => {
+      expect(
+        getEdgeStylesheetIds(makeDiagram([], ['edge-1', 'edge-2'], 'edge-1'), {
+          edgeStylesheetIds: []
+        })
+      ).toEqual([]);
     });
   });
 
@@ -56,7 +72,7 @@ describe('NodeLinkPopup helpers', () => {
       allIds: string[],
       basicShapeIds: string[]
     ) =>
-      ({
+      ((stencils => ({
         document: {
           props: {
             recentStencils: {
@@ -67,28 +83,27 @@ describe('NodeLinkPopup helpers', () => {
             stencils: {
               getStencils: () => [
                 {
-                  stencils: allIds.map(id => ({
-                    id,
-                    forPicker: () => ({
-                      elements: [{ type: 'node' }],
-                      diagram: { document: { release: () => {} } }
-                    })
-                  }))
+                  stencils
                 }
               ],
+              getStencil: (id: string) => stencils.find(s => s.id === id),
               get: () => ({
-                stencils: basicShapeIds.map(id => ({
-                  id,
-                  forPicker: () => ({
-                    elements: [{ type: 'node' }],
-                    diagram: { document: { release: () => {} } }
-                  })
-                }))
+                stencils: basicShapeIds
+                  .map(id => stencils.find(s => s.id === id))
+                  .filter(s => s !== undefined)
               })
             }
           }
         }
-      }) as unknown as Diagram;
+      }))(
+        allIds.map(id => ({
+          id,
+          forPicker: () => ({
+            elements: [{ type: 'node' }],
+            diagram: { document: { release: () => {} } }
+          })
+        }))
+      )) as unknown as Diagram;
 
     it('should show all available shapes when there are 16 or fewer', () => {
       expect(
@@ -141,6 +156,28 @@ describe('NodeLinkPopup helpers', () => {
         'i',
         'j'
       ]);
+    });
+
+    it('should use exact custom node stencil ids in order and skip missing ids', () => {
+      expect(
+        getNodeStencilIds(
+          makeDiagram([], ['default@@text', 'default@@rect', 'a', 'b', 'c'], ['a', 'b', 'c']),
+          {
+            nodeStencilIds: ['b', 'missing', NO_SHAPE_ID, 'a']
+          }
+        )
+      ).toEqual(['b', NO_SHAPE_ID, 'a']);
+    });
+
+    it('should allow custom node stencil ids to produce an empty popup section', () => {
+      expect(
+        getNodeStencilIds(
+          makeDiagram([], ['default@@text', 'default@@rect', 'a', 'b', 'c'], ['a', 'b', 'c']),
+          {
+            nodeStencilIds: []
+          }
+        )
+      ).toEqual([]);
     });
   });
 });

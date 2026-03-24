@@ -15,6 +15,7 @@ import {
   createProvisionalLinkedNode
 } from '../linkedNode';
 import type { AnchorHandleDragSource } from './anchorHandleDragSource';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 
 const makeEndpoint = (node: DiagramNode, source: AnchorHandleDragSource) => {
   if (source.type === 'anchor') {
@@ -92,13 +93,17 @@ export class AnchorHandleDrag extends Drag {
     }
 
     const previousActions = diagram.undoManager.getToMark();
+    const definition = this.node.getDefinition();
 
     /** @see NodeLinkPopup */
     this.context.ui.showNodeLinkPopup(
       this.edge.end.position,
       newNodeId,
       this.edge.id,
-      previousActions
+      previousActions,
+      definition instanceof ShapeNodeDefinition
+        ? definition.getNodeLinkPopupOptions(this.node)
+        : undefined
     );
   }
 

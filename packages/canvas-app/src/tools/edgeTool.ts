@@ -25,8 +25,21 @@ import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
+import {
+  ShapeNodeDefinition,
+  type NodeLinkPopupOptions
+} from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
+  private getNodeLinkPopupOptions(): NodeLinkPopupOptions | undefined {
+    if (!(this.edge.start instanceof ConnectedEndpoint)) return undefined;
+
+    const definition = this.edge.start.node.getDefinition();
+    if (!(definition instanceof ShapeNodeDefinition)) return undefined;
+
+    return definition.getNodeLinkPopupOptions(this.edge.start.node);
+  }
+
   onDragEnd() {
     super.onDragEnd();
 
@@ -46,7 +59,7 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
       setTimeout(() => {
         this.context.ui.showNodeLinkPopup(point, nodeId, this.edge.id, [
           ...undoManager.getToMark()
-        ]);
+        ], this.getNodeLinkPopupOptions());
       }, 0);
     } else {
       undoManager.add(new CompoundUndoableAction([...undoManager.getToMark()]));

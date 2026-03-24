@@ -24,13 +24,17 @@ import styles from './NodeLinkPopup.module.css';
 import objectPickerStyles from './ObjectPicker.module.css';
 import { LineEndIcon } from './icons/LineEndIcon';
 import { createProvisionalLinkedNode } from '@diagram-craft/canvas/linkedNode';
+import {
+  NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkPopupOptions
+} from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 
 const EDGE_LIMIT = 8;
 const NODE_LIMIT = 16;
 const REQUIRED_NODE_STENCIL_IDS = ['default@@text', 'default@@rect'];
 
 const NODE_LINK_POPUP_MARK = 'node-link-popup';
-const NO_SHAPE_ID = '__no_shape__';
+const NO_SHAPE_ID = NODE_LINK_POPUP_NO_SHAPE_ID;
 
 export const markStartOfNodeLinkPopup = (diagram: Diagram, actions: UndoableAction[]) => {
   diagram.undoManager.setMark(NODE_LINK_POPUP_MARK);
@@ -46,7 +50,7 @@ const combineUndoActionsFromMark = (diagram: Diagram) => {
   }
 };
 
-const getRecentEdgeStylesheetIds = (diagram: Diagram) => {
+const getDefaultEdgeStylesheetIds = (diagram: Diagram) => {
   // Edge stylesheet ids from the LRU-style document history.
   const recentIds = diagram.document.props.recentEdgeStylesheets.stylesheets;
 
@@ -68,7 +72,7 @@ const getRecentEdgeStylesheetIds = (diagram: Diagram) => {
   return unique([...lruIds, ...availableIds]).slice(0, EDGE_LIMIT);
 };
 
-const getNodeStencilIds = (diagram: Diagram) => {
+const getDefaultNodeStencilIds = (diagram: Diagram) => {
   const stencilRegistry = diagram.document.registry.stencils;
   const recentIds = diagram.document.props.recentStencils.stencils;
 
@@ -106,6 +110,25 @@ const getNodeStencilIds = (diagram: Diagram) => {
     0,
     NODE_LIMIT
   );
+};
+
+const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkPopupOptions) => {
+  if (options?.edgeStylesheetIds !== undefined) {
+    return options.edgeStylesheetIds.filter(id => diagram.document.styles.getEdgeStyle(id) !== undefined);
+  }
+
+  return getDefaultEdgeStylesheetIds(diagram);
+};
+
+const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkPopupOptions) => {
+  if (options?.nodeStencilIds !== undefined) {
+    return options.nodeStencilIds.filter(id => {
+      if (id === NO_SHAPE_ID) return true;
+      return diagram.document.registry.stencils.getStencil(id) !== undefined;
+    });
+  }
+
+  return getDefaultNodeStencilIds(diagram);
 };
 
 const buildStencilPreview = (stencil: Stencil, diagram: Diagram) => {
@@ -307,7 +330,7 @@ const useNodeLinkPopupController = ({
   };
 };
 
-export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Props) => {
+export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClose }: Props) => {
   const diagram = useDiagram();
   const hasProvisionalNode = nodeId !== undefined;
   const stencilRegistry = diagram.document.registry.stencils;
@@ -336,15 +359,15 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
   useEventListener(stencilRegistry, 'change', redraw);
 
   const edgeStylesheets = useMemo(() => {
-    const ids = getRecentEdgeStylesheetIds(diagram);
+    const ids = getEdgeStylesheetIds(diagram, options);
 
     return ids.map(id => styleManager.getEdgeStyle(id)).filter(s => s !== undefined);
-  }, [diagram, styleManager]);
+  }, [diagram, options, styleManager]);
 
   const nodeStencils = useMemo(() => {
     if (!hasProvisionalNode) return [];
 
-    return getNodeStencilIds(diagram)
+    return getNodeStencilIds(diagram, options)
       .map(id => {
         if (id === NO_SHAPE_ID) return { id, kind: 'no-shape' as const };
 
@@ -353,7 +376,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, onClose }: Pro
         return { id, kind: 'stencil' as const, stencil };
       })
       .filter(e => e !== undefined);
-  }, [diagram, hasProvisionalNode, stencilRegistry]);
+  }, [diagram, hasProvisionalNode, options, stencilRegistry]);
 
   const edgePreviewDiagrams = useMemo(
     () =>
@@ -526,7 +549,8 @@ NodeLinkPopup.INITIAL_STATE = {
   position: { x: 600, y: 200 },
   isOpen: false,
   nodeId: undefined,
-  edgeId: ''
+  edgeId: '',
+  options: undefined
 };
 
 export type NodeLinkPopupState = {
@@ -534,6 +558,7 @@ export type NodeLinkPopupState = {
   isOpen: boolean;
   nodeId: string | undefined;
   edgeId: string;
+  options?: NodeLinkPopupOptions;
 };
 
 type Props = NodeLinkPopupState & {
@@ -542,6 +567,7 @@ type Props = NodeLinkPopupState & {
 
 export const _test = {
   NO_SHAPE_ID,
-  getRecentEdgeStylesheetIds,
+  getDefaultEdgeStylesheetIds,
+  getEdgeStylesheetIds,
   getNodeStencilIds
 };
