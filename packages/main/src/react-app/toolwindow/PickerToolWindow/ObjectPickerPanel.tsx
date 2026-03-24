@@ -2,6 +2,7 @@ import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
   copyStyles,
+  getStencilsInPackage,
   Stencil,
   StencilPackage,
   stencilScaleStrokes
@@ -118,11 +119,13 @@ export const ObjectPickerPanel = (props: Props) => {
           });
         }
       } else {
+        const stencils =
+          props.stencilPackage.subPackages?.[0]?.stencils ?? getStencilsInPackage(props.stencilPackage);
         res.push({
           id: 'default',
           name: '',
           isDefault: true,
-          stencils: props.stencilPackage.stencils!.map(n => makeDiagramNode(diagram.document, n))
+          stencils: stencils.map(n => makeDiagramNode(diagram.document, n))
         });
       }
     } else {

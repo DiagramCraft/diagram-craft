@@ -1,4 +1,4 @@
-import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { mustExist } from '@diagram-craft/utils/assert';
 import type { EdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
@@ -132,17 +132,13 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   private preRegistrations: Array<{ id: string; name: string; loader: () => Promise<void> }> = [];
 
   register(id: string, name: string, pkg: StencilPackage) {
-    const subpackageStencils = new Set<Stencil>();
-
     pkg.subPackages?.forEach(sp =>
       sp.stencils.forEach(s => {
         s.id = id + STENCIL_ID_DELIMITER + sp.id + STENCIL_ID_DELIMITER + s.id;
-        subpackageStencils.add(s);
       })
     );
 
     pkg.stencils.forEach(s => {
-      if (subpackageStencils.has(s)) return;
       s.id = id + STENCIL_ID_DELIMITER + s.id;
     });
 
@@ -171,12 +167,9 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
   getStencil(id: string) {
     if (id.includes(STENCIL_ID_DELIMITER)) {
       const [pkgId] = safeSplit(id, STENCIL_ID_DELIMITER, 2);
-      return this.get(pkgId).stencils.find(s => s.id === id);
+      return getStencilsInPackage(this.get(pkgId)).find(s => s.id === id);
     } else {
-      return this.stencils
-        .values()
-        .flatMap(pkg => [...pkg.stencils, ...(pkg.subPackages?.flatMap(p => p.stencils) ?? [])])
-        .find(s => s.id === id);
+      return this.stencils.values().flatMap(pkg => getStencilsInPackage(pkg)).find(s => s.id === id);
     }
   }
 
@@ -195,10 +188,11 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 
     const results: Stencil[] = [];
     for (const pkg of this.stencils.values()) {
+      const stencils = getStencilsInPackage(pkg);
       if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
-        results.push(...pkg.stencils);
+        results.push(...stencils);
       } else {
-        for (const stencil of pkg.stencils) {
+        for (const stencil of stencils) {
           if (stencil.name?.toLowerCase().includes(s.toLowerCase())) {
             results.push(stencil);
           }
@@ -210,6 +204,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
 }
 
 /* Helpers ************************************************************************** */
+
+export const getStencilsInPackage = (pkg: StencilPackage): Array<Stencil> => {
+  return [...pkg.stencils, ...(pkg.subPackages?.flatMap(subPackage => subPackage.stencils) ?? [])];
+};
 
 export const getStencilSubPackage = (
   pkg: StencilPackage,
@@ -233,10 +231,6 @@ export const addStencil = (
   def: NodeDefinition | EdgeDefinition,
   opts?: MakeStencilNodeOpts
 ) => {
-  if ((pkg.subPackages ?? []).length > 0) {
-    assert.true(!!opts?.subPackage);
-  }
-
   const isNodeDef = 'getBoundingPath' in def;
   const stencil = {
     id: opts?.id ?? def.type,

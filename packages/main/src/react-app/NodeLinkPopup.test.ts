@@ -75,7 +75,8 @@ describe('NodeLinkPopup helpers', () => {
     const makeDiagram = (
       recentIds: string[],
       allIds: string[],
-      basicShapeIds: string[]
+      basicShapeIds: string[],
+      subPackageIds: string[] = []
     ) =>
       ((stencils => ({
         document: {
@@ -88,7 +89,14 @@ describe('NodeLinkPopup helpers', () => {
             stencils: {
               getStencils: () => [
                 {
-                  stencils
+                  stencils: stencils.filter(s => !subPackageIds.includes(s.id)),
+                  subPackages: [
+                    {
+                      id: 'sub',
+                      name: 'Sub',
+                      stencils: stencils.filter(s => subPackageIds.includes(s.id))
+                    }
+                  ]
                 }
               ],
               getStencil: (id: string) => stencils.find(s => s.id === id),
@@ -183,6 +191,22 @@ describe('NodeLinkPopup helpers', () => {
           }
         )
       ).toEqual([]);
+    });
+
+    it('should keep subpackage-only custom node stencil ids', () => {
+      expect(
+        getNodeStencilIds(
+          makeDiagram(
+            [],
+            ['default@@text', 'default@@rect', 'uml@@class@@target'],
+            [],
+            ['uml@@class@@target']
+          ),
+          {
+            nodeStencilIds: ['uml@@class@@target', 'missing', NO_SHAPE_ID]
+          }
+        )
+      ).toEqual(['uml@@class@@target', NO_SHAPE_ID]);
     });
   });
 

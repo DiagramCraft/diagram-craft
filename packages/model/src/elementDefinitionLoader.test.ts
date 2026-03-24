@@ -164,7 +164,7 @@ describe('loadStencilsFromYaml', () => {
         { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
       ]
     });
-    expect(pkg.stencils).toHaveLength(2);
+    expect(pkg.stencils).toHaveLength(0);
     expect(subPackage.stencils).toHaveLength(2);
   });
 });

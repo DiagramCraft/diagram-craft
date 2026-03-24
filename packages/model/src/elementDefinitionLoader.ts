@@ -118,12 +118,10 @@ export const loadStencilsFromYaml = (
     });
   }
 
-  if (pkg) {
-    pkg.stencils.push(...dest);
-  }
-
   if (subPackage) {
     subPackage.stencils.push(...dest);
+  } else if (pkg) {
+    pkg.stencils.push(...dest);
   }
 
   return dest;
