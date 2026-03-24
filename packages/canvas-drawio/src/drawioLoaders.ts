@@ -1,7 +1,7 @@
 import { FileLoader } from '@diagram-craft/canvas-app/loaders';
 import { drawioReader } from './drawioReader';
 import { type StencilLoader } from '@diagram-craft/model/stencilRegistry';
-import { loadDrawioStencils } from './drawioStencilLoader';
+import { loadDrawioStencilPackage } from './drawioStencilLoader';
 import { toRegularStencil } from './drawioStencilUtils';
 
 declare global {
@@ -18,8 +18,12 @@ declare global {
 
 export const stencilLoaderDrawioXml: StencilLoader<'drawioXml'> = async (_registry, opts) => {
   const { url, foreground, background } = opts;
-  const drawioStencils = await loadDrawioStencils(url, foreground, background);
-  return { stencils: drawioStencils.map(toRegularStencil), type: 'drawioXml' };
+  const drawioPackage = await loadDrawioStencilPackage(url, foreground, background);
+  return {
+    id: drawioPackage.id,
+    stencils: drawioPackage.stencils.map(toRegularStencil),
+    type: 'drawioXml'
+  };
 };
 
 export const fileLoaderDrawio: FileLoader = async (content, doc) =>

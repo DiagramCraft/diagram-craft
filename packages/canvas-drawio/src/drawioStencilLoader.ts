@@ -1,4 +1,4 @@
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { xNum } from '@diagram-craft/utils/xml';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
@@ -19,15 +19,16 @@ export const toTypeName = (n: string) => {
   return n.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_').replaceAll("'", '');
 };
 
-export const loadDrawioStencils = async (
-  url: string,
+export const parseDrawioStencilPackage = (
+  txt: string,
   foreground = 'black',
   background = 'white'
 ) => {
-  const txt = await FileSystem.loadFromUrl(url);
-
   const parser = new DOMParser();
   const $doc = parser.parseFromString(txt, 'application/xml');
+  const $root = $doc.documentElement;
+  const packageId = $root.getAttribute('name')?.trim();
+  assert.false(packageId === undefined || packageId === '');
 
   const newStencils: Array<DrawioStencil> = [];
 
@@ -52,5 +53,26 @@ export const loadDrawioStencils = async (
     });
   }
 
-  return newStencils;
+  return {
+    id: mustExist(packageId),
+    stencils: newStencils
+  };
+};
+
+export const loadDrawioStencilPackage = async (
+  url: string,
+  foreground = 'black',
+  background = 'white'
+) => {
+  const txt = await FileSystem.loadFromUrl(url);
+  return parseDrawioStencilPackage(txt, foreground, background);
+};
+
+// TODO: Replace by loadDrawioStencilPackage
+export const loadDrawioStencils = async (
+  url: string,
+  foreground = 'black',
+  background = 'white'
+) => {
+  return (await loadDrawioStencilPackage(url, foreground, background)).stencils;
 };
