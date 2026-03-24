@@ -16,6 +16,7 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
 import type { Endpoint } from './endpoint';
+import type { NodeLinkOptions } from './stencilRegistry';
 
 export type NodeFlag = string & { __brand: 'nodeFlag' };
 
@@ -435,6 +436,13 @@ export interface NodeDefinition {
   onAdd(node: DiagramNode, diagram: Diagram, uow: UnitOfWork): void;
 
   requestFocus(node: DiagramNode, selectAll?: boolean): void;
+
+  getNodeLinkOptions?(node: DiagramNode): NodeLinkOptions | undefined;
+  setNodeLinkOptions?(
+    node: DiagramNode,
+    options: NodeLinkOptions | undefined,
+    uow: UnitOfWork
+  ): void;
 }
 
 export type AttachPhase = 'drag' | 'dragEnd';

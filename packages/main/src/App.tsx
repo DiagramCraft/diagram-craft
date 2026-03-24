@@ -17,7 +17,7 @@ import {
   NodeLinkPopup,
   NodeLinkPopupState
 } from './react-app/NodeLinkPopup';
-import type { NodeLinkOptions } from '@diagram-craft/canvas/context';
+import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
 import { type UndoableAction } from '@diagram-craft/model/undoManager';
 import { MessageDialog } from './react-app/components/MessageDialog';
 import {

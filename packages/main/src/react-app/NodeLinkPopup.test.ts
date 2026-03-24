@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Diagram } from '@diagram-craft/model/diagram';
-import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/canvas/context';
+import { NODE_LINK_POPUP_NO_SHAPE_ID } from '@diagram-craft/model/stencilRegistry';
 import { _test } from './NodeLinkPopup';
 
 const {

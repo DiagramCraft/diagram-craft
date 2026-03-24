@@ -22,7 +22,7 @@ import { AnchorHandleDrag } from './anchorHandleDrag';
 import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
-import type { NodeLinkOptions } from '../context';
+import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
 import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
 import { DRAG_DROP_MANAGER, DragDopManager } from '../dragDropManager';
 
