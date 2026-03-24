@@ -14,7 +14,7 @@ import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import { BPMNChoreographyActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivity.nodeType';
 import { BPMNChoreographyActivityParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityParticipant.nodeType';
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
-import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/model/elementDefinitionLoader';
 import bpmnChoreographyStencils from './bpmn-choreography-stencils.yaml';
 import bpmnChoreographyAdvancedStencils from './bpmn-choreography-advanced-stencils.yaml';
 import bpmnEdgesStencils from './bpmn-edges-stencils.yaml';
@@ -23,11 +23,7 @@ import bpmnCollaborationStencils from './bpmn-collaboration-stencils.yaml';
 import { BPMNLane } from '@diagram-craft/stencil-bpmn/BPMNLane';
 import { BPMNChoreographyActivityNameNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityName.nodeType';
 import { BPMNConversationEdgeDefinition } from '@diagram-craft/stencil-bpmn/BPMNConversationEdge.edgeType';
-import {
-  addStencilToSubpackage,
-  getStencilSubPackage,
-  StencilPackage
-} from '@diagram-craft/model/stencilRegistry';
+import { addStencilToSubpackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerBPMNNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new BPMNActivityNodeDefinition());
@@ -66,12 +62,13 @@ export const loadBPMNStencils = async (registry: Registry) => {
       { id: 'choreography-advanced', name: 'Choreography (Advanced)', stencils: [] }
     ]
   };
+  const loader = new YamlStencilLoader(bpmnStencils);
 
   /* *********************************************************************** */
   /* CORE PACKAGE                                                            */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnCoreStencils, bpmnStencils, getStencilSubPackage(bpmnStencils, 'core'));
+  loader.registerSubPackage('core', bpmnCoreStencils);
 
   addStencilToSubpackage('core', bpmnStencils, new RoundedRectNodeDefinition(), {
     id: 'bpmn-group',
@@ -107,7 +104,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
   /* EDGES PACKAGE                                                           */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(bpmnEdgesStencils, bpmnStencils, getStencilSubPackage(bpmnStencils, 'edges'));
+  loader.registerSubPackage('edges', bpmnEdgesStencils);
 
   addStencilToSubpackage('edges', bpmnStencils, new BPMNConversationEdgeDefinition(), {
     id: 'bpmn-conversation-edge',
@@ -242,11 +239,7 @@ export const loadBPMNStencils = async (registry: Registry) => {
     }
   });
 
-  loadStencilsFromYaml(
-    bpmnCollaborationStencils,
-    bpmnStencils,
-    getStencilSubPackage(bpmnStencils, 'collaboration')
-  );
+  loader.registerSubPackage('collaboration', bpmnCollaborationStencils);
 
   /* *********************************************************************** */
   /* PROCESS PACKAGE                                                         */
@@ -596,21 +589,13 @@ export const loadBPMNStencils = async (registry: Registry) => {
   /* CHOREOGRAPHY PACKAGE                                                    */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(
-    bpmnChoreographyStencils,
-    bpmnStencils,
-    getStencilSubPackage(bpmnStencils, 'choreography')
-  );
+  loader.registerSubPackage('choreography', bpmnChoreographyStencils);
 
   /* *********************************************************************** */
   /* CHOREOGRAPHY ADVANCED PACKAGE                                           */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(
-    bpmnChoreographyAdvancedStencils,
-    bpmnStencils,
-    getStencilSubPackage(bpmnStencils, 'choreography-advanced')
-  );
+  loader.registerSubPackage('choreography-advanced', bpmnChoreographyAdvancedStencils);
 
   addStencilToSubpackage(
     'choreography-advanced',
@@ -674,5 +659,5 @@ export const loadBPMNStencils = async (registry: Registry) => {
     }
   );
 
-  return bpmnStencils;
+  return loader.apply();
 };

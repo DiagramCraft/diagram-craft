@@ -1,4 +1,5 @@
 import {
+  getStencilSubPackage,
   type Stencil,
   STENCIL_ID_DELIMITER,
   type StencilPackage,
@@ -37,92 +38,122 @@ const mergePickerProps = (
   });
 };
 
-export const loadStencilsFromYaml = (
-  // biome-ignore lint/suspicious/noExplicitAny: false positive
-  stencils: any,
-  pkg?: StencilPackage,
-  subPackage?: StencilSubPackage
-) => {
-  const dest: Array<Stencil> = [];
-  const stencilIdsInFile = new Set<string>(
-    stencils.stencils.map((stencil: { id: string }) => stencil.id)
-  );
+export class YamlStencilLoader {
+  constructor(private readonly pkg: StencilPackage) {}
 
-  const qualifyStencilId = (id: string) => {
+  registerPackage(stencils: unknown): void {
+    this.register(undefined, stencils);
+  }
+
+  registerSubPackage(subPackage: string, stencils: unknown): void {
+    this.register(getStencilSubPackage(this.pkg, subPackage), stencils);
+  }
+
+  apply() {
+    return this.pkg;
+  }
+
+  private qualifyStencilId = (
+    id: string,
+    stencilIdsInFile: ReadonlySet<string>,
+    subPackage?: StencilSubPackage
+  ) => {
     if (id === NODE_LINK_POPUP_NO_SHAPE_ID) return id;
     if (id.includes(STENCIL_ID_DELIMITER)) return id;
     if (!stencilIdsInFile.has(id)) return id;
-    if (!pkg?.id) return id;
-    if (subPackage)
-      return `${pkg.id}${STENCIL_ID_DELIMITER}${subPackage.id}${STENCIL_ID_DELIMITER}${id}`;
-    return `${pkg.id}${STENCIL_ID_DELIMITER}${id}`;
+    if (subPackage) {
+      return `${this.pkg.id}${STENCIL_ID_DELIMITER}${subPackage.id}${STENCIL_ID_DELIMITER}${id}`;
+    }
+    return `${this.pkg.id}${STENCIL_ID_DELIMITER}${id}`;
   };
 
-  const resolveNodeLinkOptions = (
-    nodeLinkOptions: NodeLinkOptions | undefined
+  private resolveNodeLinkOptions = (
+    nodeLinkOptions: NodeLinkOptions | undefined,
+    stencilIdsInFile: ReadonlySet<string>,
+    subPackage?: StencilSubPackage
   ): NodeLinkOptions | undefined => {
     if (nodeLinkOptions === undefined) return undefined;
 
     return {
       ...nodeLinkOptions,
-      nodeStencilIds: nodeLinkOptions.nodeStencilIds?.map(qualifyStencilId),
+      nodeStencilIds: nodeLinkOptions.nodeStencilIds?.map(id =>
+        this.qualifyStencilId(id, stencilIdsInFile, subPackage)
+      ),
       allowedCombinations: nodeLinkOptions.allowedCombinations?.map(c => ({
         ...c,
-        nodeStencilId: c.nodeStencilId === undefined ? undefined : qualifyStencilId(c.nodeStencilId)
+        nodeStencilId:
+          c.nodeStencilId === undefined
+            ? undefined
+            : this.qualifyStencilId(c.nodeStencilId, stencilIdsInFile, subPackage)
       }))
     };
   };
 
-  for (const stencil of stencils.stencils) {
-    const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
-      const { diagram, layer } = StencilUtils.makeDiagram(registry);
+  private register = (
+    subPackage: StencilSubPackage | undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    stencils: any
+  ): void => {
+    // TODO: Cast stencils into some appropriate type
 
-      return UnitOfWork.execute(diagram, uow => {
-        const serializedElements =
-          t === 'picker'
-            ? mergePickerProps(stencil.node ? [stencil.node] : stencil.elements)
-            : deepClone(stencil.node ? [stencil.node] : stencil.elements);
-        const elements = deserializeDiagramElements(
-          serializedElements,
-          layer,
-          uow,
-          undefined,
-          new ElementLookup<DiagramNode>(),
-          new ElementLookup<DiagramEdge>()
-        );
-        elements.forEach(e => layer.addElement(e, uow));
+    const dest: Array<Stencil> = [];
+    const stencilIdsInFile = new Set<string>(
+      stencils.stencils.map((stencil: { id: string }) => stencil.id)
+    );
 
-        const bounds = Box.asReadWrite(Box.boundingBox(elements.map(e => e.bounds)));
+    for (const stencil of stencils.stencils) {
+      const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
+        const { diagram, layer } = StencilUtils.makeDiagram(registry);
 
-        bounds.x -= (stencil as Stencil).settings?.marginLeft ?? 0;
-        bounds.w += (stencil as Stencil).settings?.marginLeft ?? 0;
+        return UnitOfWork.execute(diagram, uow => {
+          const serializedElements =
+            t === 'picker'
+              ? mergePickerProps(stencil.node ? [stencil.node] : stencil.elements)
+              : deepClone(stencil.node ? [stencil.node] : stencil.elements);
+          const elements = deserializeDiagramElements(
+            serializedElements,
+            layer,
+            uow,
+            undefined,
+            new ElementLookup<DiagramNode>(),
+            new ElementLookup<DiagramEdge>()
+          );
+          elements.forEach(e => layer.addElement(e, uow));
 
-        bounds.y -= (stencil as Stencil).settings?.marginTop ?? 0;
-        bounds.h += (stencil as Stencil).settings?.marginTop ?? 0;
+          const bounds = Box.asReadWrite(Box.boundingBox(elements.map(e => e.bounds)));
 
-        bounds.w += (stencil as Stencil).settings?.marginRight ?? 0;
-        bounds.h += (stencil as Stencil).settings?.marginBottom ?? 0;
+          bounds.x -= (stencil as Stencil).settings?.marginLeft ?? 0;
+          bounds.w += (stencil as Stencil).settings?.marginLeft ?? 0;
 
-        return { elements, bounds: WritableBox.asBox(bounds), diagram, layer };
+          bounds.y -= (stencil as Stencil).settings?.marginTop ?? 0;
+          bounds.h += (stencil as Stencil).settings?.marginTop ?? 0;
+
+          bounds.w += (stencil as Stencil).settings?.marginRight ?? 0;
+          bounds.h += (stencil as Stencil).settings?.marginBottom ?? 0;
+
+          return { elements, bounds: WritableBox.asBox(bounds), diagram, layer };
+        });
+      };
+      dest.push({
+        id: stencil.id,
+        name: stencil.name,
+        nodeLinkOptions: this.resolveNodeLinkOptions(
+          stencil.settings?.nodeLinkOptions,
+          stencilIdsInFile,
+          subPackage
+        ),
+        styles: stencil.styles,
+        settings: stencil.settings,
+        forPicker: registry => mkNode(registry, 'picker'),
+        forCanvas: registry => mkNode(registry, 'canvas'),
+        type: 'yaml'
       });
-    };
-    dest.push({
-      id: stencil.id,
-      name: stencil.name,
-      nodeLinkOptions: resolveNodeLinkOptions(stencil.settings?.nodeLinkOptions),
-      styles: stencil.styles,
-      settings: stencil.settings,
-      forPicker: registry => mkNode(registry, 'picker'),
-      forCanvas: registry => mkNode(registry, 'canvas'),
-      type: 'yaml'
-    });
-  }
+    }
 
-  if (subPackage) {
-    subPackage.stencils.push(...dest);
-  } else if (pkg) {
-    pkg.stencils.push(...dest);
-  }
-
-  return dest;
-};
+    if (subPackage) {
+      subPackage.stencils.push(...dest);
+    } else {
+      this.pkg.stencils.push(...dest);
+    }
+  };
+}

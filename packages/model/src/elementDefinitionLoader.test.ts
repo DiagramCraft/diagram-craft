@@ -1,12 +1,17 @@
 import { describe, expect, test } from 'vitest';
-import { NODE_LINK_POPUP_NO_SHAPE_ID } from './stencilRegistry';
-import { loadStencilsFromYaml } from './elementDefinitionLoader';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type StencilPackage, type StencilSubPackage } from './stencilRegistry';
+import { YamlStencilLoader } from './elementDefinitionLoader';
 import { TestModel } from './test-support/testModel';
 import { isNode } from './diagramElement';
 
-describe('loadStencilsFromYaml', () => {
+describe('YamlStencilLoader', () => {
   test('merges pickerProps into props only for picker rendering', () => {
-    const [stencil] = loadStencilsFromYaml({
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+    new YamlStencilLoader(pkg).registerPackage({
       stencils: [
         {
           id: 'picker-props',
@@ -58,6 +63,7 @@ describe('loadStencilsFromYaml', () => {
         }
       ]
     });
+    const [stencil] = pkg.stencils;
 
     expect(stencil).toBeDefined();
     if (!stencil) {
@@ -100,58 +106,54 @@ describe('loadStencilsFromYaml', () => {
   });
 
   test('resolves relative node link stencil references within the same yaml file', () => {
-    const pkg = {
+    const subPackage: StencilSubPackage = { id: 'class', name: 'Class', stencils: [] };
+    const pkg: StencilPackage = {
       id: 'uml',
       stencils: [],
       type: 'default' as const,
-      subPackages: [{ id: 'class', name: 'Class', stencils: [] }]
+      subPackages: [subPackage]
     };
-    const subPackage = pkg.subPackages[0];
-    if (subPackage === undefined) throw new Error('Expected subpackage');
 
-    const [stencil] = loadStencilsFromYaml(
-      {
-        stencils: [
-          {
-            id: 'source',
-            name: 'Source',
-            settings: {
-              nodeLinkOptions: {
-                nodeStencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
-                allowedCombinations: [
-                  { nodeStencilId: 'target', edgeStylesheetId: 'edge-a' },
-                  { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
-                ]
-              }
-            },
-            node: {
-              id: 'source-node',
-              type: 'node',
-              nodeType: 'rect',
-              bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
-              props: {},
-              texts: { text: '' },
-              metadata: {}
+    new YamlStencilLoader(pkg).registerSubPackage('class', {
+      stencils: [
+        {
+          id: 'source',
+          name: 'Source',
+          settings: {
+            nodeLinkOptions: {
+              nodeStencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
+              allowedCombinations: [
+                { nodeStencilId: 'target', edgeStylesheetId: 'edge-a' },
+                { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+              ]
             }
           },
-          {
-            id: 'target',
-            name: 'Target',
-            node: {
-              id: 'target-node',
-              type: 'node',
-              nodeType: 'rect',
-              bounds: { x: 0, y: 0, w: 80, h: 60, r: 0 },
-              props: {},
-              texts: { text: '' },
-              metadata: {}
-            }
+          node: {
+            id: 'source-node',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
           }
-        ]
-      },
-      pkg,
-      subPackage
-    );
+        },
+        {
+          id: 'target',
+          name: 'Target',
+          node: {
+            id: 'target-node',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 80, h: 60, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+    const [stencil] = subPackage.stencils;
 
     expect(stencil?.nodeLinkOptions).toEqual({
       nodeStencilIds: [

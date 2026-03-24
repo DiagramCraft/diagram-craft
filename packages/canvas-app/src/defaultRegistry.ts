@@ -38,7 +38,7 @@ import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
-import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/model/elementDefinitionLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { SVGNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/SVG.nodeType';
 import { addStencil, StencilPackage, StencilRegistry } from '@diagram-craft/model/stencilRegistry';
@@ -103,6 +103,7 @@ export const defaultStencilRegistry = () => {
     stencils: [],
     type: 'default'
   };
+  const defaultsLoader = new YamlStencilLoader(defaults);
 
   const arrows: StencilPackage = { id: 'arrow', stencils: [], type: 'default' };
 
@@ -177,7 +178,8 @@ export const defaultStencilRegistry = () => {
   addStencil(arrows, new ArrowNodeDefinition('arrow-down', 'Arrow Down', Math.PI / 2));
   addStencil(arrows, new ArrowNodeDefinition('arrow-left', 'Arrow Left', Math.PI));
 
-  loadStencilsFromYaml(stencils, defaults);
+  defaultsLoader.registerPackage(stencils);
+  defaultsLoader.apply();
 
   // Edges
   addStencil(arrows, new BlockArrowEdgeDefinition());

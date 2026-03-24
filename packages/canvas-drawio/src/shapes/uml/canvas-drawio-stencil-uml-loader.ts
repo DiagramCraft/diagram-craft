@@ -16,7 +16,7 @@ import { UmlFrame } from './umlFrame.nodeType';
 import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType';
 import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
-import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/model/elementDefinitionLoader';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -61,8 +61,9 @@ export const loadUMLStencils = async (registry: Registry) => {
   await registerUMLShapes(registry.nodes);
 
   const umlStencils: StencilPackage = { id: 'drawioUml', stencils: [], type: 'default' };
+  const loader = new YamlStencilLoader(umlStencils);
 
-  loadStencilsFromYaml(stencils, umlStencils);
+  loader.registerPackage(stencils);
 
   const props: MakeStencilNodeOpts['props'] = () => ({
     fill: {
@@ -136,7 +137,7 @@ export const loadUMLStencils = async (registry: Registry) => {
     aspectRatio: 0.5
   });
 
-  return umlStencils;
+  return loader.apply();
 };
 
 export const registerUMLShapes = async (r: NodeDefinitionRegistry) => {
