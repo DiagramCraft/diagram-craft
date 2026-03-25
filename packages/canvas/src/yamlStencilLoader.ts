@@ -34,6 +34,8 @@ type YamlStencilSettings = {
   [key: string]: unknown;
 };
 
+type YamlStencilStyle = NonNullable<Stencil['styles']>[number];
+
 export type YamlStencilDefinition = {
   id: string;
   name?: string;
@@ -42,17 +44,22 @@ export type YamlStencilDefinition = {
   node?: SerializedElementWithPickerProps;
   elements?: Array<SerializedElementWithPickerProps>;
   settings?: YamlStencilSettings;
-  styles?: Stencil['styles'];
+  styles?: Array<YamlStencilStyle | string>;
 };
 
 export type YamlStencilFile = {
   stencils: Array<YamlStencilDefinition>;
+  styles?: Array<YamlStencilStyle>;
 };
 
-type PendingNodeLinkResolution = {
-  stencils: Array<Stencil>;
+type PendingStencilFinalization = {
+  stencils: Array<{
+    stencil: Stencil;
+    yamlStencil: YamlStencilDefinition;
+  }>;
   stencilIdsInFile: ReadonlySet<string>;
   subPackage?: StencilSubPackage;
+  styles: Array<YamlStencilStyle>;
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
@@ -60,6 +67,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
 };
 
 const hasSerializedElementShape = (value: unknown): value is SerializedElementWithPickerProps => {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string' && typeof value.type === 'string';
+};
+
+const hasYamlStencilStyleShape = (value: unknown): value is YamlStencilStyle => {
   if (!isRecord(value)) return false;
   return typeof value.id === 'string' && typeof value.type === 'string';
 };
@@ -109,6 +121,18 @@ function assertYamlStencilFile(value: unknown): asserts value is YamlStencilFile
       }
     }
   });
+
+  if (value.styles !== undefined) {
+    if (!Array.isArray(value.styles)) {
+      throw new Error("Invalid stencil yaml: top-level 'styles' must be an array");
+    }
+
+    for (const style of value.styles) {
+      if (!hasYamlStencilStyleShape(style)) {
+        throw new Error("Invalid stencil yaml: top-level 'styles' must contain style objects");
+      }
+    }
+  }
 }
 
 export const _test = {
@@ -116,7 +140,7 @@ export const _test = {
 };
 
 export class YamlStencilLoader {
-  private readonly pendingNodeLinkResolutions: Array<PendingNodeLinkResolution> = [];
+  private readonly pendingStencilFinalizations: Array<PendingStencilFinalization> = [];
 
   constructor(private readonly pkg: StencilPackage) {}
 
@@ -129,19 +153,22 @@ export class YamlStencilLoader {
   }
 
   apply() {
-    for (const resolution of this.pendingNodeLinkResolutions) {
+    for (const resolution of this.pendingStencilFinalizations) {
+      const stylesById = new Map(resolution.styles.map(style => [style.id, style]));
+
       for (const stencil of resolution.stencils) {
-        stencil.settings ??= {};
-        stencil.settings.nodeLinkOptions = this.resolveNodeLinkOptions(
+        stencil.stencil.settings ??= {};
+        stencil.stencil.settings.nodeLinkOptions = this.resolveNodeLinkOptions(
           // biome-ignore lint/suspicious/noExplicitAny: yaml loader stores nodeLinkOptions outside the narrowed Stencil settings type
-          (stencil.settings as any)?.nodeLinkOptions,
+          (stencil.stencil.settings as any)?.nodeLinkOptions,
           resolution.stencilIdsInFile,
           resolution.subPackage
         );
+        stencil.stencil.styles = this.resolveStyles(stencil.yamlStencil.styles, stylesById, stencil.yamlStencil.id);
       }
     }
 
-    this.pendingNodeLinkResolutions.length = 0;
+    this.pendingStencilFinalizations.length = 0;
     return this.pkg;
   }
 
@@ -207,10 +234,33 @@ export class YamlStencilLoader {
     };
   };
 
+  private resolveStyles = (
+    styles: YamlStencilDefinition['styles'],
+    stylesById: ReadonlyMap<string, YamlStencilStyle>,
+    stencilId: string
+  ): Stencil['styles'] => {
+    if (styles === undefined) return undefined;
+
+    return styles.map(style => {
+      if (typeof style !== 'string') return style;
+
+      const resolved = stylesById.get(style);
+      if (resolved === undefined) {
+        throw new Error(
+          `Invalid stencil yaml: stencil '${stencilId}' references unknown top-level style '${style}'`
+        );
+      }
+      return deepClone(resolved);
+    });
+  };
+
   private register = (subPackage: StencilSubPackage | undefined, stencils: unknown): void => {
     assertYamlStencilFile(stencils);
 
-    const dest: Array<Stencil> = [];
+    const dest: Array<{
+      stencil: Stencil;
+      yamlStencil: YamlStencilDefinition;
+    }> = [];
     const stencilIdsInFile = new Set<string>(stencils.stencils.map(stencil => stencil.id));
 
     for (const stencil of stencils.stencils) {
@@ -245,27 +295,32 @@ export class YamlStencilLoader {
           return { elements, bounds: WritableBox.asBox(bounds), diagram, layer };
         });
       };
-      dest.push({
+      const registeredStencil: Stencil = {
         id: stencil.id,
         name: stencil.name,
-        styles: stencil.styles,
+        styles: undefined,
         settings: stencil.settings,
         forPicker: registry => mkNode(registry, 'picker'),
         forCanvas: registry => mkNode(registry, 'canvas'),
         type: 'yaml'
+      };
+      dest.push({
+        stencil: registeredStencil,
+        yamlStencil: stencil
       });
     }
 
     if (subPackage) {
-      subPackage.stencils.push(...dest);
+      subPackage.stencils.push(...dest.map(entry => entry.stencil));
     } else {
-      this.pkg.stencils.push(...dest);
+      this.pkg.stencils.push(...dest.map(entry => entry.stencil));
     }
 
-    this.pendingNodeLinkResolutions.push({
+    this.pendingStencilFinalizations.push({
       stencils: dest,
       stencilIdsInFile,
-      subPackage
+      subPackage,
+      styles: stencils.styles ?? []
     });
   };
 }

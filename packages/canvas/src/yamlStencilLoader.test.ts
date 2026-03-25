@@ -189,4 +189,88 @@ describe('YamlStencilLoader', () => {
       })
     ).toThrow(/must define either 'node' or 'elements'/);
   });
+
+  test('resolves string style references from the top-level styles block in apply', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerPackage({
+      styles: [
+        {
+          id: 'shared-style',
+          name: 'Shared Style',
+          type: 'node',
+          props: {
+            stroke: {
+              color: 'red'
+            }
+          }
+        }
+      ],
+      stencils: [
+        {
+          id: 'with-style-ref',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          },
+          styles: ['shared-style']
+        }
+      ]
+    });
+
+    expect(pkg.stencils[0]?.styles).toBeUndefined();
+    loader.apply();
+
+    expect(pkg.stencils[0]?.styles).toEqual([
+      {
+        id: 'shared-style',
+        name: 'Shared Style',
+        type: 'node',
+        props: {
+          stroke: {
+            color: 'red'
+          }
+        }
+      }
+    ]);
+  });
+
+  test('fails apply when a style reference cannot be resolved', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerPackage({
+      stencils: [
+        {
+          id: 'with-missing-style-ref',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          },
+          styles: ['missing-style']
+        }
+      ]
+    });
+
+    expect(() => loader.apply()).toThrow(/references unknown top-level style 'missing-style'/);
+  });
 });
