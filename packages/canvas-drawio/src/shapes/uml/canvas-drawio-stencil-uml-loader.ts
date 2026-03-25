@@ -16,7 +16,7 @@ import { UmlFrame } from './umlFrame.nodeType';
 import { ProvidedRequiredInterface } from './providedRequiredInterface.nodeType';
 import { RequiredInterface } from './requiredInterface.nodeType';
 import { StyleManager } from '../../styleManager';
-import { YamlStencilLoader } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';

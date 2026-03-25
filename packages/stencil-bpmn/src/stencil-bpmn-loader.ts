@@ -14,7 +14,7 @@ import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import { BPMNChoreographyActivityNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivity.nodeType';
 import { BPMNChoreographyActivityParticipantNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyActivityParticipant.nodeType';
 import { BPMNChoreographyEnvelopeNodeDefinition } from '@diagram-craft/stencil-bpmn/BPMNChoreographyEnvelope.nodeType';
-import { YamlStencilLoader } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
 import bpmnChoreographyStencils from './bpmn-choreography-stencils.yaml';
 import bpmnChoreographyAdvancedStencils from './bpmn-choreography-advanced-stencils.yaml';
 import bpmnEdgesStencils from './bpmn-edges-stencils.yaml';
