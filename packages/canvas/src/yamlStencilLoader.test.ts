@@ -4,7 +4,7 @@ import {
   type StencilPackage,
   type StencilSubPackage
 } from '@diagram-craft/model/stencilRegistry';
-import { YamlStencilLoader } from './yamlStencilLoader';
+import { _test, YamlStencilLoader } from './yamlStencilLoader';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { isNode } from '@diagram-craft/model/diagramElement';
 
@@ -176,5 +176,13 @@ describe('YamlStencilLoader', () => {
     });
     expect(pkg.stencils).toHaveLength(0);
     expect(subPackage.stencils).toHaveLength(2);
+  });
+
+  test('rejects yaml without node or elements', () => {
+    expect(() =>
+      _test.assertYamlStencilFile({
+        stencils: [{ id: 'broken' }]
+      })
+    ).toThrow(/must define either 'node' or 'elements'/);
   });
 });

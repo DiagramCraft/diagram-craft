@@ -22,10 +22,92 @@ type SerializedElementWithPickerProps = SerializedElement & {
   children?: Array<SerializedElementWithPickerProps>;
 };
 
+type YamlStencilSettings = {
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  nodeLinkOptions?: NodeLinkOptions;
+  [key: string]: unknown;
+};
+
+export type YamlStencilDefinition = {
+  id: string;
+  name?: string;
+  title?: string;
+  stencil?: string;
+  node?: SerializedElementWithPickerProps;
+  elements?: Array<SerializedElementWithPickerProps>;
+  settings?: YamlStencilSettings;
+  styles?: Stencil['styles'];
+};
+
+export type YamlStencilFile = {
+  stencils: Array<YamlStencilDefinition>;
+};
+
 type PendingNodeLinkResolution = {
   stencils: Array<Stencil>;
   stencilIdsInFile: ReadonlySet<string>;
   subPackage?: StencilSubPackage;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
+};
+
+const hasSerializedElementShape = (value: unknown): value is SerializedElementWithPickerProps => {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string' && typeof value.type === 'string';
+};
+
+function assertYamlStencilFile(value: unknown): asserts value is YamlStencilFile {
+  if (!isRecord(value) || !Array.isArray(value.stencils)) {
+    throw new Error("Invalid stencil yaml: expected an object with a 'stencils' array");
+  }
+
+  value.stencils.forEach((stencil, index) => {
+    if (!isRecord(stencil)) {
+      throw new Error(`Invalid stencil yaml: stencil at index ${index} must be an object`);
+    }
+
+    if (typeof stencil.id !== 'string' || stencil.id.length === 0) {
+      throw new Error(`Invalid stencil yaml: stencil at index ${index} must have a non-empty string id`);
+    }
+
+    const hasNode = stencil.node !== undefined;
+    const hasElements = stencil.elements !== undefined;
+
+    if (!hasNode && !hasElements) {
+      throw new Error(
+        `Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`
+      );
+    }
+
+    if (hasNode && !hasSerializedElementShape(stencil.node)) {
+      throw new Error(`Invalid stencil yaml: stencil '${stencil.id}' has an invalid 'node' entry`);
+    }
+
+    if (hasElements) {
+      if (!Array.isArray(stencil.elements) || stencil.elements.length === 0) {
+        throw new Error(
+          `Invalid stencil yaml: stencil '${stencil.id}' must have a non-empty 'elements' array`
+        );
+      }
+
+      for (const element of stencil.elements) {
+        if (!hasSerializedElementShape(element)) {
+          throw new Error(
+            `Invalid stencil yaml: stencil '${stencil.id}' contains an invalid element entry`
+          );
+        }
+      }
+    }
+  });
+}
+
+export const _test = {
+  assertYamlStencilFile
 };
 
 export class YamlStencilLoader {
@@ -73,6 +155,12 @@ export class YamlStencilLoader {
     });
   }
 
+  private getSerializedElements(stencil: YamlStencilDefinition): Array<SerializedElementWithPickerProps> {
+    if (stencil.node !== undefined) return [stencil.node];
+    if (stencil.elements !== undefined) return stencil.elements;
+    throw new Error(`Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`);
+  }
+
   private qualifyStencilId = (
     id: string,
     stencilIdsInFile: ReadonlySet<string>,
@@ -111,25 +199,23 @@ export class YamlStencilLoader {
 
   private register = (
     subPackage: StencilSubPackage | undefined,
-    // biome-ignore lint/suspicious/noExplicitAny: false positive
-    stencils: any
+    stencils: unknown
   ): void => {
-    // TODO: Cast stencils into some appropriate type
+    assertYamlStencilFile(stencils);
 
     const dest: Array<Stencil> = [];
     const stencilIdsInFile = new Set<string>(
-      stencils.stencils.map((stencil: { id: string }) => stencil.id)
+      stencils.stencils.map(stencil => stencil.id)
     );
 
     for (const stencil of stencils.stencils) {
       const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
         const { diagram, layer } = StencilUtils.makeDiagram(registry);
+        const stencilElements = this.getSerializedElements(stencil);
 
         return UnitOfWork.execute(diagram, uow => {
           const serializedElements =
-            t === 'picker'
-              ? this.mergePickerProps(stencil.node ? [stencil.node] : stencil.elements)
-              : deepClone(stencil.node ? [stencil.node] : stencil.elements);
+            t === 'picker' ? this.mergePickerProps(stencilElements) : deepClone(stencilElements);
           const elements = deserializeDiagramElements(
             serializedElements,
             layer,
