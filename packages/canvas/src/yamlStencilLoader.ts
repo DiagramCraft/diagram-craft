@@ -4,12 +4,12 @@ import {
   STENCIL_ID_DELIMITER,
   type StencilPackage,
   type StencilSubPackage
-} from './stencilRegistry';
-import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from './stencilRegistry';
-import { deserializeDiagramElements } from './serialization/deserialize';
-import type { SerializedElement } from './serialization/serializedTypes';
-import type { DiagramNode } from './diagramNode';
-import { UnitOfWork } from './unitOfWork';
+} from '@diagram-craft/model/stencilRegistry';
+import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
+import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
+import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ElementLookup } from '@diagram-craft/model/elementLookup';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';

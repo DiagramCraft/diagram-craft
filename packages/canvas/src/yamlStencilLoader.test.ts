@@ -1,8 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import { NODE_LINK_POPUP_NO_SHAPE_ID, type StencilPackage, type StencilSubPackage } from './stencilRegistry';
+import {
+  NODE_LINK_POPUP_NO_SHAPE_ID,
+  type StencilPackage,
+  type StencilSubPackage
+} from '@diagram-craft/model/stencilRegistry';
 import { YamlStencilLoader } from './yamlStencilLoader';
-import { TestModel } from './test-support/testModel';
-import { isNode } from './diagramElement';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 describe('YamlStencilLoader', () => {
   test('merges pickerProps into props only for picker rendering', () => {

@@ -38,7 +38,7 @@ import stencils from './defaultStencils.yaml';
 import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
-import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import { SwimlaneNodeDefinition } from '@diagram-craft/canvas/node-types/Swimlane.nodeType';
 import { SVGNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/SVG.nodeType';
 import { addStencil, StencilPackage, StencilRegistry } from '@diagram-craft/model/stencilRegistry';

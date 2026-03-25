@@ -1,6 +1,6 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
-import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import c4CoreStencils from './c4-core-stencils.yaml';
 import c4OldStencils from './c4-old-stencils.yaml';
 import { C4ModuleNodeDefinition } from './c4Module';

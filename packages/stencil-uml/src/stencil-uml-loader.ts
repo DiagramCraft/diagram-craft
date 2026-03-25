@@ -21,7 +21,7 @@ import {
 import { UMLLifelineExecutionNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifelineExecution.nodeType';
 import { UMLDestroyNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDestroy.nodeType';
 import { UMLDurationConstraintNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDurationConstraint.nodeType';
-import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import classStencils from './class/uml-class-stencils.yaml';
 import componentStencils from './component/uml-component-stencils.yaml';
 import compositeStencils from './composite/uml-composite-stencils.yaml';

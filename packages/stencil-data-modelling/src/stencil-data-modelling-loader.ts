@@ -7,7 +7,7 @@ import chenStencils from './chen/chen-stencils.yaml';
 import ieStencils from './ie/ie-stencils.yaml';
 import barkerStencils from './barker/barker-stencils.yaml';
 import idef1xStencils from './idef1x/idef1x-stencils.yaml';
-import { YamlStencilLoader } from '@diagram-craft/model/yamlStencilLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import { IEEntityTextNodeDefinition } from '@diagram-craft/stencil-data-modelling/ie/IEEntityText.nodeType';
 import { IEEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/ie/IEEntity.nodeType';
 import { BarkerEntityTextNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntityText.nodeType';
