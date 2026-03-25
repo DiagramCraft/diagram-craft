@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { isometricBaseShape, makeIsometricTransform } from './isometric';
 import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
+import type { VNode } from '../component/vdom';
 
 const createProps = (
   overrides: Partial<NonNullable<NodePropsForRendering['effects']>['isometric']> = {}
@@ -20,6 +21,11 @@ const createProps = (
       }
     }
   }) as NodePropsForRendering;
+
+const isElementVNode = (
+  node: string | VNode
+): node is Extract<VNode, { type: 's' | 'h' | 'c' }> =>
+  typeof node !== 'string' && node.type !== 't' && node.type !== 'r';
 
 describe('makeIsometricTransform', () => {
   test('creates SVG transforms and moves off-center points', () => {
@@ -50,13 +56,27 @@ describe('makeIsometricTransform', () => {
     const props = createProps({ tilt: 0.35, rotation: 30 });
     const transform = makeIsometricTransform(bounds, props);
 
-    const svgMatrix = (matrix: string) => {
+    const svgMatrix = (matrix: string): [number, number, number, number, number, number] => {
       const match = /^matrix\(([^)]+)\)$/.exec(matrix);
       expect(match).not.toBeNull();
-      return match![1].split(',').map(Number);
+      const valuesStr = match?.[1];
+      expect(valuesStr).toBeDefined();
+      const values = valuesStr!.split(',').map(Number);
+      expect(values).toHaveLength(6);
+      return [
+        values[0]!,
+        values[1]!,
+        values[2]!,
+        values[3]!,
+        values[4]!,
+        values[5]!
+      ];
     };
 
-    const applyMatrix = (matrix: number[], point: { x: number; y: number }) => ({
+    const applyMatrix = (
+      matrix: [number, number, number, number, number, number],
+      point: { x: number; y: number }
+    ) => ({
       x: matrix[0] * point.x + matrix[2] * point.y + matrix[4],
       y: matrix[1] * point.x + matrix[3] * point.y + matrix[5]
     });
@@ -91,16 +111,20 @@ describe('isometricBaseShape', () => {
 
     expect(nodes).toHaveLength(2);
 
-    const [baseRect, sideFaces] = nodes;
+    const baseRect = nodes[0]!;
+    const sideFaces = nodes[1]!;
     expect(baseRect.tag).toBe('rect');
     expect(baseRect.data.stroke).toBe('#123456');
     expect(baseRect.data.fill).toBe('#eeeeee');
 
     expect(sideFaces.tag).toBe('g');
     expect(sideFaces.children).toHaveLength(2);
-    expect(sideFaces.children.every(child => child.tag === 'path')).toBe(true);
+    expect(sideFaces.children.every(isElementVNode)).toBe(true);
 
-    for (const face of sideFaces.children) {
+    const faces = sideFaces.children.filter(isElementVNode);
+    expect(faces.every(child => child.tag === 'path')).toBe(true);
+
+    for (const face of faces) {
       expect(face.data.stroke).toBe('#123456');
       expect(face.data.fill).toBe('#eeeeee');
       expect(typeof face.data.d).toBe('string');
@@ -114,8 +138,12 @@ describe('isometricBaseShape', () => {
     const props = createProps({ strokeEnabled: false });
     const nodes = isometricBaseShape(bounds, makeIsometricTransform(bounds, props), props);
 
-    const [baseRect, sideFaces] = nodes;
+    const baseRect = nodes[0]!;
+    const sideFaces = nodes[1]!;
     expect(baseRect.data.stroke).toBe('none');
-    expect(sideFaces.children.every(child => child.data.stroke === 'none')).toBe(true);
+    expect(sideFaces.children.every(isElementVNode)).toBe(true);
+    expect(sideFaces.children.filter(isElementVNode).every(child => child.data.stroke === 'none')).toBe(
+      true
+    );
   });
 });
