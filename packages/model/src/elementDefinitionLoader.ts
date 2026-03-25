@@ -22,23 +22,15 @@ type SerializedElementWithPickerProps = SerializedElement & {
   children?: Array<SerializedElementWithPickerProps>;
 };
 
-const mergePickerProps = (
-  elements: ReadonlyArray<SerializedElementWithPickerProps>
-): Array<SerializedElement> => {
-  return elements.map(element => {
-    const cloned = deepClone(element);
-    const { pickerProps, children, ...rest } = cloned;
-
-    return {
-      ...rest,
-      // biome-ignore lint/suspicious/noExplicitAny: node and edge props share the same merge semantics here
-      props: deepMerge({}, cloned.props as any, pickerProps as any),
-      children: children ? mergePickerProps(children) : undefined
-    } as SerializedElement;
-  });
+type PendingNodeLinkResolution = {
+  stencils: Array<Stencil>;
+  stencilIdsInFile: ReadonlySet<string>;
+  subPackage?: StencilSubPackage;
 };
 
 export class YamlStencilLoader {
+  private readonly pendingNodeLinkResolutions: Array<PendingNodeLinkResolution> = [];
+
   constructor(private readonly pkg: StencilPackage) {}
 
   registerPackage(stencils: unknown): void {
@@ -50,7 +42,35 @@ export class YamlStencilLoader {
   }
 
   apply() {
+    for (const resolution of this.pendingNodeLinkResolutions) {
+      for (const stencil of resolution.stencils) {
+        stencil.nodeLinkOptions = this.resolveNodeLinkOptions(
+          // biome-ignore lint/suspicious/noExplicitAny: yaml loader stores nodeLinkOptions outside the narrowed Stencil settings type
+          (stencil.settings as any)?.nodeLinkOptions,
+          resolution.stencilIdsInFile,
+          resolution.subPackage
+        );
+      }
+    }
+
+    this.pendingNodeLinkResolutions.length = 0;
     return this.pkg;
+  }
+
+  private mergePickerProps(
+    elements: ReadonlyArray<SerializedElementWithPickerProps>
+  ): Array<SerializedElement> {
+    return elements.map(element => {
+      const cloned = deepClone(element);
+      const { pickerProps, children, ...rest } = cloned;
+
+      return {
+        ...rest,
+        // biome-ignore lint/suspicious/noExplicitAny: node and edge props share the same merge semantics here
+        props: deepMerge({}, cloned.props as any, pickerProps as any),
+        children: children ? this.mergePickerProps(children) : undefined
+      } as SerializedElement;
+    });
   }
 
   private qualifyStencilId = (
@@ -108,7 +128,7 @@ export class YamlStencilLoader {
         return UnitOfWork.execute(diagram, uow => {
           const serializedElements =
             t === 'picker'
-              ? mergePickerProps(stencil.node ? [stencil.node] : stencil.elements)
+              ? this.mergePickerProps(stencil.node ? [stencil.node] : stencil.elements)
               : deepClone(stencil.node ? [stencil.node] : stencil.elements);
           const elements = deserializeDiagramElements(
             serializedElements,
@@ -137,11 +157,7 @@ export class YamlStencilLoader {
       dest.push({
         id: stencil.id,
         name: stencil.name,
-        nodeLinkOptions: this.resolveNodeLinkOptions(
-          stencil.settings?.nodeLinkOptions,
-          stencilIdsInFile,
-          subPackage
-        ),
+        nodeLinkOptions: stencil.settings?.nodeLinkOptions,
         styles: stencil.styles,
         settings: stencil.settings,
         forPicker: registry => mkNode(registry, 'picker'),
@@ -155,5 +171,11 @@ export class YamlStencilLoader {
     } else {
       this.pkg.stencils.push(...dest);
     }
+
+    this.pendingNodeLinkResolutions.push({
+      stencils: dest,
+      stencilIdsInFile,
+      subPackage
+    });
   };
 }

@@ -11,7 +11,8 @@ describe('YamlStencilLoader', () => {
       stencils: [],
       type: 'default' as const
     };
-    new YamlStencilLoader(pkg).registerPackage({
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerPackage({
       stencils: [
         {
           id: 'picker-props',
@@ -63,6 +64,7 @@ describe('YamlStencilLoader', () => {
         }
       ]
     });
+    loader.apply();
     const [stencil] = pkg.stencils;
 
     expect(stencil).toBeDefined();
@@ -114,7 +116,8 @@ describe('YamlStencilLoader', () => {
       subPackages: [subPackage]
     };
 
-    new YamlStencilLoader(pkg).registerSubPackage('class', {
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerSubPackage('class', {
       stencils: [
         {
           id: 'source',
@@ -153,6 +156,7 @@ describe('YamlStencilLoader', () => {
         }
       ]
     });
+    loader.apply();
     const [stencil] = subPackage.stencils;
 
     expect(stencil?.nodeLinkOptions).toEqual({
