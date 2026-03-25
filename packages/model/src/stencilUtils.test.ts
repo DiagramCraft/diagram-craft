@@ -15,12 +15,10 @@ const getSingleElementStencil = (
   exclude: string
 ) => {
   return mustExist(
-    diagram.document.registry.stencils
-      .get('default')
-      .stencils.find(stencil => {
-        const elements = stencil.forCanvas(diagram.document.registry).elements;
-        return elements.length === 1 && isNode(elements[0]) && elements[0].nodeType !== exclude;
-      })
+    diagram.document.registry.stencils.get('default').stencils.find(stencil => {
+      const elements = stencil.forCanvas(diagram.document.registry).elements;
+      return elements.length === 1 && isNode(elements[0]) && elements[0].nodeType !== exclude;
+    })
   );
 };
 
@@ -166,7 +164,8 @@ describe('stencilUtils', () => {
       });
 
       const stencil = getSingleElementStencil(diagram, node.nodeType);
-      stencil.nodeLinkOptions = {
+      stencil.settings ??= {};
+      stencil.settings.nodeLinkOptions = {
         nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
         edgeStylesheetIds: ['default-edge']
       };

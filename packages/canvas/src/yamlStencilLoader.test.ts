@@ -128,7 +128,11 @@ describe('YamlStencilLoader', () => {
           name: 'Source',
           settings: {
             nodeLinkOptions: {
-              nodeStencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
+              nodeStencilIds: [
+                'target',
+                'external@@already-qualified',
+                NODE_LINK_POPUP_NO_SHAPE_ID
+              ],
               allowedCombinations: [
                 { nodeStencilId: 'target', edgeStylesheetId: 'edge-a' },
                 { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
@@ -163,7 +167,7 @@ describe('YamlStencilLoader', () => {
     loader.apply();
     const [stencil] = subPackage.stencils;
 
-    expect(stencil?.nodeLinkOptions).toEqual({
+    expect(stencil?.settings?.nodeLinkOptions).toEqual({
       nodeStencilIds: [
         'uml@@class@@target',
         'external@@already-qualified',

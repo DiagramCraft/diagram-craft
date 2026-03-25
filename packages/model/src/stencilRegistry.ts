@@ -37,12 +37,12 @@ export type StencilElements = {
 export type Stencil = {
   id: string;
   name?: string;
-  nodeLinkOptions?: NodeLinkOptions;
   forPicker: (registry: Registry) => StencilElements;
   forCanvas: (registry: Registry) => StencilElements;
   styles?: Array<StencilStyle>;
   type: 'default' | string;
   settings?: {
+    nodeLinkOptions?: NodeLinkOptions;
     scaleStrokes?: boolean;
     marginTop?: number;
     marginRight?: number;
@@ -180,7 +180,10 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
       const [pkgId] = safeSplit(id, STENCIL_ID_DELIMITER, 2);
       return getStencilsInPackage(this.get(pkgId)).find(s => s.id === id);
     } else {
-      return this.stencils.values().flatMap(pkg => getStencilsInPackage(pkg)).find(s => s.id === id);
+      return this.stencils
+        .values()
+        .flatMap(pkg => getStencilsInPackage(pkg))
+        .find(s => s.id === id);
     }
   }
 

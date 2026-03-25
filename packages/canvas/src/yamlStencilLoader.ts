@@ -5,7 +5,10 @@ import {
   type StencilPackage,
   type StencilSubPackage
 } from '@diagram-craft/model/stencilRegistry';
-import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
+import {
+  NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkOptions
+} from '@diagram-craft/model/stencilRegistry';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
 import type { SerializedElement } from '@diagram-craft/model/serialization/serializedTypes';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -72,7 +75,9 @@ function assertYamlStencilFile(value: unknown): asserts value is YamlStencilFile
     }
 
     if (typeof stencil.id !== 'string' || stencil.id.length === 0) {
-      throw new Error(`Invalid stencil yaml: stencil at index ${index} must have a non-empty string id`);
+      throw new Error(
+        `Invalid stencil yaml: stencil at index ${index} must have a non-empty string id`
+      );
     }
 
     const hasNode = stencil.node !== undefined;
@@ -126,7 +131,8 @@ export class YamlStencilLoader {
   apply() {
     for (const resolution of this.pendingNodeLinkResolutions) {
       for (const stencil of resolution.stencils) {
-        stencil.nodeLinkOptions = this.resolveNodeLinkOptions(
+        stencil.settings ??= {};
+        stencil.settings.nodeLinkOptions = this.resolveNodeLinkOptions(
           // biome-ignore lint/suspicious/noExplicitAny: yaml loader stores nodeLinkOptions outside the narrowed Stencil settings type
           (stencil.settings as any)?.nodeLinkOptions,
           resolution.stencilIdsInFile,
@@ -155,10 +161,14 @@ export class YamlStencilLoader {
     });
   }
 
-  private getSerializedElements(stencil: YamlStencilDefinition): Array<SerializedElementWithPickerProps> {
+  private getSerializedElements(
+    stencil: YamlStencilDefinition
+  ): Array<SerializedElementWithPickerProps> {
     if (stencil.node !== undefined) return [stencil.node];
     if (stencil.elements !== undefined) return stencil.elements;
-    throw new Error(`Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`);
+    throw new Error(
+      `Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`
+    );
   }
 
   private qualifyStencilId = (
@@ -197,16 +207,11 @@ export class YamlStencilLoader {
     };
   };
 
-  private register = (
-    subPackage: StencilSubPackage | undefined,
-    stencils: unknown
-  ): void => {
+  private register = (subPackage: StencilSubPackage | undefined, stencils: unknown): void => {
     assertYamlStencilFile(stencils);
 
     const dest: Array<Stencil> = [];
-    const stencilIdsInFile = new Set<string>(
-      stencils.stencils.map(stencil => stencil.id)
-    );
+    const stencilIdsInFile = new Set<string>(stencils.stencils.map(stencil => stencil.id));
 
     for (const stencil of stencils.stencils) {
       const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
@@ -243,7 +248,6 @@ export class YamlStencilLoader {
       dest.push({
         id: stencil.id,
         name: stencil.name,
-        nodeLinkOptions: stencil.settings?.nodeLinkOptions,
         styles: stencil.styles,
         settings: stencil.settings,
         forPicker: registry => mkNode(registry, 'picker'),
