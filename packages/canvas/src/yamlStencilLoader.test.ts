@@ -182,12 +182,81 @@ describe('YamlStencilLoader', () => {
     expect(subPackage.stencils).toHaveLength(2);
   });
 
+  test('resolves relative node link stencil references across yaml files in the same subpackage', () => {
+    const subPackage: StencilSubPackage = { id: 'class', name: 'Class', stencils: [] };
+    const pkg: StencilPackage = {
+      id: 'uml',
+      stencils: [],
+      type: 'default' as const,
+      subPackages: [subPackage]
+    };
+
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerSubPackage('class', {
+      stencils: [
+        {
+          id: 'source',
+          settings: {
+            nodeLinkOptions: {
+              nodeStencilIds: ['target']
+            }
+          },
+          node: {
+            id: 'source-node',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+    loader.registerSubPackage('class', {
+      stencils: [
+        {
+          id: 'target',
+          node: {
+            id: 'target-node',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 80, h: 60, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+
+    loader.apply();
+
+    expect(subPackage.stencils[0]?.settings?.nodeLinkOptions).toEqual({
+      nodeStencilIds: ['uml@@class@@target']
+    });
+  });
+
   test('rejects yaml without node or elements', () => {
     expect(() =>
       _test.assertYamlStencilFile({
         stencils: [{ id: 'broken' }]
       })
-    ).toThrow(/must define either 'node' or 'elements'/);
+    ).toThrow(/bad stencil shape broken/);
+  });
+
+  test('allows styles-only yaml validation', () => {
+    expect(() =>
+      _test.assertYamlStencilStylesFile({
+        styles: [
+          {
+            id: 'shared-style',
+            name: 'Shared Style',
+            type: 'node'
+          }
+        ]
+      })
+    ).not.toThrow();
   });
 
   test('resolves string style references from the top-level styles block in apply', () => {
@@ -245,6 +314,76 @@ describe('YamlStencilLoader', () => {
     ]);
   });
 
+  test('resolves string style references across registered yaml files', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerPackage({
+      styles: [
+        {
+          id: 'shared-style',
+          name: 'Shared Style',
+          type: 'node',
+          props: {
+            stroke: {
+              color: 'red'
+            }
+          }
+        }
+      ],
+      stencils: [
+        {
+          id: 'source',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+    loader.registerPackage({
+      stencils: [
+        {
+          id: 'with-style-ref',
+          node: {
+            id: 'node-2',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          },
+          styles: ['shared-style']
+        }
+      ]
+    });
+
+    loader.apply();
+
+    expect(pkg.stencils[1]?.styles).toEqual([
+      {
+        id: 'shared-style',
+        name: 'Shared Style',
+        type: 'node',
+        props: {
+          stroke: {
+            color: 'red'
+          }
+        }
+      }
+    ]);
+  });
+
   test('fails apply when a style reference cannot be resolved', () => {
     const pkg: StencilPackage = {
       id: 'test',
@@ -271,6 +410,63 @@ describe('YamlStencilLoader', () => {
       ]
     });
 
-    expect(() => loader.apply()).toThrow(/references unknown top-level style 'missing-style'/);
+    expect(() => loader.apply()).toThrow(/missing style missing-style/);
+  });
+
+  test('registerStyles contributes top-level styles without registering stencils', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerStyles({
+      styles: [
+        {
+          id: 'shared-style',
+          name: 'Shared Style',
+          type: 'node',
+          props: {
+            stroke: {
+              color: 'red'
+            }
+          }
+        }
+      ]
+    });
+    loader.registerPackage({
+      stencils: [
+        {
+          id: 'with-style-ref',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 10, h: 10, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          },
+          styles: ['shared-style']
+        }
+      ]
+    });
+
+    expect(pkg.stencils).toHaveLength(1);
+    loader.apply();
+
+    expect(pkg.stencils[0]?.styles).toEqual([
+      {
+        id: 'shared-style',
+        name: 'Shared Style',
+        type: 'node',
+        props: {
+          stroke: {
+            color: 'red'
+          }
+        }
+      }
+    ]);
   });
 });

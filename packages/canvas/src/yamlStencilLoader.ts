@@ -18,7 +18,8 @@ import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
 import { Registry } from '@diagram-craft/model/elementDefinitionRegistry';
 import { StencilUtils } from '@diagram-craft/model/stencilUtils';
-import { deepClone, deepMerge } from '@diagram-craft/utils/object';
+import { assert } from '@diagram-craft/utils/assert';
+import { deepClone, deepMerge, isNonNullObj } from '@diagram-craft/utils/object';
 
 type SerializedElementWithPickerProps = SerializedElement & {
   pickerProps?: SerializedElement['props'];
@@ -52,92 +53,79 @@ export type YamlStencilFile = {
   styles?: Array<YamlStencilStyle>;
 };
 
+export type YamlStencilStylesFile = {
+  styles?: Array<YamlStencilStyle>;
+};
+
 type PendingStencilFinalization = {
   stencils: Array<{
     stencil: Stencil;
     yamlStencil: YamlStencilDefinition;
   }>;
-  stencilIdsInFile: ReadonlySet<string>;
   subPackage?: StencilSubPackage;
   styles: Array<YamlStencilStyle>;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> => {
-  return typeof value === 'object' && value !== null;
-};
-
 const hasSerializedElementShape = (value: unknown): value is SerializedElementWithPickerProps => {
-  if (!isRecord(value)) return false;
+  if (!isNonNullObj(value)) return false;
   return typeof value.id === 'string' && typeof value.type === 'string';
 };
 
 const hasYamlStencilStyleShape = (value: unknown): value is YamlStencilStyle => {
-  if (!isRecord(value)) return false;
+  if (!isNonNullObj(value)) return false;
   return typeof value.id === 'string' && typeof value.type === 'string';
 };
 
+function assertTopLevelStyles(value: Record<string, unknown>, errorPrefix: string): void {
+  const styles = value.styles;
+  if (styles === undefined) return;
+
+  if (!Array.isArray(styles)) throw new Error(`${errorPrefix}: bad styles`);
+
+  for (const style of styles) {
+    assert.true(hasYamlStencilStyleShape(style), `${errorPrefix}: bad styles`);
+  }
+}
+
 function assertYamlStencilFile(value: unknown): asserts value is YamlStencilFile {
-  if (!isRecord(value) || !Array.isArray(value.stencils)) {
-    throw new Error("Invalid stencil yaml: expected an object with a 'stencils' array");
+  if (!isNonNullObj(value) || !Array.isArray(value.stencils)) {
+    throw new Error('bad yaml');
   }
 
   value.stencils.forEach((stencil, index) => {
-    if (!isRecord(stencil)) {
-      throw new Error(`Invalid stencil yaml: stencil at index ${index} must be an object`);
-    }
+    assert.true(isNonNullObj(stencil), `bad yaml stencil ${index}`);
 
-    if (typeof stencil.id !== 'string' || stencil.id.length === 0) {
-      throw new Error(
-        `Invalid stencil yaml: stencil at index ${index} must have a non-empty string id`
-      );
-    }
+    assert.true(typeof stencil.id === 'string' && stencil.id.length > 0, `bad stencil id ${index}`);
 
     const hasNode = stencil.node !== undefined;
     const hasElements = stencil.elements !== undefined;
 
-    if (!hasNode && !hasElements) {
-      throw new Error(
-        `Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`
-      );
-    }
+    assert.true(hasNode || hasElements, `bad stencil shape ${stencil.id}`);
 
-    if (hasNode && !hasSerializedElementShape(stencil.node)) {
-      throw new Error(`Invalid stencil yaml: stencil '${stencil.id}' has an invalid 'node' entry`);
-    }
+    assert.true(!hasNode || hasSerializedElementShape(stencil.node), `bad node ${stencil.id}`);
 
     if (hasElements) {
-      if (!Array.isArray(stencil.elements) || stencil.elements.length === 0) {
-        throw new Error(
-          `Invalid stencil yaml: stencil '${stencil.id}' must have a non-empty 'elements' array`
-        );
-      }
+      assert.true(
+        Array.isArray(stencil.elements) && stencil.elements.length > 0,
+        `bad elements ${stencil.id}`
+      );
 
       for (const element of stencil.elements) {
-        if (!hasSerializedElementShape(element)) {
-          throw new Error(
-            `Invalid stencil yaml: stencil '${stencil.id}' contains an invalid element entry`
-          );
-        }
+        assert.true(hasSerializedElementShape(element), `bad element ${stencil.id}`);
       }
     }
   });
 
-  if (value.styles !== undefined) {
-    if (!Array.isArray(value.styles)) {
-      throw new Error("Invalid stencil yaml: top-level 'styles' must be an array");
-    }
-
-    for (const style of value.styles) {
-      if (!hasYamlStencilStyleShape(style)) {
-        throw new Error("Invalid stencil yaml: top-level 'styles' must contain style objects");
-      }
-    }
-  }
+  assertTopLevelStyles(value, 'bad yaml');
 }
 
-export const _test = {
-  assertYamlStencilFile
-};
+function assertYamlStencilStylesFile(value: unknown): asserts value is YamlStencilStylesFile {
+  if (!isNonNullObj(value)) {
+    throw new Error('bad yaml styles');
+  }
+
+  assertTopLevelStyles(value, 'bad yaml styles');
+}
 
 export class YamlStencilLoader {
   private readonly pendingStencilFinalizations: Array<PendingStencilFinalization> = [];
@@ -152,24 +140,74 @@ export class YamlStencilLoader {
     this.register(getStencilSubPackage(this.pkg, subPackage), stencils);
   }
 
+  registerStyles(stencils: unknown): void {
+    assertYamlStencilStylesFile(stencils);
+
+    this.pendingStencilFinalizations.push({
+      stencils: [],
+      styles: stencils.styles ?? []
+    });
+  }
+
   apply() {
+    const stylesById = this.buildStylesById();
+    const stencilIdsByTarget = this.buildStencilIdsByTarget();
+
     for (const resolution of this.pendingStencilFinalizations) {
-      const stylesById = new Map(resolution.styles.map(style => [style.id, style]));
+      const stencilIdsInTarget = stencilIdsByTarget.get(this.getTargetKey(resolution.subPackage));
+      assert.present(stencilIdsInTarget, 'missing stencil scope');
 
       for (const stencil of resolution.stencils) {
         stencil.stencil.settings ??= {};
         stencil.stencil.settings.nodeLinkOptions = this.resolveNodeLinkOptions(
           // biome-ignore lint/suspicious/noExplicitAny: yaml loader stores nodeLinkOptions outside the narrowed Stencil settings type
           (stencil.stencil.settings as any)?.nodeLinkOptions,
-          resolution.stencilIdsInFile,
+          stencilIdsInTarget,
           resolution.subPackage
         );
-        stencil.stencil.styles = this.resolveStyles(stencil.yamlStencil.styles, stylesById, stencil.yamlStencil.id);
+        stencil.stencil.styles = this.resolveStyles(stencil.yamlStencil.styles, stylesById);
       }
     }
 
     this.pendingStencilFinalizations.length = 0;
     return this.pkg;
+  }
+
+  private getTargetKey(subPackage?: StencilSubPackage): string {
+    return subPackage?.id ?? '__package__';
+  }
+
+  private buildStylesById(): Map<string, YamlStencilStyle> {
+    const stylesById = new Map<string, YamlStencilStyle>();
+
+    for (const resolution of this.pendingStencilFinalizations) {
+      for (const style of resolution.styles) {
+        const existing = stylesById.get(style.id);
+        assert.true(existing === undefined, `dup style ${style.id}`);
+        stylesById.set(style.id, style);
+      }
+    }
+
+    return stylesById;
+  }
+
+  private buildStencilIdsByTarget(): Map<string, Set<string>> {
+    const stencilIdsByTarget = new Map<string, Set<string>>();
+
+    for (const resolution of this.pendingStencilFinalizations) {
+      const targetKey = this.getTargetKey(resolution.subPackage);
+      let stencilIds = stencilIdsByTarget.get(targetKey);
+      if (stencilIds === undefined) {
+        stencilIds = new Set<string>();
+        stencilIdsByTarget.set(targetKey, stencilIds);
+      }
+
+      for (const stencil of resolution.stencils) {
+        stencilIds.add(stencil.yamlStencil.id);
+      }
+    }
+
+    return stencilIdsByTarget;
   }
 
   private mergePickerProps(
@@ -193,9 +231,7 @@ export class YamlStencilLoader {
   ): Array<SerializedElementWithPickerProps> {
     if (stencil.node !== undefined) return [stencil.node];
     if (stencil.elements !== undefined) return stencil.elements;
-    throw new Error(
-      `Invalid stencil yaml: stencil '${stencil.id}' must define either 'node' or 'elements'`
-    );
+    throw new Error(`bad stencil shape ${stencil.id}`);
   }
 
   private qualifyStencilId = (
@@ -236,8 +272,7 @@ export class YamlStencilLoader {
 
   private resolveStyles = (
     styles: YamlStencilDefinition['styles'],
-    stylesById: ReadonlyMap<string, YamlStencilStyle>,
-    stencilId: string
+    stylesById: ReadonlyMap<string, YamlStencilStyle>
   ): Stencil['styles'] => {
     if (styles === undefined) return undefined;
 
@@ -245,11 +280,7 @@ export class YamlStencilLoader {
       if (typeof style !== 'string') return style;
 
       const resolved = stylesById.get(style);
-      if (resolved === undefined) {
-        throw new Error(
-          `Invalid stencil yaml: stencil '${stencilId}' references unknown top-level style '${style}'`
-        );
-      }
+      assert.present(resolved, `missing style ${style}`);
       return deepClone(resolved);
     });
   };
@@ -261,8 +292,6 @@ export class YamlStencilLoader {
       stencil: Stencil;
       yamlStencil: YamlStencilDefinition;
     }> = [];
-    const stencilIdsInFile = new Set<string>(stencils.stencils.map(stencil => stencil.id));
-
     for (const stencil of stencils.stencils) {
       const mkNode = (registry: Registry, t: 'picker' | 'canvas') => {
         const { diagram, layer } = StencilUtils.makeDiagram(registry);
@@ -318,9 +347,13 @@ export class YamlStencilLoader {
 
     this.pendingStencilFinalizations.push({
       stencils: dest,
-      stencilIdsInFile,
       subPackage,
       styles: stencils.styles ?? []
     });
   };
 }
+
+export const _test = {
+  assertYamlStencilFile,
+  assertYamlStencilStylesFile
+};

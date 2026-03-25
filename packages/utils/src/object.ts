@@ -27,6 +27,14 @@ type Props = Record<string, any>;
  */
 export const isObj = (x: unknown): x is Record<string, unknown> => isObject(x);
 
+/**
+ * Type guard to check if a value is a non-null plain object.
+ *
+ * @param x - The value to check
+ * @returns True if the value is a non-null plain object
+ */
+export const isNonNullObj = (x: unknown): x is Record<string, unknown> => isObject(x) && x !== null;
+
 const isObject = (item: unknown) => typeof item === 'object' && !Array.isArray(item);
 
 /**
