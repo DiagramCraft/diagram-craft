@@ -304,6 +304,8 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
             },
             mouseup: e => this.tool!.onMouseUp(EventHelper.point(e), e, e.currentTarget!),
             mousemove: e => {
+              this.updateModifiers(e);
+
               // TODO: Could we cache this and only update in case a resize happens?
               const b = (e.currentTarget! as SVGSVGElement).getBoundingClientRect();
               this.tool!.onMouseMove(
@@ -440,7 +442,12 @@ export class EditableCanvasComponent extends BaseCanvasComponent<ComponentProps>
       e.metaKey !== curr.metaKey ||
       e.ctrlKey !== curr.ctrlKey
     ) {
-      this.modifiers.set({ ...e });
+      this.modifiers.set({
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+        metaKey: e.metaKey,
+        ctrlKey: e.ctrlKey
+      });
     }
   }
 
