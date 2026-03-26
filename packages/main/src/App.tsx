@@ -97,6 +97,7 @@ import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogon
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
+import { NodeActionChooserDialog } from './react-app/components/NodeActionChooserDialog';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -593,6 +594,19 @@ export const App = (props: {
               return (
                 <div key={item.id} style={{ zIndex: item.zIndex }}>
                   <CommentDialog
+                    open={true}
+                    {...item.dialog.props}
+                    onOk={item.dialog.onOk}
+                    onCancel={item.dialog.onCancel}
+                  />
+                </div>
+              );
+            })}
+            {dialogStack.map(item => {
+              if (item.dialog.id !== 'nodeActionChooser') return null;
+              return (
+                <div key={item.id} style={{ zIndex: item.zIndex }}>
+                  <NodeActionChooserDialog
                     open={true}
                     {...item.dialog.props}
                     onOk={item.dialog.onOk}

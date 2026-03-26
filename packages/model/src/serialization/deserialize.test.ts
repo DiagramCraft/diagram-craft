@@ -237,6 +237,77 @@ describe('deserializeDiagramDocument', () => {
     });
   });
 
+  describe('node action compatibility', () => {
+    it('should migrate legacy action props into actions during deserialization', async () => {
+      const originalDoc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(originalDoc, 'diagram-1');
+      const layer = diagram.newLayer();
+
+      layer.addNode({
+        id: 'node-1',
+        props: {
+          actions: {
+            existing: {
+              label: 'Kept Action',
+              type: 'url',
+              url: 'https://example.com/kept'
+            }
+          }
+        }
+      });
+      originalDoc.addDiagram(diagram);
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+      const serializedLayer = serialized.diagrams[0]!.layers[0]!;
+      if (serializedLayer.layerType !== 'regular' && serializedLayer.layerType !== 'basic') {
+        throw new Error('Expected regular layer');
+      }
+      const serializedNode = serializedLayer.elements[0]!;
+      if (serializedNode.type !== 'node' && serializedNode.type !== 'delegating-node') {
+        throw new Error('Expected node');
+      }
+
+      // biome-ignore lint/suspicious/noExplicitAny: legacy compatibility test
+      delete (serializedNode.props as any).actions;
+      // biome-ignore lint/suspicious/noExplicitAny: legacy compatibility test
+      (serializedNode.props as any).action = {
+        type: 'diagram',
+        url: 'target-diagram'
+      };
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id)
+      );
+
+      const deserializedNode = newDoc.diagrams[0]!.nodeLookup.get('node-1')!;
+      const actions = deserializedNode.storedProps.actions ?? {};
+
+      expect(Object.keys(actions)).toHaveLength(1);
+      expect(Object.values(actions)[0]).toEqual({
+        label: 'Default Action',
+        type: 'diagram',
+        url: 'target-diagram'
+      });
+
+      const reserialized = await serializeDiagramDocument(newDoc);
+      const reserializedLayer = reserialized.diagrams[0]!.layers[0]!;
+      if (reserializedLayer.layerType !== 'regular' && reserializedLayer.layerType !== 'basic') {
+        throw new Error('Expected regular layer');
+      }
+      const reserializedNode = reserializedLayer.elements[0]!;
+      if (reserializedNode.type !== 'node' && reserializedNode.type !== 'delegating-node') {
+        throw new Error('Expected node');
+      }
+
+      expect(reserializedNode.props.actions).toBeDefined();
+      // biome-ignore lint/suspicious/noExplicitAny: verifying legacy prop is gone
+      expect((reserializedNode.props as any).action).toBeUndefined();
+    });
+  });
+
   describe('document props', () => {
     it('should round-trip recent edge stylesheets', async () => {
       const originalDoc = TestModel.newDocument();

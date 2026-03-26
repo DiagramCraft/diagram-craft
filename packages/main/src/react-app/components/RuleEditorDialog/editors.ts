@@ -91,7 +91,7 @@ export const NODE_EDITORS: NodeEditorRegistry = {
     name: 'Action',
     editor: NodeActionPropertiesEditor,
     pick: (props: NodeProps | EdgeProps) => ({
-      action: (props as NodeProps).action
+      actions: (props as NodeProps).actions
     })
   },
   advanced: {

@@ -32,6 +32,7 @@ import { DelegatingDiagramNode } from '../delegatingDiagramNode';
 import { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
+import { normalizeNodeActions } from '../nodeActions';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -74,6 +75,8 @@ export const deserializeDiagramElements = (
       if (c.type !== 'node') continue;
 
       COMPATIBILITY: {
+        c.props ??= {};
+
         // Note: this is for backwards compatibility only
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         const textProps: any = c.props.text;
@@ -82,6 +85,10 @@ export const deserializeDiagramElements = (
           c.texts.text = textProps.text;
           delete textProps.text;
         }
+
+        // Note: this is for backwards compatibility only
+        // biome-ignore lint/suspicious/noExplicitAny: legacy serialized shape
+        normalizeNodeActions(c.props as any);
       }
 
       const node = ElementFactory.node({

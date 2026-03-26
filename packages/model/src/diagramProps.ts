@@ -189,11 +189,16 @@ export interface EdgeProps extends ElementProps, DiagramCraft.EdgePropsExtension
 export interface CustomEdgeProps extends DiagramCraft.CustomEdgePropsExtensions {}
 export interface CustomNodeProps extends DiagramCraft.CustomNodePropsExtensions {}
 
+export type NodeActionType = 'url' | 'diagram' | 'layer' | 'none';
+
+export interface NodeAction {
+  label: string;
+  type: NodeActionType;
+  url?: string;
+}
+
 export interface NodeProps extends ElementProps, DiagramCraft.NodePropsExtensions {
-  action?: {
-    type: 'url' | 'diagram' | 'layer' | 'none';
-    url?: string;
-  };
+  actions?: Record<string, NodeAction>;
 
   additionalFills?: Record<
     string,

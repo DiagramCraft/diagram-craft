@@ -8,8 +8,13 @@ import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { isEmptyString } from '@diagram-craft/utils/strings';
 import { $tStr } from '@diagram-craft/utils/localize';
+import {
+  createNodeActionChooserDialog,
+  executeNodeAction,
+  getExecutableActionsForNode,
+  isNodeActionable
+} from '../nodeActionUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -33,19 +38,13 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
       ...super.getCriteria(context),
       ActionCriteria.Simple(() => {
         return context.model.activeDiagram.selection.elements.every(e => {
-          return (
-            isNode(e) &&
-            e.renderProps.action.type !== undefined &&
-            e.renderProps.action.type !== 'none' &&
-            !isEmptyString(e.renderProps.action.url)
-          );
+          return isNode(e) && isNodeActionable(e);
         });
       })
     ];
   }
 
   execute(arg: { id?: string }): void {
-    const document = this.context.model.activeDocument;
     const diagram = this.context.model.activeDiagram;
 
     let node: DiagramNode;
@@ -60,34 +59,22 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
       node = diagram.selection.nodes[0];
     }
 
-    switch (node.renderProps.action.type) {
-      case 'url':
-        window.open(node.renderProps.action.url, '_blank');
-        return;
+    const actions = getExecutableActionsForNode(node);
+    if (actions.length === 0) return;
 
-      case 'diagram': {
-        const newDiagram = document.byId(node.renderProps.action.url);
-        if (newDiagram === undefined) return;
-
-        this.context.model.activeDiagram = newDiagram;
-        return;
-      }
-
-      case 'layer': {
-        const layer = diagram.layers.byId(node.renderProps.action.url);
-        if (layer === undefined) return;
-
-        diagram.layers.toggleVisibility(layer);
-        return;
-      }
-
-      case 'none':
-      case undefined:
-        // Do nothing
-        return;
+    if (actions.length === 1) {
+      executeNodeAction(this.context, actions[0]!);
+      return;
     }
 
-    // Check exhaustive handling of switch cases
-    node.renderProps.action.type satisfies never;
+    this.context.ui.showDialog(
+      createNodeActionChooserDialog(
+        {
+          title: 'Choose Action',
+          actions
+        },
+        action => executeNodeAction(this.context, action)
+      )
+    );
   }
 }
