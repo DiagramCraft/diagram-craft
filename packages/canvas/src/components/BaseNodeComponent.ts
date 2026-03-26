@@ -16,7 +16,7 @@ import { Indicator } from '@diagram-craft/model/diagramProps';
 import { DeepRequired } from '@diagram-craft/utils/types';
 import { INDICATORS } from './indicators';
 import { Box, WritableBox } from '@diagram-craft/geometry/box';
-import { getExecutableNodeActions } from '@diagram-craft/model/nodeActions';
+import { getNodeActions } from '@diagram-craft/model/nodeActions';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { makeIsometricTransform } from '../effects/isometric';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
@@ -364,7 +364,7 @@ export class BaseNodeComponent<
     }
 
     const transform = `${Transforms.rotate(props.element.bounds)} ${nodeProps.geometry.flipH ? Transforms.flipH(props.element.bounds) : ''} ${nodeProps.geometry.flipV ? Transforms.flipV(props.element.bounds) : ''} ${isIsometric ? isometricTransform?.svgForward() : ''}`;
-    const hasAction = getExecutableNodeActions(props.element.renderProps.actions).length > 0;
+    const hasAction = getNodeActions(props.element.renderProps.actions).length > 0;
 
     const mainGroup = svg.g(
       {

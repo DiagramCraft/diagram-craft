@@ -57,6 +57,6 @@ export const getResolvedNodeActions = (actions: NodeProps['actions']): ResolvedN
   }));
 };
 
-export const getExecutableNodeActions = (actions: NodeProps['actions']): ResolvedNodeAction[] => {
+export const getNodeActions = (actions: NodeProps['actions']): ResolvedNodeAction[] => {
   return getResolvedNodeActions(actions).filter(action => isNodeActionExecutable(action));
 };

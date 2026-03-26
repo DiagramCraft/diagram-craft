@@ -1,23 +1,13 @@
 import type { Application } from '../application';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DialogCommand } from '@diagram-craft/canvas/context';
-import {
-  getExecutableNodeActions,
-  type ResolvedNodeAction
-} from '@diagram-craft/model/nodeActions';
-
-export const getExecutableActionsForNode = (node: DiagramNode) => {
-  return getExecutableNodeActions(node.renderProps.actions);
-};
+import { getNodeActions, type ResolvedNodeAction } from '@diagram-craft/model/nodeActions';
 
 export const isNodeActionable = (node: DiagramNode) => {
-  return getExecutableActionsForNode(node).length > 0;
+  return getNodeActions(node.renderProps.actions).length > 0;
 };
 
-export const executeNodeAction = (
-  application: Application,
-  action: ResolvedNodeAction
-) => {
+export const executeNodeAction = (application: Application, action: ResolvedNodeAction) => {
   const document = application.model.activeDocument;
   const diagram = application.model.activeDiagram;
 

@@ -12,9 +12,9 @@ import { $tStr } from '@diagram-craft/utils/localize';
 import {
   createNodeActionChooserDialog,
   executeNodeAction,
-  getExecutableActionsForNode,
   isNodeActionable
 } from '../nodeActionUtils';
+import { getNodeActions } from '@diagram-craft/model/nodeActions';
 
 declare global {
   namespace DiagramCraft {
@@ -59,7 +59,7 @@ export class SelectionExecuteAction extends AbstractSelectionAction<Application,
       node = diagram.selection.nodes[0];
     }
 
-    const actions = getExecutableActionsForNode(node);
+    const actions = getNodeActions(node.renderProps.actions);
     if (actions.length === 0) return;
 
     if (actions.length === 1) {
