@@ -152,7 +152,7 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const r = R * (innerRadius / 100);
     const center = { x: 0.5, y: 0.5 };
     const da = Math.abs(endAngle - startAngle);
-    const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
+    const largeArcFlag: 0 | 1 = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
     return {
       R,
