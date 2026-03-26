@@ -17,14 +17,14 @@ import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilU
 export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
 
 export type NodeLinkAllowedCombination = {
-  nodeStencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
+  stencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
   edgeStylesheetId?: string;
 };
 
 export type NodeLinkOptions = {
-  nodeStencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
+  stencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
   edgeStylesheetIds?: ReadonlyArray<string>;
-  allowedCombinations?: ReadonlyArray<NodeLinkAllowedCombination>;
+  combinations?: ReadonlyArray<NodeLinkAllowedCombination>;
 };
 
 export type StencilElements = {

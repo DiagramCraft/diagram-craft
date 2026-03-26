@@ -97,9 +97,9 @@ class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
 
   getNodeLinkOptions(): NodeLinkOptions | undefined {
     return {
-      nodeStencilIds: ['custom-node', 'default@@rect'],
+      stencilIds: ['custom-node', 'default@@rect'],
       edgeStylesheetIds: ['edge-2', 'default-edge'],
-      allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+      combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
     };
   }
 }
@@ -515,9 +515,9 @@ describe('EdgeEndpointMoveDrag', () => {
       drag.edge.id,
       expect.any(Array),
       {
-        nodeStencilIds: ['custom-node', 'default@@rect'],
+        stencilIds: ['custom-node', 'default@@rect'],
         edgeStylesheetIds: ['edge-2', 'default-edge'],
-        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+        combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
       }
     );
   });
@@ -570,9 +570,9 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(String),
       expect.any(Array),
       {
-        nodeStencilIds: ['custom-node', 'default@@rect'],
+        stencilIds: ['custom-node', 'default@@rect'],
         edgeStylesheetIds: ['edge-2', 'default-edge'],
-        allowedCombinations: [{ nodeStencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+        combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
       }
     );
   });

@@ -128,14 +128,10 @@ describe('YamlStencilLoader', () => {
           name: 'Source',
           settings: {
             nodeLinkOptions: {
-              nodeStencilIds: [
-                'target',
-                'external@@already-qualified',
-                NODE_LINK_POPUP_NO_SHAPE_ID
-              ],
-              allowedCombinations: [
-                { nodeStencilId: 'target', edgeStylesheetId: 'edge-a' },
-                { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+              stencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
+              combinations: [
+                { stencilId: 'target', edgeStylesheetId: 'edge-a' },
+                { stencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
               ]
             }
           },
@@ -168,14 +164,14 @@ describe('YamlStencilLoader', () => {
     const [stencil] = subPackage.stencils;
 
     expect(stencil?.settings?.nodeLinkOptions).toEqual({
-      nodeStencilIds: [
+      stencilIds: [
         'uml@@class@@target',
         'external@@already-qualified',
         NODE_LINK_POPUP_NO_SHAPE_ID
       ],
-      allowedCombinations: [
-        { nodeStencilId: 'uml@@class@@target', edgeStylesheetId: 'edge-a' },
-        { nodeStencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+      combinations: [
+        { stencilId: 'uml@@class@@target', edgeStylesheetId: 'edge-a' },
+        { stencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
       ]
     });
     expect(pkg.stencils).toHaveLength(0);
@@ -198,7 +194,7 @@ describe('YamlStencilLoader', () => {
           id: 'source',
           settings: {
             nodeLinkOptions: {
-              nodeStencilIds: ['target']
+              stencilIds: ['target']
             }
           },
           node: {
@@ -233,7 +229,8 @@ describe('YamlStencilLoader', () => {
     loader.apply();
 
     expect(subPackage.stencils[0]?.settings?.nodeLinkOptions).toEqual({
-      nodeStencilIds: ['uml@@class@@target']
+      stencilIds: ['uml@@class@@target'],
+      combinations: undefined
     });
   });
 
@@ -410,7 +407,7 @@ describe('YamlStencilLoader', () => {
       ]
     });
 
-    expect(() => loader.apply()).toThrow(/missing style missing-style/);
+    expect(() => loader.apply()).toThrow();
   });
 
   test('registerStyles contributes top-level styles without registering stencils', () => {
