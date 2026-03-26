@@ -12,6 +12,13 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 const getTextIds = (node: DiagramNode): string[] =>
   Object.keys(node.texts).filter(k => node.texts[k] !== undefined);
 
+const formatTextIdLabel = (id: string) => {
+  if (id === 'text') return 'Main text';
+
+  const withWordBoundaries = id.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return withWordBoundaries.charAt(0).toUpperCase() + withWordBoundaries.slice(1);
+};
+
 export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selection'> }) => {
   const redraw = useRedraw();
   const diagram = useDiagram();
@@ -35,7 +42,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <Menu.SubMenu label={'Edit Text'}>
           {textIds.map(id => (
             <ActionMenuItem key={id} action={'TEXT_EDIT'} arg={{ id }}>
-              {id === 'text' ? 'Main text' : id.charAt(0).toUpperCase() + id.slice(1)}
+              {formatTextIdLabel(id)}
             </ActionMenuItem>
           ))}
         </Menu.SubMenu>

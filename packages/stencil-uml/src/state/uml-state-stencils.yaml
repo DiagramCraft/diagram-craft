@@ -1,0 +1,268 @@
+stencils:
+  - id: 'uml-state-state'
+    name: State
+    elements:
+      - id: w7ugehm
+        type: node
+        nodeType: umlState
+        bounds:
+          x: 0
+          y: 0
+          w: 110
+          h: 46
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            _collapsible:
+              collapsible: false
+            umlState:
+              size: 24
+              internalActivitiesSize: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            align: center
+            top: 6
+            bottom: 6
+            bold: true
+            left: 8
+            right: 8
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<p>Active</p>"
+          internalActivities: ""
+        tags:
+
+  - id: 'uml-state-state-with-internal-activities'
+    name: State with internal activities
+    elements:
+      - id: ll3pci4
+        type: node
+        nodeType: umlState
+        bounds:
+          x: 0
+          y: 0
+          w: 110
+          h: 60
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            _collapsible:
+              collapsible: false
+            umlState:
+              size: 24
+              internalActivitiesSize: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            align: center
+            top: 6
+            bottom: 6
+            bold: true
+            left: 8
+            right: 8
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<p>Active</p>"
+          internalActivities: "<p>entry/ Call<br><span style=\"color: var(--canvas-fg);\">exit/ Delete</span></p>"
+        tags:
+
+  - id: 'uml-state-composite-state'
+    name: Composite state
+    elements:
+      - id: 2185hej
+        type: node
+        nodeType: umlState
+        bounds:
+          x: 0
+          y: 0
+          w: 327.5
+          h: 173.16957230960665
+          r: 0
+          _discriminator:
+        children:
+          - id: acbfyeh
+            type: node
+            nodeType: container
+            bounds:
+              x: 0
+              y: 24
+              w: 327.5
+              h: 149.16957230960665
+              r: 0
+            children:
+              - id: gdc9whh
+                type: node
+                nodeType: umlState
+                bounds:
+                  x: 10178.074239318048
+                  y: 59.49036721853304
+                  w: 34448.86665615335
+                  h: 76.7705009717269
+                  r: 0
+                children: [ ]
+                props:
+                  custom:
+                    _collapsible:
+                      collapsible: false
+                    umlState:
+                      size: 24
+                      internalActivitiesSize: 36
+                  layout:
+                    container:
+                      direction: vertical
+                      enabled: true
+                      alignItems: stretch
+                      autoShrink: true
+                      justifyContent: start
+                      gap: 0
+                  text:
+                    align: center
+                    top: 6
+                    bottom: 6
+                    bold: true
+                    left: 8
+                    right: 8
+                metadata:
+                  style: default
+                  textStyle: default-text-default
+                texts:
+                  text: "<p>Active</p>"
+                  internalActivities: ""
+                tags:
+              - id: kd89ckc
+                type: node
+                nodeType: umlState
+                bounds:
+                  x: 37.50000000000003
+                  y: 73.38068971008761
+                  w: 110
+                  h: 46
+                  r: 0
+                children: [ ]
+                props:
+                  custom:
+                    _collapsible:
+                      collapsible: false
+                    umlState:
+                      size: 24
+                      internalActivitiesSize: 36
+                  layout:
+                    container:
+                      direction: vertical
+                      enabled: true
+                      alignItems: stretch
+                      autoShrink: true
+                      justifyContent: start
+                      gap: 0
+                  text:
+                    align: center
+                    top: 6
+                    bottom: 6
+                    bold: true
+                    left: 8
+                    right: 8
+                metadata:
+                  style: default
+                  textStyle: default-text-default
+                texts:
+                  text: "<p>State A</p>"
+                  internalActivities: ""
+                tags:
+              - id: inosqub
+                type: node
+                nodeType: umlState
+                bounds:
+                  x: 187.50000000000003
+                  y: 73.38068971008761
+                  w: 110
+                  h: 46
+                  r: 0
+                children: [ ]
+                props:
+                  custom:
+                    _collapsible:
+                      collapsible: false
+                    umlState:
+                      size: 24
+                      internalActivitiesSize: 36
+                  layout:
+                    container:
+                      direction: vertical
+                      enabled: true
+                      alignItems: stretch
+                      autoShrink: true
+                      justifyContent: start
+                      gap: 0
+                  text:
+                    align: center
+                    top: 6
+                    bottom: 6
+                    bold: true
+                    left: 8
+                    right: 8
+                metadata:
+                  style: default
+                  textStyle: default-text-default
+                texts:
+                  text: "<p>State B</p>"
+                  internalActivities: ""
+                tags:
+            props:
+              stroke:
+                enabled: false
+            metadata:
+              style: default
+              textStyle: default-text-default
+            texts:
+              text: ""
+            tags:
+        props:
+          custom:
+            _collapsible:
+              collapsible: true
+              mode: expanded
+              bounds: 62.49999999999997,480,235.00000000000003,113.38068971008764,0
+            umlState:
+              size: 24
+              internalActivitiesSize: 36
+          layout:
+            container:
+              direction: vertical
+              enabled: true
+              alignItems: stretch
+              autoShrink: true
+              justifyContent: start
+              gap: 0
+          text:
+            align: center
+            top: 6
+            bottom: 6
+            bold: true
+            left: 8
+            right: 8
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: "<p>Active</p>"
+          internalActivities: ""
+        tags:
