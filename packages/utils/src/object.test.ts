@@ -8,6 +8,7 @@ import {
   deepIsEmpty,
   deepMerge,
   getTypedKeys,
+  isNonNullObj,
   isObj,
   isPrimitive,
   resilientDeepClone,
@@ -41,6 +42,29 @@ describe('isObj function', () => {
   test('should return false for functions', () => {
     expect(isObj(() => {})).toBe(false);
     expect(isObj(function () {})).toBe(false);
+  });
+});
+
+describe('isNonNullObj function', () => {
+  test('should return true for non-null objects', () => {
+    expect(isNonNullObj({})).toBe(true);
+    expect(isNonNullObj({ a: 1 })).toBe(true);
+    expect(isNonNullObj(new Object())).toBe(true);
+  });
+
+  test('should return false for arrays and null', () => {
+    expect(isNonNullObj([])).toBe(false);
+    expect(isNonNullObj([1, 2, 3])).toBe(false);
+    expect(isNonNullObj(null)).toBe(false);
+  });
+
+  test('should return false for primitives and functions', () => {
+    expect(isNonNullObj(undefined)).toBe(false);
+    expect(isNonNullObj(42)).toBe(false);
+    expect(isNonNullObj('string')).toBe(false);
+    expect(isNonNullObj(true)).toBe(false);
+    expect(isNonNullObj(() => {})).toBe(false);
+    expect(isNonNullObj(function () {})).toBe(false);
   });
 });
 

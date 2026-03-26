@@ -7,14 +7,14 @@ import chenStencils from './chen/chen-stencils.yaml';
 import ieStencils from './ie/ie-stencils.yaml';
 import barkerStencils from './barker/barker-stencils.yaml';
 import idef1xStencils from './idef1x/idef1x-stencils.yaml';
-import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import { IEEntityTextNodeDefinition } from '@diagram-craft/stencil-data-modelling/ie/IEEntityText.nodeType';
 import { IEEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/ie/IEEntity.nodeType';
 import { BarkerEntityTextNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntityText.nodeType';
 import { BarkerEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/barker/BarkerEntity.nodeType';
 import { IDEF1XEntityNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XEntity.nodeType';
 import { IDEF1XCategoryDiscriminatorNodeDefinition } from '@diagram-craft/stencil-data-modelling/idef1x/IDEF1XCategoryDiscriminator.nodeType';
-import { getStencilSubPackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 
 export const registerDataModellingNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new IEEntityTextNodeDefinition());
@@ -43,38 +43,31 @@ export const loadDataModellingStencils = async (registry: Registry) => {
       { id: 'idef1x', name: 'IDEF1X notation', stencils: [] }
     ]
   };
+  const loader = new YamlStencilLoader(dataModellingStencils);
 
   /* *********************************************************************** */
   /* CHEN PACKAGE                                                            */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(chenStencils, dataModellingStencils, getStencilSubPackage(dataModellingStencils, 'chen'));
+  loader.registerSubPackage('chen', chenStencils);
 
   /* *********************************************************************** */
   /* IE PACKAGE                                                              */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(ieStencils, dataModellingStencils, getStencilSubPackage(dataModellingStencils, 'ie'));
+  loader.registerSubPackage('ie', ieStencils);
 
   /* *********************************************************************** */
   /* BARKER PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(
-    barkerStencils,
-    dataModellingStencils,
-    getStencilSubPackage(dataModellingStencils, 'barker')
-  );
+  loader.registerSubPackage('barker', barkerStencils);
 
   /* *********************************************************************** */
   /* IDEF1X PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(
-    idef1xStencils,
-    dataModellingStencils,
-    getStencilSubPackage(dataModellingStencils, 'idef1x')
-  );
+  loader.registerSubPackage('idef1x', idef1xStencils);
 
-  return dataModellingStencils;
+  return loader.apply();
 };

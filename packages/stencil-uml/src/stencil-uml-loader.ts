@@ -1,5 +1,5 @@
 import { NodeDefinitionRegistry, Registry } from '@diagram-craft/model/elementDefinitionRegistry';
-import { getStencilSubPackage, StencilPackage } from '@diagram-craft/model/stencilRegistry';
+import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClass.nodeType';
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
 import { UMLProvidedInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLProvidedInterface.nodeType';
@@ -21,7 +21,7 @@ import {
 import { UMLLifelineExecutionNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLLifelineExecution.nodeType';
 import { UMLDestroyNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDestroy.nodeType';
 import { UMLDurationConstraintNodeDefinition } from '@diagram-craft/stencil-uml/sequence/UMLDurationConstraint.nodeType';
-import { loadStencilsFromYaml } from '@diagram-craft/model/elementDefinitionLoader';
+import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import classStencils from './class/uml-class-stencils.yaml';
 import componentStencils from './component/uml-component-stencils.yaml';
 import compositeStencils from './composite/uml-composite-stencils.yaml';
@@ -73,11 +73,13 @@ export const loadUMLStencils = async (registry: Registry) => {
     ]
   };
 
+  const loader = new YamlStencilLoader(umlStencils);
+
   /* *********************************************************************** */
   /* COMMON PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(commonStencils, umlStencils, getStencilSubPackage(umlStencils, 'common'));
+  loader.registerSubPackage('common', commonStencils);
 
   /* *********************************************************************** */
   /* CLASS PACKAGE                                                           */
@@ -85,43 +87,43 @@ export const loadUMLStencils = async (registry: Registry) => {
 
   //  addStencilToSubpackage('class', umlStencils, new UMLClassNodeDefinition());
 
-  loadStencilsFromYaml(classStencils, umlStencils, getStencilSubPackage(umlStencils, 'class'));
+  loader.registerSubPackage('class', classStencils);
 
   /* *********************************************************************** */
   /* COMPONENT PACKAGE                                                       */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(componentStencils, umlStencils, getStencilSubPackage(umlStencils, 'component'));
+  loader.registerSubPackage('component', componentStencils);
 
   /* *********************************************************************** */
   /* COMPOSITE PACKAGE                                                       */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(compositeStencils, umlStencils, getStencilSubPackage(umlStencils, 'composite'));
+  loader.registerSubPackage('composite', compositeStencils);
 
   /* *********************************************************************** */
   /* PACKAGE PACKAGE                                                         */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(packageStencils, umlStencils, getStencilSubPackage(umlStencils, 'package'));
+  loader.registerSubPackage('package', packageStencils);
 
   /* *********************************************************************** */
   /* USE CASE PACKAGE                                                        */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(useCaseStencils, umlStencils, getStencilSubPackage(umlStencils, 'use-case'));
+  loader.registerSubPackage('use-case', useCaseStencils);
 
   /* *********************************************************************** */
   /* DEPLOYMENT PACKAGE                                                      */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(deploymentStencils, umlStencils, getStencilSubPackage(umlStencils, 'deployment'));
+  loader.registerSubPackage('deployment', deploymentStencils);
 
   /* *********************************************************************** */
   /* SEQUENCE PACKAGE                                                        */
   /* *********************************************************************** */
 
-  loadStencilsFromYaml(sequenceStencils, umlStencils, getStencilSubPackage(umlStencils, 'sequence'));
+  loader.registerSubPackage('sequence', sequenceStencils);
 
-  return umlStencils;
+  return loader.apply();
 };

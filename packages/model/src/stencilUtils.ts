@@ -72,7 +72,7 @@ export const applyStencilToNode = (
 
   const definition = node.getDefinition();
   if (definition.setNodeLinkOptions !== undefined) {
-    definition.setNodeLinkOptions(node, stencil.nodeLinkOptions, uow);
+    definition.setNodeLinkOptions(node, stencil.settings?.nodeLinkOptions, uow);
   }
 
   if (node.nodeType === 'text' && node.getText().trim() === '') {

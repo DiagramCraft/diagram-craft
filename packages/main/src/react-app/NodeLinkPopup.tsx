@@ -4,7 +4,10 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
-import { NODE_LINK_POPUP_NO_SHAPE_ID, type NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
+import {
+  NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkOptions
+} from '@diagram-craft/model/stencilRegistry';
 import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -85,8 +88,8 @@ const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkOptions) => {
 const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
   // An explicit list from the source node definition is treated as the exact menu.
   // Unknown stencil ids are dropped instead of backfilling from defaults/recents.
-  if (options?.nodeStencilIds !== undefined) {
-    return options.nodeStencilIds.filter(id => {
+  if (options?.stencilIds !== undefined) {
+    return options.stencilIds.filter(id => {
       if (id === NO_SHAPE_ID) return true;
       return diagram.document.registry.stencils.getStencil(id) !== undefined;
     });
@@ -138,11 +141,11 @@ type NodeLinkPopupPair = {
 
 const matchesAllowedCombination = (
   pair: NodeLinkPopupPair,
-  combination: NonNullable<NodeLinkOptions['allowedCombinations']>[number]
+  combination: NonNullable<NodeLinkOptions['combinations']>[number]
 ) => {
   // Missing fields in the combination act as wildcards for that side.
   return (
-    (combination.nodeStencilId === undefined || combination.nodeStencilId === pair.nodeStencilId) &&
+    (combination.stencilId === undefined || combination.stencilId === pair.nodeStencilId) &&
     (combination.edgeStylesheetId === undefined ||
       combination.edgeStylesheetId === pair.edgeStylesheetId)
   );
@@ -159,10 +162,10 @@ const getAllowedCombinations = (
     edgeStylesheetIds.map(edgeStylesheetId => ({ nodeStencilId, edgeStylesheetId }))
   );
 
-  if (options?.allowedCombinations === undefined) return pairs;
+  if (options?.combinations === undefined) return pairs;
 
   return pairs.filter(pair =>
-    options.allowedCombinations?.some(combination => matchesAllowedCombination(pair, combination))
+    options.combinations?.some(combination => matchesAllowedCombination(pair, combination))
   );
 };
 
@@ -172,7 +175,7 @@ const getVisibleEdgeStylesheetIds = (
   selected: string | undefined,
   options?: NodeLinkOptions
 ) => {
-  if (options?.allowedCombinations === undefined) return edgeStylesheetIds;
+  if (options?.combinations === undefined) return edgeStylesheetIds;
 
   // With combination constraints enabled, the edge column is filtered against the
   // currently selected node. Without a node selection we show every edge style
@@ -190,7 +193,7 @@ const getVisibleNodeStencilIds = (
   selected: string | undefined,
   options?: NodeLinkOptions
 ) => {
-  if (options?.allowedCombinations === undefined) return nodeStencilIds;
+  if (options?.combinations === undefined) return nodeStencilIds;
 
   // With combination constraints enabled, the node column is filtered against the
   // currently selected edge style. Without an edge selection we show every stencil

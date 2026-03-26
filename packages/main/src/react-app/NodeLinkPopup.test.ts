@@ -16,11 +16,7 @@ const NO_SHAPE_ID = NODE_LINK_POPUP_NO_SHAPE_ID;
 
 describe('NodeLinkPopup helpers', () => {
   describe('getDefaultEdgeStylesheetIds', () => {
-    const makeDiagram = (
-      recentIds: string[],
-      allIds: string[],
-      activeId: string
-    ) =>
+    const makeDiagram = (recentIds: string[], allIds: string[], activeId: string) =>
       ({
         document: {
           props: {
@@ -31,14 +27,17 @@ describe('NodeLinkPopup helpers', () => {
           styles: {
             edgeStyles: allIds.map(id => ({ id })),
             activeEdgeStylesheet: { id: activeId },
-            getEdgeStyle: (id: string) => allIds.map(edgeId => ({ id: edgeId })).find(s => s.id === id)
+            getEdgeStyle: (id: string) =>
+              allIds.map(edgeId => ({ id: edgeId })).find(s => s.id === id)
           }
         }
       }) as unknown as Diagram;
 
     it('should show all edge stylesheets when there are 8 or fewer', () => {
       expect(
-        getDefaultEdgeStylesheetIds(makeDiagram([], ['default-edge', 'edge-2', 'edge-3'], 'default-edge'))
+        getDefaultEdgeStylesheetIds(
+          makeDiagram([], ['default-edge', 'edge-2', 'edge-3'], 'default-edge')
+        )
       ).toEqual(['default-edge', 'edge-2', 'edge-3']);
     });
 
@@ -78,7 +77,7 @@ describe('NodeLinkPopup helpers', () => {
       basicShapeIds: string[],
       subPackageIds: string[] = []
     ) =>
-      ((stencils => ({
+      (stencils => ({
         document: {
           props: {
             recentStencils: {
@@ -116,7 +115,7 @@ describe('NodeLinkPopup helpers', () => {
             diagram: { document: { release: () => {} } }
           })
         }))
-      )) as unknown as Diagram;
+      ) as unknown as Diagram;
 
     it('should show all available shapes when there are 16 or fewer', () => {
       expect(
@@ -176,7 +175,7 @@ describe('NodeLinkPopup helpers', () => {
         getNodeStencilIds(
           makeDiagram([], ['default@@text', 'default@@rect', 'a', 'b', 'c'], ['a', 'b', 'c']),
           {
-            nodeStencilIds: ['b', 'missing', NO_SHAPE_ID, 'a']
+            stencilIds: ['b', 'missing', NO_SHAPE_ID, 'a']
           }
         )
       ).toEqual(['b', NO_SHAPE_ID, 'a']);
@@ -187,7 +186,7 @@ describe('NodeLinkPopup helpers', () => {
         getNodeStencilIds(
           makeDiagram([], ['default@@text', 'default@@rect', 'a', 'b', 'c'], ['a', 'b', 'c']),
           {
-            nodeStencilIds: []
+            stencilIds: []
           }
         )
       ).toEqual([]);
@@ -203,7 +202,7 @@ describe('NodeLinkPopup helpers', () => {
             ['uml@@class@@target']
           ),
           {
-            nodeStencilIds: ['uml@@class@@target', 'missing', NO_SHAPE_ID]
+            stencilIds: ['uml@@class@@target', 'missing', NO_SHAPE_ID]
           }
         )
       ).toEqual(['uml@@class@@target', NO_SHAPE_ID]);
@@ -220,41 +219,39 @@ describe('NodeLinkPopup helpers', () => {
 
     it('should restrict visible items to exact allowed pairs when provided', () => {
       const options = {
-        allowedCombinations: [
-          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
-          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        combinations: [
+          { stencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { stencilId: 'b', edgeStylesheetId: 'edge-2' }
         ]
       };
 
-      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
-        'a',
-        'b'
-      ]);
-      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
-        'edge-1',
-        'edge-2'
-      ]);
+      expect(
+        getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)
+      ).toEqual(['a', 'b']);
+      expect(
+        getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)
+      ).toEqual(['edge-1', 'edge-2']);
     });
 
     it('should narrow node choices using the selected edge stylesheet', () => {
       const options = {
-        allowedCombinations: [
-          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
-          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        combinations: [
+          { stencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { stencilId: 'b', edgeStylesheetId: 'edge-2' }
         ]
       };
 
-      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, 'edge-2', options)).toEqual([
-        'b'
-      ]);
+      expect(
+        getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, 'edge-2', options)
+      ).toEqual(['b']);
     });
 
     it('should narrow edge choices using the selected node stencil', () => {
       const options = {
-        allowedCombinations: [
-          { nodeStencilId: 'a', edgeStylesheetId: 'edge-1' },
-          { nodeStencilId: 'a', edgeStylesheetId: 'edge-3' },
-          { nodeStencilId: 'b', edgeStylesheetId: 'edge-2' }
+        combinations: [
+          { stencilId: 'a', edgeStylesheetId: 'edge-1' },
+          { stencilId: 'a', edgeStylesheetId: 'edge-3' },
+          { stencilId: 'b', edgeStylesheetId: 'edge-2' }
         ]
       };
 
@@ -266,30 +263,31 @@ describe('NodeLinkPopup helpers', () => {
 
     it('should support wildcard combinations', () => {
       const options = {
-        allowedCombinations: [
+        combinations: [
           { edgeStylesheetId: 'edge-1' },
-          { nodeStencilId: NO_SHAPE_ID, edgeStylesheetId: 'edge-2' }
+          { stencilId: NO_SHAPE_ID, edgeStylesheetId: 'edge-2' }
         ]
       };
 
-      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([
-        NO_SHAPE_ID,
-        'a',
-        'b'
-      ]);
-      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, NO_SHAPE_ID, options)).toEqual([
-        'edge-1',
-        'edge-2'
-      ]);
+      expect(
+        getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)
+      ).toEqual([NO_SHAPE_ID, 'a', 'b']);
+      expect(
+        getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, NO_SHAPE_ID, options)
+      ).toEqual(['edge-1', 'edge-2']);
     });
 
     it('should return empty lists when no allowed combinations match the popup items', () => {
       const options = {
-        allowedCombinations: [{ nodeStencilId: 'missing', edgeStylesheetId: 'edge-9' }]
+        combinations: [{ stenciId: 'missing', edgeStylesheetId: 'edge-9' }]
       };
 
-      expect(getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([]);
-      expect(getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)).toEqual([]);
+      expect(
+        getVisibleNodeStencilIds(nodeStencilIds, edgeStylesheetIds, undefined, options)
+      ).toEqual([]);
+      expect(
+        getVisibleEdgeStylesheetIds(nodeStencilIds, edgeStylesheetIds, undefined, options)
+      ).toEqual([]);
     });
   });
 });

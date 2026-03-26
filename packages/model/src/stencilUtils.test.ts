@@ -15,12 +15,10 @@ const getSingleElementStencil = (
   exclude: string
 ) => {
   return mustExist(
-    diagram.document.registry.stencils
-      .get('default')
-      .stencils.find(stencil => {
-        const elements = stencil.forCanvas(diagram.document.registry).elements;
-        return elements.length === 1 && isNode(elements[0]) && elements[0].nodeType !== exclude;
-      })
+    diagram.document.registry.stencils.get('default').stencils.find(stencil => {
+      const elements = stencil.forCanvas(diagram.document.registry).elements;
+      return elements.length === 1 && isNode(elements[0]) && elements[0].nodeType !== exclude;
+    })
   );
 };
 
@@ -166,8 +164,9 @@ describe('stencilUtils', () => {
       });
 
       const stencil = getSingleElementStencil(diagram, node.nodeType);
-      stencil.nodeLinkOptions = {
-        nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+      stencil.settings ??= {};
+      stencil.settings.nodeLinkOptions = {
+        stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
         edgeStylesheetIds: ['default-edge']
       };
 
@@ -180,13 +179,13 @@ describe('stencilUtils', () => {
 
       expect(node.metadata.nodeLink).toBe(
         JSON.stringify({
-          nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+          stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
           edgeStylesheetIds: ['default-edge']
         })
       );
       expect(node.getDefinition()).toBeInstanceOf(ShapeNodeDefinition);
       expect((node.getDefinition() as ShapeNodeDefinition).getNodeLinkOptions(node)).toEqual({
-        nodeStencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
+        stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
         edgeStylesheetIds: ['default-edge']
       });
     });
