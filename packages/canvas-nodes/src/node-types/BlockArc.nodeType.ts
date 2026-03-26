@@ -59,7 +59,7 @@ const propStartAngle = (node: DiagramNode) =>
         node.updateCustomProps('blockArc', props => (props.startAngle = undefined), uow);
       } else {
         if (value >= 360 || value <= -360) return;
-        while (value >= $defaults(node.editProps.custom!.blockArc).endAngle) {
+        while (value >= $defaults(node.editProps.custom?.blockArc).endAngle) {
           value -= 360;
         }
         node.updateCustomProps('blockArc', props => (props.startAngle = round(value!)), uow);
