@@ -32,7 +32,9 @@ import { DelegatingDiagramNode } from '../delegatingDiagramNode';
 import { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
-import { normalizeNodeActions } from '../nodeActions';
+import { DEFAULT_NODE_ACTION_LABEL } from '../nodeActions';
+import { newid } from '@diagram-craft/utils/id';
+import type { NodeAction, NodeProps } from '../diagramProps';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -57,6 +59,34 @@ const deserializeEndpoint = (
   nodeLookup: ElementLookup<DiagramNode>
 ) => {
   return Endpoint.deserialize(e, nodeLookup);
+};
+
+const normalizeNodeActions = (
+  props: NodeProps & { action?: Partial<NodeAction> }
+) => {
+  const normalizedActions: NonNullable<NodeProps['actions']> = {};
+
+  for (const [id, action] of Object.entries(props.actions ?? {})) {
+    normalizedActions[id] = {
+      label: action.label ?? DEFAULT_NODE_ACTION_LABEL,
+      type: action.type,
+      url: action.url
+    };
+  }
+
+  if (props.action !== undefined) {
+    normalizedActions[newid()] = {
+      label: props.action.label ?? DEFAULT_NODE_ACTION_LABEL,
+      type: props.action.type ?? 'none',
+      url: props.action.url
+    };
+  }
+
+  if (Object.keys(normalizedActions).length > 0 || props.actions !== undefined) {
+    props.actions = normalizedActions;
+  }
+
+  delete props.action;
 };
 
 export const deserializeDiagramElements = (
