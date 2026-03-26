@@ -12,6 +12,7 @@ import type {
   ElementProps,
   NodeProps
 } from './diagramProps';
+import { DEFAULT_NODE_ACTION_LABEL } from './nodeActions';
 
 /** @namespace */
 export const DiagramDefaultsPrivate = {
@@ -285,10 +286,7 @@ const _elementDefaults: Pick<
 const _nodeDefaults: Omit<NodePropsForRendering, 'name' | 'custom' | 'indicators'> = {
   ..._elementDefaults,
 
-  action: {
-    type: 'none',
-    url: ''
-  },
+  actions: {},
 
   additionalFills: {},
 
@@ -454,6 +452,12 @@ elementDefaults.addPattern('indicators.*', {
   width: 10,
   position: 'w',
   offset: 10
+});
+
+nodeDefaults.addPattern('actions.*', {
+  label: DEFAULT_NODE_ACTION_LABEL,
+  type: 'none',
+  url: ''
 });
 
 export function registerCustomNodeDefaults<K extends keyof CustomNodeProps>(

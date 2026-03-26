@@ -32,6 +32,9 @@ import { DelegatingDiagramNode } from '../delegatingDiagramNode';
 import { DiagramElement } from '../diagramElement';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import { Box } from '@diagram-craft/geometry/box';
+import { DEFAULT_NODE_ACTION_LABEL } from '../nodeActions';
+import { newid } from '@diagram-craft/utils/id';
+import type { NodeAction, NodeProps } from '../diagramProps';
 
 const unfoldGroup = (node: SerializedElement) => {
   const recurse = (
@@ -58,6 +61,34 @@ const deserializeEndpoint = (
   return Endpoint.deserialize(e, nodeLookup);
 };
 
+const normalizeNodeActions = (
+  props: NodeProps & { action?: Partial<NodeAction> }
+) => {
+  const normalizedActions: NonNullable<NodeProps['actions']> = {};
+
+  for (const [id, action] of Object.entries(props.actions ?? {})) {
+    normalizedActions[id] = {
+      label: action.label ?? DEFAULT_NODE_ACTION_LABEL,
+      type: action.type,
+      url: action.url
+    };
+  }
+
+  if (props.action !== undefined) {
+    normalizedActions[newid()] = {
+      label: props.action.label ?? DEFAULT_NODE_ACTION_LABEL,
+      type: props.action.type ?? 'none',
+      url: props.action.url
+    };
+  }
+
+  if (Object.keys(normalizedActions).length > 0 || props.actions !== undefined) {
+    props.actions = normalizedActions;
+  }
+
+  delete props.action;
+};
+
 export const deserializeDiagramElements = (
   diagramElements: ReadonlyArray<SerializedElement>,
   layer: RegularLayer | ModificationLayer,
@@ -74,6 +105,8 @@ export const deserializeDiagramElements = (
       if (c.type !== 'node') continue;
 
       COMPATIBILITY: {
+        c.props ??= {};
+
         // Note: this is for backwards compatibility only
         // biome-ignore lint/suspicious/noExplicitAny: false positive
         const textProps: any = c.props.text;
@@ -82,6 +115,10 @@ export const deserializeDiagramElements = (
           c.texts.text = textProps.text;
           delete textProps.text;
         }
+
+        // Note: this is for backwards compatibility only
+        // biome-ignore lint/suspicious/noExplicitAny: legacy serialized shape
+        normalizeNodeActions(c.props as any);
       }
 
       const node = ElementFactory.node({

@@ -13,8 +13,7 @@ export const NodeActionPropertiesEditor: Editor = props => {
 
   return (
     <NodeActionPropertiesPanelForm
-      type={makeProperty($p, 'action.type', nodeDefaults, onChange)}
-      url={makeProperty($p, 'action.url', nodeDefaults, onChange)}
+      actions={makeProperty($p, 'actions', nodeDefaults, onChange)}
     />
   );
 };
