@@ -117,20 +117,39 @@ export class ContainerComponent extends BaseNodeComponent<ContainerNodeDefinitio
       const svgPath = path.asSvgPath();
 
       builder.noBoundaryNeeded();
-      builder.add(
-        svg.path({
-          class: 'svg-node--container-outline',
-          d: svgPath,
-          x: props.node.bounds.x,
-          y: props.node.bounds.y,
-          width: props.node.bounds.w,
-          height: props.node.bounds.h,
-          fill: 'transparent',
-          on: {
-            mousedown: props.onMouseDown
-          }
-        })
-      );
+      if (props.nodeProps.stroke.enabled) {
+        builder.add(
+          svg.path({
+            class: 'svg-node--container-outline',
+            d: svgPath,
+            x: props.node.bounds.x,
+            y: props.node.bounds.y,
+            width: props.node.bounds.w,
+            height: props.node.bounds.h,
+            fill: 'transparent',
+            on: {
+              mousedown: props.onMouseDown
+            }
+          })
+        );
+      } else {
+        builder.add(
+          svg.path({
+            d: svgPath,
+            x: props.node.bounds.x,
+            y: props.node.bounds.y,
+            width: props.node.bounds.w,
+            height: props.node.bounds.h,
+            fill: 'transparent',
+            stroke: 'transparent',
+            style: 'pointer-events: all;',
+            on: {
+              mousedown: props.onMouseDown,
+              dblclick: props.onDoubleClick
+            }
+          })
+        );
+      }
     }
 
     if (this.def.shouldRenderChildren(props.node)) {
