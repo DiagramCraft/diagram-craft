@@ -69,6 +69,7 @@ const propStartAngle = (node: DiagramNode) =>
 
 const propEndAngle = (node: DiagramNode) =>
   CustomProperty.node.number(node, 'End Angle', 'custom.blockArc.endAngle', {
+    minValue: -360,
     maxValue: 360,
     unit: '°',
     set: (value, uow) => {
@@ -122,13 +123,8 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
   };
 
   getBoundingPathBuilder(node: DiagramNode) {
-    const startAngle = Angle.toRad(node.renderProps.custom.blockArc.startAngle);
-    const endAngle = Angle.toRad(node.renderProps.custom.blockArc.endAngle);
-
-    const { R, r, start, end, startInner, endInner } = this.getPointsOfSignificance(node);
-
-    const da = Math.abs(endAngle - startAngle);
-    const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
+    const { R, r, start, end, startInner, endInner, largeArcFlag } =
+      this.getPointsOfSignificance(node);
 
     return new PathListBuilder()
       .withTransform(fromUnitLCS(node.bounds))
@@ -155,10 +151,13 @@ export class BlockArcNodeDefinition extends ShapeNodeDefinition {
     const R = 0.5;
     const r = R * (innerRadius / 100);
     const center = { x: 0.5, y: 0.5 };
+    const da = Math.abs(endAngle - startAngle);
+    const largeArcFlag = da <= Math.PI || da >= 2 * Math.PI ? 0 : 1;
 
     return {
       R,
       r,
+      largeArcFlag,
       start: Point.add(center, ScreenVector.fromPolar(startAngle, R)),
       end: Point.add(center, ScreenVector.fromPolar(endAngle, R)),
       startInner: Point.add(center, ScreenVector.fromPolar(startAngle, r)),
