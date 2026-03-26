@@ -10,6 +10,7 @@ import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import { Button } from '@diagram-craft/app-components/Button';
 import { newid } from '@diagram-craft/utils/id';
 import type { NodeAction, NodeProps } from '@diagram-craft/model/diagramProps';
+import { TbPlus, TbTrash } from 'react-icons/tb';
 
 const DiagramList = (props: { list: readonly Diagram[]; level: number }) => {
   return (
@@ -36,6 +37,13 @@ const makeEmptyAction = (): NodeAction => ({
   type: 'none',
   url: ''
 });
+
+const addAction = (actions: ActionsProperty) => {
+  actions.set({
+    ...actions.val,
+    [newid()]: makeEmptyAction()
+  });
+};
 
 export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsProperty }) => {
   const document = useDocument();
@@ -66,19 +74,29 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
         </KeyValueTable.FullRow>
       )}
 
+      {actionEntries.length === 0 && (
+        <KeyValueTable.FullRow>No actions defined.</KeyValueTable.FullRow>
+      )}
+
       {actionEntries.map(([id, action], index) => (
         <React.Fragment key={id}>
           <KeyValueTable.Label>Label:</KeyValueTable.Label>
           <KeyValueTable.Value>
-            <TextInput
-              value={action.label}
-              onChange={value =>
-                updateAction(id, current => ({
-                  ...current,
-                  label: value ?? ''
-                }))
-              }
-            />
+            <div className={'util-hstack'} style={{ gap: '0.5rem' }}>
+              <TextInput
+                value={action.label}
+                onChange={value =>
+                  updateAction(id, current => ({
+                    ...current,
+                    label: value ?? ''
+                  }))
+                }
+                style={{ flex: 1 }}
+              />
+              <Button variant={'icon-only'} onClick={() => removeAction(id)} title={'Remove action'}>
+                <TbTrash />
+              </Button>
+            </div>
           </KeyValueTable.Value>
 
           <KeyValueTable.Label>Type:</KeyValueTable.Label>
@@ -160,31 +178,19 @@ export const NodeActionPropertiesPanelForm = ({ actions }: { actions: ActionsPro
             </>
           )}
 
-          <KeyValueTable.Label />
-          <KeyValueTable.Value>
-            <Button variant={'danger'} onClick={() => removeAction(id)}>
-              Remove Action
-            </Button>
-          </KeyValueTable.Value>
-
-          {index < actionEntries.length - 1 && <KeyValueTable.FullRow><hr /></KeyValueTable.FullRow>}
+          {index < actionEntries.length - 1 && (
+            <KeyValueTable.FullRow>
+              <div
+                style={{
+                  borderTop: '1px solid var(--cmp-border)',
+                  margin: '0 -1rem'
+                }}
+              />
+            </KeyValueTable.FullRow>
+          )}
         </React.Fragment>
       ))}
 
-      <KeyValueTable.Label />
-      <KeyValueTable.Value>
-        <Button
-          variant={'secondary'}
-          onClick={() =>
-            actions.set({
-              ...actions.val,
-              [newid()]: makeEmptyAction()
-            })
-          }
-        >
-          Add Action
-        </Button>
-      </KeyValueTable.Value>
     </KeyValueTable.Root>
   );
 };
@@ -199,6 +205,11 @@ export const NodeActionPropertiesPanel = (props: Props) => {
       id="action-props"
       title={'Action'}
       hasCheckbox={false}
+      headerButtons={
+        <a onClick={() => addAction(actions)}>
+          <TbPlus />
+        </a>
+      }
     >
       <NodeActionPropertiesPanelForm actions={actions} />
     </ToolWindowPanel>

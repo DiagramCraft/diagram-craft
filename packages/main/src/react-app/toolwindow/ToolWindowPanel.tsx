@@ -23,6 +23,7 @@ export const ToolWindowPanel = (props: Props) => {
             />
           )}
           <span>{props.title}</span>
+          {props.headerButtons && <span style={{ marginLeft: 'auto' }}>{props.headerButtons}</span>}
         </h2>
         <div className={styles.eChildren}>{props.children}</div>
       </div>
