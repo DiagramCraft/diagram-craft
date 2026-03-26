@@ -266,3 +266,118 @@ stencils:
           text: "<p>Active</p>"
           internalActivities: ""
         tags:
+
+  - id: 'uml-pseudo-state-initial'
+    name: Initial
+    elements:
+      - id: d7y2q0m
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: initial
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-pseudo-state-terminate'
+    name: Terminate
+    elements:
+      - id: k8o6xts
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: terminate
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-pseudo-state-entry'
+    name: Entry
+    elements:
+      - id: y0h8j4r
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: entry
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-pseudo-state-exit'
+    name: Exit
+    elements:
+      - id: dr0n4yx
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: exit
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-pseudo-state-final'
+    name: Final
+    elements:
+      - id: h1t7p2a
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: final
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
