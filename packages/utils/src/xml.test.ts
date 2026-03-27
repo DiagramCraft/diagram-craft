@@ -120,7 +120,16 @@ describe('XML Utilities', () => {
 
       const result = xNum(element, 'value');
 
-      expect(result).toBeNaN();
+      expect(result).toBe(0);
+    });
+
+    it('should use the provided default for invalid numeric strings', () => {
+      const element = document.createElement('div');
+      element.setAttribute('value', 'not-a-number');
+
+      const result = xNum(element, 'value', 25);
+
+      expect(result).toBe(25);
     });
 
     it('should handle empty string attributes', () => {
@@ -129,7 +138,25 @@ describe('XML Utilities', () => {
 
       const result = xNum(element, 'value');
 
-      expect(result).toBe(0); // Empty string converts to 0 in JavaScript
+      expect(result).toBe(0);
+    });
+
+    it('should use the provided default for empty string attributes', () => {
+      const element = document.createElement('div');
+      element.setAttribute('value', '');
+
+      const result = xNum(element, 'value', 10);
+
+      expect(result).toBe(10);
+    });
+
+    it('should use the provided default for whitespace-only attributes', () => {
+      const element = document.createElement('div');
+      element.setAttribute('value', '   ');
+
+      const result = xNum(element, 'value', 10);
+
+      expect(result).toBe(10);
     });
   });
 });
