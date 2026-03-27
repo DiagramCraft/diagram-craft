@@ -217,3 +217,48 @@ stencils:
           textStyle: default-text-default
         texts:
         tags:
+
+  - id: 'uml-activity-fork-join'
+    name: Fork / Join
+    elements:
+      - id: umlactivity09
+        type: node
+        nodeType: umlForkJoin
+        bounds:
+          x: 0
+          y: 0
+          w: 5
+          h: 100
+          r: 0
+        children: [ ]
+        props:
+          capabilities:
+            resizable:
+              horizontal: false
+              vertical: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-activity-merge-decision'
+    name: Merge / Decision
+    elements:
+      - id: 7p9p846
+        type: node
+        nodeType: diamond
+        bounds:
+          x: 0
+          y: 0
+          w: 40
+          h: 40
+          r: 0
+        children: [ ]
+        props: { }
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: ""
+        tags: 
