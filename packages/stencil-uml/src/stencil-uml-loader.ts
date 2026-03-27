@@ -16,6 +16,8 @@ import { UMLPackageTemplateNodeDefinition } from '@diagram-craft/stencil-uml/pac
 import { UMLActorNodeDefinition } from '@diagram-craft/stencil-uml/use-case/UMLActor.nodeType';
 import { UMLArtifactNodeDefinition } from '@diagram-craft/stencil-uml/deployment/UMLArtifact.nodeType';
 import { UMLNodeNodeDefinition } from '@diagram-craft/stencil-uml/deployment/UMLNode.nodeType';
+import { UMLActivityNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLActivity.nodeType';
+import { UMLForkJoinNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLForkJoin.nodeType';
 import {
   UMLLifelineContainerNodeDefinition,
   UMLLifelineNodeDefinition
@@ -33,6 +35,7 @@ import useCaseStencils from './use-case/uml-use-case-stencils.yaml';
 import deploymentStencils from './deployment/uml-deployment-stencils.yaml';
 import sequenceStencils from './sequence/uml-sequence-stencils.yaml';
 import stateStencils from './state/uml-state-stencils.yaml';
+import activityStencils from './activity/uml-activity-stencils.yaml';
 
 export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLClassNodeDefinition());
@@ -51,6 +54,8 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLRequiredInterfaceNodeDefinition());
   nodes.register(new UMLArtifactNodeDefinition());
   nodes.register(new UMLNodeNodeDefinition());
+  nodes.register(new UMLActivityNodeDefinition());
+  nodes.register(new UMLForkJoinNodeDefinition());
   nodes.register(new UMLLifelineContainerNodeDefinition());
   nodes.register(new UMLLifelineNodeDefinition());
   nodes.register(new UMLLifelineExecutionNodeDefinition());
@@ -72,6 +77,7 @@ export const loadUMLStencils = async (registry: Registry) => {
       { id: 'component', name: 'Component Diagrams', stencils: [] },
       { id: 'composite', name: 'Composite Diagrams', stencils: [] },
       { id: 'deployment', name: 'Deployment Diagrams', stencils: [] },
+      { id: 'activity', name: 'Activity Diagrams', stencils: [] },
       { id: 'state', name: 'State Diagrams', stencils: [] },
       { id: 'sequence', name: 'Sequence Diagrams', stencils: [] },
       { id: 'use-case', name: 'Use-Case Diagrams', stencils: [] },
@@ -124,6 +130,12 @@ export const loadUMLStencils = async (registry: Registry) => {
   /* *********************************************************************** */
 
   loader.registerSubPackage('deployment', deploymentStencils);
+
+  /* *********************************************************************** */
+  /* ACTIVITY PACKAGE                                                        */
+  /* *********************************************************************** */
+
+  loader.registerSubPackage('activity', activityStencils);
 
   /* *********************************************************************** */
   /* STATE PACKAGE                                                           */
