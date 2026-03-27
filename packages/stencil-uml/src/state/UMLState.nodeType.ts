@@ -67,13 +67,21 @@ export class UMLStateNodeDefinition extends LayoutCapableShapeNodeDefinition {
     });
   }
 
-  onAdd(node: DiagramNode, diagram: Parameters<LayoutCapableShapeNodeDefinition['onAdd']>[1], uow: UnitOfWork) {
+  onAdd(
+    node: DiagramNode,
+    diagram: Parameters<LayoutCapableShapeNodeDefinition['onAdd']>[1],
+    uow: UnitOfWork
+  ) {
     super.onAdd(node, diagram, uow);
 
     if (node.storedProps.custom?._collapsible?.collapsible === undefined) {
-      node.updateCustomProps('_collapsible', props => {
-        props.collapsible = true;
-      }, uow);
+      node.updateCustomProps(
+        '_collapsible',
+        props => {
+          props.collapsible = true;
+        },
+        uow
+      );
     }
   }
 
@@ -83,7 +91,9 @@ export class UMLStateNodeDefinition extends LayoutCapableShapeNodeDefinition {
       node.renderProps.custom.umlState.internalActivitiesSize ?? DEFAULT_INTERNAL_ACTIVITIES_SIZE;
 
     return {
-      top: (hasTitle(node) ? titleSize : 0) + (hasInternalActivities(node) ? internalActivitiesSize : 0),
+      top:
+        (hasTitle(node) ? titleSize : 0) +
+        (hasInternalActivities(node) ? internalActivitiesSize : 0),
       bottom: 0,
       left: 0,
       right: 0
@@ -91,7 +101,9 @@ export class UMLStateNodeDefinition extends LayoutCapableShapeNodeDefinition {
   }
 
   getCustomPropertyDefinitions(def: DiagramNode): CustomPropertyDefinition {
-    return new CustomPropertyDefinition(() => [...super.getCollapsiblePropertyDefinitions(def).entries]);
+    return new CustomPropertyDefinition(() => [
+      ...super.getCollapsiblePropertyDefinitions(def).entries
+    ]);
   }
 
   protected getCollapsedBounds(_storedBounds: string | undefined, node: DiagramNode): Box {
@@ -124,7 +136,7 @@ export class UMLStateNodeDefinition extends LayoutCapableShapeNodeDefinition {
       .close();
   }
 
-  override getAnchors(_node: DiagramNode): Anchor[] {
+  getShapeAnchors(_node: DiagramNode): Anchor[] {
     return [
       { id: 'n', start: Point.of(0.5, 0), type: 'point', isPrimary: true, normal: -Math.PI / 2 },
       { id: 'e', start: Point.of(1, 0.5), type: 'point', isPrimary: true, normal: 0 },
@@ -235,19 +247,23 @@ export class UMLStateComponent extends BaseNodeComponent<UMLStateNodeDefinition>
       for (let i = 0; i < children.length; i++) {
         const child = children[i]!;
         childNodes.push(
-          svg.g({ transform: Transforms.rotateBack(node.bounds) }, renderElement(this, child, props))
+          svg.g(
+            { transform: Transforms.rotateBack(node.bounds) },
+            renderElement(this, child, props)
+          )
         );
         h += child.bounds.h;
 
         if (i < children.length - 1) {
           childNodes.push(
             svg.line({
-              x1: bounds.x,
-              y1: currentY + h,
-              x2: bounds.x + bounds.w,
-              y2: currentY + h,
-              stroke: nodeProps.stroke.color,
-              'stroke-dasharray': 'calc(5 * var(--stroke-dash-zoom, 1)), calc(3 * var(--stroke-dash-zoom, 1))'
+              'x1': bounds.x,
+              'y1': currentY + h,
+              'x2': bounds.x + bounds.w,
+              'y2': currentY + h,
+              'stroke': nodeProps.stroke.color,
+              'stroke-dasharray':
+                'calc(5 * var(--stroke-dash-zoom, 1)), calc(3 * var(--stroke-dash-zoom, 1))'
             })
           );
         }
