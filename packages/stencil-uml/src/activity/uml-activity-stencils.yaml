@@ -56,3 +56,90 @@ stencils:
         texts:
           text: Activity
         tags:
+
+  - id: 'uml-activity-send-signal-action'
+    name: Send Signal Action
+    elements:
+      - id: umlactivity03
+        type: node
+        nodeType: umlActivity
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 6
+            left: 10
+            right: 10
+          custom:
+            umlActivity:
+              type: send-signal-action
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Send Signal
+        tags:
+
+  - id: 'uml-activity-accept-event-action'
+    name: Accept Event Action
+    elements:
+      - id: umlactivity04
+        type: node
+        nodeType: umlActivity
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 6
+            left: 10
+            right: 10
+          custom:
+            umlActivity:
+              type: accept-event-action
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Accept Event
+        tags:
+
+  - id: 'uml-activity-wait-time-action'
+    name: Wait Time Action
+    elements:
+      - id: umlactivity05
+        type: node
+        nodeType: umlActivity
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 6
+            left: 10
+            right: 10
+          custom:
+            umlActivity:
+              type: wait-time-action
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Wait Time
+        tags:

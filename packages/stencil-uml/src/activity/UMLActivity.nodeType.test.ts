@@ -4,15 +4,36 @@ import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { UMLActivityNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLActivity.nodeType';
 import { registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 
+const createActivity = async (
+  type?:
+    | 'activity'
+    | 'call-behaviour-action'
+    | 'call-activity-action'
+    | 'send-signal-action'
+    | 'accept-event-action'
+    | 'wait-time-action'
+) => {
+  const { diagram, layer } = TestModel.newDiagramWithLayer();
+  await registerUMLNodes(diagram.document.registry.nodes);
+
+  return layer.addNode({
+    type: 'umlActivity',
+    bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
+    ...(type
+      ? {
+          props: {
+            custom: {
+              umlActivity: { type }
+            }
+          }
+        }
+      : {})
+  });
+};
+
 describe('UMLActivity', () => {
   test('registers as a child-capable rounded activity node with a type selector', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const activity = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 }
-    });
+    const activity = await createActivity();
 
     const definition = new UMLActivityNodeDefinition();
     const propertyLabels = definition.getCustomPropertyDefinitions(activity).entries.map(p =>
@@ -27,13 +48,7 @@ describe('UMLActivity', () => {
   });
 
   test('uses a rounded rectangle bounding path', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const activity = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 }
-    });
+    const activity = await createActivity();
 
     const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
 
@@ -43,20 +58,7 @@ describe('UMLActivity', () => {
   });
 
   test('uses a convex pentagon path for send signal action', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const activity = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: {
-        custom: {
-          umlActivity: {
-            type: 'send-signal-action'
-          }
-        }
-      }
-    });
+    const activity = await createActivity('send-signal-action');
 
     const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
 
@@ -64,20 +66,7 @@ describe('UMLActivity', () => {
   });
 
   test('uses a concave arrow path for accept event action', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const activity = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: {
-        custom: {
-          umlActivity: {
-            type: 'accept-event-action'
-          }
-        }
-      }
-    });
+    const activity = await createActivity('accept-event-action');
 
     const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
 
@@ -85,20 +74,7 @@ describe('UMLActivity', () => {
   });
 
   test('uses an hourglass path for wait time action', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const activity = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: {
-        custom: {
-          umlActivity: {
-            type: 'wait-time-action'
-          }
-        }
-      }
-    });
+    const activity = await createActivity('wait-time-action');
 
     const path = new UMLActivityNodeDefinition().getBoundingPathBuilder(activity).getPaths().asSvgPath();
 
@@ -106,24 +82,9 @@ describe('UMLActivity', () => {
   });
 
   test('adjusts side anchors for special activity shapes', async () => {
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    await registerUMLNodes(diagram.document.registry.nodes);
-
-    const sendSignal = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: { custom: { umlActivity: { type: 'send-signal-action' } } }
-    });
-    const acceptEvent = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: { custom: { umlActivity: { type: 'accept-event-action' } } }
-    });
-    const waitTime = layer.addNode({
-      type: 'umlActivity',
-      bounds: { x: 10, y: 20, w: 120, h: 60, r: 0 },
-      props: { custom: { umlActivity: { type: 'wait-time-action' } } }
-    });
+    const sendSignal = await createActivity('send-signal-action');
+    const acceptEvent = await createActivity('accept-event-action');
+    const waitTime = await createActivity('wait-time-action');
 
     const sendSignalAnchors = new UMLActivityNodeDefinition().getAnchors(sendSignal);
     const acceptEventAnchors = new UMLActivityNodeDefinition().getAnchors(acceptEvent);

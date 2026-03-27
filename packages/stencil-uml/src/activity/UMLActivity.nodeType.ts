@@ -55,7 +55,7 @@ const hasForkIcon = (type: UMLActivityType) => type === 'call-activity-action';
 const isSendSignalAction = (type: UMLActivityType) => type === 'send-signal-action';
 const isAcceptEventAction = (type: UMLActivityType) => type === 'accept-event-action';
 const isWaitTimeAction = (type: UMLActivityType) => type === 'wait-time-action';
-const getSendSignalInset = (node: DiagramNode) => node.bounds.h * 0.3;
+const getShapeInset = (node: DiagramNode) => node.bounds.h * 0.3;
 
 const getIconBounds = (node: DiagramNode) => ({
   x: node.bounds.x + node.bounds.w - ACTIVITY_ICON_SIZE - ACTIVITY_ICON_PADDING,
@@ -65,39 +65,81 @@ const getIconBounds = (node: DiagramNode) => ({
   r: 0
 });
 
+const getRoundedActivityPathBuilder = (node: DiagramNode) => {
+  const radius = Math.min(ACTIVITY_RADIUS, node.bounds.w / 2, node.bounds.h / 2);
+  const xr = radius / node.bounds.w;
+  const yr = radius / node.bounds.h;
+
+  return new PathListBuilder()
+    .withTransform(fromUnitLCS(node.bounds))
+    .moveTo(_p(xr, 0))
+    .lineTo(_p(1 - xr, 0))
+    .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
+    .lineTo(_p(1, 1 - yr))
+    .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
+    .lineTo(_p(xr, 1))
+    .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
+    .lineTo(_p(0, yr))
+    .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
+};
+
+const getSendSignalPathBuilder = (bounds: Box, inset: number) =>
+  new PathListBuilder()
+    .moveTo(_p(bounds.x, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w - inset, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h / 2))
+    .lineTo(_p(bounds.x + bounds.w - inset, bounds.y + bounds.h))
+    .lineTo(_p(bounds.x, bounds.y + bounds.h))
+    .close();
+
+const getAcceptEventPathBuilder = (bounds: Box, inset: number) =>
+  new PathListBuilder()
+    .moveTo(_p(bounds.x, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h))
+    .lineTo(_p(bounds.x, bounds.y + bounds.h))
+    .lineTo(_p(bounds.x + inset, bounds.y + bounds.h / 2))
+    .close();
+
+const getWaitTimePathBuilder = (bounds: Box) => {
+  const centerX = bounds.x + bounds.w / 2;
+
+  return new PathListBuilder()
+    .moveTo(_p(bounds.x, bounds.y))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y))
+    .lineTo(_p(centerX, bounds.y + bounds.h / 2))
+    .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h))
+    .lineTo(_p(bounds.x, bounds.y + bounds.h))
+    .lineTo(_p(centerX, bounds.y + bounds.h / 2))
+    .close();
+};
+
 const getTextProps = (node: DiagramNode) => {
   const activityType = node.renderProps.custom.umlActivity.type ?? 'activity';
   const baseTextProps = getStereotypeIconTextProps(node.renderProps.text, 'empty');
+  const baseLeft = baseTextProps?.left ?? 0;
+  const baseRight = baseTextProps?.right ?? 0;
 
-  if (!hasForkIcon(activityType)) {
-    return {
-      ...baseTextProps,
-      left: Math.max(
-        baseTextProps?.left ?? 0,
-        isAcceptEventAction(activityType)
-          ? getSendSignalInset(node) + 4
-          : isWaitTimeAction(activityType)
-            ? node.bounds.w * 0.2
-            : (baseTextProps?.left ?? 0)
-      ),
-      right: Math.max(
-        baseTextProps?.right ?? 0,
-        isSendSignalAction(activityType) || isAcceptEventAction(activityType)
-          ? getSendSignalInset(node) + 4
-          : isWaitTimeAction(activityType)
-            ? node.bounds.w * 0.2
-          : (baseTextProps?.right ?? 0)
-      )
-    };
-  }
+  const leftInset = hasForkIcon(activityType)
+    ? ACTIVITY_ICON_TEXT_INSET
+    : isAcceptEventAction(activityType)
+      ? getShapeInset(node) + 4
+      : isWaitTimeAction(activityType)
+        ? node.bounds.w * 0.2
+        : baseLeft;
+
+  const rightInset = hasForkIcon(activityType)
+    ? ACTIVITY_ICON_TEXT_INSET
+    : isSendSignalAction(activityType) || isAcceptEventAction(activityType)
+      ? getShapeInset(node) + 4
+      : isWaitTimeAction(activityType)
+        ? node.bounds.w * 0.2
+        : baseRight;
 
   return {
     ...baseTextProps,
-    left: Math.max(baseTextProps?.left ?? 0, ACTIVITY_ICON_TEXT_INSET),
-    right: Math.max(
-      baseTextProps?.right ?? 0,
-      ACTIVITY_ICON_TEXT_INSET
-    )
+    left: Math.max(baseLeft, leftInset),
+    right: Math.max(baseRight, rightInset)
   };
 };
 
@@ -126,7 +168,7 @@ export class UMLActivityNodeDefinition extends ShapeNodeDefinition {
     }
 
     if (isAcceptEventAction(activityType)) {
-      const insetX = Math.min(getSendSignalInset(def), Math.max(1, def.bounds.w / 2)) / def.bounds.w;
+      const insetX = Math.min(getShapeInset(def), Math.max(1, def.bounds.w / 2)) / def.bounds.w;
       anchors.push({
         id: '4',
         start: _p(insetX, 0.5),
@@ -158,56 +200,20 @@ export class UMLActivityNodeDefinition extends ShapeNodeDefinition {
     const activityType = node.renderProps.custom.umlActivity.type ?? 'activity';
     if (isSendSignalAction(activityType) || isAcceptEventAction(activityType)) {
       const bounds = Box.withoutRotation(node.bounds);
-      const inset = Math.min(getSendSignalInset(node), Math.max(1, bounds.w / 2));
+      const inset = Math.min(getShapeInset(node), Math.max(1, bounds.w / 2));
 
       if (isSendSignalAction(activityType)) {
-        return new PathListBuilder()
-          .moveTo(_p(bounds.x, bounds.y))
-          .lineTo(_p(bounds.x + bounds.w - inset, bounds.y))
-          .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h / 2))
-          .lineTo(_p(bounds.x + bounds.w - inset, bounds.y + bounds.h))
-          .lineTo(_p(bounds.x, bounds.y + bounds.h))
-          .close();
+        return getSendSignalPathBuilder(bounds, inset);
       }
 
-      return new PathListBuilder()
-        .moveTo(_p(bounds.x, bounds.y))
-        .lineTo(_p(bounds.x + bounds.w, bounds.y))
-        .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h))
-        .lineTo(_p(bounds.x, bounds.y + bounds.h))
-        .lineTo(_p(bounds.x + inset, bounds.y + bounds.h / 2))
-        .close();
+      return getAcceptEventPathBuilder(bounds, inset);
     }
 
     if (isWaitTimeAction(activityType)) {
-      const bounds = Box.withoutRotation(node.bounds);
-      const centerX = bounds.x + bounds.w / 2;
-
-      return new PathListBuilder()
-        .moveTo(_p(bounds.x, bounds.y))
-        .lineTo(_p(bounds.x + bounds.w, bounds.y))
-        .lineTo(_p(centerX, bounds.y + bounds.h / 2))
-        .lineTo(_p(bounds.x + bounds.w, bounds.y + bounds.h))
-        .lineTo(_p(bounds.x, bounds.y + bounds.h))
-        .lineTo(_p(centerX, bounds.y + bounds.h / 2))
-        .close();
+      return getWaitTimePathBuilder(Box.withoutRotation(node.bounds));
     }
 
-    const radius = Math.min(ACTIVITY_RADIUS, node.bounds.w / 2, node.bounds.h / 2);
-    const xr = radius / node.bounds.w;
-    const yr = radius / node.bounds.h;
-
-    return new PathListBuilder()
-      .withTransform(fromUnitLCS(node.bounds))
-      .moveTo(_p(xr, 0))
-      .lineTo(_p(1 - xr, 0))
-      .arcTo(_p(1, yr), xr, yr, 0, 0, 1)
-      .lineTo(_p(1, 1 - yr))
-      .arcTo(_p(1 - xr, 1), xr, yr, 0, 0, 1)
-      .lineTo(_p(xr, 1))
-      .arcTo(_p(0, 1 - yr), xr, yr, 0, 0, 1)
-      .lineTo(_p(0, yr))
-      .arcTo(_p(xr, 0), xr, yr, 0, 0, 1);
+    return getRoundedActivityPathBuilder(node);
   }
 
   onDrop(
