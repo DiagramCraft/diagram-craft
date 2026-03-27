@@ -117,14 +117,16 @@ stencils:
 
   - id: 'uml-activity-wait-time-action'
     name: Wait Time Action
+    settings:
+      marginLeft: 50
     elements:
-      - id: umlactivity05
+      - id: uqbryic
         type: node
         nodeType: umlActivity
         bounds:
           x: 0
           y: 0
-          w: 140
+          w: 70
           h: 70
           r: 0
         children: [ ]
@@ -134,6 +136,9 @@ stencils:
             bottom: 6
             left: 10
             right: 10
+            position: w
+            align: right
+            width: 200
           custom:
             umlActivity:
               type: wait-time-action
@@ -142,4 +147,73 @@ stencils:
           textStyle: default-text-default
         texts:
           text: Wait Time
+        tags:
+
+  - id: 'uml-activity-initial'
+    name: Initial
+    elements:
+      - id: umlactivity06
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: initial
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-activity-flow-final'
+    name: Flow Final
+    elements:
+      - id: umlactivity07
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: exit
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+        tags:
+
+  - id: 'uml-activity-activity-final'
+    name: Activity Final
+    elements:
+      - id: umlactivity08
+        type: node
+        nodeType: umlPseudoState
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 24
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlPseudoState:
+              variant: final
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
         tags:
