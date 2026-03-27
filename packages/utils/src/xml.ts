@@ -52,5 +52,9 @@ export function* xIterElements(collection: HTMLCollectionOf<Element>) {
  * ```
  */
 export const xNum = (el: Element, name: string, def = 0) => {
-  return Number(el.getAttribute(name) ?? def);
+  const value = el.getAttribute(name);
+  if (value === null || value.trim() === '') return def;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : def;
 };
