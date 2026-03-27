@@ -1,0 +1,58 @@
+stencils:
+  - id: 'uml-activity-activity'
+    name: Activity
+    elements:
+      - id: umlactivity02
+        type: node
+        nodeType: umlActivity
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 6
+            left: 10
+            right: 10
+          custom:
+            umlActivity:
+              type: activity
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Activity
+        tags:
+
+  - id: 'uml-activity-activity-call'
+    name: Activity
+    elements:
+      - id: umlactivity01
+        type: node
+        nodeType: umlActivity
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 6
+            bottom: 6
+            left: 10
+            right: 10
+          custom:
+            umlActivity:
+              type: call-activity-action
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: Activity
+        tags:
