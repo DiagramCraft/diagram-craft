@@ -270,7 +270,7 @@ export class AnchorHandlesComponent extends Component<Props> {
 
     const isDirectlyHoveringNode = props.hoverElement.get() === node.id;
     const projectedHandle = isDirectlyHoveringNode
-      ? projectToPointHandle(node, props.point.get(), props.modifiers.get())
+      ? projectToPointHandle(node, props.point.get(), props.modifiers.get(), diagram.viewBox.zoomLevel)
       : undefined;
 
     if (projectedHandle) {
