@@ -12,6 +12,9 @@ import { projectToPointHandle } from '../drag/anchorHandleDragSource';
 import { Zoom } from './zoom';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Point } from '@diagram-craft/geometry/point';
+import type { Anchor } from '@diagram-craft/model/anchor';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { assert } from '@diagram-craft/utils/assert';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -23,6 +26,94 @@ type Props = CanvasState & {
   hoverElement: Observable<string | undefined>;
   point: Observable<Point>;
   modifiers: Observable<Modifiers>;
+};
+
+const getPrimaryAnchorHandleVisuals = (
+  anchor: Anchor,
+  node: DiagramNode,
+  shouldScale: boolean,
+  zoom: Zoom,
+  anchorSizeInEffect: number
+) => {
+  const p1 = node._getPositionInBounds(anchor.start, false);
+
+  // Need to calculate a new normal, by creating a vector in the unit coordinate system along the normal
+  // Then, calculating the angle of the vector between the two projected points
+  const p2 = node._getPositionInBounds(
+    Point.add(anchor.start, Vector.fromPolar(anchor.normal ?? 0, 1)),
+    false
+  );
+  const normalInEffect = Vector.angle(Vector.from(p1, p2));
+  const offsetAlongNormal = (point: Point) =>
+    shouldScale ? Point.add(point, Vector.fromPolar(normalInEffect, zoom.num(SCALE))) : point;
+
+  if (anchor.type === 'edge') {
+    assert.present(anchor.end);
+
+    const edgeStart = offsetAlongNormal(p1);
+    const edgeEnd = offsetAlongNormal(node._getPositionInBounds(anchor.end, false));
+    const midpoint = Point.midpoint(edgeStart, edgeEnd);
+    const normalEndpoint = Point.add(midpoint, Vector.fromPolar(normalInEffect, zoom.num(15, 7)));
+
+    return {
+      anchorHandlePoint: midpoint,
+      normal: normalInEffect,
+      transformedChildren: [
+        svg.line({
+          'x1': edgeStart.x,
+          'y1': edgeStart.y,
+          'x2': edgeEnd.x,
+          'y2': edgeEnd.y,
+          'stroke': 'var(--accent-9)',
+          'stroke-width': zoom.num(1),
+          'stroke-linecap': 'round'
+        }),
+        svg.line({
+          'x1': midpoint.x,
+          'y1': midpoint.y,
+          'x2': normalEndpoint.x,
+          'y2': normalEndpoint.y,
+          'stroke': 'var(--accent-9)',
+          'stroke-width': zoom.num(1)
+        })
+      ]
+    };
+  } else {
+    const anchorHandlePoint = anchor.type !== 'center' ? offsetAlongNormal(p1) : p1;
+    const normalEndpoint = Point.add(
+      anchorHandlePoint,
+      Vector.fromPolar(normalInEffect, zoom.num(15, 7))
+    );
+
+    const transformedChildren = [];
+    if (anchor.type !== 'center') {
+      transformedChildren.push(
+        svg.line({
+          'x1': anchorHandlePoint.x,
+          'y1': anchorHandlePoint.y,
+          'x2': normalEndpoint.x,
+          'y2': normalEndpoint.y,
+          'stroke': 'var(--accent-9)',
+          'stroke-width': zoom.num(1)
+        })
+      );
+    }
+
+    transformedChildren.push(
+      svg.circle({
+        class: 'svg-handle svg-anchor-handle',
+        cx: anchorHandlePoint.x,
+        cy: anchorHandlePoint.y,
+        r: anchorSizeInEffect
+      })
+    );
+
+    return {
+      anchorHandlePoint,
+      normal: normalInEffect,
+      transformedChildren
+    };
+  }
 };
 
 export class AnchorHandlesComponent extends Component<Props> {
@@ -118,81 +209,73 @@ export class AnchorHandlesComponent extends Component<Props> {
     node.anchors.forEach(a => {
       if (a.clip || !a.isPrimary) return;
 
-      const p1 = node._getPositionInBounds(a.start, false);
-
-      // Need to calculate a new normal, by creating a vector in the unit coordinate system along the normal
-      // Then, calculating the angle of the vector between the two projected points
-      const p2 = node._getPositionInBounds(
-        Point.add(a.start, Vector.fromPolar(a.normal ?? 0, 1)),
-        false
+      const { anchorHandlePoint, transformedChildren: visuals } = getPrimaryAnchorHandleVisuals(
+        a,
+        node,
+        shouldScale,
+        z,
+        anchorSizeInEffect
       );
-      const normalInEffect = Vector.angle(Vector.from(p1, p2));
 
-      const p =
-        shouldScale && a.type !== 'center'
-          ? Point.add(p1, Vector.fromPolar(normalInEffect ?? 0, z.num(SCALE)))
-          : p1;
-      const normalEndpoint = Point.add(p, Vector.fromPolar(normalInEffect ?? 0, z.num(15, 7)));
+      transformedChildren.push(...visuals);
 
-      if (a.type !== 'center') {
-        transformedChildren.push(
-          svg.line({
-            'x1': p.x,
-            'y1': p.y,
-            'x2': normalEndpoint.x,
-            'y2': normalEndpoint.y,
-            'stroke': 'var(--accent-9)',
-            'stroke-width': z.num(1)
-          })
-        );
-      }
-      transformedChildren.push(
-        svg.circle({
-          class: 'svg-handle svg-anchor-handle',
-          cx: p.x,
-          cy: p.y,
-          r: anchorSizeInEffect,
-          on: {
-            mouseover: () => (this.state = 'handle'),
-            mouseout: () => (this.state = 'background'),
-            mousedown: e => {
-              if (diagram.activeLayer.type !== 'regular') return;
+      if (a.type !== 'point') return;
 
-              DRAG_DROP_MANAGER.initiate(
-                new AnchorHandleDrag(
-                  node,
-                  {
-                    type: 'anchor',
-                    anchorId: a.id,
-                    normal: a.normal,
-                    point: p1
-                  },
-                  EventHelper.point(e),
-                  props.context
-                ),
-                () => {},
-                true
-              );
-              this.setState(undefined, 'background');
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          }
-        })
-      );
+      const handle = transformedChildren[transformedChildren.length - 1];
+      if (handle?.type !== 's' || handle.tag !== 'circle') return;
+
+      handle.data.on = {
+        mouseover: () => (this.state = 'handle'),
+        mouseout: () => (this.state = 'background'),
+        mousedown: e => {
+          if (diagram.activeLayer.type !== 'regular') return;
+
+          DRAG_DROP_MANAGER.initiate(
+            new AnchorHandleDrag(
+              node,
+              {
+                type: 'anchor',
+                anchorId: a.id,
+                normal: a.normal,
+                point: anchorHandlePoint
+              },
+              EventHelper.point(e),
+              props.context
+            ),
+            () => {},
+            true
+          );
+          this.setState(undefined, 'background');
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
     });
 
     const isDirectlyHoveringNode = props.hoverElement.get() === node.id;
     const projectedHandle = isDirectlyHoveringNode
-      ? projectToPointHandle(node, props.point.get(), props.modifiers.get())
+      ? projectToPointHandle(
+          node,
+          props.point.get(),
+          props.modifiers.get(),
+          diagram.viewBox.zoomLevel
+        )
       : undefined;
 
     if (projectedHandle) {
+      const projectedHandlePoint =
+        shouldScale && projectedHandle.type !== 'boundary-point'
+          ? Point.add(
+              projectedHandle.point,
+              Vector.fromPolar(projectedHandle.normal ?? 0, z.num(SCALE))
+            )
+          : projectedHandle.point;
+
       if (projectedHandle.type === 'edge-anchor') {
         const halfSpan = z.num(15, 10);
         const markerAngle = projectedHandle.normal ?? 0;
-        const from = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, -halfSpan));
-        const to = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, halfSpan));
+        const from = Point.add(projectedHandlePoint, Vector.fromPolar(markerAngle, -halfSpan));
+        const to = Point.add(projectedHandlePoint, Vector.fromPolar(markerAngle, halfSpan));
 
         children.push(
           svg.line({
@@ -208,14 +291,14 @@ export class AnchorHandlesComponent extends Component<Props> {
       }
 
       const normalEndpoint = Point.add(
-        projectedHandle.point,
+        projectedHandlePoint,
         Vector.fromPolar(projectedHandle.normal ?? 0, z.num(15, 7))
       );
 
       children.push(
         svg.line({
-          'x1': projectedHandle.point.x,
-          'y1': projectedHandle.point.y,
+          'x1': projectedHandlePoint.x,
+          'y1': projectedHandlePoint.y,
           'x2': normalEndpoint.x,
           'y2': normalEndpoint.y,
           'stroke': 'var(--accent-9)',
@@ -226,8 +309,8 @@ export class AnchorHandlesComponent extends Component<Props> {
       children.push(
         svg.circle({
           class: 'svg-handle svg-anchor-handle',
-          cx: projectedHandle.point.x,
-          cy: projectedHandle.point.y,
+          cx: projectedHandlePoint.x,
+          cy: projectedHandlePoint.y,
           r: anchorSizeInEffect,
           on: {
             mousedown: e => {
@@ -257,3 +340,7 @@ export class AnchorHandlesComponent extends Component<Props> {
     this.redraw();
   }
 }
+
+export const _test = {
+  getPrimaryAnchorHandleVisuals
+};

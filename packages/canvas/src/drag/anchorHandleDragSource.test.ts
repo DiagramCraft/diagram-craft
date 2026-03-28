@@ -61,6 +61,99 @@ describe('resolveProjectedSourceHandle', () => {
     expect(handle?.point).toEqual({ x: 65, y: 20 });
   });
 
+  test('requires the cursor to be much closer for thin shapes with edge anchors', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 5, h: 60, r: 0 }
+      })
+    );
+
+    const handle = projectToPointHandle(
+      node,
+      { x: 12.5, y: 24 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+
+    expect(handle).toBeUndefined();
+  });
+
+  test('still projects edge anchors on thin shapes when the cursor is near the edge', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 5, h: 60, r: 0 }
+      })
+    );
+
+    const handle = projectToPointHandle(
+      node,
+      { x: 10.5, y: 20.5 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
+    );
+
+    expect(handle?.type).toBe('edge-anchor');
+    expect(handle?.point).toEqual({ x: 10.5, y: 20 });
+  });
+
+  test('reduces edge-anchor projection distance when zoomed in', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 5, h: 60, r: 0 }
+      })
+    );
+
+    const handleAtDefaultZoom = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      1
+    );
+    const handleWhenZoomedIn = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      2
+    );
+
+    expect(handleAtDefaultZoom?.type).toBe('edge-anchor');
+    expect(handleWhenZoomedIn).toBeUndefined();
+  });
+
+  test('does not enlarge edge-anchor projection distance when zoomed out', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 5, h: 60, r: 0 }
+      })
+    );
+
+    const handleAtDefaultZoom = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      1
+    );
+    const handleWhenZoomedOut = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      0.5
+    );
+
+    expect(handleAtDefaultZoom?.type).toBe('edge-anchor');
+    expect(handleWhenZoomedOut?.type).toBe('edge-anchor');
+  });
+
   test('returns a boundary handle only when meta is active and no edge anchors exist', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({

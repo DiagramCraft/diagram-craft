@@ -9,6 +9,9 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import type { Modifiers } from '../dragDropManager';
 
+const MAX_EDGE_ANCHOR_PROJECTION_DISTANCE = 10;
+const MIN_EDGE_ANCHOR_PROJECTION_DISTANCE = 1;
+
 export type AnchorHandleDragSource =
   | {
       type: 'anchor';
@@ -47,7 +50,8 @@ type BoundaryProjection = {
 export const projectToPointHandle = (
   node: DiagramNode,
   point: Point,
-  modifiers: Modifiers
+  modifiers: Modifiers,
+  zoomLevel = 1
 ): AnchorHandleDragSource | undefined => {
   const edgeAnchors = node.anchors.filter(
     anchor => anchor.type === 'edge' && anchor.end !== undefined && !anchor.clip
@@ -76,7 +80,13 @@ export const projectToPointHandle = (
     }
   }
 
-  if (closest) {
+  const baseProjectionDistance = Math.min(
+    MAX_EDGE_ANCHOR_PROJECTION_DISTANCE,
+    Math.max(MIN_EDGE_ANCHOR_PROJECTION_DISTANCE, Math.min(node.bounds.w, node.bounds.h) / 4)
+  );
+  const maxProjectionDistance = baseProjectionDistance / Math.max(zoomLevel, 1);
+
+  if (closest && closest.distance <= maxProjectionDistance * maxProjectionDistance) {
     return {
       type: 'edge-anchor',
       anchorId: closest.anchorId,
