@@ -274,11 +274,19 @@ export class AnchorHandlesComponent extends Component<Props> {
       : undefined;
 
     if (projectedHandle) {
+      const projectedHandlePoint =
+        shouldScale && projectedHandle.type !== 'boundary-point'
+          ? Point.add(
+              projectedHandle.point,
+              Vector.fromPolar(projectedHandle.normal ?? 0, z.num(SCALE))
+            )
+          : projectedHandle.point;
+
       if (projectedHandle.type === 'edge-anchor') {
         const halfSpan = z.num(15, 10);
         const markerAngle = projectedHandle.normal ?? 0;
-        const from = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, -halfSpan));
-        const to = Point.add(projectedHandle.point, Vector.fromPolar(markerAngle, halfSpan));
+        const from = Point.add(projectedHandlePoint, Vector.fromPolar(markerAngle, -halfSpan));
+        const to = Point.add(projectedHandlePoint, Vector.fromPolar(markerAngle, halfSpan));
 
         children.push(
           svg.line({
@@ -294,14 +302,14 @@ export class AnchorHandlesComponent extends Component<Props> {
       }
 
       const normalEndpoint = Point.add(
-        projectedHandle.point,
+        projectedHandlePoint,
         Vector.fromPolar(projectedHandle.normal ?? 0, z.num(15, 7))
       );
 
       children.push(
         svg.line({
-          'x1': projectedHandle.point.x,
-          'y1': projectedHandle.point.y,
+          'x1': projectedHandlePoint.x,
+          'y1': projectedHandlePoint.y,
           'x2': normalEndpoint.x,
           'y2': normalEndpoint.y,
           'stroke': 'var(--accent-9)',
@@ -312,8 +320,8 @@ export class AnchorHandlesComponent extends Component<Props> {
       children.push(
         svg.circle({
           class: 'svg-handle svg-anchor-handle',
-          cx: projectedHandle.point.x,
-          cy: projectedHandle.point.y,
+          cx: projectedHandlePoint.x,
+          cy: projectedHandlePoint.y,
           r: anchorSizeInEffect,
           on: {
             mousedown: e => {

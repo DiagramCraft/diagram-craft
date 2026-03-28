@@ -84,7 +84,7 @@ export const projectToPointHandle = (
     MAX_EDGE_ANCHOR_PROJECTION_DISTANCE,
     Math.max(MIN_EDGE_ANCHOR_PROJECTION_DISTANCE, Math.min(node.bounds.w, node.bounds.h) / 4)
   );
-  const maxProjectionDistance = baseProjectionDistance / Math.max(zoomLevel, 0.1);
+  const maxProjectionDistance = baseProjectionDistance / Math.max(zoomLevel, 1);
 
   if (closest && closest.distance <= maxProjectionDistance * maxProjectionDistance) {
     return {

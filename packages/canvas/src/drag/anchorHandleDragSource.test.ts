@@ -127,6 +127,33 @@ describe('resolveProjectedSourceHandle', () => {
     expect(handleWhenZoomedIn).toBeUndefined();
   });
 
+  test('does not enlarge edge-anchor projection distance when zoomed out', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+
+    const node = withEdgeAnchor(
+      layer.addNode({
+        type: 'rect',
+        bounds: { x: 10, y: 20, w: 5, h: 60, r: 0 }
+      })
+    );
+
+    const handleAtDefaultZoom = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      1
+    );
+    const handleWhenZoomedOut = projectToPointHandle(
+      node,
+      { x: 10.5, y: 21.2 },
+      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+      0.5
+    );
+
+    expect(handleAtDefaultZoom?.type).toBe('edge-anchor');
+    expect(handleWhenZoomedOut?.type).toBe('edge-anchor');
+  });
+
   test('returns a boundary handle only when meta is active and no edge anchors exist', () => {
     const { layer } = TestModel.newDiagramWithLayer();
     const node = layer.addNode({
