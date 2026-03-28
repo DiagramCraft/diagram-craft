@@ -3,7 +3,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { getPrimaryAnchorHandleVisuals } from './AnchorHandlesComponent';
+import { _test } from './AnchorHandlesComponent';
 import { Zoom } from './zoom';
 
 const createNode = () => {
@@ -36,13 +36,7 @@ describe('getPrimaryAnchorHandleVisuals', () => {
       }
     ]);
 
-    const visuals = getPrimaryAnchorHandleVisuals({
-      anchor: node.anchors[0]!,
-      anchorSizeInEffect: 4,
-      node,
-      shouldScale: false,
-      zoom: new Zoom(1)
-    });
+    const visuals = _test.getPrimaryAnchorHandleVisuals(node.anchors[0]!, node, false, new Zoom(1), 4);
 
     expect(visuals.transformedChildren.some(child => child.type === 's' && child.tag === 'circle')).toBe(
       true
@@ -62,13 +56,7 @@ describe('getPrimaryAnchorHandleVisuals', () => {
       }
     ]);
 
-    const visuals = getPrimaryAnchorHandleVisuals({
-      anchor: node.anchors[0]!,
-      anchorSizeInEffect: 4,
-      node,
-      shouldScale: false,
-      zoom: new Zoom(1)
-    });
+    const visuals = _test.getPrimaryAnchorHandleVisuals(node.anchors[0]!, node, false, new Zoom(1), 4);
 
     const lineNodes = visuals.transformedChildren.filter(
       child => child.type === 's' && child.tag === 'line'
