@@ -72,7 +72,7 @@ export const loadUMLStencils = async (registry: Registry) => {
     type: 'default',
 
     subPackages: [
-      { id: 'common', name: 'Common', stencils: [] },
+      //{ id: 'common', name: 'Common', stencils: [] },
       { id: 'class', name: 'Class Diagrams', stencils: [] },
       { id: 'component', name: 'Component Diagrams', stencils: [] },
       { id: 'composite', name: 'Composite Diagrams', stencils: [] },
@@ -91,7 +91,7 @@ export const loadUMLStencils = async (registry: Registry) => {
   /* COMMON PACKAGE                                                          */
   /* *********************************************************************** */
 
-  loader.registerSubPackage('common', commonStencils);
+  loader.registerPackage(commonStencils);
 
   /* *********************************************************************** */
   /* CLASS PACKAGE                                                           */

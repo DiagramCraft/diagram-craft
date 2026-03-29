@@ -4,12 +4,21 @@ import styles from './Collapsible.module.css';
 import { Collapsible as BaseUICollapsible } from '@base-ui/react/collapsible';
 
 export const Collapsible = (props: Props) => {
-  const [open, setOpen] = useState(props.defaultOpen ?? false);
+  const [internalOpen, setInternalOpen] = useState(props.defaultOpen ?? false);
+  const open = props.open ?? internalOpen;
+
+  const handleOpenChange = (open: boolean) => {
+    if (props.open === undefined) {
+      setInternalOpen(open);
+    }
+    props.onOpenChange?.(open);
+  };
+
   return (
     <BaseUICollapsible.Root
       className={styles.cCollapsible}
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       defaultOpen={props.defaultOpen}
     >
       <div className={styles.eTrigger}>
@@ -34,4 +43,6 @@ type Props = {
   label: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };

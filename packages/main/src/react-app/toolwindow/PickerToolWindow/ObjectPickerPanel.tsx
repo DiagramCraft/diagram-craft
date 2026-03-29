@@ -2,13 +2,12 @@ import { PickerCanvas } from '../../PickerCanvas';
 import { Diagram } from '@diagram-craft/model/diagram';
 import {
   copyStyles,
-  getStencilsInPackage,
   Stencil,
   StencilPackage,
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
@@ -19,6 +18,7 @@ import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
 import objectPickerStyles from '../../ObjectPicker.module.css';
@@ -101,6 +101,7 @@ export const ObjectPickerPanel = (props: Props) => {
   const [showHover, setShowHover] = useState(true);
   const app = useApplication();
   const [loaded, setLoaded] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const redraw = useRedraw();
 
   const groups = useMemo(() => {
@@ -109,23 +110,23 @@ export const ObjectPickerPanel = (props: Props) => {
     if (!props.isOpen) return res;
 
     if (props.stencilPackage) {
-      if ((props.stencilPackage.subPackages ?? []).length > 1) {
-        for (const subPackage of props.stencilPackage.subPackages!) {
-          res.push({
-            id: subPackage.id,
-            name: subPackage.name,
-            isDefault: false,
-            stencils: subPackage.stencils!.map(n => makeDiagramNode(diagram.document, n))
-          });
-        }
-      } else {
-        const stencils =
-          props.stencilPackage.subPackages?.[0]?.stencils ?? getStencilsInPackage(props.stencilPackage);
+      if (props.stencilPackage.stencils.length > 0) {
         res.push({
           id: 'default',
           name: '',
           isDefault: true,
-          stencils: stencils.map(n => makeDiagramNode(diagram.document, n))
+          stencils: props.stencilPackage.stencils.map(n => makeDiagramNode(diagram.document, n))
+        });
+      }
+
+      for (const subPackage of props.stencilPackage.subPackages ?? []) {
+        if (subPackage.stencils.length === 0) continue;
+
+        res.push({
+          id: subPackage.id,
+          name: subPackage.name,
+          isDefault: false,
+          stencils: subPackage.stencils.map(n => makeDiagramNode(diagram.document, n))
         });
       }
     } else {
@@ -154,6 +155,63 @@ export const ObjectPickerPanel = (props: Props) => {
     }
   }, [props.isOpen]);
 
+  useEffect(() => {
+    setOpenGroups(current => {
+      let changed = false;
+      const next = { ...current };
+
+      for (const group of groups) {
+        if (group.isDefault || next[group.id] !== undefined) continue;
+        next[group.id] = true;
+        changed = true;
+      }
+
+      return changed ? next : current;
+    });
+  }, [groups]);
+
+  const renderStencilGrid = (stencils: Array<StencilEntry>) => (
+    <div className={objectPickerStyles.icObjectPicker}>
+      {stencils.map(s => (
+        <div
+          key={s.stencilDiagram.id}
+          style={{ background: 'transparent' }}
+          data-width={s.stencilDiagram.viewBox.dimensions.w}
+        >
+          <PickerCanvas
+            size={PickerConfig.size}
+            diagram={s.stencilDiagram}
+            showHover={showHover}
+            name={
+              s.stencil.name ??
+              (isNode(s.stencilElements?.[0])
+                ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType).name
+                : undefined) ??
+              'unknown'
+            }
+            onMouseDown={ev => {
+              if (!isRegularLayer(diagram.activeLayer)) return;
+
+              setShowHover(false);
+              DRAG_DROP_MANAGER.initiate(
+                new ObjectPickerDrag(
+                  ev,
+                  s.canvasElements,
+                  diagram,
+                  s.stencil.id,
+                  s.stencil.styles ?? [],
+                  app
+                ),
+                () => setShowHover(true)
+              );
+            }}
+            scaleStrokes={stencilScaleStrokes(s.stencil)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
@@ -162,52 +220,25 @@ export const ObjectPickerPanel = (props: Props) => {
       forceMount={true}
     >
       {loaded && (
-        <div className={`${objectPickerStyles.icObjectPicker} ${styles.icObjectPickerPanel}`}>
+        <div className={styles.icObjectPickerPanel}>
           {groups.map(group => (
-            <React.Fragment key={group.id}>
-              {groups.length > 1 && (
-                <div className={styles.eDivider}>
-                  <span>{group.name}</span>
-                </div>
-              )}
-              {group.stencils.map(s => (
-                <div
-                  key={s.stencilDiagram.id}
-                  style={{ background: 'transparent' }}
-                  data-width={s.stencilDiagram.viewBox.dimensions.w}
-                >
-                  <PickerCanvas
-                    size={PickerConfig.size}
-                    diagram={s.stencilDiagram}
-                    showHover={showHover}
-                    name={
-                      s.stencil.name ??
-                      (isNode(s.stencilElements?.[0])
-                        ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType).name
-                        : undefined) ??
-                      'unknown'
-                    }
-                    onMouseDown={ev => {
-                      if (!isRegularLayer(diagram.activeLayer)) return;
-
-                      setShowHover(false);
-                      DRAG_DROP_MANAGER.initiate(
-                        new ObjectPickerDrag(
-                          ev,
-                          s.canvasElements,
-                          diagram,
-                          s.stencil.id,
-                          s.stencil.styles ?? [],
-                          app
-                        ),
-                        () => setShowHover(true)
-                      );
+            <div key={group.id} className={styles.eGroup}>
+              {!group.isDefault ? (
+                <div className={styles.eCollapsibleGroup}>
+                  <Collapsible
+                    label={group.name}
+                    open={openGroups[group.id] ?? true}
+                    onOpenChange={open => {
+                      setOpenGroups(current => ({ ...current, [group.id]: open }));
                     }}
-                    scaleStrokes={stencilScaleStrokes(s.stencil)}
-                  />
+                  >
+                    {renderStencilGrid(group.stencils)}
+                  </Collapsible>
                 </div>
-              ))}
-            </React.Fragment>
+              ) : (
+                renderStencilGrid(group.stencils)
+              )}
+            </div>
           ))}
         </div>
       )}
