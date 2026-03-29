@@ -8,7 +8,7 @@ import {
   stencilScaleStrokes
 } from '@diagram-craft/model/stencilRegistry';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApplication, useDiagram } from '../../../application';
 import { DRAG_DROP_MANAGER } from '@diagram-craft/canvas/dragDropManager';
 import { ObjectPickerDrag } from './objectPickerDrag';
@@ -19,6 +19,7 @@ import { PickerConfig } from './pickerConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { useEventListener } from '../../hooks/useEventListener';
 import { useRedraw } from '../../hooks/useRedraw';
 import objectPickerStyles from '../../ObjectPicker.module.css';
@@ -162,52 +163,97 @@ export const ObjectPickerPanel = (props: Props) => {
       forceMount={true}
     >
       {loaded && (
-        <div className={`${objectPickerStyles.icObjectPicker} ${styles.icObjectPickerPanel}`}>
+        <div className={styles.icObjectPickerPanel}>
           {groups.map(group => (
-            <React.Fragment key={group.id}>
-              {groups.length > 1 && (
-                <div className={styles.eDivider}>
-                  <span>{group.name}</span>
+            <div key={group.id} className={styles.eGroup}>
+              {groups.length > 1 && !group.isDefault ? (
+                <div className={styles.eCollapsibleGroup}>
+                  <Collapsible label={group.name} defaultOpen={true}>
+                    <div className={objectPickerStyles.icObjectPicker}>
+                      {group.stencils.map(s => (
+                        <div
+                          key={s.stencilDiagram.id}
+                          style={{ background: 'transparent' }}
+                          data-width={s.stencilDiagram.viewBox.dimensions.w}
+                        >
+                          <PickerCanvas
+                            size={PickerConfig.size}
+                            diagram={s.stencilDiagram}
+                            showHover={showHover}
+                            name={
+                              s.stencil.name ??
+                              (isNode(s.stencilElements?.[0])
+                                ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType)
+                                    .name
+                                : undefined) ??
+                              'unknown'
+                            }
+                            onMouseDown={ev => {
+                              if (!isRegularLayer(diagram.activeLayer)) return;
+
+                              setShowHover(false);
+                              DRAG_DROP_MANAGER.initiate(
+                                new ObjectPickerDrag(
+                                  ev,
+                                  s.canvasElements,
+                                  diagram,
+                                  s.stencil.id,
+                                  s.stencil.styles ?? [],
+                                  app
+                                ),
+                                () => setShowHover(true)
+                              );
+                            }}
+                            scaleStrokes={stencilScaleStrokes(s.stencil)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </Collapsible>
+                </div>
+              ) : (
+                <div className={objectPickerStyles.icObjectPicker}>
+                  {group.stencils.map(s => (
+                    <div
+                      key={s.stencilDiagram.id}
+                      style={{ background: 'transparent' }}
+                      data-width={s.stencilDiagram.viewBox.dimensions.w}
+                    >
+                      <PickerCanvas
+                        size={PickerConfig.size}
+                        diagram={s.stencilDiagram}
+                        showHover={showHover}
+                        name={
+                          s.stencil.name ??
+                          (isNode(s.stencilElements?.[0])
+                            ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType)
+                                .name
+                            : undefined) ??
+                          'unknown'
+                        }
+                        onMouseDown={ev => {
+                          if (!isRegularLayer(diagram.activeLayer)) return;
+
+                          setShowHover(false);
+                          DRAG_DROP_MANAGER.initiate(
+                            new ObjectPickerDrag(
+                              ev,
+                              s.canvasElements,
+                              diagram,
+                              s.stencil.id,
+                              s.stencil.styles ?? [],
+                              app
+                            ),
+                            () => setShowHover(true)
+                          );
+                        }}
+                        scaleStrokes={stencilScaleStrokes(s.stencil)}
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
-              {group.stencils.map(s => (
-                <div
-                  key={s.stencilDiagram.id}
-                  style={{ background: 'transparent' }}
-                  data-width={s.stencilDiagram.viewBox.dimensions.w}
-                >
-                  <PickerCanvas
-                    size={PickerConfig.size}
-                    diagram={s.stencilDiagram}
-                    showHover={showHover}
-                    name={
-                      s.stencil.name ??
-                      (isNode(s.stencilElements?.[0])
-                        ? diagram.document.registry.nodes.get(s.stencilElements?.[0].nodeType).name
-                        : undefined) ??
-                      'unknown'
-                    }
-                    onMouseDown={ev => {
-                      if (!isRegularLayer(diagram.activeLayer)) return;
-
-                      setShowHover(false);
-                      DRAG_DROP_MANAGER.initiate(
-                        new ObjectPickerDrag(
-                          ev,
-                          s.canvasElements,
-                          diagram,
-                          s.stencil.id,
-                          s.stencil.styles ?? [],
-                          app
-                        ),
-                        () => setShowHover(true)
-                      );
-                    }}
-                    scaleStrokes={stencilScaleStrokes(s.stencil)}
-                  />
-                </div>
-              ))}
-            </React.Fragment>
+            </div>
           ))}
         </div>
       )}
