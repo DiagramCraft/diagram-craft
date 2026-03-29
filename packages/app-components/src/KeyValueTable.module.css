@@ -11,7 +11,12 @@
   }
 
   .eValue {
-    /* This is intentionally empty */
+    min-width: 0;
+  }
+
+  .eValue > :global(.util-hstack),
+  .eValue > :global(.util-vstack) {
+    min-width: 0;
   }
 
   .eRow {

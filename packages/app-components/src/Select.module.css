@@ -12,9 +12,13 @@
  */
 
 :global(.cSelectTrigger) {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-radius: var(--cmp-radius);
   padding: 0 5px;
   font-size: 11px;
@@ -25,7 +29,15 @@
   background-color: var(--cmp-bg);
   color: var(--cmp-fg);
 
+  .eValue {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .eIcon {
+    flex-shrink: 0;
     color: var(--base-fg-dim);
     margin-left: auto;
   }

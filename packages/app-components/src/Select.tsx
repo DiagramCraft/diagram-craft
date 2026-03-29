@@ -37,7 +37,7 @@ const Root = (props: RootProps) => {
         disabled={props.disabled}
         style={props.style ?? {}}
       >
-        <BaseUISelect.Value>
+        <BaseUISelect.Value className={styles.eValue}>
           {props.isIndeterminate ? (
             <div style={{ color: 'var(--panel-fg)' }}>···</div>
           ) : !hasValue ? (
