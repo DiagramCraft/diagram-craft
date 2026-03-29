@@ -1,3 +1,17 @@
+styles:
+  - id: uml-binary-association
+    name: UML Binary Association
+    type: edge
+    props:
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      arrow:
+        end:
+          type: SQUARE_STICK_ARROW
+      effects:
+        rounding: true
+
 stencils:
   - id: 'uml-activity-activity'
     name: Activity
@@ -244,10 +258,22 @@ stencils:
 
   - id: 'uml-activity-merge-decision'
     name: Merge / Decision
+    settings:
+      nodeLinkOptions:
+        edgeStylesheetIds:
+          - uml-binary-association
+        stencilIds:
+          - uml-activity-activity
+          - uml-activity-merge-decision
+        combinations:
+          - stencilId: uml-activity-activity
+            edgeStylesheetId: uml-binary-association
+          - stencilId: uml-activity-merge-decision
+            edgeStylesheetId: uml-binary-association
     elements:
       - id: 7p9p846
         type: node
-        nodeType: diamond
+        nodeType: umlMergeDecision
         bounds:
           x: 0
           y: 0
@@ -261,4 +287,27 @@ stencils:
           textStyle: default-text-default
         texts:
           text: ""
-        tags: 
+        tags:
+
+  - id: 'uml-connector'
+    name: Connector
+    elements:
+      - id: tl85q8x
+        type: node
+        nodeType: circle
+        bounds:
+          x: 0
+          y: 0
+          w: 24
+          h: 23.999999999999982
+          r: 0
+        children: [ ]
+        props:
+          text:
+            bold: true
+        metadata:
+          style: default
+          textStyle: default-text-default
+        texts:
+          text: B
+        tags:

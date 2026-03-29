@@ -18,6 +18,7 @@ import { UMLArtifactNodeDefinition } from '@diagram-craft/stencil-uml/deployment
 import { UMLNodeNodeDefinition } from '@diagram-craft/stencil-uml/deployment/UMLNode.nodeType';
 import { UMLActivityNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLActivity.nodeType';
 import { UMLForkJoinNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLForkJoin.nodeType';
+import { UMLMergeDecisionNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLMergeDecision.nodeType';
 import {
   UMLLifelineContainerNodeDefinition,
   UMLLifelineNodeDefinition
@@ -56,6 +57,7 @@ export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLNodeNodeDefinition());
   nodes.register(new UMLActivityNodeDefinition());
   nodes.register(new UMLForkJoinNodeDefinition());
+  nodes.register(new UMLMergeDecisionNodeDefinition());
   nodes.register(new UMLLifelineContainerNodeDefinition());
   nodes.register(new UMLLifelineNodeDefinition());
   nodes.register(new UMLLifelineExecutionNodeDefinition());
