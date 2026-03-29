@@ -7,6 +7,12 @@ import { Box } from '@diagram-craft/geometry/box';
 import { StencilElements } from '@diagram-craft/model/stencilRegistry';
 import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 
+const setViewboxFromBounds = (diagram: Diagram, bounds: Box, padding: number) => {
+  const viewboxBounds = Box.grow(bounds, padding);
+  diagram.viewBox.dimensions = { w: viewboxBounds.w, h: viewboxBounds.h };
+  diagram.viewBox.offset = { x: viewboxBounds.x, y: viewboxBounds.y };
+};
+
 export const createThumbnail = (
   factory: (
     diagram: Diagram,
@@ -33,8 +39,7 @@ export const createThumbnail = (
     elements.filter(isNode).forEach(e => e.invalidateAnchors(uow));
 
     const padding = opts?.padding ?? 0;
-    diagram.viewBox.dimensions = Box.grow(bounds, 2 * padding);
-    diagram.viewBox.offset = { x: -padding, y: -padding };
+    setViewboxFromBounds(diagram, bounds, padding);
 
     return { diagram, layer, elements, bounds };
   });
@@ -50,8 +55,7 @@ export const createThumbnailFromStencil = (
     elements.filter(isNode).forEach(e => e.invalidateAnchors(uow));
 
     const padding = opts?.padding ?? 0;
-    diagram.viewBox.dimensions = Box.grow(bounds, 2 * padding);
-    diagram.viewBox.offset = { x: -padding, y: -padding };
+    setViewboxFromBounds(diagram, bounds, padding);
 
     return stencil;
   });
