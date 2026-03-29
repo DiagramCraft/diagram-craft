@@ -101,6 +101,7 @@ export const ObjectPickerPanel = (props: Props) => {
   const [showHover, setShowHover] = useState(true);
   const app = useApplication();
   const [loaded, setLoaded] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const redraw = useRedraw();
 
   const groups = useMemo(() => {
@@ -153,6 +154,21 @@ export const ObjectPickerPanel = (props: Props) => {
       setLoaded(true);
     }
   }, [props.isOpen]);
+
+  useEffect(() => {
+    setOpenGroups(current => {
+      let changed = false;
+      const next = { ...current };
+
+      for (const group of groups) {
+        if (group.isDefault || next[group.id] !== undefined) continue;
+        next[group.id] = true;
+        changed = true;
+      }
+
+      return changed ? next : current;
+    });
+  }, [groups]);
 
   const renderStencilGrid = (stencils: Array<StencilEntry>) => (
     <div className={objectPickerStyles.icObjectPicker}>
@@ -209,7 +225,13 @@ export const ObjectPickerPanel = (props: Props) => {
             <div key={group.id} className={styles.eGroup}>
               {!group.isDefault ? (
                 <div className={styles.eCollapsibleGroup}>
-                  <Collapsible label={group.name} defaultOpen={true}>
+                  <Collapsible
+                    label={group.name}
+                    open={openGroups[group.id] ?? true}
+                    onOpenChange={open => {
+                      setOpenGroups(current => ({ ...current, [group.id]: open }));
+                    }}
+                  >
                     {renderStencilGrid(group.stencils)}
                   </Collapsible>
                 </div>
