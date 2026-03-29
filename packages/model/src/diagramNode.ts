@@ -324,6 +324,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
     this._metadata.set(metadata);
 
     this.clearCache();
+    this.#anchors.set(this.getDefinition().getAnchors(this));
   }
 
   getDefinition() {
