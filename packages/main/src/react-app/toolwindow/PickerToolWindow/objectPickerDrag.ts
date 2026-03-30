@@ -11,10 +11,11 @@ import { StaticCanvasComponent } from '@diagram-craft/canvas/canvas/StaticCanvas
 import { createThumbnail } from '@diagram-craft/canvas-app/diagramThumbnail';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
-import { copyStyles, StencilStyle } from '@diagram-craft/model/stencilRegistry';
+import { copyStyles, NodeLinkOptions, StencilStyle } from '@diagram-craft/model/stencilRegistry';
 import { AbstractPickerDrag } from './abstractPickerDrag';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
+import { isNode } from '@diagram-craft/model/diagramElement';
 
 export class ObjectPickerDrag extends AbstractPickerDrag {
   constructor(
@@ -23,7 +24,8 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     readonly diagram: Diagram,
     readonly stencilId: string | undefined,
     readonly styles: Array<StencilStyle>,
-    context: Context
+    context: Context,
+    readonly nodeLinkOptions?: NodeLinkOptions
   ) {
     const sourceBounds = Box.boundingBox(source.map(e => e.bounds));
     const svgElement =
@@ -112,6 +114,16 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
     this._elements.forEach(e => activeLayer.addElement(e, this.uow));
+
+    if (this.nodeLinkOptions !== undefined) {
+      UnitOfWork.execute(this.diagram, uow => {
+        for (const el of this._elements) {
+          if (isNode(el)) {
+            el.getDefinition().setNodeLinkOptions?.(el, this.nodeLinkOptions, uow);
+          }
+        }
+      });
+    }
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this._elements, point, Point.of(scaleX, scaleY), uow);

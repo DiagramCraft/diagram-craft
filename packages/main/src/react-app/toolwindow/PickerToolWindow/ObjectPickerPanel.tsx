@@ -200,7 +200,8 @@ export const ObjectPickerPanel = (props: Props) => {
                   diagram,
                   s.stencil.id,
                   s.stencil.styles ?? [],
-                  app
+                  app,
+                  s.stencil.settings?.nodeLinkOptions
                 ),
                 () => setShowHover(true)
               );

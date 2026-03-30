@@ -94,13 +94,15 @@ export class AnchorHandleDrag extends Drag {
     const previousActions = diagram.undoManager.getToMark();
     const definition = this.node.getDefinition();
 
+    const nodeLinkOptions = definition.getNodeLinkOptions?.(this.node);
+
     /** @see NodeLinkPopup */
     this.context.ui.showNodeLinkPopup(
       this.edge.end.position,
       newNodeId,
       this.edge.id,
       previousActions,
-      definition.getNodeLinkOptions?.(this.node)
+      nodeLinkOptions
     );
   }
 
