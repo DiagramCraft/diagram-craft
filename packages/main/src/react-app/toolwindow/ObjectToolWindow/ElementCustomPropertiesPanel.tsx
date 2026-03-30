@@ -28,6 +28,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { useConfiguration } from '../../context/ConfigurationContext';
 import { TbPencil, TbX } from 'react-icons/tb';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { resolveCssColor } from '@diagram-craft/utils/dom';
 
 const iconService = new IconifyIconService();
 
@@ -36,9 +37,16 @@ const IconPropertyEditor = (props: {
   onChange: (v: string | undefined) => void;
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const previewSrc = props.value
-    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(props.value)}`
-    : undefined;
+
+  let previewSrc: string | undefined;
+
+  if (props.value) {
+    const color = resolveCssColor('var(--base-fg)', [document.body]);
+    const processedSvg = props.value.replace(/currentColor/g, color);
+
+    previewSrc = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(processedSvg)}`;
+  }
+
   return (
     <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
       {previewSrc && <img src={previewSrc} width={20} height={20} alt="icon" />}
