@@ -22,23 +22,24 @@
         cursor: pointer;
       }
     }
+  }
 
-    .ePagination {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      margin-top: 1rem;
+  .ePagination {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
 
-      .eLink {
-        color: var(--cmp-fg);
-        font-weight: normal;
+    .eLink {
+      color: var(--cmp-fg);
+      font-weight: normal;
 
-        &[data-active='true'] {
-          font-weight: bold;
-        }
+      &[data-active='true'] {
+        font-weight: bold;
       }
     }
   }
+
 }
 
 .icRecentStencils {
