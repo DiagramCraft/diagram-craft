@@ -468,6 +468,21 @@ invalid line without colon
     });
   });
 
+  test('parses quoted IDs and text containing escaped quotes', () => {
+    const input = '"my \\"node\\"": text "Hello \\"World\\""';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'my "node"',
+      type: 'node',
+      shape: 'text',
+      name: 'Hello "World"',
+      line: 0
+    });
+  });
+
   test('parses edge with quoted endpoint IDs containing spaces', () => {
     const input = '"e 1": edge "node 1" -> "node 2"';
     const result = parse(input);
@@ -507,6 +522,26 @@ simple: circle`;
       id: 'simple',
       type: 'node',
       shape: 'circle'
+    });
+  });
+
+  test('preserves IDs starting with o instead of dropping the first character', () => {
+    const input = `ouisml9: umlMergeDecision
+onv562r: circle "B"
+oareq1a: umlArtifact "Shopping cart can be checked at any time"
+ddg9hyw: edge onv562r --> ouisml9`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(4);
+    expect(result.elements[0]).toMatchObject({ id: 'ouisml9', type: 'node' });
+    expect(result.elements[1]).toMatchObject({ id: 'onv562r', type: 'node' });
+    expect(result.elements[2]).toMatchObject({ id: 'oareq1a', type: 'node' });
+    expect(result.elements[3]).toMatchObject({
+      id: 'ddg9hyw',
+      type: 'edge',
+      from: 'onv562r',
+      to: 'ouisml9'
     });
   });
 

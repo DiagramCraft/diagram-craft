@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { _test, textToDiagram } from './textToDiagram';
 import type {
   TestDiagramBuilder,
@@ -249,6 +249,35 @@ describe('textToDiagram', () => {
       }
     });
 
+    test('does not rewrite unchanged node text or props', () => {
+      const node = layer.addNode({ id: '1', type: 'text' });
+      UnitOfWork.execute(diagram, uow => {
+        node.setText('Original', uow);
+        node.updateProps(props => {
+          props.fill = { color: '#ff0000' };
+        }, uow);
+      });
+
+      const setTextSpy = vi.spyOn(node, 'setText');
+      const updatePropsSpy = vi.spyOn(node, 'updateProps');
+
+      const elements: ParsedElement[] = [
+        {
+          id: '1',
+          type: 'node',
+          shape: 'text',
+          name: 'Original',
+          props: { fill: { color: '#ff0000' } },
+          line: 0
+        }
+      ];
+
+      textToDiagram(elements, diagram);
+
+      expect(setTextSpy).not.toHaveBeenCalled();
+      expect(updatePropsSpy).not.toHaveBeenCalled();
+    });
+
     test('updates edge connections', () => {
       const n1 = layer.addNode({ id: 'n1', type: 'rect' });
       const n2 = layer.addNode({ id: 'n2', type: 'rect' });
@@ -294,6 +323,42 @@ describe('textToDiagram', () => {
         expect(updated!.labelNodes.length).toBe(1);
         expect(updated!.labelNodes[0]!.node().getText()).toBe('Updated Label');
       }
+    });
+
+    test('does not reconnect or rewrite unchanged edge state', () => {
+      const n1 = layer.addNode({ id: 'n1', type: 'rect' });
+      const n2 = layer.addNode({ id: 'n2', type: 'rect' });
+      const edge = layer.addEdge({ id: 'e1' });
+      UnitOfWork.execute(diagram, uow => {
+        edge.setStart(new AnchorEndpoint(n1, 'c'), uow);
+        edge.setEnd(new AnchorEndpoint(n2, 'c'), uow);
+        edge.updateProps(props => {
+          props.type = 'orthogonal';
+        }, uow);
+      });
+
+      const setStartSpy = vi.spyOn(edge, 'setStart');
+      const setEndSpy = vi.spyOn(edge, 'setEnd');
+      const updatePropsSpy = vi.spyOn(edge, 'updateProps');
+
+      const elements: ParsedElement[] = [
+        { id: 'n1', type: 'node', shape: 'rect', line: 0 },
+        { id: 'n2', type: 'node', shape: 'rect', line: 1 },
+        {
+          id: 'e1',
+          type: 'edge',
+          from: 'n1',
+          to: 'n2',
+          props: { type: 'orthogonal' },
+          line: 2
+        }
+      ];
+
+      textToDiagram(elements, diagram);
+
+      expect(setStartSpy).not.toHaveBeenCalled();
+      expect(setEndSpy).not.toHaveBeenCalled();
+      expect(updatePropsSpy).not.toHaveBeenCalled();
     });
   });
 

@@ -364,4 +364,33 @@ describe('serializer', () => {
     expect(result[0]).toContain('"my node": rect {');
     expect(result.some(line => line.includes('props: "stroke.enabled=false"'))).toBe(true);
   });
+
+  test('escapes quotes in node ID and text', () => {
+    const { layer, diagram } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'my "node"', type: 'text' });
+    UnitOfWork.execute(diagram, uow => node.setText('Hello "World"', uow));
+
+    const result = serialize(layer);
+
+    expect(result).toEqual(['"my \\"node\\"": text "Hello \\"World\\""', '']);
+  });
+
+  test('escapes quotes in edge label and endpoint IDs', () => {
+    const { layer, diagram } = TestModel.newDiagramWithLayer();
+    const node1 = layer.addNode({ id: 'node "1"', type: 'rect' });
+    const node2 = layer.addNode({ id: 'node 2', type: 'rect' });
+    const edge = layer.addEdge({ id: 'edge "1"' });
+    const labelNode = layer.createNode({ id: 'label', type: 'text' });
+
+    UnitOfWork.execute(diagram, uow => edge.setStart(new AnchorEndpoint(node1, 'c'), uow));
+    UnitOfWork.execute(diagram, uow => edge.setEnd(new AnchorEndpoint(node2, 'c'), uow));
+    UnitOfWork.execute(diagram, uow => labelNode.setText('says "hi"', uow));
+    UnitOfWork.execute(diagram, uow => edge.addChild(labelNode, uow));
+    edge.labelNodes.push(labelNode.asLabelNode());
+
+    const result = serialize(layer);
+    const edgeLine = result.find(line => line.startsWith('"edge \\"1\\"":'));
+
+    expect(edgeLine).toBe('"edge \\"1\\"": edge "node \\"1\\"" -- "node 2" "says \\"hi\\""');
+  });
 });
