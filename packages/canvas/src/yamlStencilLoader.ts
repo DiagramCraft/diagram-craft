@@ -5,6 +5,7 @@ import {
   type Stencil,
   STENCIL_ID_DELIMITER,
   type StencilPackage,
+  type StencilStyleVariant,
   type StencilSubPackage
 } from '@diagram-craft/model/stencilRegistry';
 import { deserializeDiagramElements } from '@diagram-craft/model/serialization/deserialize';
@@ -19,9 +20,16 @@ import { StencilUtils } from '@diagram-craft/model/stencilUtils';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge, isNonNullObj } from '@diagram-craft/utils/object';
 
+type YamlStyleVariant = {
+  id: string;
+  name: string;
+  styles: Array<YamlStencilStyle>;
+};
+
 export type YamlStencilFile = {
   stencils: Array<YamlStencilDefinition>;
   styles?: Array<YamlStencilStyle>;
+  variants?: Array<YamlStyleVariant>;
 };
 
 export type YamlStencilStylesFile = {
@@ -64,6 +72,7 @@ type PendingStencilFinalization = {
   stencilDefs: Array<StencilDef>;
   subPackage?: StencilSubPackage;
   styles: Array<YamlStencilStyle>;
+  variants?: Array<YamlStyleVariant>;
 };
 
 export class YamlStencilLoader {
@@ -91,6 +100,21 @@ export class YamlStencilLoader {
   apply() {
     const stylesById = this.getStylesById();
     const stencilIdsByTarget = this.getStencilIdsBySubPackage();
+
+    // Collect package-level variants from all registrations
+    const variantMap = new Map<string, StencilStyleVariant>();
+    for (const finalization of this.pendingStencilFinalizations) {
+      if (finalization.variants) {
+        for (const variant of finalization.variants) {
+          if (!variantMap.has(variant.id)) {
+            variantMap.set(variant.id, { id: variant.id, name: variant.name, styles: variant.styles });
+          }
+        }
+      }
+    }
+    if (variantMap.size > 0) {
+      this.pkg.styleVariants = Array.from(variantMap.values());
+    }
 
     for (const finalization of this.pendingStencilFinalizations) {
       const stencilIds = mustExist(
@@ -142,10 +166,22 @@ export class YamlStencilLoader {
     const stylesById = new Map<string, YamlStencilStyle>();
 
     for (const resolution of this.pendingStencilFinalizations) {
+      // Always include flat styles (those without variants).
       for (const style of resolution.styles) {
         const existing = stylesById.get(style.id);
         assert.true(existing === undefined, `dup style ${style.id}`);
         stylesById.set(style.id, style);
+      }
+
+      // When variants are defined, also add the first variant's styles so that
+      // stencil `styles:` references that point to variant IDs resolve correctly.
+      // Variant IDs must not overlap with flat style IDs (they are separate sets).
+      if (resolution.variants && resolution.variants.length > 0 && resolution.variants[0] !== undefined) {
+        for (const style of resolution.variants[0].styles) {
+          const existing = stylesById.get(style.id);
+          assert.true(existing === undefined, `dup style ${style.id} (also defined in flat styles)`);
+          stylesById.set(style.id, style);
+        }
       }
     }
 
@@ -306,7 +342,8 @@ export class YamlStencilLoader {
     this.pendingStencilFinalizations.push({
       stencilDefs: dest,
       subPackage,
-      styles: stencils.styles ?? []
+      styles: stencils.styles ?? [],
+      variants: stencils.variants
     });
   };
 }
@@ -323,12 +360,25 @@ const hasYamlStencilStyleShape = (value: unknown): value is YamlStencilStyle => 
 
 function assertTopLevelStyles(value: Record<string, unknown>, errorPrefix: string): void {
   const styles = value.styles;
-  if (styles === undefined) return;
+  if (styles !== undefined) {
+    if (!Array.isArray(styles)) throw new Error(`${errorPrefix}: bad styles`);
+    for (const style of styles) {
+      assert.true(hasYamlStencilStyleShape(style), `${errorPrefix}: bad styles`);
+    }
+  }
 
-  if (!Array.isArray(styles)) throw new Error(`${errorPrefix}: bad styles`);
-
-  for (const style of styles) {
-    assert.true(hasYamlStencilStyleShape(style), `${errorPrefix}: bad styles`);
+  const variants = value.variants;
+  if (variants !== undefined) {
+    if (!Array.isArray(variants)) throw new Error(`${errorPrefix}: bad variants`);
+    for (const variant of variants) {
+      assert.true(
+        isNonNullObj(variant) && typeof variant.id === 'string' && typeof variant.name === 'string' && Array.isArray(variant.styles),
+        `${errorPrefix}: bad variant`
+      );
+      for (const style of variant.styles as unknown[]) {
+        assert.true(hasYamlStencilStyleShape(style), `${errorPrefix}: bad variant style`);
+      }
+    }
   }
 }
 

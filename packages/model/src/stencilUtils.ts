@@ -13,7 +13,7 @@ import { NoOpCRDTMap, NoOpCRDTRoot } from '@diagram-craft/collaboration/noopCrdt
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { assignNewBounds, cloneElements } from './diagramElementUtils';
 import { isNode } from './diagramElement';
-import type { Stencil, StencilElements } from './stencilRegistry';
+import type { Stencil, StencilElements, StencilStyleVariant } from './stencilRegistry';
 import { Stylesheet } from './diagramStyles';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import { deepClone, getTypedKeys } from '@diagram-craft/utils/object';
@@ -41,6 +41,34 @@ export const addStencilStylesToDocument = (
   const styleManager = document.styles;
   for (const style of stencil.styles ?? []) {
     if (styleManager.get(style.id) === undefined) {
+      const stylesheet = Stylesheet.fromSnapshot(
+        style.type,
+        style,
+        styleManager.crdt.factory,
+        styleManager
+      );
+      styleManager.addStylesheet(style.id, stylesheet, uow);
+    }
+  }
+};
+
+/**
+ * Applies a variant's styles to the document.
+ * - If a stylesheet with the same ID already exists: updates its props (variant switching).
+ * - If it does not exist yet: adds it (first-time drop).
+ */
+export const applyVariantToDocument = (
+  variant: StencilStyleVariant,
+  document: DiagramDocument,
+  uow: UnitOfWork
+): void => {
+  const styleManager = document.styles;
+  for (const style of variant.styles) {
+    const existing = styleManager.get(style.id);
+    if (existing !== undefined) {
+      existing.setProps(style.props, uow);
+      if (style.name) existing.setName(style.name, uow);
+    } else {
       const stylesheet = Stylesheet.fromSnapshot(
         style.type,
         style,

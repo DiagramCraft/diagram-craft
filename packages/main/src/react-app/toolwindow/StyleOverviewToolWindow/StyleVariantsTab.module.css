@@ -1,0 +1,36 @@
+.icStyleVariantsTab {
+  .eList {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .eRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .ePackageName {
+      flex: 1;
+      font-size: 0.75rem;
+      color: var(--base-fg);
+      font-weight: 500;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :global(.cSelectTrigger) {
+      width: 8rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .eEmpty {
+    padding: 1rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--base-fg-dim);
+  }
+}

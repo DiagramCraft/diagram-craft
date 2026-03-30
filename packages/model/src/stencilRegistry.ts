@@ -56,6 +56,7 @@ export type StencilSubPackage = {
   name: string;
   stencils: Array<Stencil>;
 };
+
 export type StencilPackage = {
   id: string;
   name?: string;
@@ -63,6 +64,7 @@ export type StencilPackage = {
   type: 'default' | string;
 
   subPackages?: Array<StencilSubPackage>;
+  styleVariants?: Array<StencilStyleVariant>;
 };
 
 export type StencilStyle = {
@@ -72,6 +74,12 @@ export type StencilStyle = {
   props: ElementProps;
   strokeColors?: string[];
   fillColors?: string[];
+};
+
+export type StencilStyleVariant = {
+  id: string;
+  name: string;
+  styles: Array<StencilStyle>;
 };
 
 /* Stencil Loader ******************************************************************* */
