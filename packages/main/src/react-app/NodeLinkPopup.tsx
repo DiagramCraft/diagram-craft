@@ -330,7 +330,10 @@ const useNodeLinkPopupController = ({
       UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
         applyStencilToNode(diagram, node, layer, stencil, uow);
 
-        const stencilBounds = stencil.forCanvas(diagram.document.registry).bounds;
+        const { bounds: stencilBounds, elements: stencilElements } = stencil.forCanvas(
+          diagram.document.registry
+        );
+
         const center = Box.center(node.bounds);
         node.setBounds(
           {
@@ -342,6 +345,18 @@ const useNodeLinkPopupController = ({
           },
           uow
         );
+
+        if (stencilElements.length === 1 && isNode(stencilElements[0])) {
+          const stencilNode = stencilElements[0];
+          for (const key of Object.keys(node.texts)) {
+            if (!(key in stencilNode.texts)) {
+              node.setText('', uow, key);
+            }
+          }
+          for (const [key, value] of Object.entries(stencilNode.texts)) {
+            node.setText(value, uow, key);
+          }
+        }
       });
 
       recentStencils.register(stencil.id);
