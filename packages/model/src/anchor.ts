@@ -445,13 +445,13 @@ export const AnchorStrategy = {
 
           const point = Point.of(x, y);
           const normalizedStart = toNormalizedCoords(point, node.bounds);
-          const rotatedPoint = Point.rotateAround(point, -node.bounds.r, Box.center(node.bounds));
 
           const normal = adjustNormalDirection(
             Vector.angle(Vector.tangentToNormal(p.tangent(pct))) - node.bounds.r,
             direction,
             node.bounds,
-            rotatedPoint
+            point,
+            paths
           );
 
           newAnchors.push({
@@ -522,14 +522,14 @@ export const AnchorStrategy = {
         const point = path.pointAt({ pathD: pct * length });
 
         const normalizedStart = toNormalizedCoords(point, node.bounds);
-        const rotatedPoint = Point.rotateAround(point, -node.bounds.r, Box.center(node.bounds));
 
         const normal = adjustNormalDirection(
           Vector.angle(Vector.tangentToNormal(path.tangentAt({ pathD: pct * length }))) -
             node.bounds.r,
           direction,
           node.bounds,
-          rotatedPoint
+          point,
+          paths
         );
 
         newAnchors.push({
@@ -578,20 +578,40 @@ const toNormalizedCoords = (point: Point, bounds: Box): Point => {
  *
  * Ensures that anchor normals point in the correct direction (typically outward from
  * the node) based on how the boundary path is wound.
+ *
+ * For shapes larger than 8px in their smallest dimension, nudges a point 2px (or
+ * proportionally less for smaller shapes) along the candidate normal and checks if
+ * it lands inside the shape — if so, the normal is flipped. This approach is reliable
+ * for hollow or concave shapes where the center-point heuristic fails.
+ *
+ * For very small shapes (min dimension < 8px), falls back to the center-point dot
+ * product method, since a nudge of even 1px may overshoot the far boundary.
  */
 const adjustNormalDirection = (
   baseNormal: number,
   direction: BoundaryDirection,
   bounds: Box,
-  point: Point
+  absolutePoint: Point,
+  paths: PathList
 ): number => {
   let normal = baseNormal;
 
   if (direction === 'unknown') {
-    // Check if normal points inward by testing dot product with vector from center
-    const tangent = Vector.from(Box.center(bounds), point);
-    if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
-      normal += Math.PI; // Flip to point outward
+    const minDim = Math.min(bounds.w, bounds.h);
+    if (minDim < 8) {
+      // Shape too small for reliable nudge — fall back to center-point dot product
+      const rotatedPoint = Point.rotateAround(absolutePoint, -bounds.r, Box.center(bounds));
+      const tangent = Vector.from(Box.center(bounds), rotatedPoint);
+      if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
+        normal += Math.PI;
+      }
+    } else {
+      // Nudge along the candidate normal and check containment
+      const nudge = Math.min(2, minDim * 0.15);
+      const nudged = Point.add(absolutePoint, Vector.fromPolar(normal, nudge));
+      if (paths.isInside(nudged)) {
+        normal += Math.PI;
+      }
     }
   } else if (direction === 'clockwise') {
     normal += Math.PI;
