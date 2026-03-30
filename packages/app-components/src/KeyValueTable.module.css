@@ -25,7 +25,7 @@
   }
 
   &[data-type="wide"] {
-    grid-template-columns: 1fr 5rem !important;
+    grid-template-columns: 1fr 1fr;
   }
 
   &[data-type="inline"] {
