@@ -48,14 +48,26 @@
   .eHighlightedText {
     border: 1px solid transparent;
     margin: 0;
-    overflow: scroll;
+    overflow: hidden;
     position: absolute;
     inset: 0;
     padding: var(--_padding);
+    white-space: pre;
+    pointer-events: none;
 
     &:focus {
       border: 1px solid var(--accent-chroma);
       outline: none;
+    }
+
+    code {
+      display: block;
+      min-width: max-content;
+    }
+
+    .eHighlightedLine {
+      display: block;
+      min-height: 15px;
     }
 
     :global(.syntax-label) {

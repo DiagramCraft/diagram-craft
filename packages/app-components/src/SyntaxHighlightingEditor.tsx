@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState
+} from 'react';
 import { extractDataAttributes } from './utils';
 import styles from './SyntaxHighlightingEditor.module.css';
 import { assert } from '@diagram-craft/utils/assert';
@@ -32,6 +39,15 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
       getValue: () => value,
       setValue: value => setInternalValue(value)
     }));
+
+    useLayoutEffect(() => {
+      if (!textareaRef.current || !preElementRef.current) {
+        return;
+      }
+
+      preElementRef.current.scrollTop = textareaRef.current.scrollTop;
+      preElementRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }, [value, maximized]);
 
     // Calculate min-height for browsers that don't support attr() in calc()
     useEffect(() => {
@@ -131,7 +147,8 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
     const highlightedLines = (props.highlighter ? props.highlighter(lines) : lines).map(
       (l, idx) => {
         const error = props.errors?.get(idx);
-        return `<span class="${error ? styles.syntaxError : ''}">${l}</span>`;
+        const lineClassName = error ? `${styles.eHighlightedLine} ${styles.syntaxError}` : styles.eHighlightedLine;
+        return `<span class="${lineClassName}">${l || '&#8203;'}</span>`;
       }
     );
 
@@ -147,6 +164,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           ref={textareaRef}
           className={styles.eEditor}
           spellCheck={false}
+          wrap={'off'}
           disabled={props.disabled}
           onKeyDown={onKeydown}
           onInput={e => {
@@ -167,7 +185,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           <code
             ref={codeElementRef}
             dangerouslySetInnerHTML={{
-              __html: highlightedLines.join('\n')
+              __html: highlightedLines.join('')
             }}
           />
         </pre>
