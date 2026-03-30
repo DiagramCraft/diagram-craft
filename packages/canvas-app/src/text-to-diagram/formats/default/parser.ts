@@ -257,10 +257,24 @@ const tokenize = (text: string): TokenizationResult => {
           tokens.push({ type: TokenType.ARROW, value: notation, line: lineNum, col: startCol });
           continue;
         } else {
-          // Not arrow notation, reset and treat as unknown character
-          col = startCol + 1;
-          continue;
+          // Not arrow notation after all, so rewind and let the identifier
+          // tokenizer or later rules consume this character.
+          col = startCol;
         }
+      }
+
+      // Identifier or keyword
+      if (/[a-zA-Z0-9_-]/.test(char)) {
+        const startCol = col;
+        let value = '';
+        while (col < line.length && /[a-zA-Z0-9_-]/.test(line[col]!)) {
+          value += line[col];
+          col++;
+        }
+
+        const type = KEYWORDS.has(value) ? TokenType.KEYWORD : TokenType.ID;
+        tokens.push({ type, value, line: lineNum, col: startCol });
+        continue;
       }
 
       // Single character tokens
@@ -285,20 +299,6 @@ const tokenize = (text: string): TokenizationResult => {
       if (char === '/') {
         tokens.push({ type: TokenType.SLASH, value: '/', line: lineNum, col });
         col++;
-        continue;
-      }
-
-      // Identifier or keyword
-      if (/[a-zA-Z0-9_-]/.test(char)) {
-        const startCol = col;
-        let value = '';
-        while (col < line.length && /[a-zA-Z0-9_-]/.test(line[col]!)) {
-          value += line[col];
-          col++;
-        }
-
-        const type = KEYWORDS.has(value) ? TokenType.KEYWORD : TokenType.ID;
-        tokens.push({ type, value, line: lineNum, col: startCol });
         continue;
       }
 
