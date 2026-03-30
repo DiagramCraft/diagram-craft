@@ -7,11 +7,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  copyStyles,
-  Stencil,
-  stencilScaleStrokes
-} from '@diagram-craft/model/stencilRegistry';
+import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { createThumbnailFromStencil } from '@diagram-craft/canvas-app/diagramThumbnail';
@@ -155,12 +151,12 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
             if (e.key !== 'Enter') return;
             doIconSearch(searchRef.current?.value ?? '');
           }}
-          style={{ flexGrow: 1 }}
+          style={{ flexGrow: 1, minWidth: '30%' }}
         />
         <Button variant={'primary'} onClick={() => doIconSearch(searchRef.current?.value ?? '')}>
           Search
         </Button>
-        &nbsp;
+        &nbsp;&nbsp;
         <Select.Root
           value={selectedCollection}
           onChange={handleCollectionChange}
@@ -198,7 +194,7 @@ const IconsTabContent = (props: { onOk: (data: ShapeSelectResult) => void }) => 
       {totalPages > 1 && (
         <div className={styles.ePagination}>
           Page:
-          {range(0, totalPages).map(p => (
+          {range(0, Math.min(25, totalPages)).map(p => (
             <a
               key={p}
               href={'#'}
@@ -313,14 +309,16 @@ export const ShapeSelectDialog = (props: Props) => {
           className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icSearchResults}`}
         >
           {!isEmptyString(search) &&
-            stencils.filter(shouldIncludeStencil).map(stencil => (
-              <StencilView
-                key={stencil.id}
-                stencil={stencil}
-                diagram={diagram}
-                onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
-              />
-            ))}
+            stencils
+              .filter(shouldIncludeStencil)
+              .map(stencil => (
+                <StencilView
+                  key={stencil.id}
+                  stencil={stencil}
+                  diagram={diagram}
+                  onClick={() => props.onOk({ id: stencil.id, type: 'stencil' })}
+                />
+              ))}
         </div>
       </>
     ),
