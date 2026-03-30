@@ -468,6 +468,21 @@ invalid line without colon
     });
   });
 
+  test('parses quoted IDs and text containing escaped quotes', () => {
+    const input = '"my \\"node\\"": text "Hello \\"World\\""';
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'my "node"',
+      type: 'node',
+      shape: 'text',
+      name: 'Hello "World"',
+      line: 0
+    });
+  });
+
   test('parses edge with quoted endpoint IDs containing spaces', () => {
     const input = '"e 1": edge "node 1" -> "node 2"';
     const result = parse(input);

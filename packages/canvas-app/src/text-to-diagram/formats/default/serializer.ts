@@ -16,9 +16,13 @@ type ElementMetadata = {
 // biome-ignore lint/suspicious/noExplicitAny: this needs to handle both NodeProps and EdgeProps
 type ElementProps = any;
 
-const needsQuotes = (id: string) => id.includes(' ');
+const escapeString = (value: string) => value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 
-const formatId = (id: string) => (needsQuotes(id) ? `"${id}"` : id);
+const needsQuotes = (id: string) => !/^[a-zA-Z0-9_-]+$/.test(id);
+
+const formatString = (value: string) => `"${escapeString(value)}"`;
+
+const formatId = (id: string) => (needsQuotes(id) ? formatString(id) : id);
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
@@ -55,7 +59,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     node += ` ${element.nodeType}`;
 
     if (element.texts.text) {
-      node += ` "${element.texts.text}"`;
+      node += ` ${formatString(element.texts.text)}`;
     }
 
     const sublines: string[] = [];
@@ -77,12 +81,12 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
     const propsS = serializeProps(element.storedProps);
     if (propsS) {
-      sublines.push(`${indent}  props: "${propsS}"`);
+      sublines.push(`${indent}  props: ${formatString(propsS)}`);
     }
 
     const metadataS = serializeMetadata(element.metadata);
     if (metadataS) {
-      sublines.push(`${indent}  metadata: "${metadataS}"`);
+      sublines.push(`${indent}  metadata: ${formatString(metadataS)}`);
     }
 
     if (sublines.length > 0) {
@@ -130,7 +134,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
     const hasSingleLabelNode = element.labelNodes.length === 1;
     if (hasSingleLabelNode) {
-      edge += ` "${element.labelNodes[0]!.node().texts.text}"`;
+      edge += ` ${formatString(element.labelNodes[0]!.node().texts.text)}`;
     }
 
     const sublines: string[] = [];
@@ -145,7 +149,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
 
     const propsS = serializeProps(propsWithoutArrow);
     if (propsS) {
-      sublines.push(`${indent}  props: "${propsS}"`);
+      sublines.push(`${indent}  props: ${formatString(propsS)}`);
     }
 
     if (sublines.length > 0) {
