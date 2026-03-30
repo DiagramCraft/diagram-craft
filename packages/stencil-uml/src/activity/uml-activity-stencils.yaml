@@ -11,10 +11,29 @@ styles:
           type: SQUARE_STICK_ARROW
       effects:
         rounding: true
-
+variants:
+  - id: default
+    name: Default
+    styles:
+      - id: uml-shape
+        name: UML Shape
+        type: node
+        props: { }
+  - id: classic
+    name: Classic
+    styles:
+      - id: uml-shape
+        name: UML Shape
+        type: node
+        props:
+          fill:
+            color: "#fbffd0"
+          stroke:
+            color: "#9d3b59"
 stencils:
   - id: 'uml-activity-activity'
     name: Activity
+    styles: [ uml-shape ]
     elements:
       - id: umlactivity02
         type: node
@@ -36,7 +55,7 @@ stencils:
             umlActivity:
               type: activity
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: Activity
