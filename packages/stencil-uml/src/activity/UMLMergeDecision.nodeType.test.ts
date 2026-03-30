@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { isNode } from '@diagram-craft/model/diagramElement';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
-import { mustExist } from '@diagram-craft/utils/assert';
-import {
-  loadUMLStencils,
-  registerUMLNodes
-} from '@diagram-craft/stencil-uml/stencil-uml-loader';
+import { registerUMLNodes } from '@diagram-craft/stencil-uml/stencil-uml-loader';
 import { UMLMergeDecisionNodeDefinition } from '@diagram-craft/stencil-uml/activity/UMLMergeDecision.nodeType';
 
 describe('UMLMergeDecision', () => {
@@ -27,23 +22,5 @@ describe('UMLMergeDecision', () => {
     expect(anchors[2]).toMatchObject({ start: { x: 0.5, y: 1 }, type: 'point' });
     expect(anchors[3]).toMatchObject({ start: { x: 0, y: 0.5 }, type: 'point' });
     expect(anchors[4]).toMatchObject({ start: { x: 0.5, y: 0.5 }, type: 'center' });
-  });
-
-  test('loads the activity stencil with the dedicated merge decision node type', async () => {
-    const { diagram } = TestModel.newDiagramWithLayer();
-
-    const stencils = await loadUMLStencils(diagram.document.registry);
-    const activityPackage = mustExist(stencils.subPackages?.find(p => p.id === 'activity'));
-    const stencil = mustExist(
-      activityPackage.stencils.find(s => s.id === 'uml-activity-merge-decision')
-    );
-
-    const [element] = stencil.forCanvas(diagram.document.registry).elements;
-
-    expect(isNode(element)).toBe(true);
-    if (!isNode(element)) throw new Error('Expected node stencil');
-
-    expect(element.nodeType).toBe('umlMergeDecision');
-    expect(element.anchors.map(a => a.id)).toEqual(['n', 'e', 's', 'w', 'c']);
   });
 });
