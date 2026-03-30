@@ -2,6 +2,7 @@ import { PickerCanvas } from './PickerCanvas';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover } from '@diagram-craft/app-components/Popover';
 import { Point } from '@diagram-craft/geometry/point';
+import { Box } from '@diagram-craft/geometry/box';
 import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
 import {
@@ -328,6 +329,19 @@ const useNodeLinkPopupController = ({
 
       UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
         applyStencilToNode(diagram, node, layer, stencil, uow);
+
+        const stencilBounds = stencil.forCanvas(diagram.document.registry).bounds;
+        const center = Box.center(node.bounds);
+        node.setBounds(
+          {
+            x: center.x - stencilBounds.w / 2,
+            y: center.y - stencilBounds.h / 2,
+            w: stencilBounds.w,
+            h: stencilBounds.h,
+            r: node.bounds.r
+          },
+          uow
+        );
       });
 
       recentStencils.register(stencil.id);
