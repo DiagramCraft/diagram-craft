@@ -105,6 +105,28 @@ export class YamlStencilLoader {
           finalization.subPackage
         );
         def.stencil.styles = this.resolveStyles(def.yamlStencil.styles, stylesById);
+
+        // Also include styles referenced via nodeLinkOptions so they are available
+        // when the stencil is dropped onto the canvas (copyStyles, addStencilStylesToDocument, etc.)
+        const nodeLinkOptions = def.stencil.settings?.nodeLinkOptions;
+        if (nodeLinkOptions) {
+          const existingIds = new Set(def.stencil.styles?.map(s => s.id));
+          const referencedIds = [
+            ...(nodeLinkOptions.edgeStylesheetIds ?? []),
+            ...(nodeLinkOptions.combinations?.flatMap(c =>
+              c.edgeStylesheetId !== undefined ? [c.edgeStylesheetId] : []
+            ) ?? [])
+          ];
+          for (const id of referencedIds) {
+            if (!existingIds.has(id)) {
+              const style = stylesById.get(id);
+              if (style) {
+                def.stencil.styles = [...(def.stencil.styles ?? []), deepClone(style)];
+                existingIds.add(id);
+              }
+            }
+          }
+        }
       }
     }
 

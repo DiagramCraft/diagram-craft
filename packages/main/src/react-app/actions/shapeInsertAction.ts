@@ -7,6 +7,7 @@ import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
 import { IconifyIconService } from '@diagram-craft/canvas-app/icon/IconifyIconService';
@@ -60,6 +61,9 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
 
               for (const node of newElements) {
                 layer.addElement(node, uow);
+                if (isNode(node) && stencil.settings?.nodeLinkOptions !== undefined) {
+                  node.getDefinition().setNodeLinkOptions?.(node, stencil.settings.nodeLinkOptions, uow);
+                }
               }
 
               assignNewBounds(
