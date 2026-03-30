@@ -7,21 +7,31 @@ import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { deepMerge } from '@diagram-craft/utils/object';
+import { deepMerge, isNonNullObj } from '@diagram-craft/utils/object';
 import { type ParsedElement } from './types';
 import { collectElementIds } from './utils';
 import { placeNode } from '@diagram-craft/canvas/utils/placeNode';
 import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+// Parsed text only includes explicitly serialized values, while the live model also
+// contains defaults and derived state. This checks whether applying the parsed fragment
+// would actually change the current value.
+const isPartialMatch = (current: unknown, parsed: unknown): boolean => {
+  if (Array.isArray(parsed)) {
+    // Arrays are compared positionally because parsed edge/node fragments
+    // should only be treated as unchanged when the full serialized array matches.
+    if (!Array.isArray(current) || current.length !== parsed.length) return false;
 
-const matchesPartial = (current: unknown, parsed: unknown): boolean => {
-  if (isObject(parsed)) {
-    if (!isObject(current)) return false;
+    return parsed.every((value, index) => isPartialMatch(current[index], value));
+  }
+
+  if (isNonNullObj(parsed)) {
+    // Objects are treated as partial patches: every parsed key must already
+    // match in the live value, but extra keys in the live model are allowed.
+    if (!isNonNullObj(current)) return false;
 
     for (const [key, value] of Object.entries(parsed)) {
-      if (!matchesPartial(current[key], value)) {
+      if (!isPartialMatch(current[key], value)) {
         return false;
       }
     }
@@ -140,7 +150,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           // Update props
           if (
             parsedElement.props &&
-            !matchesPartial(existingElement.storedProps, parsedElement.props as Partial<NodeProps>)
+            !isPartialMatch(existingElement.storedProps, parsedElement.props as Partial<NodeProps>)
           ) {
             existingElement.updateProps(props => {
               deepMerge(props, parsedElement.props as Partial<NodeProps>);
@@ -150,7 +160,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           // Update metadata
           if (
             parsedElement.metadata &&
-            !matchesPartial(existingElement.metadata, parsedElement.metadata)
+            !isPartialMatch(existingElement.metadata, parsedElement.metadata)
           ) {
             existingElement.updateMetadata(metadata => {
               Object.assign(metadata, parsedElement.metadata);
@@ -187,7 +197,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           // Update edge props
           if (
             parsedElement.props &&
-            !matchesPartial(existingElement.storedProps, parsedElement.props as Partial<EdgeProps>)
+            !isPartialMatch(existingElement.storedProps, parsedElement.props as Partial<EdgeProps>)
           ) {
             existingElement.updateProps(props => {
               deepMerge(props, parsedElement.props as Partial<EdgeProps>);
@@ -197,7 +207,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           // Update metadata
           if (
             parsedElement.metadata &&
-            !matchesPartial(existingElement.metadata, parsedElement.metadata)
+            !isPartialMatch(existingElement.metadata, parsedElement.metadata)
           ) {
             existingElement.updateMetadata(metadata => {
               Object.assign(metadata, parsedElement.metadata);
