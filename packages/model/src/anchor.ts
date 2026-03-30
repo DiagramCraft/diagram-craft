@@ -592,24 +592,25 @@ const adjustNormalDirection = (
   direction: BoundaryDirection,
   bounds: Box,
   absolutePoint: Point,
-  paths: PathList
+  paths?: PathList
 ): number => {
   let normal = baseNormal;
 
   if (direction === 'unknown') {
     const minDim = Math.min(bounds.w, bounds.h);
-    if (minDim < 8) {
-      // Shape too small for reliable nudge — fall back to center-point dot product
-      const rotatedPoint = Point.rotateAround(absolutePoint, -bounds.r, Box.center(bounds));
-      const tangent = Vector.from(Box.center(bounds), rotatedPoint);
-      if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
-        normal += Math.PI;
-      }
-    } else {
+    if (paths !== undefined && minDim >= 8) {
       // Nudge along the candidate normal and check containment
       const nudge = Math.min(2, minDim * 0.15);
       const nudged = Point.add(absolutePoint, Vector.fromPolar(normal, nudge));
       if (paths.isInside(nudged)) {
+        normal += Math.PI;
+      }
+    } else {
+      // Shape too small for reliable nudge, or no paths available —
+      // fall back to center-point dot product
+      const rotatedPoint = Point.rotateAround(absolutePoint, -bounds.r, Box.center(bounds));
+      const tangent = Vector.from(Box.center(bounds), rotatedPoint);
+      if (Vector.dotProduct(tangent, Vector.fromPolar(normal, 1)) < 0) {
         normal += Math.PI;
       }
     }
