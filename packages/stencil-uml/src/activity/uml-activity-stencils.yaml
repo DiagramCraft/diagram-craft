@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-activity-activity'
     name: Activity
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity02
         type: node
@@ -24,14 +24,14 @@ stencils:
               type: activity
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Activity
         tags:
 
   - id: 'uml-activity-activity-call'
     name: Activity
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity01
         type: node
@@ -54,14 +54,14 @@ stencils:
               type: call-activity-action
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Activity
         tags:
 
   - id: 'uml-activity-send-signal-action'
     name: Send Signal Action
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity03
         type: node
@@ -84,14 +84,14 @@ stencils:
               type: send-signal-action
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Send Signal
         tags:
 
   - id: 'uml-activity-accept-event-action'
     name: Accept Event Action
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity04
         type: node
@@ -114,7 +114,7 @@ stencils:
               type: accept-event-action
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Accept Event
         tags:
@@ -287,7 +287,7 @@ stencils:
 
   - id: 'uml-connector'
     name: Connector
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: tl85q8x
         type: node
@@ -304,7 +304,7 @@ stencils:
             bold: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: B
         tags:

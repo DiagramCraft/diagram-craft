@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-use-case-use-case'
     name: Use Case
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umluc01
         type: node
@@ -16,14 +16,14 @@ stencils:
         props: { }
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Use Case"
         tags:
 
   - id: 'uml-use-case-business-use-case'
     name: Business Use Case
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlbuc01
         type: node
@@ -41,14 +41,14 @@ stencils:
               type: business
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Business Use Case"
         tags:
 
   - id: 'uml-use-case-split'
     name: Split Use Case
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: hai7xye
         type: node
@@ -66,14 +66,14 @@ stencils:
               type: split
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Split <br><br>Use Case"
         tags:
 
   - id: 'uml-use-case-subject'
     name: Subject
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: u163l3u
         type: node
@@ -95,7 +95,7 @@ stencils:
             valign: top
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "&lt;&lt;Business&gt;&gt;<br><b>Subject Name</b>"
         tags:

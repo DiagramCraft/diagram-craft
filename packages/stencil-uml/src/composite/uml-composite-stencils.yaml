@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-composite-structured-classifier'
     name: Structured Classifier
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlstructuredclassifier01
         type: node
@@ -26,7 +26,7 @@ stencils:
             bold: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Structured Classifier"
         tags:

@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-state-state'
     name: State
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: w7ugehm
         type: node
@@ -37,7 +37,7 @@ stencils:
             right: 8
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<p>Active</p>"
           internalActivities: ""
@@ -45,7 +45,7 @@ stencils:
 
   - id: 'uml-state-state-with-internal-activities'
     name: State with internal activities
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: ll3pci4
         type: node
@@ -81,15 +81,15 @@ stencils:
             right: 8
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<p>Active</p>"
-          internalActivities: "<p>entry/ Call<br><span style=\"color: var(--canvas-fg);\">exit/ Delete</span></p>"
+          internalActivities: "<p>entry/ Call<br><span>exit/ Delete</span></p>"
         tags:
 
   - id: 'uml-state-composite-state'
     name: Composite state
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: 2185hej
         type: node
@@ -146,7 +146,7 @@ stencils:
                     right: 8
                 metadata:
                   style: default
-                  textStyle: default-text-default
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>Active</p>"
                   internalActivities: ""
@@ -185,7 +185,7 @@ stencils:
                     right: 8
                 metadata:
                   style: uml-shape
-                  textStyle: default-text-default
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>State A</p>"
                   internalActivities: ""
@@ -224,7 +224,7 @@ stencils:
                     right: 8
                 metadata:
                   style: uml-shape
-                  textStyle: default-text-default
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>State B</p>"
                   internalActivities: ""

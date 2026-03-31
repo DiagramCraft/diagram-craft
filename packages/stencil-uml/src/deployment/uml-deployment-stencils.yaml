@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-deployment-artifact'
     name: Artifact
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlDeploymentArtifactStereotype
         type: node
@@ -35,7 +35,7 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;artifact&gt;&gt;</span></div><span style=\"font-style: normal;\">web-app.war</span>"
         tags:
@@ -81,7 +81,7 @@ stencils:
         tags:
   - id: 'uml-deployment-node'
     name: Node
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlDeploymentNode
         type: node
@@ -101,7 +101,7 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: app-server
         tags:

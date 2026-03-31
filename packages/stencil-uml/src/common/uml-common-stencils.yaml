@@ -15,6 +15,10 @@ variants:
           type: orthogonal
           effects:
             rounding: true
+      - id: uml-shape-text
+        name: UML Shape Text
+        type: text
+        props: { }
       - id: uml-association
         name: UML Association
         type: edge
@@ -118,6 +122,12 @@ variants:
           type: orthogonal
           effects:
             rounding: true
+      - id: uml-shape-text
+        name: UML Shape Text
+        type: text
+        props:
+          text:
+            color: black
       - id: uml-association
         name: UML Association
         type: edge
@@ -208,7 +218,7 @@ stencils:
 
   - id: 'uml-common-frame'
     name: Frame
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlframe01
         type: node
@@ -233,7 +243,7 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Label"
         tags:
@@ -270,7 +280,7 @@ stencils:
 
   - id: 'uml-note'
     name: Note
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: h9e8hdj
         type: node
@@ -303,7 +313,7 @@ stencils:
               stereotypeIcon: empty
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Note
         tags:

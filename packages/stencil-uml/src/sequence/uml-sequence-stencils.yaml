@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-sequence-lifeline'
     name: Lifeline
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umllifeline-container01
         type: node
@@ -31,7 +31,7 @@ stencils:
                 right: 6
             metadata:
               style: uml-shape
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "Participant"
             tags:
@@ -260,7 +260,7 @@ stencils:
 
   - id: 'uml-sequence-state-symbol'
     name: State Symbol
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: wvi1k24
         type: node
@@ -278,14 +278,14 @@ stencils:
               radius: 2.8970446965731753
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Finished
         tags:
 
   - id: 'uml-sequence-combined-alt'
     name: Alt
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: rsn1l8z
         type: node
@@ -366,19 +366,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<b>alt</b>"
         tags:
 
   - id: 'uml-sequence-combined-opt'
     name: Opt
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: ye9tw8q
         type: node
@@ -432,19 +429,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<b>opt</b>"
         tags:
 
   - id: 'uml-sequence-combined-loop'
     name: Loop
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: q9bqs5u
         type: node
@@ -469,19 +463,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<b>loop</b>"
         tags:
 
   - id: 'uml-sequence-combined-par'
     name: Parallel
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: a8mhn1n
         type: node
@@ -590,12 +581,9 @@ stencils:
             right: 6
           fill:
             enabled: false
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<b>par</b>"
         tags:

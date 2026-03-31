@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-package-package'
     name: Package
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlpkg01
         type: node
@@ -24,14 +24,14 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Package"
         tags:
 
   - id: 'uml-package-template'
     name: Template Package
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     settings:
       marginRight: 35
     elements:
@@ -56,7 +56,7 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Package"
           template: "T"
@@ -64,7 +64,7 @@ stencils:
 
   - id: 'uml-package-model'
     name: Model Package
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlpkg02
         type: node
@@ -88,7 +88,7 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "Package"
         tags:

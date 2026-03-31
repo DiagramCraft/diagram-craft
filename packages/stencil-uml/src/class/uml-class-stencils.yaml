@@ -1,7 +1,7 @@
 stencils:
   - id: 'uml-class-abstract-class'
     name: Abstract Class
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: vqmthpw
         type: node
@@ -40,7 +40,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "+ email: String {id}&nbsp;<div>+ title: String&nbsp;<div>+ firstName: String</div></div><div>+ lastName: String</div>"
             tags:
@@ -70,7 +70,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "+ send(subject: String, body: String)"
             tags:
@@ -95,14 +95,14 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Person
         tags:
 
   - id: 'uml-class-class'
     name: Class
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: 8wev7u1
         type: node
@@ -140,7 +140,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "- employeeNumber: String {id}<div>- salary: Number</div>"
             tags:
@@ -170,7 +170,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "+ paySalary()<div>+ promote()</div>"
             tags:
@@ -195,13 +195,13 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<span style=\"font-style: normal;\">Employee</span>"
         tags:
   - id: 'uml-class-enumeration'
     name: Enumeration
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: 29u9hbj
         type: node
@@ -239,7 +239,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "Red<div>Green</div><div>Blue</div>"
             tags:
@@ -264,13 +264,13 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;enumeration&gt;&gt;</span></div><span style=\"font-style: normal;\">Color</span>"
         tags:
   - id: 'uml-class-with-stereotype'
     name: Class with Stereotype
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: 9oejapf
         type: node
@@ -308,7 +308,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "employeeNumber: String {id}<div>salary: Number</div>"
             tags:
@@ -333,13 +333,13 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;entity&gt;&gt;</span></div><span style=\"font-style: normal;\">Employee</span>"
         tags:
   - id: 'uml-class-template-class'
     name: Template Class
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     settings:
       marginRight: 32
     elements:
@@ -379,7 +379,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "- attribute: Type"
             tags:
@@ -409,7 +409,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "+ method()"
             tags:
@@ -433,14 +433,14 @@ stencils:
             right: 6
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "ClassName"
           template: "T"
         tags:
   - id: 'uml-class-collapsed-class'
     name: Collapsed Class
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: nntdxun
         type: node
@@ -477,13 +477,13 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<span style=\"font-style: normal;\">Employee</span>"
         tags:
   - id: 'uml-class-collapsed-interface'
     name: Collapsed Interface
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: oc81ulr
         type: node
@@ -516,7 +516,7 @@ stencils:
             italic: true
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal; font-weight: normal;\">&lt;&lt;interface&gt;&gt;</span></div><span style=\"font-style: normal;\">Vehicle</span>"
         tags:
