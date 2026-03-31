@@ -1,6 +1,214 @@
+variants:
+  - id: default
+    name: Default
+    styles:
+      - id: uml-shape
+        name: UML Shape
+        type: node
+        props: { }
+      - id: uml-edge
+        name: UML Edge
+        type: edge
+        props:
+          stroke:
+            color: var(--canvas-fg)
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-association
+        name: UML Association
+        type: edge
+        props:
+          stroke:
+            color: var(--canvas-fg)
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-generalization
+        name: UML Generalization
+        type: edge
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+          stroke:
+            color: var(--canvas-fg)
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-realization
+        name: UML Realization
+        type: edge
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+          stroke:
+            color: var(--canvas-fg)
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-dependency
+        name: UML Dependency
+        type: edge
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+              size: 75
+          stroke:
+            color: var(--canvas-fg)
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-aggregation
+        name: UML Aggregation
+        type: edge
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_OUTLINE
+              size: 150
+          stroke:
+            color: var(--canvas-fg)
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-composition
+        name: UML Composition
+        type: edge
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_FILLED
+              size: 150
+          stroke:
+            color: var(--canvas-fg)
+          fill:
+            color: var(--canvas-fg)
+          type: orthogonal
+          effects:
+            rounding: true
+  - id: classic
+    name: Classic
+    styles:
+      - id: uml-shape
+        name: UML Shape
+        type: node
+        props:
+          fill:
+            color: "#fbffd0"
+          stroke:
+            color: "#9d3b59"
+          additionalFills:
+            - enabled: true
+              color: "#fbffd0"
+      - id: uml-edge
+        name: UML Edge
+        type: edge
+        props:
+          stroke:
+            color: "#9d3b59"
+          type: orthogonal
+          effects:
+            rounding: true
+      - id: uml-association
+        name: UML Association
+        type: edge
+        props:
+          stroke:
+            color: "#9d3b59"
+      - id: uml-generalization
+        name: UML Generalization
+        type: edge
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+          stroke:
+            color: "#9d3b59"
+      - id: uml-realization
+        name: UML Realization
+        type: edge
+        props:
+          stroke:
+            color: "#9d3b59"
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+      - id: uml-dependency
+        name: UML Dependency
+        type: edge
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_OUTLINE
+              size: 75
+          stroke:
+            color: "#9d3b59"
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+      - id: uml-aggregation
+        name: UML Aggregation
+        type: edge
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_OUTLINE
+              size: 150
+          stroke:
+            color: "#9d3b59"
+      - id: uml-composition
+        name: UML Composition
+        type: edge
+        props:
+          arrow:
+            end:
+              type: DIAMOND_THIN_FILLED
+              size: 150
+          fill:
+            color: "#9d3b59"
+          stroke:
+            color: "#9d3b59"
 stencils:
+  - id: 'uml-binary-association'
+    name: Binary Association
+    styles: [ uml-association ]
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+        metadata:
+          style: uml-association
+        children: [ ]
+        tags:
+
   - id: 'uml-common-frame'
     name: Frame
+    styles: [ uml-shape ]
     elements:
       - id: umlframe01
         type: node
@@ -16,19 +224,22 @@ stencils:
           custom:
             umlFrame:
               labelH: 24
+          fill:
+            color: "transparent"
           text:
             top: 4
             bottom: 4
             left: 6
             right: 6
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: "Label"
         tags:
   - id: 'uml-common-port'
     name: Port
+    styles: [ uml-shape ]
     elements:
       - id: umlport01
         type: node
@@ -51,7 +262,7 @@ stencils:
               horizontal: false
               vertical: false
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -59,6 +270,7 @@ stencils:
 
   - id: 'uml-note'
     name: Note
+    styles: [ uml-shape ]
     elements:
       - id: h9e8hdj
         type: node
@@ -90,7 +302,7 @@ stencils:
             umlArtifact:
               stereotypeIcon: empty
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: Note
