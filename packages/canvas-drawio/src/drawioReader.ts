@@ -154,7 +154,7 @@ const attachLabelNode = (
     return;
   }
 
-  const clippedPath = clipPath(path, edge, undefined, undefined)!;
+  const clippedPath = clipPath(path, edge, undefined, undefined) ?? path;
 
   // Since drawio uses a position on the clipped path, we convert the offset to a
   // point (x, y) on the path
@@ -622,9 +622,9 @@ const parseLabelNode = (
 
   const textNode = createLabelNode(id, edge, value, props, '#ffffff');
 
-  // Note: This used to be done with queue.add - unclear why
-  attachLabelNode(textNode, edge, $geometry, uow);
-
+  // Must be queued so it runs after attachEdge has resolved the edge endpoints;
+  // at parse time the edge still has FreeEndpoint(ORIGIN) on both ends, yielding a zero-length path.
+  queue.add(() => attachLabelNode(textNode, edge, $geometry, uow));
   queue.add(() => calculateLabelNodeActualSize(style, textNode, value, uow));
   queue.add(() => edge.invalidate('full', uow), 1);
 };
@@ -1097,7 +1097,13 @@ export const drawioReader = async (contents: string, doc: DiagramDocument): Prom
 
       UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(canvasBounds, uow));
 
-      diagram.viewBox.offset = { x: 0, y: 0 };
+      // Position the viewport so the content is immediately visible.
+      // dx/dy from the XML encode draw.io's mxGraph view.translate at save
+      // time; reconstructing the exact scroll position from them also requires
+      // the container size (not available here), so we derive the offset from
+      // the content bounding box instead.
+      const MARGIN = 50;
+      diagram.viewBox.offset = { x: bounds.x - MARGIN, y: bounds.y - MARGIN };
       diagram.viewBox.zoomLevel = xNum($mxGraphModel, 'pageScale', 1);
     }
   }
