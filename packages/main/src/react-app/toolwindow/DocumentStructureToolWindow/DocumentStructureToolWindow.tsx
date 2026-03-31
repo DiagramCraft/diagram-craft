@@ -1,4 +1,5 @@
 import { LayerListPanel } from './LayerListPanel';
+import { LayerListTabActions } from './LayerListTabActions';
 import { TagsPanel } from './TagsPanel';
 import { DocumentPanel } from './DocumentPanel';
 import { ToolWindow } from '../ToolWindow';
@@ -7,6 +8,9 @@ export const DocumentStructureToolWindow = () => {
   return (
     <ToolWindow.Root id={'document-structure'} defaultTab={'layer'}>
       <ToolWindow.Tab id={'layer'} title={'Layer'}>
+        <ToolWindow.TabActions>
+          <LayerListTabActions />
+        </ToolWindow.TabActions>
         <ToolWindow.TabContent>
           <LayerListPanel />
         </ToolWindow.TabContent>
