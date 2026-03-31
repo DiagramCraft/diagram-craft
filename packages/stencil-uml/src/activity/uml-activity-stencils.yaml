@@ -256,16 +256,17 @@ stencils:
     styles: [ uml-shape ]
     settings:
       nodeLinkOptions:
-        edgeStylesheetIds:
-          - uml-binary-association
+        edgeStyles:
+          - id: uml-binary-association
+            edgeStylesheetId: uml-binary-association
         stencilIds:
           - uml-activity-activity
           - uml-activity-merge-decision
         combinations:
           - stencilId: uml-activity-activity
-            edgeStylesheetId: uml-binary-association
+            edgeStyleId: uml-binary-association
           - stencilId: uml-activity-merge-decision
-            edgeStylesheetId: uml-binary-association
+            edgeStyleId: uml-binary-association
     elements:
       - id: 7p9p846
         type: node

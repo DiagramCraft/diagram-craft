@@ -130,8 +130,8 @@ describe('YamlStencilLoader', () => {
             nodeLinkOptions: {
               stencilIds: ['target', 'external@@already-qualified', NODE_LINK_POPUP_NO_SHAPE_ID],
               combinations: [
-                { stencilId: 'target', edgeStylesheetId: 'edge-a' },
-                { stencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+                { stencilId: 'target', edgeStyleId: 'edge-a' },
+                { stencilId: 'external@@already-qualified', edgeStyleId: 'edge-b' }
               ]
             }
           },
@@ -170,8 +170,8 @@ describe('YamlStencilLoader', () => {
         NODE_LINK_POPUP_NO_SHAPE_ID
       ],
       combinations: [
-        { stencilId: 'uml@@class@@target', edgeStylesheetId: 'edge-a' },
-        { stencilId: 'external@@already-qualified', edgeStylesheetId: 'edge-b' }
+        { stencilId: 'uml@@class@@target', edgeStyleId: 'edge-a' },
+        { stencilId: 'external@@already-qualified', edgeStyleId: 'edge-b' }
       ]
     });
     expect(pkg.stencils).toHaveLength(0);
