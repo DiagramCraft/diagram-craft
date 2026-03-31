@@ -247,7 +247,11 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
         ].join(' '),
         'fill': 'none',
         'stroke': nodeProps.stroke.color,
-        'stroke-width': nodeProps.stroke.width
+        'stroke-width': nodeProps.stroke.width,
+
+        // TODO: This is needed as otherwise the style is not deleted - in case
+        //       the number of child paths changes
+        'style': ''
       })
     );
 
