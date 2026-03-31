@@ -1,4 +1,5 @@
 .icRuler {
+  position: relative;
   background-color: var(--panel-bg);
   z-index: 1;
 

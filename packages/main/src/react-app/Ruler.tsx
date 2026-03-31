@@ -38,22 +38,11 @@ export const Ruler = ({ orientation, id }: Props) => {
   const redraw = useRedraw();
 
   const cursor = useRef<number>(0);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const cursorRef = useRef<SVGLineElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const selRef = useRef<SVGRectElement>(null);
 
   const toScreenX = useCallback((x: number) => viewbox.toScreenPoint({ x, y: 0 }).x, [viewbox]);
   const toScreenY = useCallback((y: number) => viewbox.toScreenPoint({ x: 0, y }).y, [viewbox]);
-
-  const updateCursorLine = useCallback(() => {
-    if (orientation === 'horizontal') {
-      cursorRef.current!.setAttribute('x1', cursor.current.toString());
-      cursorRef.current!.setAttribute('x2', cursor.current.toString());
-    } else {
-      cursorRef.current!.setAttribute('y1', cursor.current.toString());
-      cursorRef.current!.setAttribute('y2', cursor.current.toString());
-    }
-  }, [orientation]);
 
   const updateSelection = useCallback(() => {
     const bounds = diagram.selection.bounds;
@@ -82,106 +71,170 @@ export const Ruler = ({ orientation, id }: Props) => {
     [diagram, orientation]
   );
 
+  // Draw ticks directly onto the canvas — no React re-render needed
+  const drawTicks = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio ?? 1;
+    const rect = canvas.getBoundingClientRect();
+    const displayW = rect.width;
+    const displayH = rect.height;
+
+    // Resize backing store only when dimensions actually changed
+    const backingW = Math.round(displayW * dpr);
+    const backingH = Math.round(displayH * dpr);
+    if (canvas.width !== backingW || canvas.height !== backingH) {
+      canvas.width = backingW;
+      canvas.height = backingH;
+    }
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, displayW, displayH);
+
+    if (!viewbox.isInitialized()) return;
+
+    // Read colors from CSS custom properties set on the canvas element
+    const cs = getComputedStyle(canvas);
+    const tickColor = cs.getPropertyValue('--base-fg-more-dim').trim() || '#666';
+    const textColor = cs.getPropertyValue('--base-fg-dim').trim() || '#999';
+    const accentColor = cs.getPropertyValue('--accent-fg').trim() || '#4af';
+
+    ctx.lineWidth = 1;
+
+    const ticks: Tick[] = [];
+
+    if (orientation === 'horizontal') {
+      if (viewbox.isInitialized()) {
+        for (let x = diagram.bounds.x; x <= diagram.bounds.x + diagram.bounds.w; x += 10) {
+          ticks.push({ pos: toScreenX(x), lbl: x.toString(), value: x });
+        }
+      }
+      roundTicks(ticks);
+
+      ctx.strokeStyle = tickColor;
+      for (let i = 0; i < ticks.length; i++) {
+        const tick = ticks[i]!;
+        const tickH = i % 5 === 0 ? 6 : 3;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(tick.pos) + 0.5, 0);
+        ctx.lineTo(Math.round(tick.pos) + 0.5, tickH);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = textColor;
+      ctx.font = '6px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (let i = 0; i < ticks.length; i++) {
+        if (i % 10 === 0) {
+          ctx.fillText(ticks[i]!.lbl, ticks[i]!.pos, 9);
+        }
+      }
+    } else {
+      if (viewbox.isInitialized()) {
+        for (let y = diagram.bounds.y; y <= diagram.bounds.y + diagram.bounds.h; y += 10) {
+          ticks.push({ pos: toScreenY(y), lbl: y.toString(), value: y });
+        }
+      }
+      roundTicks(ticks);
+
+      ctx.strokeStyle = tickColor;
+      for (let i = 0; i < ticks.length; i++) {
+        const tick = ticks[i]!;
+        const tickW = i % 5 === 0 ? 6 : 3;
+        ctx.beginPath();
+        ctx.moveTo(0, Math.round(tick.pos) + 0.5);
+        ctx.lineTo(tickW, Math.round(tick.pos) + 0.5);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = textColor;
+      ctx.font = '6px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (let i = 0; i < ticks.length; i++) {
+        if (i % 10 === 0) {
+          ctx.save();
+          ctx.translate(9, ticks[i]!.pos);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillText(ticks[i]!.lbl, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
+
+    // Redraw the cursor indicator on top
+    ctx.strokeStyle = accentColor;
+    ctx.beginPath();
+    if (orientation === 'horizontal') {
+      const x = Math.round(cursor.current) + 0.5;
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 8);
+    } else {
+      const y = Math.round(cursor.current) + 0.5;
+      ctx.moveTo(0, y);
+      ctx.lineTo(8, y);
+    }
+    ctx.stroke();
+  }, [diagram.bounds, orientation, toScreenX, toScreenY, viewbox]);
+
+  // Viewbox changes (pan/zoom) redraw the canvas directly — no React re-render
+  useEventListener(diagram.viewBox, 'viewbox', drawTicks);
+
+  // Structural changes (diagram edited, user state) still go through React
   useEventListener(diagram, 'diagramChange', () => queueMicrotask(() => redraw()));
-  useEventListener(diagram.viewBox, 'viewbox', () => queueMicrotask(() => redraw()));
   useEventListener(diagram.selection, 'change', updateSelection);
   useEventListener(UserState.get(), 'change', () => queueMicrotask(() => redraw()));
+
+  // Draw after every React render (covers initial mount, resize, zoom, theme changes)
+  useEffect(() => drawTicks());
 
   const userState = UserState.get();
 
   useEffect(() => {
     if (!userState.showRulers) return;
 
-    const handler = (e: SVGSVGElementEventMap['mousemove']) => {
-      cursor.current = EventHelper.pointWithRespectTo(e, svgRef.current!)[
+    const handler = (e: MouseEvent) => {
+      cursor.current = EventHelper.pointWithRespectTo(e, canvasRef.current!)[
         orientation === 'horizontal' ? 'x' : 'y'
       ];
-      updateCursorLine();
+      // Redraw ticks so the cursor indicator stays current without a React re-render
+      drawTicks();
     };
 
     document.addEventListener('mousemove', handler);
     return () => {
       document.removeEventListener('mousemove', handler);
     };
-  }, [userState.showRulers, orientation, updateCursorLine]);
+  }, [userState.showRulers, orientation, drawTicks]);
 
   if (!userState.showRulers) return null;
 
-  const ticks: Tick[] = [];
-
   if (orientation === 'horizontal') {
-    if (diagram.viewBox.isInitialized()) {
-      for (let x = diagram.bounds.x; x <= diagram.bounds.x + diagram.bounds.w; x += 10) {
-        ticks.push({ pos: toScreenX(x), lbl: x.toString(), value: x });
-      }
-    }
-    roundTicks(ticks);
-
     return (
       <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'horizontal'}>
-        <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
-          {ticks.map((tick, idx) => (
-            <line
-              key={tick.lbl}
-              className={styles.eSvgTick}
-              x1={tick.pos}
-              y1={-1}
-              x2={tick.pos}
-              y2={idx % 5 === 0 ? 6 : 3}
-            />
-          ))}
-
-          {ticks
-            .filter((_, idx) => idx % 10 === 0)
-            .map(tick => (
-              <text key={tick.lbl} className={styles.eSvgLbl} x={tick.pos} y={9}>
-                {tick.lbl}
-              </text>
-            ))}
-
+        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <svg
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          onMouseDown={handleMouseDown}
+        >
           <rect ref={selRef} className={styles.eSvgSelection} y={-1} height={16} />
-          <line ref={cursorRef} className={styles.eSvgCursor} y1={-1} y2={8} />
         </svg>
       </div>
     );
   } else {
-    if (diagram.viewBox.isInitialized()) {
-      for (let y = diagram.bounds.y; y <= diagram.bounds.y + diagram.bounds.h; y += 10) {
-        ticks.push({ pos: toScreenY(y), lbl: y.toString(), value: y });
-      }
-    }
-    roundTicks(ticks);
-
     return (
       <div id={id} className={`${styles.icRuler} dark-theme`} data-orientation={'vertical'}>
-        <svg preserveAspectRatio={'none'} ref={svgRef} onMouseDown={handleMouseDown}>
-          {ticks.map((tick, idx) => (
-            <line
-              key={tick.lbl}
-              className={styles.eSvgTick}
-              x1={-1}
-              y1={tick.pos}
-              x2={idx % 5 === 0 ? 6 : 3}
-              y2={tick.pos}
-            />
-          ))}
-
-          {ticks
-            .filter((_, idx) => idx % 10 === 0)
-            .map(tick => (
-              <text
-                key={tick.lbl}
-                className={styles.eSvgLbl}
-                x={9}
-                y={tick.pos}
-                transform={`rotate(-90,9,${tick.pos})`}
-              >
-                {tick.lbl}
-              </text>
-            ))}
-
+        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <svg
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          onMouseDown={handleMouseDown}
+        >
           <rect ref={selRef} className={styles.eSvgSelection} x={-1} width={16} />
-          <line ref={cursorRef} className={styles.eSvgCursor} x1={-1} x2={8} />
         </svg>
       </div>
     );
