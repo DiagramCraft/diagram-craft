@@ -175,7 +175,7 @@ stencils:
         children: [ ]
         props:
           fill:
-            color: var(--canvas-fg)
+            color: stroke
         metadata:
           style: uml-shape
           textStyle: default-text-default
@@ -224,7 +224,7 @@ stencils:
         children: [ ]
         props:
           fill:
-            color: var(--canvas-fg)
+            color: stroke
         metadata:
           style: uml-shape
           textStyle: default-text-default
