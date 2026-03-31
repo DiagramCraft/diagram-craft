@@ -16,17 +16,7 @@ import {
   getPositionInBoundsForBox
 } from './collapsible';
 
-/**
- * Calculates an offset vector for an endpoint.
- *
- * Relative offsets are scaled by the supplied bounds before the vector is rotated
- * around the origin using the bounds rotation.
- *
- * @param offset - The raw offset stored on the endpoint
- * @param bounds - The bounds used to scale and rotate the offset
- * @param isRelative - Whether the offset is stored in normalized units
- * @returns The rotated absolute offset vector
- */
+/** Scales relative offsets to bounds space and rotates the result around the origin. */
 const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point => {
   const v = isRelative ? { x: offset.x * bounds.w, y: offset.y * bounds.h } : offset;
   return Point.rotateAround(v, bounds.r, Point.ORIGIN);
