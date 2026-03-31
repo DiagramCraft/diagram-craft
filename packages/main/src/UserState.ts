@@ -24,6 +24,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #recentFiles: Array<string>;
   #themeMode: ThemeMode = 'dark';
   #toolWindowTabs: Record<string, string> = {};
+  #persistedState: string;
 
   private awarenessStateCache: AwarenessUserState | undefined;
 
@@ -48,6 +49,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
+    this.#persistedState = this.serializeState();
   }
 
   addRecentFile(file: string) {
@@ -165,20 +167,24 @@ export class UserState extends EventEmitter<UserStateEvents> {
   }
 
   private triggerChange() {
-    localStorage.setItem(
-      'diagram-craft.user-state',
-      JSON.stringify({
-        panelLeft: this.#panelLeft,
-        panelRight: this.#panelRight,
-        panelLeftWidth: this.#panelLeftWidth,
-        panelRightWidth: this.#panelRightWidth,
-        showHelp: this.#showHelp,
-        stencils: this.#stencils,
-        recentFiles: this.#recentFiles,
-        themeMode: this.#themeMode,
-        toolWindowTabs: this.#toolWindowTabs
-      })
-    );
+    const persistedState = this.serializeState();
+    if (persistedState === this.#persistedState) return;
+    this.#persistedState = persistedState;
+    localStorage.setItem('diagram-craft.user-state', persistedState);
     this.emit('change', { after: this });
+  }
+
+  private serializeState() {
+    return JSON.stringify({
+      panelLeft: this.#panelLeft,
+      panelRight: this.#panelRight,
+      panelLeftWidth: this.#panelLeftWidth,
+      panelRightWidth: this.#panelRightWidth,
+      showHelp: this.#showHelp,
+      stencils: this.#stencils,
+      recentFiles: this.#recentFiles,
+      themeMode: this.#themeMode,
+      toolWindowTabs: this.#toolWindowTabs
+    });
   }
 }
