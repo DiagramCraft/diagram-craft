@@ -167,7 +167,7 @@ describe('stencilUtils', () => {
       stencil.settings ??= {};
       stencil.settings.nodeLinkOptions = {
         stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
-        edgeStylesheetIds: ['default-edge']
+        edgeStyles: [{ id: 'default-edge', edgeStylesheetId: 'default-edge' }]
       };
 
       assertRegularLayer(diagram.activeLayer);
@@ -180,13 +180,13 @@ describe('stencilUtils', () => {
       expect(node.metadata.nodeLink).toBe(
         JSON.stringify({
           stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
-          edgeStylesheetIds: ['default-edge']
+          edgeStyles: [{ id: 'default-edge', edgeStylesheetId: 'default-edge' }]
         })
       );
       expect(node.getDefinition()).toBeInstanceOf(ShapeNodeDefinition);
       expect((node.getDefinition() as ShapeNodeDefinition).getNodeLinkOptions(node)).toEqual({
         stencilIds: [NODE_LINK_POPUP_NO_SHAPE_ID, 'default@@text'],
-        edgeStylesheetIds: ['default-edge']
+        edgeStyles: [{ id: 'default-edge', edgeStylesheetId: 'default-edge' }]
       });
     });
   });

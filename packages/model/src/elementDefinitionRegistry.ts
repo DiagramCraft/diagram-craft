@@ -443,6 +443,21 @@ export interface NodeDefinition {
     options: NodeLinkOptions | undefined,
     uow: UnitOfWork
   ): void;
+
+  /**
+   * When defined, replaces the default "apply stencil + apply stylesheet" popup behavior.
+   * Called once per user selection change (stencil or edge style).
+   * Either selectedStencilId or selectedEdgeStyleId may be undefined (partial selection).
+   */
+  onNodeLinkSelection?(
+    sourceNode: DiagramNode,
+    edge: DiagramEdge,
+    provisionalNode: DiagramNode | undefined,
+    selectedStencilId: string | undefined,
+    selectedEdgeStyleId: string | undefined,
+    resolvedOptions: NodeLinkOptions,
+    uow: UnitOfWork
+  ): void;
 }
 
 export type AttachPhase = 'drag' | 'dragEnd';

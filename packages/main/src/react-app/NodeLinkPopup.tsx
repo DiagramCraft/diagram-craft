@@ -7,8 +7,10 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import type { EdgeStylesheet } from '@diagram-craft/model/diagramStyles';
 import {
   NODE_LINK_POPUP_NO_SHAPE_ID,
+  type NodeLinkEdgeStyle,
   type NodeLinkOptions
 } from '@diagram-craft/model/stencilRegistry';
+import { deepMerge } from '@diagram-craft/utils/object';
 import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -56,12 +58,13 @@ const combineUndoActionsFromMark = (diagram: Diagram) => {
   }
 };
 
-const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkOptions) => {
+const getEdgeStyles = (diagram: Diagram, options?: NodeLinkOptions): ReadonlyArray<NodeLinkEdgeStyle> => {
   // An explicit list from the source node definition is treated as the exact menu.
-  // Unknown stylesheet ids are dropped instead of backfilling from defaults/recents.
-  if (options?.edgeStylesheetIds !== undefined) {
-    return options.edgeStylesheetIds.filter(
-      id => diagram.document.styles.getEdgeStyle(id) !== undefined
+  // Entries without an edgeStylesheetId are always kept (name/props-only styles).
+  // Entries with an edgeStylesheetId are kept only if the stylesheet exists in the diagram.
+  if (options?.edgeStyles !== undefined) {
+    return options.edgeStyles.filter(
+      s => s.edgeStylesheetId === undefined || diagram.document.styles.getEdgeStyle(s.edgeStylesheetId) !== undefined
     );
   }
 
@@ -78,12 +81,12 @@ const getEdgeStylesheetIds = (diagram: Diagram, options?: NodeLinkOptions) => {
   const availableIds = unique(allIds.filter(Boolean));
 
   // If the document has only a few edge stylesheets, keep the list exhaustive.
-  if (availableIds.length <= EDGE_LIMIT) return availableIds;
+  if (availableIds.length <= EDGE_LIMIT) return availableIds.map(id => ({ id, edgeStylesheetId: id }));
 
   // Deduped LRU-style candidates, with the active stylesheet appended as a fallback.
   // Otherwise prefer the LRU-style history, with the active stylesheet as a fallback.
   const lruIds = unique([...recentIds.filter(Boolean), activeId].filter(Boolean));
-  return unique([...lruIds, ...availableIds]).slice(0, EDGE_LIMIT);
+  return unique([...lruIds, ...availableIds]).slice(0, EDGE_LIMIT).map(id => ({ id, edgeStylesheetId: id }));
 };
 
 const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
@@ -137,30 +140,28 @@ const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
 
 type NodeLinkPopupPair = {
   nodeStencilId: string;
-  edgeStylesheetId: string;
+  edgeStyleId: string;
 };
 
 const matchesAllowedCombination = (
   pair: NodeLinkPopupPair,
   combination: NonNullable<NodeLinkOptions['combinations']>[number]
 ) => {
-  // Missing fields in the combination act as wildcards for that side.
   return (
     (combination.stencilId === undefined || combination.stencilId === pair.nodeStencilId) &&
-    (combination.edgeStylesheetId === undefined ||
-      combination.edgeStylesheetId === pair.edgeStylesheetId)
+    (combination.edgeStyleId === undefined || combination.edgeStyleId === pair.edgeStyleId)
   );
 };
 
 const getAllowedCombinations = (
   nodeStencilIds: ReadonlyArray<string>,
-  edgeStylesheetIds: ReadonlyArray<string>,
+  edgeStyles: ReadonlyArray<NodeLinkEdgeStyle>,
   options?: NodeLinkOptions
 ) => {
   // Start from the currently available popup ids only, so stale ids in
   // allowedCombinations cannot reintroduce filtered-out stencil/style entries.
   const pairs = nodeStencilIds.flatMap(nodeStencilId =>
-    edgeStylesheetIds.map(edgeStylesheetId => ({ nodeStencilId, edgeStylesheetId }))
+    edgeStyles.map(edgeStyle => ({ nodeStencilId, edgeStyleId: edgeStyle.id }))
   );
 
   if (options?.combinations === undefined) return pairs;
@@ -170,27 +171,27 @@ const getAllowedCombinations = (
   );
 };
 
-const getVisibleEdgeStylesheetIds = (
+const getVisibleEdgeStyles = (
   nodeStencilIds: ReadonlyArray<string>,
-  edgeStylesheetIds: ReadonlyArray<string>,
+  edgeStyles: ReadonlyArray<NodeLinkEdgeStyle>,
   selected: string | undefined,
   options?: NodeLinkOptions
-) => {
-  if (options?.combinations === undefined) return edgeStylesheetIds;
+): ReadonlyArray<NodeLinkEdgeStyle> => {
+  if (options?.combinations === undefined) return edgeStyles;
 
   // With combination constraints enabled, the edge column is filtered against the
   // currently selected node. Without a node selection we show every edge style
   // that participates in at least one allowed pair.
-  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStyles, options)
     .filter(pair => selected === undefined || pair.nodeStencilId === selected)
-    .map(pair => pair.edgeStylesheetId);
+    .map(pair => pair.edgeStyleId);
 
-  return edgeStylesheetIds.filter(id => visibleIds.includes(id));
+  return edgeStyles.filter(s => visibleIds.includes(s.id));
 };
 
 const getVisibleNodeStencilIds = (
   nodeStencilIds: ReadonlyArray<string>,
-  edgeStylesheetIds: ReadonlyArray<string>,
+  edgeStyles: ReadonlyArray<NodeLinkEdgeStyle>,
   selected: string | undefined,
   options?: NodeLinkOptions
 ) => {
@@ -199,8 +200,8 @@ const getVisibleNodeStencilIds = (
   // With combination constraints enabled, the node column is filtered against the
   // currently selected edge style. Without an edge selection we show every stencil
   // that participates in at least one allowed pair.
-  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStylesheetIds, options)
-    .filter(pair => selected === undefined || pair.edgeStylesheetId === selected)
+  const visibleIds = getAllowedCombinations(nodeStencilIds, edgeStyles, options)
+    .filter(pair => selected === undefined || pair.edgeStyleId === selected)
     .map(pair => pair.nodeStencilId);
 
   return nodeStencilIds.filter(id => visibleIds.includes(id));
@@ -253,6 +254,7 @@ const useNodeLinkPopupController = ({
   initialNodeId,
   isOpen,
   position,
+  options,
   onClose
 }: {
   // Active diagram for all popup-side mutations.
@@ -265,6 +267,8 @@ const useNodeLinkPopupController = ({
   isOpen: boolean;
   // Popup anchor position, reused when converting "no shape" into a free edge end.
   position: Point;
+  // NodeLinkOptions from the source node definition.
+  options?: NodeLinkOptions;
   // Closes the popup surface.
   onClose: () => void;
 }) => {
@@ -277,6 +281,15 @@ const useNodeLinkPopupController = ({
   const [selectedNodeState, setSelectedNodeState] = useState<string | undefined>(undefined);
   const [currentNodeId, setCurrentNodeId] = useState<string | undefined>(initialNodeId);
 
+  const sourceNode = useMemo(() => {
+    const edge = diagram.edgeLookup.get(edgeId);
+    if (!(edge?.start instanceof ConnectedEndpoint)) return undefined;
+    return edge.start.node;
+  }, [diagram, edgeId]);
+  const nodeDef = sourceNode?.getDefinition();
+
+  const resolvedEdgeStyles = useMemo(() => getEdgeStyles(diagram, options), [diagram, options]);
+
   const close = useCallback(
     (mode: CloseMode = 'idle') => {
       closeModeRef.current = mode;
@@ -288,6 +301,23 @@ const useNodeLinkPopupController = ({
   const setSelectedNode = useCallback(
     (stencilId: string) => {
       setSelectedNodeState(stencilId);
+
+      if (nodeDef?.onNodeLinkSelection) {
+        const edge = mustExist(diagram.edgeLookup.get(edgeId));
+        const provisionalNode = currentNodeId ? diagram.nodeLookup.get(currentNodeId) : undefined;
+        UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+          nodeDef.onNodeLinkSelection!(
+            sourceNode!,
+            edge,
+            provisionalNode,
+            stencilId,
+            selectedEdgeState,
+            options!,
+            uow
+          );
+        });
+        return;
+      }
 
       const edge = mustExist(diagram.edgeLookup.get(edgeId));
 
@@ -361,21 +391,44 @@ const useNodeLinkPopupController = ({
 
       recentStencils.register(stencil.id);
     },
-    [currentNodeId, diagram, edgeId, position, recentStencils, stencilRegistry]
+    [currentNodeId, diagram, edgeId, nodeDef, options, position, recentStencils, selectedEdgeState, sourceNode, stencilRegistry]
   );
 
   const setSelectedEdge = useCallback(
-    (stylesheetId: string) => {
-      setSelectedEdgeState(stylesheetId);
+    (edgeStyleId: string) => {
+      setSelectedEdgeState(edgeStyleId);
       const edge = mustExist(diagram.edgeLookup.get(edgeId));
 
-      UnitOfWork.executeWithUndo(diagram, 'Change edge style', uow => {
-        edge.updateMetadata(meta => {
-          meta.style = stylesheetId;
-        }, uow);
-      });
+      if (nodeDef?.onNodeLinkSelection) {
+        const provisionalNode = currentNodeId ? diagram.nodeLookup.get(currentNodeId) : undefined;
+        UnitOfWork.executeWithUndo(diagram, 'Change edge style', uow => {
+          nodeDef.onNodeLinkSelection!(
+            sourceNode!,
+            edge,
+            provisionalNode,
+            selectedNodeState,
+            edgeStyleId,
+            options!,
+            uow
+          );
+        });
+      } else {
+        const edgeStyle = resolvedEdgeStyles.find(s => s.id === edgeStyleId);
+        UnitOfWork.executeWithUndo(diagram, 'Change edge style', uow => {
+          if (edgeStyle?.edgeStylesheetId) {
+            edge.updateMetadata(meta => {
+              meta.style = edgeStyle.edgeStylesheetId!;
+            }, uow);
+          }
+          if (edgeStyle?.edgeProps) {
+            edge.updateProps(props => {
+              deepMerge(props, edgeStyle.edgeProps!);
+            }, uow);
+          }
+        });
+      }
     },
-    [diagram, edgeId]
+    [currentNodeId, diagram, edgeId, nodeDef, options, resolvedEdgeStyles, selectedNodeState, sourceNode]
   );
 
   const onOk = useCallback(() => {
@@ -414,6 +467,16 @@ const useNodeLinkPopupController = ({
     setSelectedEdgeState(undefined);
     setSelectedNodeState(undefined);
   }, [initialNodeId, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (selectedEdgeState !== undefined || selectedNodeState !== undefined) return;
+    const def = options?.defaultCombination;
+    if (!def) return;
+    if (def.edgeStyleId !== undefined) setSelectedEdge(def.edgeStyleId);
+    if (def.stencilId !== undefined) setSelectedNode(def.stencilId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   return {
     // Apply an edge style immediately and remember the current tile selection.
@@ -456,13 +519,14 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
     initialNodeId: nodeId,
     isOpen,
     position,
+    options,
     onClose
   });
 
   useEventListener(stencilRegistry, 'change', redraw);
 
-  const baseEdgeStylesheetIds = useMemo(
-    () => getEdgeStylesheetIds(diagram, options),
+  const baseEdgeStyles = useMemo(
+    () => getEdgeStyles(diagram, options),
     [diagram, options]
   );
 
@@ -471,24 +535,21 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
     return getNodeStencilIds(diagram, options);
   }, [diagram, hasProvisionalNode, options]);
 
-  const edgeStylesheets = useMemo(() => {
-    const ids = hasProvisionalNode
-      ? getVisibleEdgeStylesheetIds(
+  const visibleEdgeStyles = useMemo(() => {
+    return hasProvisionalNode
+      ? getVisibleEdgeStyles(
           baseNodeStencilIds,
-          baseEdgeStylesheetIds,
+          baseEdgeStyles,
           selectedNode,
           options
         )
-      : baseEdgeStylesheetIds;
-
-    return ids.map(id => styleManager.getEdgeStyle(id)).filter(s => s !== undefined);
+      : baseEdgeStyles;
   }, [
-    baseEdgeStylesheetIds,
+    baseEdgeStyles,
     baseNodeStencilIds,
     hasProvisionalNode,
     options,
-    selectedNode,
-    styleManager
+    selectedNode
   ]);
 
   const nodeStencils = useMemo(() => {
@@ -496,7 +557,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
 
     return getVisibleNodeStencilIds(
       baseNodeStencilIds,
-      baseEdgeStylesheetIds,
+      baseEdgeStyles,
       selectedEdge,
       options
     )
@@ -509,7 +570,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
       })
       .filter(e => e !== undefined);
   }, [
-    baseEdgeStylesheetIds,
+    baseEdgeStyles,
     baseNodeStencilIds,
     hasProvisionalNode,
     options,
@@ -519,11 +580,13 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
 
   const edgePreviewDiagrams = useMemo(
     () =>
-      edgeStylesheets.map(stylesheet => ({
-        stylesheet,
-        diagram: buildEdgePreview(stylesheet, diagram)
-      })),
-    [diagram, edgeStylesheets]
+      visibleEdgeStyles.flatMap(edgeStyle => {
+        if (!edgeStyle.edgeStylesheetId) return [];
+        const stylesheet = styleManager.getEdgeStyle(edgeStyle.edgeStylesheetId);
+        if (!stylesheet) return [];
+        return [{ edgeStyle, stylesheet, diagram: buildEdgePreview(stylesheet, diagram) }];
+      }),
+    [diagram, styleManager, visibleEdgeStyles]
   );
 
   const nodePreviewDiagrams = useMemo(
@@ -609,19 +672,19 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
             <div className={styles.eSection}>
               <div className={styles.eHeading}>Edges</div>
               <div className={`${objectPickerStyles.icObjectPicker} ${styles.eEdgeGrid}`}>
-                {edgePreviewDiagrams.map(({ stylesheet, diagram: preview }) => (
+                {edgePreviewDiagrams.map(({ edgeStyle, stylesheet, diagram: preview }) => (
                   <div
-                    key={stylesheet.id}
+                    key={edgeStyle.id}
                     className={styles.ePickerItem}
-                    title={stylesheet.name}
-                    data-selected={selectedEdge === stylesheet.id}
-                    onClick={() => setSelectedEdge(stylesheet.id)}
+                    title={edgeStyle.name ?? stylesheet.name}
+                    data-selected={selectedEdge === edgeStyle.id}
+                    onClick={() => setSelectedEdge(edgeStyle.id)}
                   >
                     <PickerCanvas
-                      name={stylesheet.name}
+                      name={edgeStyle.name ?? stylesheet.name}
                       size={34}
                       diagram={preview}
-                      onMouseDown={() => setSelectedEdge(stylesheet.id)}
+                      onMouseDown={() => setSelectedEdge(edgeStyle.id)}
                       showHover={false}
                     />
                   </div>
@@ -707,9 +770,9 @@ type Props = NodeLinkPopupState & {
 export const _test = {
   NO_SHAPE_ID,
   getAllowedCombinations,
-  getDefaultEdgeStylesheetIds: (diagram: Diagram) => getEdgeStylesheetIds(diagram),
-  getEdgeStylesheetIds,
+  getDefaultEdgeStylesheetIds: (diagram: Diagram) => getEdgeStyles(diagram),
+  getEdgeStylesheetIds: getEdgeStyles,
   getNodeStencilIds,
-  getVisibleEdgeStylesheetIds,
+  getVisibleEdgeStylesheetIds: getVisibleEdgeStyles,
   getVisibleNodeStencilIds
 };

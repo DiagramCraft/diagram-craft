@@ -136,9 +136,8 @@ export class YamlStencilLoader {
         if (nodeLinkOptions) {
           const existingIds = new Set(def.stencil.styles?.map(s => s.id));
           const referencedIds = [
-            ...(nodeLinkOptions.edgeStylesheetIds ?? []),
-            ...(nodeLinkOptions.combinations?.flatMap(c =>
-              c.edgeStylesheetId !== undefined ? [c.edgeStylesheetId] : []
+            ...(nodeLinkOptions.edgeStyles?.flatMap(s =>
+              s.edgeStylesheetId !== undefined ? [s.edgeStylesheetId] : []
             ) ?? [])
           ];
           for (const id of referencedIds) {

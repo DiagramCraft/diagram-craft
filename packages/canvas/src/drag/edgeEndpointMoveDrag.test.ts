@@ -98,8 +98,8 @@ class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
   getNodeLinkOptions(): NodeLinkOptions | undefined {
     return {
       stencilIds: ['custom-node', 'default@@rect'],
-      edgeStylesheetIds: ['edge-2', 'default-edge'],
-      combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+      edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
+      combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
     };
   }
 }
@@ -516,8 +516,8 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(Array),
       {
         stencilIds: ['custom-node', 'default@@rect'],
-        edgeStylesheetIds: ['edge-2', 'default-edge'],
-        combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+        edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
+        combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
       }
     );
   });
@@ -571,8 +571,8 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(Array),
       {
         stencilIds: ['custom-node', 'default@@rect'],
-        edgeStylesheetIds: ['edge-2', 'default-edge'],
-        combinations: [{ stencilId: 'custom-node', edgeStylesheetId: 'edge-2' }]
+        edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
+        combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
       }
     );
   });

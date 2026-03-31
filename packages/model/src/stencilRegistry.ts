@@ -6,7 +6,7 @@ import { NodeDefinition, Registry } from '@diagram-craft/model/elementDefinition
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { safeSplit } from '@diagram-craft/utils/safe';
-import { ElementProps } from '@diagram-craft/model/diagramProps';
+import { EdgeProps, ElementProps } from '@diagram-craft/model/diagramProps';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -16,15 +16,31 @@ import { MakeStencilNodeOpts, StencilUtils } from '@diagram-craft/model/stencilU
 
 export const NODE_LINK_POPUP_NO_SHAPE_ID = '__no_shape__';
 
+export type NodeLinkEdgeStyle = {
+  /** Unique id used in combinations and defaultCombination. */
+  id: string;
+  /** Optional human-readable label shown in the edge tile. */
+  name?: string;
+  /** Stylesheet to apply (sets edge.metadata.style). */
+  edgeStylesheetId?: string;
+  /** Additional edge props deep-merged on top of the stylesheet. */
+  edgeProps?: EdgeProps;
+};
+
 export type NodeLinkAllowedCombination = {
   stencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
-  edgeStylesheetId?: string;
+  edgeStyleId?: string;
 };
 
 export type NodeLinkOptions = {
   stencilIds?: ReadonlyArray<string | typeof NODE_LINK_POPUP_NO_SHAPE_ID>;
-  edgeStylesheetIds?: ReadonlyArray<string>;
+  edgeStyles?: ReadonlyArray<NodeLinkEdgeStyle>;
   combinations?: ReadonlyArray<NodeLinkAllowedCombination>;
+  /** Pre-selects a stencil+edge pair when the popup opens. */
+  defaultCombination?: {
+    stencilId?: string | typeof NODE_LINK_POPUP_NO_SHAPE_ID;
+    edgeStyleId?: string;
+  };
 };
 
 export type StencilElements = {
