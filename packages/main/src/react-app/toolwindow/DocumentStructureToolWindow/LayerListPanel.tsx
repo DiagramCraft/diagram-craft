@@ -12,6 +12,7 @@ import {
   TbLock,
   TbLockOff,
   TbPencil,
+  TbPlus,
   TbRectangle,
   TbTable,
   TbTableRow,
@@ -158,6 +159,18 @@ const LayerEntry = (props: { layer: Layer }) => {
             </div>
           </Tree.NodeLabel>
           <Tree.NodeCell type={'action'}>
+            {layer instanceof RuleLayer && (
+              <span
+                style={{ cursor: 'pointer' }}
+                onClick={e => {
+                  application.actions['RULE_LAYER_ADD']!.execute({ id: layer.id });
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <TbPlus />
+              </span>
+            )}
             {layer.type !== 'reference' && layer.type !== 'rule' ? (
               <LockToggle layer={layer} diagram={diagram} />
             ) : (
