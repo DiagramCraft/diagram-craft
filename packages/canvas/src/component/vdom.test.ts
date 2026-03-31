@@ -1,5 +1,7 @@
+// @vitest-environment jsdom
+
 import { describe, expect, test } from 'vitest';
-import { _test, toInlineCSS } from './vdom';
+import { _test, apply, h, insert, toInlineCSS } from './vdom';
 
 const { toKebabCase } = _test;
 
@@ -128,5 +130,18 @@ describe('toInlineCSS', () => {
 
     expect(result).toContain('font-family: Arial, sans-serif;');
     expect(result).toContain('box-shadow: 0 2px 4px rgba(0,0,0,0.1);');
+  });
+});
+
+describe('apply', () => {
+  test('removes attributes omitted from the new vnode', () => {
+    const oldNode = insert(h('div', { id: 'before', class: 'old', 'data-stale': 'yes' }));
+    const el = oldNode.el as HTMLElement;
+
+    apply(oldNode, h('div', { id: 'after' }));
+
+    expect(el.getAttribute('id')).toBe('after');
+    expect(el.hasAttribute('class')).toBe(false);
+    expect(el.hasAttribute('data-stale')).toBe(false);
   });
 });
