@@ -66,6 +66,14 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     this.context.help.pop('AddDrag');
     this.removeDragImage();
 
+    if (this.#state === State.OUTSIDE) {
+      this.cancel();
+      this.uow.abort();
+      this.uow = UnitOfWork.begin(this.diagram);
+      super.onDragEnd();
+      return;
+    }
+
     const point = this.diagram.selection.bounds;
     this.removeElement();
     this.uow.abort();
@@ -75,6 +83,10 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
     transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);
 
     super.onDragEnd();
+  }
+
+  protected wasDroppedInsideCanvas() {
+    return this.#state === State.INSIDE;
   }
 
   cancel() {

@@ -135,7 +135,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
 
   onDragEnd() {
     super.onDragEnd();
-    if (this.stencilId) {
+    if (this.stencilId && this.wasDroppedInsideCanvas()) {
       this.diagram.document.props.recentStencils.register(this.stencilId);
     }
   }
