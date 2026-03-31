@@ -1,5 +1,5 @@
 import './App.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
@@ -98,6 +98,7 @@ import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeri
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 import { NodeActionChooserDialog } from './react-app/components/NodeActionChooserDialog';
+import { applyThemeMode, themeModeClassName } from './react-app/themeMode';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -164,7 +165,7 @@ export const App = (props: {
   const helpState = useRef(new HelpState());
   const [preview, setPreview] = useState<boolean>(false);
 
-  const userState = useRef(new UserState());
+  const userState = useRef(UserState.get());
   const application = useRef(new Application(userState.current));
 
   const [progress, setProgress] = useState<Progress | undefined>(undefined);
@@ -175,6 +176,7 @@ export const App = (props: {
 
   useEventListener(application.current.model, 'activeDiagramChange', redraw);
   useEventListener(application.current.model, 'activeDocumentChange', redraw);
+  useEventListener(userState.current, 'change', redraw);
 
   const help: Help = {
     push: (id: string, message: string) => {
@@ -385,6 +387,10 @@ export const App = (props: {
   useEventListener(doc.props.query, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
+
+  useLayoutEffect(() => {
+    applyThemeMode(userState.current.themeMode);
+  }, [userState.current.themeMode]);
 
   usePanOnDrag($d, userState.current!);
 
@@ -696,7 +702,7 @@ export const App = (props: {
               );
             })}
 
-            <div id="app" className={'dark-theme'}>
+            <div id="app" className={themeModeClassName(userState.current.themeMode)}>
               <div id="menu">
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <MainMenu />
