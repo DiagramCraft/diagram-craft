@@ -45,6 +45,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelLeftWidth = state.panelLeftWidth ?? 248;
     this.#panelRightWidth = state.panelRightWidth ?? 248;
     this.#showHelp = state.showHelp ?? true;
+    this.#showRulers = state.showRulers ?? true;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
@@ -181,6 +182,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       panelLeftWidth: this.#panelLeftWidth,
       panelRightWidth: this.#panelRightWidth,
       showHelp: this.#showHelp,
+      showRulers: this.#showRulers,
       stencils: this.#stencils,
       recentFiles: this.#recentFiles,
       themeMode: this.#themeMode,
