@@ -9,6 +9,21 @@ import { FillType, type NodeProps } from '@diagram-craft/model/diagramProps';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { DeepRequired } from '@diagram-craft/utils/types';
 
+const resolveSpecialColor = (color: string, strokeColor: string) => {
+  if (color === 'stroke') return strokeColor;
+  return color;
+};
+
+export const resolveFillForRendering = <T extends { color?: string }>(
+  fill: T,
+  strokeColor: string
+): T => {
+  return {
+    ...fill,
+    color: fill.color === undefined ? undefined : resolveSpecialColor(fill.color, strokeColor)
+  };
+};
+
 const getPatternProps = (fill: NodePropsForRendering['fill'], bounds: Omit<Box, 'r'>) => {
   if (fill.image) {
     if (fill.image.fit === 'fill') {
@@ -371,4 +386,8 @@ export const addFillComponents = (
       })
     );
   }
+};
+
+export const _test = {
+  resolveSpecialColor
 };

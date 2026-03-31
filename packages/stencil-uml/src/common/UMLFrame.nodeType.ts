@@ -194,30 +194,22 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
 
     const isFillDisabled = nodeProps.fill.enabled === false;
 
-    let boundaryProps: NodePropsForEditing = nodeProps;
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    if (isFillDisabled) {
-      // We set to none to make it easier to select nodes behind the frame
-      boundaryProps = { ...nodeProps, fill: { color: 'none' } };
-    }
-    builder.boundaryPath(boundary.all(), boundaryProps);
-
     const labelFill = props.nodeProps.additionalFills?.['0'];
     if (labelFill?.enabled) {
-      const sw = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
       const color = labelFill.color ?? 'transparent';
       builder.add(
         svg.path({
-          d: [
-            `M ${bounds.x + sw} ${bounds.y + sw}`,
-            `L ${bounds.x + labelW} ${bounds.y + sw}`,
+          'd': [
+            `M ${bounds.x} ${bounds.y}`,
+            `L ${bounds.x + labelW} ${bounds.y}`,
             `L ${bounds.x + labelW} ${bounds.y + labelH - cut}`,
             `L ${bounds.x + labelW - cut} ${bounds.y + labelH}`,
-            `L ${bounds.x + sw} ${bounds.y + labelH}`,
+            `L ${bounds.x} ${bounds.y + labelH}`,
             'Z'
           ].join(' '),
-          fill: color,
-          stroke: color,
+          'fill': color,
+          'stroke': 'none',
+          'stroke-width': 0,
 
           // We need to ensure the label is clickable in case the fill is disabled as we set
           // background to none in that case (to be able to easily select nodes behind)
@@ -235,6 +227,14 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
       );
     }
 
+    let boundaryProps: NodePropsForEditing = nodeProps;
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    if (isFillDisabled) {
+      // We set to none to make it easier to select nodes behind the frame
+      boundaryProps = { ...nodeProps, fill: { color: 'none' } };
+    }
+    builder.boundaryPath(boundary.all(), boundaryProps);
+
     // Label box inner border: right edge → diagonal cut → bottom edge
     // The top and left edges are shared with the outer rectangle border
     builder.add(
@@ -247,7 +247,11 @@ export class UMLFrameComponent extends BaseNodeComponent<UMLFrameNodeDefinition>
         ].join(' '),
         'fill': 'none',
         'stroke': nodeProps.stroke.color,
-        'stroke-width': nodeProps.stroke.width
+        'stroke-width': nodeProps.stroke.width,
+
+        // TODO: This is needed as otherwise the style is not deleted - in case
+        //       the number of child paths changes
+        'style': ''
       })
     );
 

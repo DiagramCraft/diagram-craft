@@ -1,39 +1,7 @@
-styles:
-  - id: uml-binary-association
-    name: UML Binary Association
-    type: edge
-    props:
-      stroke:
-        color: var(--canvas-fg)
-      type: orthogonal
-      arrow:
-        end:
-          type: SQUARE_STICK_ARROW
-      effects:
-        rounding: true
-variants:
-  - id: default
-    name: Default
-    styles:
-      - id: uml-shape
-        name: UML Shape
-        type: node
-        props: { }
-  - id: classic
-    name: Classic
-    styles:
-      - id: uml-shape
-        name: UML Shape
-        type: node
-        props:
-          fill:
-            color: "#fbffd0"
-          stroke:
-            color: "#9d3b59"
 stencils:
   - id: 'uml-activity-activity'
     name: Activity
-    styles: [ uml-shape ]
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity02
         type: node
@@ -56,13 +24,14 @@ stencils:
               type: activity
         metadata:
           style: uml-shape
-          textStyle: default-text-default
+          textStyle: uml-shape-text
         texts:
           text: Activity
         tags:
 
   - id: 'uml-activity-activity-call'
     name: Activity
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity01
         type: node
@@ -84,14 +53,15 @@ stencils:
             umlActivity:
               type: call-activity-action
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: Activity
         tags:
 
   - id: 'uml-activity-send-signal-action'
     name: Send Signal Action
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity03
         type: node
@@ -113,14 +83,15 @@ stencils:
             umlActivity:
               type: send-signal-action
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: Send Signal
         tags:
 
   - id: 'uml-activity-accept-event-action'
     name: Accept Event Action
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umlactivity04
         type: node
@@ -142,16 +113,17 @@ stencils:
             umlActivity:
               type: accept-event-action
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: Accept Event
         tags:
 
   - id: 'uml-activity-wait-time-action'
     name: Wait Time Action
+    styles: [ uml-shape ]
     settings:
-      marginLeft: 50
+      marginLeft: 55
     elements:
       - id: uqbryic
         type: node
@@ -176,7 +148,7 @@ stencils:
             umlActivity:
               type: wait-time-action
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: Wait Time
@@ -184,6 +156,7 @@ stencils:
 
   - id: 'uml-activity-initial'
     name: Initial
+    styles: [ uml-shape ]
     elements:
       - id: umlactivity06
         type: node
@@ -200,13 +173,14 @@ stencils:
             umlPseudoState:
               variant: initial
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-activity-flow-final'
     name: Flow Final
+    styles: [ uml-shape ]
     elements:
       - id: umlactivity07
         type: node
@@ -223,13 +197,14 @@ stencils:
             umlPseudoState:
               variant: exit
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-activity-activity-final'
     name: Activity Final
+    styles: [ uml-shape ]
     elements:
       - id: umlactivity08
         type: node
@@ -246,13 +221,14 @@ stencils:
             umlPseudoState:
               variant: final
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-activity-fork-join'
     name: Fork / Join
+    styles: [ uml-shape ]
     elements:
       - id: umlactivity09
         type: node
@@ -270,13 +246,14 @@ stencils:
               horizontal: false
               vertical: true
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-activity-merge-decision'
     name: Merge / Decision
+    styles: [ uml-shape ]
     settings:
       nodeLinkOptions:
         edgeStylesheetIds:
@@ -302,7 +279,7 @@ stencils:
         children: [ ]
         props: { }
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -310,6 +287,7 @@ stencils:
 
   - id: 'uml-connector'
     name: Connector
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: tl85q8x
         type: node
@@ -325,8 +303,8 @@ stencils:
           text:
             bold: true
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: B
         tags:

@@ -21,41 +21,42 @@ export const renderForkIconInBounds = (
   return svg.g(
     {
       transform: `translate(${x} ${y}) scale(${scale})`,
-      style: 'pointer-events: none'
+      style: 'pointer-events: none',
+      class: 'uScale'
     },
     svg.line({
-      x1: 7,
-      y1: 1.5,
-      x2: 7,
-      y2: 12.5,
-      stroke: color,
+      'x1': 7,
+      'y1': 1.5,
+      'x2': 7,
+      'y2': 12.5,
+      'stroke': color,
       'stroke-width': strokeWidth,
       'stroke-linecap': 'round'
     }),
     svg.line({
-      x1: 2.5,
-      y1: 7,
-      x2: 11.5,
-      y2: 7,
-      stroke: color,
+      'x1': 2.5,
+      'y1': 7,
+      'x2': 11.5,
+      'y2': 7,
+      'stroke': color,
       'stroke-width': strokeWidth,
       'stroke-linecap': 'round'
     }),
     svg.line({
-      x1: 2.5,
-      y1: 7,
-      x2: 2.5,
-      y2: 12.5,
-      stroke: color,
+      'x1': 2.5,
+      'y1': 7,
+      'x2': 2.5,
+      'y2': 12.5,
+      'stroke': color,
       'stroke-width': strokeWidth,
       'stroke-linecap': 'round'
     }),
     svg.line({
-      x1: 11.5,
-      y1: 7,
-      x2: 11.5,
-      y2: 12.5,
-      stroke: color,
+      'x1': 11.5,
+      'y1': 7,
+      'x2': 11.5,
+      'y2': 12.5,
+      'stroke': color,
       'stroke-width': strokeWidth,
       'stroke-linecap': 'round'
     })

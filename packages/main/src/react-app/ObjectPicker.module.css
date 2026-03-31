@@ -9,14 +9,8 @@
     display: block;
     cursor: pointer;
 
-    * {
+    *:not(:global(.uScale), :global(.uScale) *) {
       vector-effect: non-scaling-stroke;
-
-      path {
-        vector-effect: non-scaling-stroke;
-      }
     }
   }
-
-
 }

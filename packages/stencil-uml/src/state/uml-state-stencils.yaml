@@ -1,6 +1,7 @@
 stencils:
   - id: 'uml-state-state'
     name: State
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: w7ugehm
         type: node
@@ -35,8 +36,8 @@ stencils:
             left: 8
             right: 8
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<p>Active</p>"
           internalActivities: ""
@@ -44,6 +45,7 @@ stencils:
 
   - id: 'uml-state-state-with-internal-activities'
     name: State with internal activities
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: ll3pci4
         type: node
@@ -78,15 +80,16 @@ stencils:
             left: 8
             right: 8
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<p>Active</p>"
-          internalActivities: "<p>entry/ Call<br><span style=\"color: var(--canvas-fg);\">exit/ Delete</span></p>"
+          internalActivities: "<p>entry/ Call<br><span>exit/ Delete</span></p>"
         tags:
 
   - id: 'uml-state-composite-state'
     name: Composite state
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: 2185hej
         type: node
@@ -143,7 +146,7 @@ stencils:
                     right: 8
                 metadata:
                   style: default
-                  textStyle: default-text-default
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>Active</p>"
                   internalActivities: ""
@@ -181,8 +184,8 @@ stencils:
                     left: 8
                     right: 8
                 metadata:
-                  style: default
-                  textStyle: default-text-default
+                  style: uml-shape
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>State A</p>"
                   internalActivities: ""
@@ -220,8 +223,8 @@ stencils:
                     left: 8
                     right: 8
                 metadata:
-                  style: default
-                  textStyle: default-text-default
+                  style: uml-shape
+                  textStyle: uml-shape-text
                 texts:
                   text: "<p>State B</p>"
                   internalActivities: ""
@@ -260,7 +263,7 @@ stencils:
             left: 8
             right: 8
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: "<p>Active</p>"
@@ -269,6 +272,7 @@ stencils:
 
   - id: 'uml-pseudo-state-initial'
     name: Initial
+    styles: [ uml-shape ]
     elements:
       - id: d7y2q0m
         type: node
@@ -285,13 +289,14 @@ stencils:
             umlPseudoState:
               variant: initial
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-pseudo-state-terminate'
     name: Terminate
+    styles: [ uml-shape ]
     elements:
       - id: k8o6xts
         type: node
@@ -308,13 +313,14 @@ stencils:
             umlPseudoState:
               variant: terminate
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-pseudo-state-entry'
     name: Entry
+    styles: [ uml-shape ]
     elements:
       - id: y0h8j4r
         type: node
@@ -331,13 +337,14 @@ stencils:
             umlPseudoState:
               variant: entry
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-pseudo-state-exit'
     name: Exit
+    styles: [ uml-shape ]
     elements:
       - id: dr0n4yx
         type: node
@@ -354,13 +361,14 @@ stencils:
             umlPseudoState:
               variant: exit
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:
 
   - id: 'uml-pseudo-state-final'
     name: Final
+    styles: [ uml-shape ]
     elements:
       - id: h1t7p2a
         type: node
@@ -377,7 +385,7 @@ stencils:
             umlPseudoState:
               variant: final
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
         tags:

@@ -1,7 +1,7 @@
 import { text, toInlineCSS, VNode } from '../component/vdom';
 import * as svg from '../component/vdom-svg';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { makeLinearGradient, makeRadialGradient } from './shapeFill';
+import { makeLinearGradient, makeRadialGradient, resolveFillForRendering } from './shapeFill';
 import { newid } from '@diagram-craft/utils/id';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
@@ -183,7 +183,9 @@ export class SVGGBuilder {
   setFill(fill: NodeProps['fill']) {
     this.#fillGradientId = undefined;
 
-    this.#fill = fill;
+    if (!fill) return this;
+
+    this.#fill = resolveFillForRendering(fill, this.#stroke?.color ?? 'var(--canvas-fg)');
 
     if (this.#fill!.type === 'gradient') {
       this.#fillGradientId = newid();

@@ -1,6 +1,7 @@
 stencils:
   - id: 'uml-component-full'
     name: Full Component
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: xrg6yfx
         type: node
@@ -39,7 +40,7 @@ stencils:
                 adjustSizeBasedOnText: true
             metadata:
               style: default-text
-              textStyle: default-text-default
+              textStyle: uml-shape-text
             texts:
               text: "<b>&lt;&lt;provided interfaces&gt;&gt;</b><div>&nbsp; IUserServices</div><div><b>&lt;&lt;required interfaces&gt;&gt;</b></div><div>&nbsp; IAddressValidation</div>"
             tags:
@@ -64,13 +65,14 @@ stencils:
             right: 6
             italic: true
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: Component
         tags:
   - id: 'uml-component-simple'
     name: Simple Component
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: oolk6to
         type: node
@@ -105,13 +107,14 @@ stencils:
           anchors:
             type: shape-defaults
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal;\">UserService</span></div>"
         tags:
   - id: 'uml-component-simple-with-interface'
     name: Simple Component with Interface
+    styles: [ uml-shape, uml-edge, uml-shape-text ]
     elements:
       - id: oolk6to
         type: node
@@ -146,8 +149,8 @@ stencils:
           anchors:
             type: shape-defaults
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<div><span style=\"font-style: normal;\">UserService</span></div>"
         tags:
@@ -176,7 +179,7 @@ stencils:
             position: s
             width: 200
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -213,12 +216,13 @@ stencils:
             end:
               type: NONE
         metadata:
-          style: c4-edge
+          style: uml-edge
         children: [ ]
         tags:
 
   - id: 'uml-component-provided-interface'
     name: Provided Interface
+    styles: [ uml-shape, uml-edge ]
     elements:
       - id: 9ug4rjk
         type: node
@@ -240,7 +244,7 @@ stencils:
             position: s
             width: 200
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -271,12 +275,13 @@ stencils:
             end:
               type: NONE
         metadata:
-          style: c4-edge
+          style: uml-edge
         children: [ ]
         tags:
 
   - id: 'uml-component-required-interface'
     name: Required Interface
+    styles: [ uml-shape, uml-edge ]
     elements:
       - id: eahi25i
         type: node
@@ -303,7 +308,7 @@ stencils:
             position: s
             width: 200
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -334,12 +339,13 @@ stencils:
             end:
               type: NONE
         metadata:
-          style: c4-edge
+          style: uml-edge
         children: [ ]
         tags:
 
   - id: 'uml-component-required-interface-west'
     name: Required Interface (West)
+    styles: [ uml-shape, uml-edge ]
     elements:
       - id: b0cpadh
         type: node
@@ -366,7 +372,7 @@ stencils:
             position: s
             width: 200
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -397,6 +403,6 @@ stencils:
             end:
               type: NONE
         metadata:
-          style: c4-edge
+          style: uml-edge
         children: [ ]
         tags:

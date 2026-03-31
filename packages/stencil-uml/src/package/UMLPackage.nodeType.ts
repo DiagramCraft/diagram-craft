@@ -54,7 +54,11 @@ export class UMLPackageNodeDefinition extends LayoutCapableShapeNodeDefinition {
   additionalFillCount = 1;
 
   // biome-ignore lint/suspicious/noExplicitAny: allows subclassing with a different component
-  constructor(type = 'umlPackage', name = 'UML Package', component: NodeShapeConstructor<any> = UMLPackageComponent) {
+  constructor(
+    type = 'umlPackage',
+    name = 'UML Package',
+    component: NodeShapeConstructor<any> = UMLPackageComponent
+  ) {
     super(type, name, component);
 
     this.setFlags({
@@ -128,25 +132,28 @@ export class UMLPackageComponent extends BaseNodeComponent<UMLPackageNodeDefinit
       props.node.children.length > 0 && this.def.shouldRenderChildren(props.node);
     const tabH = this.def.getTabH(props.node);
 
-    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
-    builder.boundaryPath(boundary.all());
-
     const tabFill = nodeProps.additionalFills?.['0'];
     if (tabFill?.enabled) {
-      const strokeWidth = nodeProps.stroke.enabled ? nodeProps.stroke.width : 0;
       const color = tabFill.color ?? 'transparent';
       builder.add(
         svg.rect({
-          x: bounds.x + strokeWidth,
-          y: bounds.y + strokeWidth,
-          width: effectiveTabW - 2 * strokeWidth,
-          height: tabH - 2 * strokeWidth,
+          x: bounds.x,
+          y: bounds.y,
+          width: effectiveTabW,
+          height: tabH,
           fill: color,
-          stroke: color,
-          style: 'pointer-events: none'
+          stroke: 'none',
+          style: 'pointer-events: none',
+          on: {
+            mousedown: props.onMouseDown,
+            dblclick: builder.makeOnDblclickHandle('1')
+          }
         })
       );
     }
+
+    const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
+    builder.boundaryPath(boundary.all());
 
     // Interior line separating tab from body
     const interiorPath = new PathListBuilder().withTransform([new Translation(bounds)]);
@@ -206,7 +213,8 @@ export class UMLPackageComponent extends BaseNodeComponent<UMLPackageNodeDefinit
           'd': `M ${tx + triW / 2} ${ty} L ${tx} ${ty + triH} L ${tx + triW} ${ty + triH} Z`,
           'fill': 'none',
           'stroke': nodeProps.stroke.color,
-          'stroke-width': nodeProps.stroke.width
+          'stroke-width': nodeProps.stroke.width,
+          'class': 'uScale'
         })
       );
     }

@@ -1,6 +1,7 @@
 stencils:
   - id: 'uml-sequence-lifeline'
     name: Lifeline
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: umllifeline-container01
         type: node
@@ -29,8 +30,8 @@ stencils:
                 left: 6
                 right: 6
             metadata:
-              style: default
-              textStyle: default-text-default
+              style: uml-shape
+              textStyle: uml-shape-text
             texts:
               text: "Participant"
             tags:
@@ -52,7 +53,7 @@ stencils:
                 resizable:
                   horizontal: false
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: ""
@@ -70,6 +71,7 @@ stencils:
         tags:
   - id: 'uml-sequence-execution'
     name: Execution
+    styles: [ uml-shape ]
     elements:
       - id: umllifelineexecution01
         type: node
@@ -88,13 +90,14 @@ stencils:
             left: 0
             right: 0
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
         tags:
   - id: 'uml-sequence-destroy'
     name: Destroy
+    styles: [ uml-shape ]
     elements:
       - id: umldestroy01
         type: node
@@ -115,15 +118,16 @@ stencils:
             left: 0
             right: 0
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
         tags:
   - id: 'uml-sequence-duration-constraint'
     name: Duration Constraint
+    styles: [ uml-shape ]
     settings:
-      marginLeft: -20
+      marginLeft: 20
     elements:
       - id: umldurationconstraint01
         type: node
@@ -150,13 +154,14 @@ stencils:
               bottomLine: true
               alignment: left
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: "{10ms}"
         tags:
   - id: 'uml-sequence-lost-message'
     name: Lost Message
+    styles: [ uml-shape, uml-edge ]
     elements:
       - id: l5g3i86
         type: node
@@ -170,9 +175,9 @@ stencils:
         children: [ ]
         props:
           fill:
-            color: var(--canvas-fg)
+            color: stroke
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -200,11 +205,12 @@ stencils:
             end:
               type: SQUARE_STICK_ARROW
         metadata:
-          style: default-edge
+          style: uml-edge
         children: [ ]
         tags:
   - id: 'uml-sequence-found-message'
     name: Found Message
+    styles: [ uml-shape, uml-edge ]
     elements:
       - id: 2kj7v5d
         type: node
@@ -218,9 +224,9 @@ stencils:
         children: [ ]
         props:
           fill:
-            color: var(--canvas-fg)
+            color: stroke
         metadata:
-          style: default
+          style: uml-shape
           textStyle: default-text-default
         texts:
           text: ""
@@ -248,12 +254,13 @@ stencils:
             end:
               type: SQUARE_STICK_ARROW
         metadata:
-          style: default-edge
+          style: uml-edge
         children: [ ]
         tags:
 
   - id: 'uml-sequence-state-symbol'
     name: State Symbol
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: wvi1k24
         type: node
@@ -270,14 +277,15 @@ stencils:
             roundedRect:
               radius: 2.8970446965731753
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: Finished
         tags:
 
   - id: 'uml-sequence-combined-alt'
     name: Alt
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: rsn1l8z
         type: node
@@ -312,7 +320,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p>[condition 2]</p>"
@@ -340,7 +348,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p>[condition 1]</p>"
@@ -358,21 +366,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-          additionalFills:
-            - enabled: true
-              color: var(--canvas-bg2)
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<b>alt</b>"
         tags:
 
   - id: 'uml-sequence-combined-opt'
     name: Opt
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: ye9tw8q
         type: node
@@ -408,7 +411,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p>[condition]</p>"
@@ -426,21 +429,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-          additionalFills:
-            - enabled: true
-              color: var(--canvas-bg2)
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<b>opt</b>"
         tags:
 
   - id: 'uml-sequence-combined-loop'
     name: Loop
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: q9bqs5u
         type: node
@@ -465,21 +463,16 @@ stencils:
             right: 6
           fill:
             enabled: false
-          additionalFills:
-            - enabled: true
-              color: white
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<b>loop</b>"
         tags:
 
   - id: 'uml-sequence-combined-par'
     name: Parallel
+    styles: [ uml-shape, uml-shape-text ]
     elements:
       - id: a8mhn1n
         type: node
@@ -514,7 +507,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p><br></p>"
@@ -542,7 +535,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p><br></p>"
@@ -570,7 +563,7 @@ stencils:
                 bottom: 0
                 valign: top
             metadata:
-              style: default
+              style: uml-shape
               textStyle: default-text-default
             texts:
               text: "<p><br></p>"
@@ -588,15 +581,9 @@ stencils:
             right: 6
           fill:
             enabled: false
-          additionalFills:
-            - enabled: true
-              color: white
-        pickerProps:
-          additionalFills:
-            - enabled: false
         metadata:
-          style: default
-          textStyle: default-text-default
+          style: uml-shape
+          textStyle: uml-shape-text
         texts:
           text: "<b>par</b>"
         tags:

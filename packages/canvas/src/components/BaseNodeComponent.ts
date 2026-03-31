@@ -1,7 +1,7 @@
 import { Component } from '../component/component';
 import { VNode } from '../component/vdom';
 import { DASH_PATTERNS } from '../dashPatterns';
-import { addFillComponents, makeLinearGradient } from '../shape/shapeFill';
+import { addFillComponents, makeLinearGradient, resolveFillForRendering } from '../shape/shapeFill';
 import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
@@ -143,6 +143,7 @@ export class BaseNodeComponent<
       : undefined;
 
     const nodeProps = props.element.renderProps;
+    const fill = resolveFillForRendering(nodeProps.fill, nodeProps.stroke.color);
 
     const isSelected = $d.selection.elements.includes(props.element);
     const isSingleSelected = isSelected && $d.selection.elements.length === 1;
@@ -175,14 +176,14 @@ export class BaseNodeComponent<
     if (nodeProps.fill.enabled === false) {
       style.fill = 'transparent';
     } else {
-      style.fill = nodeProps.fill.color;
+      style.fill = fill.color;
     }
 
     addFillComponents(
       'node',
       props.element.id,
-      nodeProps.fill.type,
-      nodeProps.fill,
+      fill.type,
+      fill,
       props.element.diagram,
       props.element.bounds,
       style,
@@ -393,6 +394,10 @@ export class BaseNodeComponent<
 
   private buildIndicator(props: NodeComponentProps, indicator: DeepRequired<Indicator>) {
     const eBounds = props.element.bounds;
+    const fill = resolveFillForRendering(
+      props.element.renderProps.fill,
+      props.element.renderProps.stroke.color
+    );
 
     const bounds: WritableBox = Box.asReadWrite({
       x: eBounds.x + indicator.offset,
@@ -452,7 +457,7 @@ export class BaseNodeComponent<
         'stroke-width': 0,
         'fill': 'transparent'
       }),
-      renderer(WritableBox.asBox(bounds), indicator, props.element.renderProps.fill.color)
+      renderer(WritableBox.asBox(bounds), indicator, fill.color)
     );
   }
 

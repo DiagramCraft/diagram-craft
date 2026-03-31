@@ -15,6 +15,7 @@ import type { Property } from '@diagram-craft/model/property';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { TbLine } from 'react-icons/tb';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -47,6 +48,10 @@ const PATTERNS = [
   `<pattern id="#ID#" x="2" y="2" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#BG#" /><rect x="0" y="0" width="2" height="2" fill="#FG#" /><rect x="2" y="2" width="2" height="2" fill="#FG#" /></pattern>`,
   `<pattern id="#ID#" x="2" y="2" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="8" height="8" fill="#BG#" /><rect x="0" y="0" width="4" height="4" fill="#FG#" /><rect x="4" y="4" width="4" height="4" fill="#FG#" /></pattern>`
 ];
+
+const SPECIAL_FILL_COLORS = {
+  stroke: { label: 'Stroke Color', icon: <TbLine /> }
+};
 
 const ImageScale = (props: { imageScale: Property<number> }) => (
   <>
@@ -195,6 +200,7 @@ export const FillPanelForm = ({
                   palette={$cfg.palette.primary}
                   customPalette={$d.document.customPalette}
                   onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                  special={SPECIAL_FILL_COLORS}
                 />
               )}
               renderValue={props => <ColorPreview {...props} />}
@@ -209,6 +215,7 @@ export const FillPanelForm = ({
                     palette={$cfg.palette.primary}
                     customPalette={$d.document.customPalette}
                     onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                    special={SPECIAL_FILL_COLORS}
                   />
                 )}
                 renderValue={props => <ColorPreview {...props} />}

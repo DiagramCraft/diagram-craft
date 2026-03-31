@@ -53,8 +53,7 @@ const getBuiltInStereotypeIconChildren = (
     case 'artifact':
       return [
         svg.path({
-          'd':
-            'M 2.333,0 L 9.667,0 L 12.667,3 L 12.667,14 L 2.333,14 Z M 9.667,0 L 9.667,3 L 12.667,3',
+          'd': 'M 2.333,0 L 9.667,0 L 12.667,3 L 12.667,14 L 2.333,14 Z M 9.667,0 L 9.667,3 L 12.667,3',
           'fill': fillColor,
           'stroke': color,
           'stroke-width': strokeWidth,
@@ -65,19 +64,19 @@ const getBuiltInStereotypeIconChildren = (
     case 'entity':
       return [
         svg.circle({
-          cx: 7,
-          cy: 5.5,
-          r: 4.5,
-          fill: 'none',
-          stroke: color,
+          'cx': 7,
+          'cy': 5.5,
+          'r': 4.5,
+          'fill': 'none',
+          'stroke': color,
           'stroke-width': strokeWidth
         }),
         svg.line({
-          x1: 2.5,
-          y1: 10,
-          x2: 11.5,
-          y2: 10,
-          stroke: color,
+          'x1': 2.5,
+          'y1': 10,
+          'x2': 11.5,
+          'y2': 10,
+          'stroke': color,
           'stroke-width': strokeWidth,
           'stroke-linecap': 'round'
         })
@@ -119,7 +118,8 @@ export const renderStereotypeIconInBounds = (
       width: iconBounds.w,
       height: iconBounds.h,
       preserveAspectRatio: 'xMidYMid meet',
-      style: 'pointer-events: none;'
+      style: 'pointer-events: none;',
+      class: 'uScale'
     });
   }
 
@@ -135,7 +135,8 @@ export const renderStereotypeIconInBounds = (
   return svg.g(
     {
       transform: `translate(${x} ${y}) scale(${scale})`,
-      style: 'pointer-events: none'
+      style: 'pointer-events: none;',
+      class: 'uScale'
     },
     ...children
   );
