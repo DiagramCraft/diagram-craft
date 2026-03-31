@@ -7,6 +7,8 @@ type UserStateEvents = {
   change: { after: UserState };
 };
 
+export type ThemeMode = 'dark' | 'light';
+
 const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
 
 const MAX_RECENT_FILES = 10;
@@ -20,6 +22,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #recentFiles: Array<string>;
+  #themeMode: ThemeMode = 'dark';
   #toolWindowTabs: Record<string, string> = {};
 
   private awarenessStateCache: AwarenessUserState | undefined;
@@ -43,6 +46,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#showHelp = state.showHelp ?? true;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
     this.#recentFiles = state.recentFiles ?? [];
+    this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
   }
 
@@ -76,6 +80,16 @@ export class UserState extends EventEmitter<UserStateEvents> {
 
   get recentFiles(): Array<string> {
     return this.#recentFiles;
+  }
+
+  set themeMode(themeMode: ThemeMode) {
+    if (this.#themeMode === themeMode) return;
+    this.#themeMode = themeMode;
+    this.triggerChange();
+  }
+
+  get themeMode(): ThemeMode {
+    return this.#themeMode;
   }
 
   set panelLeft(panelLeft: number | undefined) {
@@ -161,6 +175,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
         showHelp: this.#showHelp,
         stencils: this.#stencils,
         recentFiles: this.#recentFiles,
+        themeMode: this.#themeMode,
         toolWindowTabs: this.#toolWindowTabs
       })
     );
