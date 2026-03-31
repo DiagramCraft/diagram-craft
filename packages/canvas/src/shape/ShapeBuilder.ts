@@ -51,7 +51,7 @@ type Opts = {
 };
 
 const applyStrokeZoom = (style: Partial<CSSStyleDeclaration>) => {
-  if (style.strokeDasharray === undefined) return style;
+  if (style.strokeDasharray === undefined || style.strokeDasharray === '') return style;
 
   // TODO: Would be nice to only do this in a thumbnail context
   return {
