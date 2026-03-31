@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { UserState } from './UserState';
 
 describe('UserState', () => {
@@ -28,5 +28,20 @@ describe('UserState', () => {
 
   test('defaults to dark mode when no theme mode is stored', () => {
     expect(new UserState().themeMode).toBe('dark');
+  });
+
+  test('only emits change when persisted state actually changes', () => {
+    const userState = new UserState();
+    const changeListener = vi.fn();
+
+    userState.on('change', changeListener);
+
+    userState.showHelp = true;
+    userState.setToolWindowTab('object-tool', 'style');
+    userState.setToolWindowTab('object-tool', 'style');
+    userState.showHelp = false;
+    userState.showHelp = false;
+
+    expect(changeListener).toHaveBeenCalledTimes(2);
   });
 });
