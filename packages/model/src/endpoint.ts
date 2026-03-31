@@ -17,20 +17,40 @@ import {
 } from './collapsible';
 
 /**
- * Calculates an offset vector with optional rotation.
- * Converts normalized offset to absolute offset based on bounds dimensions.
+ * Calculates an offset vector for an endpoint.
+ *
+ * Relative offsets are scaled by the supplied bounds before the vector is rotated
+ * around the origin using the bounds rotation.
+ *
+ * @param offset - The raw offset stored on the endpoint
+ * @param bounds - The bounds used to scale and rotate the offset
+ * @param isRelative - Whether the offset is stored in normalized units
+ * @returns The rotated absolute offset vector
  */
 const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point => {
   const v = isRelative ? { x: offset.x * bounds.w, y: offset.y * bounds.h } : offset;
   return Point.rotateAround(v, bounds.r, Point.ORIGIN);
 };
 
+/**
+ * Represents an edge endpoint.
+ *
+ * Endpoints can either be free-floating in the canvas or attached to a node.
+ */
 export interface Endpoint {
   readonly position: Point;
   serialize(): SerializedEndpoint;
   readonly isConnected: boolean;
 }
 
+/**
+ * Base class for endpoints that are attached to a node.
+ *
+ * The node can be provided eagerly or via a deferred lookup callback, which is
+ * useful while deserializing graph structures that resolve nodes in a later pass.
+ *
+ * @typeParam T - The serialized endpoint shape
+ */
 export abstract class ConnectedEndpoint<
   T extends SerializedEndpoint = SerializedEndpoint
 > implements Endpoint {
@@ -50,10 +70,31 @@ export abstract class ConnectedEndpoint<
   abstract isConnected: boolean;
 }
 
+/**
+ * Describes how an endpoint offset is interpreted.
+ *
+ * - `absolute`: the offset is stored in canvas units
+ * - `relative`: the offset is stored in normalized node-space units
+ */
 export type OffsetType = 'absolute' | 'relative';
 
-/** @namespace */
+/**
+ * Factory helpers for working with endpoints.
+ *
+ * @namespace
+ */
 export const Endpoint = {
+  /**
+   * Deserializes a serialized endpoint.
+   *
+   * When `defer` is enabled, connected endpoints keep a lazy node lookup so they
+   * can be created before the referenced node object is accessed.
+   *
+   * @param endpoint - The serialized endpoint to deserialize
+   * @param nodeLookup - Lookup used to resolve referenced nodes
+   * @param defer - Whether node lookup should be deferred until first access
+   * @returns The deserialized endpoint instance
+   */
   deserialize: (
     endpoint: SerializedEndpoint,
     nodeLookup: ElementLookup<DiagramNode>,
@@ -78,6 +119,9 @@ export const Endpoint = {
   }
 };
 
+/**
+ * Endpoint that snaps to a named anchor on a node.
+ */
 export class AnchorEndpoint
   extends ConnectedEndpoint<SerializedAnchorEndpoint>
   implements Endpoint
@@ -133,6 +177,12 @@ export class AnchorEndpoint
   }
 }
 
+/**
+ * Endpoint that targets an arbitrary point inside or around a node.
+ *
+ * The endpoint can either use a normalized reference point inside the node or a
+ * free offset from the node bounds when `ref` is undefined.
+ */
 export class PointInNodeEndpoint
   extends ConnectedEndpoint<SerializedPointInNodeEndpoint>
   implements Endpoint
@@ -158,13 +208,17 @@ export class PointInNodeEndpoint
     const p = this.ref;
     if (!p) return false;
 
-    const r = Point.add(this.ref, this.offset);
-    return (
-      Point.isEqual(r, _p(0, 0)) ||
-      Point.isEqual(r, _p(1, 0)) ||
-      Point.isEqual(r, _p(0, 1)) ||
-      Point.isEqual(r, _p(1, 1))
-    );
+    if (this.offsetType === 'relative') {
+      const r = Point.add(this.ref, this.offset);
+      return (
+        Point.isEqual(r, _p(0, 0)) ||
+        Point.isEqual(r, _p(1, 0)) ||
+        Point.isEqual(r, _p(0, 1)) ||
+        Point.isEqual(r, _p(1, 1))
+      );
+    }
+
+    return Box.corners(this.node.bounds).some(corner => Point.isEqual(corner, this.position));
   }
 
   get position(): Point {
@@ -214,6 +268,9 @@ export class PointInNodeEndpoint
   }
 }
 
+/**
+ * Endpoint with a fixed canvas position and no node attachment.
+ */
 export class FreeEndpoint implements Endpoint {
   isConnected = false;
   readonly position: Point;
