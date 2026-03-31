@@ -27,6 +27,6 @@ export const downloadDiagram = async (page: Page) => {
 };
 
 export const setTab = async (page: Page, n: number) => {
-  const tablist = page.getByRole('tablist').first();
+  const tablist = page.getByRole('tablist', { name: 'Diagrams in document' });
   await tablist.getByRole('tab').nth(n).click();
 };

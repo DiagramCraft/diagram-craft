@@ -169,6 +169,14 @@ const updateAttrs = (oldVNode: VNode, newVNode: VNode) => {
   const newAttrs = newVNode.data;
   const newNode = newVNode.el!;
 
+  for (const key in oldAttrs) {
+    if (key === 'on' || key === 'hooks' || key === 'component') continue;
+
+    if (!(key in newAttrs)) {
+      newNode.removeAttribute(key);
+    }
+  }
+
   for (const key in newAttrs) {
     if (key === 'on' || key === 'hooks' || key === 'component') continue;
 
