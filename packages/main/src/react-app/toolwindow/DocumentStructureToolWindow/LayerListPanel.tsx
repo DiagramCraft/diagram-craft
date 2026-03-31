@@ -83,6 +83,7 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
 
 const LayerEntry = (props: { layer: Layer }) => {
   const diagram = useDiagram();
+  const application = useApplication();
   const layer = props.layer;
 
   const drag = useDraggable(JSON.stringify([layer.id]), LAYER_INSTANCES);
@@ -135,6 +136,11 @@ const LayerEntry = (props: { layer: Layer }) => {
           {...dropTarget.eventHandlers}
           onClick={() => {
             diagram.layers.active = layer;
+          }}
+          onDoubleClick={e => {
+            application.actions['LAYER_RENAME']!.execute({ id: layer.id });
+            e.preventDefault();
+            e.stopPropagation();
           }}
         >
           <Tree.NodeLabel>

@@ -20,6 +20,7 @@ export function ActionMenuItem<
         const a = actionMap[props.action]!;
         a.execute(props.arg ?? {});
       }}
+      leftSlot={props.leftSlot}
       rightSlot={formatKeyBinding(findKeyBindingsForAction(props.action, keyMap)[0])}
     >
       {props.children ?? $t(actionMap[props.action]!.name)}
@@ -30,4 +31,5 @@ export function ActionMenuItem<
 type Props<K extends keyof ActionMap, P = Parameters<ActionMap[K]['execute']>[0]> = {
   action: K;
   children?: React.ReactNode;
+  leftSlot?: React.ReactElement;
 } & (P extends undefined ? { arg?: never } : { arg: P });

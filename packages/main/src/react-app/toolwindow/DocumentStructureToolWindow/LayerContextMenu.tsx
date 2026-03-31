@@ -4,6 +4,7 @@ import { ActionToggleMenuItem } from '../../components/ActionToggleMenuItem';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { TbAdjustments, TbLayersSelectedBottom, TbLink, TbRectangle } from 'react-icons/tb';
 
 export const LayerContextMenu = (props: Props) => {
   return (
@@ -11,10 +12,10 @@ export const LayerContextMenu = (props: Props) => {
       <ContextMenu.Trigger element={props.element} />
       <ContextMenu.Menu>
         <Menu.SubMenu label={'New'}>
-          <ActionMenuItem action={'LAYER_ADD'}>Layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_REFERENCE'}>Reference layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_RULE'}>Rule layer...</ActionMenuItem>
-          <ActionMenuItem action={'LAYER_ADD_MODIFICATION'}>Modification layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD'} leftSlot={<TbRectangle />}>Layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_REFERENCE'} leftSlot={<TbLink />}>Reference layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_RULE'} leftSlot={<TbAdjustments />}>Rule layer...</ActionMenuItem>
+          <ActionMenuItem action={'LAYER_ADD_MODIFICATION'} leftSlot={<TbLayersSelectedBottom />}>Modification layer...</ActionMenuItem>
         </Menu.SubMenu>
 
         <Menu.Separator />
