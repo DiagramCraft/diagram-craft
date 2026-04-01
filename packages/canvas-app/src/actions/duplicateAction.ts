@@ -17,6 +17,7 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 declare global {
   namespace DiagramCraft {
@@ -50,7 +51,7 @@ const reconnectEndpoint = (
   }
 
   if (!(originalEndpoint instanceof ConnectedEndpoint)) {
-    return new FreeEndpoint(originalEndpoint.position);
+    VERIFY_NOT_REACHED();
   }
 
   const duplicatedNode = nodeMapping.get(originalEndpoint.node.id);

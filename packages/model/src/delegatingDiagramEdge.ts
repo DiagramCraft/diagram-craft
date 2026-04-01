@@ -264,16 +264,16 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
     return this.delegate.attachedEdges;
   }
 
-  _addDependentEdge(edge: DiagramEdge, uow: UnitOfWork): void {
-    this.delegate._addDependentEdge(edge, uow);
+  _addAttachedEdge(edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._addAttachedEdge(edge, uow);
   }
 
-  _removeDependentEdge(edge: DiagramEdge, uow: UnitOfWork): void {
-    this.delegate._removeDependentEdge(edge, uow);
+  _removeAttachedEdge(edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._removeAttachedEdge(edge, uow);
   }
 
-  dependsOn(edge: DiagramEdge, seen?: Set<string>): boolean {
-    return this.delegate.dependsOn(edge, seen);
+  isTransitivelyAttachedTo(edge: DiagramEdge, seen?: Set<string>): boolean {
+    return this.delegate.isTransitivelyAttachedTo(edge, seen);
   }
 
   get labelNodes(): ReadonlyArray<ResolvedLabelNode> {

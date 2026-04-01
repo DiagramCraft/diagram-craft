@@ -263,21 +263,27 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     const path = hoverEdge.path();
     const length = path.length();
+    // Degenerate paths cannot produce a stable projected attachment point.
     if (length === 0 || Number.isNaN(length)) {
       this.setEndpoint(new FreeEndpoint(p));
       return;
     }
 
     const projection = path.projectPoint(p);
+    // Only snap to the hovered edge while the pointer is within the standard
+    // endpoint snap threshold from the routed path.
     if (Point.distance(projection.point, p) > getSnapConfig(this.diagram).threshold) {
       this.setEndpoint(new FreeEndpoint(p));
       return;
     }
 
+    // Persist the attachment as a normalized offset along the target edge so
+    // it can be recomputed if that edge moves or reroutes.
     const pathPosition = projection.pathD / length;
     const endpoint = new PointOnEdgeEndpoint(hoverEdge, pathPosition);
 
-    if (hoverEdge === this.edge || hoverEdge.dependsOn(this.edge)) {
+    // Reject self-targeting and indirect dependency cycles.
+    if (hoverEdge === this.edge || hoverEdge.isTransitivelyAttachedTo(this.edge)) {
       removeHighlight(hoverEdge, Highlights.NODE__EDGE_CONNECT);
       this.setEndpoint(new FreeEndpoint(p));
       return;
@@ -360,14 +366,8 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   private updateEdgeParent() {
-    const start =
-      this.edge.start instanceof ConnectedEndpoint
-        ? this.edge.start.node
-        : undefined;
-    const end =
-      this.edge.end instanceof ConnectedEndpoint
-        ? this.edge.end.node
-        : undefined;
+    const start = this.edge.start instanceof ConnectedEndpoint ? this.edge.start.node : undefined;
+    const end = this.edge.end instanceof ConnectedEndpoint ? this.edge.end.node : undefined;
     const connectedCount = (start ? 1 : 0) + (end ? 1 : 0);
     const currentParent = this.edge.parent;
 

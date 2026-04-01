@@ -5,9 +5,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Point } from '@diagram-craft/geometry/point';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
-  EdgeConnectedEndpoint,
   FreeEndpoint,
+  isConnectedEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -92,10 +91,7 @@ export class AnchorHandleDrag extends Drag {
     let newNodeId: string | undefined;
 
     // In case we have connected to an existing node, we don't need to show the popup
-    if (
-      !(this.edge.end instanceof ConnectedEndpoint) &&
-      !(this.edge.end instanceof EdgeConnectedEndpoint)
-    ) {
+    if (!isConnectedEndpoint(this.edge.end)) {
       const newNode = createProvisionalLinkedNode(this.node, this.edge, this.edge.end.position);
       newNodeId = newNode.id;
     }

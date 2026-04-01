@@ -16,7 +16,6 @@ import {
   ConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
-  PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from './endpoint';
 import { DeepReadonly, DeepRequired, makeWriteable } from '@diagram-craft/utils/types';
@@ -804,8 +803,6 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
                 e.start.offset,
                 e.start.offsetType
               );
-            } else if (e.start instanceof PointOnEdgeEndpoint) {
-              throw new VerifyNotReached();
             } else {
               throw new VerifyNotReached();
             }
@@ -828,8 +825,6 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
                 e.end.offset,
                 e.end.offsetType
               );
-            } else if (e.end instanceof PointOnEdgeEndpoint) {
-              throw new VerifyNotReached();
             } else {
               throw new VerifyNotReached();
             }

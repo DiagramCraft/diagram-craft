@@ -4,13 +4,10 @@ import * as svg from '../component/vdom-svg';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
-import { ConnectedEndpoint, EdgeConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { isConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { $c } from '@diagram-craft/utils/classname';
 import { Zoom } from './zoom';
 import { Context } from '../context';
-
-const isConnectedEndpoint = (endpoint: DiagramEdge['start']) =>
-  endpoint instanceof ConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
 
 export class EdgeSelectionComponent extends Component<Props> {
   render(props: Props) {

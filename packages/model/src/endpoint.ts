@@ -39,6 +39,11 @@ export interface Endpoint {
   serialize(): SerializedEndpoint;
 }
 
+export const isConnectedEndpoint = (
+  endpoint: Endpoint
+): endpoint is ConnectedEndpoint | EdgeConnectedEndpoint =>
+  endpoint instanceof ConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
+
 /**
  * Base class for endpoints that are attached to a node.
  *
@@ -65,9 +70,17 @@ export abstract class ConnectedEndpoint<
   abstract serialize(): T;
 }
 
-export abstract class EdgeConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
-  implements Endpoint
-{
+/**
+ * Base class for endpoints that are attached to an edge.
+ *
+ * The edge can be provided eagerly or via a deferred lookup callback, which is
+ * useful while deserializing graph structures that resolve edges in a later pass.
+ *
+ * @typeParam T - The serialized endpoint shape
+ */
+export abstract class EdgeConnectedEndpoint<
+  T extends SerializedEndpoint = SerializedEndpoint
+> implements Endpoint {
   protected constructor(readonly edgeFn: DiagramEdge | (() => DiagramEdge)) {}
 
   get edge(): DiagramEdge {
@@ -76,8 +89,6 @@ export abstract class EdgeConnectedEndpoint<T extends SerializedEndpoint = Seria
     }
     return this.edgeFn;
   }
-
-  abstract isMidpoint(): boolean;
 
   abstract readonly position: Readonly<{ x: number; y: number }>;
   abstract serialize(): T;
@@ -128,18 +139,14 @@ export const Endpoint = {
       );
     } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
-        defer
-          ? () => nodeLookup.get(endpoint.node.id)!
-          : nodeLookup.get(endpoint.node.id)!,
+        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
         endpoint.ref,
         endpoint.offset,
         endpoint.offsetType ?? 'absolute'
       );
     } else {
       return new AnchorEndpoint(
-        defer
-          ? () => nodeLookup.get(endpoint.node.id)!
-          : nodeLookup.get(endpoint.node.id)!,
+        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
         endpoint.anchor,
         endpoint.offset ?? Point.ORIGIN
       );
@@ -299,12 +306,11 @@ export class PointOnEdgeEndpoint
   extends EdgeConnectedEndpoint<SerializedPointOnEdgeEndpoint>
   implements Endpoint
 {
-  constructor(edge: DiagramEdge | (() => DiagramEdge), public readonly pathPosition: number) {
+  constructor(
+    edge: DiagramEdge | (() => DiagramEdge),
+    public readonly pathPosition: number
+  ) {
     super(edge);
-  }
-
-  isMidpoint() {
-    return false;
   }
 
   get normalizedPathPosition() {
