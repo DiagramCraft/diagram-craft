@@ -12,12 +12,17 @@ import type { DiagramNode } from './diagramNode';
 import type { DiagramEdge } from './diagramEdge';
 import { ElementLookup } from './elementLookup';
 import { groupBy } from '@diagram-craft/utils/array';
-import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './serialization/utils';
+import {
+  isSerializedEndpointAnchor,
+  isSerializedEndpointPointInNode,
+  isSerializedEndpointPointOnEdge
+} from './serialization/utils';
 
 export const assignNewIdsToSerializedElements = (
   elements: ReadonlyArray<SerializedNode | SerializedEdge>
 ): Map<string, string> => {
   const nodeIdMapping = new Map<string, string>();
+  const edgeIdMapping = new Map<string, string>();
 
   // Recursive function to assign new IDs to nodes and build the mapping
   const assignNodeIds = (e: SerializedNode | SerializedEdge) => {
@@ -27,6 +32,8 @@ export const assignNewIdsToSerializedElements = (
 
     if (e.type === 'node' || e.type === 'delegating-node') {
       nodeIdMapping.set(oldId, newId);
+    } else {
+      edgeIdMapping.set(oldId, newId);
     }
 
     for (const c of e.children ?? []) {
@@ -45,6 +52,13 @@ export const assignNewIdsToSerializedElements = (
           // Node not in cloned set - convert to free endpoint
           e.start = { position: e.start.position! };
         }
+      } else if (isSerializedEndpointPointOnEdge(e.start)) {
+        const newId = edgeIdMapping.get(e.start.edge.id);
+        if (newId) {
+          e.start.edge = { id: newId };
+        } else {
+          e.start = { position: e.start.position! };
+        }
       }
       if (isSerializedEndpointAnchor(e.end) || isSerializedEndpointPointInNode(e.end)) {
         const newId = nodeIdMapping.get(e.end.node.id);
@@ -52,6 +66,13 @@ export const assignNewIdsToSerializedElements = (
           e.end.node = { id: newId };
         } else {
           // Node not in cloned set - convert to free endpoint
+          e.end = { position: e.end.position! };
+        }
+      } else if (isSerializedEndpointPointOnEdge(e.end)) {
+        const newId = edgeIdMapping.get(e.end.edge.id);
+        if (newId) {
+          e.end.edge = { id: newId };
+        } else {
           e.end = { position: e.end.position! };
         }
       }

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnitOfWork } from './unitOfWork';
-import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from './endpoint';
+import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint, PointOnEdgeEndpoint } from './endpoint';
 import {
   resetListeners,
   standardTestModel,
@@ -165,6 +165,46 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
         expect(edge2?.isConnected()).toBe(true);
         expect(model.elementChange[1]).toHaveBeenCalledTimes(4);
       }
+    });
+
+    it('should set an endpoint to PointOnEdgeEndpoint and keep it synced with the target edge', () => {
+      const target = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 0 }),
+        layer: model.layer1
+      });
+      UnitOfWork.execute(model.diagram1, uow => model.layer1.addElement(target, uow));
+
+      model.reset();
+      UnitOfWork.execute(model.diagram1, uow =>
+        edge1.setStart(new PointOnEdgeEndpoint(target, 0.3), uow)
+      );
+
+      expect(edge1.start).toBeInstanceOf(PointOnEdgeEndpoint);
+      expect(edge1.start.serialize()).toStrictEqual({
+        edge: { id: target.id },
+        pathPosition: 0.3,
+        position: { x: 30, y: 0 }
+      });
+
+      UnitOfWork.execute(model.diagram1, uow => {
+        target.setEnd(new FreeEndpoint({ x: 200, y: 0 }), uow);
+      });
+
+      expect(edge1.start.position).toStrictEqual({ x: 60, y: 0 });
+      expect(model.elementChange[0]).toHaveBeenCalled();
+      if (model.doc2) {
+        const remoteTarget = model.diagram2!.edgeLookup.get(target.id)!;
+        expect((edge2!.start as PointOnEdgeEndpoint).edge).toBe(remoteTarget);
+        expect(edge2!.start.position).toStrictEqual({ x: 60, y: 0 });
+        expect(model.elementChange[1]).toHaveBeenCalled();
+      }
+    });
+
+    it('should reject edge endpoint cycles', () => {
+      expect(() =>
+        UnitOfWork.execute(model.diagram1, uow => edge1.setStart(new PointOnEdgeEndpoint(edge1, 0.5), uow))
+      ).toThrow();
     });
   });
 

@@ -19,7 +19,12 @@ export class DiagramGraph extends SimpleGraph<DiagramNode, DiagramEdge> {
 
     // Add all edges
     for (const edge of edges) {
-      if (edge.start instanceof ConnectedEndpoint && edge.end instanceof ConnectedEndpoint) {
+      if (
+        edge.start instanceof ConnectedEndpoint &&
+        edge.start.isNodeConnected() &&
+        edge.end instanceof ConnectedEndpoint &&
+        edge.end.isNodeConnected()
+      ) {
         this.addEdge({
           id: edge.id,
           from: edge.start.node.id,

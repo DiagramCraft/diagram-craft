@@ -2,6 +2,7 @@ import type {
   SerializedAnchorEndpoint,
   SerializedEndpoint,
   SerializedFreeEndpoint,
+  SerializedPointOnEdgeEndpoint,
   SerializedPointInNodeEndpoint
 } from './serializedTypes';
 
@@ -13,6 +14,10 @@ export const isSerializedEndpointPointInNode = (
   endpoint: SerializedEndpoint
 ): endpoint is SerializedPointInNodeEndpoint => !('anchor' in endpoint) && 'node' in endpoint;
 
+export const isSerializedEndpointPointOnEdge = (
+  endpoint: SerializedEndpoint
+): endpoint is SerializedPointOnEdgeEndpoint => 'edge' in endpoint;
+
 export const isSerializedEndpointFree = (
   endpoint: SerializedEndpoint
-): endpoint is SerializedFreeEndpoint => !('node' in endpoint);
+): endpoint is SerializedFreeEndpoint => !('node' in endpoint) && !('edge' in endpoint);

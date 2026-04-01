@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   isSerializedEndpointAnchor,
+  isSerializedEndpointFree,
   isSerializedEndpointPointInNode,
-  isSerializedEndpointFree
+  isSerializedEndpointPointOnEdge
 } from './utils';
 import type {
   SerializedAnchorEndpoint,
   SerializedFreeEndpoint,
+  SerializedPointOnEdgeEndpoint,
   SerializedPointInNodeEndpoint
 } from './serializedTypes';
 
@@ -27,6 +29,11 @@ describe('Serialized Endpoint Type Guards', () => {
 
   const freeEndpoint: SerializedFreeEndpoint = {
     position: { x: 100, y: 100 }
+  };
+
+  const edgeEndpoint: SerializedPointOnEdgeEndpoint = {
+    edge: { id: 'edge-1' },
+    pathPosition: 0.3
   };
 
   describe('isSerializedEndpointAnchor', () => {
@@ -57,6 +64,16 @@ describe('Serialized Endpoint Type Guards', () => {
     });
   });
 
+  describe('isSerializedEndpointPointOnEdge', () => {
+    it('should return true for point-on-edge endpoints', () => {
+      expect(isSerializedEndpointPointOnEdge(edgeEndpoint)).toBe(true);
+    });
+
+    it('should return false for node-connected endpoints', () => {
+      expect(isSerializedEndpointPointOnEdge(connectedEndpoint)).toBe(false);
+    });
+  });
+
   describe('isSerializedEndpointFree', () => {
     it('should return true for free endpoints', () => {
       expect(isSerializedEndpointFree(freeEndpoint)).toBe(true);
@@ -68,6 +85,10 @@ describe('Serialized Endpoint Type Guards', () => {
 
     it('should return false for connected endpoints', () => {
       expect(isSerializedEndpointFree(connectedEndpoint)).toBe(false);
+    });
+
+    it('should return false for edge endpoints', () => {
+      expect(isSerializedEndpointFree(edgeEndpoint)).toBe(false);
     });
   });
 });

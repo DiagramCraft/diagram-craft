@@ -1,12 +1,17 @@
 import type {
   SerializedAnchorEndpoint,
   SerializedEndpoint,
+  SerializedPointOnEdgeEndpoint,
   SerializedPointInNodeEndpoint
 } from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointFree, isSerializedEndpointPointInNode } from './serialization/utils';
+import {
+  isSerializedEndpointFree,
+  isSerializedEndpointPointInNode,
+  isSerializedEndpointPointOnEdge
+} from './serialization/utils';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementLookup } from './elementLookup';
 import {
@@ -15,6 +20,8 @@ import {
   getAnchorPositionForBounds,
   getPositionInBoundsForBox
 } from './collapsible';
+import type { DiagramEdge } from './diagramEdge';
+import { clamp } from '@diagram-craft/utils/math';
 
 /** Scales relative offsets to bounds space and rotates the result around the origin. */
 const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point => {
@@ -42,15 +49,36 @@ export interface Endpoint {
  * @typeParam T - The serialized endpoint shape
  */
 export abstract class ConnectedEndpoint<
-  T extends SerializedEndpoint = SerializedEndpoint
+  T extends SerializedEndpoint = SerializedEndpoint,
+  TTarget extends DiagramNode | DiagramEdge = DiagramNode | DiagramEdge
 > implements Endpoint {
-  protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
+  protected constructor(readonly targetFn: TTarget | (() => TTarget)) {}
+
+  get target(): TTarget {
+    if (this.targetFn instanceof Function) {
+      return this.targetFn();
+    }
+    return this.targetFn;
+  }
 
   get node(): DiagramNode {
-    if (this.nodeFn instanceof Function) {
-      return this.nodeFn();
-    }
-    return this.nodeFn;
+    assert.present(this.target);
+    assert.true('nodeType' in this.target);
+    return this.target as unknown as DiagramNode;
+  }
+
+  get edge(): DiagramEdge {
+    assert.present(this.target);
+    assert.true('start' in this.target && 'end' in this.target);
+    return this.target as unknown as DiagramEdge;
+  }
+
+  isNodeConnected(): this is ConnectedEndpoint<T, DiagramNode> {
+    return 'nodeType' in this.target;
+  }
+
+  isEdgeConnected(): this is ConnectedEndpoint<T, DiagramEdge> {
+    return 'start' in this.target && 'end' in this.target;
   }
 
   abstract isMidpoint(): boolean;
@@ -88,20 +116,35 @@ export const Endpoint = {
   deserialize: (
     endpoint: SerializedEndpoint,
     nodeLookup: ElementLookup<DiagramNode>,
+    edgeLookupOrDefer?: ElementLookup<DiagramEdge> | boolean,
     defer = false
   ): Endpoint => {
+    const edgeLookup =
+      typeof edgeLookupOrDefer === 'boolean' ? undefined : edgeLookupOrDefer;
+    const resolvedDefer = typeof edgeLookupOrDefer === 'boolean' ? edgeLookupOrDefer : defer;
+
     if (isSerializedEndpointFree(endpoint)) {
       return new FreeEndpoint(endpoint.position);
+    } else if (isSerializedEndpointPointOnEdge(endpoint)) {
+      assert.present(edgeLookup);
+      return new PointOnEdgeEndpoint(
+        resolvedDefer ? () => edgeLookup.get(endpoint.edge.id)! : edgeLookup.get(endpoint.edge.id)!,
+        endpoint.pathPosition
+      );
     } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
-        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
+        resolvedDefer
+          ? () => nodeLookup.get(endpoint.node.id)!
+          : nodeLookup.get(endpoint.node.id)!,
         endpoint.ref,
         endpoint.offset,
         endpoint.offsetType ?? 'absolute'
       );
     } else {
       return new AnchorEndpoint(
-        defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
+        resolvedDefer
+          ? () => nodeLookup.get(endpoint.node.id)!
+          : nodeLookup.get(endpoint.node.id)!,
         endpoint.anchor,
         endpoint.offset ?? Point.ORIGIN
       );
@@ -113,7 +156,7 @@ export const Endpoint = {
  * Endpoint that snaps to a named anchor on a node.
  */
 export class AnchorEndpoint
-  extends ConnectedEndpoint<SerializedAnchorEndpoint>
+  extends ConnectedEndpoint<SerializedAnchorEndpoint, DiagramNode>
   implements Endpoint
 {
   isConnected = true;
@@ -174,7 +217,7 @@ export class AnchorEndpoint
  * free offset from the node bounds when `ref` is undefined.
  */
 export class PointInNodeEndpoint
-  extends ConnectedEndpoint<SerializedPointInNodeEndpoint>
+  extends ConnectedEndpoint<SerializedPointInNodeEndpoint, DiagramNode>
   implements Endpoint
 {
   isConnected = true;
@@ -254,6 +297,45 @@ export class PointInNodeEndpoint
       ref: this.ref,
       offset: this.offset,
       offsetType: this.offsetType
+    };
+  }
+}
+
+/**
+ * Endpoint attached to a normalized position along another edge's routed path.
+ */
+export class PointOnEdgeEndpoint
+  extends ConnectedEndpoint<SerializedPointOnEdgeEndpoint, DiagramEdge>
+  implements Endpoint
+{
+  isConnected = true;
+
+  constructor(edge: DiagramEdge | (() => DiagramEdge), public readonly pathPosition: number) {
+    super(edge);
+  }
+
+  isMidpoint() {
+    return false;
+  }
+
+  get normalizedPathPosition() {
+    return clamp(this.pathPosition, 0, 1);
+  }
+
+  get position(): Point {
+    const path = this.edge.path();
+    const length = path.length();
+    if (length === 0 || Number.isNaN(length)) {
+      return this.edge.start.position;
+    }
+    return path.pointAt({ pathD: length * this.normalizedPathPosition });
+  }
+
+  serialize(): SerializedPointOnEdgeEndpoint {
+    return {
+      edge: { id: this.edge.id },
+      position: this.position,
+      pathPosition: this.normalizedPathPosition
     };
   }
 }

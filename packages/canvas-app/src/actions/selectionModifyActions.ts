@@ -115,10 +115,10 @@ export class SelectionSelectGrowAction extends AbstractSelectionAction {
         }
       } else if (isEdge(element)) {
         // Add both connected nodes for this edge
-        if (element.start instanceof ConnectedEndpoint) {
+        if (element.start instanceof ConnectedEndpoint && element.start.isNodeConnected()) {
           elements.add(element.start.node);
         }
-        if (element.end instanceof ConnectedEndpoint) {
+        if (element.end instanceof ConnectedEndpoint && element.end.isNodeConnected()) {
           elements.add(element.end.node);
         }
       }
@@ -148,10 +148,18 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
       }
     } else if (isEdge(element)) {
       // Count how many connected nodes are in the selection
-      if (element.start instanceof ConnectedEndpoint && elementSet.has(element.start.node)) {
+      if (
+        element.start instanceof ConnectedEndpoint &&
+        element.start.isNodeConnected() &&
+        elementSet.has(element.start.node)
+      ) {
         connectedCount++;
       }
-      if (element.end instanceof ConnectedEndpoint && elementSet.has(element.end.node)) {
+      if (
+        element.end instanceof ConnectedEndpoint &&
+        element.end.isNodeConnected() &&
+        elementSet.has(element.end.node)
+      ) {
         connectedCount++;
       }
     }

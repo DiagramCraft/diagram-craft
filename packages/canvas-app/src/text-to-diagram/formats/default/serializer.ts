@@ -122,13 +122,22 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     // Fall back to default notation if no match
     const notation = arrowNotation ?? '--';
 
-    if (element.start.isConnected || element.end.isConnected) {
-      if (element.start.isConnected) {
-        edge += ` ${formatId((element.start as ConnectedEndpoint).node.id)}`;
+    const startNode =
+      element.start instanceof ConnectedEndpoint && element.start.isNodeConnected()
+        ? element.start.node
+        : undefined;
+    const endNode =
+      element.end instanceof ConnectedEndpoint && element.end.isNodeConnected()
+        ? element.end.node
+        : undefined;
+
+    if (startNode || endNode) {
+      if (startNode) {
+        edge += ` ${formatId(startNode.id)}`;
       }
       edge += ` ${notation} `;
-      if (element.end.isConnected) {
-        edge += formatId((element.end as ConnectedEndpoint).node.id);
+      if (endNode) {
+        edge += formatId(endNode.id);
       }
     }
 

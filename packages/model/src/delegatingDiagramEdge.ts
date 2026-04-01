@@ -100,7 +100,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
     // Initialize override endpoints
     const makeEndpointMapper = () => ({
-      fromCRDT: (e: SerializedEndpoint) => Endpoint.deserialize(e, this.diagram.nodeLookup, true),
+      fromCRDT: (e: SerializedEndpoint) =>
+        Endpoint.deserialize(e, this.diagram.nodeLookup, this.diagram.edgeLookup, true),
       toCRDT: (e: Endpoint) => e.serialize()
     });
 
@@ -257,6 +258,22 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
 
   isConnected(): boolean {
     return this.delegate.isConnected();
+  }
+
+  get attachedEdges() {
+    return this.delegate.attachedEdges;
+  }
+
+  _addDependentEdge(edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._addDependentEdge(edge, uow);
+  }
+
+  _removeDependentEdge(edge: DiagramEdge, uow: UnitOfWork): void {
+    this.delegate._removeDependentEdge(edge, uow);
+  }
+
+  dependsOn(edge: DiagramEdge, seen?: Set<string>): boolean {
+    return this.delegate.dependsOn(edge, seen);
   }
 
   get labelNodes(): ReadonlyArray<ResolvedLabelNode> {

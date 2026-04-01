@@ -22,12 +22,13 @@ export const toTypeName = (n: string) => {
 export const parseDrawioStencilPackage = (
   txt: string,
   foreground = 'black',
-  background = 'white'
+  background = 'white',
+  fallbackId?: string
 ) => {
   const parser = new DOMParser();
   const $doc = parser.parseFromString(txt, 'application/xml');
   const $root = $doc.documentElement;
-  const packageId = $root.getAttribute('name')?.trim();
+  const packageId = $root.getAttribute('name')?.trim() || fallbackId;
   assert.false(packageId === undefined || packageId === '');
 
   const newStencils: Array<DrawioStencil> = [];
@@ -65,7 +66,12 @@ export const loadDrawioStencilPackage = async (
   background = 'white'
 ) => {
   const txt = await FileSystem.loadFromUrl(url);
-  return parseDrawioStencilPackage(txt, foreground, background);
+  const fallbackId = url
+    .split('/')
+    .at(-1)
+    ?.replace(/\.[^.]+$/, '')
+    ?.trim();
+  return parseDrawioStencilPackage(txt, foreground, background, fallbackId);
 };
 
 // TODO: Replace by loadDrawioStencilPackage

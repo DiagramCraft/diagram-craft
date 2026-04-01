@@ -253,8 +253,14 @@ class PathfindingSegmentProvider implements SegmentProvider {
   private endNode: DiagramNode | undefined;
 
   constructor(private edge: DiagramEdge) {
-    this.startNode = edge.start instanceof ConnectedEndpoint ? edge.start.node : undefined;
-    this.endNode = edge.end instanceof ConnectedEndpoint ? edge.end.node : undefined;
+    this.startNode =
+      edge.start instanceof ConnectedEndpoint && edge.start.isNodeConnected()
+        ? edge.start.node
+        : undefined;
+    this.endNode =
+      edge.end instanceof ConnectedEndpoint && edge.end.isNodeConnected()
+        ? edge.end.node
+        : undefined;
   }
 
   private initialize() {
@@ -588,7 +594,7 @@ const directionPenalty = (): Record<Direction, number> => ({
 });
 
 function whenConnected(e: Endpoint | undefined): ConnectedEndpoint | undefined {
-  if (e instanceof ConnectedEndpoint) return e;
+  if (e instanceof ConnectedEndpoint && e.isNodeConnected()) return e;
   return undefined;
 }
 

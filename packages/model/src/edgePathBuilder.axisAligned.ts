@@ -48,7 +48,12 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
   // Primary axis: whichever direction spans the greater distance.
   const isHorizontal = Math.abs(end.x - start.x) > Math.abs(end.y - start.y);
 
-  if (edge.start instanceof ConnectedEndpoint && edge.end instanceof ConnectedEndpoint) {
+  if (
+    edge.start instanceof ConnectedEndpoint &&
+    edge.start.isNodeConnected() &&
+    edge.end instanceof ConnectedEndpoint &&
+    edge.end.isNodeConnected()
+  ) {
     // Both endpoints are attached to nodes.  Try to find a shared horizontal or
     // vertical line that crosses both node boundaries.
 
@@ -93,7 +98,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
       start = result.newStart;
       end = result.newEnd;
     }
-  } else if (edge.start instanceof ConnectedEndpoint) {
+  } else if (edge.start instanceof ConnectedEndpoint && edge.start.isNodeConnected()) {
     // Only the start is attached to a node; snap it to the boundary point that
     // aligns with the free end.
     const startNode = edge.start.node;
@@ -103,7 +108,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
 
     const newStart = isHorizontal ? (tryH() ?? tryV()) : (tryV() ?? tryH());
     if (newStart) start = newStart;
-  } else if (edge.end instanceof ConnectedEndpoint) {
+  } else if (edge.end instanceof ConnectedEndpoint && edge.end.isNodeConnected()) {
     // Only the end is attached to a node; snap it to the boundary point that
     // aligns with the free start.
     const endNode = edge.end.node;
