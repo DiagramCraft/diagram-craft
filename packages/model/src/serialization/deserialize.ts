@@ -575,7 +575,9 @@ const deserializeDiagrams = async <T extends Diagram>(
       }
 
       if ($d.views) {
-        newDiagram.views.push(...$d.views);
+        for (const view of $d.views) {
+          newDiagram.views.add(view.name, { id: view.id, layers: [...view.layers] });
+        }
       }
 
       if ($d.zoom) {
