@@ -1,9 +1,16 @@
 import { describe, expect, test } from 'vitest';
-import { AnchorEndpoint, Endpoint, PointInNodeEndpoint } from './endpoint';
+import {
+  AnchorEndpoint,
+  Endpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint,
+  PointOnEdgeEndpoint
+} from './endpoint';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import { ElementLookup } from './elementLookup';
+import type { DiagramEdge } from './diagramEdge';
 import type { DiagramNode } from './diagramNode';
 
 describe('endpoint', () => {
@@ -19,6 +26,7 @@ describe('endpoint', () => {
 
   test('supports deferred node lookup during deserialization', () => {
     const lookup = new ElementLookup<DiagramNode>();
+    const edgeLookup = new ElementLookup<DiagramEdge>();
     const endpoint = Endpoint.deserialize(
       {
         anchor: 'c',
@@ -26,6 +34,7 @@ describe('endpoint', () => {
         offset: { x: 0, y: 0 }
       },
       lookup,
+      edgeLookup,
       true
     );
 
@@ -36,6 +45,29 @@ describe('endpoint', () => {
     expect(endpoint).toBeInstanceOf(AnchorEndpoint);
     expect((endpoint as AnchorEndpoint).node).toBe(node);
     expect(endpoint.position).toStrictEqual({ x: 5, y: 5 });
+  });
+
+  test('supports deferred edge lookup during deserialization', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const target = layer.addEdge();
+    UnitOfWork.execute(layer.diagram, uow => {
+      target.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
+      target.setEnd(new FreeEndpoint({ x: 100, y: 0 }), uow);
+    });
+
+    const endpoint = Endpoint.deserialize(
+      {
+        edge: { id: target.id },
+        pathPosition: 0.3
+      },
+      layer.diagram.nodeLookup,
+      layer.diagram.edgeLookup,
+      true
+    );
+
+    expect(endpoint).toBeInstanceOf(PointOnEdgeEndpoint);
+    expect((endpoint as PointOnEdgeEndpoint).edge).toBe(target);
+    expect(endpoint.position).toStrictEqual({ x: 30, y: 0 });
   });
 
   test('calculates anchor positions relative to a collapsed ancestor', () => {

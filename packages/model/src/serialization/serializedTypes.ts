@@ -144,10 +144,16 @@ export type SerializedAnchorEndpoint = {
   position?: Point;
   offset: Point;
 };
+export type SerializedPointOnEdgeEndpoint = {
+  edge: Reference;
+  position?: Point;
+  pathPosition: number;
+};
 export type SerializedFreeEndpoint = { position: Point };
 
 export type SerializedEndpoint =
   | SerializedAnchorEndpoint
+  | SerializedPointOnEdgeEndpoint
   | SerializedPointInNodeEndpoint
   | SerializedFreeEndpoint;
 

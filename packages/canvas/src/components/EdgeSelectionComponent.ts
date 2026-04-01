@@ -4,6 +4,7 @@ import * as svg from '../component/vdom-svg';
 import { EdgeEndpointMoveDrag } from '../drag/edgeEndpointMoveDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { isConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { $c } from '@diagram-craft/utils/classname';
 import { Zoom } from './zoom';
 import { Context } from '../context';
@@ -20,7 +21,7 @@ export class EdgeSelectionComponent extends Component<Props> {
     return svg.g(
       {},
       svg.circle({
-        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: edge.start.isConnected })}`,
+        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: isConnectedEndpoint(edge.start) })}`,
         cx: edge.start.position.x,
         cy: edge.start.position.y,
         r: z.num(4, 1.5),
@@ -36,7 +37,7 @@ export class EdgeSelectionComponent extends Component<Props> {
         style: `pointer-events: ${DRAG_DROP_MANAGER.isDragging() ? 'none' : 'unset'}`
       }),
       svg.circle({
-        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: edge.end.isConnected })}`,
+        class: `svg-handle ${$c('svg-selection__handle-edge', { connected: isConnectedEndpoint(edge.end) })}`,
         cx: edge.end.position.x,
         cy: edge.end.position.y,
         r: z.num(4, 1.5),

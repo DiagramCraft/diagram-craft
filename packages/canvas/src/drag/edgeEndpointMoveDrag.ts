@@ -9,6 +9,7 @@ import {
   ConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
+  PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
@@ -18,7 +19,7 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Context } from '../context';
-import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import { getSnapConfig, SnapManager, SnapMarkers } from '../snap/snapManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { Path } from '@diagram-craft/geometry/path';
@@ -87,8 +88,10 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     this.modifiers = modifiers;
 
-    if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
-      if (this.shouldAttachToPoint()) {
+    if (this.hoverElement && this.diagram.edgeLookup.has(this.hoverElement)) {
+      this.attachToEdge(offset);
+    } else if (this.hoverElement && this.diagram.nodeLookup.has(this.hoverElement)) {
+      if (this.shouldAttachToPoint() && !this.diagram.edgeLookup.has(this.hoverElement)) {
         this.attachToPoint(offset);
       } else {
         if (!this.modifiers.shiftKey) {
@@ -114,7 +117,9 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   onDragEnd(): void {
-    if (this.shouldAttachToPoint()) {
+    if (this.hoverElement && this.diagram.edgeLookup.has(this.hoverElement)) {
+      this.attachToEdge(this.point!, 'dragEnd');
+    } else if (this.shouldAttachToPoint()) {
       this.attachToPoint(this.point!, 'dragEnd');
     } else {
       this.attachToClosestAnchor(this.point!, 'dragEnd');
@@ -248,6 +253,44 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   private shouldAttachToPoint() {
     return this.modifiers?.metaKey;
+  }
+
+  private attachToEdge(p: Point, _phase: AttachPhase = 'drag') {
+    if (!this.hoverElement || !this.diagram.edgeLookup.has(this.hoverElement)) return;
+
+    const hoverEdge = this.diagram.edgeLookup.get(this.hoverElement);
+    assert.present(hoverEdge);
+
+    const path = hoverEdge.path();
+    const length = path.length();
+    // Degenerate paths cannot produce a stable projected attachment point.
+    if (length === 0 || Number.isNaN(length)) {
+      this.setEndpoint(new FreeEndpoint(p));
+      return;
+    }
+
+    const projection = path.projectPoint(p);
+    // Only snap to the hovered edge while the pointer is within the standard
+    // endpoint snap threshold from the routed path.
+    if (Point.distance(projection.point, p) > getSnapConfig(this.diagram).threshold) {
+      this.setEndpoint(new FreeEndpoint(p));
+      return;
+    }
+
+    // Persist the attachment as a normalized offset along the target edge so
+    // it can be recomputed if that edge moves or reroutes.
+    const pathPosition = projection.pathD / length;
+    const endpoint = new PointOnEdgeEndpoint(hoverEdge, pathPosition);
+
+    // Reject self-targeting and indirect dependency cycles.
+    if (hoverEdge === this.edge || hoverEdge.isTransitivelyAttachedTo(this.edge)) {
+      removeHighlight(hoverEdge, Highlights.NODE__EDGE_CONNECT);
+      this.setEndpoint(new FreeEndpoint(p));
+      return;
+    }
+
+    addHighlight(hoverEdge, Highlights.NODE__EDGE_CONNECT, 'edge');
+    this.setEndpoint(endpoint);
   }
 
   private attachToPoint(p: Point, phase: AttachPhase = 'drag') {

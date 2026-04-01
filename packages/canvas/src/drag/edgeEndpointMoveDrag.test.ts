@@ -9,6 +9,7 @@ import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import {
   AnchorEndpoint,
   FreeEndpoint,
+  PointOnEdgeEndpoint,
   PointInNodeEndpoint,
   type Endpoint
 } from '@diagram-craft/model/endpoint';
@@ -291,6 +292,38 @@ describe('EdgeEndpointMoveDrag', () => {
 
     expect(edge.end).toBeInstanceOf(AnchorEndpoint);
     expect((edge.end as AnchorEndpoint).anchorId).toBe('c');
+  });
+
+  test('attaches endpoints to hovered edges using normalized path position', () => {
+    const { diagram, layer } = TestModel.newDiagramWithLayer();
+    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
+
+    const targetEdge = layer.addEdge();
+    const edge = layer.addEdge();
+    UnitOfWork.execute(diagram, uow => {
+      targetEdge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
+      targetEdge.setEnd(new FreeEndpoint({ x: 100, y: 0 }), uow);
+      edge.setEnd(new FreeEndpoint({ x: 150, y: 50 }), uow);
+    });
+
+    const drag = new EdgeEndpointMoveDrag(diagram, edge, 'end', createContext());
+    const target = document.createElement('div');
+    const point = { x: 30, y: 4 };
+
+    drag.onDragEnter(new DragEvents.DragEnter(point, target, targetEdge.id));
+    drag.onDrag(
+      new DragEvents.DragStart(
+        point,
+        { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false },
+        target
+      )
+    );
+    drag.onDragEnd();
+
+    expect(edge.end).toBeInstanceOf(PointOnEdgeEndpoint);
+    expect((edge.end as PointOnEdgeEndpoint).edge).toBe(targetEdge);
+    expect((edge.end as PointOnEdgeEndpoint).pathPosition).toBeCloseTo(0.3, 3);
+    expect(edge.end.position.x).toBeCloseTo(30, 3);
   });
 
   test('delegates onAttachEdge to the selected container shape', () => {

@@ -283,6 +283,14 @@
     }
   }
 
+  .svg-edge--highlight-node__edge-connect---edge {
+    .svg-edge {
+      stroke: var(--accent-fg) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
+      stroke-dasharray: none !important;
+    }
+  }
+
   .svg-node--highlight-node__drop-target {
     > .svg-node__boundary, > .svg-node--container-outline {
       stroke-width: 3px !important;

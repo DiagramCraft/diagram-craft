@@ -2,7 +2,11 @@ import { Diagram } from '../diagram';
 import { DiagramNode } from '../diagramNode';
 import { DiagramEdge } from '../diagramEdge';
 import { UnitOfWork } from '../unitOfWork';
-import { isSerializedEndpointAnchor, isSerializedEndpointPointInNode } from './utils';
+import {
+  isSerializedEndpointAnchor,
+  isSerializedEndpointPointInNode,
+  isSerializedEndpointPointOnEdge
+} from './utils';
 import { DiagramDocument } from '../diagramDocument';
 import { assert, VerifyNotReached } from '@diagram-craft/utils/assert';
 import {
@@ -11,6 +15,7 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedFreeEndpoint,
+  SerializedPointOnEdgeEndpoint,
   type SerializedOverride,
   SerializedPointInNodeEndpoint,
   SerializedStylesheet
@@ -55,10 +60,15 @@ const unfoldGroup = (node: SerializedElement) => {
 };
 
 const deserializeEndpoint = (
-  e: SerializedAnchorEndpoint | SerializedPointInNodeEndpoint | SerializedFreeEndpoint,
-  nodeLookup: ElementLookup<DiagramNode>
+  e:
+    | SerializedAnchorEndpoint
+    | SerializedPointInNodeEndpoint
+    | SerializedPointOnEdgeEndpoint
+    | SerializedFreeEndpoint,
+  nodeLookup: ElementLookup<DiagramNode>,
+  edgeLookup: ElementLookup<DiagramEdge>
 ) => {
-  return Endpoint.deserialize(e, nodeLookup);
+  return Endpoint.deserialize(e, nodeLookup, edgeLookup);
 };
 
 const normalizeNodeActions = (
@@ -147,8 +157,8 @@ export const deserializeDiagramElements = (
 
       const { start, end } = e;
 
-      const startEndpoint = deserializeEndpoint(start, nodeLookup);
-      const endEndpoint = deserializeEndpoint(end, nodeLookup);
+      const startEndpoint = deserializeEndpoint(start, nodeLookup, edgeLookup);
+      const endEndpoint = deserializeEndpoint(end, nodeLookup, edgeLookup);
 
       const edge = ElementFactory.edge({
         id: e.id,
@@ -175,6 +185,9 @@ export const deserializeDiagramElements = (
       } else if (isSerializedEndpointPointInNode(start)) {
         const startNode = nodeLookup.get(start.node.id)!;
         startNode._addEdge(undefined, edge, uow);
+      } else if (isSerializedEndpointPointOnEdge(start)) {
+        const targetEdge = edgeLookup.get(start.edge.id)!;
+        targetEdge._addAttachedEdge(edge, uow);
       }
 
       if (isSerializedEndpointAnchor(end)) {
@@ -183,6 +196,9 @@ export const deserializeDiagramElements = (
       } else if (isSerializedEndpointPointInNode(end)) {
         const endNode = nodeLookup.get(end.node.id)!;
         endNode._addEdge(undefined, edge, uow);
+      } else if (isSerializedEndpointPointOnEdge(end)) {
+        const targetEdge = edgeLookup.get(end.edge.id)!;
+        targetEdge._addAttachedEdge(edge, uow);
       }
 
       edgeLookup.set(e.id, edge);
@@ -536,8 +552,8 @@ const deserializeDiagrams = async <T extends Diagram>(
                 {
                   props: modification.element.props,
                   metadata: modification.element.metadata,
-                  start: deserializeEndpoint(modification.element.start, nodeLookup),
-                  end: deserializeEndpoint(modification.element.end, nodeLookup),
+                  start: deserializeEndpoint(modification.element.start, nodeLookup, edgeLookup),
+                  end: deserializeEndpoint(modification.element.end, nodeLookup, edgeLookup),
                   waypoints: modification.element.waypoints
                 }
               );

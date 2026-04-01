@@ -253,8 +253,14 @@ class PathfindingSegmentProvider implements SegmentProvider {
   private endNode: DiagramNode | undefined;
 
   constructor(private edge: DiagramEdge) {
-    this.startNode = edge.start instanceof ConnectedEndpoint ? edge.start.node : undefined;
-    this.endNode = edge.end instanceof ConnectedEndpoint ? edge.end.node : undefined;
+    this.startNode =
+      edge.start instanceof ConnectedEndpoint
+        ? edge.start.node
+        : undefined;
+    this.endNode =
+      edge.end instanceof ConnectedEndpoint
+        ? edge.end.node
+        : undefined;
   }
 
   private initialize() {

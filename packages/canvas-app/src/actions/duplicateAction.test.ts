@@ -7,7 +7,12 @@ import {
 } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { ActionContext } from '@diagram-craft/canvas/action';
-import { AnchorEndpoint, FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
+import {
+  AnchorEndpoint,
+  FreeEndpoint,
+  PointInNodeEndpoint,
+  PointOnEdgeEndpoint
+} from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -160,6 +165,31 @@ describe('DuplicateAction', () => {
       expect(duplicatedEdge.storedProps.arrow?.end?.type).toBe('open');
       expect(duplicatedEdge.storedProps.arrow?.end?.size).toBe(8);
     });
+
+    test('should disconnect duplicated point-on-edge endpoints when the target edge is not duplicated', () => {
+      const target = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 0 }),
+        layer
+      });
+      const edge = ElementFactory.edge({
+        start: new PointOnEdgeEndpoint(target, 0.3),
+        end: new FreeEndpoint({ x: 100, y: 100 }),
+        layer
+      });
+      UnitOfWork.execute(diagram, uow => {
+        layer.addElement(target, uow);
+        layer.addElement(edge, uow);
+      });
+
+      diagram.selection.setElements([edge]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedEdge = layer.elements.filter(isEdge).find(e => e.id !== edge.id && e.id !== target.id)!;
+      expect(duplicatedEdge.start).toBeInstanceOf(FreeEndpoint);
+      expect(duplicatedEdge.start.position).toEqual({ x: 40, y: 10 });
+    });
   });
 
   describe('nodes and edges', () => {
@@ -210,6 +240,36 @@ describe('DuplicateAction', () => {
 
       // Selection should contain all duplicated elements
       expect(diagram.selection.elements).toHaveLength(3);
+    });
+
+    test('should remap duplicated point-on-edge endpoints to duplicated target edges', () => {
+      const target = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 0 }),
+        layer
+      });
+      const edge = ElementFactory.edge({
+        start: new PointOnEdgeEndpoint(target, 0.3),
+        end: new FreeEndpoint({ x: 100, y: 100 }),
+        layer
+      });
+      UnitOfWork.execute(diagram, uow => {
+        layer.addElement(target, uow);
+        layer.addElement(edge, uow);
+      });
+
+      diagram.selection.setElements([target, edge]);
+
+      new DuplicateAction(mkContext(diagram)).execute();
+
+      const duplicatedEdges = layer.elements.filter(isEdge).filter(e => e.id !== target.id && e.id !== edge.id);
+      expect(duplicatedEdges).toHaveLength(2);
+
+      const duplicatedTarget = duplicatedEdges.find(e => !(e.start instanceof PointOnEdgeEndpoint))!;
+      const duplicatedEdge = duplicatedEdges.find(e => e.start instanceof PointOnEdgeEndpoint)!;
+
+      expect(duplicatedEdge.start).toBeInstanceOf(PointOnEdgeEndpoint);
+      expect((duplicatedEdge.start as PointOnEdgeEndpoint).edge).toBe(duplicatedTarget);
     });
 
     test('should duplicate selected edge and partially disconnect when only one connected node is selected', () => {

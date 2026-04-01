@@ -148,10 +148,16 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
       }
     } else if (isEdge(element)) {
       // Count how many connected nodes are in the selection
-      if (element.start instanceof ConnectedEndpoint && elementSet.has(element.start.node)) {
+      if (
+        element.start instanceof ConnectedEndpoint &&
+        elementSet.has(element.start.node)
+      ) {
         connectedCount++;
       }
-      if (element.end instanceof ConnectedEndpoint && elementSet.has(element.end.node)) {
+      if (
+        element.end instanceof ConnectedEndpoint &&
+        elementSet.has(element.end.node)
+      ) {
         connectedCount++;
       }
     }

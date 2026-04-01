@@ -1,12 +1,17 @@
 import type {
   SerializedAnchorEndpoint,
   SerializedEndpoint,
+  SerializedPointOnEdgeEndpoint,
   SerializedPointInNodeEndpoint
 } from './serialization/serializedTypes';
 import type { DiagramNode } from './diagramNode';
 import { _p, Point } from '@diagram-craft/geometry/point';
 import { Box } from '@diagram-craft/geometry/box';
-import { isSerializedEndpointFree, isSerializedEndpointPointInNode } from './serialization/utils';
+import {
+  isSerializedEndpointFree,
+  isSerializedEndpointPointInNode,
+  isSerializedEndpointPointOnEdge
+} from './serialization/utils';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementLookup } from './elementLookup';
 import {
@@ -15,6 +20,8 @@ import {
   getAnchorPositionForBounds,
   getPositionInBoundsForBox
 } from './collapsible';
+import type { DiagramEdge } from './diagramEdge';
+import { clamp } from '@diagram-craft/utils/math';
 
 /** Scales relative offsets to bounds space and rotates the result around the origin. */
 const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point => {
@@ -30,8 +37,12 @@ const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point
 export interface Endpoint {
   readonly position: Point;
   serialize(): SerializedEndpoint;
-  readonly isConnected: boolean;
 }
+
+export const isConnectedEndpoint = (
+  endpoint: Endpoint
+): endpoint is ConnectedEndpoint | EdgeConnectedEndpoint =>
+  endpoint instanceof ConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
 
 /**
  * Base class for endpoints that are attached to a node.
@@ -57,7 +68,30 @@ export abstract class ConnectedEndpoint<
 
   abstract readonly position: Readonly<{ x: number; y: number }>;
   abstract serialize(): T;
-  abstract isConnected: boolean;
+}
+
+/**
+ * Base class for endpoints that are attached to an edge.
+ *
+ * The edge can be provided eagerly or via a deferred lookup callback, which is
+ * useful while deserializing graph structures that resolve edges in a later pass.
+ *
+ * @typeParam T - The serialized endpoint shape
+ */
+export abstract class EdgeConnectedEndpoint<
+  T extends SerializedEndpoint = SerializedEndpoint
+> implements Endpoint {
+  protected constructor(readonly edgeFn: DiagramEdge | (() => DiagramEdge)) {}
+
+  get edge(): DiagramEdge {
+    if (this.edgeFn instanceof Function) {
+      return this.edgeFn();
+    }
+    return this.edgeFn;
+  }
+
+  abstract readonly position: Readonly<{ x: number; y: number }>;
+  abstract serialize(): T;
 }
 
 /**
@@ -82,16 +116,27 @@ export const Endpoint = {
    *
    * @param endpoint - The serialized endpoint to deserialize
    * @param nodeLookup - Lookup used to resolve referenced nodes
+   * @param edgeLookup - Lookup used to resolve referenced edges
    * @param defer - Whether node lookup should be deferred until first access
    * @returns The deserialized endpoint instance
    */
   deserialize: (
     endpoint: SerializedEndpoint,
     nodeLookup: ElementLookup<DiagramNode>,
+    edgeLookup: ElementLookup<DiagramEdge>,
     defer = false
   ): Endpoint => {
     if (isSerializedEndpointFree(endpoint)) {
       return new FreeEndpoint(endpoint.position);
+    } else if (isSerializedEndpointPointOnEdge(endpoint)) {
+      assert.present(edgeLookup);
+      const resolvedEdgeLookup = edgeLookup;
+      return new PointOnEdgeEndpoint(
+        defer
+          ? () => resolvedEdgeLookup.get(endpoint.edge.id)!
+          : resolvedEdgeLookup.get(endpoint.edge.id)!,
+        endpoint.pathPosition
+      );
     } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
         defer ? () => nodeLookup.get(endpoint.node.id)! : nodeLookup.get(endpoint.node.id)!,
@@ -116,8 +161,6 @@ export class AnchorEndpoint
   extends ConnectedEndpoint<SerializedAnchorEndpoint>
   implements Endpoint
 {
-  isConnected = true;
-
   constructor(
     node: DiagramNode | (() => DiagramNode),
     public readonly anchorId: string,
@@ -177,8 +220,6 @@ export class PointInNodeEndpoint
   extends ConnectedEndpoint<SerializedPointInNodeEndpoint>
   implements Endpoint
 {
-  isConnected = true;
-
   constructor(
     node: DiagramNode | (() => DiagramNode),
     public readonly ref: Point | undefined,
@@ -259,10 +300,45 @@ export class PointInNodeEndpoint
 }
 
 /**
+ * Endpoint attached to a normalized position along another edge's routed path.
+ */
+export class PointOnEdgeEndpoint
+  extends EdgeConnectedEndpoint<SerializedPointOnEdgeEndpoint>
+  implements Endpoint
+{
+  constructor(
+    edge: DiagramEdge | (() => DiagramEdge),
+    public readonly pathPosition: number
+  ) {
+    super(edge);
+  }
+
+  get normalizedPathPosition() {
+    return clamp(this.pathPosition, 0, 1);
+  }
+
+  get position(): Point {
+    const path = this.edge.path();
+    const length = path.length();
+    if (length === 0 || Number.isNaN(length)) {
+      return this.edge.start.position;
+    }
+    return path.pointAt({ pathD: length * this.normalizedPathPosition });
+  }
+
+  serialize(): SerializedPointOnEdgeEndpoint {
+    return {
+      edge: { id: this.edge.id },
+      position: this.position,
+      pathPosition: this.normalizedPathPosition
+    };
+  }
+}
+
+/**
  * Endpoint with a fixed canvas position and no node attachment.
  */
 export class FreeEndpoint implements Endpoint {
-  isConnected = false;
   readonly position: Point;
 
   constructor(position: Point) {

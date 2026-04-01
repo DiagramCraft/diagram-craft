@@ -6,15 +6,18 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
+  ConnectedEndpoint,
+  PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
+import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 
 declare global {
   namespace DiagramCraft {
@@ -30,10 +33,25 @@ const OFFSET = 10;
 
 const reconnectEndpoint = (
   originalEndpoint: Endpoint,
-  nodeMapping: Map<string, DiagramNode>
+  nodeMapping: Map<string, DiagramNode>,
+  edgeMapping: Map<string, DiagramEdge>
 ): Endpoint => {
-  if (!(originalEndpoint instanceof ConnectedEndpoint)) {
+  if (
+    !(originalEndpoint instanceof ConnectedEndpoint) &&
+    !(originalEndpoint instanceof EdgeConnectedEndpoint)
+  ) {
     return originalEndpoint;
+  }
+
+  if (originalEndpoint instanceof PointOnEdgeEndpoint) {
+    const duplicatedEdge = edgeMapping.get(originalEndpoint.edge.id);
+    return duplicatedEdge
+      ? new PointOnEdgeEndpoint(duplicatedEdge, originalEndpoint.pathPosition)
+      : new FreeEndpoint(originalEndpoint.position);
+  }
+
+  if (!(originalEndpoint instanceof ConnectedEndpoint)) {
+    VERIFY_NOT_REACHED();
   }
 
   const duplicatedNode = nodeMapping.get(originalEndpoint.node.id);
@@ -87,6 +105,7 @@ export class DuplicateAction extends AbstractSelectionAction {
 
       // Create mapping of original nodes to duplicated nodes
       const nodeMapping = new Map<string, DiagramNode>();
+      const edgeMapping = new Map<string, DiagramEdge>();
       const newElements: DiagramElement[] = [];
 
       const activeLayer = diagram.activeLayer;
@@ -104,11 +123,15 @@ export class DuplicateAction extends AbstractSelectionAction {
 
       // Duplicate edges with proper reconnection logic
       for (const originalEdge of diagram.selection.edges) {
-        const newStart = reconnectEndpoint(originalEdge.start, nodeMapping);
-        const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping);
-
         const newEdge = originalEdge.duplicate() as DiagramEdge;
         this.add(newEdge, activeLayer, commonParent, uow);
+        edgeMapping.set(originalEdge.id, newEdge);
+      }
+
+      for (const originalEdge of diagram.selection.edges) {
+        const newEdge = edgeMapping.get(originalEdge.id)!;
+        const newStart = reconnectEndpoint(originalEdge.start, nodeMapping, edgeMapping);
+        const newEnd = reconnectEndpoint(originalEdge.end, nodeMapping, edgeMapping);
 
         newEdge.setStart(newStart, uow);
         newEdge.setEnd(newEnd, uow);

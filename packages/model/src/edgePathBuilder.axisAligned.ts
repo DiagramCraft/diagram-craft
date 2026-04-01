@@ -48,7 +48,10 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
   // Primary axis: whichever direction spans the greater distance.
   const isHorizontal = Math.abs(end.x - start.x) > Math.abs(end.y - start.y);
 
-  if (edge.start instanceof ConnectedEndpoint && edge.end instanceof ConnectedEndpoint) {
+  if (
+    edge.start instanceof ConnectedEndpoint &&
+    edge.end instanceof ConnectedEndpoint
+  ) {
     // Both endpoints are attached to nodes.  Try to find a shared horizontal or
     // vertical line that crosses both node boundaries.
 
