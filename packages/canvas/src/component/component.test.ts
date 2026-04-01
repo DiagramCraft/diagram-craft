@@ -12,16 +12,9 @@ vi.mock('./vdom', () => ({
 }));
 
 import { Component, createEffect } from './component';
+import type { VNode } from './vdom';
 
-type TestVNode = {
-  type: 'h';
-  tag: string;
-  data: Record<string, unknown>;
-  children: [];
-  el?: unknown;
-};
-
-const vnode = (): TestVNode => ({
+const vnode = (): VNode => ({
   type: 'h',
   tag: 'div',
   data: {},
