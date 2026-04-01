@@ -333,7 +333,7 @@ table {
   grid-template-columns: 1fr auto 1fr;
   border-bottom: 1px solid var(--panel-border);
 
-  #menu-button {
+  .menu-button {
     position: relative;
     display: flex;
     gap: 1rem;

@@ -13,7 +13,7 @@
   }
 }
 
-#menu #menu-button {
+#menu .menu-button {
   > * {
     display: none !important;
   }
@@ -54,7 +54,7 @@
   }
 }
 
-body.fullscreen #menu #menu-button {
+body.fullscreen #menu .menu-button {
   display: none;
 }
 
