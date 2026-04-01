@@ -574,6 +574,10 @@ const deserializeDiagrams = async <T extends Diagram>(
         }
       }
 
+      if ($d.views) {
+        newDiagram.views.push(...$d.views);
+      }
+
       if ($d.zoom) {
         newDiagram.viewBox.zoom($d.zoom.zoom);
         newDiagram.viewBox.pan({ x: $d.zoom.x, y: $d.zoom.y });

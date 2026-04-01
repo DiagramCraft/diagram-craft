@@ -62,7 +62,7 @@
     }
   }
 
-  .eButton:hover,
+  .eButton:hover:not([data-hover="false"]),
   .eButton[data-hover="true"] {
     color: var(--accent-fg);
     background-color: var(--accent-bg);
@@ -125,10 +125,6 @@
     .eSeparator {
       margin: 0 10px;
     }
-  }
-
-  div:has(> :global(.cSelectTrigger)) {
-    margin-top: -2px;
   }
 
   :global(.cSelectTrigger) {

@@ -44,7 +44,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   ) {
     return (
       <>
-        <div className={toolbarStyles.eButton}>
+        <div className={toolbarStyles.eButton} data-hover={'false'}>
           <TbPalette />
         </div>
         <PropertyEditor
@@ -60,7 +60,11 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
           )}
         />
 
-        <div className={toolbarStyles.eButton} style={{ marginLeft: '0.5rem' }}>
+        <div
+          className={toolbarStyles.eButton}
+          style={{ marginLeft: '0.5rem' }}
+          data-hover={'false'}
+        >
           <TbBaseline />
         </div>
         <PropertyEditor

@@ -1,0 +1,61 @@
+/**
+ *  ViewsPopover - .icViewsPopover
+ *  | Empty message  - .eEmpty
+ *  | View row [0..*] - .eViewRow
+ *  |   | View name - .eViewName
+ *  |   | Delete button - .eDeleteBtn
+ *  | Save row - .eSaveRow
+ */
+
+.icViewsPopover {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  .eEmpty {
+    color: var(--tertiary-fg);
+    font-style: italic;
+  }
+
+  .eViewRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .eViewName {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .eDeleteBtn {
+      cursor: pointer;
+    }
+  }
+
+  .eSaveRow {
+    margin-top: 0.25rem;
+    border-top: 1px solid var(--panel-border);
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-top: 0.5rem;
+
+    > div {
+      margin-left: 1.25rem;
+      margin-right: 1.25rem;
+
+      .eLabel {
+        display: block;
+        margin-bottom: 0.25rem;
+
+        font-size: 0.85em;
+        color: var(--base-fg-more-dim);
+      }
+
+      .eForm {
+        display: flex;
+        gap: 0.25rem;
+      }
+    }
+
+  }
+}
