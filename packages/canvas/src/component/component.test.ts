@@ -83,9 +83,10 @@ describe('component runtime', () => {
     const cmp = new MemoComponent();
 
     cmp.mount({ memoId: 'static-canvas', version: 1 });
+    cmp.update({ memoId: 'static-canvas', version: 1 });
     cmp.update({ memoId: 'static-canvas', version: 2 });
     cmp.redraw();
 
-    expect(cmp.renderedVersions).toEqual([1, 2]);
+    expect(cmp.renderedVersions).toEqual([1, 1, 2]);
   });
 });
