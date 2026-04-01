@@ -22,12 +22,12 @@ export const ViewsPopover = (props: { diagram: Diagram; onClose: () => void }) =
   const redraw = useRedraw();
   const [newViewName, setNewViewName] = useState('');
 
-  useEventListener(diagram, 'viewsChange', redraw);
+  useEventListener(diagram.views, 'viewChange', redraw);
 
   const saveView = () => {
     const trimmed = newViewName.trim();
     if (!trimmed) return;
-    diagram.addView(trimmed);
+    diagram.views.add(trimmed);
     setNewViewName('');
     onClose();
   };
@@ -35,8 +35,8 @@ export const ViewsPopover = (props: { diagram: Diagram; onClose: () => void }) =
   return (
     <div className={styles.icViewsPopover}>
       <h2>Views</h2>
-      {diagram.views.length === 0 && <div className={styles.eEmpty}>No views saved yet</div>}
-      {diagram.views.map(view => (
+      {diagram.views.all.length === 0 && <div className={styles.eEmpty}>No views saved yet</div>}
+      {diagram.views.all.map(view => (
         <div key={view.id} className={styles.eViewRow}>
           <span
             className={styles.eViewName}
@@ -44,7 +44,7 @@ export const ViewsPopover = (props: { diagram: Diagram; onClose: () => void }) =
           >
             {view.name}
           </span>
-          <span className={styles.eDeleteBtn} onClick={() => diagram.removeView(view.id)}>
+          <span className={styles.eDeleteBtn} onClick={() => diagram.views.remove(view.id)}>
             <TbTrash />
           </span>
         </div>
