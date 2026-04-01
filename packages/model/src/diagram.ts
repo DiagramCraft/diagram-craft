@@ -29,6 +29,11 @@ import { SpatialIndex } from './spatialIndex';
 import type { DiagramProps } from './diagramProps';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { DiagramUOWAdapter } from '@diagram-craft/model/diagram.uow';
+import { DiagramViewManager } from './diagramViewManager';
+import type {
+  MappedCRDTOrderedMapMapType
+} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { StoredDiagramView } from './diagramViewManager';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -60,9 +65,6 @@ export type DiagramEvents = {
   /* Diagram props, canvas have changed
    */
   diagramChange: { diagram: Diagram };
-
-  /* Views have been added or removed */
-  viewsChange: { diagram: Diagram };
 
   /* A single element has changed (e.g. moved, resized, etc) */
   elementChange: { element: DiagramElement; silent?: boolean };
@@ -107,6 +109,7 @@ export type DiagramCRDT = {
   layers: CRDTMap<LayerManagerCRDT>;
   guides: CRDTMap<Record<string, Guide>>;
   comments: CRDTMap<Record<string, SerializedComment>>;
+  views: CRDTMap<MappedCRDTOrderedMapMapType<StoredDiagramView>>;
 };
 
 export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, Releasable {
@@ -128,6 +131,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly #canvas: CRDTProp<DiagramCRDT, 'canvas'>;
   readonly #props: CRDTObject<DiagramProps>;
   readonly #guides: CRDTMap<Record<string, Guide>>;
+  readonly views: DiagramViewManager;
 
   readonly layers: LayerManager;
 
@@ -139,8 +143,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly undoManager = new UndoManager(this);
 
   readonly commentManager: CommentManager;
-
-  views: DiagramView[] = [];
 
   constructor(
     id: string,
@@ -194,6 +196,11 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.#guides = this._crdt.get().get('guides', () => document.root.factory.makeMap())!;
     this.#releasables.add(
       this.#guides.on('remoteAfterTransaction', () => this.emitDiagramChange('content'))
+    );
+    this.views = new DiagramViewManager(
+      document,
+      this._crdt.get().get('views', () => document.root.factory.makeMap())!,
+      () => this.layers.visible.map(l => l.id)
     );
 
     this.viewBox = new Viewbox(this.bounds);
@@ -486,25 +493,6 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
     this.#guides.set(id, { ...existing, ...updates });
     this.emitDiagramChange('content');
-  }
-
-  addView(name: string): DiagramView {
-    const view: DiagramView = {
-      id: newid(),
-      name,
-      layers: this.layers.visible.map(l => l.id)
-    };
-    this.views.push(view);
-    this.emit('viewsChange', { diagram: this });
-    return view;
-  }
-
-  removeView(id: string): void {
-    const idx = this.views.findIndex(v => v.id === id);
-    if (idx !== -1) {
-      this.views.splice(idx, 1);
-      this.emit('viewsChange', { diagram: this });
-    }
   }
 
   emitDiagramChange(type: 'content' | 'metadata') {

@@ -59,7 +59,6 @@ import { StringInputDialog } from './react-app/components/StringInputDialog';
 import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
 import { ModelCenterDialog } from './react-app/components/ModelCenterDialog/ModelCenterDialog';
 import { useOnChange } from './react-app/hooks/useOnChange';
-import { MainMenu } from './react-app/MainMenu';
 import { MainToolbar } from './react-app/MainToolbar';
 import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
@@ -802,3 +801,4 @@ export const App = (props: {
     </PortalContextProvider>
   );
 };
+import { MainMenu } from './react-app/MainMenu';
