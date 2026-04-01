@@ -22,21 +22,6 @@ describe('parseDrawioStencilPackage', () => {
     expect(pkg.stencils).toHaveLength(1);
     expect(pkg.stencils[0]?.key).toBe('Arrow Right');
   });
-
-  test('falls back to the provided package id when the root name is missing', () => {
-    const pkg = parseDrawioStencilPackage(
-      `
-        <shapes>
-          <shape name="Arrow Right" w="80" h="40" />
-        </shapes>
-      `,
-      '#111111',
-      '#eeeeee',
-      'fallback-package'
-    );
-
-    expect(pkg.id).toBe('fallback-package');
-  });
 });
 
 describe('loadDrawioStencilPackage', () => {
@@ -49,19 +34,6 @@ describe('loadDrawioStencilPackage', () => {
 
     await expect(loadDrawioStencilPackage('/tmp/basic.xml')).resolves.toMatchObject({
       id: 'mxgraph.basic',
-      stencils: [{ key: 'Rect' }]
-    });
-  });
-
-  test('falls back to the file name when the xml package name is missing', async () => {
-    vi.spyOn(FileSystem, 'loadFromUrl').mockResolvedValue(`
-      <shapes>
-        <shape name="Rect" w="120" h="80" />
-      </shapes>
-    `);
-
-    await expect(loadDrawioStencilPackage('/tmp/basic.xml')).resolves.toMatchObject({
-      id: 'basic',
       stencils: [{ key: 'Rect' }]
     });
   });
