@@ -83,7 +83,8 @@ class EffectManager {
     if (
       id in this.dependencies &&
       (this.dependencies[id]!.deps.length === 0 ||
-        deps.every((d, i) => d === this.dependencies[id]!.deps[i]))
+        (deps.length === this.dependencies[id]!.deps.length &&
+          deps.every((d, i) => d === this.dependencies[id]!.deps[i])))
     ) {
       return;
     }
@@ -206,8 +207,8 @@ export abstract class Component<P = Record<string, never>> {
 
   update(props: P, force = false) {
     const memoKey = this.getMemoKey(props);
-    if (!force && memoKey !== undefined && shallowEquals(memoKey, this.oldMemoKey)) return;
     this.currentProps = props;
+    if (!force && memoKey !== undefined && shallowEquals(memoKey, this.oldMemoKey)) return;
     this.oldMemoKey = memoKey;
     this.element = apply(this.element!, this.doRender(props));
   }
