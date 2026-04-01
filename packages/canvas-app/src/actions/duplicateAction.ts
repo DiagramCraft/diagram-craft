@@ -6,9 +6,10 @@ import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
+  ConnectedEndpoint,
   PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
@@ -34,7 +35,10 @@ const reconnectEndpoint = (
   nodeMapping: Map<string, DiagramNode>,
   edgeMapping: Map<string, DiagramEdge>
 ): Endpoint => {
-  if (!(originalEndpoint instanceof ConnectedEndpoint)) {
+  if (
+    !(originalEndpoint instanceof ConnectedEndpoint) &&
+    !(originalEndpoint instanceof EdgeConnectedEndpoint)
+  ) {
     return originalEndpoint;
   }
 
@@ -43,6 +47,10 @@ const reconnectEndpoint = (
     return duplicatedEdge
       ? new PointOnEdgeEndpoint(duplicatedEdge, originalEndpoint.pathPosition)
       : new FreeEndpoint(originalEndpoint.position);
+  }
+
+  if (!(originalEndpoint instanceof ConnectedEndpoint)) {
+    return new FreeEndpoint(originalEndpoint.position);
   }
 
   const duplicatedNode = nodeMapping.get(originalEndpoint.node.id);

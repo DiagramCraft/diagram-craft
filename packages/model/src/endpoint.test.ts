@@ -10,6 +10,7 @@ import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { Box } from '@diagram-craft/geometry/box';
 import { ElementLookup } from './elementLookup';
+import type { DiagramEdge } from './diagramEdge';
 import type { DiagramNode } from './diagramNode';
 
 describe('endpoint', () => {
@@ -25,6 +26,7 @@ describe('endpoint', () => {
 
   test('supports deferred node lookup during deserialization', () => {
     const lookup = new ElementLookup<DiagramNode>();
+    const edgeLookup = new ElementLookup<DiagramEdge>();
     const endpoint = Endpoint.deserialize(
       {
         anchor: 'c',
@@ -32,6 +34,7 @@ describe('endpoint', () => {
         offset: { x: 0, y: 0 }
       },
       lookup,
+      edgeLookup,
       true
     );
 

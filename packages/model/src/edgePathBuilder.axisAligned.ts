@@ -50,9 +50,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
 
   if (
     edge.start instanceof ConnectedEndpoint &&
-    edge.start.isNodeConnected() &&
-    edge.end instanceof ConnectedEndpoint &&
-    edge.end.isNodeConnected()
+    edge.end instanceof ConnectedEndpoint
   ) {
     // Both endpoints are attached to nodes.  Try to find a shared horizontal or
     // vertical line that crosses both node boundaries.
@@ -98,7 +96,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
       start = result.newStart;
       end = result.newEnd;
     }
-  } else if (edge.start instanceof ConnectedEndpoint && edge.start.isNodeConnected()) {
+  } else if (edge.start instanceof ConnectedEndpoint) {
     // Only the start is attached to a node; snap it to the boundary point that
     // aligns with the free end.
     const startNode = edge.start.node;
@@ -108,7 +106,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
 
     const newStart = isHorizontal ? (tryH() ?? tryV()) : (tryV() ?? tryH());
     if (newStart) start = newStart;
-  } else if (edge.end instanceof ConnectedEndpoint && edge.end.isNodeConnected()) {
+  } else if (edge.end instanceof ConnectedEndpoint) {
     // Only the end is attached to a node; snap it to the boundary point that
     // aligns with the free start.
     const endNode = edge.end.node;

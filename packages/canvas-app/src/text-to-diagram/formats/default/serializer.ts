@@ -123,11 +123,11 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     const notation = arrowNotation ?? '--';
 
     const startNode =
-      element.start instanceof ConnectedEndpoint && element.start.isNodeConnected()
+      element.start instanceof ConnectedEndpoint
         ? element.start.node
         : undefined;
     const endNode =
-      element.end instanceof ConnectedEndpoint && element.end.isNodeConnected()
+      element.end instanceof ConnectedEndpoint
         ? element.end.node
         : undefined;
 

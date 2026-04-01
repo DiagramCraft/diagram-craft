@@ -274,11 +274,11 @@ export class AIModel {
     }));
 
     const edges: SimplifiedEdge[] = Array.from(this.diagram.edgeLookup.values()).map(edge => {
-      const startNode = edge.start.isConnected
-        ? ((edge.start as ConnectedEndpoint).node as DiagramNode)
+      const startNode = edge.start instanceof ConnectedEndpoint
+        ? (edge.start.node as DiagramNode)
         : undefined;
-      const endNode = edge.end.isConnected
-        ? ((edge.end as ConnectedEndpoint).node as DiagramNode)
+      const endNode = edge.end instanceof ConnectedEndpoint
+        ? (edge.end.node as DiagramNode)
         : undefined;
 
       return {

@@ -45,7 +45,6 @@ const adjustForPerimeterSpacing = (
   endpoint: ConnectedEndpoint
 ): PointOnPath | undefined => {
   if (!pointOnPath) return undefined;
-  if (!endpoint.isNodeConnected()) return pointOnPath;
 
   let spacing = type === 'start' ? edge.renderProps.spacing.start : edge.renderProps.spacing.end;
   if (spacing === 0 && endpoint.isMidpoint()) spacing = endpoint.node.renderProps.routing.spacing;
@@ -104,7 +103,7 @@ export const clipPath = (
   const diagram = edge.diagram;
 
   const start =
-    edge.start instanceof ConnectedEndpoint && edge.start.isNodeConnected()
+    edge.start instanceof ConnectedEndpoint
       ? adjustForPerimeterSpacing(
           'start',
           intersectWithNode(edge.start, edge.start.position, path, diagram),
@@ -116,7 +115,7 @@ export const clipPath = (
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
   const end =
-    edge.end instanceof ConnectedEndpoint && edge.end.isNodeConnected()
+    edge.end instanceof ConnectedEndpoint
       ? adjustForPerimeterSpacing(
           'end',
           intersectWithNode(edge.end, edge.end.position, path, diagram),

@@ -131,9 +131,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     if (
       this.edge.start instanceof ConnectedEndpoint &&
-      this.edge.start.isNodeConnected() &&
       this.edge.end instanceof ConnectedEndpoint &&
-      this.edge.end.isNodeConnected() &&
       this.edge.start.node.id === this.edge.end.node.id &&
       this.edge.waypoints.length === 0
     ) {
@@ -151,8 +149,8 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   private addLoopEndpoint() {
-    if (!(this.edge.start instanceof ConnectedEndpoint) || !this.edge.start.isNodeConnected()) return;
-    if (!(this.edge.end instanceof ConnectedEndpoint) || !this.edge.end.isNodeConnected()) return;
+    if (!(this.edge.start instanceof ConnectedEndpoint)) return;
+    if (!(this.edge.end instanceof ConnectedEndpoint)) return;
 
     // The idea is to take the midpoint between the two endpoints and create a normal ray and determine
     // all intersections with the boundary path. We then take points along the normal, with a fixed distance
@@ -363,11 +361,11 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   private updateEdgeParent() {
     const start =
-      this.edge.start instanceof ConnectedEndpoint && this.edge.start.isNodeConnected()
+      this.edge.start instanceof ConnectedEndpoint
         ? this.edge.start.node
         : undefined;
     const end =
-      this.edge.end instanceof ConnectedEndpoint && this.edge.end.isNodeConnected()
+      this.edge.end instanceof ConnectedEndpoint
         ? this.edge.end.node
         : undefined;
     const connectedCount = (start ? 1 : 0) + (end ? 1 : 0);

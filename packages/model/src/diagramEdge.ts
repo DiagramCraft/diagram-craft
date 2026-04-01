@@ -17,6 +17,7 @@ import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
   ConnectedEndpoint,
+  EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
   PointOnEdgeEndpoint,
@@ -71,16 +72,16 @@ import {
   DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
 
-const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
-  endpoint instanceof ConnectedEndpoint;
+const isConnected = (endpoint: Endpoint): endpoint is ConnectedEndpoint | EdgeConnectedEndpoint =>
+  endpoint instanceof ConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
 
 const isNodeConnectedEndpoint = (
   endpoint: Endpoint
-): endpoint is ConnectedEndpoint<SerializedEndpoint, DiagramNode> =>
-  endpoint instanceof ConnectedEndpoint && endpoint.isNodeConnected();
+): endpoint is ConnectedEndpoint<SerializedEndpoint> => endpoint instanceof ConnectedEndpoint;
 
-const isEdgeConnectedEndpoint = (endpoint: Endpoint): endpoint is PointOnEdgeEndpoint =>
-  endpoint instanceof PointOnEdgeEndpoint;
+const isEdgeConnectedEndpoint = (
+  endpoint: Endpoint
+): endpoint is EdgeConnectedEndpoint<SerializedEndpoint> => endpoint instanceof EdgeConnectedEndpoint;
 
 export type Waypoint = Readonly<{
   point: Point;
@@ -1025,16 +1026,17 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
    * TODO: Could we move this to the endpoint?
    */
   private _getNormalDirection(endpoint: Endpoint) {
-    if (isConnected(endpoint)) {
-      if (endpoint instanceof PointOnEdgeEndpoint) {
-        const path = endpoint.edge.path();
-        const length = path.length();
-        if (length === 0 || Number.isNaN(length)) return undefined;
+    if (endpoint instanceof PointOnEdgeEndpoint) {
+      const path = endpoint.edge.path();
+      const length = path.length();
+      if (length === 0 || Number.isNaN(length)) return undefined;
 
-        return Direction.fromVector(
-          path.tangentAt({ pathD: length * endpoint.normalizedPathPosition })
-        );
-      }
+      return Direction.fromVector(
+        path.tangentAt({ pathD: length * endpoint.normalizedPathPosition })
+      );
+    }
+
+    if (isNodeConnectedEndpoint(endpoint)) {
 
       // Check if the node is inside a collapsed container
       const collapsedAncestor = getCollapsedAncestor(endpoint.node);

@@ -792,7 +792,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
         let newEnd: Endpoint;
 
         // TODO: This is duplicated. Can refactor?
-        if (e.start instanceof ConnectedEndpoint && e.start.isNodeConnected()) {
+        if (e.start instanceof ConnectedEndpoint) {
           const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
           if (newStartNode) {
             if (e.start instanceof AnchorEndpoint) {
@@ -816,7 +816,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
           newStart = new FreeEndpoint(e.start.position);
         }
 
-        if (e.end instanceof ConnectedEndpoint && e.end.isNodeConnected()) {
+        if (e.end instanceof ConnectedEndpoint) {
           const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
           if (newEndNode) {
             if (e.end instanceof AnchorEndpoint) {
@@ -904,10 +904,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       for (const id of this.#edges.get(anchor) ?? []) {
         const edge = this.diagram.edgeLookup.get(id)!;
         uow.executeUpdate(edge, () => {
-          if (edge.start instanceof ConnectedEndpoint && edge.start.isNodeConnected() && edge.start.node === this) {
+          if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
             edge.setStart(new FreeEndpoint(edge.start.position), uow);
           }
-          if (edge.end instanceof ConnectedEndpoint && edge.end.isNodeConnected() && edge.end.node === this) {
+          if (edge.end instanceof ConnectedEndpoint && edge.end.node === this) {
             edge.setEnd(new FreeEndpoint(edge.end.position), uow);
           }
         });
