@@ -4,6 +4,7 @@ import type { SerializedEdge, SerializedNode } from './serialization/serializedT
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { isEdge, isNode } from './diagramElement';
+import { ConnectedEndpoint, FreeEndpoint } from './endpoint';
 
 describe('cloneHelper', () => {
   describe('assignNewIdsToSerializedElements', () => {
@@ -282,8 +283,8 @@ describe('cloneHelper', () => {
       expect(clonedEdge.id).not.toBe(originalEdgeId);
 
       // Verify edge is connected to the cloned nodes
-      expect(clonedEdge.start.isConnected).toBe(true);
-      expect(clonedEdge.end.isConnected).toBe(true);
+      expect(clonedEdge.start).toBeInstanceOf(ConnectedEndpoint);
+      expect(clonedEdge.end).toBeInstanceOf(ConnectedEndpoint);
       if ('node' in clonedEdge.start) {
         expect(clonedEdge.start.node).toBe(clonedNode1);
       }
@@ -329,13 +330,13 @@ describe('cloneHelper', () => {
       expect(clonedEdge).toBeDefined();
 
       // Start should be connected to cloned node
-      expect(clonedEdge.start.isConnected).toBe(true);
+      expect(clonedEdge.start).toBeInstanceOf(ConnectedEndpoint);
       if ('node' in clonedEdge.start) {
         expect(clonedEdge.start.node).toBe(clonedNode);
       }
 
       // End should be a free endpoint since node2 was not cloned
-      expect(clonedEdge.end.isConnected).toBe(false);
+      expect(clonedEdge.end).toBeInstanceOf(FreeEndpoint);
       expect(clonedEdge.end.position).toBeDefined();
     });
 

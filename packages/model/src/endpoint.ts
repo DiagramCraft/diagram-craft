@@ -37,7 +37,6 @@ const calculateOffset = (offset: Point, bounds: Box, isRelative: boolean): Point
 export interface Endpoint {
   readonly position: Point;
   serialize(): SerializedEndpoint;
-  readonly isConnected: boolean;
 }
 
 /**
@@ -64,7 +63,6 @@ export abstract class ConnectedEndpoint<
 
   abstract readonly position: Readonly<{ x: number; y: number }>;
   abstract serialize(): T;
-  abstract isConnected: boolean;
 }
 
 export abstract class EdgeConnectedEndpoint<T extends SerializedEndpoint = SerializedEndpoint>
@@ -83,7 +81,6 @@ export abstract class EdgeConnectedEndpoint<T extends SerializedEndpoint = Seria
 
   abstract readonly position: Readonly<{ x: number; y: number }>;
   abstract serialize(): T;
-  abstract isConnected: boolean;
 }
 
 /**
@@ -157,8 +154,6 @@ export class AnchorEndpoint
   extends ConnectedEndpoint<SerializedAnchorEndpoint>
   implements Endpoint
 {
-  isConnected = true;
-
   constructor(
     node: DiagramNode | (() => DiagramNode),
     public readonly anchorId: string,
@@ -218,8 +213,6 @@ export class PointInNodeEndpoint
   extends ConnectedEndpoint<SerializedPointInNodeEndpoint>
   implements Endpoint
 {
-  isConnected = true;
-
   constructor(
     node: DiagramNode | (() => DiagramNode),
     public readonly ref: Point | undefined,
@@ -306,8 +299,6 @@ export class PointOnEdgeEndpoint
   extends EdgeConnectedEndpoint<SerializedPointOnEdgeEndpoint>
   implements Endpoint
 {
-  isConnected = true;
-
   constructor(edge: DiagramEdge | (() => DiagramEdge), public readonly pathPosition: number) {
     super(edge);
   }
@@ -342,7 +333,6 @@ export class PointOnEdgeEndpoint
  * Endpoint with a fixed canvas position and no node attachment.
  */
 export class FreeEndpoint implements Endpoint {
-  isConnected = false;
   readonly position: Point;
 
   constructor(position: Point) {
