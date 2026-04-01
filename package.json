@@ -47,7 +47,9 @@
       "yaml@2.8.1": "^2.8.3",
       "@isaacs/brace-expansion": ">=5.0.1",
       "tar": ">=7.5.11",
-      "minimatch@10.0.1": ">=10.2.4"
+      "minimatch@10.0.1": ">=10.2.4",
+      "@xmldom/xmldom": ">=0.8.12",
+      "@tootallnate/once": ">=3.0.1"
     }
   },
   "devDependencies": {
@@ -58,8 +60,8 @@
     "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
-    "skott": "^0.35.7",
-    "syncpack": "^12.4.0",
+    "skott": "^0.35.9",
+    "syncpack": "^14.3.0",
     "tsx": "^4.20.6",
     "typedoc": "^0.28.17",
     "typedoc-github-theme": "^0.4.0",
