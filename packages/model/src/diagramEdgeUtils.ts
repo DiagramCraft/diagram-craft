@@ -1,5 +1,5 @@
 import { DiagramEdge, Intersection } from './diagramEdge';
-import { AnchorEndpoint, ConnectedEndpoint } from './endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint } from './endpoint';
 import {
   LengthOffsetOnPath,
   LengthOffsetOnSegment,
@@ -42,7 +42,7 @@ const adjustForPerimeterSpacing = (
   pointOnPath: PointOnPath | undefined,
   path: Path,
   edge: DiagramEdge,
-  endpoint: ConnectedEndpoint
+  endpoint: NodeConnectedEndpoint
 ): PointOnPath | undefined => {
   if (!pointOnPath) return undefined;
 
@@ -58,7 +58,7 @@ const adjustForPerimeterSpacing = (
 };
 
 const intersectWithNode = (
-  endpoint: ConnectedEndpoint,
+  endpoint: NodeConnectedEndpoint,
   endpointPosition: Point,
   path: Path,
   diagram: Diagram
@@ -103,7 +103,7 @@ export const clipPath = (
   const diagram = edge.diagram;
 
   const start =
-    edge.start instanceof ConnectedEndpoint
+    edge.start instanceof NodeConnectedEndpoint
       ? adjustForPerimeterSpacing(
           'start',
           intersectWithNode(edge.start, edge.start.position, path, diagram),
@@ -115,7 +115,7 @@ export const clipPath = (
   const startOffset = adjustForArrow(start, startArrow, path, 1);
 
   const end =
-    edge.end instanceof ConnectedEndpoint
+    edge.end instanceof NodeConnectedEndpoint
       ? adjustForPerimeterSpacing(
           'end',
           intersectWithNode(edge.end, edge.end.position, path, diagram),

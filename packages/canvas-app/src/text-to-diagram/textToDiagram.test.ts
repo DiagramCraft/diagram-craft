@@ -6,7 +6,7 @@ import type {
 } from '@diagram-craft/model/test-support/testModel';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { ParsedElement } from './types';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 
@@ -170,8 +170,8 @@ describe('textToDiagram', () => {
       const edge = diagram.lookup('e1');
       expect(edge).toBeDefined();
       if (isEdge(edge!)) {
-        expect((edge!.start as ConnectedEndpoint).node?.id).toBe('n1');
-        expect((edge!.end as ConnectedEndpoint).node?.id).toBe('n2');
+        expect((edge!.start as NodeConnectedEndpoint).node?.id).toBe('n1');
+        expect((edge!.end as NodeConnectedEndpoint).node?.id).toBe('n2');
       }
     });
 
@@ -299,8 +299,8 @@ describe('textToDiagram', () => {
       const updated = diagram.lookup('e1');
       expect(updated).toBeDefined();
       if (isEdge(updated!)) {
-        expect((updated!.start as ConnectedEndpoint).node?.id).toBe('n2');
-        expect((updated!.end as ConnectedEndpoint).node?.id).toBe('n3');
+        expect((updated!.start as NodeConnectedEndpoint).node?.id).toBe('n2');
+        expect((updated!.end as NodeConnectedEndpoint).node?.id).toBe('n3');
       }
     });
 

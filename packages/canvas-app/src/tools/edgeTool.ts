@@ -8,7 +8,7 @@ import {
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
-import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import {
   addHighlight,
   getHighlights,
@@ -38,7 +38,7 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
     if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
       // TODO: Guard the free-start case here. EdgeTool can still start from empty canvas,
       //       so this cast is unsafe when shift-dragging from a non-connected start point.
-      const start = mustExist(this.edge.start as ConnectedEndpoint);
+      const start = mustExist(this.edge.start as NodeConnectedEndpoint);
       const newNode = createProvisionalLinkedNode(start.node, this.edge, this.point!);
       const point = this.point!;
       const nodeId = newNode.id;
@@ -60,7 +60,7 @@ class EdgeToolEdgeEndpointMoveDrag extends EdgeEndpointMoveDrag {
   }
 
   private getNodeLinkPopupOptions(): NodeLinkOptions | undefined {
-    if (!(this.edge.start instanceof ConnectedEndpoint)) return undefined;
+    if (!(this.edge.start instanceof NodeConnectedEndpoint)) return undefined;
 
     const definition = this.edge.start.node.getDefinition();
     if (!(definition instanceof ShapeNodeDefinition)) return undefined;

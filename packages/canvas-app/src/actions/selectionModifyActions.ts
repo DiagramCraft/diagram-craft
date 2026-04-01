@@ -9,7 +9,7 @@ import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElem
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramGraph } from '@diagram-craft/model/diagramGraph';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { $tStr } from '@diagram-craft/utils/localize';
 
@@ -115,10 +115,10 @@ export class SelectionSelectGrowAction extends AbstractSelectionAction {
         }
       } else if (isEdge(element)) {
         // Add both connected nodes for this edge
-        if (element.start instanceof ConnectedEndpoint) {
+        if (element.start instanceof NodeConnectedEndpoint) {
           elements.add(element.start.node);
         }
-        if (element.end instanceof ConnectedEndpoint) {
+        if (element.end instanceof NodeConnectedEndpoint) {
           elements.add(element.end.node);
         }
       }
@@ -148,16 +148,10 @@ export class SelectionSelectShrinkAction extends AbstractSelectionAction {
       }
     } else if (isEdge(element)) {
       // Count how many connected nodes are in the selection
-      if (
-        element.start instanceof ConnectedEndpoint &&
-        elementSet.has(element.start.node)
-      ) {
+      if (element.start instanceof NodeConnectedEndpoint && elementSet.has(element.start.node)) {
         connectedCount++;
       }
-      if (
-        element.end instanceof ConnectedEndpoint &&
-        elementSet.has(element.end.node)
-      ) {
+      if (element.end instanceof NodeConnectedEndpoint && elementSet.has(element.end.node)) {
         connectedCount++;
       }
     }

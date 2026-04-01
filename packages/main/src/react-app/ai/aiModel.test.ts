@@ -5,7 +5,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { newid } from '@diagram-craft/utils/id';
 import { defaultRegistry } from '@diagram-craft/canvas-app/defaultRegistry';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 
 describe('AIModel', () => {
   let document: DiagramDocument;
@@ -100,8 +100,8 @@ describe('AIModel', () => {
     expect(edges.length).toBe(1);
 
     const edge = edges[0]!;
-    expect((edge.start as ConnectedEndpoint).node!.id).toBe(nodes[0]!.id);
-    expect((edge.end as ConnectedEndpoint).node!.id).toBe(nodes[1]!.id);
+    expect((edge.start as NodeConnectedEndpoint).node!.id).toBe(nodes[0]!.id);
+    expect((edge.end as NodeConnectedEndpoint).node!.id).toBe(nodes[1]!.id);
   });
 
   test('creates edges with custom styling', () => {

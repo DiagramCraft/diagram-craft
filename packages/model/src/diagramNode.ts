@@ -13,7 +13,7 @@ import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
 import { DefaultStyles, nodeDefaults } from './diagramDefaults';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  NodeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
   PointInNodeEndpoint
@@ -791,7 +791,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
         let newEnd: Endpoint;
 
         // TODO: This is duplicated. Can refactor?
-        if (e.start instanceof ConnectedEndpoint) {
+        if (e.start instanceof NodeConnectedEndpoint) {
           const newStartNode = context.targetElementsInGroup.get(e.start.node.id);
           if (newStartNode) {
             if (e.start instanceof AnchorEndpoint) {
@@ -813,7 +813,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
           newStart = new FreeEndpoint(e.start.position);
         }
 
-        if (e.end instanceof ConnectedEndpoint) {
+        if (e.end instanceof NodeConnectedEndpoint) {
           const newEndNode = context.targetElementsInGroup.get(e.end.node.id);
           if (newEndNode) {
             if (e.end instanceof AnchorEndpoint) {
@@ -899,10 +899,10 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       for (const id of this.#edges.get(anchor) ?? []) {
         const edge = this.diagram.edgeLookup.get(id)!;
         uow.executeUpdate(edge, () => {
-          if (edge.start instanceof ConnectedEndpoint && edge.start.node === this) {
+          if (edge.start instanceof NodeConnectedEndpoint && edge.start.node === this) {
             edge.setStart(new FreeEndpoint(edge.start.position), uow);
           }
-          if (edge.end instanceof ConnectedEndpoint && edge.end.node === this) {
+          if (edge.end instanceof NodeConnectedEndpoint && edge.end.node === this) {
             edge.setEnd(new FreeEndpoint(edge.end.position), uow);
           }
         });

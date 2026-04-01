@@ -3,7 +3,7 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DiagramEdge, type EdgePropsForEditing } from '@diagram-craft/model/diagramEdge';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import {
   ANCHOR_POSITION_MAP,
   ARROW_TYPE_MAP,
@@ -274,12 +274,10 @@ export class AIModel {
     }));
 
     const edges: SimplifiedEdge[] = Array.from(this.diagram.edgeLookup.values()).map(edge => {
-      const startNode = edge.start instanceof ConnectedEndpoint
-        ? (edge.start.node as DiagramNode)
-        : undefined;
-      const endNode = edge.end instanceof ConnectedEndpoint
-        ? (edge.end.node as DiagramNode)
-        : undefined;
+      const startNode =
+        edge.start instanceof NodeConnectedEndpoint ? (edge.start.node as DiagramNode) : undefined;
+      const endNode =
+        edge.end instanceof NodeConnectedEndpoint ? (edge.end.node as DiagramNode) : undefined;
 
       return {
         from: startNode?.id ?? '',

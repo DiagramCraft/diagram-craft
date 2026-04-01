@@ -3,7 +3,7 @@ import { DiagramNode } from './diagramNode';
 import type { DiagramEdge } from './diagramEdge';
 import type { RegularLayer } from './diagramLayerRegular';
 import { isEdge, isNode } from './diagramElement';
-import { ConnectedEndpoint } from './endpoint';
+import { NodeConnectedEndpoint } from './endpoint';
 
 export class DiagramGraph extends SimpleGraph<DiagramNode, DiagramEdge> {
   constructor(layer: RegularLayer) {
@@ -20,8 +20,8 @@ export class DiagramGraph extends SimpleGraph<DiagramNode, DiagramEdge> {
     // Add all edges
     for (const edge of edges) {
       if (
-        edge.start instanceof ConnectedEndpoint &&
-        edge.end instanceof ConnectedEndpoint
+        edge.start instanceof NodeConnectedEndpoint &&
+        edge.end instanceof NodeConnectedEndpoint
       ) {
         this.addEdge({
           id: edge.id,

@@ -17,7 +17,7 @@ import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
 import { Anchor } from '@diagram-craft/model/anchor';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  NodeConnectedEndpoint,
   Endpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
@@ -49,7 +49,7 @@ const NEST_OFFSET = 8;
 const NODE_MIN_HEIGHT = 25;
 const RIGHT_CORNER_PADDING = 10;
 
-const isConnected = (e: Endpoint): e is ConnectedEndpoint => e instanceof ConnectedEndpoint;
+const isConnected = (e: Endpoint): e is NodeConnectedEndpoint => e instanceof NodeConnectedEndpoint;
 
 const isFullyConnected = (edge: DiagramEdge) => isConnected(edge.start) && isConnected(edge.end);
 
@@ -171,7 +171,7 @@ class ExecutionCascade {
     }
   }
 
-  private isConnectedToRightSide(endpoint: ConnectedEndpoint) {
+  private isConnectedToRightSide(endpoint: NodeConnectedEndpoint) {
     if (endpoint instanceof AnchorEndpoint) {
       return isRightSideAnchor(endpoint.anchorId);
     } else if (endpoint instanceof PointInNodeEndpoint) {
@@ -189,7 +189,7 @@ class ExecutionCascade {
     }
   }
 
-  private hasCornerRightSideAnchorPadding(endpoint: ConnectedEndpoint) {
+  private hasCornerRightSideAnchorPadding(endpoint: NodeConnectedEndpoint) {
     if (endpoint instanceof AnchorEndpoint) {
       return endpoint.anchorId !== 'r1' && endpoint.anchorId !== `r${RIGHT_ANCHOR_COUNT}`;
     }
@@ -222,7 +222,10 @@ class ExecutionCascade {
     return (Number(anchorId.slice(1)) - 1) / (RIGHT_ANCHOR_COUNT - 1);
   }
 
-  private getYPositionForEndpoint(endpoint: ConnectedEndpoint, bounds: Box): number | undefined {
+  private getYPositionForEndpoint(
+    endpoint: NodeConnectedEndpoint,
+    bounds: Box
+  ): number | undefined {
     if (endpoint instanceof AnchorEndpoint) {
       const normalizedY = this.getNormalizedYForAnchor(endpoint.anchorId);
       return bounds.y + bounds.h * normalizedY;
@@ -242,7 +245,7 @@ class ExecutionCascade {
   }
 
   private setRightSideEndpoint(
-    endpoint: ConnectedEndpoint,
+    endpoint: NodeConnectedEndpoint,
     edge: DiagramEdge,
     targetY: number,
     uow: UnitOfWork
@@ -277,7 +280,7 @@ class ExecutionCascade {
 
   private adjustEndpoint(
     edge: DiagramEdge,
-    endpoint: ConnectedEndpoint,
+    endpoint: NodeConnectedEndpoint,
     targetY: number,
     uow: UnitOfWork
   ) {
@@ -292,7 +295,7 @@ class ExecutionCascade {
 
   private adjustRightSideEndpoint(
     edge: DiagramEdge,
-    endpoint: ConnectedEndpoint,
+    endpoint: NodeConnectedEndpoint,
     targetY: number,
     uow: UnitOfWork
   ) {
@@ -330,10 +333,12 @@ class ExecutionCascade {
     }
   }
 
-  private getAndAdjustTargetY(edge: DiagramEdge, endpoint: ConnectedEndpoint, uow: UnitOfWork) {
+  private getAndAdjustTargetY(edge: DiagramEdge, endpoint: NodeConnectedEndpoint, uow: UnitOfWork) {
     const ypos = endpoint.position.y;
     if (this.isConnectedToRightSide(endpoint)) {
-      const cornerPadding = this.hasCornerRightSideAnchorPadding(endpoint) ? RIGHT_CORNER_PADDING : 0;
+      const cornerPadding = this.hasCornerRightSideAnchorPadding(endpoint)
+        ? RIGHT_CORNER_PADDING
+        : 0;
       const adjusted = clamp(
         ypos,
         endpoint.node.bounds.y + cornerPadding,

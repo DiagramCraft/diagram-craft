@@ -1,5 +1,5 @@
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
-import { ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import type { DiagramSerializer } from '../../types';
 import { propsToArrowNotation } from './arrowNotation';
@@ -123,13 +123,8 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
     const notation = arrowNotation ?? '--';
 
     const startNode =
-      element.start instanceof ConnectedEndpoint
-        ? element.start.node
-        : undefined;
-    const endNode =
-      element.end instanceof ConnectedEndpoint
-        ? element.end.node
-        : undefined;
+      element.start instanceof NodeConnectedEndpoint ? element.start.node : undefined;
+    const endNode = element.end instanceof NodeConnectedEndpoint ? element.end.node : undefined;
 
     if (startNode || endNode) {
       if (startNode) {
