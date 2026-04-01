@@ -1,0 +1,89 @@
+import { useCallback, useEffect, useState } from 'react';
+import { useEventListener } from '../hooks/useEventListener';
+import { useDiagram } from '../../application';
+import { type Diagram, type DiagramView } from '@diagram-craft/model/diagram';
+import { Select } from '@diagram-craft/app-components/Select';
+import { Toolbar } from '@diagram-craft/app-components/Toolbar';
+import { TbEyeDotted } from 'react-icons/tb';
+import toolbarStyles from '@diagram-craft/app-components/Toolbar.module.css';
+
+const deriveActiveViewId = (diagram: Diagram): string | undefined => {
+  const visibleIds = new Set(diagram.layers.visible.map(l => l.id));
+
+  for (const view of diagram.views) {
+    const viewIds = new Set(view.layers);
+    if (viewIds.size === visibleIds.size && [...visibleIds].every(id => viewIds.has(id))) {
+      return view.id;
+    }
+  }
+
+  if (diagram.views.length === 1) {
+    const allIds = new Set(diagram.layers.all.map(l => l.id));
+    if (visibleIds.size === allIds.size && [...allIds].every(id => visibleIds.has(id))) {
+      return 'all';
+    }
+  }
+
+  return undefined;
+};
+
+const applyView = (diagram: Diagram, targetLayerIds: Set<string>) => {
+  for (const layer of diagram.layers.all) {
+    const shouldBeVisible = targetLayerIds.has(layer.id);
+    const isVisible = diagram.layers.visible.includes(layer);
+    if (shouldBeVisible !== isVisible) {
+      diagram.layers.toggleVisibility(layer);
+    }
+  }
+};
+
+export const ViewSelectorToolbarButton = () => {
+  const diagram = useDiagram();
+  const [views, setViews] = useState<DiagramView[]>(() => [...diagram.views]);
+  const [activeViewId, setActiveViewId] = useState<string | undefined>(() =>
+    deriveActiveViewId(diagram)
+  );
+
+  const updateViews = useCallback(() => {
+    setViews([...diagram.views]);
+    setActiveViewId(deriveActiveViewId(diagram));
+  }, [diagram]);
+
+  useEventListener(diagram, 'viewsChange', updateViews);
+  useEventListener(diagram.layers, 'layerStructureChange', updateViews);
+  useEffect(updateViews, [updateViews]);
+
+  if (views.length === 0) return null;
+
+  return (
+    <>
+      <Toolbar.Separator />
+      <div className={toolbarStyles.eButton} data-hover={'false'}>
+        <TbEyeDotted />
+      </div>
+      <div style={{ width: 'fit-content', flexShrink: 0 }}>
+        <Select.Root
+          value={activeViewId}
+          onChange={id => {
+            if (!id) return;
+            if (id === 'all') {
+              applyView(diagram, new Set(diagram.layers.all.map(l => l.id)));
+            } else {
+              const view = diagram.views.find(v => v.id === id);
+              if (view) applyView(diagram, new Set(view.layers));
+            }
+          }}
+          placeholder="— View —"
+          style={{ width: 'auto' }}
+        >
+          {views.map(v => (
+            <Select.Item key={v.id} value={v.id}>
+              {v.name}
+            </Select.Item>
+          ))}
+          {views.length === 1 && <Select.Item value="all">All</Select.Item>}
+        </Select.Root>
+      </div>
+    </>
+  );
+};

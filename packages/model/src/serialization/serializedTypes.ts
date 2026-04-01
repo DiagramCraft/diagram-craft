@@ -48,12 +48,19 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
     }
 );
 
+export type SerializedDiagramView = {
+  id: string;
+  name: string;
+  layers: string[];
+};
+
 export type SerializedDiagram = {
   id: string;
   name: string;
   layers: ReadonlyArray<SerializedLayer>;
   activeLayerId?: string;
   visibleLayers?: string[];
+  views?: ReadonlyArray<SerializedDiagramView>;
   diagrams: ReadonlyArray<SerializedDiagram>;
   guides?: ReadonlyArray<Guide>;
   zoom?: {

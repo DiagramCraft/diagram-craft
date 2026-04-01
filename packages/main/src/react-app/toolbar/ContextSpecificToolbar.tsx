@@ -26,13 +26,13 @@ import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { ElementStylesheetToolbarButton } from '../toolwindow/ObjectToolWindow/ElementStylesheetToolbarButton';
 import { CommentToolbarButton } from './CommentToolbarButton';
 import { useDiagram } from '../../application';
+import { ViewSelectorToolbarButton } from './ViewSelectorToolbarButton';
 
 export const ContextSpecificToolbar = () => {
   const diagram = useDiagram();
 
   const [selectionType, setSelectionType] = useState<SelectionType | undefined>(undefined);
   const [nodeType, setNodeType] = useState<string | undefined>(undefined);
-
   const callback = useCallback(() => {
     setSelectionType(diagram.selection.type);
     if (diagram.selection.isNodesOnly() && diagram.selection.nodes.length === 1) {
@@ -126,6 +126,10 @@ export const ContextSpecificToolbar = () => {
       <Toolbar.Separator />
 
       <CommentToolbarButton />
+
+      {!isNodeSelection && !isTextSelection && !isMixedSelection && !isEdgeSelection && (
+        <ViewSelectorToolbarButton />
+      )}
     </Toolbar.Root>
   );
 };

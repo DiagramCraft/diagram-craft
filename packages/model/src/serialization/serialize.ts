@@ -126,6 +126,7 @@ export const serializeDiagram = (diagram: Diagram): SerializedDiagram => {
     layers: diagram.layers.all.map(l => serializeLayer(l)),
     activeLayerId: diagram.activeLayer.id,
     visibleLayers: diagram.layers.visible.map(l => l.id),
+    views: diagram.views.length > 0 ? diagram.views : undefined,
     diagrams: diagram.diagrams.map(d => serializeDiagram(d)),
     guides: diagram.guides.length > 0 ? diagram.guides : undefined,
     comments: serializeComments(diagram.commentManager),
