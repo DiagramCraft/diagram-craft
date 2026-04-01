@@ -73,13 +73,10 @@ import {
   DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
 
-const isNodeConnectedEndpoint = (
-  endpoint: Endpoint
-): endpoint is ConnectedEndpoint => endpoint instanceof ConnectedEndpoint;
+const isNodeConnectedEndpoint = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
+  endpoint instanceof ConnectedEndpoint;
 
-const isEdgeConnectedEndpoint = (
-  endpoint: Endpoint
-): endpoint is EdgeConnectedEndpoint =>
+const isEdgeConnectedEndpoint = (endpoint: Endpoint): endpoint is EdgeConnectedEndpoint =>
   endpoint instanceof EdgeConnectedEndpoint;
 
 export type Waypoint = Readonly<{
