@@ -73,7 +73,9 @@ export const MainMenu = () => {
     <MenuButton.Root>
       <MenuButton.Trigger
         element={
-          <button type={'button'} id={'menu-button'}>
+          // Intentionally use a class rather than an id here. Base UI manages trigger ids
+          // internally, and overriding the trigger's id caused submenu navigation to break.
+          <button type={'button'} className={'menu-button'}>
             <TbMenu2 size={'24px'} />
           </button>
         }
