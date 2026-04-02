@@ -25,6 +25,7 @@ import { newid } from '@diagram-craft/utils/id';
 import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps, ElementProps, NodeProps } from '@diagram-craft/model/diagramProps';
+import { resolveFillForRendering } from './shapeFill';
 
 const defaultOnChange =
   (element: DiagramNode, textId: string = '1') =>
@@ -269,9 +270,11 @@ export class ShapeBuilder {
 
   private makeStyle(props: ElementPropsForEditing): Partial<CSSStyleDeclaration> {
     const style: Partial<CSSStyleDeclaration> = {};
+    const strokeColor = props.stroke!.color ?? 'var(--canvas-fg)';
+    const fill = props.fill ? resolveFillForRendering(props.fill, strokeColor) : undefined;
     style.strokeWidth = props.stroke!.width?.toString();
-    style.stroke = props.stroke!.color;
-    style.fill = props.fill!.color;
+    style.stroke = strokeColor;
+    style.fill = fill?.color;
     style.strokeMiterlimit = props.stroke!.miterLimit?.toString();
     style.strokeLinecap = props.stroke!.lineCap;
     style.strokeLinejoin = props.stroke!.lineJoin;
@@ -288,7 +291,7 @@ export class ShapeBuilder {
       }
     }
 
-    if (props.fill?.type === 'gradient') {
+    if (fill?.type === 'gradient') {
       const gradientId = `node-${this.props.element.id}-gradient`;
       style.fill = `url(#${gradientId})`;
     }

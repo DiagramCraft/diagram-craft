@@ -389,3 +389,28 @@ stencils:
           textStyle: default-text-default
         texts:
         tags:
+
+  - id: 'uml-edge-binary-association'
+    name: Transition
+    styles: [ uml-association ]
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_STICK_ARROW
+        metadata:
+          style: uml-association
+        children: [ ]
+        tags:

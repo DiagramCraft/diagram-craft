@@ -587,3 +587,50 @@ stencils:
         texts:
           text: "<b>par</b>"
         tags:
+
+  - id: 'uml-edge-association'
+    name: Async Message
+    styles: [ uml-dependency ]
+    elements:
+      - id: 492ywhl
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-dependency
+        tags:
+
+  - id: 'uml-edge-binary-association'
+    name: Sync Message
+    styles: [ uml-association ]
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props:
+          arrow:
+            end:
+              type: SQUARE_ARROW_FILLED
+          fill:
+            color: stroke
+        metadata:
+          style: uml-association
+        children: [ ]
+        tags:

@@ -28,6 +28,7 @@ import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { EdgeFlag, EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EffectsRegistry } from '@diagram-craft/model/effect';
 import type { EdgeProps } from '@diagram-craft/model/diagramProps';
+import { resolveFillForRendering } from '../shape/shapeFill';
 
 export type EdgeComponentProps = {
   element: DiagramEdge;
@@ -45,7 +46,7 @@ const makeArrowMarker = (
   if (!arrow) return null;
 
   const { color, width } = edgeProps.stroke;
-  const fillColor = edgeProps.fill.color;
+  const fillColor = resolveFillForRendering(edgeProps.fill, color).color;
 
   let path = arrow.path;
   const effect = EffectsRegistry.get(undefined, edgeProps, 'getArrowPath')?.[0];
