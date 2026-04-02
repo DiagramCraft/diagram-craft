@@ -4,7 +4,7 @@ import type { DiagramNode, NodePropsForEditing } from '@diagram-craft/model/diag
 import type { EdgePropsForEditing, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { AnchorEndpoint, ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deepMerge, isNonNullObj } from '@diagram-craft/utils/object';
@@ -143,7 +143,10 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
         // Update existing element
         if (parsedElement.type === 'node' && isNode(existingElement)) {
           // Update text
-          if (parsedElement.name !== undefined && existingElement.getText() !== parsedElement.name) {
+          if (
+            parsedElement.name !== undefined &&
+            existingElement.getText() !== parsedElement.name
+          ) {
             existingElement.setText(parsedElement.name, uow);
           }
 
@@ -168,7 +171,10 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           }
 
           // Update stylesheets
-          if (parsedElement.stylesheet && existingElement.metadata.style !== parsedElement.stylesheet) {
+          if (
+            parsedElement.stylesheet &&
+            existingElement.metadata.style !== parsedElement.stylesheet
+          ) {
             existingElement.updateMetadata(metadata => {
               metadata.style = parsedElement.stylesheet!;
             }, uow);
@@ -215,7 +221,10 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           }
 
           // Update stylesheet
-          if (parsedElement.stylesheet && existingElement.metadata.style !== parsedElement.stylesheet) {
+          if (
+            parsedElement.stylesheet &&
+            existingElement.metadata.style !== parsedElement.stylesheet
+          ) {
             existingElement.updateMetadata(metadata => {
               metadata.style = parsedElement.stylesheet!;
             }, uow);
@@ -225,18 +234,20 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
           if (parsedElement.from !== undefined || parsedElement.to !== undefined) {
             if (parsedElement.from) {
               const fromNode = diagram.lookup(parsedElement.from);
-              const currentFromId = existingElement.start instanceof ConnectedEndpoint
-                ? existingElement.start.node.id
-                : undefined;
+              const currentFromId =
+                existingElement.start instanceof NodeConnectedEndpoint
+                  ? existingElement.start.node.id
+                  : undefined;
               if (fromNode && isNode(fromNode) && currentFromId !== parsedElement.from) {
                 existingElement.setStart(new AnchorEndpoint(fromNode, 'c'), uow);
               }
             }
             if (parsedElement.to) {
               const toNode = diagram.lookup(parsedElement.to);
-              const currentToId = existingElement.end instanceof ConnectedEndpoint
-                ? existingElement.end.node.id
-                : undefined;
+              const currentToId =
+                existingElement.end instanceof NodeConnectedEndpoint
+                  ? existingElement.end.node.id
+                  : undefined;
               if (toNode && isNode(toNode) && currentToId !== parsedElement.to) {
                 existingElement.setEnd(new AnchorEndpoint(toNode, 'c'), uow);
               }

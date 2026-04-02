@@ -4,7 +4,7 @@ import { SimpleGraph, type Edge, type Vertex } from '@diagram-craft/graph/graph'
 import { findShortestPathAStar, type HeuristicFunction } from '@diagram-craft/graph/paths';
 import { Direction } from '@diagram-craft/geometry/direction';
 import type { DiagramEdge } from './diagramEdge';
-import { ConnectedEndpoint, type Endpoint } from './endpoint';
+import { NodeConnectedEndpoint, type Endpoint } from './endpoint';
 import { unique } from '@diagram-craft/utils/array';
 import { round } from '@diagram-craft/utils/math';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
@@ -253,14 +253,8 @@ class PathfindingSegmentProvider implements SegmentProvider {
   private endNode: DiagramNode | undefined;
 
   constructor(private edge: DiagramEdge) {
-    this.startNode =
-      edge.start instanceof ConnectedEndpoint
-        ? edge.start.node
-        : undefined;
-    this.endNode =
-      edge.end instanceof ConnectedEndpoint
-        ? edge.end.node
-        : undefined;
+    this.startNode = edge.start instanceof NodeConnectedEndpoint ? edge.start.node : undefined;
+    this.endNode = edge.end instanceof NodeConnectedEndpoint ? edge.end.node : undefined;
   }
 
   private initialize() {
@@ -593,8 +587,8 @@ const directionPenalty = (): Record<Direction, number> => ({
   w: Weights.baseDirectionPenalty
 });
 
-function whenConnected(e: Endpoint | undefined): ConnectedEndpoint | undefined {
-  if (e instanceof ConnectedEndpoint) return e;
+function whenConnected(e: Endpoint | undefined): NodeConnectedEndpoint | undefined {
+  if (e instanceof NodeConnectedEndpoint) return e;
   return undefined;
 }
 

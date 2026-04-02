@@ -9,7 +9,7 @@ import {
   EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
-  ConnectedEndpoint,
+  NodeConnectedEndpoint,
   PointOnEdgeEndpoint,
   PointInNodeEndpoint
 } from '@diagram-craft/model/endpoint';
@@ -37,7 +37,7 @@ const reconnectEndpoint = (
   edgeMapping: Map<string, DiagramEdge>
 ): Endpoint => {
   if (
-    !(originalEndpoint instanceof ConnectedEndpoint) &&
+    !(originalEndpoint instanceof NodeConnectedEndpoint) &&
     !(originalEndpoint instanceof EdgeConnectedEndpoint)
   ) {
     return originalEndpoint;
@@ -50,7 +50,7 @@ const reconnectEndpoint = (
       : new FreeEndpoint(originalEndpoint.position);
   }
 
-  if (!(originalEndpoint instanceof ConnectedEndpoint)) {
+  if (!(originalEndpoint instanceof NodeConnectedEndpoint)) {
     VERIFY_NOT_REACHED();
   }
 

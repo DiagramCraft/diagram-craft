@@ -16,7 +16,7 @@ import {
 import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  NodeConnectedEndpoint,
   EdgeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
@@ -73,8 +73,8 @@ import {
   DiagramElementUOWAdapter
 } from '@diagram-craft/model/diagramElement.uow';
 
-const isNodeConnectedEndpoint = (endpoint: Endpoint): endpoint is ConnectedEndpoint =>
-  endpoint instanceof ConnectedEndpoint;
+const isNodeConnectedEndpoint = (endpoint: Endpoint): endpoint is NodeConnectedEndpoint =>
+  endpoint instanceof NodeConnectedEndpoint;
 
 const isEdgeConnectedEndpoint = (endpoint: Endpoint): endpoint is EdgeConnectedEndpoint =>
   endpoint instanceof EdgeConnectedEndpoint;

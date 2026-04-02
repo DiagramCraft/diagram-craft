@@ -1,7 +1,7 @@
 import type { DiagramEdge } from './diagramEdge';
 import type { DiagramNode } from './diagramNode';
 import { PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { ConnectedEndpoint } from './endpoint';
+import { NodeConnectedEndpoint } from './endpoint';
 import { Line } from '@diagram-craft/geometry/line';
 import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
@@ -41,17 +41,12 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
   // Use an explicit waypoint as the midpoint hint; otherwise use the geometric
   // midpoint of the raw start→end segment.
   const preferredMidpoint =
-    edge.waypoints.length === 1
-      ? edge.waypoints[0]!.point
-      : Line.midpoint(Line.of(start, end));
+    edge.waypoints.length === 1 ? edge.waypoints[0]!.point : Line.midpoint(Line.of(start, end));
 
   // Primary axis: whichever direction spans the greater distance.
   const isHorizontal = Math.abs(end.x - start.x) > Math.abs(end.y - start.y);
 
-  if (
-    edge.start instanceof ConnectedEndpoint &&
-    edge.end instanceof ConnectedEndpoint
-  ) {
+  if (edge.start instanceof NodeConnectedEndpoint && edge.end instanceof NodeConnectedEndpoint) {
     // Both endpoints are attached to nodes.  Try to find a shared horizontal or
     // vertical line that crosses both node boundaries.
 
@@ -96,7 +91,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
       start = result.newStart;
       end = result.newEnd;
     }
-  } else if (edge.start instanceof ConnectedEndpoint) {
+  } else if (edge.start instanceof NodeConnectedEndpoint) {
     // Only the start is attached to a node; snap it to the boundary point that
     // aligns with the free end.
     const startNode = edge.start.node;
@@ -106,7 +101,7 @@ export const buildAxisAlignedEdgePath = (edge: DiagramEdge) => {
 
     const newStart = isHorizontal ? (tryH() ?? tryV()) : (tryV() ?? tryH());
     if (newStart) start = newStart;
-  } else if (edge.end instanceof ConnectedEndpoint) {
+  } else if (edge.end instanceof NodeConnectedEndpoint) {
     // Only the end is attached to a node; snap it to the boundary point that
     // aligns with the free start.
     const endNode = edge.end.node;

@@ -1,7 +1,7 @@
 import { TbLink, TbLinkOff, TbPentagon } from 'react-icons/tb';
 import { useDiagram } from '../../application';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { AnchorEndpoint, ConnectedEndpoint } from '@diagram-craft/model/endpoint';
+import { AnchorEndpoint, NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
@@ -33,12 +33,12 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
     // Find the other end of the edge
     let otherNode: DiagramNode | undefined;
 
-    if (edge.start instanceof ConnectedEndpoint && edge.start.node === selectedNode) {
-      if (edge.end instanceof ConnectedEndpoint) {
+    if (edge.start instanceof NodeConnectedEndpoint && edge.start.node === selectedNode) {
+      if (edge.end instanceof NodeConnectedEndpoint) {
         otherNode = edge.end.node;
       }
-    } else if (edge.end instanceof ConnectedEndpoint && edge.end.node === selectedNode) {
-      if (edge.start instanceof ConnectedEndpoint) {
+    } else if (edge.end instanceof NodeConnectedEndpoint && edge.end.node === selectedNode) {
+      if (edge.start instanceof NodeConnectedEndpoint) {
         otherNode = edge.start.node;
       }
     }

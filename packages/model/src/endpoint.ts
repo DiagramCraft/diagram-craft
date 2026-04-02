@@ -41,8 +41,8 @@ export interface Endpoint {
 
 export const isConnectedEndpoint = (
   endpoint: Endpoint
-): endpoint is ConnectedEndpoint | EdgeConnectedEndpoint =>
-  endpoint instanceof ConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
+): endpoint is NodeConnectedEndpoint | EdgeConnectedEndpoint =>
+  endpoint instanceof NodeConnectedEndpoint || endpoint instanceof EdgeConnectedEndpoint;
 
 /**
  * Base class for endpoints that are attached to a node.
@@ -52,7 +52,7 @@ export const isConnectedEndpoint = (
  *
  * @typeParam T - The serialized endpoint shape
  */
-export abstract class ConnectedEndpoint<
+export abstract class NodeConnectedEndpoint<
   T extends SerializedEndpoint = SerializedEndpoint
 > implements Endpoint {
   protected constructor(readonly nodeFn: DiagramNode | (() => DiagramNode)) {}
@@ -158,7 +158,7 @@ export const Endpoint = {
  * Endpoint that snaps to a named anchor on a node.
  */
 export class AnchorEndpoint
-  extends ConnectedEndpoint<SerializedAnchorEndpoint>
+  extends NodeConnectedEndpoint<SerializedAnchorEndpoint>
   implements Endpoint
 {
   constructor(
@@ -217,7 +217,7 @@ export class AnchorEndpoint
  * free offset from the node bounds when `ref` is undefined.
  */
 export class PointInNodeEndpoint
-  extends ConnectedEndpoint<SerializedPointInNodeEndpoint>
+  extends NodeConnectedEndpoint<SerializedPointInNodeEndpoint>
   implements Endpoint
 {
   constructor(

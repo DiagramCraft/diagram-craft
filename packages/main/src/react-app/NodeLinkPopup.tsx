@@ -11,7 +11,7 @@ import {
   type NodeLinkOptions
 } from '@diagram-craft/model/stencilRegistry';
 import { deepMerge } from '@diagram-craft/utils/object';
-import { ConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
+import { NodeConnectedEndpoint, FreeEndpoint } from '@diagram-craft/model/endpoint';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -58,13 +58,18 @@ const combineUndoActionsFromMark = (diagram: Diagram) => {
   }
 };
 
-const getEdgeStyles = (diagram: Diagram, options?: NodeLinkOptions): ReadonlyArray<NodeLinkEdgeStyle> => {
+const getEdgeStyles = (
+  diagram: Diagram,
+  options?: NodeLinkOptions
+): ReadonlyArray<NodeLinkEdgeStyle> => {
   // An explicit list from the source node definition is treated as the exact menu.
   // Entries without an edgeStylesheetId are always kept (name/props-only styles).
   // Entries with an edgeStylesheetId are kept only if the stylesheet exists in the diagram.
   if (options?.edgeStyles !== undefined) {
     return options.edgeStyles.filter(
-      s => s.edgeStylesheetId === undefined || diagram.document.styles.getEdgeStyle(s.edgeStylesheetId) !== undefined
+      s =>
+        s.edgeStylesheetId === undefined ||
+        diagram.document.styles.getEdgeStyle(s.edgeStylesheetId) !== undefined
     );
   }
 
@@ -81,12 +86,15 @@ const getEdgeStyles = (diagram: Diagram, options?: NodeLinkOptions): ReadonlyArr
   const availableIds = unique(allIds.filter(Boolean));
 
   // If the document has only a few edge stylesheets, keep the list exhaustive.
-  if (availableIds.length <= EDGE_LIMIT) return availableIds.map(id => ({ id, edgeStylesheetId: id }));
+  if (availableIds.length <= EDGE_LIMIT)
+    return availableIds.map(id => ({ id, edgeStylesheetId: id }));
 
   // Deduped LRU-style candidates, with the active stylesheet appended as a fallback.
   // Otherwise prefer the LRU-style history, with the active stylesheet as a fallback.
   const lruIds = unique([...recentIds.filter(Boolean), activeId].filter(Boolean));
-  return unique([...lruIds, ...availableIds]).slice(0, EDGE_LIMIT).map(id => ({ id, edgeStylesheetId: id }));
+  return unique([...lruIds, ...availableIds])
+    .slice(0, EDGE_LIMIT)
+    .map(id => ({ id, edgeStylesheetId: id }));
 };
 
 const getNodeStencilIds = (diagram: Diagram, options?: NodeLinkOptions) => {
@@ -283,7 +291,7 @@ const useNodeLinkPopupController = ({
 
   const sourceNode = useMemo(() => {
     const edge = diagram.edgeLookup.get(edgeId);
-    if (!(edge?.start instanceof ConnectedEndpoint)) return undefined;
+    if (!(edge?.start instanceof NodeConnectedEndpoint)) return undefined;
     return edge.start.node;
   }, [diagram, edgeId]);
   const nodeDef = sourceNode?.getDefinition();
@@ -342,7 +350,7 @@ const useNodeLinkPopupController = ({
 
       let targetNodeId = currentNodeId;
       if (!targetNodeId) {
-        if (!(edge.start instanceof ConnectedEndpoint)) return;
+        if (!(edge.start instanceof NodeConnectedEndpoint)) return;
 
         // If the user comes back from "no shape" to a real node shape, recreate the
         // provisional linked node in-place and continue applying shapes to it.
@@ -391,7 +399,18 @@ const useNodeLinkPopupController = ({
 
       recentStencils.register(stencil.id);
     },
-    [currentNodeId, diagram, edgeId, nodeDef, options, position, recentStencils, selectedEdgeState, sourceNode, stencilRegistry]
+    [
+      currentNodeId,
+      diagram,
+      edgeId,
+      nodeDef,
+      options,
+      position,
+      recentStencils,
+      selectedEdgeState,
+      sourceNode,
+      stencilRegistry
+    ]
   );
 
   const setSelectedEdge = useCallback(
@@ -428,7 +447,16 @@ const useNodeLinkPopupController = ({
         });
       }
     },
-    [currentNodeId, diagram, edgeId, nodeDef, options, resolvedEdgeStyles, selectedNodeState, sourceNode]
+    [
+      currentNodeId,
+      diagram,
+      edgeId,
+      nodeDef,
+      options,
+      resolvedEdgeStyles,
+      selectedNodeState,
+      sourceNode
+    ]
   );
 
   const onOk = useCallback(() => {
@@ -525,10 +553,7 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
 
   useEventListener(stencilRegistry, 'change', redraw);
 
-  const baseEdgeStyles = useMemo(
-    () => getEdgeStyles(diagram, options),
-    [diagram, options]
-  );
+  const baseEdgeStyles = useMemo(() => getEdgeStyles(diagram, options), [diagram, options]);
 
   const baseNodeStencilIds = useMemo(() => {
     if (!hasProvisionalNode) return [];
@@ -537,30 +562,14 @@ export const NodeLinkPopup = ({ position, isOpen, nodeId, edgeId, options, onClo
 
   const visibleEdgeStyles = useMemo(() => {
     return hasProvisionalNode
-      ? getVisibleEdgeStyles(
-          baseNodeStencilIds,
-          baseEdgeStyles,
-          selectedNode,
-          options
-        )
+      ? getVisibleEdgeStyles(baseNodeStencilIds, baseEdgeStyles, selectedNode, options)
       : baseEdgeStyles;
-  }, [
-    baseEdgeStyles,
-    baseNodeStencilIds,
-    hasProvisionalNode,
-    options,
-    selectedNode
-  ]);
+  }, [baseEdgeStyles, baseNodeStencilIds, hasProvisionalNode, options, selectedNode]);
 
   const nodeStencils = useMemo(() => {
     if (!hasProvisionalNode) return [];
 
-    return getVisibleNodeStencilIds(
-      baseNodeStencilIds,
-      baseEdgeStyles,
-      selectedEdge,
-      options
-    )
+    return getVisibleNodeStencilIds(baseNodeStencilIds, baseEdgeStyles, selectedEdge, options)
       .map(id => {
         if (id === NO_SHAPE_ID) return { id, kind: 'no-shape' as const };
 

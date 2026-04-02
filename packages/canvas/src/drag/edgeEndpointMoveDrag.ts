@@ -6,7 +6,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
   AnchorEndpoint,
-  ConnectedEndpoint,
+  NodeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
   PointOnEdgeEndpoint,
@@ -130,8 +130,8 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
 
     if (
-      this.edge.start instanceof ConnectedEndpoint &&
-      this.edge.end instanceof ConnectedEndpoint &&
+      this.edge.start instanceof NodeConnectedEndpoint &&
+      this.edge.end instanceof NodeConnectedEndpoint &&
       this.edge.start.node.id === this.edge.end.node.id &&
       this.edge.waypoints.length === 0
     ) {
@@ -149,8 +149,8 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   private addLoopEndpoint() {
-    if (!(this.edge.start instanceof ConnectedEndpoint)) return;
-    if (!(this.edge.end instanceof ConnectedEndpoint)) return;
+    if (!(this.edge.start instanceof NodeConnectedEndpoint)) return;
+    if (!(this.edge.end instanceof NodeConnectedEndpoint)) return;
 
     // The idea is to take the midpoint between the two endpoints and create a normal ray and determine
     // all intersections with the boundary path. We then take points along the normal, with a fixed distance
@@ -312,7 +312,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   private attach(
     type: AttachEdgeContext['type'],
     point: Point,
-    endpoint: ConnectedEndpoint,
+    endpoint: NodeConnectedEndpoint,
     phase: AttachPhase,
     highlightArg?: string
   ) {
@@ -366,8 +366,9 @@ export class EdgeEndpointMoveDrag extends Drag {
   }
 
   private updateEdgeParent() {
-    const start = this.edge.start instanceof ConnectedEndpoint ? this.edge.start.node : undefined;
-    const end = this.edge.end instanceof ConnectedEndpoint ? this.edge.end.node : undefined;
+    const start =
+      this.edge.start instanceof NodeConnectedEndpoint ? this.edge.start.node : undefined;
+    const end = this.edge.end instanceof NodeConnectedEndpoint ? this.edge.end.node : undefined;
     const connectedCount = (start ? 1 : 0) + (end ? 1 : 0);
     const currentParent = this.edge.parent;
 
