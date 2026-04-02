@@ -61,8 +61,7 @@ variants:
         props:
           arrow:
             end:
-              type: SQUARE_ARROW_OUTLINE
-              size: 75
+              type: SQUARE_STICK_ARROW
           stroke:
             color: var(--canvas-fg)
             pattern: DASHED
@@ -191,7 +190,29 @@ variants:
           stroke:
             color: "#9d3b59"
 stencils:
-  - id: 'uml-binary-association'
+  - id: 'uml-edge-association'
+    name: Association
+    styles: [ uml-association ]
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-association
+        children: [ ]
+        tags:
+
+  - id: 'uml-edge-binary-association'
     name: Binary Association
     styles: [ uml-association ]
     elements:
@@ -213,6 +234,70 @@ stencils:
               type: SQUARE_STICK_ARROW
         metadata:
           style: uml-association
+        children: [ ]
+        tags:
+
+  - id: 'uml-edge-dependency'
+    name: Dependency
+    styles: [ uml-dependency ]
+    elements:
+      - id: 492ywhl
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-dependency
+        tags:
+
+  - id: 'uml-edge-generalization'
+    name: Generalization
+    styles: [ uml-generalization ]
+    elements:
+      - id: da0b1un
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 40
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-generalization
+        children: [ ]
+        tags:
+
+  - id: 'uml-edge-realization'
+    name: Interface Realization
+    styles: [ uml-realization ]
+    elements:
+      - id: kffzynl
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 50
+            y: 0
+        labelNodes: [ ]
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-realization
         children: [ ]
         tags:
 
@@ -247,36 +332,7 @@ stencils:
         texts:
           text: "Label"
         tags:
-  - id: 'uml-common-port'
-    name: Port
-    styles: [ uml-shape ]
-    elements:
-      - id: umlport01
-        type: node
-        nodeType: umlPort
-        bounds:
-          x: 0
-          y: 0
-          w: 10
-          h: 10
-          r: 0
-        children: [ ]
-        props:
-          text:
-            top: 0
-            bottom: 0
-            left: 0
-            right: 0
-          capabilities:
-            resizable:
-              horizontal: false
-              vertical: false
-        metadata:
-          style: uml-shape
-          textStyle: default-text-default
-        texts:
-          text: ""
-        tags:
+
 
   - id: 'uml-note'
     name: Note
@@ -316,4 +372,35 @@ stencils:
           textStyle: uml-shape-text
         texts:
           text: Note
+        tags:
+
+  - id: 'uml-common-port'
+    name: Port
+    styles: [ uml-shape ]
+    elements:
+      - id: umlport01
+        type: node
+        nodeType: umlPort
+        bounds:
+          x: 0
+          y: 0
+          w: 10
+          h: 10
+          r: 0
+        children: [ ]
+        props:
+          text:
+            top: 0
+            bottom: 0
+            left: 0
+            right: 0
+          capabilities:
+            resizable:
+              horizontal: false
+              vertical: false
+        metadata:
+          style: uml-shape
+          textStyle: default-text-default
+        texts:
+          text: ""
         tags:

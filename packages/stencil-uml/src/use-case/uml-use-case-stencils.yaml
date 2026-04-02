@@ -162,3 +162,101 @@ stencils:
         texts:
           text: "Label"
         tags:
+
+  - id: 'uml-edge-extend'
+    name: Extend
+    elements:
+      - id: mqkw35c
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 70
+            y: 0
+        labelNodes:
+          - id: 2qwxokq
+            type: horizontal
+            offset:
+              x: 0
+              y: -11
+            offsetType: absolute
+            timeOffset: 0.5
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-dependency
+        children:
+          - id: 2qwxokq
+            type: node
+            nodeType: text
+            bounds:
+              x: 254.5
+              y: 613
+              r: 0
+              h: 12
+              w: 41
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "<p>«extend»</p>"
+            tags:
+        tags:
+
+  - id: 'uml-edge-inclue'
+    name: Include
+    elements:
+      - id: bfm0rn5
+        type: edge
+        start:
+          position:
+            x: 0
+            y: 0
+        end:
+          position:
+            x: 70
+            y: 0
+        labelNodes:
+          - id: 9lakaag
+            type: horizontal
+            offset:
+              x: 0
+              y: -11
+            offsetType: absolute
+            timeOffset: 0.5
+        waypoints: [ ]
+        props: { }
+        metadata:
+          style: uml-dependency
+        children:
+          - id: 9lakaag
+            type: node
+            nodeType: text
+            bounds:
+              x: 253.5
+              y: 643
+              r: 0
+              h: 12
+              w: 43
+            children: [ ]
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: "<p>«include»</p>"
+            tags:
+        tags:

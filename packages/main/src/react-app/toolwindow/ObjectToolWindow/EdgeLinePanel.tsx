@@ -17,6 +17,10 @@ import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { unique } from '@diagram-craft/utils/array';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
+const SPECIAL_FILL_COLORS = {
+  stroke: { label: 'Stroke Color', icon: <TbLine /> }
+};
+
 type FormProps = {
   diagram: Diagram;
   config: ConfigurationContextType;
@@ -150,6 +154,7 @@ export const EdgeLinePanelForm = ({
                 customPalette={$d.document.customPalette}
                 onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
                 extraPalettes={{ Stylesheet: palette }}
+                special={SPECIAL_FILL_COLORS}
               />
             )}
             renderValue={props => <ColorPreview {...props} />}
