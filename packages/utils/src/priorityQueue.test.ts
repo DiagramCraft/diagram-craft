@@ -154,4 +154,33 @@ describe('PriorityQueue', () => {
     expect(queue.dequeue()).toBe('third');
     expect(queue.isEmpty()).toBe(true);
   });
+
+  test('preserves FIFO order for equal priorities across heap reordering', () => {
+    const queue = new PriorityQueue<string>();
+
+    queue.enqueue('first', 5);
+    queue.enqueue('lower-priority', 10);
+    queue.enqueue('second', 5);
+    queue.enqueue('third', 5);
+    queue.enqueue('highest', 1);
+
+    expect(queue.dequeue()).toBe('highest');
+    expect(queue.dequeue()).toBe('first');
+    expect(queue.dequeue()).toBe('second');
+    expect(queue.dequeue()).toBe('third');
+    expect(queue.dequeue()).toBe('lower-priority');
+  });
+
+  test('allows duplicate elements with updated priorities', () => {
+    const queue = new PriorityQueue<string>();
+
+    queue.enqueue('node-a', 10);
+    queue.enqueue('node-b', 5);
+    queue.enqueue('node-a', 1);
+
+    expect(queue.dequeue()).toBe('node-a');
+    expect(queue.dequeue()).toBe('node-b');
+    expect(queue.dequeue()).toBe('node-a');
+    expect(queue.dequeue()).toBeUndefined();
+  });
 });
