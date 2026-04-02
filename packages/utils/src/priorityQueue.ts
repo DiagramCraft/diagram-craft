@@ -19,10 +19,11 @@
  */
 
 /**
- * A priority queue implementation where elements with lower priority values are dequeued first.
+ * A stable min-heap priority queue where elements with lower priority values are dequeued first.
  */
 export class PriorityQueue<T> {
-  private items: Array<{ element: T; priority: number }> = [];
+  private items: Array<{ element: T; priority: number; sequence: number }> = [];
+  private sequence = 0;
 
   /**
    * Adds an element to the queue with the given priority.
@@ -30,19 +31,52 @@ export class PriorityQueue<T> {
    * @param priority The priority value (lower values = higher priority)
    */
   enqueue(element: T, priority: number): void {
-    const item = { element, priority };
-    let added = false;
+    this.items.push({ element, priority, sequence: this.sequence++ });
+    this.bubbleUp(this.items.length - 1);
+  }
 
-    for (let i = 0; i < this.items.length; i++) {
-      if (item.priority < this.items[i]!.priority) {
-        this.items.splice(i, 0, item);
-        added = true;
-        break;
+  private bubbleUp(index: number): void {
+    let currentIndex = index;
+
+    while (currentIndex > 0) {
+      const parentIndex = Math.floor((currentIndex - 1) / 2);
+      if (this.compare(this.items[currentIndex]!, this.items[parentIndex]!) >= 0) {
+        return;
       }
-    }
 
-    if (!added) {
-      this.items.push(item);
+      this.swap(currentIndex, parentIndex);
+      currentIndex = parentIndex;
+    }
+  }
+
+  private bubbleDown(index: number): void {
+    let currentIndex = index;
+
+    while (true) {
+      const leftChildIndex = currentIndex * 2 + 1;
+      const rightChildIndex = leftChildIndex + 1;
+      let smallestIndex = currentIndex;
+
+      if (
+        leftChildIndex < this.items.length &&
+        this.compare(this.items[leftChildIndex]!, this.items[smallestIndex]!) < 0
+      ) {
+        smallestIndex = leftChildIndex;
+      }
+
+      if (
+        rightChildIndex < this.items.length &&
+        this.compare(this.items[rightChildIndex]!, this.items[smallestIndex]!) < 0
+      ) {
+        smallestIndex = rightChildIndex;
+      }
+
+      if (smallestIndex === currentIndex) {
+        return;
+      }
+
+      this.swap(currentIndex, smallestIndex);
+      currentIndex = smallestIndex;
     }
   }
 
@@ -51,8 +85,19 @@ export class PriorityQueue<T> {
    * @returns The highest priority element, or undefined if queue is empty
    */
   dequeue(): T | undefined {
-    const item = this.items.shift();
-    return item?.element;
+    if (this.items.length === 0) {
+      return undefined;
+    }
+
+    const root = this.items[0]!;
+    const last = this.items.pop()!;
+
+    if (this.items.length > 0) {
+      this.items[0] = last;
+      this.bubbleDown(0);
+    }
+
+    return root.element;
   }
 
   /**
@@ -61,5 +106,19 @@ export class PriorityQueue<T> {
    */
   isEmpty(): boolean {
     return this.items.length === 0;
+  }
+
+  private compare(
+    a: { element: T; priority: number; sequence: number },
+    b: { element: T; priority: number; sequence: number }
+  ): number {
+    if (a.priority !== b.priority) {
+      return a.priority - b.priority;
+    }
+    return a.sequence - b.sequence;
+  }
+
+  private swap(a: number, b: number): void {
+    [this.items[a], this.items[b]] = [this.items[b]!, this.items[a]!];
   }
 }
