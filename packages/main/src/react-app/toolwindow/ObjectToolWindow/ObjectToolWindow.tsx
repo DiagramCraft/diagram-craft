@@ -22,7 +22,6 @@ import { Accordion } from '@diagram-craft/app-components/Accordion';
 import { NodeTableToolbarPanel } from './NodeTableToolbarPanel';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
-import { isNode } from '@diagram-craft/model/diagramElement';
 import { ElementAnchorsPanel } from './ElementAnchorsPanel';
 import { NodeActionPropertiesPanel } from './NodeActionPropertiesPanel';
 import { NodeAdvancedPropertiesPanel } from './NodeAdvancedPropertiesPanel';
@@ -33,6 +32,7 @@ import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EdgeTransformPanel } from './EdgeTransformPanel';
+import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 type Type =
   | 'diagram'
@@ -72,7 +72,12 @@ export const ObjectToolWindow = () => {
       setType('table');
     } else if (
       diagram.selection.isNodesOnly() &&
-      diagram.selection.nodes.every(e => isNode(e.parent) && e.parent?.nodeType === 'tableRow')
+      diagram.selection.nodes.every(e => e.nodeType === 'tableCell')
+    ) {
+      setType('table-cell');
+    } else if (
+      diagram.selection.isNodesOnly() &&
+      diagram.selection.nodes.every(e => new TableHelper(e).getCurrentCell() !== undefined)
     ) {
       setType('table-cell');
     } else if (diagram.selection.type === 'mixed') {

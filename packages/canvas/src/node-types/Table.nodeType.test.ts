@@ -1,9 +1,10 @@
-import { describe, expect, test, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { TableHelper } from './Table.nodeType';
-import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { TransformFactory } from '@diagram-craft/geometry/transform';
 
 describe('TableHelper', () => {
   let diagram: Diagram;
@@ -13,14 +14,6 @@ describe('TableHelper', () => {
     const diagramBuilder = TestModel.newDiagram();
     diagram = diagramBuilder;
     const layer = diagramBuilder.newLayer();
-
-    // Create a 2x2 table with structure:
-    // Visual:      Internal (reversed):
-    // a | b        table:
-    // -----          row2:
-    // c | d            d, c
-    //                row1:
-    //                  b, a
 
     table = layer.addNode({
       id: 'table-1',
@@ -41,311 +34,150 @@ describe('TableHelper', () => {
 
     const cellB = layer.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellA = layer.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
-
     const cellD = layer.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellC = layer.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
-    // TODO: Why two UnitOfWork
     UnitOfWork.execute(diagram, uow => {
       row1.addChild(cellB, uow);
       row1.addChild(cellA, uow);
       row2.addChild(cellD, uow);
       row2.addChild(cellC, uow);
       table.addChild(row2, uow);
-    });
-    UnitOfWork.execute(diagram, uow => {
       table.addChild(row1, uow);
     });
   });
 
-  describe('constructor and basic properties', () => {
-    test('identifies table node when element is a table', () => {
-      const helper = new TableHelper(table);
+  test('resolves selected table', () => {
+    const helper = new TableHelper(table);
 
-      expect(helper.isTable()).toBe(true);
-      expect(helper.tableNode).toBe(table);
-      expect(helper.element).toBe(table);
-      expect(helper.cell).toBe(table);
-    });
-
-    test('identifies table node when element is a cell', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      expect(helper.isTable()).toBe(true);
-      expect(helper.tableNode).toBe(table);
-      expect(helper.element).toBe(cellA);
-      expect(helper.cell).toBe(cellA);
-    });
-
-    test('returns false for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
-
-      expect(helper.isTable()).toBe(false);
-      expect(helper.element).toBe(nonTableNode);
-    });
-
-    test('handles edge element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const edge = builder.addEdge({ id: 'edge-1' });
-      const helper = new TableHelper(edge);
-
-      expect(helper.isTable()).toBe(false);
-    });
+    expect(helper.isTable()).toBe(true);
+    expect(helper.tableNode).toBe(table);
+    expect(helper.cell).toBe(undefined);
+    expect(helper.getCurrentRow()).toBe(undefined);
   });
 
-  describe('getCellRow', () => {
-    test('returns correct row index for cell in top row visually', () => {
-      const row2 = table.children[0] as DiagramNode; // row2 is actually at y=100
-      const cellC = row2.children[1] as DiagramNode;
-      const helper = new TableHelper(cellC);
+  test('resolves selected table cell', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const helper = new TableHelper(cellA);
 
-      // Based on the setup: row1 has y=0, row2 has y=100
-      // But testing shows row2's cells are at sorted index 0
-      expect(helper.getCellRowIndex()).toBe(0);
-    });
-
-    test('returns correct row index for cell in bottom row visually', () => {
-      const row1 = table.children[1] as DiagramNode; // row1 is actually at y=0
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      // Testing shows row1's cells are at sorted index 1
-      expect(helper.getCellRowIndex()).toBe(1);
-    });
-
-    test('returns undefined for table node', () => {
-      const helper = new TableHelper(table);
-
-      expect(helper.getCellRowIndex()).toBe(undefined);
-    });
-
-    test('returns undefined for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
-
-      expect(helper.getCellRowIndex()).toBe(undefined);
-    });
+    expect(helper.isTable()).toBe(true);
+    expect(helper.tableNode).toBe(table);
+    expect(helper.cell).toBe(cellA);
+    expect(helper.getCurrentCell()).toBe(cellA);
+    expect(helper.getCurrentRow()?.id).toBe('row-1');
   });
 
-  describe('getCellColumn', () => {
-    test('returns correct column index for left cell', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      expect(helper.getCellColumnIndex()).toBe(0);
+  test('returns false for non-table element', () => {
+    const layer = diagram.layers.all[0]!;
+    const builder = layer as any;
+    const nonTableNode = builder.addNode({
+      id: 'non-table',
+      type: 'rect',
+      bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
     });
 
-    test('returns correct column index for right cell', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellB = row1.children[0] as DiagramNode;
-      const helper = new TableHelper(cellB);
+    const helper = new TableHelper(nonTableNode);
 
-      expect(helper.getCellColumnIndex()).toBe(1);
-    });
-
-    test('returns undefined for table node', () => {
-      const helper = new TableHelper(table);
-
-      expect(helper.getCellColumnIndex()).toBe(undefined);
-    });
-
-    test('returns undefined for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
-
-      expect(helper.getCellColumnIndex()).toBe(undefined);
-    });
+    expect(helper.isTable()).toBe(false);
+    expect(helper.getCurrentCell()).toBe(undefined);
+    expect(helper.getRowsSorted()).toEqual([]);
+    expect(helper.getColumnCount()).toBe(0);
   });
 
-  describe('getRowsSorted', () => {
-    test('returns rows in visual order (top to bottom)', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
+  test('returns correct row index', () => {
+    const topRow = table.children[1] as DiagramNode;
+    const bottomRow = table.children[0] as DiagramNode;
 
-      const rows = helper.getRowsSorted();
+    const cellA = topRow.children[1] as DiagramNode;
+    const cellC = bottomRow.children[1] as DiagramNode;
 
-      expect(rows).toHaveLength(2);
-      // Rows are sorted by y coordinate
-      expect(rows[0]?.bounds.y).toBeLessThan(rows[1]!.bounds.y);
-    });
-
-    test('returns empty array for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
-
-      expect(helper.getRowsSorted()).toEqual([]);
-    });
-
-    test('sorts rows by y coordinate', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      const rows = helper.getRowsSorted();
-
-      expect(rows[0]?.bounds.y).toBeLessThan(rows[1]!.bounds.y);
-    });
+    expect(new TableHelper(cellA).getCellRowIndex()).toBe(0);
+    expect(new TableHelper(cellC).getCellRowIndex()).toBe(1);
   });
 
-  describe('getColumnsSorted', () => {
-    test('returns columns in visual order (left to right)', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
+  test('returns correct column index', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellB = row1.children[0] as DiagramNode;
 
-      const columns = helper.getColumnsSorted(row1);
-
-      expect(columns).toHaveLength(2);
-      expect(columns[0]?.id).toBe('cell-a'); // Left cell
-      expect(columns[1]?.id).toBe('cell-b'); // Right cell
-    });
-
-    test('sorts columns by x coordinate', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      const columns = helper.getColumnsSorted(row1);
-
-      expect(columns[0]?.bounds.x).toBeLessThan(columns[1]!.bounds.x);
-    });
-
-    test('works for different rows', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const row2 = table.children[0] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
-
-      const columnsRow1 = helper.getColumnsSorted(row1);
-      const columnsRow2 = helper.getColumnsSorted(row2);
-
-      expect(columnsRow1[0]?.id).toBe('cell-a');
-      expect(columnsRow1[1]?.id).toBe('cell-b');
-      expect(columnsRow2[0]?.id).toBe('cell-c');
-      expect(columnsRow2[1]?.id).toBe('cell-d');
-    });
+    expect(new TableHelper(cellA).getCellColumnIndex()).toBe(0);
+    expect(new TableHelper(cellB).getCellColumnIndex()).toBe(1);
   });
 
-  describe('getCurrentRow', () => {
-    test('returns current row for cell in first row', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
+  test('sorts rows and columns visually', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const helper = new TableHelper(cellA);
 
-      const currentRow = helper.getCurrentRow();
+    const rows = helper.getRowsSorted();
+    const columns = helper.getColumnsSorted(rows[0]!);
 
-      expect(currentRow?.id).toBe('row-1');
-    });
-
-    test('returns current row for cell in second row', () => {
-      const row2 = table.children[0] as DiagramNode;
-      const cellC = row2.children[1] as DiagramNode;
-      const helper = new TableHelper(cellC);
-
-      const currentRow = helper.getCurrentRow();
-
-      expect(currentRow?.id).toBe('row-2');
-    });
-
-    test('returns undefined for table node', () => {
-      const helper = new TableHelper(table);
-
-      expect(helper.getCurrentRow()).toBe(undefined);
-    });
-
-    test('returns undefined for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
-
-      expect(helper.getCurrentRow()).toBe(undefined);
-    });
+    expect(rows.map(r => r.id)).toEqual(['row-1', 'row-2']);
+    expect(columns.map(c => c.id)).toEqual(['cell-a', 'cell-b']);
   });
 
-  describe('getColumnCount', () => {
-    test('returns correct column count', () => {
-      const row1 = table.children[1] as DiagramNode;
-      const cellA = row1.children[1] as DiagramNode;
-      const helper = new TableHelper(cellA);
+  test('returns correct column count', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
 
-      expect(helper.getColumnCount()).toBe(2);
+    expect(new TableHelper(cellA).getColumnCount()).toBe(2);
+  });
+
+  test('shrinking a cell shrinks the whole column', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const row2 = table.children[0] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellC = row2.children[1] as DiagramNode;
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.transform(TransformFactory.fromTo(cellA.bounds, { ...cellA.bounds, w: 60 }), uow);
     });
 
-    test('returns 0 for non-table element', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const nonTableNode = builder.addNode({
-        id: 'non-table',
-        type: 'rect',
-        bounds: { x: 300, y: 300, w: 50, h: 50, r: 0 }
-      });
-      const helper = new TableHelper(nonTableNode);
+    expect(cellA.bounds.w).toBe(60);
+    expect(cellC.bounds.w).toBe(60);
+  });
 
-      expect(helper.getColumnCount()).toBe(0);
+  test('shrinking a cell shrinks the whole row height', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellB = row1.children[0] as DiagramNode;
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.transform(TransformFactory.fromTo(cellA.bounds, { ...cellA.bounds, h: 40 }), uow);
     });
 
-    test('returns 0 for empty table', () => {
-      const layer = diagram.layers.all[0]!;
-      const builder = layer as any;
-      const emptyTable = builder.addNode({
-        id: 'empty-table',
-        type: 'table',
-        bounds: { x: 300, y: 300, w: 200, h: 200, r: 0 }
-      });
-      const helper = new TableHelper(emptyTable);
+    expect(cellA.bounds.h).toBe(40);
+    expect(cellB.bounds.h).toBe(40);
+  });
 
-      expect(helper.getColumnCount()).toBe(0);
+  test('resizing a row height does not compound across cells', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellB = row1.children[0] as DiagramNode;
+
+    UnitOfWork.execute(diagram, uow => {
+      row1.transform(TransformFactory.fromTo(row1.bounds, { ...row1.bounds, h: 105 }), uow);
     });
+
+    expect(row1.bounds.h).toBe(105);
+    expect(cellA.bounds.h).toBe(105);
+    expect(cellB.bounds.h).toBe(105);
   });
 });

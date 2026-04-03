@@ -18,6 +18,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderChildren } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
+import { assertTableCell, assertTableRow, getOwningTable, getOwningTableCell } from './tableUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -59,6 +60,7 @@ const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
 
   for (const r of rows) {
     const columns = r.children.filter(isNode);
+    columns.forEach(assertTableCell);
     const cells = columns.map(c => ({ cell: c, idx: 0 }));
 
     dest.push({ row: r, columns: cells, idx: 0 });
@@ -116,8 +118,7 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     const children = node.children;
     const rows = children.filter(isNode);
 
-    // Assert all children are rows
-    for (const row of rows) assert.true(row.nodeType === 'tableRow');
+    for (const row of rows) assertTableRow(row);
 
     const cellsInOrder = getCellsInOrder(rows);
 
@@ -312,22 +313,8 @@ export class TableHelper {
   readonly cell: DiagramNode | undefined;
 
   constructor(readonly element: DiagramElement) {
-    if (!isNode(element)) return;
-
-    const parent = element.parent;
-
-    if (element.nodeType === 'table') {
-      this.#tableNode = element;
-    } else if (isNode(parent) && parent.nodeType === 'tableRow') {
-      const grandParent = parent.parent;
-
-      assert.node(grandParent!);
-      assert.true(grandParent.nodeType === 'table');
-
-      this.#tableNode = grandParent;
-    }
-
-    this.cell = element;
+    this.#tableNode = getOwningTable(element);
+    this.cell = this.#tableNode ? getOwningTableCell(element) : undefined;
   }
 
   static get(diagram: Diagram) {
@@ -347,6 +334,10 @@ export class TableHelper {
     return this.tableNode.children.filter(isNode);
   }
 
+  getCurrentCell() {
+    return this.cell;
+  }
+
   getCellRow() {
     return this.rows[this.getCellRowIndex()!];
   }
@@ -358,13 +349,13 @@ export class TableHelper {
       (a, b) => a.bounds.y - b.bounds.y
     );
     for (let i = 0; i < rows.length; i++) {
-      if (rows[i]!.children.includes(this.cell!)) return i;
+      if (this.cell && rows[i]!.children.includes(this.cell)) return i;
     }
     return undefined;
   }
 
   getCellColumnIndex(): number | undefined {
-    if (!this.#tableNode) return;
+    if (!this.#tableNode || !this.cell) return;
 
     const row = this.cell!.parent as DiagramNode;
     if (!row) return undefined;

@@ -24,7 +24,7 @@ stencils:
           children:
             - id: 0gry4n3
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 0
                 w: 100
@@ -44,7 +44,7 @@ stencils:
                   color: var(--canvas-bg)
             - id: uyky8zy
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 100
                 w: 100
@@ -65,7 +65,7 @@ stencils:
 
             - id: 6thlpmi
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 200
                 w: 100
@@ -103,7 +103,7 @@ stencils:
           children:
             - id: 5iuu4iq
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 0
                 w: 100
@@ -121,7 +121,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: oglt1l7
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 100
                 w: 100
@@ -139,7 +139,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: smikt5d
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 200
                 w: 100
@@ -175,7 +175,7 @@ stencils:
           children:
             - id: yjeptoc
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 0
                 w: 100
@@ -193,7 +193,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: lwxcumy
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 100
                 w: 100
@@ -211,7 +211,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: 6l0q84j
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 200
                 w: 100
@@ -247,7 +247,7 @@ stencils:
           children:
             - id: vblv6z0
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 0
                 w: 100
@@ -265,7 +265,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: kgmeib2
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 100
                 w: 100
@@ -283,7 +283,7 @@ stencils:
                   color: var(--canvas-bg2)
             - id: wqc1jaz
               type: node
-              nodeType: text
+              nodeType: tableCell
               bounds:
                 x: 200
                 w: 100

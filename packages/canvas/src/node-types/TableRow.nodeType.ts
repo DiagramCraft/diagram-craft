@@ -6,6 +6,7 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';
+import { Transform } from '@diagram-craft/geometry/transform';
 
 export class TableRowNodeDefinition extends ShapeNodeDefinition {
   constructor() {
@@ -32,6 +33,17 @@ export class TableRowNodeDefinition extends ShapeNodeDefinition {
         const parentDef = parent.getDefinition();
         parentDef.onChildChanged(parent, uow);
       });
+    }
+  }
+
+  protected transformChildren(
+    transforms: ReadonlyArray<Transform>,
+    node: DiagramNode,
+    uow: UnitOfWork
+  ): void {
+    for (const child of node.children) {
+      if (!isNode(child)) continue;
+      child.setBounds(Transform.box(child.bounds, ...transforms), uow);
     }
   }
 }

@@ -32,6 +32,7 @@ import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-type
 import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.nodeType';
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
 import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { TableCellNodeDefinition } from '@diagram-craft/canvas/node-types/TableCell.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import { IconRoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/IconRoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
@@ -80,6 +81,7 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new SwimlaneNodeDefinition());
   reg.register(new TableNodeDefinition());
   reg.register(new TableRowNodeDefinition());
+  reg.register(new TableCellNodeDefinition());
   reg.register(new TextNodeDefinition());
   reg.register(new TrapezoidNodeDefinition());
   reg.register(new TriangleNodeDefinition());

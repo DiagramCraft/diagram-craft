@@ -9,6 +9,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { useTable } from '../../hooks/useTable';
 import { useDiagram } from '../../../application';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 export const NodeTableCellDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();
@@ -21,16 +22,19 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
 
   if (!table || elements.length !== 1 || isEdge(elements[0])) return <div></div>;
 
-  const node = elements[0] as DiagramNode;
+  const helper = new TableHelper(elements[0]!);
+  const node = helper.getCurrentCell();
+  if (!node) return <div></div>;
 
   const height = node.bounds.h;
   const width = node.bounds.w;
 
   const updateHeight = (h: number) => {
-    const row = (table.children as DiagramNode[]).find(e => e.children.includes(node));
+    const row = helper.getCurrentRow();
+    if (!row) return;
 
     UnitOfWork.executeWithUndo(diagram, 'Row height', uow => {
-      for (const child of row!.children) {
+      for (const child of row.children) {
         const t = TransformFactory.fromTo(child.bounds, { ...child.bounds, h });
         child.transform(t, uow);
       }
@@ -38,8 +42,8 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
   };
 
   const updateWidth = (w: number) => {
-    const row = (table.children as DiagramNode[]).find(e => e.children.includes(node));
-    const colIdx = row!.children.indexOf(node);
+    const colIdx = helper.getCellColumnIndex();
+    if (colIdx === undefined) return;
 
     UnitOfWork.executeWithUndo(diagram, 'Row height', uow => {
       for (const r of table.children) {

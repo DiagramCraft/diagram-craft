@@ -63,10 +63,16 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
             for (let c = 0; c < width; c++) {
               const cell = ElementFactory.node({
-                nodeType: 'text',
+                nodeType: 'tableCell',
                 bounds: { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
                 layer,
+                texts: {
+                  text: r === 0 ? `Header ${c + 1}` : ''
+                },
                 props: {
+                  stroke: {
+                    enabled: false
+                  },
                   fill: {
                     enabled: true
                   },
