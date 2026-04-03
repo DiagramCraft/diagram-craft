@@ -70,7 +70,16 @@ type DocumentsContextMenuProps = {
 
 const DiagramLabel = (props: { diagram: Diagram; onValueChange: (v: string) => void }) => {
   return (
-    <div className={'util-action'} onClick={() => props.onValueChange(props.diagram.id)}>
+    <div
+      className={'util-action'}
+      style={{
+        overflow: 'hidden',
+        maxWidth: '100%',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      }}
+      onClick={() => props.onValueChange(props.diagram.id)}
+    >
       {props.diagram.name}
     </div>
   );
