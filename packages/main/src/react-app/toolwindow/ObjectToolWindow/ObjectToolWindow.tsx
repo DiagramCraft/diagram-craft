@@ -32,7 +32,6 @@ import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EdgeTransformPanel } from './EdgeTransformPanel';
-import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 type Type =
   | 'diagram'
@@ -54,7 +53,7 @@ const TABS: Record<Type, TabType[]> = {
   'mixed': ['style', 'text', 'arrange'],
   'single-label-node': ['style', 'text'],
   'table': ['table', 'arrange', 'advanced'],
-  'table-cell': ['cell', 'text']
+  'table-cell': ['cell', 'text', 'arrange']
 };
 
 export const ObjectToolWindow = () => {
@@ -73,11 +72,6 @@ export const ObjectToolWindow = () => {
     } else if (
       diagram.selection.isNodesOnly() &&
       diagram.selection.nodes.every(e => e.nodeType === 'tableCell')
-    ) {
-      setType('table-cell');
-    } else if (
-      diagram.selection.isNodesOnly() &&
-      diagram.selection.nodes.every(e => new TableHelper(e).getCurrentCell() !== undefined)
     ) {
       setType('table-cell');
     } else if (diagram.selection.type === 'mixed') {
@@ -207,16 +201,22 @@ export const ObjectToolWindow = () => {
               defaultValue={
                 type === 'single-edge' || type === 'edge'
                   ? ['transform']
-                  : ['transform', 'layout-container', 'layout-element']
+                  : type === 'table-cell'
+                    ? ['layout-container', 'layout-element']
+                    : ['transform', 'layout-container', 'layout-element']
               }
             >
               {type === 'single-edge' || type === 'edge' ? (
                 <EdgeTransformPanel />
-              ) : (
+              ) : type !== 'table-cell' ? (
                 <NodeTransformPanel />
+              ) : null}
+              {type !== 'single-edge' && type !== 'edge' && (
+                <>
+                  <LayoutContainerPanel />
+                  <LayoutElementPanel />
+                </>
               )}
-              {type !== 'single-edge' && type !== 'edge' && <LayoutContainerPanel />}
-              {type !== 'single-edge' && type !== 'edge' && <LayoutElementPanel />}
             </Accordion.Root>
           </ToolWindow.TabContent>
         </ToolWindow.Tab>

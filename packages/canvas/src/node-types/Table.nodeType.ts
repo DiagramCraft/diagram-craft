@@ -18,7 +18,13 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderChildren } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
-import { assertTableCell, assertTableRow, getOwningTable, getOwningTableCell } from './tableUtils';
+import {
+  assertTableCell,
+  assertTableRow,
+  getOwningTable,
+  getOwningTableCell,
+  setBoundsAndTransformChildren
+} from './tableUtils';
 
 declare global {
   namespace DiagramCraft {
@@ -186,7 +192,12 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     for (const r of cellsInOrder) {
       r.row.setBounds(Transform.box(r.newLocalBounds!, ...transformForward), uow);
       for (const c of r.columns) {
-        c.cell.setBounds(Transform.box(c.newLocalBounds!, ...transformForward), uow);
+        setBoundsAndTransformChildren(
+          c.cell,
+          Transform.box(c.newLocalBounds!, ...transformForward),
+          uow,
+          { inTableSyncOperation: true }
+        );
       }
     }
 

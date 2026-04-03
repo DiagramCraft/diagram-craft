@@ -2,7 +2,6 @@ import {
   BaseNodeComponent,
   BaseShapeBuildShapeProps
 } from '../components/BaseNodeComponent';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
@@ -11,13 +10,16 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { TableHelper } from './Table.nodeType';
+import { renderChildren } from '../components/renderElement';
+import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
+import { setBoundsAndTransformChildren } from './tableUtils';
 
-export class TableCellNodeDefinition extends ShapeNodeDefinition {
+export class TableCellNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
     super('tableCell', 'Table Cell', TableCellComponent);
 
     this.setFlags({
-      [NodeFlags.ChildrenAllowed]: false,
+      [NodeFlags.ChildrenAllowed]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: false
     });
   }
@@ -40,6 +42,8 @@ const syncTableCellDimensions = (
   prevBounds: Box,
   uow: UnitOfWork
 ) => {
+  if (uow.metadata.inTableSyncOperation) return;
+
   const helper = new TableHelper(node);
   if (!helper.isTable()) return;
 
@@ -49,7 +53,9 @@ const syncTableCellDimensions = (
   if (newBounds.h !== prevBounds.h && row) {
     for (const sibling of helper.getColumnsSorted(row)) {
       if (sibling === node) continue;
-      sibling.setBounds({ ...sibling.bounds, h: newBounds.h }, uow);
+      setBoundsAndTransformChildren(sibling, { ...sibling.bounds, h: newBounds.h }, uow, {
+        inTableSyncOperation: true
+      });
     }
   }
 
@@ -57,7 +63,9 @@ const syncTableCellDimensions = (
     for (const siblingRow of helper.getRowsSorted()) {
       const sibling = helper.getColumnsSorted(siblingRow)[colIdx];
       if (!sibling || sibling === node) continue;
-      sibling.setBounds({ ...sibling.bounds, w: newBounds.w }, uow);
+      setBoundsAndTransformChildren(sibling, { ...sibling.bounds, w: newBounds.w }, uow, {
+        inTableSyncOperation: true
+      });
     }
   }
 };
@@ -108,5 +116,6 @@ class TableCellComponent extends BaseNodeComponent<TableCellNodeDefinition> {
       props.node.bounds,
       this.onTableCellTextSizeChange(props)
     );
+    shapeBuilder.add(renderChildren(this, props.node, props));
   }
 }
