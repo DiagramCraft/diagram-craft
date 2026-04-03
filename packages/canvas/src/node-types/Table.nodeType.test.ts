@@ -166,4 +166,18 @@ describe('TableHelper', () => {
     expect(cellA.bounds.h).toBe(40);
     expect(cellB.bounds.h).toBe(40);
   });
+
+  test('resizing a row height does not compound across cells', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellB = row1.children[0] as DiagramNode;
+
+    UnitOfWork.execute(diagram, uow => {
+      row1.transform(TransformFactory.fromTo(row1.bounds, { ...row1.bounds, h: 105 }), uow);
+    });
+
+    expect(row1.bounds.h).toBe(105);
+    expect(cellA.bounds.h).toBe(105);
+    expect(cellB.bounds.h).toBe(105);
+  });
 });
