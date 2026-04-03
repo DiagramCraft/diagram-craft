@@ -30,20 +30,6 @@ export const getOwningTableCell = (element: DiagramElement): DiagramNode | undef
   return undefined;
 };
 
-export const getOwningTableRow = (element: DiagramElement): DiagramNode | undefined => {
-  if (!isNode(element)) return undefined;
-
-  if (element.nodeType === 'tableRow') return element;
-
-  const cell = getOwningTableCell(element);
-  if (cell) {
-    const row = cell.parent;
-    if (isNode(row) && row.nodeType === 'tableRow') return row;
-  }
-
-  return undefined;
-};
-
 export const assertTableRow = (row: DiagramNode) => {
   assert.true(row.nodeType === 'tableRow');
 };

@@ -5,7 +5,6 @@ import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr } from '@diagram-craft/utils/localize';
-import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -69,10 +68,6 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
                 layer,
                 texts: {
                   text: r === 0 ? `Header ${c + 1}` : ''
-                },
-                metadata: {
-                  style: DefaultStyles.node.default,
-                  textStyle: DefaultStyles.text.default
                 },
                 props: {
                   stroke: {
