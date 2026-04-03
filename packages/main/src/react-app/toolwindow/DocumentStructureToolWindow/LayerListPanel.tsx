@@ -16,6 +16,7 @@ import {
   TbRectangle,
   TbTable,
   TbTableRow,
+  TbLayoutGrid,
   TbTextSize,
   TbTrash
 } from 'react-icons/tb';
@@ -412,6 +413,8 @@ const ElementEntry = (props: { element: DiagramElement }) => {
     icon = <TbTextSize />;
   } else if (isNode(e) && e.nodeType === 'tableRow') {
     icon = <TbTableRow />;
+  } else if (isNode(e) && e.nodeType === 'tableCell') {
+    icon = <TbLayoutGrid />;
   }
 
   return (

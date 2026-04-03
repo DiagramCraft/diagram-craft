@@ -7,6 +7,7 @@ import {
   TbTable,
   TbTextSize,
   TbTableRow,
+  TbLayoutGrid,
   TbGridDots
 } from 'react-icons/tb';
 import styles from './SearchResultsPanel.module.css';
@@ -35,6 +36,8 @@ const getElementIcon = (element: DiagramElement) => {
         return <TbTextSize />;
       case 'tableRow':
         return <TbTableRow />;
+      case 'tableCell':
+        return <TbLayoutGrid />;
       default:
         return <TbRectangle />;
     }

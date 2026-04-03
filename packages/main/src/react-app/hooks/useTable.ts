@@ -5,8 +5,8 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { makePropertyArrayHook } from './usePropertyFactory';
 import { useEventListener } from './useEventListener';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { assert } from '@diagram-craft/utils/assert';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);
@@ -22,14 +22,8 @@ export const useTable = (diagram: Diagram) => {
         setElement(undefined);
       } else {
         const el = diagram.selection.elements[0] as DiagramNode;
-        if (el.nodeType === 'table') {
-          setElement(el);
-        } else if (el.parent && isNode(el.parent) && el.parent.nodeType === 'tableRow') {
-          assert.node(el.parent.parent!);
-          setElement(el.parent.parent);
-        } else {
-          setElement(undefined);
-        }
+        const table = new TableHelper(el).isTable() ? new TableHelper(el).tableNode : undefined;
+        setElement(table);
       }
     };
     callback();
@@ -49,10 +43,8 @@ export const useTableProperty = makePropertyArrayHook<DiagramNode, NodeProps>(
     if (nodes.length !== 1) return [];
     if (!isNode(nodes[0])) return [];
 
-    const node = nodes[0];
-    if (node.nodeType === 'table') return [node];
-    if (isNode(node.parent) && node.parent?.nodeType === 'tableRow') return [node.parent.parent];
-    return [];
+    const helper = new TableHelper(nodes[0]);
+    return helper.isTable() ? [helper.tableNode] : [];
   }) as (d: Diagram) => DiagramNode[],
   node => node.editProps,
   node => node.storedProps,

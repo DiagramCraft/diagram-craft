@@ -1,5 +1,5 @@
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
-import { DiagramElement } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
@@ -35,7 +35,11 @@ export const tableActions = (context: ActionContext) => ({
 });
 
 const adjustRowHeight = (row: DiagramNode, h: number, uow: UnitOfWork) => {
-  row.transform(TransformFactory.fromTo(row.bounds, { ...row.bounds, h }), uow);
+  for (const cell of row.children) {
+    if (isNode(cell)) {
+      cell.transform(TransformFactory.fromTo(cell.bounds, { ...cell.bounds, h }), uow);
+    }
+  }
 };
 
 const adjustColumnWidth = (colIdx: number, table: TableHelper, w: number, uow: UnitOfWork) => {

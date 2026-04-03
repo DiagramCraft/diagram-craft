@@ -5,6 +5,7 @@ import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 
 export const tableInsertActions = (application: Application) => ({
   TABLE_INSERT: new TableInsertAction(application)
@@ -63,15 +64,26 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
 
             for (let c = 0; c < width; c++) {
               const cell = ElementFactory.node({
-                nodeType: 'text',
+                nodeType: 'tableCell',
                 bounds: { w: colWidth, h: rowHeight, x: c * colWidth, y: 0, r: 0 },
                 layer,
+                texts: {
+                  text: r === 0 ? `Header ${c + 1}` : ''
+                },
+                metadata: {
+                  style: DefaultStyles.node.default,
+                  textStyle: DefaultStyles.text.default
+                },
                 props: {
+                  stroke: {
+                    enabled: false
+                  },
                   fill: {
                     enabled: true
                   },
                   text: {
-                    bold: r === 0
+                    bold: r === 0,
+                    shrink: true
                   }
                 }
               });

@@ -54,24 +54,24 @@ describe('TableRowMoveAction', () => {
     // Create cells for row 1 (rightmost first)
     const cellB = layer.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellA = layer.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
 
     // Create cells for row 2 (rightmost first)
     const cellD = layer.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellC = layer.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
@@ -169,24 +169,24 @@ describe('TableColumnMoveAction', () => {
     // Create cells for row 1 (rightmost first)
     const cellB = layer.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellA = layer.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
 
     // Create cells for row 2 (rightmost first)
     const cellD = layer.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellC = layer.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
@@ -284,22 +284,22 @@ describe('TableInsertAction', () => {
 
     const cellB = layer.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellA = layer.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellD = layer.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellC = layer.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
 
@@ -444,22 +444,22 @@ describe('TableRemoveAction', () => {
     // Create cells in left-to-right order (matching real app behavior)
     const cellA = layer.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellB = layer.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 100, r: 0 }
     });
     const cellC = layer.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellD = layer.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 100, w: 100, h: 100, r: 0 }
     });
 
@@ -605,49 +605,49 @@ describe('TableDistributeAction', () => {
     // Create cells with different widths for each row
     const cellA1 = layer.createNode({
       id: 'cell-a1',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 50, h: 50, r: 0 }
     });
     const cellA2 = layer.createNode({
       id: 'cell-a2',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 50, y: 0, w: 100, h: 50, r: 0 }
     });
     const cellA3 = layer.createNode({
       id: 'cell-a3',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 150, y: 0, w: 150, h: 50, r: 0 }
     });
 
     const cellB1 = layer.createNode({
       id: 'cell-b1',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 50, w: 50, h: 150, r: 0 }
     });
     const cellB2 = layer.createNode({
       id: 'cell-b2',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 50, y: 50, w: 100, h: 150, r: 0 }
     });
     const cellB3 = layer.createNode({
       id: 'cell-b3',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 150, y: 50, w: 150, h: 150, r: 0 }
     });
 
     const cellC1 = layer.createNode({
       id: 'cell-c1',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 200, w: 50, h: 100, r: 0 }
     });
     const cellC2 = layer.createNode({
       id: 'cell-c2',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 50, y: 200, w: 100, h: 100, r: 0 }
     });
     const cellC3 = layer.createNode({
       id: 'cell-c3',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 150, y: 200, w: 150, h: 100, r: 0 }
     });
 
@@ -756,17 +756,17 @@ describe('TableDistributeAction', () => {
 
     const cellA = layer2.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 50, w: 100, h: 50, r: 0 }
     });
     const cellB = layer2.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 100, h: 100, r: 0 }
     });
     const cellC = layer2.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 200, w: 100, h: 100, r: 0 }
     });
 
@@ -823,22 +823,22 @@ describe('TableDistributeAction', () => {
 
     const cellA = layer2.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 100, h: 80, r: 0 }
     });
     const cellB = layer2.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 0, w: 100, h: 80, r: 0 }
     });
     const cellC = layer2.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 80, w: 100, h: 120, r: 0 }
     });
     const cellD = layer2.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 100, y: 80, w: 100, h: 120, r: 0 }
     });
 
@@ -893,22 +893,22 @@ describe('TableDistributeAction', () => {
 
     const cellA = layer2.createNode({
       id: 'cell-a',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 0, w: 50, h: 100, r: 0 }
     });
     const cellB = layer2.createNode({
       id: 'cell-b',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 50, y: 0, w: 150, h: 100, r: 0 }
     });
     const cellC = layer2.createNode({
       id: 'cell-c',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 0, y: 100, w: 50, h: 100, r: 0 }
     });
     const cellD = layer2.createNode({
       id: 'cell-d',
-      type: 'rect',
+      type: 'tableCell',
       bounds: { x: 50, y: 100, w: 150, h: 100, r: 0 }
     });
 

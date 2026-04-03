@@ -4,10 +4,10 @@ import { useEventListener } from '../hooks/useEventListener';
 import { useDiagram } from '../../application';
 import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
-import { isNode } from '@diagram-craft/model/diagramElement';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
+import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
 
 const getTextIds = (node: DiagramNode): string[] =>
   Object.keys(node.texts).filter(k => node.texts[k] !== undefined);
@@ -28,8 +28,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
 
   const isSingleElementInTableRow =
     diagram.selection.elements.length === 1 &&
-    isNode(diagram.selection.elements?.[0]?.parent) &&
-    diagram.selection.elements[0].parent?.nodeType === 'tableRow';
+    new TableHelper(diagram.selection.elements[0]!).getCurrentCell() !== undefined;
 
   const singleNode =
     diagram.selection.type === 'single-node' ? diagram.selection.nodes[0] : undefined;
