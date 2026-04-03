@@ -4,7 +4,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { Transform, TransformFactory } from '@diagram-craft/geometry/transform';
 import { TestLayerBuilder } from '@diagram-craft/model/test-support/testModel';
 
 describe('TableHelper', () => {
@@ -198,5 +198,79 @@ describe('TableHelper', () => {
 
     expect(child.parent).toBe(cellA);
     expect(cellA.children).toContain(child);
+  });
+
+  test('moving a table moves children nested inside its cells', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const child = layer.createNode({
+      id: 'nested-child',
+      type: 'rect',
+      bounds: { x: 10, y: 10, w: 20, h: 20, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.addChild(child, uow);
+    });
+
+    const before = child.bounds;
+
+    UnitOfWork.execute(diagram, uow => {
+      table.transform(TransformFactory.fromTo(table.bounds, { ...table.bounds, x: 50, y: 40 }), uow);
+    });
+
+    expect(child.bounds).toEqual({ ...before, x: before.x + 50, y: before.y + 40 });
+  });
+
+  test('resizing a row propagates the bounds change to nested children in its cells', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const child = layer.createNode({
+      id: 'nested-child-row-resize',
+      type: 'rect',
+      bounds: { x: 10, y: 10, w: 20, h: 20, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.addChild(child, uow);
+    });
+
+    const childBefore = child.bounds;
+    const cellBefore = cellA.bounds;
+
+    UnitOfWork.execute(diagram, uow => {
+      row1.transform(TransformFactory.fromTo(row1.bounds, { ...row1.bounds, h: 105 }), uow);
+    });
+
+    expect(child.bounds).toEqual(
+      Transform.box(childBefore, ...TransformFactory.fromTo(cellBefore, cellA.bounds))
+    );
+  });
+
+  test('resizing a column propagates the bounds change to nested children in sibling cells', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const row2 = table.children[0] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const cellC = row2.children[1] as DiagramNode;
+    const child = layer.createNode({
+      id: 'nested-child-column-resize',
+      type: 'rect',
+      bounds: { x: 10, y: 110, w: 20, h: 20, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      cellC.addChild(child, uow);
+    });
+
+    const childBefore = child.bounds;
+    const cellBefore = cellC.bounds;
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.transform(TransformFactory.fromTo(cellA.bounds, { ...cellA.bounds, w: 60 }), uow);
+    });
+
+    expect(child.bounds).toEqual(
+      Transform.box(childBefore, ...TransformFactory.fromTo(cellBefore, cellC.bounds))
+    );
   });
 });

@@ -12,6 +12,7 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { TableHelper } from './Table.nodeType';
 import { renderChildren } from '../components/renderElement';
 import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
+import { setBoundsAndTransformChildren } from './tableUtils';
 
 export class TableCellNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
@@ -41,6 +42,8 @@ const syncTableCellDimensions = (
   prevBounds: Box,
   uow: UnitOfWork
 ) => {
+  if (uow.metadata.inTableSyncOperation) return;
+
   const helper = new TableHelper(node);
   if (!helper.isTable()) return;
 
@@ -50,7 +53,9 @@ const syncTableCellDimensions = (
   if (newBounds.h !== prevBounds.h && row) {
     for (const sibling of helper.getColumnsSorted(row)) {
       if (sibling === node) continue;
-      sibling.setBounds({ ...sibling.bounds, h: newBounds.h }, uow);
+      setBoundsAndTransformChildren(sibling, { ...sibling.bounds, h: newBounds.h }, uow, {
+        inTableSyncOperation: true
+      });
     }
   }
 
@@ -58,7 +63,9 @@ const syncTableCellDimensions = (
     for (const siblingRow of helper.getRowsSorted()) {
       const sibling = helper.getColumnsSorted(siblingRow)[colIdx];
       if (!sibling || sibling === node) continue;
-      sibling.setBounds({ ...sibling.bounds, w: newBounds.w }, uow);
+      setBoundsAndTransformChildren(sibling, { ...sibling.bounds, w: newBounds.w }, uow, {
+        inTableSyncOperation: true
+      });
     }
   }
 };
