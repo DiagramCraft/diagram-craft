@@ -37,7 +37,6 @@ stencils:
                 style: default
                 text:
                   bold: true
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -58,7 +57,6 @@ stencils:
                 style: default
                 text:
                   bold: true
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -80,7 +78,6 @@ stencils:
                 style: default
                 text:
                   bold: true
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -117,7 +114,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -136,7 +132,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -155,7 +150,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -192,7 +186,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -211,7 +204,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -230,7 +222,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -267,7 +258,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -286,7 +276,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:
@@ -305,7 +294,6 @@ stencils:
                 style: default
                 text:
                   text: ''
-                  shrink: true
                 stroke:
                   enabled: false
                 fill:

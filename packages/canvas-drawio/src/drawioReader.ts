@@ -4,7 +4,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode, NodeTexts, SimpleDiagramNode } from '@diagram-craft/model/diagramNode';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramEdge, SimpleDiagramEdge, Waypoint } from '@diagram-craft/model/diagramEdge';
-import { DiagramElement, isEdge } from '@diagram-craft/model/diagramElement';
+import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { FreeEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -948,6 +948,21 @@ const attachNodeToParent = (
   }
 };
 
+const normalizeImportedTableNode = (node: DiagramElement, parent: Parent, uow: UnitOfWork) => {
+  if (!isNode(node) || !(parent instanceof SimpleDiagramNode) || parent.nodeType !== 'tableRow')
+    return;
+  if (node.nodeType === 'tableCell') return;
+
+  node.changeNodeType('tableCell', uow);
+  node.updateProps(props => {
+    props.text ??= {};
+    props.text.top ??= 6;
+    props.text.bottom ??= 6;
+    props.text.left ??= 6;
+    props.text.right ??= 6;
+  }, uow);
+};
+
 /**
  * Naming convention for variables are:
  *   - $$abc - collection of XML Elements
@@ -1041,6 +1056,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
 
         // Attach all nodes created to their parent (group and/or layer)
         if (node) {
+          normalizeImportedTableNode(node, parent, uow);
           attachNodeToParent(node, parent, $geometry, ctx);
         }
       }

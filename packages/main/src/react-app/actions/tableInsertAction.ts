@@ -82,8 +82,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
                     enabled: true
                   },
                   text: {
-                    bold: r === 0,
-                    shrink: true
+                    bold: r === 0
                   }
                 }
               });

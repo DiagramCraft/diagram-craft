@@ -118,7 +118,6 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
     const children = node.children;
     const rows = children.filter(isNode);
 
-    // Assert all children are rows
     for (const row of rows) assertTableRow(row);
 
     const cellsInOrder = getCellsInOrder(rows);
