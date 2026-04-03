@@ -5,15 +5,17 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
+import { TestLayerBuilder } from '@diagram-craft/model/test-support/testModel';
 
 describe('TableHelper', () => {
   let diagram: Diagram;
   let table: DiagramNode;
+  let layer: TestLayerBuilder;
 
   beforeEach(() => {
     const diagramBuilder = TestModel.newDiagram();
     diagram = diagramBuilder;
-    const layer = diagramBuilder.newLayer();
+    layer = diagramBuilder.newLayer();
 
     table = layer.addNode({
       id: 'table-1',
@@ -179,5 +181,22 @@ describe('TableHelper', () => {
     expect(row1.bounds.h).toBe(105);
     expect(cellA.bounds.h).toBe(105);
     expect(cellB.bounds.h).toBe(105);
+  });
+
+  test('table cell accepts dropped children', () => {
+    const row1 = table.children[1] as DiagramNode;
+    const cellA = row1.children[1] as DiagramNode;
+    const child = layer.addNode({
+      id: 'dropped-child',
+      type: 'rect',
+      bounds: { x: 250, y: 250, w: 20, h: 20, r: 0 }
+    });
+
+    UnitOfWork.execute(diagram, uow => {
+      cellA.getDefinition().onDrop?.({ x: 15, y: 15 }, cellA, [child], uow, 'default');
+    });
+
+    expect(child.parent).toBe(cellA);
+    expect(cellA.children).toContain(child);
   });
 });

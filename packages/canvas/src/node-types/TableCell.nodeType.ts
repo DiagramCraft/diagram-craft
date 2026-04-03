@@ -2,7 +2,6 @@ import {
   BaseNodeComponent,
   BaseShapeBuildShapeProps
 } from '../components/BaseNodeComponent';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
@@ -11,13 +10,15 @@ import { Transform } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { TableHelper } from './Table.nodeType';
+import { renderChildren } from '../components/renderElement';
+import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
 
-export class TableCellNodeDefinition extends ShapeNodeDefinition {
+export class TableCellNodeDefinition extends LayoutCapableShapeNodeDefinition {
   constructor() {
     super('tableCell', 'Table Cell', TableCellComponent);
 
     this.setFlags({
-      [NodeFlags.ChildrenAllowed]: false,
+      [NodeFlags.ChildrenAllowed]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: false
     });
   }
@@ -108,5 +109,6 @@ class TableCellComponent extends BaseNodeComponent<TableCellNodeDefinition> {
       props.node.bounds,
       this.onTableCellTextSizeChange(props)
     );
+    shapeBuilder.add(renderChildren(this, props.node, props));
   }
 }
