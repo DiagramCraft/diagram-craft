@@ -1,7 +1,7 @@
 import { createApp, defineEventHandler, handleCors } from 'h3';
-import { createAIRoutes } from './aiRoutes';
-import { createDataRoutes } from './dataRoutes';
-import { createFilesystemRoutes } from './filesystemRoutes';
+import { createAIRoutes } from './routes/aiRoutes';
+import { createDataRoutes } from './routes/dataRoutes';
+import { createFilesystemRoutes } from './routes/filesystemRoutes';
 import type { ServerModules } from './serverFactory';
 import openapiSpec from './openapi.json';
 

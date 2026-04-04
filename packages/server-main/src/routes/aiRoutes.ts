@@ -7,7 +7,7 @@ import {
   readBody,
   setResponseHeader
 } from 'h3';
-import type { AIGenerateRequest, AIServer } from './aiServer';
+import type { AIGenerateRequest, AIServer } from '../aiServer';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests

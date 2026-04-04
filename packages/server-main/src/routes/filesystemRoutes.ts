@@ -6,7 +6,7 @@ import {
   serveStatic
 } from 'h3';
 import { readFile } from 'node:fs/promises';
-import type { FileSystemServer } from './fileSystemServer';
+import type { FileSystemServer } from '../fileSystemServer';
 
 // Constants
 const API_FS_PATH = '/api/fs';
