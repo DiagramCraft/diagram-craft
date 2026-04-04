@@ -1,29 +1,33 @@
-import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../../components/BaseNodeComponent';
+import { Component } from '../../component/component';
+import type { VNode } from '../../component/vdom';
+import { ShapeBuilder } from '../../shape/ShapeBuilder';
+import { DRAG_DROP_MANAGER } from '../../dragDropManager';
+import { TableDividerResizeDrag } from './tableDividerResizeDrag';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import * as svg from '../component/vdom-svg';
+import { ShapeNodeDefinition } from '../../shape/shapeNodeDefinition';
+import * as svg from '../../component/vdom-svg';
 import {
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { hasHighlight, Highlights } from '../highlight';
-import { renderChildren } from '../components/renderElement';
-import type { Diagram } from '@diagram-craft/model/diagram';
+import { hasHighlight, Highlights } from '../../highlight';
+import { renderChildren } from '../../components/renderElement';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import {
   assertTableCell,
   assertTableRow,
-  getOwningTable,
-  getOwningTableCell,
-  setBoundsAndTransformChildren
+  getTableDividerBands,
+  setBoundsAndTransformChildren,
+  TableHelper
 } from './tableUtils';
 
 declare global {
@@ -87,6 +91,8 @@ const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
 };
 
 export class TableNodeDefinition extends ShapeNodeDefinition {
+  overlayComponent = TableResizeOverlayComponent;
+
   constructor() {
     super('table', 'Table', TableComponent);
 
@@ -224,6 +230,71 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
+const TABLE_RESIZE_OVERLAY_BAND_SIZE = 5;
+
+class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
+  #hoveredDivider: string | undefined;
+
+  private renderDividerBand(
+    table: DiagramNode,
+    divider: ReturnType<typeof getTableDividerBands>[number]
+  ) {
+    return svg.rect({
+      'class': 'svg-hover-overlay',
+      'x': divider.bounds.x,
+      'y': divider.bounds.y,
+      'width': divider.bounds.w,
+      'height': divider.bounds.h,
+      'fill':
+        this.#hoveredDivider === divider.id ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0)',
+      'stroke': 'none',
+      'cursor': divider.type === 'column' ? 'ew-resize' : 'ns-resize',
+      'pointer-events': 'all',
+      'on': {
+        mouseover: () => {
+          this.#hoveredDivider = divider.id;
+          this.redraw();
+        },
+        mouseout: () => {
+          this.#hoveredDivider = undefined;
+          this.redraw();
+        },
+        mousedown: e => {
+          if (e.button !== 0) return;
+
+          DRAG_DROP_MANAGER.initiate(
+            new TableDividerResizeDrag(
+              table,
+              divider.type,
+              divider.index,
+              table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
+            )
+          );
+          e.stopPropagation();
+        }
+      }
+    });
+  }
+
+  render(props: { node: DiagramNode }) {
+    const table = props.node;
+    const helper = new TableHelper(table);
+    if (!helper.isTable()) return svg.g({});
+    const selection = table.diagram.selection;
+    if (selection.type !== 'single-node' || selection.nodes[0] !== table) return svg.g({});
+
+    const rows = helper.getRowsSorted();
+    if (rows.length === 0) return svg.g({});
+
+    const dividerBands: VNode[] = [];
+    for (const divider of getTableDividerBands(table, TABLE_RESIZE_OVERLAY_BAND_SIZE)) {
+      dividerBands.push(this.renderDividerBand(table, divider));
+    }
+
+    return svg.g({}, ...dividerBands);
+  }
+}
+
 class TableComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, builder: ShapeBuilder) {
     const boundary = this.def.getBoundingPathBuilder(props.node).getPaths();
@@ -316,82 +387,5 @@ class TableComponent extends BaseNodeComponent {
         : props.nodeProps.stroke,
       fill: {}
     });
-  }
-}
-
-export class TableHelper {
-  readonly #tableNode: DiagramNode | undefined;
-  readonly cell: DiagramNode | undefined;
-
-  constructor(readonly element: DiagramElement) {
-    this.#tableNode = getOwningTable(element);
-    this.cell = this.#tableNode ? getOwningTableCell(element) : undefined;
-  }
-
-  static get(diagram: Diagram) {
-    return new TableHelper(diagram.selection.elements[0]!);
-  }
-
-  get tableNode() {
-    assert.present(this.#tableNode);
-    return this.#tableNode;
-  }
-
-  isTable() {
-    return !!this.#tableNode;
-  }
-
-  get rows() {
-    return this.tableNode.children.filter(isNode);
-  }
-
-  getCurrentCell() {
-    return this.cell;
-  }
-
-  getCellRow() {
-    return this.rows[this.getCellRowIndex()!];
-  }
-
-  getCellRowIndex(): number | undefined {
-    if (!this.#tableNode) return;
-
-    const rows = (this.#tableNode.children as DiagramNode[]).toSorted(
-      (a, b) => a.bounds.y - b.bounds.y
-    );
-    for (let i = 0; i < rows.length; i++) {
-      if (this.cell && rows[i]!.children.includes(this.cell)) return i;
-    }
-    return undefined;
-  }
-
-  getCellColumnIndex(): number | undefined {
-    if (!this.#tableNode || !this.cell) return;
-
-    const row = this.cell!.parent as DiagramNode;
-    if (!row) return undefined;
-
-    const columns = (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
-    return columns.indexOf(this.cell!);
-  }
-
-  getRowsSorted(): DiagramNode[] {
-    if (!this.#tableNode) return [];
-    return (this.#tableNode.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
-  }
-
-  getColumnsSorted(row: DiagramNode): DiagramNode[] {
-    return (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
-  }
-
-  getCurrentRow(): DiagramNode | undefined {
-    const rowIdx = this.getCellRowIndex();
-    if (rowIdx === undefined) return undefined;
-    return this.getRowsSorted()[rowIdx];
-  }
-
-  getColumnCount(): number {
-    if (!this.#tableNode || this.#tableNode.children.length === 0) return 0;
-    return (this.#tableNode.children[0] as DiagramNode).children.length;
   }
 }

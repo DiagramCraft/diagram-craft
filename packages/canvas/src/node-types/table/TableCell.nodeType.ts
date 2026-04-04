@@ -1,17 +1,14 @@
-import {
-  BaseNodeComponent,
-  BaseShapeBuildShapeProps
-} from '../components/BaseNodeComponent';
-import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../../components/BaseNodeComponent';
+import { ShapeBuilder } from '../../shape/ShapeBuilder';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Transform } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { TableHelper } from './Table.nodeType';
-import { renderChildren } from '../components/renderElement';
-import { LayoutCapableShapeNodeDefinition } from '../shape/layoutCapableShapeNodeDefinition';
+import { TableHelper } from './tableUtils';
+import { renderChildren } from '../../components/renderElement';
+import { LayoutCapableShapeNodeDefinition } from '../../shape/layoutCapableShapeNodeDefinition';
 import { setBoundsAndTransformChildren } from './tableUtils';
 
 export class TableCellNodeDefinition extends LayoutCapableShapeNodeDefinition {

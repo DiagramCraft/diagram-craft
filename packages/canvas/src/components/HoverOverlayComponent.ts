@@ -32,7 +32,8 @@ export class HoverOverlayComponent extends Component<Props> {
     const overlay = this.subComponent(() => nodeComponent, { node: overlayMatch.node });
     if (!overlay) return svg.g({});
 
-    const transform = `${Transforms.rotate(node.bounds)} ${node.renderProps.geometry.flipH ? Transforms.flipH(node.bounds) : ''} ${node.renderProps.geometry.flipV ? Transforms.flipV(node.bounds) : ''}`;
+    const overlayNode = overlayMatch.node;
+    const transform = `${Transforms.rotate(overlayNode.bounds)} ${overlayNode.renderProps.geometry.flipH ? Transforms.flipH(overlayNode.bounds) : ''} ${overlayNode.renderProps.geometry.flipV ? Transforms.flipV(overlayNode.bounds) : ''}`;
     return svg.g({ transform: transform.trim() }, overlay);
   }
 

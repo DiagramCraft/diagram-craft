@@ -7,7 +7,7 @@ import { ConnectedNodesSubmenu } from './ConnectedNodesSubmenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { TableHelper } from '@diagram-craft/canvas/node-types/table/tableUtils';
 
 const getTextIds = (node: DiagramNode): string[] =>
   Object.keys(node.texts).filter(k => node.texts[k] !== undefined);
