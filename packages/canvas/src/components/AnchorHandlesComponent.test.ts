@@ -74,3 +74,22 @@ describe('getPrimaryAnchorHandleVisuals', () => {
     });
   });
 });
+
+describe('shouldRenderAnchorHandles', () => {
+  test('allows hover handles by default', () => {
+    const node = createNode();
+
+    expect(_test.shouldRenderAnchorHandles(node, [])).toBe(true);
+  });
+
+  test('requires selection when hover handles are disabled for the node type', () => {
+    const { layer } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({
+      type: 'tableCell',
+      bounds: { x: 10, y: 20, w: 100, h: 60, r: 0 }
+    });
+
+    expect(_test.shouldRenderAnchorHandles(node, [])).toBe(false);
+    expect(_test.shouldRenderAnchorHandles(node, [node])).toBe(true);
+  });
+});

@@ -15,6 +15,7 @@ import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
+import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
 type State = 'background' | 'node' | 'handle';
 
@@ -116,6 +117,13 @@ const getPrimaryAnchorHandleVisuals = (
   }
 };
 
+const shouldRenderAnchorHandles = (
+  node: DiagramNode,
+  selectedNodes: ReadonlyArray<DiagramNode>
+) => {
+  return node.getDefinition().hasFlag(NodeFlags.AnchorsVisibleOnHover) || selectedNodes.includes(node);
+};
+
 export class AnchorHandlesComponent extends Component<Props> {
   private hoverNode: DiagramElement | undefined;
   private state: State = 'background';
@@ -196,6 +204,10 @@ export class AnchorHandlesComponent extends Component<Props> {
     }
 
     const node = this.hoverNode;
+    if (!shouldRenderAnchorHandles(node, selection.nodes)) {
+      return svg.g({});
+    }
+
     if (node.layer.type !== 'regular' || node.layer.isLocked()) {
       return svg.g({});
     }
@@ -342,5 +354,6 @@ export class AnchorHandlesComponent extends Component<Props> {
 }
 
 export const _test = {
-  getPrimaryAnchorHandleVisuals
+  getPrimaryAnchorHandleVisuals,
+  shouldRenderAnchorHandles
 };
