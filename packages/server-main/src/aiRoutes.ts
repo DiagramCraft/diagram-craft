@@ -7,43 +7,14 @@ import {
   readBody,
   setResponseHeader
 } from 'h3';
+import type { AIGenerateRequest, AIServer } from './serverInterfaces';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests
 const CONTENT_TYPE_JSON = 'application/json';
 const API_AI_PATH = '/api/ai';
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const REQUEST_TIMEOUT = 120000; // 120 seconds for AI responses
 
-// Type definitions
-export interface AIConfig {
-  apiKey: string;
-  defaultModel?: string;
-  siteUrl?: string;
-  appName?: string;
-}
-
-export interface OpenRouterMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface AIGenerateRequest {
-  messages: OpenRouterMessage[];
-  stream?: boolean;
-  temperature?: number;
-  max_tokens?: number;
-}
-
-export interface OpenRouterRequest {
-  model: string;
-  messages: OpenRouterMessage[];
-  stream?: boolean;
-  temperature?: number;
-  max_tokens?: number;
-}
-
-export function createAIRoutes(config: AIConfig) {
+export function createAIRoutes(aiServer: AIServer) {
   const router = createRouter();
 
   // Helper function to validate content type and size
@@ -148,72 +119,16 @@ export function createAIRoutes(config: AIConfig) {
         }
 
         // Prepare OpenRouter request
-        const openRouterRequest: OpenRouterRequest = {
-          model: config.defaultModel ?? 'anthropic/claude-3.5-sonnet',
-          messages: body.messages,
-          stream: body.stream ?? true,
-          temperature: body.temperature ?? 0.7,
-          max_tokens: body.max_tokens
-        };
+        const result = await aiServer.generate(body);
 
-        // Set up abort controller for timeout
-        const abortController = new AbortController();
-        const timeoutId = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT);
-
-        try {
-          // Make request to OpenRouter
-          const response = await fetch(OPENROUTER_API_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${config.apiKey}`,
-              'HTTP-Referer': config.siteUrl ?? 'http://localhost',
-              'X-Title': config.appName ?? 'DiagramCraft'
-            },
-            body: JSON.stringify(openRouterRequest),
-            signal: abortController.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          // Handle non-OK responses
-          if (!response.ok) {
-            const errorBody = await response.text();
-            let errorMessage = 'OpenRouter API error';
-
-            try {
-              const errorJson = JSON.parse(errorBody);
-              errorMessage = errorJson.error?.message ?? errorMessage;
-            } catch {
-              // If parsing fails, use default message
-            }
-
-            throw createError({
-              status: response.status,
-              statusMessage: response.statusText,
-              data: { message: errorMessage }
-            });
-          }
-
-          // Handle streaming response
-          if (body.stream ?? true) {
-            // Set headers for SSE streaming
-            setResponseHeader(event, 'Content-Type', 'text/event-stream');
-            setResponseHeader(event, 'Cache-Control', 'no-cache');
-            setResponseHeader(event, 'Connection', 'keep-alive');
-
-            // Return the readable stream directly
-            // H3 will handle piping it to the response
-            return response.body;
-          } else {
-            // Non-streaming response
-            const data = await response.json();
-            return data;
-          }
-        } catch (error) {
-          clearTimeout(timeoutId);
-          throw error;
+        if (result.type === 'stream') {
+          setResponseHeader(event, 'Content-Type', 'text/event-stream');
+          setResponseHeader(event, 'Cache-Control', 'no-cache');
+          setResponseHeader(event, 'Connection', 'keep-alive');
+          return result.body;
         }
+
+        return result.body;
       } catch (error: unknown) {
         handleError(error, 'Failed to generate AI response');
       }

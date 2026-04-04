@@ -1,10 +1,10 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import type { Socket } from 'node:net';
 import { toNodeListener } from 'h3';
 import { createServerApp } from './app';
 import type { ServerMainConfig } from './config';
-import { createYjsWebSocketServer, YJS_WEBSOCKET_PATH } from './websocket';
+import { createServerModules } from './serverFactory';
+import { YJS_WEBSOCKET_PATH } from './websocket';
 
 export type RunningServer = {
   server: ReturnType<typeof createServer>;
@@ -18,15 +18,11 @@ const getUrlHost = (host: string) => {
 };
 
 export const startServer = async (config: ServerMainConfig): Promise<RunningServer> => {
-  const app = createServerApp(config);
+  const serverModules = createServerModules(config);
+  const app = createServerApp(serverModules);
   const nodeListener = toNodeListener(app);
-  const yjsWebSocketServer = createYjsWebSocketServer();
-
   const server = createServer(nodeListener);
-
-  server.on('upgrade', (request, socket, head) => {
-    yjsWebSocketServer.handleUpgrade(request, socket as Socket, head);
-  });
+  serverModules.collaborationServer.bind(server);
 
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
@@ -65,7 +61,7 @@ export const startServer = async (config: ServerMainConfig): Promise<RunningServ
         });
       });
 
-      await yjsWebSocketServer.close();
+      await serverModules.collaborationServer.close();
     }
   };
 };

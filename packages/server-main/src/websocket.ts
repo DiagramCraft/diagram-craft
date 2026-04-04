@@ -1,6 +1,8 @@
 import type { IncomingMessage } from 'node:http';
+import type { createServer } from 'node:http';
 import type { Socket } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
+import type { CollaborationServer } from './serverInterfaces';
 import { setupYjsWebSocketConnection } from './yjsWebsocketServer';
 
 export const YJS_WEBSOCKET_PATH = '/ws';
@@ -20,38 +22,65 @@ const matchesPath = (requestUrl: string, basePath: string) => {
   return pathname === basePath || pathname.startsWith(`${basePath}/`);
 };
 
-export const createYjsWebSocketServer = (basePath = YJS_WEBSOCKET_PATH) => {
-  const webSocketServer = new WebSocketServer({ noServer: true });
+export class YjsCollaborationServer implements CollaborationServer {
+  private readonly webSocketServer = new WebSocketServer({ noServer: true });
+  private boundServer?: ReturnType<typeof createServer>;
+  private readonly upgradeHandler: (
+    request: IncomingMessage,
+    socket: Socket,
+    head: Buffer
+  ) => void;
 
-  webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
-    setupYjsWebSocketConnection(connection, request, getDocName(request.url ?? basePath, basePath));
-  });
+  constructor(private readonly basePath = YJS_WEBSOCKET_PATH) {
+    this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
+      setupYjsWebSocketConnection(
+        connection,
+        request,
+        getDocName(request.url ?? this.basePath, this.basePath)
+      );
+    });
 
-  return {
-    webSocketServer,
-    handleUpgrade: (request: IncomingMessage, socket: Socket, head: Buffer) => {
-      if (!matchesPath(request.url ?? '', basePath)) {
+    this.upgradeHandler = (request, socket, head) => {
+      if (!matchesPath(request.url ?? '', this.basePath)) {
         socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
         socket.destroy();
-        return false;
+        return;
       }
 
-      webSocketServer.handleUpgrade(request, socket, head, (connection: WebSocket) => {
-        webSocketServer.emit('connection', connection, request);
+      this.webSocketServer.handleUpgrade(request, socket, head, (connection: WebSocket) => {
+        this.webSocketServer.emit('connection', connection, request);
       });
+    };
+  }
 
-      return true;
-    },
-    close: () =>
-      new Promise<void>((resolve, reject) => {
-        webSocketServer.close((error?: Error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
+  bind(server: ReturnType<typeof createServer>) {
+    if (this.boundServer === server) {
+      return;
+    }
 
-          resolve();
-        });
-      })
-  };
-};
+    if (this.boundServer) {
+      this.boundServer.off('upgrade', this.upgradeHandler);
+    }
+
+    this.boundServer = server;
+    server.on('upgrade', this.upgradeHandler);
+  }
+
+  close() {
+    if (this.boundServer) {
+      this.boundServer.off('upgrade', this.upgradeHandler);
+      this.boundServer = undefined;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      this.webSocketServer.close((error?: Error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+}
