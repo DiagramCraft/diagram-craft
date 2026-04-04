@@ -1,9 +1,9 @@
-import { Drag, DragEvents } from '../dragDropManager';
+import { Drag, DragEvents } from '../../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { TableHelper } from '../node-types/tableUtils';
+import { TableHelper } from './tableUtils';
 
 type DividerType = 'row' | 'column';
 

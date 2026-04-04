@@ -1,8 +1,8 @@
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import { ShapeNodeDefinition } from '../../shape/shapeNodeDefinition';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../../components/BaseNodeComponent';
+import { ShapeBuilder } from '../../shape/ShapeBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { renderChildren } from '@diagram-craft/canvas/components/renderElement';

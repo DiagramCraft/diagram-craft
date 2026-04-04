@@ -3,7 +3,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestLayerBuilder, TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
-import { DragEvents } from '../dragDropManager';
+import { DragEvents } from '../../dragDropManager';
 import { TableDividerResizeDrag } from './tableDividerResizeDrag';
 
 describe('TableDividerResizeDrag', () => {

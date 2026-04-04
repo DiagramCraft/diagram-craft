@@ -31,12 +31,12 @@ import { DelayNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Dela
 import { PartialRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/PartialRect.nodeType';
 import { CubeNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Cube.nodeType';
 import { LineNodeDefinition } from '@diagram-craft/canvas/node-types/Line.nodeType';
-import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/Table.nodeType';
-import { TableCellNodeDefinition } from '@diagram-craft/canvas/node-types/TableCell.nodeType';
+import { TableNodeDefinition } from '@diagram-craft/canvas/node-types/table/Table.nodeType';
+import { TableCellNodeDefinition } from '@diagram-craft/canvas/node-types/table/TableCell.nodeType';
 import { RoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/RoundedRect.nodeType';
 import { IconRoundedRectNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/IconRoundedRect.nodeType';
 import stencils from './defaultStencils.yaml';
-import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/TableRow.nodeType';
+import { TableRowNodeDefinition } from '@diagram-craft/canvas/node-types/table/TableRow.nodeType';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { DocumentNodeDefinition } from '@diagram-craft/canvas-nodes/node-types/Document.nodeType';
 import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';

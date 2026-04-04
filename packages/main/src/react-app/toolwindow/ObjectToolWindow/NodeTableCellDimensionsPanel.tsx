@@ -9,7 +9,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { useTable } from '../../hooks/useTable';
 import { useDiagram } from '../../../application';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
-import { TableHelper } from '@diagram-craft/canvas/node-types/tableUtils';
+import { TableHelper } from '@diagram-craft/canvas/node-types/table/tableUtils';
 
 export const NodeTableCellDimensionsPanel = (props: Props) => {
   const diagram = useDiagram();

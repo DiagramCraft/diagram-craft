@@ -1,9 +1,9 @@
-import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
-import { Component } from '../component/component';
-import type { VNode } from '../component/vdom';
-import { ShapeBuilder } from '../shape/ShapeBuilder';
-import { DRAG_DROP_MANAGER } from '../dragDropManager';
-import { TableDividerResizeDrag } from '../drag/tableDividerResizeDrag';
+import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../../components/BaseNodeComponent';
+import { Component } from '../../component/component';
+import type { VNode } from '../../component/vdom';
+import { ShapeBuilder } from '../../shape/ShapeBuilder';
+import { DRAG_DROP_MANAGER } from '../../dragDropManager';
+import { TableDividerResizeDrag } from './tableDividerResizeDrag';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -12,15 +12,15 @@ import { Point } from '@diagram-craft/geometry/point';
 import { assert } from '@diagram-craft/utils/assert';
 import { Rotation, Transform, Translation } from '@diagram-craft/geometry/transform';
 import { Box } from '@diagram-craft/geometry/box';
-import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
-import * as svg from '../component/vdom-svg';
+import { ShapeNodeDefinition } from '../../shape/shapeNodeDefinition';
+import * as svg from '../../component/vdom-svg';
 import {
   CustomPropertyDefinition,
   NodeFlags
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
-import { hasHighlight, Highlights } from '../highlight';
-import { renderChildren } from '../components/renderElement';
+import { hasHighlight, Highlights } from '../../highlight';
+import { renderChildren } from '../../components/renderElement';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import {
   assertTableCell,
@@ -235,18 +235,22 @@ const TABLE_RESIZE_OVERLAY_BAND_SIZE = 5;
 class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
   #hoveredDivider: string | undefined;
 
-  private renderDividerBand(table: DiagramNode, divider: ReturnType<typeof getTableDividerBands>[number]) {
+  private renderDividerBand(
+    table: DiagramNode,
+    divider: ReturnType<typeof getTableDividerBands>[number]
+  ) {
     return svg.rect({
-      class: 'svg-hover-overlay',
-      x: divider.bounds.x,
-      y: divider.bounds.y,
-      width: divider.bounds.w,
-      height: divider.bounds.h,
-      fill: this.#hoveredDivider === divider.id ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0)',
-      stroke: 'none',
-      cursor: divider.type === 'column' ? 'ew-resize' : 'ns-resize',
+      'class': 'svg-hover-overlay',
+      'x': divider.bounds.x,
+      'y': divider.bounds.y,
+      'width': divider.bounds.w,
+      'height': divider.bounds.h,
+      'fill':
+        this.#hoveredDivider === divider.id ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0)',
+      'stroke': 'none',
+      'cursor': divider.type === 'column' ? 'ew-resize' : 'ns-resize',
       'pointer-events': 'all',
-      on: {
+      'on': {
         mouseover: () => {
           this.#hoveredDivider = divider.id;
           this.redraw();
