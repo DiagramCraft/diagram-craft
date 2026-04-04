@@ -3,15 +3,23 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "src/main.ts",
   "scripts": {
     "test": "vitest",
-    "dev": "npx --yes listhen --public -w ./src/main.ts"
+    "dev": "pnpm exec tsx watch ./src/main.ts",
+    "start": "pnpm exec tsx ./src/main.ts"
   },
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "@y/websocket-server": "^0.1.1",
-    "h3": "^1.15.6"
+    "h3": "^1.15.6",
+    "lib0": "^0.2.109",
+    "ws": "^8.18.0",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.27"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "y-websocket": "^3.0.0"
   }
 }
