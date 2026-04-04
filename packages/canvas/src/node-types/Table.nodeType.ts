@@ -26,8 +26,11 @@ import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import {
   assertTableCell,
   assertTableRow,
+  getTableColumnsSorted,
+  getTableDividerBands,
   getOwningTable,
   getOwningTableCell,
+  getTableRowsSorted,
   setBoundsAndTransformChildren
 } from './tableUtils';
 
@@ -247,32 +250,27 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
     if (rows.length === 0) return svg.g({});
 
     const dividerBands: VNode[] = [];
-    const bandOffset = TABLE_RESIZE_OVERLAY_BAND_SIZE / 2;
     const highlightedFill = 'rgba(59, 130, 246, 0.35)';
     const transparentFill = 'rgba(59, 130, 246, 0)';
 
     const getDividerFill = (dividerId: string) =>
       this.#hoveredDivider === dividerId ? highlightedFill : transparentFill;
 
-    const firstRowColumns = helper.getColumnsSorted(rows[0]!);
-    for (let i = 0; i < firstRowColumns.length - 1; i++) {
-      const cell = firstRowColumns[i]!;
-      const dividerId = `column-${i}`;
-      const x = cell.bounds.x + cell.bounds.w - bandOffset;
+    for (const divider of getTableDividerBands(table, TABLE_RESIZE_OVERLAY_BAND_SIZE)) {
       dividerBands.push(
         svg.rect({
           class: 'svg-hover-overlay',
-          x,
-          y: table.bounds.y,
-          width: TABLE_RESIZE_OVERLAY_BAND_SIZE,
-          height: table.bounds.h,
-          fill: getDividerFill(dividerId),
+          x: divider.bounds.x,
+          y: divider.bounds.y,
+          width: divider.bounds.w,
+          height: divider.bounds.h,
+          fill: getDividerFill(divider.id),
           stroke: 'none',
-          cursor: 'ew-resize',
+          cursor: divider.type === 'column' ? 'ew-resize' : 'ns-resize',
           'pointer-events': 'all',
           on: {
             mouseover: () => {
-              this.#hoveredDivider = dividerId;
+              this.#hoveredDivider = divider.id;
               this.redraw();
             },
             mouseout: () => {
@@ -285,50 +283,8 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
               DRAG_DROP_MANAGER.initiate(
                 new TableDividerResizeDrag(
                   table,
-                  'column',
-                  i,
-                  table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
-                )
-              );
-              e.stopPropagation();
-            }
-          }
-        })
-      );
-    }
-
-    for (let i = 0; i < rows.length - 1; i++) {
-      const row = rows[i]!;
-      const dividerId = `row-${i}`;
-      const y = row.bounds.y + row.bounds.h - bandOffset;
-      dividerBands.push(
-        svg.rect({
-          class: 'svg-hover-overlay',
-          x: table.bounds.x,
-          y,
-          width: table.bounds.w,
-          height: TABLE_RESIZE_OVERLAY_BAND_SIZE,
-          fill: getDividerFill(dividerId),
-          stroke: 'none',
-          cursor: 'ns-resize',
-          'pointer-events': 'all',
-          on: {
-            mouseover: () => {
-              this.#hoveredDivider = dividerId;
-              this.redraw();
-            },
-            mouseout: () => {
-              this.#hoveredDivider = undefined;
-              this.redraw();
-            },
-            mousedown: e => {
-              if (e.button !== 0) return;
-
-              DRAG_DROP_MANAGER.initiate(
-                new TableDividerResizeDrag(
-                  table,
-                  'row',
-                  i,
+                  divider.type,
+                  divider.index,
                   table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
                 )
               );
@@ -475,9 +431,7 @@ export class TableHelper {
   getCellRowIndex(): number | undefined {
     if (!this.#tableNode) return;
 
-    const rows = (this.#tableNode.children as DiagramNode[]).toSorted(
-      (a, b) => a.bounds.y - b.bounds.y
-    );
+    const rows = getTableRowsSorted(this.#tableNode);
     for (let i = 0; i < rows.length; i++) {
       if (this.cell && rows[i]!.children.includes(this.cell)) return i;
     }
@@ -490,17 +444,17 @@ export class TableHelper {
     const row = this.cell!.parent as DiagramNode;
     if (!row) return undefined;
 
-    const columns = (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    const columns = getTableColumnsSorted(row);
     return columns.indexOf(this.cell!);
   }
 
   getRowsSorted(): DiagramNode[] {
     if (!this.#tableNode) return [];
-    return (this.#tableNode.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+    return getTableRowsSorted(this.#tableNode);
   }
 
   getColumnsSorted(row: DiagramNode): DiagramNode[] {
-    return (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+    return getTableColumnsSorted(row);
   }
 
   getCurrentRow(): DiagramNode | undefined {

@@ -78,3 +78,66 @@ export const setBoundsAndTransformChildren = (
     uow.metadata.inTableSyncOperation = previousInTableSyncOperation;
   }
 };
+
+export type TableDividerBand = {
+  id: string;
+  type: 'row' | 'column';
+  index: number;
+  bounds: Box;
+};
+
+export const getTableRowsSorted = (table: DiagramNode): DiagramNode[] => {
+  return (table.children as DiagramNode[]).toSorted((a, b) => a.bounds.y - b.bounds.y);
+};
+
+export const getTableColumnsSorted = (row: DiagramNode): DiagramNode[] => {
+  return (row.children as DiagramNode[]).toSorted((a, b) => a.bounds.x - b.bounds.x);
+};
+
+export const getTableDividerBands = (
+  table: DiagramNode,
+  bandSize: number
+): TableDividerBand[] => {
+  if (table.nodeType !== 'table') return [];
+
+  const rows = getTableRowsSorted(table);
+  if (rows.length === 0) return [];
+
+  const bandOffset = bandSize / 2;
+  const dividerBands: TableDividerBand[] = [];
+
+  const firstRowColumns = getTableColumnsSorted(rows[0]!);
+  for (let i = 0; i < firstRowColumns.length - 1; i++) {
+    const cell = firstRowColumns[i]!;
+    dividerBands.push({
+      id: `column-${i}`,
+      type: 'column',
+      index: i,
+      bounds: {
+        x: cell.bounds.x + cell.bounds.w - bandOffset,
+        y: table.bounds.y,
+        w: bandSize,
+        h: table.bounds.h,
+        r: 0
+      }
+    });
+  }
+
+  for (let i = 0; i < rows.length - 1; i++) {
+    const row = rows[i]!;
+    dividerBands.push({
+      id: `row-${i}`,
+      type: 'row',
+      index: i,
+      bounds: {
+        x: table.bounds.x,
+        y: row.bounds.y + row.bounds.h - bandOffset,
+        w: table.bounds.w,
+        h: bandSize,
+        r: 0
+      }
+    });
+  }
+
+  return dividerBands;
+};
