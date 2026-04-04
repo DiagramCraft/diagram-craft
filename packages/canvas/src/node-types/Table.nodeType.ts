@@ -1,4 +1,6 @@
 import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseNodeComponent';
+import { Component } from '../component/component';
+import type { VNode } from '../component/vdom';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
@@ -87,6 +89,8 @@ const getCellsInOrder = (rows: DiagramNode[]): CellsInOrder => {
 };
 
 export class TableNodeDefinition extends ShapeNodeDefinition {
+  overlayComponent = TableResizeOverlayComponent;
+
   constructor() {
     super('table', 'Table', TableComponent);
 
@@ -221,6 +225,60 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
         unit: 'px'
       })
     ]);
+  }
+}
+
+const TABLE_RESIZE_OVERLAY_BAND_SIZE = 5;
+
+class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
+  render(props: { node: DiagramNode }) {
+    const table = props.node;
+    const helper = new TableHelper(table);
+    if (!helper.isTable()) return svg.g({});
+
+    const rows = helper.getRowsSorted();
+    if (rows.length === 0) return svg.g({});
+
+    const dividerBands: VNode[] = [];
+    const bandOffset = TABLE_RESIZE_OVERLAY_BAND_SIZE / 2;
+    const fill = 'rgba(59, 130, 246, 0.35)';
+
+    const firstRowColumns = helper.getColumnsSorted(rows[0]!);
+    for (let i = 0; i < firstRowColumns.length - 1; i++) {
+      const cell = firstRowColumns[i]!;
+      const x = cell.bounds.x + cell.bounds.w - bandOffset;
+      dividerBands.push(
+        svg.rect({
+          class: 'svg-hover-overlay',
+          x,
+          y: table.bounds.y,
+          width: TABLE_RESIZE_OVERLAY_BAND_SIZE,
+          height: table.bounds.h,
+          fill,
+          stroke: 'none',
+          'pointer-events': 'all'
+        })
+      );
+    }
+
+    for (let i = 0; i < rows.length - 1; i++) {
+      const row = rows[i]!;
+      const y = row.bounds.y + row.bounds.h - bandOffset;
+      dividerBands.push(
+        svg.rect({
+          class: 'svg-hover-overlay',
+          x: table.bounds.x,
+          y,
+          width: table.bounds.w,
+          height: TABLE_RESIZE_OVERLAY_BAND_SIZE,
+          fill,
+          stroke: 'none',
+          'pointer-events': 'all'
+        })
+      );
+    }
+
+    return svg.g({}, ...dividerBands);
   }
 }
 
