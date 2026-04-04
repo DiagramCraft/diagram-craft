@@ -3,8 +3,8 @@ import type { AddressInfo } from 'node:net';
 import { toNodeListener } from 'h3';
 import { createServerApp } from './app';
 import type { ServerMainConfig } from './config';
+import { YJS_WEBSOCKET_PATH } from './default/yjsCollaborationServer';
 import { createServerModules } from './serverFactory';
-import { YJS_WEBSOCKET_PATH } from './websocket';
 
 export type RunningServer = {
   server: ReturnType<typeof createServer>;

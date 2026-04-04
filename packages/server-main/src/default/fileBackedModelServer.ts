@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { ModelServer } from './serverInterfaces';
-import { DataSchema, DataWithSchema } from './types';
+import type { ModelServer } from '../modelServer';
+import { DataSchema, DataWithSchema } from '../types';
 
 const newid = () => {
   return Math.random().toString(36).substring(2, 9);

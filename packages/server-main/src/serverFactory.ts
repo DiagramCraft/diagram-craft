@@ -1,14 +1,12 @@
 import type { ServerMainConfig } from './config';
-import { OpenRouterAIServer } from './aiServer';
-import { FileBackedModelServer } from './dataStore';
-import { LocalFileSystemServer } from './filesystemServer';
-import type {
-  AIServer,
-  CollaborationServer,
-  FileSystemServer,
-  ModelServer
-} from './serverInterfaces';
-import { YJS_WEBSOCKET_PATH, YjsCollaborationServer } from './websocket';
+import { FileBackedModelServer } from './default/fileBackedModelServer';
+import { LocalFileSystemServer } from './default/filesystemServer';
+import { OpenRouterAIServer } from './default/openRouterAiServer';
+import { YJS_WEBSOCKET_PATH, YjsCollaborationServer } from './default/yjsCollaborationServer';
+import type { AIServer } from './aiServer';
+import type { CollaborationServer } from './collaborationServer';
+import type { FileSystemServer } from './fileSystemServer';
+import type { ModelServer } from './modelServer';
 
 export type ServerModules = {
   modelServer: ModelServer;

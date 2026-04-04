@@ -4,13 +4,33 @@ import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import * as Y from 'yjs';
 import type { IncomingMessage } from 'node:http';
-import type { WebSocket } from 'ws';
+import type { createServer } from 'node:http';
+import type { Socket } from 'node:net';
+import { WebSocketServer, type WebSocket } from 'ws';
+import type { CollaborationServer } from '../collaborationServer';
+
+export const YJS_WEBSOCKET_PATH = '/ws';
 
 const wsReadyStateConnecting = 0;
 const wsReadyStateOpen = 1;
 const messageSync = 0;
 const messageAwareness = 1;
 const pingTimeout = 30000;
+
+const getDocName = (requestUrl: string, basePath: string) => {
+  const pathname = new URL(requestUrl, 'http://localhost').pathname;
+
+  if (pathname === basePath) {
+    return '';
+  }
+
+  return pathname.slice(basePath.length + 1);
+};
+
+const matchesPath = (requestUrl: string, basePath: string) => {
+  const pathname = new URL(requestUrl, 'http://localhost').pathname;
+  return pathname === basePath || pathname.startsWith(`${basePath}/`);
+};
 
 class WSSharedDoc extends Y.Doc {
   readonly conns = new Map<WebSocket, Set<number>>();
@@ -26,25 +46,25 @@ class WSSharedDoc extends Y.Doc {
         { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
         connection: WebSocket | null
       ) => {
-      const changedClients = added.concat(updated, removed);
+        const changedClients = added.concat(updated, removed);
 
-      if (connection !== null) {
-        const controlledIds = this.conns.get(connection);
-        if (controlledIds) {
-          added.forEach((clientId: number) => controlledIds.add(clientId));
-          removed.forEach((clientId: number) => controlledIds.delete(clientId));
+        if (connection !== null) {
+          const controlledIds = this.conns.get(connection);
+          if (controlledIds) {
+            added.forEach((clientId: number) => controlledIds.add(clientId));
+            removed.forEach((clientId: number) => controlledIds.delete(clientId));
+          }
         }
-      }
 
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, messageAwareness);
-      encoding.writeVarUint8Array(
-        encoder,
-        awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
-      );
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, messageAwareness);
+        encoding.writeVarUint8Array(
+          encoder,
+          awarenessProtocol.encodeAwarenessUpdate(this.awareness, changedClients)
+        );
 
-      const message = encoding.toUint8Array(encoder);
-      this.conns.forEach((_ids, conn) => send(this, conn, message));
+        const message = encoding.toUint8Array(encoder);
+        this.conns.forEach((_ids, conn) => send(this, conn, message));
       }
     );
 
@@ -95,7 +115,7 @@ const send = (doc: WSSharedDoc, conn: WebSocket, message: Uint8Array) => {
   }
 
   try {
-  conn.send(message, {}, (error?: Error) => {
+    conn.send(message, {}, (error?: Error) => {
       if (error) {
         closeConn(doc, conn);
       }
@@ -132,11 +152,7 @@ const messageListener = (conn: WebSocket, doc: WSSharedDoc, message: Uint8Array)
   }
 };
 
-export const setupYjsWebSocketConnection = (
-  conn: WebSocket,
-  _req: IncomingMessage,
-  docName: string
-) => {
+const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
   conn.binaryType = 'arraybuffer';
   const doc = getYDoc(docName);
   doc.conns.set(conn, new Set());
@@ -175,6 +191,7 @@ export const setupYjsWebSocketConnection = (
       closeConn(doc, conn);
     }
   });
+
   conn.on('pong', () => {
     pongReceived = true;
   });
@@ -195,3 +212,62 @@ export const setupYjsWebSocketConnection = (
     send(doc, conn, encoding.toUint8Array(awarenessEncoder));
   }
 };
+
+export class YjsCollaborationServer implements CollaborationServer {
+  private readonly webSocketServer = new WebSocketServer({ noServer: true });
+  private boundServer?: ReturnType<typeof createServer>;
+  private readonly upgradeHandler: (
+    request: IncomingMessage,
+    socket: Socket,
+    head: Buffer
+  ) => void;
+
+  constructor(private readonly basePath = YJS_WEBSOCKET_PATH) {
+    this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
+      setupYjsWebSocketConnection(connection, getDocName(request.url ?? this.basePath, this.basePath));
+    });
+
+    this.upgradeHandler = (request, socket, head) => {
+      if (!matchesPath(request.url ?? '', this.basePath)) {
+        socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+
+      this.webSocketServer.handleUpgrade(request, socket, head, (connection: WebSocket) => {
+        this.webSocketServer.emit('connection', connection, request);
+      });
+    };
+  }
+
+  bind(server: ReturnType<typeof createServer>) {
+    if (this.boundServer === server) {
+      return;
+    }
+
+    if (this.boundServer) {
+      this.boundServer.off('upgrade', this.upgradeHandler);
+    }
+
+    this.boundServer = server;
+    server.on('upgrade', this.upgradeHandler);
+  }
+
+  close() {
+    if (this.boundServer) {
+      this.boundServer.off('upgrade', this.upgradeHandler);
+      this.boundServer = undefined;
+    }
+
+    return new Promise<void>((resolve, reject) => {
+      this.webSocketServer.close((error?: Error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+}

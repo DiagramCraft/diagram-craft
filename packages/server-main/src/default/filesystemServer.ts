@@ -6,7 +6,7 @@ import type {
   FileSystemPutResult,
   FileSystemServer,
   FileSystemWriteRequest
-} from './serverInterfaces';
+} from '../fileSystemServer';
 
 const MAX_REQUEST_SIZE = 500 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/octet-stream'];

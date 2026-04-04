@@ -6,7 +6,7 @@ import {
   H3Event,
   readBody
 } from 'h3';
-import type { ModelServer } from './serverInterfaces';
+import type { ModelServer } from './modelServer';
 
 // Constants
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB limit for data requests
