@@ -50,10 +50,21 @@ cd packages/server-main
 pnpm dev
 ```
 
+This starts both:
+
+- the REST API on `http://localhost:3000`
+- the embedded Yjs websocket endpoint on `ws://localhost:3000/ws`
+
 ### Start with custom directories
 
 ```bash
-node src/main.ts --data-dir ./my-data --fs-root ./public-files
+pnpm start -- --data-dir ./my-data --fs-root ./public-files
+```
+
+### Start with explicit host and port
+
+```bash
+pnpm start -- --host 127.0.0.1 --port 3001
 ```
 
 ### Bootstrap with initial data
@@ -70,6 +81,8 @@ node src/main.ts \
 
 - `--data-dir <path>` - Directory to store data files (default: `./data`)
 - `--fs-root <path>` - Root directory for filesystem API (default: `../main/public`)
+- `--host <host>` - Host to bind the server to (default: `HOST` env var or `localhost`)
+- `--port <port>` - Port to bind the server to (default: `PORT` env var or `3000`)
 - `--bootstrap-data <path>` - JSON file to bootstrap initial data from
 - `--bootstrap-schemas <path>` - JSON file to bootstrap initial schemas from
 - `--openrouter-api-key <key>` - OpenRouter API key (can also use `OPENROUTER_API_KEY` env var)
@@ -234,3 +247,14 @@ const provider = new RESTDataProvider(JSON.stringify({
   baseUrl: 'http://localhost:3000'
 }));
 ```
+
+## Collaboration
+
+The server also embeds a Yjs websocket listener in the same process. Point the frontend at the same server using:
+
+```bash
+VITE_CRDT_BACKEND=yjs-websocket
+VITE_CRDT_BACKEND_YJS_URL=ws://localhost:3000/ws
+```
+
+The websocket server uses the standard `y-websocket` protocol and keeps room state in memory for this first version.

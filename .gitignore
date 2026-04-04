@@ -42,6 +42,7 @@ packages/main/public/Test*
 *.sw?
 
 # Playwright
+.pnpm-store/
 node_modules/
 /packages/playwright/test-results/
 /packages/playwright/playwright-report/
