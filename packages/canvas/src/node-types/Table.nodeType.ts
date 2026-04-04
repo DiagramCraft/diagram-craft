@@ -2,6 +2,8 @@ import { BaseNodeComponent, BaseShapeBuildShapeProps } from '../components/BaseN
 import { Component } from '../component/component';
 import type { VNode } from '../component/vdom';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
+import { TableDividerResizeDrag } from '../drag/tableDividerResizeDrag';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
@@ -20,6 +22,7 @@ import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults
 import { hasHighlight, Highlights } from '../highlight';
 import { renderChildren } from '../components/renderElement';
 import type { Diagram } from '@diagram-craft/model/diagram';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import {
   assertTableCell,
   assertTableRow,
@@ -275,6 +278,19 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
             mouseout: () => {
               this.#hoveredDivider = undefined;
               this.redraw();
+            },
+            mousedown: e => {
+              if (e.button !== 0) return;
+
+              DRAG_DROP_MANAGER.initiate(
+                new TableDividerResizeDrag(
+                  table,
+                  'column',
+                  i,
+                  table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
+                )
+              );
+              e.stopPropagation();
             }
           }
         })
@@ -304,6 +320,19 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
             mouseout: () => {
               this.#hoveredDivider = undefined;
               this.redraw();
+            },
+            mousedown: e => {
+              if (e.button !== 0) return;
+
+              DRAG_DROP_MANAGER.initiate(
+                new TableDividerResizeDrag(
+                  table,
+                  'row',
+                  i,
+                  table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
+                )
+              );
+              e.stopPropagation();
             }
           }
         })
