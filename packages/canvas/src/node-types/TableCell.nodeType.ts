@@ -20,7 +20,8 @@ export class TableCellNodeDefinition extends LayoutCapableShapeNodeDefinition {
 
     this.setFlags({
       [NodeFlags.ChildrenAllowed]: true,
-      [NodeFlags.ChildrenCanConvertToContainer]: false
+      [NodeFlags.ChildrenCanConvertToContainer]: false,
+      [NodeFlags.AnchorsVisibleOnHover]: false
     });
   }
 

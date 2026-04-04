@@ -76,6 +76,17 @@ export const NodeFlags = {
   AnchorsConfigurable: makeNodeFlag('anchors.configurable'),
 
   /**
+   * Whether anchor handles appear when the node is hovered.
+   *
+   * When disabled, anchor handles are only rendered for selected nodes.
+   * Default: true
+   *
+   * @example
+   * Disabled by: TableRow, TableCell
+   */
+  AnchorsVisibleOnHover: makeNodeFlag('anchors.visible-on-hover'),
+
+  /**
    * Whether a node can contain child elements.
    *
    * When enabled, the node appears as expandable in the layer panel and supports nesting.

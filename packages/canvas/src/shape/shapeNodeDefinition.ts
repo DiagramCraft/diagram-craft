@@ -82,6 +82,7 @@ export abstract class ShapeNodeDefinition implements NodeDefinition {
       [NodeFlags.StyleRounding]: true,
       [NodeFlags.AnchorsBoundary]: true,
       [NodeFlags.AnchorsConfigurable]: true,
+      [NodeFlags.AnchorsVisibleOnHover]: true,
       [NodeFlags.ChildrenCanConvertToContainer]: true,
       [NodeFlags.ChildrenCanHaveLayout]: false,
       [NodeFlags.ChildrenCollapsible]: false,
