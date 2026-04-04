@@ -1,12 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DataSchema, DataWithSchema } from './types';
+import type { ModelServer } from '../modelServer';
+import { DataSchema, DataWithSchema } from '../types';
 
 const newid = () => {
   return Math.random().toString(36).substring(2, 9);
 };
 
-export class FileSystemDataStore {
+export class FileBackedModelServer implements ModelServer {
   private dataFile: string;
   private schemasFile: string;
   private data: DataWithSchema[] = [];
@@ -153,27 +154,27 @@ export class FileSystemDataStore {
   }
 
   // Bootstrap data from external files
-  bootstrapFromFiles(dataFilePath: string, schemasFilePath: string): void {
+  bootstrap(args: { dataFile: string; schemasFile: string }): void {
     try {
-      if (fs.existsSync(dataFilePath)) {
-        const dataContent = fs.readFileSync(dataFilePath, 'utf-8');
+      if (fs.existsSync(args.dataFile)) {
+        const dataContent = fs.readFileSync(args.dataFile, 'utf-8');
         this.data = JSON.parse(dataContent);
         this.saveData();
-        console.log(`Bootstrapped data from: ${dataFilePath}`);
+        console.log(`Bootstrapped data from: ${args.dataFile}`);
       }
     } catch (_error) {
-      throw new Error(`Failed to bootstrap data from ${dataFilePath}`);
+      throw new Error(`Failed to bootstrap data from ${args.dataFile}`);
     }
 
     try {
-      if (fs.existsSync(schemasFilePath)) {
-        const schemasContent = fs.readFileSync(schemasFilePath, 'utf-8');
+      if (fs.existsSync(args.schemasFile)) {
+        const schemasContent = fs.readFileSync(args.schemasFile, 'utf-8');
         this.schemas = JSON.parse(schemasContent);
         this.saveSchemas();
-        console.log(`Bootstrapped schemas from: ${schemasFilePath}`);
+        console.log(`Bootstrapped schemas from: ${args.schemasFile}`);
       }
     } catch (_error) {
-      throw new Error(`Failed to bootstrap schemas from ${schemasFilePath}`);
+      throw new Error(`Failed to bootstrap schemas from ${args.schemasFile}`);
     }
   }
 }

@@ -6,7 +6,7 @@ import {
   H3Event,
   readBody
 } from 'h3';
-import { FileSystemDataStore } from './dataStore';
+import type { ModelServer } from '../modelServer';
 
 // Constants
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB limit for data requests
@@ -14,7 +14,7 @@ const CONTENT_TYPE_JSON = 'application/json';
 const API_DATA_PATH = '/api/data';
 const API_SCHEMAS_PATH = '/api/schemas';
 
-export function createDataRoutes(dataStore: FileSystemDataStore) {
+export function createDataRoutes(modelServer: ModelServer) {
   const router = createRouter();
 
   // Helper function to validate content type and size
@@ -73,7 +73,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     API_DATA_PATH,
     defineEventHandler(async _event => {
       try {
-        return dataStore.getAllData();
+        return modelServer.getAllData();
       } catch (_error) {
         throw createError({
           status: 500,
@@ -98,7 +98,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
       }
 
       try {
-        const data = dataStore.getDataById(id);
+        const data = modelServer.getDataById(id);
         if (!data) {
           throw createError({
             status: 404,
@@ -137,7 +137,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
           });
         }
 
-        return dataStore.addData(body);
+        return modelServer.addData(body);
       } catch (error: unknown) {
         handleError(error, 'Failed to create data');
       }
@@ -177,7 +177,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
           });
         }
 
-        const updatedData = dataStore.updateData(id, body);
+        const updatedData = modelServer.updateData(id, body);
         if (!updatedData) {
           throw createError({
             status: 404,
@@ -207,7 +207,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
       }
 
       try {
-        const deleted = dataStore.deleteData(id);
+        const deleted = modelServer.deleteData(id);
         if (!deleted) {
           throw createError({
             status: 404,
@@ -228,7 +228,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
     API_SCHEMAS_PATH,
     defineEventHandler(async _event => {
       try {
-        return dataStore.getAllSchemas();
+        return modelServer.getAllSchemas();
       } catch (error: unknown) {
         handleError(error, 'Failed to retrieve schemas');
       }
@@ -249,7 +249,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
       }
 
       try {
-        const schema = dataStore.getSchemaById(id);
+        const schema = modelServer.getSchemaById(id);
         if (!schema) {
           throw createError({
             status: 404,
@@ -287,7 +287,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
           });
         }
 
-        const createdSchema = dataStore.addSchema(body);
+        const createdSchema = modelServer.addSchema(body);
         return createdSchema;
       } catch (error: unknown) {
         handleError(error, 'Failed to create schema');
@@ -327,7 +327,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
           });
         }
 
-        const updatedSchema = dataStore.updateSchema(id, body);
+        const updatedSchema = modelServer.updateSchema(id, body);
         if (!updatedSchema) {
           throw createError({
             status: 404,
@@ -357,7 +357,7 @@ export function createDataRoutes(dataStore: FileSystemDataStore) {
       }
 
       try {
-        const deleted = dataStore.deleteSchema(id);
+        const deleted = modelServer.deleteSchema(id);
         if (!deleted) {
           throw createError({
             status: 404,

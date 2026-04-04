@@ -1,20 +1,11 @@
 import { createApp, defineEventHandler, handleCors } from 'h3';
-import { createAIRoutes } from './aiRoutes';
-import { createDataRoutes } from './dataRoutes';
-import { FileSystemDataStore } from './dataStore';
-import { createFilesystemRoutes } from './filesystemRoutes';
-import type { ServerMainConfig } from './config';
+import { createAIRoutes } from './routes/aiRoutes';
+import { createDataRoutes } from './routes/dataRoutes';
+import { createFilesystemRoutes } from './routes/filesystemRoutes';
+import type { ServerModules } from './serverFactory';
 import openapiSpec from './openapi.json';
 
-export const createServerApp = (config: ServerMainConfig) => {
-  const dataStore = new FileSystemDataStore(config.dataDir);
-
-  if (config.bootstrapData && config.bootstrapSchemas) {
-    dataStore.bootstrapFromFiles(config.bootstrapData, config.bootstrapSchemas);
-  } else if (config.bootstrapData || config.bootstrapSchemas) {
-    console.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
-  }
-
+export const createServerApp = (servers: ServerModules) => {
   const app = createApp();
   app.use(
     defineEventHandler(event => {
@@ -38,21 +29,14 @@ export const createServerApp = (config: ServerMainConfig) => {
     })
   );
 
-  app.use(createDataRoutes(dataStore));
-  app.use(createFilesystemRoutes(config.fsRoot));
+  app.use(createDataRoutes(servers.modelServer));
+  app.use(createFilesystemRoutes(servers.fileSystemServer));
 
-  if (config.openrouterApiKey) {
-    app.use(
-      createAIRoutes({
-        apiKey: config.openrouterApiKey,
-        defaultModel: config.openrouterModel,
-        siteUrl: config.openrouterSiteUrl,
-        appName: config.openrouterAppName
-      })
-    );
+  if (servers.aiServer) {
+    app.use(createAIRoutes(servers.aiServer));
     console.log(
       'AI routes enabled with model:',
-      config.openrouterModel ?? 'anthropic/claude-3.5-sonnet'
+      servers.aiDefaultModel ?? 'anthropic/claude-3.5-sonnet'
     );
   } else {
     console.log('AI routes disabled: No OpenRouter API key configured');
