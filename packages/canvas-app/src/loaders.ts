@@ -47,5 +47,11 @@ export const loadFileFromUrl = async (
 
 /** @namespace */
 export const FileSystem = {
-  loadFromUrl: async (url: string) => fetch(url.replace('$STENCIL_ROOT', '')).then(r => r.text())
+  loadFromUrl: async (url: string) => {
+    const response = await fetch(url.replace('$STENCIL_ROOT', ''));
+    if (!response.ok) {
+      throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+    }
+    return response.text();
+  }
 };
