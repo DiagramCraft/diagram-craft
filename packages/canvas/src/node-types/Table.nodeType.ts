@@ -237,6 +237,8 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
     const table = props.node;
     const helper = new TableHelper(table);
     if (!helper.isTable()) return svg.g({});
+    const selection = table.diagram.selection;
+    if (selection.type !== 'single-node' || selection.nodes[0] !== table) return svg.g({});
 
     const rows = helper.getRowsSorted();
     if (rows.length === 0) return svg.g({});
