@@ -231,6 +231,8 @@ export class TableNodeDefinition extends ShapeNodeDefinition {
 const TABLE_RESIZE_OVERLAY_BAND_SIZE = 5;
 
 class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
+  #hoveredDivider: string | undefined;
+
   render(props: { node: DiagramNode }) {
     const table = props.node;
     const helper = new TableHelper(table);
@@ -241,11 +243,16 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
 
     const dividerBands: VNode[] = [];
     const bandOffset = TABLE_RESIZE_OVERLAY_BAND_SIZE / 2;
-    const fill = 'rgba(59, 130, 246, 0.35)';
+    const highlightedFill = 'rgba(59, 130, 246, 0.35)';
+    const transparentFill = 'rgba(59, 130, 246, 0)';
+
+    const getDividerFill = (dividerId: string) =>
+      this.#hoveredDivider === dividerId ? highlightedFill : transparentFill;
 
     const firstRowColumns = helper.getColumnsSorted(rows[0]!);
     for (let i = 0; i < firstRowColumns.length - 1; i++) {
       const cell = firstRowColumns[i]!;
+      const dividerId = `column-${i}`;
       const x = cell.bounds.x + cell.bounds.w - bandOffset;
       dividerBands.push(
         svg.rect({
@@ -254,15 +261,27 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
           y: table.bounds.y,
           width: TABLE_RESIZE_OVERLAY_BAND_SIZE,
           height: table.bounds.h,
-          fill,
+          fill: getDividerFill(dividerId),
           stroke: 'none',
-          'pointer-events': 'all'
+          cursor: 'ew-resize',
+          'pointer-events': 'all',
+          on: {
+            mouseover: () => {
+              this.#hoveredDivider = dividerId;
+              this.redraw();
+            },
+            mouseout: () => {
+              this.#hoveredDivider = undefined;
+              this.redraw();
+            }
+          }
         })
       );
     }
 
     for (let i = 0; i < rows.length - 1; i++) {
       const row = rows[i]!;
+      const dividerId = `row-${i}`;
       const y = row.bounds.y + row.bounds.h - bandOffset;
       dividerBands.push(
         svg.rect({
@@ -271,9 +290,20 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
           y,
           width: table.bounds.w,
           height: TABLE_RESIZE_OVERLAY_BAND_SIZE,
-          fill,
+          fill: getDividerFill(dividerId),
           stroke: 'none',
-          'pointer-events': 'all'
+          cursor: 'ns-resize',
+          'pointer-events': 'all',
+          on: {
+            mouseover: () => {
+              this.#hoveredDivider = dividerId;
+              this.redraw();
+            },
+            mouseout: () => {
+              this.#hoveredDivider = undefined;
+              this.redraw();
+            }
+          }
         })
       );
     }
