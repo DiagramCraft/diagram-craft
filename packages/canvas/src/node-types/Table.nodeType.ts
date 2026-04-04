@@ -5,7 +5,7 @@ import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { DRAG_DROP_MANAGER } from '../dragDropManager';
 import { TableDividerResizeDrag } from '../drag/tableDividerResizeDrag';
 import { PathBuilderHelper, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
-import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import { isNode } from '@diagram-craft/model/diagramElement';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
@@ -21,17 +21,13 @@ import {
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { hasHighlight, Highlights } from '../highlight';
 import { renderChildren } from '../components/renderElement';
-import type { Diagram } from '@diagram-craft/model/diagram';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import {
   assertTableCell,
   assertTableRow,
-  getTableColumnsSorted,
   getTableDividerBands,
-  getOwningTable,
-  getOwningTableCell,
-  getTableRowsSorted,
-  setBoundsAndTransformChildren
+  setBoundsAndTransformChildren,
+  TableHelper
 } from './tableUtils';
 
 declare global {
@@ -239,6 +235,43 @@ const TABLE_RESIZE_OVERLAY_BAND_SIZE = 5;
 class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
   #hoveredDivider: string | undefined;
 
+  private renderDividerBand(table: DiagramNode, divider: ReturnType<typeof getTableDividerBands>[number]) {
+    return svg.rect({
+      class: 'svg-hover-overlay',
+      x: divider.bounds.x,
+      y: divider.bounds.y,
+      width: divider.bounds.w,
+      height: divider.bounds.h,
+      fill: this.#hoveredDivider === divider.id ? 'rgba(59, 130, 246, 0.35)' : 'rgba(59, 130, 246, 0)',
+      stroke: 'none',
+      cursor: divider.type === 'column' ? 'ew-resize' : 'ns-resize',
+      'pointer-events': 'all',
+      on: {
+        mouseover: () => {
+          this.#hoveredDivider = divider.id;
+          this.redraw();
+        },
+        mouseout: () => {
+          this.#hoveredDivider = undefined;
+          this.redraw();
+        },
+        mousedown: e => {
+          if (e.button !== 0) return;
+
+          DRAG_DROP_MANAGER.initiate(
+            new TableDividerResizeDrag(
+              table,
+              divider.type,
+              divider.index,
+              table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
+            )
+          );
+          e.stopPropagation();
+        }
+      }
+    });
+  }
+
   render(props: { node: DiagramNode }) {
     const table = props.node;
     const helper = new TableHelper(table);
@@ -250,49 +283,8 @@ class TableResizeOverlayComponent extends Component<{ node: DiagramNode }> {
     if (rows.length === 0) return svg.g({});
 
     const dividerBands: VNode[] = [];
-    const highlightedFill = 'rgba(59, 130, 246, 0.35)';
-    const transparentFill = 'rgba(59, 130, 246, 0)';
-
-    const getDividerFill = (dividerId: string) =>
-      this.#hoveredDivider === dividerId ? highlightedFill : transparentFill;
-
     for (const divider of getTableDividerBands(table, TABLE_RESIZE_OVERLAY_BAND_SIZE)) {
-      dividerBands.push(
-        svg.rect({
-          class: 'svg-hover-overlay',
-          x: divider.bounds.x,
-          y: divider.bounds.y,
-          width: divider.bounds.w,
-          height: divider.bounds.h,
-          fill: getDividerFill(divider.id),
-          stroke: 'none',
-          cursor: divider.type === 'column' ? 'ew-resize' : 'ns-resize',
-          'pointer-events': 'all',
-          on: {
-            mouseover: () => {
-              this.#hoveredDivider = divider.id;
-              this.redraw();
-            },
-            mouseout: () => {
-              this.#hoveredDivider = undefined;
-              this.redraw();
-            },
-            mousedown: e => {
-              if (e.button !== 0) return;
-
-              DRAG_DROP_MANAGER.initiate(
-                new TableDividerResizeDrag(
-                  table,
-                  divider.type,
-                  divider.index,
-                  table.diagram.viewBox.toDiagramPoint(EventHelper.point(e))
-                )
-              );
-              e.stopPropagation();
-            }
-          }
-        })
-      );
+      dividerBands.push(this.renderDividerBand(table, divider));
     }
 
     return svg.g({}, ...dividerBands);
@@ -391,80 +383,5 @@ class TableComponent extends BaseNodeComponent {
         : props.nodeProps.stroke,
       fill: {}
     });
-  }
-}
-
-export class TableHelper {
-  readonly #tableNode: DiagramNode | undefined;
-  readonly cell: DiagramNode | undefined;
-
-  constructor(readonly element: DiagramElement) {
-    this.#tableNode = getOwningTable(element);
-    this.cell = this.#tableNode ? getOwningTableCell(element) : undefined;
-  }
-
-  static get(diagram: Diagram) {
-    return new TableHelper(diagram.selection.elements[0]!);
-  }
-
-  get tableNode() {
-    assert.present(this.#tableNode);
-    return this.#tableNode;
-  }
-
-  isTable() {
-    return !!this.#tableNode;
-  }
-
-  get rows() {
-    return this.tableNode.children.filter(isNode);
-  }
-
-  getCurrentCell() {
-    return this.cell;
-  }
-
-  getCellRow() {
-    return this.rows[this.getCellRowIndex()!];
-  }
-
-  getCellRowIndex(): number | undefined {
-    if (!this.#tableNode) return;
-
-    const rows = getTableRowsSorted(this.#tableNode);
-    for (let i = 0; i < rows.length; i++) {
-      if (this.cell && rows[i]!.children.includes(this.cell)) return i;
-    }
-    return undefined;
-  }
-
-  getCellColumnIndex(): number | undefined {
-    if (!this.#tableNode || !this.cell) return;
-
-    const row = this.cell!.parent as DiagramNode;
-    if (!row) return undefined;
-
-    const columns = getTableColumnsSorted(row);
-    return columns.indexOf(this.cell!);
-  }
-
-  getRowsSorted(): DiagramNode[] {
-    if (!this.#tableNode) return [];
-    return getTableRowsSorted(this.#tableNode);
-  }
-
-  getColumnsSorted(row: DiagramNode): DiagramNode[] {
-    return getTableColumnsSorted(row);
-  }
-
-  getCurrentRow(): DiagramNode | undefined {
-    const rowIdx = this.getCellRowIndex();
-    if (rowIdx === undefined) return undefined;
-    return this.getRowsSorted()[rowIdx];
-  }
-
-  getColumnCount(): number {
-    if (!this.#tableNode || this.#tableNode.children.length === 0) return 0;
-    return (this.#tableNode.children[0] as DiagramNode).children.length;
   }
 }

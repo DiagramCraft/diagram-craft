@@ -1,4 +1,5 @@
 import { DiagramElement, isNode } from '@diagram-craft/model/diagramElement';
+import type { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { assert } from '@diagram-craft/utils/assert';
 import { Box } from '@diagram-craft/geometry/box';
@@ -141,3 +142,77 @@ export const getTableDividerBands = (
 
   return dividerBands;
 };
+
+export class TableHelper {
+  readonly #tableNode: DiagramNode | undefined;
+  readonly cell: DiagramNode | undefined;
+
+  constructor(readonly element: DiagramElement) {
+    this.#tableNode = getOwningTable(element);
+    this.cell = this.#tableNode ? getOwningTableCell(element) : undefined;
+  }
+
+  static get(diagram: Diagram) {
+    return new TableHelper(diagram.selection.elements[0]!);
+  }
+
+  get tableNode() {
+    assert.present(this.#tableNode);
+    return this.#tableNode;
+  }
+
+  isTable() {
+    return !!this.#tableNode;
+  }
+
+  get rows() {
+    return this.tableNode.children.filter(isNode);
+  }
+
+  getCurrentCell() {
+    return this.cell;
+  }
+
+  getCellRow() {
+    return this.rows[this.getCellRowIndex()!];
+  }
+
+  getCellRowIndex(): number | undefined {
+    if (!this.#tableNode) return;
+
+    const rows = getTableRowsSorted(this.#tableNode);
+    for (let i = 0; i < rows.length; i++) {
+      if (this.cell && rows[i]!.children.includes(this.cell)) return i;
+    }
+    return undefined;
+  }
+
+  getCellColumnIndex(): number | undefined {
+    if (!this.#tableNode || !this.cell) return;
+
+    const row = this.cell.parent as DiagramNode;
+    if (!row) return undefined;
+
+    return getTableColumnsSorted(row).indexOf(this.cell);
+  }
+
+  getRowsSorted(): DiagramNode[] {
+    if (!this.#tableNode) return [];
+    return getTableRowsSorted(this.#tableNode);
+  }
+
+  getColumnsSorted(row: DiagramNode): DiagramNode[] {
+    return getTableColumnsSorted(row);
+  }
+
+  getCurrentRow(): DiagramNode | undefined {
+    const rowIdx = this.getCellRowIndex();
+    if (rowIdx === undefined) return undefined;
+    return this.getRowsSorted()[rowIdx];
+  }
+
+  getColumnCount(): number {
+    if (!this.#tableNode || this.#tableNode.children.length === 0) return 0;
+    return (this.#tableNode.children[0] as DiagramNode).children.length;
+  }
+}

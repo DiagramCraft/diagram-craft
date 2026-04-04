@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { TableHelper } from './Table.nodeType';
+import { TableHelper } from './tableUtils';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';

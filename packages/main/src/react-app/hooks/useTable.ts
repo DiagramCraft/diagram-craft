@@ -6,7 +6,7 @@ import { makePropertyArrayHook } from './usePropertyFactory';
 import { useEventListener } from './useEventListener';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
-import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { TableHelper } from '@diagram-craft/canvas/node-types/tableUtils';
 
 export const useTable = (diagram: Diagram) => {
   const [element, setElement] = useState<DiagramNode | undefined>(undefined);

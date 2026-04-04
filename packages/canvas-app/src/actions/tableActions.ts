@@ -9,7 +9,7 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { TableHelper } from '@diagram-craft/canvas/node-types/Table.nodeType';
+import { TableHelper } from '@diagram-craft/canvas/node-types/tableUtils';
 import { assert } from '@diagram-craft/utils/assert';
 import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
