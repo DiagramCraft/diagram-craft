@@ -9,10 +9,14 @@ import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
 const random = new Random(Date.now());
 
 if (!window.electronAPI) {
-  FileSystem.loadFromUrl = async (url: string) =>
-    fetch(url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '')).then(r =>
-      r.text()
-    );
+  FileSystem.loadFromUrl = async (url: string) => {
+    const resolvedUrl = url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '');
+    const response = await fetch(resolvedUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+    }
+    return response.text();
+  };
 }
 
 export const defaultAppConfig: AppConfig = {
