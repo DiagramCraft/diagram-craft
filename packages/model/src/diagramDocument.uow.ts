@@ -25,10 +25,15 @@ export class DiagramDocumentUOWAdapter
 
   restore(snap: DiagramDocumentSnapshot, el: DiagramDocument, _uow: UnitOfWork): void {
     el._setDiagramOrder(snap.diagramOrder);
+    // Notify UI that diagram order changed (e.g. after undo/redo of reorder)
+    const anyDiagram = el.diagrams[0];
+    if (anyDiagram) el.emit('diagramChanged', { diagram: anyDiagram });
   }
 
   update(diagram: Diagram, _id: string, snap: DiagramDocumentSnapshot, _uow: UnitOfWork): void {
     diagram.document._setDiagramOrder(snap.diagramOrder);
+    // Notify UI that diagram order changed (e.g. after undo/redo of reorder)
+    diagram.document.emit('diagramChanged', { diagram });
   }
 }
 
