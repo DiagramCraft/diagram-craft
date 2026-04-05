@@ -93,13 +93,25 @@ export const FileDialog = (props: Props) => {
           <div className={styles.eList}>
             <div>
               <ul>
-                {list.map(entry => (
-                  <li key={entry.name}>
-                    <a href={'#'} onClick={() => handleEntryClick(entry)}>
-                      {entry.isDirectory ? <TbFolder /> : <TbFile />} {entry.name}
-                    </a>
-                  </li>
-                ))}
+                {list
+                  .filter(e => e.isDirectory)
+                  .map(entry => (
+                    <li key={entry.name}>
+                      <a href={'#'} onClick={() => handleEntryClick(entry)}>
+                        <TbFolder /> {entry.name}
+                      </a>
+                    </li>
+                  ))}
+
+                {list
+                  .filter(e => !e.isDirectory)
+                  .map(entry => (
+                    <li key={entry.name}>
+                      <a href={'#'} onClick={() => handleEntryClick(entry)}>
+                        <TbFile /> {entry.name}
+                      </a>
+                    </li>
+                  ))}
               </ul>
             </div>
           </div>
