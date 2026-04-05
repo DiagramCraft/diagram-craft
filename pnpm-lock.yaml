@@ -453,6 +453,18 @@ importers:
 
   packages/server-main:
     dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:*
+        version: link:../canvas
+      '@diagram-craft/collaboration':
+        specifier: workspace:*
+        version: link:../collaboration
+      '@diagram-craft/model':
+        specifier: workspace:*
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:*
+        version: link:../utils
       h3:
         specifier: ^1.15.6
         version: 1.15.9

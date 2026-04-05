@@ -1,6 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createError } from 'h3';
+import type { CollaborationServer } from '../collaborationServer';
+import { createLogger } from '../logger';
 import type {
   FileSystemGetResult,
   FileSystemPutResult,
@@ -8,14 +10,20 @@ import type {
   FileSystemWriteRequest
 } from '../fileSystemServer';
 
+const log = createLogger('LocalFileSystemServer');
+
 const MAX_REQUEST_SIZE = 500 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/octet-stream'];
 
 export class LocalFileSystemServer implements FileSystemServer {
   private readonly resolvedRootPath: string;
 
-  constructor(private readonly rootPath: string) {
+  constructor(
+    private readonly rootPath: string,
+    private readonly collaborationServer?: CollaborationServer
+  ) {
     this.resolvedRootPath = path.resolve(rootPath);
+    log.debug(`Created: rootPath=${rootPath} hasCollaborationServer=${!!collaborationServer}`);
   }
 
   async get(relPath: string): Promise<FileSystemGetResult> {
@@ -23,6 +31,9 @@ export class LocalFileSystemServer implements FileSystemServer {
     const stat = fs.statSync(fullPath);
 
     if (stat.isFile()) {
+      log.debug(`get: relPath=${relPath} hasCollaborationServer=${!!this.collaborationServer}`);
+      this.collaborationServer?.ensureRoom(this.getRoomName(relPath));
+
       return {
         type: 'file',
         path: fullPath,
@@ -116,5 +127,9 @@ export class LocalFileSystemServer implements FileSystemServer {
     }
 
     return fullPath;
+  }
+
+  private getRoomName(relPath: string) {
+    return relPath;
   }
 }

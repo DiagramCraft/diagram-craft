@@ -7,6 +7,9 @@ import type { AIServer } from './aiServer';
 import type { CollaborationServer } from './collaborationServer';
 import type { FileSystemServer } from './fileSystemServer';
 import type { ModelServer } from './modelServer';
+import { createLogger } from './logger';
+
+const log = createLogger('serverFactory');
 
 export type ServerModules = {
   modelServer: ModelServer;
@@ -16,8 +19,34 @@ export type ServerModules = {
   collaborationServer: CollaborationServer;
 };
 
+const noopCollaborationServer: CollaborationServer = {
+  bind: () => {},
+  ensureRoom: () => {},
+  close: () => Promise.resolve()
+};
+
 export const createServerModules = (config: ServerMainConfig): ServerModules => {
   const modelServer = new FileBackedModelServer(config.dataDir);
+
+  let collaborationServer: CollaborationServer;
+  let fileSystemServer: FileSystemServer;
+
+  if (config.collaboration) {
+    // Lazy reference resolved before the writer is ever called (writer fires on Y.Doc
+    // updates which only happen after clients connect, well after construction)
+    let lazyFileSystemServer!: FileSystemServer;
+    collaborationServer = new YjsCollaborationServer(
+      YJS_WEBSOCKET_PATH,
+      (relPath, content) =>
+        lazyFileSystemServer.put(relPath, { body: content, contentType: 'application/json' })
+    );
+    fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
+    lazyFileSystemServer = fileSystemServer;
+  } else {
+    collaborationServer = noopCollaborationServer;
+    fileSystemServer = new LocalFileSystemServer(config.fsRoot);
+  }
+  log.debug(`Modules created: fsRoot=${config.fsRoot}`);
 
   if (config.bootstrapData && config.bootstrapSchemas) {
     modelServer.bootstrap?.({
@@ -25,7 +54,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
       schemasFile: config.bootstrapSchemas
     });
   } else if (config.bootstrapData || config.bootstrapSchemas) {
-    console.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
+    log.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
   }
 
   const aiServer =
@@ -42,7 +71,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
     modelServer,
     aiServer,
     aiDefaultModel: config.openrouterModel,
-    fileSystemServer: new LocalFileSystemServer(config.fsRoot),
-    collaborationServer: new YjsCollaborationServer(YJS_WEBSOCKET_PATH)
+    fileSystemServer,
+    collaborationServer
   };
 };

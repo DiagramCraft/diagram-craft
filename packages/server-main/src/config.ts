@@ -3,6 +3,7 @@ export type ServerMainConfig = {
   port: number;
   dataDir: string;
   fsRoot: string;
+  collaboration: boolean;
   bootstrapData?: string;
   bootstrapSchemas?: string;
   openrouterApiKey?: string;
@@ -32,6 +33,7 @@ Options:
   --port <port>                  Port to bind the server to (default: PORT env or 3000)
   --data-dir <path>              Directory to store data files (default: ./data)
   --fs-root <path>               Root directory for filesystem API (default: ../main/public)
+  --collaboration                Enable the Yjs collaboration websocket server
   --bootstrap-data <path>        JSON file to bootstrap initial data from
   --bootstrap-schemas <path>     JSON file to bootstrap initial schemas from
   --openrouter-api-key <key>     OpenRouter API key (can also use OPENROUTER_API_KEY env var)
@@ -49,6 +51,7 @@ export const parseArgs = (
   env: NodeJS.ProcessEnv = process.env
 ): ServerMainConfig | 'help' => {
   const config: Partial<ServerMainConfig> = {};
+  let collaboration = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -84,6 +87,9 @@ export const parseArgs = (
       case '--openrouter-app-name':
         config.openrouterAppName = args[++i];
         break;
+      case '--collaboration':
+        collaboration = true;
+        break;
       case '--help':
         return 'help';
       default:
@@ -96,6 +102,7 @@ export const parseArgs = (
     port: config.port ?? parseNumberOption(env.PORT ?? '3000', 'PORT'),
     dataDir: config.dataDir ?? './data',
     fsRoot: config.fsRoot ?? '../main/public',
+    collaboration,
     bootstrapData: config.bootstrapData,
     bootstrapSchemas: config.bootstrapSchemas,
     openrouterApiKey: config.openrouterApiKey ?? env.OPENROUTER_API_KEY ?? env.OPENAI_API_KEY,

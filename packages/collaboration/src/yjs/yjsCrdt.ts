@@ -64,13 +64,14 @@ export class YJSFactory implements CRDTFactory {
 }
 
 export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
-  private readonly doc = new Y.Doc();
+  private readonly doc: Y.Doc;
 
   readonly factory = new YJSFactory();
   private data: Y.Map<unknown>;
 
-  constructor() {
+  constructor(existingDoc?: Y.Doc) {
     super();
+    this.doc = existingDoc ?? new Y.Doc();
     this.data = this.doc.getMap('data');
 
     this.doc.on('beforeTransaction', t => {

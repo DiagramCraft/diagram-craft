@@ -504,6 +504,7 @@ export type EdgeDefinitionLoader = (edges: EdgeDefinitionRegistry) => Promise<vo
 
 export class NodeDefinitionRegistry {
   private nodes = new Map<string, NodeDefinition>();
+  logMissingShapes = true;
 
   constructor(private readonly lazyNodeLoaders: Array<LazyElementLoaderEntry> = []) {}
 
@@ -536,7 +537,7 @@ export class NodeDefinitionRegistry {
 
     if (!r) {
       missing.add(type);
-      console.warn(`Cannot find shape '${type}'`, new Error().stack);
+      if (this.lazyNodeLoaders) console.warn(`Cannot find shape '${type}'`, new Error().stack);
       return this.nodes.get('rect')!;
     }
 
