@@ -87,14 +87,30 @@ export const DEFAULT_SNAP_CONFIG: SnapManagerConfig = {
   magnetTypes: { grid: true, guide: true, node: true, canvas: true, distance: true, size: true }
 };
 
+export const createSnapConfig = (config?: Partial<SnapManagerConfig>): SnapManagerConfig => ({
+  enabled: config?.enabled ?? DEFAULT_SNAP_CONFIG.enabled,
+  threshold: config?.threshold ?? DEFAULT_SNAP_CONFIG.threshold,
+  magnetTypes: {
+    ...DEFAULT_SNAP_CONFIG.magnetTypes,
+    ...config?.magnetTypes
+  }
+});
+
 export const getSnapConfig = (diagram: Diagram): SnapManagerConfig => {
-  if (diagram.props.snap === undefined) {
+  const currentConfig = diagram.props.snap;
+  const needsNormalization =
+    currentConfig === undefined ||
+    currentConfig.enabled === undefined ||
+    currentConfig.threshold === undefined ||
+    currentConfig.magnetTypes === undefined ||
+    Object.keys(DEFAULT_SNAP_CONFIG.magnetTypes).some(
+      key => currentConfig.magnetTypes?.[key as MagnetType] === undefined
+    );
+
+  if (needsNormalization) {
     UnitOfWork.executeSilently(diagram, uow =>
       diagram.updateProps(p => {
-        p.snap ??= DEFAULT_SNAP_CONFIG;
-        p.snap.magnetTypes ??= DEFAULT_SNAP_CONFIG.magnetTypes;
-        p.snap.enabled ??= DEFAULT_SNAP_CONFIG.enabled;
-        p.snap.threshold ??= DEFAULT_SNAP_CONFIG.threshold;
+        p.snap = createSnapConfig(p.snap);
       }, uow)
     );
   }
