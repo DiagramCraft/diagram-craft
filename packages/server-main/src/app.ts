@@ -3,6 +3,9 @@ import { createAIRoutes } from './routes/aiRoutes';
 import { createDataRoutes } from './routes/dataRoutes';
 import { createFilesystemRoutes } from './routes/filesystemRoutes';
 import type { ServerModules } from './serverFactory';
+import { createLogger } from './logger';
+
+const log = createLogger('app');
 import openapiSpec from './openapi.json';
 
 export const createServerApp = (servers: ServerModules) => {
@@ -34,13 +37,10 @@ export const createServerApp = (servers: ServerModules) => {
 
   if (servers.aiServer) {
     app.use(createAIRoutes(servers.aiServer));
-    console.log(
-      'AI routes enabled with model:',
-      servers.aiDefaultModel ?? 'anthropic/claude-3.5-sonnet'
-    );
+    log.info(`AI routes enabled with model: ${servers.aiDefaultModel ?? 'anthropic/claude-3.5-sonnet'}`);
   } else {
-    console.log('AI routes disabled: No OpenRouter API key configured');
-    console.log('Set OPENROUTER_API_KEY environment variable or use --openrouter-api-key flag');
+    log.info('AI routes disabled: No OpenRouter API key configured');
+    log.info('Set OPENROUTER_API_KEY environment variable or use --openrouter-api-key flag');
   }
 
   return app;

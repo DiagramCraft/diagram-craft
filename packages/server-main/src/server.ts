@@ -5,6 +5,9 @@ import { createServerApp } from './app';
 import type { ServerMainConfig } from './config';
 import { YJS_WEBSOCKET_PATH } from './default/yjsCollaborationServer';
 import { createServerModules } from './serverFactory';
+import { createLogger } from './logger';
+
+const log = createLogger('server');
 
 export type RunningServer = {
   server: ReturnType<typeof createServer>;
@@ -42,8 +45,8 @@ export const startServer = async (config: ServerMainConfig): Promise<RunningServ
   const httpUrl = `http://${urlHost}:${effectivePort}`;
   const wsUrl = `ws://${urlHost}:${effectivePort}${YJS_WEBSOCKET_PATH}`;
 
-  console.log(`REST server listening at ${httpUrl}`);
-  console.log(`Yjs websocket listening at ${wsUrl}`);
+  log.info(`REST server listening at ${httpUrl}`);
+  log.info(`Yjs websocket listening at ${wsUrl}`);
 
   return {
     server,

@@ -9,6 +9,9 @@ import type { Socket } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { CollaborationServer } from '../collaborationServer';
 import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave';
+import { createLogger } from '../logger';
+
+const log = createLogger('YjsCollaborationServer');
 
 export const YJS_WEBSOCKET_PATH = '/ws';
 const FILESYSTEM_API_PATH_PREFIX = '/api/fs/';
@@ -160,13 +163,14 @@ const messageListener = (conn: WebSocket, doc: WSSharedDoc, message: Uint8Array)
         break;
     }
   } catch (error) {
-    console.error(error);
+    log.error('Message handling failed', error);
   }
 };
 
 const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
   conn.binaryType = 'arraybuffer';
   const doc = getOrCreateYDoc(docName);
+  log.debug(`WebSocket connected: docName=${docName} hasAutoSave=${autoSaves.has(docName)}`);
   doc.conns.set(conn, new Set());
 
   conn.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
@@ -239,7 +243,16 @@ export class YjsCollaborationServer implements CollaborationServer {
     private readonly autoSaveWriter?: AutoSaveWriter
   ) {
     this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
-      setupYjsWebSocketConnection(connection, getDocName(request.url ?? this.basePath, this.basePath));
+      const docName = getDocName(request.url ?? this.basePath, this.basePath);
+      setupYjsWebSocketConnection(connection, docName);
+
+      if (!autoSaves.has(docName) && this.autoSaveWriter && docName.endsWith('.json')) {
+        const doc = docs.get(docName);
+        if (doc) {
+          log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
+          autoSaves.set(docName, new DiagramAutoSave(doc, docName, this.autoSaveWriter));
+        }
+      }
     });
 
     this.upgradeHandler = (request, socket, head) => {
@@ -270,10 +283,11 @@ export class YjsCollaborationServer implements CollaborationServer {
 
   ensureRoom(name: string) {
     const normalized = normalizeDocName(name);
-    const isNew = !docs.has(normalized);
     const doc = getOrCreateYDoc(normalized);
+    log.debug(`ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${autoSaves.has(normalized)}`);
 
-    if (isNew && this.autoSaveWriter && normalized.endsWith('.json')) {
+    if (!autoSaves.has(normalized) && this.autoSaveWriter && normalized.endsWith('.json')) {
+      log.debug(`Setting up auto-save for room: ${normalized}`);
       autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, this.autoSaveWriter));
     }
   }

@@ -9,7 +9,11 @@ import {
 } from '@diagram-craft/model/elementDefinitionRegistry';
 import { AbstractEdgeDefinition } from '@diagram-craft/model/edgeDefinition';
 import { StencilRegistry } from '@diagram-craft/model/stencilRegistry';
+import { RectNodeDefinition } from '@diagram-craft/canvas/node-types/Rect.nodeType';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
+import { createLogger } from '../logger';
+
+const log = createLogger('DiagramAutoSave');
 
 const DEBOUNCE_MS = 2000;
 
@@ -19,17 +23,25 @@ class ServerEdgeDefinition extends AbstractEdgeDefinition {
   }
 }
 
-const makeServerRegistry = (): Registry => ({
-  nodes: new NodeDefinitionRegistry(),
-  edges: new EdgeDefinitionRegistry(new ServerEdgeDefinition()),
-  stencils: new StencilRegistry()
-});
+const makeServerRegistry = (): Registry => {
+  const nodes = new NodeDefinitionRegistry();
+  nodes.logMissingShapes = false;
+  nodes.register(new RectNodeDefinition());
+  return {
+    nodes,
+    edges: new EdgeDefinitionRegistry(new ServerEdgeDefinition()),
+    stencils: new StencilRegistry()
+  };
+};
 
 export type AutoSaveWriter = (relPath: string, content: string) => Promise<unknown>;
 
 export class DiagramAutoSave {
-  private readonly yjsRoot: YJSRoot;
-  private readonly document: DiagramDocument;
+  // DiagramDocument is created lazily on the first Y.Doc update to avoid making
+  // local CRDT mutations (via getMap) before the client has synced its state.
+  // Creating it immediately would write empty Y.Maps into the shared doc, which
+  // would win the CRDT conflict and overwrite the client's diagram data.
+  private document: DiagramDocument | undefined;
   private readonly handleUpdate: () => void;
   private disposed = false;
   private readonly tempRelPath: string;
@@ -40,34 +52,44 @@ export class DiagramAutoSave {
     private readonly writer: AutoSaveWriter
   ) {
     this.tempRelPath = relPath.replace(/\.json$/, '.temp.json');
-    this.yjsRoot = new YJSRoot(yDoc);
-    this.document = new DiagramDocument(makeServerRegistry(), false, this.yjsRoot);
+    log.debug(`Setting up auto-save for ${relPath} → ${this.tempRelPath}`);
 
     const debouncedSave = debounce(() => {
-      this.save().catch(err =>
-        console.error(`[DiagramAutoSave] Failed to save ${this.tempRelPath}:`, err)
-      );
+      this.save().catch(err => log.error(`Failed to save ${this.tempRelPath}`, err));
     }, DEBOUNCE_MS);
 
     this.handleUpdate = () => {
       if (this.disposed) return;
+      if (!this.document) {
+        log.debug(`First update for ${this.tempRelPath} — creating DiagramDocument`);
+        this.document = new DiagramDocument(makeServerRegistry(), false, new YJSRoot(yDoc));
+      }
+      log.trace(`Update received for ${this.tempRelPath}, debouncing...`);
       debouncedSave();
     };
 
+    yDoc.on('update', (_update, origin) => {
+      log.trace(
+        `RAW update event: origin=${origin}, disposed=${this.disposed}, hasDocument=${!!this.document}`
+      );
+    });
     yDoc.on('update', this.handleUpdate);
   }
 
   private async save() {
-    if (this.disposed) return;
+    if (this.disposed || !this.document) return;
+    log.debug(`Serializing ${this.tempRelPath}...`);
     const serialized = await serializeDiagramDocument(this.document);
+    log.debug(`Serialized ${this.tempRelPath}: ${serialized.diagrams.length} diagram(s)`);
     await this.writer(this.tempRelPath, JSON.stringify(serialized, null, 2));
-    console.log(`[DiagramAutoSave] Saved ${this.tempRelPath}`);
+    log.info(`Saved ${this.tempRelPath}`);
   }
 
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
+    log.debug(`Disposing auto-save for ${this.tempRelPath}`);
     this.yDoc.off('update', this.handleUpdate);
-    this.document.release();
+    this.document?.release();
   }
 }

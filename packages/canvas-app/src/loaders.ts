@@ -1,5 +1,5 @@
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { assert } from '@diagram-craft/utils/assert';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
@@ -47,11 +47,13 @@ export const loadFileFromUrl = async (
 
 /** @namespace */
 export const FileSystem = {
-  loadFromUrl: async (url: string) => {
-    const response = await fetch(url.replace('$STENCIL_ROOT', ''));
+  loadFromUrl: async (_url: string): Promise<string> => {
+    VERIFY_NOT_REACHED();
+    // TODO: What is this used for?
+    /*const response = await fetch(url.replace('$STENCIL_ROOT', ''));
     if (!response.ok) {
       throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
     }
-    return response.text();
+    return response.text();*/
   }
 };

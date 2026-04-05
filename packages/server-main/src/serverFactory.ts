@@ -7,6 +7,9 @@ import type { AIServer } from './aiServer';
 import type { CollaborationServer } from './collaborationServer';
 import type { FileSystemServer } from './fileSystemServer';
 import type { ModelServer } from './modelServer';
+import { createLogger } from './logger';
+
+const log = createLogger('serverFactory');
 
 export type ServerModules = {
   modelServer: ModelServer;
@@ -29,6 +32,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
   );
 
   fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
+  log.debug(`Modules created: fsRoot=${config.fsRoot}`);
 
   if (config.bootstrapData && config.bootstrapSchemas) {
     modelServer.bootstrap?.({
@@ -36,7 +40,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
       schemasFile: config.bootstrapSchemas
     });
   } else if (config.bootstrapData || config.bootstrapSchemas) {
-    console.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
+    log.warn('Both --bootstrap-data and --bootstrap-schemas must be provided for bootstrapping');
   }
 
   const aiServer =

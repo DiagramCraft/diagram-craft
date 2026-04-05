@@ -10,7 +10,14 @@ const random = new Random(Date.now());
 
 if (!window.electronAPI) {
   FileSystem.loadFromUrl = async (url: string) => {
-    const resolvedUrl = url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '');
+    let resolvedUrl: string;
+    if (url.includes('$STENCIL_ROOT')) {
+      resolvedUrl = url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '');
+    } else if (AppConfig.get().filesystem.provider === 'remote') {
+      resolvedUrl = `${AppConfig.get().filesystem.endpoint}/api/fs/${url}`;
+    } else {
+      resolvedUrl = url;
+    }
     const response = await fetch(resolvedUrl);
     if (!response.ok) {
       throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);

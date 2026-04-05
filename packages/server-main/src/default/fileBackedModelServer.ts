@@ -1,6 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { ModelServer } from '../modelServer';
+import { createLogger } from '../logger';
+
+const log = createLogger('FileBackedModelServer');
 import { DataSchema, DataWithSchema } from '../types';
 
 const newid = () => {
@@ -32,7 +35,7 @@ export class FileBackedModelServer implements ModelServer {
         this.data = JSON.parse(dataContent);
       }
     } catch (error) {
-      console.warn('Failed to load data file:', error);
+      log.warn('Failed to load data file:' + String(error));
       this.data = [];
     }
 
@@ -42,7 +45,7 @@ export class FileBackedModelServer implements ModelServer {
         this.schemas = JSON.parse(schemasContent);
       }
     } catch (error) {
-      console.warn('Failed to load schemas file:', error);
+      log.warn('Failed to load schemas file: ' + String(error));
       this.schemas = [];
     }
   }
@@ -51,7 +54,7 @@ export class FileBackedModelServer implements ModelServer {
     try {
       fs.writeFileSync(this.dataFile, JSON.stringify(this.data, null, 2));
     } catch (error) {
-      console.error('Failed to save data file:', error);
+      log.error('Failed to save data file', error);
       throw new Error('Failed to save data');
     }
   }
@@ -60,7 +63,7 @@ export class FileBackedModelServer implements ModelServer {
     try {
       fs.writeFileSync(this.schemasFile, JSON.stringify(this.schemas, null, 2));
     } catch (error) {
-      console.error('Failed to save schemas file:', error);
+      log.error('Failed to save schemas file', error);
       throw new Error('Failed to save schemas');
     }
   }
@@ -160,7 +163,7 @@ export class FileBackedModelServer implements ModelServer {
         const dataContent = fs.readFileSync(args.dataFile, 'utf-8');
         this.data = JSON.parse(dataContent);
         this.saveData();
-        console.log(`Bootstrapped data from: ${args.dataFile}`);
+        log.info(`Bootstrapped data from: ${args.dataFile}`);
       }
     } catch (_error) {
       throw new Error(`Failed to bootstrap data from ${args.dataFile}`);
@@ -171,7 +174,7 @@ export class FileBackedModelServer implements ModelServer {
         const schemasContent = fs.readFileSync(args.schemasFile, 'utf-8');
         this.schemas = JSON.parse(schemasContent);
         this.saveSchemas();
-        console.log(`Bootstrapped schemas from: ${args.schemasFile}`);
+        log.info(`Bootstrapped schemas from: ${args.schemasFile}`);
       }
     } catch (_error) {
       throw new Error(`Failed to bootstrap schemas from ${args.schemasFile}`);
