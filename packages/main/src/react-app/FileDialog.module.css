@@ -40,6 +40,9 @@
 
       a {
         color: var(--base-fg-dim);
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
 
         &:hover {
           color: var(--accent-fg);
