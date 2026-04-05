@@ -4,7 +4,11 @@ import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './di
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Registry } from './elementDefinitionRegistry';
-import { getRemoteUnitOfWork } from './unitOfWork';
+import { getRemoteUnitOfWork, type UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
+import {
+  DiagramDocumentUOWAdapter,
+  DocumentDiagramChildAdapter
+} from './diagramDocument.uow';
 import { DataProviderRegistry } from './dataProvider';
 import { DefaultDataProvider, DefaultDataProviderId } from './data-providers/dataProviderDefault';
 import { UrlDataProvider, UrlDataProviderId } from './data-providers/dataProviderUrl';
@@ -49,8 +53,11 @@ export type DataTemplate = {
 
 export class DiagramDocument
   extends EventEmitter<DocumentEvents>
-  implements AttachmentConsumer, Releasable
+  implements AttachmentConsumer, Releasable, UOWTrackable
 {
+  readonly id = 'document';
+  readonly _trackableType = 'document';
+
   readonly root: CRDTRoot;
 
   readonly attachments: AttachmentManager;
@@ -170,7 +177,15 @@ export class DiagramDocument
     return dest;
   }
 
-  insertDiagram(diagram: Diagram, position: number, parent?: Diagram) {
+  insertDiagram(diagram: Diagram, position: number, parent?: Diagram, uow?: UnitOfWork) {
+    if (uow) {
+      uow.executeAdd(diagram, this, position, () => this.#doInsertDiagram(diagram, position, parent));
+    } else {
+      this.#doInsertDiagram(diagram, position, parent);
+    }
+  }
+
+  #doInsertDiagram(diagram: Diagram, position: number, parent?: Diagram) {
     precondition.is.false(!!this.byId(diagram.id));
 
     diagram._parent = parent?.id;
@@ -185,11 +200,21 @@ export class DiagramDocument
     this.emit('diagramAdded', { diagram: diagram });
   }
 
-  addDiagram(diagram: Diagram, parent?: Diagram) {
-    this.insertDiagram(diagram, this.#diagrams.size, parent);
+  addDiagram(diagram: Diagram, parent?: Diagram, uow?: UnitOfWork) {
+    this.insertDiagram(diagram, this.#diagrams.size, parent, uow);
   }
 
-  removeDiagram(diagram: Diagram) {
+  removeDiagram(diagram: Diagram, uow?: UnitOfWork) {
+    if (uow) {
+      const peerDiagrams = diagram.parent ? this.byId(diagram.parent)!.diagrams : this.diagrams;
+      const idx = peerDiagrams.indexOf(diagram);
+      uow.executeRemove(diagram, this, idx, () => this.#doRemoveDiagram(diagram));
+    } else {
+      this.#doRemoveDiagram(diagram);
+    }
+  }
+
+  #doRemoveDiagram(diagram: Diagram) {
     this.#diagrams.remove(diagram.id);
 
     this.root.off('remoteAfterTransaction', diagram.id);
@@ -201,7 +226,15 @@ export class DiagramDocument
     this.emit('diagramChanged', { diagram: diagram });
   }
 
-  moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }) {
+  moveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }, uow?: UnitOfWork) {
+    if (uow) {
+      uow.executeUpdate(this, () => this.#doMoveDiagram(diagram, ref));
+    } else {
+      this.#doMoveDiagram(diagram, ref);
+    }
+  }
+
+  #doMoveDiagram(diagram: Diagram, ref: { diagram: Diagram; relation: 'before' | 'after' }) {
     // Get all diagrams with the same parent as the reference
     const parentId = ref.diagram.parent;
     const diagramsInParent = this.#diagrams.values.filter(d => d.parent === parentId);
@@ -227,6 +260,14 @@ export class DiagramDocument
 
     // Emit change event for moved diagram
     this.emit('diagramChanged', { diagram });
+  }
+
+  _getDiagramOrder(): string[] {
+    return this.#diagrams.values.map(d => d.id);
+  }
+
+  _setDiagramOrder(order: string[]) {
+    this.#diagrams.setOrder(order);
   }
 
   getAttachmentsInUse() {
@@ -276,3 +317,9 @@ export class DiagramDocument
 DataProviderRegistry.register(DefaultDataProviderId, (s: string) => new DefaultDataProvider(s));
 DataProviderRegistry.register(UrlDataProviderId, (s: string) => new UrlDataProvider(s));
 DataProviderRegistry.register(RestDataProviderId, (s: string) => new RESTDataProvider(s));
+
+/*
+ * Register UOW adapters
+ */
+UOWRegistry.adapters['document'] = new DiagramDocumentUOWAdapter();
+UOWRegistry.childAdapters['document-diagram'] = new DocumentDiagramChildAdapter();

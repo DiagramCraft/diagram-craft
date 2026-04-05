@@ -5,8 +5,9 @@ import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepClone } from '@diagram-craft/utils/object';
 
-interface DiagramSnapshot extends Snapshot {
+export interface DiagramSnapshot extends Snapshot {
   _snapshotType: 'diagram';
+  _ref: Diagram;
   name: string;
   props: DiagramProps;
   bounds: Omit<Box, 'r'>;
@@ -24,6 +25,7 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
   snapshot(element: Diagram): DiagramSnapshot {
     return {
       _snapshotType: 'diagram',
+      _ref: element,
       name: element.name,
       props: deepClone(element.props),
       bounds: deepClone(element.bounds)
