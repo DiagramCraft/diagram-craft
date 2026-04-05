@@ -35,6 +35,16 @@ export class CanvasGuidesComponent extends Component<CanvasState> {
         e.stopPropagation();
       };
 
+      const contextmenu = (e: MouseEvent) => {
+        const mainSvg = document.querySelector('svg.canvas.editable-canvas') as SVGSVGElement;
+        const rect = mainSvg.getBoundingClientRect();
+        const diagramPoint = diagram.viewBox.toDiagramPoint({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        });
+        props.context.ui.showContextMenu('guide', diagramPoint, e, { guideId: guide.id });
+      };
+
       const id = `guide-${guide.id}`;
 
       if (guide.type === 'horizontal') {
@@ -46,7 +56,7 @@ export class CanvasGuidesComponent extends Component<CanvasState> {
           x2: viewBox.offset.x + viewBox.dimensions.w,
           y2: guide.position,
           style: `cursor: ns-resize; ${style}`,
-          on: { mousedown }
+          on: { mousedown, contextmenu }
         });
       } else {
         return svg.line({
@@ -57,7 +67,7 @@ export class CanvasGuidesComponent extends Component<CanvasState> {
           x2: guide.position,
           y2: viewBox.offset.y + viewBox.dimensions.h,
           style: `cursor: ew-resize; ${style}`,
-          on: { mousedown }
+          on: { mousedown, contextmenu }
         });
       }
     });

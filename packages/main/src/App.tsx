@@ -2,6 +2,7 @@ import './App.css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
 import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
+import { GuideContextMenu } from './react-app/context-menu-dispatcher/GuideContextMenu';
 import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
 import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
 import { useEventListener } from './react-app/hooks/useEventListener';
@@ -763,6 +764,10 @@ export const App = (props: {
                                 <SelectionContextMenu
                                   target={state as ContextMenuTarget<'selection'>}
                                 />
+                              );
+                            } else if (state.type === 'guide') {
+                              return (
+                                <GuideContextMenu target={state as ContextMenuTarget<'guide'>} />
                               );
                             } else {
                               VERIFY_NOT_REACHED();
