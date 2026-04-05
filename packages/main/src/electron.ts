@@ -1,5 +1,5 @@
 import type { Application } from './application';
-import { AbstractAction, AbstractToggleAction, ActionCriteria } from '@diagram-craft/canvas/action';
+import { AbstractAction, AbstractToggleAction, ActionCriteria, NoopAction } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
@@ -7,6 +7,7 @@ import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import { UserState } from './UserState';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };
@@ -56,8 +57,12 @@ export const ElectronIntegration = {
 
     window.electronAPI?.setMenu(mainMenuStructure, keybindings);
 
-    app.actions.FILE_SAVE = new ElectronFileSaveAction(app);
-    app.actions.FILE_SAVE_AS = new ElectronFileSaveAsAction(app);
+    app.actions.FILE_SAVE = CollaborationConfig.isNoOp
+      ? new ElectronFileSaveAction(app)
+      : new NoopAction(app);
+    app.actions.FILE_SAVE_AS = CollaborationConfig.isNoOp
+      ? new ElectronFileSaveAsAction(app)
+      : new NoopAction(app);
     app.actions.FILE_OPEN = new ElectronFileOpenAction(app);
 
     window.electronAPI.removeAllListeners('menu:action');
