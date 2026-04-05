@@ -4,9 +4,10 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
 export const fileSaveActions = (application: Application) =>
-  AppConfig.get().filesystem.provider === 'none'
+  AppConfig.get().filesystem.provider === 'none' || !CollaborationConfig.isNoOp
     ? {
         FILE_SAVE: new NoopAction(application)
       }
