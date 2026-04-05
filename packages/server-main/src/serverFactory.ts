@@ -18,6 +18,7 @@ export type ServerModules = {
 
 export const createServerModules = (config: ServerMainConfig): ServerModules => {
   const modelServer = new FileBackedModelServer(config.dataDir);
+  const collaborationServer = new YjsCollaborationServer(YJS_WEBSOCKET_PATH);
 
   if (config.bootstrapData && config.bootstrapSchemas) {
     modelServer.bootstrap?.({
@@ -42,7 +43,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
     modelServer,
     aiServer,
     aiDefaultModel: config.openrouterModel,
-    fileSystemServer: new LocalFileSystemServer(config.fsRoot),
-    collaborationServer: new YjsCollaborationServer(YJS_WEBSOCKET_PATH)
+    fileSystemServer: new LocalFileSystemServer(config.fsRoot, collaborationServer),
+    collaborationServer
   };
 };

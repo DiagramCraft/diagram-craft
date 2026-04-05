@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createError } from 'h3';
+import type { CollaborationServer } from '../collaborationServer';
 import type {
   FileSystemGetResult,
   FileSystemPutResult,
@@ -14,7 +15,10 @@ const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/oc
 export class LocalFileSystemServer implements FileSystemServer {
   private readonly resolvedRootPath: string;
 
-  constructor(private readonly rootPath: string) {
+  constructor(
+    private readonly rootPath: string,
+    private readonly collaborationServer?: CollaborationServer
+  ) {
     this.resolvedRootPath = path.resolve(rootPath);
   }
 
@@ -23,6 +27,8 @@ export class LocalFileSystemServer implements FileSystemServer {
     const stat = fs.statSync(fullPath);
 
     if (stat.isFile()) {
+      this.collaborationServer?.ensureRoom(this.getRoomName(relPath));
+
       return {
         type: 'file',
         path: fullPath,
@@ -116,5 +122,9 @@ export class LocalFileSystemServer implements FileSystemServer {
     }
 
     return fullPath;
+  }
+
+  private getRoomName(relPath: string) {
+    return relPath;
   }
 }

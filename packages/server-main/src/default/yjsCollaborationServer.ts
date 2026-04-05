@@ -10,6 +10,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import type { CollaborationServer } from '../collaborationServer';
 
 export const YJS_WEBSOCKET_PATH = '/ws';
+const FILESYSTEM_API_PATH_PREFIX = '/api/fs/';
 
 const wsReadyStateConnecting = 0;
 const wsReadyStateOpen = 1;
@@ -24,12 +25,19 @@ const getDocName = (requestUrl: string, basePath: string) => {
     return '';
   }
 
-  return pathname.slice(basePath.length + 1);
+  return normalizeDocName(pathname.slice(basePath.length + 1));
 };
 
 const matchesPath = (requestUrl: string, basePath: string) => {
   const pathname = new URL(requestUrl, 'http://localhost').pathname;
   return pathname === basePath || pathname.startsWith(`${basePath}/`);
+};
+
+const normalizeDocName = (name: string) => {
+  const withoutLeadingSlash = name.startsWith('/') ? name.slice(1) : name;
+  return withoutLeadingSlash.startsWith(FILESYSTEM_API_PATH_PREFIX.slice(1))
+    ? withoutLeadingSlash.slice(FILESYSTEM_API_PATH_PREFIX.length - 1)
+    : withoutLeadingSlash;
 };
 
 class WSSharedDoc extends Y.Doc {
@@ -251,6 +259,10 @@ export class YjsCollaborationServer implements CollaborationServer {
 
     this.boundServer = server;
     server.on('upgrade', this.upgradeHandler);
+  }
+
+  ensureRoom(name: string) {
+    getYDoc(normalizeDocName(name));
   }
 
   close() {
