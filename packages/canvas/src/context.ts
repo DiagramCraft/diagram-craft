@@ -41,6 +41,7 @@ export interface UIActions {
 export interface ContextMenus {
   canvas: object;
   selection: object;
+  guide: { guideId: string };
 }
 
 export interface Help {
