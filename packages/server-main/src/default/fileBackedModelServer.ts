@@ -11,8 +11,8 @@ const newid = () => {
 };
 
 export class FileBackedModelServer implements ModelServer {
-  private dataFile: string;
-  private schemasFile: string;
+  private readonly dataFile: string;
+  private readonly schemasFile: string;
   private data: DataWithSchema[] = [];
   private schemas: DataSchema[] = [];
 
@@ -35,7 +35,7 @@ export class FileBackedModelServer implements ModelServer {
         this.data = JSON.parse(dataContent);
       }
     } catch (error) {
-      log.warn('Failed to load data file:' + String(error));
+      log.warn('Failed to load data file', error);
       this.data = [];
     }
 
@@ -45,7 +45,7 @@ export class FileBackedModelServer implements ModelServer {
         this.schemas = JSON.parse(schemasContent);
       }
     } catch (error) {
-      log.warn('Failed to load schemas file: ' + String(error));
+      log.warn('Failed to load schemas file', error);
       this.schemas = [];
     }
   }

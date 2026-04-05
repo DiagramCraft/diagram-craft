@@ -19,20 +19,22 @@ const isEnabled = (level: LogLevel) => LEVELS[level] >= LEVELS[activeLevel];
 const format = (level: LogLevel, ns: string, msg: string) =>
   `[${level.toUpperCase()}] [${ns}] ${msg}`;
 
+const extra = (context?: unknown) => (context !== undefined ? [context] : []);
+
 export const createLogger = (ns: string) => ({
-  trace: (msg: string) => {
-    if (isEnabled('trace')) console.log(format('trace', ns, msg));
+  trace: (msg: string, context?: unknown) => {
+    if (isEnabled('trace')) console.log(format('trace', ns, msg), ...extra(context));
   },
-  debug: (msg: string) => {
-    if (isEnabled('debug')) console.log(format('debug', ns, msg));
+  debug: (msg: string, context?: unknown) => {
+    if (isEnabled('debug')) console.log(format('debug', ns, msg), ...extra(context));
   },
-  info: (msg: string) => {
-    if (isEnabled('info')) console.log(format('info', ns, msg));
+  info: (msg: string, context?: unknown) => {
+    if (isEnabled('info')) console.log(format('info', ns, msg), ...extra(context));
   },
-  warn: (msg: string) => {
-    if (isEnabled('warn')) console.warn(format('warn', ns, msg));
+  warn: (msg: string, context?: unknown) => {
+    if (isEnabled('warn')) console.warn(format('warn', ns, msg), ...extra(context));
   },
-  error: (msg: string, err?: unknown) => {
-    if (isEnabled('error')) console.error(format('error', ns, msg), ...(err !== undefined ? [err] : []));
+  error: (msg: string, context?: unknown) => {
+    if (isEnabled('error')) console.error(format('error', ns, msg), ...extra(context));
   }
 });

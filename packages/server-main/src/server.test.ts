@@ -47,6 +47,7 @@ const createTestServer = async (overrides: Partial<Parameters<typeof startServer
     port: 0,
     dataDir,
     fsRoot,
+    collaboration: false,
     ...overrides
   });
   runningServers.push(server);
@@ -63,6 +64,7 @@ describe('parseArgs', () => {
       port: 4100,
       dataDir: './data',
       fsRoot: '../main/public',
+      collaboration: false,
       bootstrapData: undefined,
       bootstrapSchemas: undefined,
       openrouterApiKey: undefined,

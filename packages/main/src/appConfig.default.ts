@@ -13,10 +13,13 @@ if (!window.electronAPI) {
     let resolvedUrl: string;
     if (url.includes('$STENCIL_ROOT')) {
       resolvedUrl = url.replace('$STENCIL_ROOT', import.meta.env.VITE_STENCIL_ROOT ?? '');
-    } else if (AppConfig.get().filesystem.provider === 'remote') {
-      resolvedUrl = `${AppConfig.get().filesystem.endpoint}/api/fs/${url}`;
     } else {
-      resolvedUrl = url;
+      const fsConfig = AppConfig.get().filesystem;
+      if (fsConfig.provider === 'remote') {
+        resolvedUrl = `${AppConfig.get().filesystem.endpoint}/api/fs/${url}`;
+      } else {
+        resolvedUrl = url;
+      }
     }
     const response = await fetch(resolvedUrl);
     if (!response.ok) {
