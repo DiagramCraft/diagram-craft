@@ -9,6 +9,8 @@ import type { Socket } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { CollaborationServer } from '../collaborationServer';
 import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave';
+
+export type TempPathResolver = (name: string) => string;
 import { createLogger } from '../logger';
 
 const log = createLogger('YjsCollaborationServer');
@@ -240,7 +242,8 @@ export class YjsCollaborationServer implements CollaborationServer {
 
   constructor(
     private readonly basePath = YJS_WEBSOCKET_PATH,
-    private readonly autoSaveWriter?: AutoSaveWriter
+    private readonly autoSaveWriter?: AutoSaveWriter,
+    private readonly tempPathResolver?: TempPathResolver
   ) {
     this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
       const docName = getDocName(request.url ?? this.basePath, this.basePath);
@@ -249,8 +252,9 @@ export class YjsCollaborationServer implements CollaborationServer {
       if (!autoSaves.has(docName) && this.autoSaveWriter && docName.endsWith('.json')) {
         const doc = docs.get(docName);
         if (doc) {
+          const tempPath = this.tempPathResolver?.(docName) ?? docName.replace(/\.json$/, '.temp.json');
           log.debug(`Setting up auto-save on WebSocket connect: ${docName}`);
-          autoSaves.set(docName, new DiagramAutoSave(doc, docName, this.autoSaveWriter));
+          autoSaves.set(docName, new DiagramAutoSave(doc, docName, tempPath, this.autoSaveWriter));
         }
       }
     });
@@ -287,8 +291,9 @@ export class YjsCollaborationServer implements CollaborationServer {
     log.debug(`ensureRoom: name=${name} normalized=${normalized} hasWriter=${!!this.autoSaveWriter} hasAutoSave=${autoSaves.has(normalized)}`);
 
     if (!autoSaves.has(normalized) && this.autoSaveWriter && normalized.endsWith('.json')) {
+      const tempPath = this.tempPathResolver?.(normalized) ?? normalized.replace(/\.json$/, '.temp.json');
       log.debug(`Setting up auto-save for room: ${normalized}`);
-      autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, this.autoSaveWriter));
+      autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, tempPath, this.autoSaveWriter));
     }
   }
 

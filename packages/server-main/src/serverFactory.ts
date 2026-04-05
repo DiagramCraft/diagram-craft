@@ -38,7 +38,8 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
     collaborationServer = new YjsCollaborationServer(
       YJS_WEBSOCKET_PATH,
       (relPath, content) =>
-        lazyFileSystemServer.put(relPath, { body: content, contentType: 'application/json' })
+        lazyFileSystemServer.put(relPath, { body: content, contentType: 'application/json' }),
+      name => lazyFileSystemServer.getTempPath(name)
     );
     fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
     lazyFileSystemServer = fileSystemServer;
