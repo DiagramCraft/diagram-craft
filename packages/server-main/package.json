@@ -13,10 +13,10 @@
   "author": "Magnus Johansson",
   "dependencies": {
     "h3": "^1.15.6",
-    "lib0": "^0.2.109",
-    "ws": "^8.18.0",
-    "y-protocols": "^1.0.6",
-    "yjs": "^13.6.27"
+    "lib0": "^0.2.117",
+    "ws": "^8.20.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
