@@ -19,19 +19,33 @@ export type ServerModules = {
   collaborationServer: CollaborationServer;
 };
 
+const noopCollaborationServer: CollaborationServer = {
+  bind: () => {},
+  ensureRoom: () => {},
+  close: () => Promise.resolve()
+};
+
 export const createServerModules = (config: ServerMainConfig): ServerModules => {
   const modelServer = new FileBackedModelServer(config.dataDir);
 
-  // Lazy reference resolved before the writer is ever called (writer fires on Y.Doc
-  // updates which only happen after clients connect, well after construction)
-  let fileSystemServer!: FileSystemServer;
-  const collaborationServer = new YjsCollaborationServer(
-    YJS_WEBSOCKET_PATH,
-    (relPath, content) =>
-      fileSystemServer.put(relPath, { body: content, contentType: 'application/json' })
-  );
+  let collaborationServer: CollaborationServer;
+  let fileSystemServer: FileSystemServer;
 
-  fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
+  if (config.collaboration) {
+    // Lazy reference resolved before the writer is ever called (writer fires on Y.Doc
+    // updates which only happen after clients connect, well after construction)
+    let lazyFileSystemServer!: FileSystemServer;
+    collaborationServer = new YjsCollaborationServer(
+      YJS_WEBSOCKET_PATH,
+      (relPath, content) =>
+        lazyFileSystemServer.put(relPath, { body: content, contentType: 'application/json' })
+    );
+    fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
+    lazyFileSystemServer = fileSystemServer;
+  } else {
+    collaborationServer = noopCollaborationServer;
+    fileSystemServer = new LocalFileSystemServer(config.fsRoot);
+  }
   log.debug(`Modules created: fsRoot=${config.fsRoot}`);
 
   if (config.bootstrapData && config.bootstrapSchemas) {

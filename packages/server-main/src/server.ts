@@ -46,7 +46,11 @@ export const startServer = async (config: ServerMainConfig): Promise<RunningServ
   const wsUrl = `ws://${urlHost}:${effectivePort}${YJS_WEBSOCKET_PATH}`;
 
   log.info(`REST server listening at ${httpUrl}`);
-  log.info(`Yjs websocket listening at ${wsUrl}`);
+  if (config.collaboration) {
+    log.info(`Yjs websocket listening at ${wsUrl}`);
+  } else {
+    log.info('Collaboration server disabled');
+  }
 
   return {
     server,
