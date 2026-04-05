@@ -5,7 +5,6 @@ import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
-import { makeUndoableAction } from '@diagram-craft/model/undoManager';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
@@ -26,39 +25,31 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
 
   execute(props: { parentId?: string }): void {
     const document = this.context.model.activeDocument;
-    const diagram = this.context.model.activeDiagram;
-    const undoManager = diagram.undoManager;
-
-    const id = newid();
+    const activeDiagram = this.context.model.activeDiagram;
     const parent = props.parentId ? document.byId(props.parentId) : undefined;
+    const peerDiagrams = parent ? parent.diagrams : document.diagrams;
 
-    undoManager.addAndExecute(
-      makeUndoableAction('Add diagram', {
-        redo: () => {
-          const peerDiagrams = parent ? parent.diagrams : document.diagrams;
-
-          const { diagram: newDiagram } = DocumentBuilder.empty(
-            id,
-            `Sheet ${peerDiagrams.length + 1}`,
-            document
-          );
-
-          newDiagram.viewBox.pan({
-            x: (this.context.userState.panelLeft ?? -1) >= 0 ? -280 : -30,
-            y: -30
-          });
-
-          document.addDiagram(newDiagram, parent);
-
-          this.context.model.activeDiagram = newDiagram;
-        },
-        undo: () => {
-          const d = document.byId(id);
-          assert.present(d);
-          document.removeDiagram(d);
-        }
-      })
+    const { diagram: newDiagram } = DocumentBuilder.empty(
+      newid(),
+      `Sheet ${peerDiagrams.length + 1}`,
+      document
     );
+
+    newDiagram.viewBox.pan({
+      x: (this.context.userState.panelLeft ?? -1) >= 0 ? -280 : -30,
+      y: -30
+    });
+
+    UnitOfWork.executeWithUndo(activeDiagram, 'Add diagram', uow => {
+      document.addDiagram(newDiagram, parent, uow);
+    });
+
+    this.context.model.activeDiagram = newDiagram;
+
+    // The undo action was registered in activeDiagram's undoManager, but the new
+    // diagram is now active. Move it so Ctrl+Z works while on the new diagram.
+    const action = activeDiagram.undoManager.undoableActions.pop();
+    if (action) newDiagram.undoManager.add(action);
   }
 }
 
@@ -78,12 +69,6 @@ export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, 
         ? document.diagrams[0]!
         : this.context.model.activeDiagram;
 
-    const undoManager = diagramToFallbackTo.undoManager;
-
-    const parent = document.getDiagramPath(diagram).at(-2);
-    const peerDiagrams = parent ? parent.diagrams : document.diagrams;
-    const originalIndex = peerDiagrams.indexOf(diagram);
-
     this.context.ui.showDialog(
       new MessageDialogCommand(
         {
@@ -93,15 +78,10 @@ export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, 
           cancelLabel: 'No'
         },
         () => {
-          undoManager.addAndExecute(
-            makeUndoableAction('Delete diagram', {
-              redo: () => {
-                this.context.model.activeDiagram = diagramToFallbackTo;
-                document.removeDiagram(diagram);
-              },
-              undo: () => document.insertDiagram(diagram, originalIndex, parent)
-            })
-          );
+          this.context.model.activeDiagram = diagramToFallbackTo;
+          UnitOfWork.executeWithUndo(diagramToFallbackTo, 'Delete diagram', uow => {
+            document.removeDiagram(diagram, uow);
+          });
         }
       )
     );

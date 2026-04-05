@@ -11,7 +11,7 @@ import { ActionMenuItem } from '../../components/ActionMenuItem';
 import { type ReactElement } from 'react';
 import { useDraggable, useDropTarget } from '../../hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { DiagramReorderUndoableAction } from '@diagram-craft/model/diagramUndoActions';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import styles from './StructureTree.module.css';
 
 type Relation = 'before' | 'after';
@@ -35,9 +35,9 @@ export const useDiagramReorderDnD = <E extends HTMLElement>(node: Diagram) => {
 
       const relation: Relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
 
-      application.model.activeDiagram.undoManager.addAndExecute(
-        new DiagramReorderUndoableAction(document, diagramToMove, node, relation)
-      );
+      UnitOfWork.executeWithUndo(application.model.activeDiagram, 'Reorder diagram', uow => {
+        document.moveDiagram(diagramToMove, { diagram: node, relation }, uow);
+      });
     },
     { split: () => [0.5, 0, 0.5] }
   );
