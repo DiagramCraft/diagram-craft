@@ -3,9 +3,6 @@ import { useEventListener } from '../hooks/useEventListener';
 import { useDiagram } from '../../application';
 import { type Diagram, type DiagramView } from '@diagram-craft/model/diagram';
 import { Select } from '@diagram-craft/app-components/Select';
-import { Toolbar } from '@diagram-craft/app-components/Toolbar';
-import { TbEyeDotted } from 'react-icons/tb';
-import toolbarStyles from '@diagram-craft/app-components/Toolbar.module.css';
 
 const deriveActiveViewId = (diagram: Diagram): string | undefined => {
   const visibleIds = new Set(diagram.layers.visible.map(l => l.id));
@@ -56,11 +53,18 @@ export const ViewSelectorToolbarButton = () => {
   if (views.length === 0) return null;
 
   return (
-    <>
-      <Toolbar.Separator />
-      <div className={toolbarStyles.eButton} data-hover={'false'}>
-        <TbEyeDotted />
-      </div>
+    <div
+      style={{
+        marginLeft: 'auto',
+        marginRight: '0.5rem',
+        width: 'fit-content',
+        display: 'flex',
+        gap: '4px',
+        alignItems: 'center',
+        marginTop: '-5px'
+      }}
+    >
+      <div style={{ fontSize: '11px', color: 'var(--base-fg-dim)' }}>View:</div>
       <div style={{ width: 'fit-content', flexShrink: 0 }}>
         <Select.Root
           value={activeViewId}
@@ -84,6 +88,6 @@ export const ViewSelectorToolbarButton = () => {
           {views.length === 1 && <Select.Item value="all">All</Select.Item>}
         </Select.Root>
       </div>
-    </>
+    </div>
   );
 };
