@@ -15,6 +15,10 @@ const log = createLogger('LocalFileSystemServer');
 const MAX_REQUEST_SIZE = 500 * 1024 * 1024;
 const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/octet-stream'];
 
+const SNAPSHOT_DIR = '.snapshot';
+const SNAPSHOT_AGE_MS = 60 * 60 * 1000; // 1 hour
+const MAX_SNAPSHOTS = 10;
+
 export class LocalFileSystemServer implements FileSystemServer {
   private readonly resolvedRootPath: string;
 
@@ -100,8 +104,47 @@ export class LocalFileSystemServer implements FileSystemServer {
       throw this.badRequest('Path is a directory');
     }
 
+    this.maybeSnapshot(relPath, fullPath);
+
     fs.writeFileSync(fullPath, request.body);
     return { status: 'ok' };
+  }
+
+  private maybeSnapshot(relPath: string, fullPath: string) {
+    if (!fs.existsSync(fullPath)) return;
+
+    const stat = fs.statSync(fullPath);
+    if (Date.now() - stat.mtimeMs < SNAPSHOT_AGE_MS) return;
+
+    const snapshotDir = path.join(
+      this.resolvedRootPath,
+      SNAPSHOT_DIR,
+      path.dirname(relPath) === '.' ? '' : path.dirname(relPath)
+    );
+
+    if (!fs.existsSync(snapshotDir)) {
+      fs.mkdirSync(snapshotDir, { recursive: true });
+    }
+
+    const basename = path.basename(relPath);
+    const timestamp = new Date(stat.mtimeMs).toISOString().replace(/[:.]/g, '-');
+    const snapshotPath = path.join(snapshotDir, `${basename}.${timestamp}`);
+
+    fs.copyFileSync(fullPath, snapshotPath);
+    log.debug(`Snapshot created: ${snapshotPath}`);
+
+    // Prune old snapshots, keeping only MAX_SNAPSHOTS most recent
+    const entries = fs
+      .readdirSync(snapshotDir)
+      .filter(e => e.startsWith(`${basename}.`))
+      .sort();
+
+    if (entries.length > MAX_SNAPSHOTS) {
+      for (const old of entries.slice(0, entries.length - MAX_SNAPSHOTS)) {
+        fs.rmSync(path.join(snapshotDir, old));
+        log.debug(`Snapshot pruned: ${old}`);
+      }
+    }
   }
 
   private badRequest(message: string) {
