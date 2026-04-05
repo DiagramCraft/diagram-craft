@@ -12,6 +12,9 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
+    "@diagram-craft/collaboration": "workspace:*",
+    "@diagram-craft/model": "workspace:*",
+    "@diagram-craft/utils": "workspace:*",
     "h3": "^1.15.6",
     "lib0": "^0.2.117",
     "ws": "^8.20.0",

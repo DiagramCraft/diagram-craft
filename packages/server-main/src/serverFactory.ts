@@ -18,7 +18,17 @@ export type ServerModules = {
 
 export const createServerModules = (config: ServerMainConfig): ServerModules => {
   const modelServer = new FileBackedModelServer(config.dataDir);
-  const collaborationServer = new YjsCollaborationServer(YJS_WEBSOCKET_PATH);
+
+  // Lazy reference resolved before the writer is ever called (writer fires on Y.Doc
+  // updates which only happen after clients connect, well after construction)
+  let fileSystemServer!: FileSystemServer;
+  const collaborationServer = new YjsCollaborationServer(
+    YJS_WEBSOCKET_PATH,
+    (relPath, content) =>
+      fileSystemServer.put(relPath, { body: content, contentType: 'application/json' })
+  );
+
+  fileSystemServer = new LocalFileSystemServer(config.fsRoot, collaborationServer);
 
   if (config.bootstrapData && config.bootstrapSchemas) {
     modelServer.bootstrap?.({
@@ -43,7 +53,7 @@ export const createServerModules = (config: ServerMainConfig): ServerModules => 
     modelServer,
     aiServer,
     aiDefaultModel: config.openrouterModel,
-    fileSystemServer: new LocalFileSystemServer(config.fsRoot, collaborationServer),
+    fileSystemServer,
     collaborationServer
   };
 };

@@ -8,6 +8,7 @@ import type { createServer } from 'node:http';
 import type { Socket } from 'node:net';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { CollaborationServer } from '../collaborationServer';
+import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave';
 
 export const YJS_WEBSOCKET_PATH = '/ws';
 const FILESYSTEM_API_PATH_PREFIX = '/api/fs/';
@@ -88,8 +89,9 @@ class WSSharedDoc extends Y.Doc {
 }
 
 const docs = new Map<string, WSSharedDoc>();
+const autoSaves = new Map<string, DiagramAutoSave>();
 
-const getYDoc = (docName: string) => {
+const getOrCreateYDoc = (docName: string) => {
   const existing = docs.get(docName);
   if (existing) {
     return existing;
@@ -111,6 +113,8 @@ const closeConn = (doc: WSSharedDoc, conn: WebSocket) => {
   if (doc.conns.size === 0) {
     docs.delete(doc.name);
     doc.destroy();
+    autoSaves.get(doc.name)?.dispose();
+    autoSaves.delete(doc.name);
   }
 
   conn.close();
@@ -162,7 +166,7 @@ const messageListener = (conn: WebSocket, doc: WSSharedDoc, message: Uint8Array)
 
 const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
   conn.binaryType = 'arraybuffer';
-  const doc = getYDoc(docName);
+  const doc = getOrCreateYDoc(docName);
   doc.conns.set(conn, new Set());
 
   conn.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
@@ -230,7 +234,10 @@ export class YjsCollaborationServer implements CollaborationServer {
     head: Buffer
   ) => void;
 
-  constructor(private readonly basePath = YJS_WEBSOCKET_PATH) {
+  constructor(
+    private readonly basePath = YJS_WEBSOCKET_PATH,
+    private readonly autoSaveWriter?: AutoSaveWriter
+  ) {
     this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
       setupYjsWebSocketConnection(connection, getDocName(request.url ?? this.basePath, this.basePath));
     });
@@ -262,10 +269,21 @@ export class YjsCollaborationServer implements CollaborationServer {
   }
 
   ensureRoom(name: string) {
-    getYDoc(normalizeDocName(name));
+    const normalized = normalizeDocName(name);
+    const isNew = !docs.has(normalized);
+    const doc = getOrCreateYDoc(normalized);
+
+    if (isNew && this.autoSaveWriter && normalized.endsWith('.json')) {
+      autoSaves.set(normalized, new DiagramAutoSave(doc, normalized, this.autoSaveWriter));
+    }
   }
 
   close() {
+    for (const autoSave of autoSaves.values()) {
+      autoSave.dispose();
+    }
+    autoSaves.clear();
+
     if (this.boundServer) {
       this.boundServer.off('upgrade', this.upgradeHandler);
       this.boundServer = undefined;
