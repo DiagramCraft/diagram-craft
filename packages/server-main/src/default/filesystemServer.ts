@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createError } from 'h3';
+import { newid } from '@diagram-craft/utils/id';
 import type { CollaborationServer } from '../collaborationServer';
 import { createLogger } from '../logger';
 import type {
@@ -18,6 +19,8 @@ const ALLOWED_CONTENT_TYPES = ['application/json', 'text/plain', 'application/oc
 const SNAPSHOT_DIR = '.snapshot';
 const SNAPSHOT_AGE_MS = 60 * 60 * 1000; // 1 hour
 const MAX_SNAPSHOTS = 10;
+
+const TEMP_DIR = '.temp';
 
 export class LocalFileSystemServer implements FileSystemServer {
   private readonly resolvedRootPath: string;
@@ -108,6 +111,17 @@ export class LocalFileSystemServer implements FileSystemServer {
 
     fs.writeFileSync(fullPath, request.body);
     return { status: 'ok' };
+  }
+
+  getTempPath(name: string): string {
+    const tempDir = path.join(this.resolvedRootPath, TEMP_DIR);
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    const ext = path.extname(name);
+    const base = path.basename(name, ext);
+    const uniqueId = newid();
+    return `${TEMP_DIR}/${base}-${uniqueId}${ext}`;
   }
 
   private maybeSnapshot(relPath: string, fullPath: string) {

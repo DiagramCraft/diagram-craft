@@ -29,4 +29,5 @@ export type FileSystemPutResult = {
 export interface FileSystemServer {
   get(path: string): Promise<FileSystemGetResult>;
   put(path: string, request: FileSystemWriteRequest): Promise<FileSystemPutResult>;
+  getTempPath(name: string): string;
 }

@@ -49,9 +49,10 @@ export class DiagramAutoSave {
   constructor(
     private readonly yDoc: Y.Doc,
     relPath: string,
+    tempRelPath: string,
     private readonly writer: AutoSaveWriter
   ) {
-    this.tempRelPath = relPath.replace(/\.json$/, '.temp.json');
+    this.tempRelPath = tempRelPath;
     log.debug(`Setting up auto-save for ${relPath} → ${this.tempRelPath}`);
 
     const debouncedSave = debounce(() => {
