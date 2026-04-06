@@ -33,8 +33,8 @@ type StylesheetTypeImplementations = {
   edge: EdgeStylesheet;
 };
 
-type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style'> };
-type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'>;
+type TextStyleProps = { text: Omit<NodeProps['text'], 'text' | 'style' | 'color'> };
+type NodeStyleProps = Omit<NodeProps, 'name' | 'text' | 'data' | 'style'> & { text?: { color?: string } };
 type EdgeStyleProps = Omit<EdgeProps, 'name' | 'text' | 'data' | 'style'>;
 
 export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements UOWTrackable {
@@ -195,14 +195,18 @@ export abstract class Stylesheet<P = Partial<NodeProps | EdgeProps>> implements 
       return p as P;
     } else if (this.type === 'text') {
       const p = deepClone(props) as NodeProps;
-      // TODO: Not sure why this is needed?
-      /*if (p.text && Object.keys(p.text).length === 0) {
-        delete p.text;
-      }*/
+      if (p.text) {
+        delete (p.text as Record<string, unknown>).color;
+      }
       return { text: p.text } as P;
     } else {
+      // node: preserve only text.color
       const p = deepClone(props) as NodeProps;
+      const textColor = p.text?.color;
       delete p.text;
+      if (textColor !== undefined) {
+        p.text = { color: textColor };
+      }
       return p as P;
     }
   }

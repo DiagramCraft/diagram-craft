@@ -28,7 +28,6 @@ export const NodeTextEditor: Editor = props => {
       isItalic={makeProperty($p, 'text.italic', nodeDefaults, onChange)}
       textDecoration={makeProperty($p, 'text.textDecoration', nodeDefaults, onChange)}
       textTransform={makeProperty($p, 'text.textTransform', nodeDefaults, onChange)}
-      color={makeProperty($p, 'text.color', nodeDefaults, onChange)}
       align={makeProperty($p, 'text.align', nodeDefaults, onChange)}
       valign={makeProperty($p, 'text.valign', nodeDefaults, onChange)}
       top={makeProperty($p, 'text.top', nodeDefaults, onChange)}

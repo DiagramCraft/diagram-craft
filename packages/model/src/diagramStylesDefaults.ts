@@ -13,6 +13,9 @@ export const DEFAULT_NODE_STYLES: Record<
       },
       stroke: {
         color: 'var(--canvas-fg)'
+      },
+      text: {
+        color: 'var(--canvas-fg)'
       }
     },
     type: 'node'
@@ -27,6 +30,9 @@ export const DEFAULT_NODE_STYLES: Record<
       },
       stroke: {
         enabled: false
+      },
+      text: {
+        color: 'var(--canvas-fg)'
       }
     }
   }
@@ -41,7 +47,6 @@ export const DEFAULT_TEXT_STYLES: Record<
     name: 'Default',
     props: {
       text: {
-        color: 'var(--canvas-fg)',
         fontSize: 10,
         font: 'sans-serif',
         top: 0,
@@ -56,7 +61,6 @@ export const DEFAULT_TEXT_STYLES: Record<
     name: 'H1',
     props: {
       text: {
-        color: 'var(--canvas-fg)',
         fontSize: 20,
         bold: true,
         font: 'sans-serif',

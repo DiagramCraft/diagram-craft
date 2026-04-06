@@ -40,7 +40,7 @@ type FormProps = {
   isItalic: Property<boolean>;
   textDecoration: Property<'none' | 'underline' | 'line-through' | 'overline'>;
   textTransform: Property<'none' | 'uppercase' | 'lowercase' | 'capitalize'>;
-  color: Property<string>;
+  color?: Property<string>;
   top: Property<number>;
   left: Property<number>;
   bottom: Property<number>;
@@ -199,26 +199,30 @@ export const NodeTextPanelForm = ({
           />
         </KeyValueTable.Value>
 
-        <KeyValueTable.Label>Color:</KeyValueTable.Label>
-        <KeyValueTable.Value>
-          <PropertyEditor
-            property={color}
-            render={props => (
-              <ColorPicker
-                {...props}
-                extraPalettes={{ Stylesheet: palette }}
-                palette={$cfg.palette.primary}
-                customPalette={$d.document.customPalette}
-                onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
-                special={{
-                  'stroke': { label: 'Stroke Color', icon: <TbLine /> },
-                  'var(--cmp-fg)': { label: 'Foreground', icon: <TbPencil /> }
-                }}
+        {color && (
+          <>
+            <KeyValueTable.Label>Color:</KeyValueTable.Label>
+            <KeyValueTable.Value>
+              <PropertyEditor
+                property={color}
+                render={props => (
+                  <ColorPicker
+                    {...props}
+                    extraPalettes={{ Stylesheet: palette }}
+                    palette={$cfg.palette.primary}
+                    customPalette={$d.document.customPalette}
+                    onChangeCustomPalette={(idx, v) => $d.document.customPalette.setColor(idx, v)}
+                    special={{
+                      'stroke': { label: 'Stroke Color', icon: <TbLine /> },
+                      'var(--cmp-fg)': { label: 'Foreground', icon: <TbPencil /> }
+                    }}
+                  />
+                )}
+                renderValue={props => <ColorPreview {...props} />}
               />
-            )}
-            renderValue={props => <ColorPreview {...props} />}
-          />
-        </KeyValueTable.Value>
+            </KeyValueTable.Value>
+          </>
+        )}
 
         <KeyValueTable.Label>Align:</KeyValueTable.Label>
         <KeyValueTable.Value stack={'horizontal'}>
@@ -427,7 +431,7 @@ export const NodeTextPanel = (props: Props) => {
         width={width}
         palette={unique(
           $d.selection.nodes.flatMap(
-            n => $d.document.styles.getTextStyle(n.metadata.textStyle)?.strokeColors ?? []
+            n => $d.document.styles.getNodeStyle(n.metadata.style)?.strokeColors ?? []
           )
         )}
       />

@@ -9,12 +9,43 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
 import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
 import { StylesheetPaletteEditor } from './StylesheetPaletteEditor';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { useConfiguration } from '../../context/ConfigurationContext';
+import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { ColorPicker } from '../../components/ColorPicker';
+
+const NodeTextColorEditor: Editor = ({ props, onChange }) => {
+  const $p = props as NodeProps;
+  const diagram = useDiagram();
+  const $cfg = useConfiguration();
+
+  return (
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value>
+        <ColorPicker
+          value={$p.text?.color ?? (nodeDefaults.get('text.color') as string)}
+          palette={$cfg.palette.primary}
+          customPalette={diagram.document.customPalette}
+          onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+          onChange={c => {
+            if (!$p.text) $p.text = {};
+            $p.text.color = c;
+            onChange();
+          }}
+        />
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
+  );
+};
 
 export const STYLESHEET_EDITORS = {
   text: [{ name: 'Text', editor: NodeTextEditor }],
   node: [
     { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
     { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
+    { name: 'Text Color', editor: NodeTextColorEditor },
     { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
     { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
     { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },

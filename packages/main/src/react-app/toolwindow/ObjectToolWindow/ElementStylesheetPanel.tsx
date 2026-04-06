@@ -169,14 +169,20 @@ export const ElementStylesheetPanel = (props: Props) => {
                             const commonProps = getCommonProps(
                               $d.selection.elements.map(e => e.editProps)
                             ) as NodeProps & EdgeProps;
+                            const snapshotProps = isText
+                              ? { text: { ...commonProps.text, color: undefined } }
+                              : {
+                                  ...commonProps,
+                                  text: commonProps.text?.color
+                                    ? { color: commonProps.text.color }
+                                    : undefined
+                                };
                             const s = Stylesheet.fromSnapshot(
                               isText ? 'text' : isNode($d.selection.elements[0]) ? 'node' : 'edge',
                               {
                                 id,
                                 name: v,
-                                props: {
-                                  ...(isText ? { text: commonProps.text } : commonProps)
-                                }
+                                props: snapshotProps
                               },
                               $d.document.styles.crdt.factory,
                               $d.document.styles
@@ -216,7 +222,14 @@ export const ElementStylesheetPanel = (props: Props) => {
                               $d.selection.elements.map(e => e.editProps)
                             ) as NodeProps & EdgeProps;
 
-                            const elementProps = isText ? { text: commonProps.text } : commonProps;
+                            const elementProps = isText
+                              ? { text: { ...commonProps.text, color: undefined } }
+                              : {
+                                  ...commonProps,
+                                  text: commonProps.text?.color
+                                    ? { color: commonProps.text.color }
+                                    : undefined
+                                };
                             const parentProps = parentStylesheet.props as Record<string, unknown>;
                             const diffProps = computeChildStylesheetProps(
                               elementProps as Record<string, unknown>,
