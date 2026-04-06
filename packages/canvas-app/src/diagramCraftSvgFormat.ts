@@ -14,7 +14,8 @@ export const generateDiagramCraftSvg = async (context: ActionContext): Promise<s
 
   // Serialize diagram document and embed as base64 in <metadata>
   const docJson = await serializeDiagramDocument(context.model.activeDocument);
-  const base64Json = btoa(unescape(encodeURIComponent(JSON.stringify(docJson))));
+  const encoded = new TextEncoder().encode(JSON.stringify(docJson));
+  const base64Json = btoa(Array.from(encoded, b => String.fromCharCode(b)).join(''));
 
   const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
   const dc = document.createElementNS(DC_NS, 'diagramcraft');
@@ -31,6 +32,7 @@ export const fileLoaderDiagramCraftSvg: () => Promise<FileLoader> =
     const svgDoc = parser.parseFromString(content, 'image/svg+xml');
     const el = svgDoc.querySelector('metadata > diagramcraft');
     if (!el?.textContent) throw new Error('Not a valid .diagramCraft.svg file');
-    const json = JSON.parse(decodeURIComponent(escape(atob(el.textContent.trim()))));
+    const decoded = Uint8Array.from(atob(el.textContent.trim()), c => c.charCodeAt(0));
+    const json = JSON.parse(new TextDecoder().decode(decoded));
     return deserializeDiagramDocument(json, doc, diagramFactory);
   };
