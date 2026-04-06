@@ -46,30 +46,6 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    // REVIEW: Is this used still? Or did we replace this with file:saveAsDialog
-    ipcMain.handle('file:saveAs', async (_event, { url, data }) => {
-      try {
-        const result = await dialog.showSaveDialog(mainWindow, {
-          defaultPath: url,
-          filters: [
-            { name: 'Diagram Files', extensions: ['dcd'] },
-            { name: 'All Files', extensions: ['*'] }
-          ]
-        });
-
-        if (!result.canceled && result.filePath) {
-          BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePath);
-          app.addRecentDocument(result.filePath);
-          writeFileSync(result.filePath, data);
-          return result.filePath;
-        }
-
-        return undefined;
-      } catch (_error) {
-        return undefined;
-      }
-    });
-
     ipcMain.handle('file:saveAsDialog', async (_event, { url }) => {
       try {
         const result = await dialog.showSaveDialog(mainWindow, {

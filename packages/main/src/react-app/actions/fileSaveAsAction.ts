@@ -5,7 +5,7 @@ import { AppConfig } from '../../appConfig';
 import { FileDialog } from '../FileDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { $tStr } from '@diagram-craft/utils/localize';
-import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/actions/exportAction';
+import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 
 export const fileSaveAsActions = (application: Application) =>
   AppConfig.get().filesystem.provider === 'none'

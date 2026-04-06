@@ -4,6 +4,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import { fileLoaderDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
 
 const random = new Random(Date.now());
@@ -242,15 +243,7 @@ export const defaultAppConfig: AppConfig = {
       '.dcd': async () => (content, doc, diagramFactory) =>
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
 
-      // REVIEW: Can we extract this logic to a separate file, let's say diagramCraftSvgFormat.ts
-      '.diagramCraft.svg': async () => (content, doc, diagramFactory) => {
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(content, 'image/svg+xml');
-        const el = svgDoc.querySelector('metadata > diagramcraft');
-        if (!el?.textContent) throw new Error('Not a valid .diagramCraft.svg file');
-        const json = JSON.parse(decodeURIComponent(escape(atob(el.textContent.trim()))));
-        return deserializeDiagramDocument(json, doc, diagramFactory);
-      }
+      '.diagramCraft.svg': fileLoaderDiagramCraftSvg
     }
   },
   state: {

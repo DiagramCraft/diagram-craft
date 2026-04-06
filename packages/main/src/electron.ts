@@ -13,7 +13,7 @@ import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api'
 import { UserState } from './UserState';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
-import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/actions/exportAction';
+import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };

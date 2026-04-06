@@ -4,7 +4,6 @@ import { isEdge } from '@diagram-craft/model/diagramElement';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import { $tStr } from '@diagram-craft/utils/localize';
-import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context),
@@ -37,10 +36,10 @@ const downloadSVG = (svgData: string, filename = 'untitled.svg') => {
   a.remove();
 };
 
-const MARGIN = 50;
+export const SVG_EXPORT_MARGIN = 50;
 const SCALE = 2;
 
-const prepareSvgForExport = async (context: ActionContext) => {
+export const prepareSvgForExport = async (context: ActionContext) => {
   const bounds = Box.boundingBox(
     context.model.activeDiagram.visibleElements().flatMap(e => {
       return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
@@ -67,7 +66,7 @@ const prepareSvgForExport = async (context: ActionContext) => {
   );
   clonedSvg.setAttribute(
     'viewBox',
-    `${bounds.x - MARGIN} ${bounds.y - MARGIN} ${bounds.w + 2 * MARGIN} ${bounds.h + 2 * MARGIN}`
+    `${bounds.x - SVG_EXPORT_MARGIN} ${bounds.y - SVG_EXPORT_MARGIN} ${bounds.w + 2 * SVG_EXPORT_MARGIN} ${bounds.h + 2 * SVG_EXPORT_MARGIN}`
   );
 
   // Cleanup some elements that should not be part of the export
@@ -98,28 +97,6 @@ const prepareSvgForExport = async (context: ActionContext) => {
   }
 
   return { clonedSvg, bounds };
-};
-
-// REVIEW: Can we move this to separate file, let's say diagramCraftSvgFormat.ts
-export const generateDiagramCraftSvg = async (context: ActionContext): Promise<string> => {
-  const { clonedSvg, bounds } = await prepareSvgForExport(context);
-
-  clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
-  clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
-
-  // Serialize diagram document and embed as base64 in <metadata>
-  const docJson = await serializeDiagramDocument(context.model.activeDocument);
-  const base64Json = btoa(unescape(encodeURIComponent(JSON.stringify(docJson))));
-
-  const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
-
-  // REVIEW: Please change this namespace to https://github.com/DiagramCraft/diagram-craft/ns
-  const dc = document.createElementNS('https://diagramcraft.io/ns', 'diagramcraft');
-  dc.textContent = base64Json;
-  metadata.appendChild(dc);
-  clonedSvg.insertBefore(metadata, clonedSvg.firstChild);
-
-  return new XMLSerializer().serializeToString(clonedSvg);
 };
 
 class ExportImageAction extends AbstractAction {
@@ -178,8 +155,8 @@ class ExportSVGAction extends AbstractAction {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
 
-      clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
-      clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
+      clonedSvg.setAttribute('width', (bounds.w + 2 * SVG_EXPORT_MARGIN).toString());
+      clonedSvg.setAttribute('height', (bounds.h + 2 * SVG_EXPORT_MARGIN).toString());
 
       const svgData = new XMLSerializer().serializeToString(clonedSvg);
       downloadSVG(svgData, 'diagram.svg');
