@@ -7,7 +7,7 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
-import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+import { makeNodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
 import { StylesheetPaletteEditor } from './StylesheetPaletteEditor';
 import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { useConfiguration } from '../../context/ConfigurationContext';
@@ -41,11 +41,11 @@ const NodeTextColorEditor: Editor = ({ props, onChange }) => {
 };
 
 export const STYLESHEET_EDITORS = {
-  text: [{ name: 'Text', editor: NodeTextEditor }],
+  text: [{ name: 'Text', editor: makeNodeTextEditor(false) }],
   node: [
     { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
     { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
-    { name: 'Text Color', editor: NodeTextColorEditor },
+    { name: 'Text', editor: NodeTextColorEditor },
     { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
     { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
     { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
@@ -81,7 +81,11 @@ export const ElementStylesheetDialog = (props: Props) => {
       open={props.open}
       title={name}
       buttons={[
-        { type: 'default', label: 'Save', onClick: () => props.onSave(data, fillColors, strokeColors) },
+        {
+          type: 'default',
+          label: 'Save',
+          onClick: () => props.onSave(data, fillColors, strokeColors)
+        },
         { type: 'cancel', label: 'Cancel', onClick: props.onClose }
       ]}
       onClose={props.onClose}
