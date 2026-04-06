@@ -1,4 +1,5 @@
 import type { Diagram } from '@diagram-craft/model/diagram';
+import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { CanvasSnapProvider } from './canvasSnapProvider';
 import { NodeSnapProvider } from './nodeSnapProvider';
 import { NodeDistanceSnapProvider } from './nodeDistanceSnapProvider';
@@ -302,41 +303,44 @@ export class SnapManager {
     this.enabled = config.enabled;
   }
 
-  static create(diagram: Diagram): SnapManager {
+  static create(diagram: Diagram, potentialParent?: DiagramNode): SnapManager {
     const snapConfig = getSnapConfig(diagram);
 
-    const selection = diagram.selection.nodes;
     const selectionIds = new Set(diagram.selection.elements.map(e => e.id));
 
-    const firstParent = selection[0]?.parent;
-    if (firstParent && selection.every(n => n.parent === firstParent)) {
-      // When moving group members, they should snap to:
-      // 1. Other members of the same group
-      // 2. Direct members of any parent group
-      // 3. Direct members of the diagram itself (top-level elements)
+    // Determine the effective parent: prefer the hovered container, fall back to actual parent
+    const firstActualParent = diagram.selection.nodes[0]?.parent;
+    const effectiveParent =
+      potentialParent ??
+      (diagram.selection.nodes.every(n => n.parent === firstActualParent)
+        ? firstActualParent
+        : undefined);
 
+    if (effectiveParent) {
+      // Moving within / into a container → snap to siblings + ancestor-level nodes
       const eligibleNodePredicate = (id: string) => {
         if (selectionIds.has(id)) return false;
 
         const element = diagram.lookup(id);
         if (!element) return false;
 
-        // 1. Other members of the same group
-        if (element.parent === firstParent) return true;
+        // 1. Siblings in the effective parent
+        if (element.parent === effectiveParent) return true;
 
         // 2. Direct members of any parent group (traverse up the hierarchy)
-        let currentParent = firstParent.parent;
+        let currentParent = effectiveParent.parent;
         while (currentParent) {
           if (element.parent === currentParent) return true;
           currentParent = currentParent.parent;
         }
 
-        // 3. Direct members of the diagram itself (top-level elements)
+        // 3. Top-level elements
         return !element.parent;
       };
 
       return new SnapManager(diagram, eligibleNodePredicate, snapConfig);
     } else {
+      // Top-level move (or dragged outside all containers) → snap to top-level only
       return new SnapManager(
         diagram,
         id => !selectionIds.has(id) && !diagram.lookup(id)?.parent,

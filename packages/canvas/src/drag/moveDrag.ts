@@ -166,7 +166,11 @@ export abstract class AbstractMoveDrag extends Drag {
     if (isFreeDrag(modifiers)) {
       SnapMarkers.get(this.diagram).clear();
     } else {
-      const snapManager = SnapManager.create(this.diagram);
+      const potentialParent =
+        this.#currentElement && isNode(this.#currentElement) && this.#currentElement.getDefinition().onDrop
+          ? this.#currentElement
+          : undefined;
+      const snapManager = SnapManager.create(this.diagram, potentialParent);
 
       const result = snapManager.snapMove(WritableBox.asBox(newBounds), snapDirections);
       SnapMarkers.get(this.diagram).set(result.markers);
