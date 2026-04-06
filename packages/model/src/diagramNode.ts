@@ -509,12 +509,24 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       {}
     );
 
+    // Exclude text.color from textStyleProps — color is owned by the node stylesheet
+    const filteredTextProps =
+      textStyleProps && textStyleProps.text
+        ? { ...textStyleProps, text: { ...textStyleProps.text, color: undefined } }
+        : textStyleProps;
+
+    // Exclude text.color from ruleTextStyleProps for the same reason
+    const filteredRuleTextProps =
+      ruleTextStyleProps && ruleTextStyleProps.text
+        ? { ...ruleTextStyleProps, text: { ...ruleTextStyleProps.text, color: undefined } }
+        : ruleTextStyleProps;
+
     const propsForEditing = deepMerge<NodeProps>(
       {},
       styleProps ?? {},
-      textStyleProps ?? {},
+      filteredTextProps ?? {},
       ruleStyleProps,
-      ruleTextStyleProps,
+      filteredRuleTextProps,
       parentProps,
       this.#props.get() as NodeProps
     ) as DeepRequired<NodeProps>;

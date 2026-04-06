@@ -7,14 +7,47 @@ import { deepClone } from '@diagram-craft/utils/object';
 import { useRedraw } from '../../hooks/useRedraw';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
-import { NodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
+import { makeNodeTextEditor } from '../../components/RuleEditorDialog/NodeTextEditor';
 import { StylesheetPaletteEditor } from './StylesheetPaletteEditor';
+import { nodeDefaults } from '@diagram-craft/model/diagramDefaults';
+import { useConfiguration } from '../../context/ConfigurationContext';
+import { useDiagram } from '../../../application';
+import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { ColorPicker } from '../../components/ColorPicker';
+import { TbLine } from 'react-icons/tb';
+
+const NodeTextColorEditor: Editor = ({ props, onChange }) => {
+  const $p = props as NodeProps;
+  const diagram = useDiagram();
+  const $cfg = useConfiguration();
+
+  return (
+    <KeyValueTable.Root>
+      <KeyValueTable.Label>Color:</KeyValueTable.Label>
+      <KeyValueTable.Value>
+        <ColorPicker
+          value={$p.text?.color ?? (nodeDefaults.get('text.color') as string)}
+          palette={$cfg.palette.primary}
+          customPalette={diagram.document.customPalette}
+          onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+          special={{ stroke: { label: 'Stroke Color', icon: <TbLine /> } }}
+          onChange={c => {
+            if (!$p.text) $p.text = {};
+            $p.text.color = c;
+            onChange();
+          }}
+        />
+      </KeyValueTable.Value>
+    </KeyValueTable.Root>
+  );
+};
 
 export const STYLESHEET_EDITORS = {
-  text: [{ name: 'Text', editor: NodeTextEditor }],
+  text: [{ name: 'Text', editor: makeNodeTextEditor(false) }],
   node: [
     { name: 'Fill', editor: NODE_EDITORS['fill'].editor },
     { name: 'Stroke', editor: NODE_EDITORS['stroke'].editor },
+    { name: 'Text', editor: NodeTextColorEditor },
     { name: 'Shadow', editor: NODE_EDITORS['shadow'].editor },
     { name: 'Effects', editor: NODE_EDITORS['effects'].editor },
     { name: 'Custom', editor: NODE_EDITORS['nodeCustom'].editor },
@@ -50,7 +83,11 @@ export const ElementStylesheetDialog = (props: Props) => {
       open={props.open}
       title={name}
       buttons={[
-        { type: 'default', label: 'Save', onClick: () => props.onSave(data, fillColors, strokeColors) },
+        {
+          type: 'default',
+          label: 'Save',
+          onClick: () => props.onSave(data, fillColors, strokeColors)
+        },
         { type: 'cancel', label: 'Cancel', onClick: props.onClose }
       ]}
       onClose={props.onClose}

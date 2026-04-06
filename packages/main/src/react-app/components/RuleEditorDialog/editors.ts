@@ -3,7 +3,7 @@ import { NodeFillEditor } from './NodeFillEditor';
 import { NodeStrokeEditor } from './NodeStrokeEditor';
 import { ElementShadowEditor } from './ElementShadowEditor';
 import { NodeEffectsEditor } from './NodeEffectsEditor';
-import { NodeTextEditor } from './NodeTextEditor';
+import { makeNodeTextEditor } from './NodeTextEditor';
 import { NodeAdvancedPropertiesEditor } from './NodeAdvancedPropertiesEditor';
 import { NodeCustomPropertiesEditor } from './NodeCustomPropertiesEditor';
 import { EdgeCustomPropertiesEditor } from './EdgeCustomPropertiesEditor';
@@ -68,7 +68,7 @@ export const NODE_EDITORS: NodeEditorRegistry = {
   },
   text: {
     name: 'Text',
-    editor: NodeTextEditor,
+    editor: makeNodeTextEditor(true),
     pick: (props: NodeProps | EdgeProps) => ({
       text: (props as NodeProps).text
     })
