@@ -100,6 +100,7 @@ const prepareSvgForExport = async (context: ActionContext) => {
   return { clonedSvg, bounds };
 };
 
+// REVIEW: Can we move this to separate file, let's say diagramCraftSvgFormat.ts
 export const generateDiagramCraftSvg = async (context: ActionContext): Promise<string> => {
   const { clonedSvg, bounds } = await prepareSvgForExport(context);
 
@@ -111,6 +112,8 @@ export const generateDiagramCraftSvg = async (context: ActionContext): Promise<s
   const base64Json = btoa(unescape(encodeURIComponent(JSON.stringify(docJson))));
 
   const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
+
+  // REVIEW: Please change this namespace to https://github.com/DiagramCraft/diagram-craft/ns
   const dc = document.createElementNS('https://diagramcraft.io/ns', 'diagramcraft');
   dc.textContent = base64Json;
   metadata.appendChild(dc);
@@ -173,8 +176,13 @@ class ExportSVGAction extends AbstractAction {
 
   execute(): void {
     const run = async () => {
-      const svgData = await generateDiagramCraftSvg(this.context);
-      downloadSVG(svgData, 'diagram.diagramCraft.svg');
+      const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
+
+      clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
+      clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
+
+      const svgData = new XMLSerializer().serializeToString(clonedSvg);
+      downloadSVG(svgData, 'diagram.svg');
     };
     run();
   }
