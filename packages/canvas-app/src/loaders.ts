@@ -17,7 +17,14 @@ export const fileLoaderRegistry: Record<string, () => Promise<FileLoader>> = {};
 /* Now some utilities to make it easier to use the FileLoader infrastructure */
 
 export const getFileLoaderForUrl = (url: string) => {
-  const ext = url.split('.').pop();
+  // Try compound extension first (e.g. ".diagramCraft.svg")
+  const filename = url.split('/').pop() ?? url;
+  const dotIdx = filename.indexOf('.');
+  if (dotIdx !== -1) {
+    const compoundExt = filename.slice(dotIdx); // e.g. ".diagramCraft.svg"
+    if (fileLoaderRegistry[compoundExt]) return fileLoaderRegistry[compoundExt];
+  }
+  const ext = filename.split('.').pop();
   return fileLoaderRegistry[`.${ext}`];
 };
 

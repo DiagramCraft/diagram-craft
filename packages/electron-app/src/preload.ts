@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fileSave: (url: string, data: string) => ipcRenderer.invoke('file:save', { url, data }),
   fileSaveAs: (url: string | undefined, data: string) =>
     ipcRenderer.invoke('file:saveAs', { url, data }),
+  fileSaveAsDialog: (url: string | undefined) =>
+    ipcRenderer.invoke('file:saveAsDialog', { url }),
   fileLoad: (url: string) => ipcRenderer.invoke('file:load', url),
 
   setMenu: (items: MenuEntry[], keybindings: Record<string, string>) =>

@@ -4,6 +4,7 @@ import { isEdge } from '@diagram-craft/model/diagramElement';
 import { blobToDataURL } from '@diagram-craft/utils/blobUtils';
 import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 
 export const exportActions = (context: ActionContext) => ({
   FILE_EXPORT_IMAGE: new ExportImageAction(context),
@@ -99,6 +100,25 @@ const prepareSvgForExport = async (context: ActionContext) => {
   return { clonedSvg, bounds };
 };
 
+export const generateDiagramCraftSvg = async (context: ActionContext): Promise<string> => {
+  const { clonedSvg, bounds } = await prepareSvgForExport(context);
+
+  clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
+  clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
+
+  // Serialize diagram document and embed as base64 in <metadata>
+  const docJson = await serializeDiagramDocument(context.model.activeDocument);
+  const base64Json = btoa(unescape(encodeURIComponent(JSON.stringify(docJson))));
+
+  const metadata = document.createElementNS('http://www.w3.org/2000/svg', 'metadata');
+  const dc = document.createElementNS('https://diagramcraft.io/ns', 'diagramcraft');
+  dc.textContent = base64Json;
+  metadata.appendChild(dc);
+  clonedSvg.insertBefore(metadata, clonedSvg.firstChild);
+
+  return new XMLSerializer().serializeToString(clonedSvg);
+};
+
 class ExportImageAction extends AbstractAction {
   name = $tStr('action.FILE_EXPORT_IMAGE.name', 'Export as Image');
 
@@ -153,13 +173,8 @@ class ExportSVGAction extends AbstractAction {
 
   execute(): void {
     const run = async () => {
-      const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
-
-      clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
-      clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
-
-      const svgData = new XMLSerializer().serializeToString(clonedSvg);
-      downloadSVG(svgData, 'diagram.svg');
+      const svgData = await generateDiagramCraftSvg(this.context);
+      downloadSVG(svgData, 'diagram.diagramCraft.svg');
     };
     run();
   }

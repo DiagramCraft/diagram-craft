@@ -5,6 +5,7 @@ import { AppConfig } from '../../appConfig';
 import { FileDialog } from '../FileDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/actions/exportAction';
 
 export const fileSaveAsActions = (application: Application) =>
   AppConfig.get().filesystem.provider === 'none'
@@ -75,13 +76,22 @@ async function checkFileExists(path: string): Promise<boolean> {
 }
 
 async function performSave(context: Application, path: string): Promise<void> {
-  const serialized = JSON.stringify(await serializeDiagramDocument(context.model.activeDocument));
+  let body: string;
+  let contentType: string;
+
+  if (path.endsWith('.diagramCraft.svg')) {
+    body = await generateDiagramCraftSvg(context);
+    contentType = 'image/svg+xml';
+  } else {
+    body = JSON.stringify(await serializeDiagramDocument(context.model.activeDocument));
+    contentType = 'application/json';
+  }
 
   const response = await fetch(`${AppConfig.get().filesystem.endpoint}/api/fs/${path}`, {
     method: 'PUT',
-    body: serialized,
+    body,
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': contentType
     }
   });
 

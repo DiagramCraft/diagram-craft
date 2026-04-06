@@ -240,7 +240,16 @@ export const defaultAppConfig: AppConfig = {
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
 
       '.dcd': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory)
+        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
+
+      '.diagramCraft.svg': async () => (content, doc, diagramFactory) => {
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(content, 'image/svg+xml');
+        const el = svgDoc.querySelector('metadata > diagramcraft');
+        if (!el?.textContent) throw new Error('Not a valid .diagramCraft.svg file');
+        const json = JSON.parse(decodeURIComponent(escape(atob(el.textContent.trim()))));
+        return deserializeDiagramDocument(json, doc, diagramFactory);
+      }
     }
   },
   state: {
