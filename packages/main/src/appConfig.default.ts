@@ -4,6 +4,7 @@ import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
 import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
+import { fileLoaderDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
 
 const random = new Random(Date.now());
@@ -240,7 +241,9 @@ export const defaultAppConfig: AppConfig = {
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
 
       '.dcd': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory)
+        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
+
+      '.diagramCraft.svg': fileLoaderDiagramCraftSvg
     }
   },
   state: {

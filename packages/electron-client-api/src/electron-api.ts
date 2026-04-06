@@ -10,7 +10,7 @@ export type ElectronAPI = {
 
   fileOpen: () => Promise<{ url: string } | undefined>;
   fileSave: (url: string, data: string) => Promise<string | undefined>;
-  fileSaveAs: (url: string | undefined, data: string) => Promise<string | undefined>;
+  fileSaveAsDialog: (url: string | undefined) => Promise<string | undefined>;
   fileLoad: (url: string) => Promise<{ content: string } | undefined>;
 
   setMenu: (items: MenuEntry[], keybindings: Record<string, string>) => void;

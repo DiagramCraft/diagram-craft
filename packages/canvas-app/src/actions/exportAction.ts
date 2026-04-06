@@ -36,10 +36,10 @@ const downloadSVG = (svgData: string, filename = 'untitled.svg') => {
   a.remove();
 };
 
-const MARGIN = 50;
+export const SVG_EXPORT_MARGIN = 50;
 const SCALE = 2;
 
-const prepareSvgForExport = async (context: ActionContext) => {
+export const prepareSvgForExport = async (context: ActionContext) => {
   const bounds = Box.boundingBox(
     context.model.activeDiagram.visibleElements().flatMap(e => {
       return isEdge(e) ? [e.bounds, ...e.children.map(c => c.bounds)] : [e.bounds];
@@ -66,7 +66,7 @@ const prepareSvgForExport = async (context: ActionContext) => {
   );
   clonedSvg.setAttribute(
     'viewBox',
-    `${bounds.x - MARGIN} ${bounds.y - MARGIN} ${bounds.w + 2 * MARGIN} ${bounds.h + 2 * MARGIN}`
+    `${bounds.x - SVG_EXPORT_MARGIN} ${bounds.y - SVG_EXPORT_MARGIN} ${bounds.w + 2 * SVG_EXPORT_MARGIN} ${bounds.h + 2 * SVG_EXPORT_MARGIN}`
   );
 
   // Cleanup some elements that should not be part of the export
@@ -155,8 +155,8 @@ class ExportSVGAction extends AbstractAction {
     const run = async () => {
       const { clonedSvg, bounds } = await prepareSvgForExport(this.context);
 
-      clonedSvg.setAttribute('width', (bounds.w + 2 * MARGIN).toString());
-      clonedSvg.setAttribute('height', (bounds.h + 2 * MARGIN).toString());
+      clonedSvg.setAttribute('width', (bounds.w + 2 * SVG_EXPORT_MARGIN).toString());
+      clonedSvg.setAttribute('height', (bounds.h + 2 * SVG_EXPORT_MARGIN).toString());
 
       const svgData = new XMLSerializer().serializeToString(clonedSvg);
       downloadSVG(svgData, 'diagram.svg');

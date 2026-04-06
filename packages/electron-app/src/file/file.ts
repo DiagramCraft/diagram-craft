@@ -10,7 +10,7 @@ export const fileHandlers: IpcHandlers = {
       const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openFile'],
         filters: [
-          { name: 'Diagram Files', extensions: ['dcd', 'drawio'] },
+          { name: 'Diagram Files', extensions: ['dcd', 'drawio', 'diagramCraft.svg'] },
           { name: 'All Files', extensions: ['*'] }
         ]
       });
@@ -46,11 +46,12 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
-    ipcMain.handle('file:saveAs', async (_event, { url, data }) => {
+    ipcMain.handle('file:saveAsDialog', async (_event, { url }) => {
       try {
         const result = await dialog.showSaveDialog(mainWindow, {
           defaultPath: url,
           filters: [
+            { name: 'DiagramCraft SVG', extensions: ['diagramCraft.svg'] },
             { name: 'Diagram Files', extensions: ['dcd'] },
             { name: 'All Files', extensions: ['*'] }
           ]
@@ -59,7 +60,6 @@ export const fileHandlers: IpcHandlers = {
         if (!result.canceled && result.filePath) {
           BrowserWindow.getFocusedWindow()?.setRepresentedFilename(result.filePath);
           app.addRecentDocument(result.filePath);
-          writeFileSync(result.filePath, data);
           return result.filePath;
         }
 
