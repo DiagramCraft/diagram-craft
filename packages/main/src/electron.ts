@@ -1,5 +1,10 @@
 import type { Application } from './application';
-import { AbstractAction, AbstractToggleAction, ActionCriteria, NoopAction } from '@diagram-craft/canvas/action';
+import {
+  AbstractAction,
+  AbstractToggleAction,
+  ActionCriteria,
+  NoopAction
+} from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
@@ -8,6 +13,7 @@ import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api'
 import { UserState } from './UserState';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/actions/exportAction';
 
 const updateState = (e: MenuEntry, app: Application, recurse: boolean = false) => {
   const state = { enabled: true, checked: false, keybinding: '' };
@@ -140,18 +146,30 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
     const url = this.context.model.activeDocument.url ?? 'diagram';
     assert.present(url);
 
-    serializeDiagramDocument(this.context.model.activeDocument).then(async e => {
-      const serialized = JSON.stringify(e);
+    // Step 1: show save dialog and get chosen path (without writing)
+    const chosenPath = await window.electronAPI?.fileSaveAsDialog(url);
+    if (!chosenPath) return;
 
-      window.electronAPI?.fileSaveAs(url, serialized).then(async (result: string | undefined) => {
-        if (!result) {
-          console.log('Error');
-        } else {
-          this.context.model.activeDocument.url = result;
-          this.context.file.clearDirty();
-        }
-      });
-    });
+    // Step 2: generate appropriate content based on chosen extension, then write
+    if (chosenPath.endsWith('.diagramCraft.svg')) {
+      const svgData = await generateDiagramCraftSvg(this.context);
+      const result = await window.electronAPI?.fileSave(chosenPath, svgData);
+      if (!result) {
+        console.log('Error saving .diagramCraft.svg');
+      } else {
+        this.context.model.activeDocument.url = result;
+        this.context.file.clearDirty();
+      }
+    } else {
+      const serialized = JSON.stringify(await serializeDiagramDocument(this.context.model.activeDocument));
+      const result = await window.electronAPI?.fileSave(chosenPath, serialized);
+      if (!result) {
+        console.log('Error saving file');
+      } else {
+        this.context.model.activeDocument.url = result;
+        this.context.file.clearDirty();
+      }
+    }
   }
 }
 
