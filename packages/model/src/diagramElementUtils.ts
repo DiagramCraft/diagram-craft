@@ -119,13 +119,12 @@ export const deleteElements = (elements: readonly DiagramElement[], uow: UnitOfW
     }
   }
 
-  const layer = elements[0]!.layer;
   const rootChildren = byParent.get(undefined) ?? [];
   for (const edge of rootChildren.filter(isEdge)) {
-    layer.removeElement(edge, uow);
+    edge.layer.removeElement(edge, uow);
   }
   for (const node of rootChildren.filter(isNode)) {
-    layer.removeElement(node, uow);
+    node.layer.removeElement(node, uow);
   }
 };
 
