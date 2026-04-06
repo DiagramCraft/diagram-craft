@@ -13,10 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   fileOpen: () => ipcRenderer.invoke('file:open'),
   fileSave: (url: string, data: string) => ipcRenderer.invoke('file:save', { url, data }),
+  // REVIEW: Is this stil used - or replaced by fileSaveAsDialog
   fileSaveAs: (url: string | undefined, data: string) =>
     ipcRenderer.invoke('file:saveAs', { url, data }),
-  fileSaveAsDialog: (url: string | undefined) =>
-    ipcRenderer.invoke('file:saveAsDialog', { url }),
+  fileSaveAsDialog: (url: string | undefined) => ipcRenderer.invoke('file:saveAsDialog', { url }),
   fileLoad: (url: string) => ipcRenderer.invoke('file:load', url),
 
   setMenu: (items: MenuEntry[], keybindings: Record<string, string>) =>

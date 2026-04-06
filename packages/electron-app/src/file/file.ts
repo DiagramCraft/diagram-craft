@@ -46,6 +46,7 @@ export const fileHandlers: IpcHandlers = {
       }
     });
 
+    // REVIEW: Is this used still? Or did we replace this with file:saveAsDialog
     ipcMain.handle('file:saveAs', async (_event, { url, data }) => {
       try {
         const result = await dialog.showSaveDialog(mainWindow, {

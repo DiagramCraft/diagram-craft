@@ -242,7 +242,7 @@ export const defaultAppConfig: AppConfig = {
       '.dcd': async () => (content, doc, diagramFactory) =>
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
 
-      // TODO: Can we extract this logic to a separate file, let's say diagramCraftSvgFormat.ts
+      // REVIEW: Can we extract this logic to a separate file, let's say diagramCraftSvgFormat.ts
       '.diagramCraft.svg': async () => (content, doc, diagramFactory) => {
         const parser = new DOMParser();
         const svgDoc = parser.parseFromString(content, 'image/svg+xml');

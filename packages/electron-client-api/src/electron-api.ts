@@ -10,6 +10,7 @@ export type ElectronAPI = {
 
   fileOpen: () => Promise<{ url: string } | undefined>;
   fileSave: (url: string, data: string) => Promise<string | undefined>;
+  // REVIEW: Is this still used - or replaced by fileSaveAsDialog
   fileSaveAs: (url: string | undefined, data: string) => Promise<string | undefined>;
   fileSaveAsDialog: (url: string | undefined) => Promise<string | undefined>;
   fileLoad: (url: string) => Promise<{ content: string } | undefined>;
