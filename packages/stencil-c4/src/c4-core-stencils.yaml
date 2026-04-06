@@ -19,6 +19,8 @@ stencils:
           stroke:
             color: "#3066b7"
             width: 3
+          text:
+            color: stroke
       - id: 'c4-element-text'
         name: 'C4 Element Text'
         type: 'text'

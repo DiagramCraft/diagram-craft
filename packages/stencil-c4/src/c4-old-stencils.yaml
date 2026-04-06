@@ -22,6 +22,8 @@ stencils:
             enabled: false
             color: "#406fa2"
             width: 1
+          text:
+            color: "white"
           fill:
             color: '#3169b9'
       - id: 'c4-old-element-text'
@@ -29,7 +31,6 @@ stencils:
         type: 'text'
         props:
           text:
-            color: "white"
             fontSize: 12
 
     settings:

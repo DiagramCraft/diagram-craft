@@ -14,6 +14,7 @@ import { useConfiguration } from '../../context/ConfigurationContext';
 import { useDiagram } from '../../../application';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import { ColorPicker } from '../../components/ColorPicker';
+import { TbLine } from 'react-icons/tb';
 
 const NodeTextColorEditor: Editor = ({ props, onChange }) => {
   const $p = props as NodeProps;
@@ -29,6 +30,7 @@ const NodeTextColorEditor: Editor = ({ props, onChange }) => {
           palette={$cfg.palette.primary}
           customPalette={diagram.document.customPalette}
           onChangeCustomPalette={(idx, v) => diagram.document.customPalette.setColor(idx, v)}
+          special={{ stroke: { label: 'Stroke Color', icon: <TbLine /> } }}
           onChange={c => {
             if (!$p.text) $p.text = {};
             $p.text.color = c;
