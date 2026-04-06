@@ -109,9 +109,10 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
   }
 }
 
-class TextComponent extends BaseNodeComponent {
+class TextComponent extends BaseNodeComponent<TextNodeDefinition> {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    shapeBuilder.boundaryPath(props.node.getDefinition().getBoundingPathBuilder(props.node).getPaths().all());
+    const definition = props.node.getDefinition() as ShapeNodeDefinition;
+    shapeBuilder.boundaryPath(definition.getBoundingPathBuilder(props.node).getPaths().all());
     shapeBuilder.text(
       this,
       '1',
