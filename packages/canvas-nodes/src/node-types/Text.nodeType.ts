@@ -27,6 +27,13 @@ const RE_BR = /<br\s*\/?>/gi;
 const RE_DIV_OPEN = /<div[^>]*>/gi;
 const RE_DIV_CLOSE = /<\/div>/gi;
 
+const normalizeEditableLines = (text: string): string[] => {
+  const startsWithDiv = text.trimStart().startsWith('<div');
+  const normalized = text.replace(RE_BR, '\n').replace(RE_DIV_OPEN, '\n').replace(RE_DIV_CLOSE, '');
+
+  return (startsWithDiv ? normalized.replace(/^\n/, '') : normalized).split('\n');
+};
+
 const splitWithDelimiter = (line: string, delimiter: string, numCols: number): string[] => {
   let remaining = line;
   const parts: string[] = [];
@@ -54,12 +61,7 @@ const toColumnsHTML = (text: string, split: string, columnWidths: string): strin
   // Normalize line separators from contenteditable HTML:
   // - <div>...</div> wraps each line after the first
   // - <br> is used in plaintext-only mode
-  const lines = text
-    .replace(RE_BR, '\n')
-    .replace(RE_DIV_OPEN, '\n')
-    .replace(RE_DIV_CLOSE, '')
-    .split('\n')
-    .filter(l => l.trim() !== '');
+  const lines = normalizeEditableLines(text);
 
   const dest: string[] = [];
   dest.push(
@@ -109,9 +111,7 @@ export class TextNodeDefinition extends ShapeNodeDefinition {
 
 class TextComponent extends BaseNodeComponent {
   buildShape(props: BaseShapeBuildShapeProps, shapeBuilder: ShapeBuilder) {
-    shapeBuilder.boundaryPath(
-      new TextNodeDefinition().getBoundingPathBuilder(props.node).getPaths().all()
-    );
+    shapeBuilder.boundaryPath(props.node.getDefinition().getBoundingPathBuilder(props.node).getPaths().all());
     shapeBuilder.text(
       this,
       '1',
