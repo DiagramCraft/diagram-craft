@@ -1,0 +1,213 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 9.3.0
+          run_install: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Create report directory
+        run: mkdir -p output/biome
+
+      - name: Run Biome on PR
+        run: |
+          set +e
+          pnpm exec biome lint --reporter=json --max-diagnostics=100 . > output/biome/biome-pr.json
+          exit 0
+
+      - name: Save PR warnings summary
+        id: pr_summary
+        run: |
+          if [ -f output/biome/biome-pr.json ]; then
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('output/biome/biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('output/biome/biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'warnings=' + warnings + '\nerrors=' + errors + '\n');"
+          else
+            echo '{"warnings":0,"errors":0}' > output/biome/biome-pr-summary.json
+            echo "warnings=0" >> "$GITHUB_OUTPUT"
+            echo "errors=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload PR Biome artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-pr-summary
+          path: output/biome/biome-pr-summary.json
+          retention-days: 1
+
+      - name: Upload PR Biome report
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-pr-report
+          path: output/biome/biome-pr.json
+          retention-days: 1
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          submodules: 'recursive'
+
+      - name: Recreate report directory
+        run: mkdir -p output/biome
+
+      - name: Install dependencies on base
+        run: pnpm install
+
+      - name: Run Biome on base
+        run:
+          pnpm exec biome lint --reporter=json --max-diagnostics=100 . >
+          output/biome/biome-base.json
+        continue-on-error: true
+
+      - name: Save base warnings summary
+        run: |
+          if [ -f output/biome/biome-base.json ]; then
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('output/biome/biome-base.json', 'utf8')); fs.writeFileSync('output/biome/biome-base-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
+          else
+            echo '{"warnings":0,"errors":0}' > output/biome/biome-base-summary.json
+          fi
+
+      - name: Upload base Biome artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-base-summary
+          path: output/biome/biome-base-summary.json
+          retention-days: 1
+
+      - name: Download base Biome artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: biome-base-summary
+
+      - name: Compare Biome warnings and comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const readWarnings = path => {
+              try {
+                const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+                return {
+                  warnings: data.warnings ?? 0,
+                  errors: data.errors ?? 0
+                };
+              } catch (e) {
+                console.error(`Failed to read ${path}:`, e);
+                return { warnings: 0, errors: 0 };
+              }
+            };
+
+            const baseSummary = readWarnings('output/biome/biome-base-summary.json');
+            const prSummary = {
+              warnings: Number('${{ steps.pr_summary.outputs.warnings }}' || 0),
+              errors: Number('${{ steps.pr_summary.outputs.errors }}' || 0)
+            };
+            const baseWarnings = baseSummary.warnings;
+            const prWarnings = prSummary.warnings;
+            const baseErrors = baseSummary.errors;
+            const prErrors = prSummary.errors;
+
+            const formatDelta = (current, base, unchangedIcon) => {
+              const delta = current - base;
+              const sign = delta > 0 ? '+' : '';
+
+              return delta > 0
+                ? `🔴 ${sign}${delta}`
+                : delta < 0
+                  ? `🟢 ${delta}`
+                  : current > 0
+                    ? `${unchangedIcon} 0`
+                    : '🟢 0';
+            };
+
+            const warningsIndicator = formatDelta(prWarnings, baseWarnings, '🟠');
+            const errorsIndicator = formatDelta(prErrors, baseErrors, '🔴');
+
+            const warningStatusMessage =
+              prWarnings > baseWarnings
+                ? '🔴 Lint warnings increased'
+                : prWarnings < baseWarnings
+                  ? '🟢 Lint warnings decreased'
+                  : prWarnings > 0
+                    ? '🟠 Lint warnings unchanged'
+                    : '🟢 No lint warnings';
+
+            const errorStatusMessage =
+              prErrors > 0
+                ? `🔴 Biome errors present (${prErrors})`
+                : '🟢 No Biome errors';
+
+            const comment = `## ⚠️ Lint Warnings Report
+
+            | Metric | Base | PR | Change |
+            |--------|------|----|--------|
+            | **Warnings** | ${baseWarnings} | ${prWarnings} | ${warningsIndicator} |
+            | **Errors** | ${baseErrors} | ${prErrors} | ${errorsIndicator} |
+
+            ${warningStatusMessage}
+
+            ${errorStatusMessage}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('⚠️ Lint Warnings Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+      - name: Fail on Biome errors
+        if: always()
+        run: |
+          errors="${{ steps.pr_summary.outputs.errors }}"
+          if [ "${errors:-0}" -gt 0 ]; then
+            echo "Biome lint reported ${errors} error(s) on the PR branch."
+            exit 1
+          fi

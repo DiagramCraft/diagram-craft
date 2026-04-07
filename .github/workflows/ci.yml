@@ -54,8 +54,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint
-        run: pnpm run lint
+      - name: TypeScript check
+        run: pnpm run lint:tsc
 
       - name: Test
         run: pnpm run test
