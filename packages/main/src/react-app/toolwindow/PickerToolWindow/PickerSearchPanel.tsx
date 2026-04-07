@@ -7,9 +7,10 @@ import { useDocument } from '../../../application';
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { ObjectPickerPanel } from './ObjectPickerPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import styles from '../../ObjectPicker.module.css';
+import { PickerViewModeMenu } from './PickerViewModeMenu';
+import type { PickerViewMode } from '../../../UserState';
 
-export const PickerSearchPanel = () => {
+export const PickerSearchPanel = (props: Props) => {
   const ref = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState('');
   const [stencils, setStencils] = useState<Stencil[]>([]);
@@ -56,26 +57,37 @@ export const PickerSearchPanel = () => {
         />
         <Button
           onClick={() => {
-            setSearch(ref.current?.value ?? '');
+            doSearch(ref.current?.value ?? '');
             ref.current?.blur();
           }}
           variant={'secondary'}
         >
           <TbSearch />
         </Button>
+
+        <PickerViewModeMenu
+          pickerViewMode={props.pickerViewMode}
+          onPickerViewModeChange={props.onPickerViewModeChange}
+        />
       </div>
 
       {!isEmptyString(search) && (
-        <div className={styles.icObjectPicker} style={{ marginTop: '0.75rem' }}>
+        <div style={{ marginTop: '0.75rem' }}>
           <ObjectPickerPanel
             stencils={stencils}
             id={'search'}
             title={'Search results'}
             isOpen={true}
             mode={'headless-no-padding'}
+            pickerViewMode={props.pickerViewMode}
           />
         </div>
       )}
     </ToolWindowPanel>
   );
+};
+
+type Props = {
+  pickerViewMode: PickerViewMode;
+  onPickerViewModeChange: (mode: PickerViewMode) => void;
 };

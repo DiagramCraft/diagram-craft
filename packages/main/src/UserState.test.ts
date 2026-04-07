@@ -30,6 +30,19 @@ describe('UserState', () => {
     expect(new UserState().themeMode).toBe('dark');
   });
 
+  test('persists the stencil picker view mode', () => {
+    const userState = new UserState();
+
+    expect(userState.stencilPickerViewMode).toBe('grid');
+
+    userState.stencilPickerViewMode = 'list';
+
+    expect(JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}')).toMatchObject({
+      stencilPickerViewMode: 'list'
+    });
+    expect(new UserState().stencilPickerViewMode).toBe('list');
+  });
+
   test('only emits change when persisted state actually changes', () => {
     const userState = new UserState();
     const changeListener = vi.fn();

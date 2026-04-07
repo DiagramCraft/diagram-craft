@@ -8,12 +8,15 @@ import styles from './Menu.module.css';
 type RootProps = {
   children: React.ReactNode;
   open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const Root = (props: RootProps) => {
   return (
     <_Menu.Context type={'menu'}>
-      <BaseUIMenu.Root open={props.open}>{props.children}</BaseUIMenu.Root>
+      <BaseUIMenu.Root open={props.open} onOpenChange={props.onOpenChange}>
+        {props.children}
+      </BaseUIMenu.Root>
     </_Menu.Context>
   );
 };
