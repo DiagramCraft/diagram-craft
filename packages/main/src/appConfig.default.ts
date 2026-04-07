@@ -110,6 +110,17 @@ export const defaultAppConfig: AppConfig = {
         }
       }),
       stencilEntry({
+        id: 'archimate',
+        name: 'ArchiMate',
+        loader: 'basic',
+        opts: {
+          stencils: () =>
+            import('@diagram-craft/stencil-archimate/stencil-archimate-loader').then(
+              m => m.loadArchimateStencils
+            )
+        }
+      }),
+      stencilEntry({
         id: 'drawioUml',
         name: 'UML (DrawIO)',
         loader: 'basic',

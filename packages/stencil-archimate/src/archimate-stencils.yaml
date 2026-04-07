@@ -1,0 +1,24 @@
+stencils:
+  - id: 'archimate-rect'
+    stencil: Rectangle
+    elements:
+      - id: arch-rect-1
+        type: node
+        nodeType: rect
+        bounds:
+          x: 0
+          y: 0
+          w: 150
+          h: 80
+          r: 0
+        children: []
+        props: {}
+        pickerProps:
+          stroke:
+            width: 1.5
+        metadata:
+          style: default
+          textStyle: default-text
+        texts:
+          text: '<h1>Element</h1>'
+        tags: []

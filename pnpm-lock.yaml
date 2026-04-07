@@ -488,6 +488,24 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(yjs@13.6.30)
 
+  packages/stencil-archimate:
+    dependencies:
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../canvas
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../canvas-nodes
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../geometry
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../model
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/stencil-bpmn:
     dependencies:
       '@diagram-craft/canvas':
