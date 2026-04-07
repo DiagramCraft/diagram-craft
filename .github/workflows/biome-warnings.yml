@@ -34,10 +34,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Create report directory
+        run: mkdir -p output/biome
+
       - name: Run Biome on PR
         run: |
           set +e
-          pnpm exec biome lint --reporter=json --max-diagnostics=100 . > biome-pr.json
+          pnpm exec biome lint --reporter=json --max-diagnostics=100 . > output/biome/biome-pr.json
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
@@ -46,10 +49,10 @@ jobs:
       - name: Save PR warnings summary
         id: pr_summary
         run: |
-          if [ -f biome-pr.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'warnings=' + warnings + '\nerrors=' + errors + '\n');"
+          if [ -f output/biome/biome-pr.json ]; then
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('output/biome/biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('output/biome/biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'warnings=' + warnings + '\nerrors=' + errors + '\n');"
           else
-            echo '{"warnings":0,"errors":0}' > biome-pr-summary.json
+            echo '{"warnings":0,"errors":0}' > output/biome/biome-pr-summary.json
             echo "warnings=0" >> "$GITHUB_OUTPUT"
             echo "errors=0" >> "$GITHUB_OUTPUT"
           fi
@@ -58,20 +61,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: biome-pr-summary
-          path: biome-pr-summary.json
+          path: output/biome/biome-pr-summary.json
           retention-days: 1
 
       - name: Upload PR Biome report
         uses: actions/upload-artifact@v4
         with:
           name: biome-pr-report
-          path: biome-pr.json
+          path: output/biome/biome-pr.json
           retention-days: 1
 
       - name: Print PR Biome diagnostics
         if: always()
         run: |
-          cat biome-pr.json
+          cat output/biome/biome-pr.json
 
       - name: Checkout base branch
         uses: actions/checkout@v4
@@ -79,26 +82,31 @@ jobs:
           ref: ${{ github.base_ref }}
           submodules: 'recursive'
 
+      - name: Recreate report directory
+        run: mkdir -p output/biome
+
       - name: Install dependencies on base
         run: pnpm install
 
       - name: Run Biome on base
-        run: pnpm exec biome lint --reporter=json --max-diagnostics=100 . > biome-base.json
+        run:
+          pnpm exec biome lint --reporter=json --max-diagnostics=100 . >
+          output/biome/biome-base.json
         continue-on-error: true
 
       - name: Save base warnings summary
         run: |
-          if [ -f biome-base.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-base.json', 'utf8')); fs.writeFileSync('biome-base-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
+          if [ -f output/biome/biome-base.json ]; then
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('output/biome/biome-base.json', 'utf8')); fs.writeFileSync('output/biome/biome-base-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
           else
-            echo '{"warnings":0,"errors":0}' > biome-base-summary.json
+            echo '{"warnings":0,"errors":0}' > output/biome/biome-base-summary.json
           fi
 
       - name: Upload base Biome artifact
         uses: actions/upload-artifact@v4
         with:
           name: biome-base-summary
-          path: biome-base-summary.json
+          path: output/biome/biome-base-summary.json
           retention-days: 1
 
       - name: Download PR Biome artifact
@@ -131,7 +139,7 @@ jobs:
               }
             };
 
-            const baseSummary = readWarnings('biome-base-summary.json');
+            const baseSummary = readWarnings('output/biome/biome-base-summary.json');
             const prSummary = {
               warnings: Number('${{ steps.pr_summary.outputs.warnings }}' || 0),
               errors: Number('${{ steps.pr_summary.outputs.errors }}' || 0)
