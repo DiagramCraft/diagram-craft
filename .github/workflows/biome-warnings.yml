@@ -47,7 +47,7 @@ jobs:
         id: pr_summary
         run: |
           if [ -f biome-pr.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, `warnings=${warnings}\nerrors=${errors}\n`);"
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'warnings=' + warnings + '\nerrors=' + errors + '\n');"
           else
             echo '{"warnings":0,"errors":0}' > biome-pr-summary.json
             echo "warnings=0" >> "$GITHUB_OUTPUT"
