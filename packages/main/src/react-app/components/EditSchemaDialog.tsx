@@ -218,11 +218,11 @@ export const EditSchemaDialog = (props: Props) => {
         {errors.fields && <ErrorMessage>{errors.fields}</ErrorMessage>}
 
         <Scrollable
+          maxHeight="50vh"
           style={{
             display: 'flex',
             flexDirection: 'column',
             gap: '0.5rem',
-            maxHeight: '50vh',
             borderTop: '1px solid var(--cmp-border)',
             border: '1px solid var(--cmp-border)'
           }}
