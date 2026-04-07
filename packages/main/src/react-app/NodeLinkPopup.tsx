@@ -503,8 +503,14 @@ const useNodeLinkPopupController = ({
     if (!def) return;
     if (def.edgeStyleId !== undefined) setSelectedEdge(def.edgeStyleId);
     if (def.stencilId !== undefined) setSelectedNode(def.stencilId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [
+    isOpen,
+    options?.defaultCombination,
+    selectedEdgeState,
+    selectedNodeState,
+    setSelectedEdge,
+    setSelectedNode
+  ]);
 
   return {
     // Apply an edge style immediately and remember the current tile selection.

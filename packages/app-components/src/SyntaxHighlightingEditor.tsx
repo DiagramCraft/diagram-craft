@@ -47,7 +47,7 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
 
       preElementRef.current.scrollTop = textareaRef.current.scrollTop;
       preElementRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }, [value, maximized]);
+    });
 
     // Calculate min-height for browsers that don't support attr() in calc()
     useEffect(() => {
