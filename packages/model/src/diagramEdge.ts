@@ -538,11 +538,11 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     if (isConnectedEndpoint(this.start) || isConnectedEndpoint(this.end)) {
       let s = '';
       if (isConnectedEndpoint(this.start)) {
-        s = isNodeConnectedEndpoint(this.start) ? this.start.node.name : this.start.edge.name;
+        s = isNodeConnectedEndpoint(this.start) ? this.start.node.name : (this.start.edge?.name ?? '');
       }
       s += ' - ';
       if (isConnectedEndpoint(this.end)) {
-        s += isNodeConnectedEndpoint(this.end) ? this.end.node.name : this.end.edge.name;
+        s += isNodeConnectedEndpoint(this.end) ? this.end.node.name : (this.end.edge?.name ?? '');
       }
       return s;
     }
@@ -580,7 +580,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   setStart(start: Endpoint, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
       // Prevent edge-to-edge attachments from introducing dependency cycles.
-      assert.true(!isEdgeConnectedEndpoint(start) || !start.edge.isTransitivelyAttachedTo(this));
+      assert.true(!isEdgeConnectedEndpoint(start) || !start.edge?.isTransitivelyAttachedTo(this));
 
       if (isNodeConnectedEndpoint(this.start)) {
         this.start.node._removeEdge(
@@ -589,7 +589,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
           uow
         );
       }
-      if (isEdgeConnectedEndpoint(this.start)) {
+      if (isEdgeConnectedEndpoint(this.start) && this.start.edge?._isAttached) {
         this.start.edge._removeAttachedEdge(this, uow);
       }
 
@@ -600,7 +600,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
           uow
         );
       }
-      if (isEdgeConnectedEndpoint(start)) {
+      if (isEdgeConnectedEndpoint(start) && start.edge?._isAttached) {
         start.edge._addAttachedEdge(this, uow);
       }
 
@@ -615,7 +615,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   setEnd(end: Endpoint, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
       // Prevent edge-to-edge attachments from introducing dependency cycles.
-      assert.true(!isEdgeConnectedEndpoint(end) || !end.edge.isTransitivelyAttachedTo(this));
+      assert.true(!isEdgeConnectedEndpoint(end) || !end.edge?.isTransitivelyAttachedTo(this));
 
       if (isNodeConnectedEndpoint(this.end)) {
         this.end.node._removeEdge(
@@ -624,14 +624,14 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
           uow
         );
       }
-      if (isEdgeConnectedEndpoint(this.end)) {
+      if (isEdgeConnectedEndpoint(this.end) && this.end.edge?._isAttached) {
         this.end.edge._removeAttachedEdge(this, uow);
       }
 
       if (isNodeConnectedEndpoint(end)) {
         end.node._addEdge(end instanceof AnchorEndpoint ? end.anchorId : undefined, this, uow);
       }
-      if (isEdgeConnectedEndpoint(end)) {
+      if (isEdgeConnectedEndpoint(end) && end.edge?._isAttached) {
         end.edge._addAttachedEdge(this, uow);
       }
 
@@ -936,11 +936,11 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
   restore(snapshot: DiagramEdgeSnapshot, uow: UnitOfWork) {
     this.#props.set(snapshot.props as EdgeProps);
     this.setStart(
-      Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup, this.diagram.edgeLookup),
+      Endpoint.deserialize(snapshot.start, this.diagram.nodeLookup, this.diagram.edgeLookup, true),
       uow
     );
     this.setEnd(
-      Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup, this.diagram.edgeLookup),
+      Endpoint.deserialize(snapshot.end, this.diagram.nodeLookup, this.diagram.edgeLookup, true),
       uow
     );
     this.#waypoints.set((snapshot.waypoints ?? []) as Array<Waypoint>);
@@ -1146,6 +1146,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
 
     this.adjustLabelNodePosition(uow);
     for (const edge of this.attachedEdges) {
+      if (!edge._isAttached) continue;
       uow.updateElement(edge, edge.snapshot());
       edge.invalidate(scope, uow);
     }
@@ -1167,7 +1168,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         uow
       );
     }
-    if (isEdgeConnectedEndpoint(this.start)) {
+    if (isEdgeConnectedEndpoint(this.start) && this.start.edge?._isAttached) {
       this.start.edge._removeAttachedEdge(this, uow);
     }
     if (isNodeConnectedEndpoint(this.end)) {
@@ -1177,7 +1178,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         uow
       );
     }
-    if (isEdgeConnectedEndpoint(this.end)) {
+    if (isEdgeConnectedEndpoint(this.end) && this.end.edge?._isAttached) {
       this.end.edge._removeAttachedEdge(this, uow);
     }
   }
