@@ -61,6 +61,13 @@ jobs:
           path: biome-pr-summary.json
           retention-days: 1
 
+      - name: Upload PR Biome report
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-pr-report
+          path: biome-pr.json
+          retention-days: 1
+
       - name: Print PR Biome diagnostics
         if: always()
         run: |
