@@ -38,7 +38,7 @@
       "!**/eslintrc.cjs",
       "!**/*.js",
       "!**/.storybook",
-      "!**/.*",
+      "!.*",
       "!**/*.html",
       "!**/vite.config.ts",
       "!**/vitest.config.ts"

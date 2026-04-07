@@ -48,6 +48,16 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     }
   }, [props.showHover]);
 
+  const getPreviewDiagram = useCallback(async () => {
+    const s = await serializeDiagramDocument(diagram.document);
+    s.diagrams = [serializeDiagram(diagram)];
+    s.diagrams[0]!.id = newid();
+
+    const doc = new DiagramDocument(diagram.document.registry, true);
+    await deserializeDiagramDocument(s, doc, makeDefaultDiagramFactory());
+    return doc;
+  }, [diagram]);
+
   useEffect(() => {
     if (!hover || !props.showHover || preview !== undefined) return;
 
@@ -61,17 +71,7 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     return () => {
       cancelled = true;
     };
-  }, [hover, props.showHover, preview, diagram]);
-
-  const getPreviewDiagram = async () => {
-    const s = await serializeDiagramDocument(diagram.document);
-    s.diagrams = [serializeDiagram(diagram)];
-    s.diagrams[0]!.id = newid();
-
-    const doc = new DiagramDocument(diagram.document.registry, true);
-    await deserializeDiagramDocument(s, doc, makeDefaultDiagramFactory());
-    return doc;
-  };
+  }, [getPreviewDiagram, hover, preview, props.showHover]);
 
   const onMouseOver = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const rect = e.currentTarget.getBoundingClientRect();

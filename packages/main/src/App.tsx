@@ -391,7 +391,7 @@ export const App = (props: {
 
   useLayoutEffect(() => {
     applyThemeMode(userState.current.themeMode);
-  }, [userState.current.themeMode]);
+  });
 
   usePanOnDrag($d, userState.current!);
 
