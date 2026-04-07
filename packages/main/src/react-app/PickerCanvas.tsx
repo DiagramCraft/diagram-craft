@@ -34,6 +34,35 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     setPreview(undefined);
   }, [diagram]);
 
+  useEffect(() => {
+    return () => {
+      if (timeout.current) {
+        clearTimeout(timeout.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!props.showHover) {
+      setHover(undefined);
+    }
+  }, [props.showHover]);
+
+  useEffect(() => {
+    if (!hover || !props.showHover || preview !== undefined) return;
+
+    let cancelled = false;
+    getPreviewDiagram().then(doc => {
+      if (!cancelled) {
+        setPreview(doc);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hover, props.showHover, preview, diagram]);
+
   const getPreviewDiagram = async () => {
     const s = await serializeDiagramDocument(diagram.document);
     s.diagrams = [serializeDiagram(diagram)];
@@ -68,14 +97,6 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
     }
     setHover(undefined);
   }, []);
-
-  if (!props.showHover && hover) {
-    setHover(undefined);
-  }
-
-  if (hover && props.showHover && preview === undefined) {
-    getPreviewDiagram().then(doc => setPreview(doc));
-  }
 
   // TODO: We should use default cursor instead of move cursor when disabled
   const isRuleLayer = $d.activeLayer.type === 'rule';

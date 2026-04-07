@@ -1,7 +1,19 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from 'vitest';
-import { resolveCanvasDragElementId } from './dragDropManager';
+import { describe, expect, it, vi } from 'vitest';
+import { Drag, DragEvents, DragDopManager, resolveCanvasDragElementId } from './dragDropManager';
+
+class TestDrag extends Drag {
+  constructor() {
+    super();
+  }
+
+  onDrag(_event: DragEvents.DragStart): void {}
+
+  onDragEnd(_event: DragEvents.DragEnd): void {}
+
+  cancel(): void {}
+}
 
 describe('resolveCanvasDragElementId', () => {
   it('returns the diagram element id for descendants inside the editable canvas', () => {
@@ -46,5 +58,32 @@ describe('resolveCanvasDragElementId', () => {
     document.body.appendChild(canvas);
 
     expect(resolveCanvasDragElementId(canvas)).toBeUndefined();
+  });
+});
+
+describe('DragDopManager', () => {
+  it('runs the end callback when a drag is cleared without emitting dragEnd', () => {
+    const manager = new DragDopManager();
+    const drag = new TestDrag();
+    const onEnd = vi.fn();
+
+    manager.initiate(drag, onEnd);
+    manager.clear();
+
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    expect(manager.current()).toBeUndefined();
+  });
+
+  it('does not run the end callback twice when dragEnd is emitted before clear', () => {
+    const manager = new DragDopManager();
+    const drag = new TestDrag();
+    const onEnd = vi.fn();
+
+    manager.initiate(drag, onEnd);
+    drag.emit('dragEnd');
+    manager.clear();
+
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    expect(manager.current()).toBeUndefined();
   });
 });

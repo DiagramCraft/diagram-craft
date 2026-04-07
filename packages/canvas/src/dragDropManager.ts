@@ -186,9 +186,13 @@ export class DragDopManager extends EventEmitter<{
 }> {
   private drag?: Drag;
   private dragStarted = false;
+  private onEndCallback?: () => void;
+  private didRunOnEndCallback = false;
 
   initiate(drag: Drag, onEndCallback = () => {}, startImmediately = false) {
     this.drag = drag;
+    this.onEndCallback = onEndCallback;
+    this.didRunOnEndCallback = false;
 
     this.dragStarted = startImmediately;
     this.emit('dragStart', { drag });
@@ -199,10 +203,26 @@ export class DragDopManager extends EventEmitter<{
       this.emit('dragStateChange', { drag: this.drag!, state });
     });
     this.drag.on('dragEnd', () => {
-      onEndCallback();
-      this.drag = undefined;
+      if (this.drag !== drag || this.didRunOnEndCallback) return;
+      this.didRunOnEndCallback = true;
       this.dragStarted = false;
+      this.onEndCallback?.();
+      this.onEndCallback = undefined;
     });
+  }
+
+  private reset() {
+    this.drag = undefined;
+    this.dragStarted = false;
+    this.onEndCallback = undefined;
+    this.didRunOnEndCallback = false;
+  }
+
+  private runOnEndCallback() {
+    if (this.didRunOnEndCallback) return;
+    this.didRunOnEndCallback = true;
+    this.onEndCallback?.();
+    this.onEndCallback = undefined;
   }
 
   isDragging() {
@@ -214,9 +234,12 @@ export class DragDopManager extends EventEmitter<{
   }
 
   clear() {
-    this.emit('dragEnd', { drag: this.drag! });
-    this.drag = undefined;
-    this.dragStarted = false;
+    const drag = this.drag;
+    if (!drag) return;
+
+    this.emit('dragEnd', { drag });
+    this.runOnEndCallback();
+    this.reset();
   }
 }
 
