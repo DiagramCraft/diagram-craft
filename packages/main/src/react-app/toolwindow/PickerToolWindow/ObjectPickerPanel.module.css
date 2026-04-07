@@ -32,4 +32,43 @@
       }
     }
   }
+
+  .eStencilList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(calc(35px * 3), 1fr));
+    gap: 0.35rem 0.75rem;
+
+    & svg {
+      margin: 0.2rem;
+      display: block;
+      cursor: pointer;
+
+      *:not(:global(.uScale), :global(.uScale) *) {
+        vector-effect: non-scaling-stroke;
+      }
+    }
+  }
+
+  .eStencilListItem {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.5rem;
+  }
+
+  .eStencilListIcon {
+    flex: 0 0 auto;
+    width: fit-content;
+  }
+
+  .eStencilListName {
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: normal;
+    word-break: normal;
+    line-height: 1.2;
+  }
 }

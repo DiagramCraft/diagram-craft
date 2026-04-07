@@ -8,6 +8,7 @@ type UserStateEvents = {
 };
 
 export type ThemeMode = 'dark' | 'light';
+export type PickerViewMode = 'grid' | 'list';
 
 const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
 
@@ -21,6 +22,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #showHelp: boolean = true;
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
+  #stencilPickerViewMode: PickerViewMode = 'grid';
   #recentFiles: Array<string>;
   #themeMode: ThemeMode = 'dark';
   #toolWindowTabs: Record<string, string> = {};
@@ -47,6 +49,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#showHelp = state.showHelp ?? true;
     this.#showRulers = state.showRulers ?? true;
     this.#stencils = state.stencils ?? DEFAULT_STENCILS;
+    this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
@@ -149,6 +152,16 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  get stencilPickerViewMode(): PickerViewMode {
+    return this.#stencilPickerViewMode;
+  }
+
+  set stencilPickerViewMode(stencilPickerViewMode: PickerViewMode) {
+    if (this.#stencilPickerViewMode === stencilPickerViewMode) return;
+    this.#stencilPickerViewMode = stencilPickerViewMode;
+    this.triggerChange();
+  }
+
   get showRulers() {
     return this.#showRulers;
   }
@@ -184,6 +197,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       showHelp: this.#showHelp,
       showRulers: this.#showRulers,
       stencils: this.#stencils,
+      stencilPickerViewMode: this.#stencilPickerViewMode,
       recentFiles: this.#recentFiles,
       themeMode: this.#themeMode,
       toolWindowTabs: this.#toolWindowTabs

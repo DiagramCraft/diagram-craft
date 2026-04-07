@@ -31,6 +31,7 @@ export const ShapesPickerTab = () => {
     SEARCH_KEY,
     ...userState.stencils.filter(s => s.isOpen).map(s => s.id)
   ]);
+  const [pickerViewMode, setPickerViewMode] = useState(userState.stencilPickerViewMode);
   const [loaded, setLoaded] = useState(
     new Set(userState.stencils.filter(s => s.isOpen).map(s => s.id))
   );
@@ -73,13 +74,20 @@ export const ShapesPickerTab = () => {
   return (
     <ToolWindow.TabContent>
       <Accordion.Root type="multiple" value={open} onValueChange={setOpenStencils}>
-        <PickerSearchPanel />
+        <PickerSearchPanel
+          pickerViewMode={pickerViewMode}
+          onPickerViewModeChange={mode => {
+            setPickerViewMode(mode);
+            userState.stencilPickerViewMode = mode;
+          }}
+        />
 
         <ObjectPickerPanel
           id={'basic-shapes'}
           title={'Basic shapes'}
           stencilPackage={stencilRegistry.get('default')}
           isOpen={open.includes('basic-shapes')}
+          pickerViewMode={pickerViewMode}
         />
 
         {activeStencils.map(group => (
@@ -89,6 +97,7 @@ export const ShapesPickerTab = () => {
             title={group.name}
             stencilPackage={group}
             isOpen={open.includes(group.id)}
+            pickerViewMode={pickerViewMode}
           />
         ))}
       </Accordion.Root>
