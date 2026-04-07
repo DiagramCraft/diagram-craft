@@ -1,7 +1,7 @@
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { CRDTList, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 
@@ -175,20 +175,14 @@ class RecentEdgeStylesheets extends RecentItems {
 
 class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
   #items: CRDTList<string>;
-  #meta: CRDTMap<{ initialized: boolean }>;
 
   constructor(root: CRDTRoot) {
     super();
     this.#items = root.getList<string>('activeStencilPackages');
-    this.#meta = root.getMap('activeStencilPackagesMeta');
   }
 
   get ids() {
     return this.#items.toArray();
-  }
-
-  get isInitialized() {
-    return this.#meta.get('initialized') ?? false;
   }
 
   has(id: string) {
@@ -201,14 +195,12 @@ class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
       if (this.#items.toArray().includes(id)) continue;
       this.#items.push(id);
     }
-    this.#meta.set('initialized', true);
     this.emitAsync('change');
   }
 
   add(id: string) {
     if (this.has(id)) return;
     this.#items.push(id);
-    this.#meta.set('initialized', true);
     this.emitAsync('change');
   }
 
@@ -218,7 +210,6 @@ class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
       this.#items.delete(i);
       break;
     }
-    this.#meta.set('initialized', true);
     this.emitAsync('change');
   }
 }

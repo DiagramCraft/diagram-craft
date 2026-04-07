@@ -1,6 +1,7 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { useEffect, useState } from 'react';
+import { Scrollable } from '@diagram-craft/app-components/Scrollable';
 
 export type StencilPackageOption = {
   id: string;
@@ -34,6 +35,9 @@ export const StencilPackageDialog = ({
       if (checked) {
         return current.includes(id) ? current : [...current, id];
       }
+      if (current.length === 1 && current.includes(id)) {
+        return current;
+      }
       return current.filter(currentId => currentId !== id);
     });
   };
@@ -60,23 +64,27 @@ export const StencilPackageDialog = ({
       ]}
     >
       <div style={{ minWidth: '20rem' }}>
-        <div
-          className={'util-vstack'}
-          style={{ gap: '0.75rem', maxHeight: '22rem', overflowY: 'auto', paddingRight: '0.25rem' }}
+        <Scrollable
+          style={{
+            maxHeight: '30vh'
+          }}
         >
-          {packages.map(pkg => (
-            <label
-              key={pkg.id}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
-            >
-              <Checkbox
-                value={draft.includes(pkg.id)}
-                onChange={checked => toggle(pkg.id, !!checked)}
-              />
-              <span>{pkg.name}</span>
-            </label>
-          ))}
-        </div>
+          <div className={'util-vstack'} style={{ gap: '0.75rem' }}>
+            {packages.map(pkg => (
+              <label
+                key={pkg.id}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}
+              >
+                <Checkbox
+                  value={draft.includes(pkg.id)}
+                  onChange={checked => toggle(pkg.id, !!checked)}
+                  disabled={draft.length === 1 && draft.includes(pkg.id)}
+                />
+                <span>{pkg.name}</span>
+              </label>
+            ))}
+          </div>
+        </Scrollable>
       </div>
     </Dialog>
   );

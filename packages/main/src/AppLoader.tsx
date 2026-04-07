@@ -143,7 +143,7 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     if (!doc) return;
-    if (!doc.props.activeStencilPackages.isInitialized) {
+    if (doc.props.activeStencilPackages.ids.length === 0) {
       doc.props.activeStencilPackages.set(getDefaultStencilPackages());
     }
     for (const def of props.stencils) {

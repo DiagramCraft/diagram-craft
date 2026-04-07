@@ -326,7 +326,6 @@ describe('deserializeDiagramDocument', () => {
       );
 
       expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
-      expect(newDoc.props.activeStencilPackages.isInitialized).toBe(true);
       expect(newDoc.props.recentStencils.stencils).toEqual([]);
     });
 
@@ -348,7 +347,23 @@ describe('deserializeDiagramDocument', () => {
       );
 
       expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'arrow']);
-      expect(newDoc.props.activeStencilPackages.isInitialized).toBe(true);
+    });
+
+    it('should apply default active stencil packages when serialized props are empty', async () => {
+      const originalDoc = TestModel.newDocument();
+      const serialized = await serializeDiagramDocument(originalDoc);
+      serialized.props ??= {};
+      serialized.props.activeStencilPackages = [];
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id),
+        { includedPackages: ['default', 'arrow'] }
+      );
+
+      expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'arrow']);
     });
 
     it('should round-trip recent edge stylesheets', async () => {

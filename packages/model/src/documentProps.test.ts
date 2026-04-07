@@ -117,11 +117,10 @@ describe.each(Backends.all())('RecentEdgeStylesheets [%s]', (_name, backend) => 
 });
 
 describe.each(Backends.all())('ActiveStencilPackages [%s]', (_name, backend) => {
-  it('should initialize with an empty list and unset marker', () => {
+  it('should initialize with an empty list', () => {
     const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
 
     expect(documentProps.activeStencilPackages.ids).toEqual([]);
-    expect(documentProps.activeStencilPackages.isInitialized).toBe(false);
   });
 
   it('should set active packages and sync across collaborators', () => {
@@ -130,10 +129,8 @@ describe.each(Backends.all())('ActiveStencilPackages [%s]', (_name, backend) => 
     doc1.props.activeStencilPackages.set(['default', 'uml']);
 
     expect(doc1.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
-    expect(doc1.props.activeStencilPackages.isInitialized).toBe(true);
     if (doc2) {
       expect(doc2.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
-      expect(doc2.props.activeStencilPackages.isInitialized).toBe(true);
     }
   });
 

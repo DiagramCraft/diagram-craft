@@ -33,6 +33,8 @@ const getVisibleStencilPackages = (
     if (!activeIds.includes(entry.id)) continue;
 
     try {
+      // Keep the configured id as the UI identity, even when the loader registers
+      // the package under a different runtime id and exposes it through an alias.
       const stencilPackage = stencilRegistry.get(entry.id) as RegisteredStencilPackage;
       result.push({
         id: entry.id,
@@ -79,6 +81,7 @@ export const ShapesPickerTab = () => {
 
   for (const id of open) {
     if (id === SEARCH_KEY) continue;
+    // Expansion is the signal to eagerly load package contents into the picker.
     stencilRegistry.loadStencilPackage(id);
   }
 
@@ -112,6 +115,8 @@ export const ShapesPickerTab = () => {
   });
 
   useEventListener(diagram.document.root, 'remoteAfterTransaction', () => {
+    // Active package selection is document-scoped CRDT data, so remote edits need
+    // to rebuild the visible picker groups even though the accordion state stays local.
     const ids = diagram.document.props.activeStencilPackages.ids;
     setActivePackageIds(ids);
     setActiveStencils(
@@ -128,6 +133,8 @@ export const ShapesPickerTab = () => {
         getVisibleStencilPackages(stencilRegistry, AppConfig.get().stencils.registry, ids)
       );
 
+      // Packages removed from the document should also disappear from the local
+      // accordion expansion state, otherwise the UI keeps stale open sections around.
       const nextOpenIds = open.filter(id => id === SEARCH_KEY || ids.includes(id));
       if (nextOpenIds.length !== open.length) {
         setOpen(nextOpenIds);

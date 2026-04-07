@@ -347,8 +347,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props.stencils);
     }
-    if (document.props?.activeStencilPackages) {
-      doc.props.activeStencilPackages.set(document.props.activeStencilPackages);
+    const activeStencilPackages = document.props?.activeStencilPackages;
+    if (activeStencilPackages !== undefined && activeStencilPackages.length > 0) {
+      doc.props.activeStencilPackages.set(activeStencilPackages);
     } else if (opts?.includedPackages) {
       doc.props.activeStencilPackages.set(opts.includedPackages);
     }
