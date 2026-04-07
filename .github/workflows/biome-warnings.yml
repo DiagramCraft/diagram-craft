@@ -41,10 +41,7 @@ jobs:
         run: |
           set +e
           pnpm exec biome lint --reporter=json --max-diagnostics=100 . > output/biome/biome-pr.json
-          status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
           exit 0
-        id: biome_pr
 
       - name: Save PR warnings summary
         id: pr_summary
@@ -70,11 +67,6 @@ jobs:
           name: biome-pr-report
           path: output/biome/biome-pr.json
           retention-days: 1
-
-      - name: Print PR Biome diagnostics
-        if: always()
-        run: |
-          cat output/biome/biome-pr.json
 
       - name: Checkout base branch
         uses: actions/checkout@v4
@@ -108,11 +100,6 @@ jobs:
           name: biome-base-summary
           path: output/biome/biome-base-summary.json
           retention-days: 1
-
-      - name: Download PR Biome artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: biome-pr-summary
 
       - name: Download base Biome artifact
         uses: actions/download-artifact@v4
