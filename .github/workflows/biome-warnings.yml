@@ -1,4 +1,4 @@
-name: Biome Warnings
+name: Lint
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  biome-warnings:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,9 +46,9 @@ jobs:
       - name: Save PR warnings summary
         run: |
           if [ -f biome-pr.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0 }));"
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
           else
-            echo '{"warnings":0}' > biome-pr-summary.json
+            echo '{"warnings":0,"errors":0}' > biome-pr-summary.json
           fi
 
       - name: Upload PR Biome artifact
@@ -74,9 +74,9 @@ jobs:
       - name: Save base warnings summary
         run: |
           if [ -f biome-base.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-base.json', 'utf8')); fs.writeFileSync('biome-base-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0 }));"
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-base.json', 'utf8')); fs.writeFileSync('biome-base-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
           else
-            echo '{"warnings":0}' > biome-base-summary.json
+            echo '{"warnings":0,"errors":0}' > biome-base-summary.json
           fi
 
       - name: Upload base Biome artifact
@@ -106,15 +106,20 @@ jobs:
             const readWarnings = path => {
               try {
                 const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-                return data.warnings ?? 0;
+                return {
+                  warnings: data.warnings ?? 0,
+                  errors: data.errors ?? 0
+                };
               } catch (e) {
                 console.error(`Failed to read ${path}:`, e);
-                return 0;
+                return { warnings: 0, errors: 0 };
               }
             };
 
-            const baseWarnings = readWarnings('biome-base-summary.json');
-            const prWarnings = readWarnings('biome-pr-summary.json');
+            const baseSummary = readWarnings('biome-base-summary.json');
+            const prSummary = readWarnings('biome-pr-summary.json');
+            const baseWarnings = baseSummary.warnings;
+            const prWarnings = prSummary.warnings;
             const delta = prWarnings - baseWarnings;
             const sign = delta > 0 ? '+' : '';
 
@@ -171,7 +176,6 @@ jobs:
             }
 
       - name: Fail on Biome errors
-        if: always() && steps.biome_pr.outputs.status != '0'
+        if: always()
         run: |
-          echo "Biome lint reported errors on the PR branch."
-          exit 1
+          node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr-summary.json', 'utf8')); const errors = data.errors ?? 0; if (errors > 0) { console.error(`Biome lint reported ${errors} error(s) on the PR branch.`); process.exit(1); }"
