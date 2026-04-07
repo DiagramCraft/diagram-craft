@@ -83,6 +83,7 @@ export interface SerializedDiagramDocument {
   schemaMetadata?: Record<string, SchemaMetadata>;
   props?: {
     stencils?: ReadonlyArray<string>;
+    activeStencilPackages?: ReadonlyArray<string>;
     recentEdgeStylesheets?: ReadonlyArray<string>;
     query?: {
       history?: ReadonlyArray<QueryEntry>;

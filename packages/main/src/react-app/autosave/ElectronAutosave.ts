@@ -8,6 +8,7 @@ import type { SerializedDiagramDocument } from '@diagram-craft/model/serializati
 import type { Autosave } from './Autosave';
 import { assert } from '@diagram-craft/utils/assert';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { AppConfig, getIncludedByDefaultStencilPackageIds } from '../../appConfig';
 
 let needsSave:
   | {
@@ -38,7 +39,11 @@ export const ElectronAutosave: Autosave = {
       const autosaveData = JSON.parse(autosaveContent);
       const { diagram, url } = autosaveData;
       const doc = await documentFactory.createDocument(root, url, progressCallback);
-      await deserializeDiagramDocument(diagram, doc, diagramFactory);
+      await deserializeDiagramDocument(diagram, doc, diagramFactory, {
+        defaultActiveStencilPackages: getIncludedByDefaultStencilPackageIds(
+          AppConfig.get().stencils.registry
+        )
+      });
       await doc.load();
 
       return { document: doc, url };

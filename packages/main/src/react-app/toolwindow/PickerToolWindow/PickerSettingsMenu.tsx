@@ -8,9 +8,14 @@ import { useState } from 'react';
 type Props = {
   pickerViewMode: PickerViewMode;
   onPickerViewModeChange: (mode: PickerViewMode) => void;
+  onManageStencils: () => void;
 };
 
-export const PickerViewModeMenu = ({ pickerViewMode, onPickerViewModeChange }: Props) => {
+export const PickerSettingsMenu = ({
+  pickerViewMode,
+  onPickerViewModeChange,
+  onManageStencils
+}: Props) => {
   const [open, setOpen] = useState(false);
 
   const onSelect = (mode: PickerViewMode) => {
@@ -23,7 +28,7 @@ export const PickerViewModeMenu = ({ pickerViewMode, onPickerViewModeChange }: P
       <MenuButton.Root open={open} onOpenChange={setOpen}>
         <MenuButton.Trigger
           variant={'icon-only'}
-          aria-label={'Change object picker layout'}
+          aria-label={'Open picker settings'}
           element={
             <Button variant={'secondary'}>
               <TbSettings />
@@ -47,6 +52,15 @@ export const PickerViewModeMenu = ({ pickerViewMode, onPickerViewModeChange }: P
               List
             </Menu.RadioItem>
           </Menu.RadioGroup>
+          <Menu.Separator />
+          <Menu.Item
+            onClick={() => {
+              onManageStencils();
+              setOpen(false);
+            }}
+          >
+            Manage stencil packages
+          </Menu.Item>
         </MenuButton.Menu>
       </MenuButton.Root>
     </div>

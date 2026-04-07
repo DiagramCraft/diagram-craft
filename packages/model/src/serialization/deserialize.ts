@@ -247,7 +247,10 @@ export const deserializeDiagramElements = (
 export const deserializeDiagramDocument = async <T extends Diagram>(
   document: SerializedDiagramDocument,
   doc: DiagramDocument,
-  diagramFactory: DiagramFactory<T>
+  diagramFactory: DiagramFactory<T>,
+  opts?: {
+    defaultActiveStencilPackages?: ReadonlyArray<string>;
+  }
 ): Promise<void> => {
   const diagrams = document.diagrams;
 
@@ -345,6 +348,11 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     }
     if (document.props?.stencils) {
       doc.props.recentStencils.set(document.props.stencils);
+    }
+    if (document.props?.activeStencilPackages) {
+      doc.props.activeStencilPackages.set(document.props.activeStencilPackages);
+    } else if (opts?.defaultActiveStencilPackages) {
+      doc.props.activeStencilPackages.set(opts.defaultActiveStencilPackages);
     }
     if (document.props?.recentEdgeStylesheets) {
       doc.props.recentEdgeStylesheets.set(document.props.recentEdgeStylesheets);

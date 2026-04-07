@@ -1,7 +1,7 @@
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import type { CRDTList, CRDTRoot } from '@diagram-craft/collaboration/crdt';
+import type { CRDTList, CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 
@@ -173,6 +173,56 @@ class RecentEdgeStylesheets extends RecentItems {
   }
 }
 
+class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
+  #items: CRDTList<string>;
+  #meta: CRDTMap<{ initialized: boolean }>;
+
+  constructor(root: CRDTRoot) {
+    super();
+    this.#items = root.getList<string>('activeStencilPackages');
+    this.#meta = root.getMap('activeStencilPackagesMeta');
+  }
+
+  get ids() {
+    return this.#items.toArray();
+  }
+
+  get isInitialized() {
+    return this.#meta.get('initialized') ?? false;
+  }
+
+  has(id: string) {
+    return this.ids.includes(id);
+  }
+
+  set(ids: readonly string[]) {
+    this.#items.clear();
+    for (const id of ids) {
+      if (this.#items.toArray().includes(id)) continue;
+      this.#items.push(id);
+    }
+    this.#meta.set('initialized', true);
+    this.emitAsync('change');
+  }
+
+  add(id: string) {
+    if (this.has(id)) return;
+    this.#items.push(id);
+    this.#meta.set('initialized', true);
+    this.emitAsync('change');
+  }
+
+  remove(id: string) {
+    for (let i = 0; i < this.#items.length; i++) {
+      if (this.#items.get(i) !== id) continue;
+      this.#items.delete(i);
+      break;
+    }
+    this.#meta.set('initialized', true);
+    this.emitAsync('change');
+  }
+}
+
 /**
  * The DocumentProps allows extra application data to be stored
  * By design; changing the extra data field, the document is not to be
@@ -182,11 +232,13 @@ export class DocumentProps implements Releasable {
   readonly query: Query;
   readonly recentStencils: RecentStencils;
   readonly recentEdgeStylesheets: RecentEdgeStylesheets;
+  readonly activeStencilPackages: ActiveStencilPackages;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
     this.query = new Query(root, document);
     this.recentStencils = new RecentStencils(root);
     this.recentEdgeStylesheets = new RecentEdgeStylesheets(root);
+    this.activeStencilPackages = new ActiveStencilPackages(root);
   }
 
   release() {}

@@ -385,6 +385,7 @@ export const App = (props: {
   useEventListener(doc.data.db, 'deleteSchema', autosave);
   useEventListener(doc.data.db, 'updateSchema', autosave);
   useEventListener(doc.props.query, 'change', autosave);
+  useEventListener(doc.props.activeStencilPackages, 'change', autosave);
 
   useEffect(() => bindDocumentDragAndDrop());
 

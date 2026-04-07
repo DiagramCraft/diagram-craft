@@ -10,7 +10,7 @@ type UserStateEvents = {
 export type ThemeMode = 'dark' | 'light';
 export type PickerViewMode = 'grid' | 'list';
 
-const DEFAULT_STENCILS = [{ id: 'basic-shapes', isOpen: true }];
+const DEFAULT_STENCILS = [{ id: 'default', isOpen: true }];
 
 const MAX_RECENT_FILES = 10;
 
@@ -48,7 +48,11 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#panelRightWidth = state.panelRightWidth ?? 248;
     this.#showHelp = state.showHelp ?? true;
     this.#showRulers = state.showRulers ?? true;
-    this.#stencils = state.stencils ?? DEFAULT_STENCILS;
+    this.#stencils =
+      state.stencils?.map((stencil: { id: string; isOpen?: boolean }) => ({
+        ...stencil,
+        id: stencil.id === 'basic-shapes' ? 'default' : stencil.id
+      })) ?? DEFAULT_STENCILS;
     this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
