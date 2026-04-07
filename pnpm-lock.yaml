@@ -91,6 +91,12 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2(@types/node@22.18.0)(jsdom@26.1.0)(vite@8.0.3(@types/node@22.18.0)(@vitejs/devtools@0.1.13)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  arch-register-packages/server:
+    dependencies:
+      h3:
+        specifier: ^1.15.6
+        version: 1.15.11
+
   arch-register-packages/web:
     dependencies:
       react:

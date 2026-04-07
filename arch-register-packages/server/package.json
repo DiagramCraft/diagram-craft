@@ -1,0 +1,16 @@
+{
+  "name": "@arch-register/server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "pnpm exec tsx watch ./src/main.ts",
+    "start": "pnpm exec tsx ./src/main.ts"
+  },
+  "keywords": [],
+  "author": "Magnus Johansson",
+  "dependencies": {
+    "h3": "^1.15.6"
+  }
+}
