@@ -44,11 +44,14 @@ jobs:
         id: biome_pr
 
       - name: Save PR warnings summary
+        id: pr_summary
         run: |
           if [ -f biome-pr.json ]; then
-            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings: data.summary?.warnings ?? 0, errors: data.summary?.errors ?? 0 }));"
+            node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); const warnings = data.summary?.warnings ?? 0; const errors = data.summary?.errors ?? 0; fs.writeFileSync('biome-pr-summary.json', JSON.stringify({ warnings, errors })); fs.appendFileSync(process.env.GITHUB_OUTPUT, `warnings=${warnings}\nerrors=${errors}\n`);"
           else
             echo '{"warnings":0,"errors":0}' > biome-pr-summary.json
+            echo "warnings=0" >> "$GITHUB_OUTPUT"
+            echo "errors=0" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload PR Biome artifact
@@ -117,37 +120,55 @@ jobs:
             };
 
             const baseSummary = readWarnings('biome-base-summary.json');
-            const prSummary = readWarnings('biome-pr-summary.json');
+            const prSummary = {
+              warnings: Number('${{ steps.pr_summary.outputs.warnings }}' || 0),
+              errors: Number('${{ steps.pr_summary.outputs.errors }}' || 0)
+            };
             const baseWarnings = baseSummary.warnings;
             const prWarnings = prSummary.warnings;
-            const delta = prWarnings - baseWarnings;
-            const sign = delta > 0 ? '+' : '';
+            const baseErrors = baseSummary.errors;
+            const prErrors = prSummary.errors;
 
-            const changeIndicator =
-              delta > 0
+            const formatDelta = (current, base, unchangedIcon) => {
+              const delta = current - base;
+              const sign = delta > 0 ? '+' : '';
+
+              return delta > 0
                 ? `🔴 ${sign}${delta}`
                 : delta < 0
                   ? `🟢 ${delta}`
-                  : prWarnings > 0
-                    ? '🟠 0'
+                  : current > 0
+                    ? `${unchangedIcon} 0`
                     : '🟢 0';
+            };
 
-            const statusMessage =
-              delta > 0
+            const warningsIndicator = formatDelta(prWarnings, baseWarnings, '🟠');
+            const errorsIndicator = formatDelta(prErrors, baseErrors, '🔴');
+
+            const warningStatusMessage =
+              prWarnings > baseWarnings
                 ? '🔴 Lint warnings increased'
-                : delta < 0
+                : prWarnings < baseWarnings
                   ? '🟢 Lint warnings decreased'
                   : prWarnings > 0
                     ? '🟠 Lint warnings unchanged'
-                    : '🟢 No Lint warnings';
+                    : '🟢 No lint warnings';
+
+            const errorStatusMessage =
+              prErrors > 0
+                ? `🔴 Biome errors present (${prErrors})`
+                : '🟢 No Biome errors';
 
             const comment = `## ⚠️ Lint Warnings Report
 
             | Metric | Base | PR | Change |
             |--------|------|----|--------|
-            | **Warnings** | ${baseWarnings} | ${prWarnings} | ${changeIndicator} |
+            | **Warnings** | ${baseWarnings} | ${prWarnings} | ${warningsIndicator} |
+            | **Errors** | ${baseErrors} | ${prErrors} | ${errorsIndicator} |
 
-            ${statusMessage}`;
+            ${warningStatusMessage}
+
+            ${errorStatusMessage}`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -178,4 +199,8 @@ jobs:
       - name: Fail on Biome errors
         if: always()
         run: |
-          node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr-summary.json', 'utf8')); const errors = data.errors ?? 0; if (errors > 0) { console.error('Biome lint reported ' + errors + ' error(s) on the PR branch.'); process.exit(1); }"
+          errors="${{ steps.pr_summary.outputs.errors }}"
+          if [ "${errors:-0}" -gt 0 ]; then
+            echo "Biome lint reported ${errors} error(s) on the PR branch."
+            exit 1
+          fi
