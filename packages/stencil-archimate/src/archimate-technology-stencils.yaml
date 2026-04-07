@@ -1,6 +1,6 @@
 stencils:
   - id: 'archimate-technology-node'
-    stencil: Node
+    name: Node
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-node-node
@@ -21,11 +21,11 @@ stencils:
           style: archimate-technology
           textStyle: archimate-technology-text
         texts:
-          text: "<h1>Node</h1>\n\n<p><small>&lt;&lt;Node&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Node</h1>\n\n<p><small>«Node»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-device'
-    stencil: Device
+    name: Device
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-device-node
@@ -37,11 +37,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Device</h1>\n\n<p><small>&lt;&lt;Device&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Device</h1>\n\n<p><small>«Device»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-system-software'
-    stencil: System Software
+    name: System Software
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-system-software-node
@@ -53,11 +53,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>System Software</h1>\n\n<p><small>&lt;&lt;System Software&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>System Software</h1>\n\n<p><small>«System Software»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-collaboration'
-    stencil: Collaboration
+    name: Collaboration
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-collaboration-node
@@ -69,11 +69,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Collaboration</h1>\n\n<p><small>&lt;&lt;Technology Collaboration&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Collaboration</h1>\n\n<p><small>«Technology Collaboration»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-interface'
-    stencil: Interface
+    name: Interface
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-interface-node
@@ -85,11 +85,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Interface</h1>\n\n<p><small>&lt;&lt;Technology Interface&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Interface</h1>\n\n<p><small>«Technology Interface»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-function'
-    stencil: Function
+    name: Function
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-function-node
@@ -109,11 +109,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Function</h1>\n\n<p><small>&lt;&lt;Technology Function&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Function</h1>\n\n<p><small>«Technology Function»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-process'
-    stencil: Process
+    name: Process
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-process-node
@@ -128,11 +128,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Process</h1>\n\n<p><small>&lt;&lt;Technology Process&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Process</h1>\n\n<p><small>«Technology Process»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-interaction'
-    stencil: Interaction
+    name: Interaction
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-interaction-node
@@ -147,11 +147,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Interaction</h1>\n\n<p><small>&lt;&lt;Technology Interaction&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Interaction</h1>\n\n<p><small>«Technology Interaction»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-event'
-    stencil: Event
+    name: Event
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-event-node
@@ -171,11 +171,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Event</h1>\n\n<p><small>&lt;&lt;Technology Event&gt;&gt;</small></p>"
+          text: "<h1>Event</h1>\n\n<p><small>«Technology Event»</small></p>"
         tags: []
 
   - id: 'archimate-technology-service'
-    stencil: Service
+    name: Service
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-service-node
@@ -190,11 +190,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Service</h1>\n\n<p><small>&lt;&lt;Technology Service&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Service</h1>\n\n<p><small>«Technology Service»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-artifact'
-    stencil: Artifact
+    name: Artifact
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-artifact-node
@@ -206,11 +206,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Artifact</h1>\n\n<p><small>&lt;&lt;Artifact&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Artifact</h1>\n\n<p><small>«Artifact»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-communication-network'
-    stencil: Communication Network
+    name: Communication Network
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-communication-network-node
@@ -222,11 +222,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Communication Network</h1>\n\n<p><small>&lt;&lt;Communication Network&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Communication Network</h1>\n\n<p><small>«Communication Network»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-technology-path'
-    stencil: Path
+    name: Path
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-path-node
@@ -238,5 +238,5 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-technology-metadata
         texts:
-          text: "<h1>Path</h1>\n\n<p><small>&lt;&lt;Path&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Path</h1>\n\n<p><small>«Path»</small></p>\n\n<p>Description</p>"
         tags: []

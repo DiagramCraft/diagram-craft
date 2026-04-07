@@ -1,6 +1,6 @@
 stencils:
   - id: 'bpmn-core-annotation-left'
-    title: 'BPMN Core Annotation Left'
+    name: 'BPMN Core Annotation Left'
     elements:
       - id: zuribv0
         type: node
@@ -43,7 +43,7 @@ stencils:
               type: none
 
   - id: 'bpmn-core-annotation-right'
-    title: 'BPMN Core Annotation Right'
+    name: 'BPMN Core Annotation Right'
     elements:
       - id: yzeprk6
         type: node
@@ -88,4 +88,3 @@ stencils:
           arrow:
             end:
               type: none
-

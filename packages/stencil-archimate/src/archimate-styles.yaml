@@ -14,7 +14,7 @@ styles:
     props:
       text:
         color: '#5e4300'
-        fontSize: 12
+        fontSize: 10
         top: 0
         left: 0
         right: 0
@@ -34,7 +34,7 @@ styles:
     props:
       text:
         color: '#184f7e'
-        fontSize: 12
+        fontSize: 10
         top: 0
         left: 0
         right: 0
@@ -54,7 +54,7 @@ styles:
     props:
       text:
         color: '#2d5f2d'
-        fontSize: 12
+        fontSize: 10
         top: 0
         left: 0
         right: 0

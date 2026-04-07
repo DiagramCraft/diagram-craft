@@ -1,7 +1,7 @@
 stencils:
   - id: 'archimate-business-actor'
-    stencil: Actor
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Actor
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-actor-node
         type: node
@@ -12,8 +12,8 @@ stencils:
           w: 160
           h: 90
           r: 0
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: &archimate-picker-props
           stroke:
             width: 1.5
@@ -21,60 +21,60 @@ stencils:
           style: archimate-business
           textStyle: archimate-business-text
         texts:
-          text: "<h1>Actor</h1>\n\n<p><small>&lt;&lt;Business Actor&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Actor</h1>\n\n<p><small>«Business Actor»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-role'
-    stencil: Role
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Role
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-role-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Role</h1>\n\n<p><small>&lt;&lt;Business Role&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Role</h1>\n\n<p><small>«Business Role»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-collaboration'
-    stencil: Collaboration
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Collaboration
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-collaboration-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Collaboration</h1>\n\n<p><small>&lt;&lt;Business Collaboration&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Collaboration</h1>\n\n<p><small>«Business Collaboration»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-interface'
-    stencil: Interface
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Interface
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-interface-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Interface</h1>\n\n<p><small>&lt;&lt;Business Interface&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Interface</h1>\n\n<p><small>«Business Interface»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-process'
-    stencil: Process
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Process
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-process-node
         type: node
@@ -85,7 +85,7 @@ stencils:
           w: 170
           h: 90
           r: 0
-        children: []
+        children: [ ]
         props:
           custom:
             roundedRect:
@@ -93,18 +93,18 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Process</h1>\n\n<p><small>&lt;&lt;Business Process&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Process</h1>\n\n<p><small>«Business Process»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-function'
-    stencil: Function
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Function
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-function-node
         type: node
         nodeType: rounded-rect
         bounds: *archimate-business-behavior-bounds
-        children: []
+        children: [ ]
         props:
           custom:
             roundedRect:
@@ -112,18 +112,18 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Function</h1>\n\n<p><small>&lt;&lt;Business Function&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Function</h1>\n\n<p><small>«Business Function»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-interaction'
-    stencil: Interaction
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Interaction
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-interaction-node
         type: node
         nodeType: rounded-rect
         bounds: *archimate-business-behavior-bounds
-        children: []
+        children: [ ]
         props:
           custom:
             roundedRect:
@@ -131,12 +131,12 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Interaction</h1>\n\n<p><small>&lt;&lt;Business Interaction&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Interaction</h1>\n\n<p><small>«Business Interaction»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-event'
-    stencil: Event
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Event
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-event-node
         type: node
@@ -147,7 +147,7 @@ stencils:
           w: 170
           h: 64
           r: 0
-        children: []
+        children: [ ]
         props:
           custom:
             roundedRect:
@@ -155,18 +155,18 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Event</h1>\n\n<p><small>&lt;&lt;Business Event&gt;&gt;</small></p>"
-        tags: []
+          text: "<h1>Event</h1>\n\n<p><small>«Business Event»</small></p>"
+        tags: [ ]
 
   - id: 'archimate-business-service'
-    stencil: Service
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Service
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-service-node
         type: node
         nodeType: rounded-rect
         bounds: *archimate-business-behavior-bounds
-        children: []
+        children: [ ]
         props:
           custom:
             roundedRect:
@@ -174,69 +174,69 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Service</h1>\n\n<p><small>&lt;&lt;Business Service&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Service</h1>\n\n<p><small>«Business Service»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-object'
-    stencil: Object
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Object
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-object-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Object</h1>\n\n<p><small>&lt;&lt;Business Object&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Object</h1>\n\n<p><small>«Business Object»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-contract'
-    stencil: Contract
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Contract
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-contract-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Contract</h1>\n\n<p><small>&lt;&lt;Contract&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Contract</h1>\n\n<p><small>«Contract»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-representation'
-    stencil: Representation
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Representation
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-representation-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Representation</h1>\n\n<p><small>&lt;&lt;Representation&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Representation</h1>\n\n<p><small>«Representation»</small></p>\n\n<p>Description</p>"
+        tags: [ ]
 
   - id: 'archimate-business-product'
-    stencil: Product
-    styles: ['archimate-business', 'archimate-business-text']
+    name: Product
+    styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-product-node
         type: node
         nodeType: rect
         bounds: *archimate-business-structure-bounds
-        children: []
-        props: {}
+        children: [ ]
+        props: { }
         pickerProps: *archimate-picker-props
         metadata: *archimate-business-metadata
         texts:
-          text: "<h1>Product</h1>\n\n<p><small>&lt;&lt;Product&gt;&gt;</small></p>\n\n<p>Description</p>"
-        tags: []
+          text: "<h1>Product</h1>\n\n<p><small>«Product»</small></p>\n\n<p>Description</p>"
+        tags: [ ]

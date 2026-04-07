@@ -1,6 +1,6 @@
 stencils:
   - id: 'archimate-application-component'
-    stencil: Component
+    name: Component
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-component-node
@@ -21,11 +21,11 @@ stencils:
           style: archimate-application
           textStyle: archimate-application-text
         texts:
-          text: "<h1>Component</h1>\n\n<p><small>&lt;&lt;Application Component&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Component</h1>\n\n<p><small>«Application Component»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-collaboration'
-    stencil: Collaboration
+    name: Collaboration
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-collaboration-node
@@ -37,11 +37,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Collaboration</h1>\n\n<p><small>&lt;&lt;Application Collaboration&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Collaboration</h1>\n\n<p><small>«Application Collaboration»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-interface'
-    stencil: Interface
+    name: Interface
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-interface-node
@@ -53,11 +53,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Interface</h1>\n\n<p><small>&lt;&lt;Application Interface&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Interface</h1>\n\n<p><small>«Application Interface»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-function'
-    stencil: Function
+    name: Function
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-function-node
@@ -77,11 +77,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Function</h1>\n\n<p><small>&lt;&lt;Application Function&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Function</h1>\n\n<p><small>«Application Function»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-interaction'
-    stencil: Interaction
+    name: Interaction
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-interaction-node
@@ -96,11 +96,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Interaction</h1>\n\n<p><small>&lt;&lt;Application Interaction&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Interaction</h1>\n\n<p><small>«Application Interaction»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-process'
-    stencil: Process
+    name: Process
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-process-node
@@ -115,11 +115,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Process</h1>\n\n<p><small>&lt;&lt;Application Process&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Process</h1>\n\n<p><small>«Application Process»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-event'
-    stencil: Event
+    name: Event
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-event-node
@@ -139,11 +139,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Event</h1>\n\n<p><small>&lt;&lt;Application Event&gt;&gt;</small></p>"
+          text: "<h1>Event</h1>\n\n<p><small>«Application Event»</small></p>"
         tags: []
 
   - id: 'archimate-application-service'
-    stencil: Service
+    name: Service
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-service-node
@@ -158,11 +158,11 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Service</h1>\n\n<p><small>&lt;&lt;Application Service&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Service</h1>\n\n<p><small>«Application Service»</small></p>\n\n<p>Description</p>"
         tags: []
 
   - id: 'archimate-application-data-object'
-    stencil: Data Object
+    name: Data Object
     styles: ['archimate-application', 'archimate-application-text']
     elements:
       - id: archimate-application-data-object-node
@@ -174,5 +174,5 @@ stencils:
         pickerProps: *archimate-picker-props
         metadata: *archimate-application-metadata
         texts:
-          text: "<h1>Data Object</h1>\n\n<p><small>&lt;&lt;Data Object&gt;&gt;</small></p>\n\n<p>Description</p>"
+          text: "<h1>Data Object</h1>\n\n<p><small>«Data Object»</small></p>\n\n<p>Description</p>"
         tags: []
