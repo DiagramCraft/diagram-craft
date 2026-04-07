@@ -7,7 +7,8 @@ export const loadArchimateStencils = async (_registry: Registry) => {
   const archimateStencilPkg: StencilPackage = {
     id: 'archimate',
     stencils: [],
-    type: 'default'
+    type: 'default',
+    subPackages: [{ id: 'main', name: 'Archimate', stencils: [] }]
   };
 
   const loader = new YamlStencilLoader(archimateStencilPkg);

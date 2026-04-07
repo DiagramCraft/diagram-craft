@@ -383,6 +383,9 @@ importers:
       '@diagram-craft/model':
         specifier: workspace:^
         version: link:../model
+      '@diagram-craft/stencil-archimate':
+        specifier: workspace:^
+        version: link:../stencil-archimate
       '@diagram-craft/stencil-bpmn':
         specifier: workspace:^
         version: link:../stencil-bpmn
