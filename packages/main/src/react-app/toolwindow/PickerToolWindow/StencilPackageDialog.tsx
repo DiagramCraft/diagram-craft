@@ -65,11 +65,13 @@ export const StencilPackageDialog = ({
     >
       <div style={{ minWidth: '20rem' }}>
         <Scrollable
+          maxHeight="30vh"
           style={{
-            maxHeight: '30vh'
+            border: '1px solid var(--cmp-border)',
+            background: 'var(--panel-bg)'
           }}
         >
-          <div className={'util-vstack'} style={{ gap: '0.75rem' }}>
+          <div className={'util-vstack'} style={{ gap: '0.75rem', paddingBottom: '1.5rem' }}>
             {packages.map(pkg => (
               <label
                 key={pkg.id}
