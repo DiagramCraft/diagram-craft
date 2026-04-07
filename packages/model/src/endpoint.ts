@@ -135,7 +135,8 @@ export const Endpoint = {
         defer
           ? () => resolvedEdgeLookup.get(endpoint.edge.id)!
           : resolvedEdgeLookup.get(endpoint.edge.id)!,
-        endpoint.pathPosition
+        endpoint.pathPosition,
+        defer ? endpoint.edge.id : undefined
       );
     } else if (isSerializedEndpointPointInNode(endpoint)) {
       return new PointInNodeEndpoint(
@@ -306,11 +307,15 @@ export class PointOnEdgeEndpoint
   extends EdgeConnectedEndpoint<SerializedPointOnEdgeEndpoint>
   implements Endpoint
 {
+  readonly #edgeId: string | undefined;
+
   constructor(
     edge: DiagramEdge | (() => DiagramEdge),
-    public readonly pathPosition: number
+    public readonly pathPosition: number,
+    edgeId?: string
   ) {
     super(edge);
+    this.#edgeId = edgeId;
   }
 
   get normalizedPathPosition() {
@@ -318,6 +323,7 @@ export class PointOnEdgeEndpoint
   }
 
   get position(): Point {
+    if (!this.edge) return Point.ORIGIN;
     const path = this.edge.path();
     const length = path.length();
     if (length === 0 || Number.isNaN(length)) {
@@ -327,9 +333,10 @@ export class PointOnEdgeEndpoint
   }
 
   serialize(): SerializedPointOnEdgeEndpoint {
+    const id = this.#edgeId ?? this.edge?.id;
     return {
-      edge: { id: this.edge.id },
-      position: this.position,
+      edge: { id: id! },
+      ...(this.edge ? { position: this.position } : {}),
       pathPosition: this.normalizedPathPosition
     };
   }
