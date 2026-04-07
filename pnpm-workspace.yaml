@@ -1,3 +1,4 @@
 packages:
-  - "./packages/**"
-  - "./submodules/**"
+  - './packages/**'
+  - './submodules/**'
+  - './arch-register-packages/**'
