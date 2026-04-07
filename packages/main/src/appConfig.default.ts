@@ -6,7 +6,6 @@ import { ElectronAutosave } from './react-app/autosave/ElectronAutosave';
 import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { fileLoaderDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 import { stencilLoaderBasic } from '@diagram-craft/model/stencilRegistry';
-import { loadArchimateStencils } from '@diagram-craft/stencil-archimate/stencil-archimate-loader';
 
 const random = new Random(Date.now());
 
