@@ -9,7 +9,7 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
-import { hasMatchingIsometricProjection, makeIsometricTransform } from '../effects/isometric';
+import { resolveSelectionProjection } from '../effects/selectionEffects';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -35,21 +35,10 @@ export class SelectionComponent extends Component<CanvasState> {
 
     const hasMultipleElements = selection.nodes.length + selection.edges.length > 1;
     const nonLabelNodes = selection.nodes.filter(n => !n.labelEdge());
-
-    // REVIEW: Could we generalize this into having an array of (selection) => "Transform" | undefined
-    //         This way we don't need to explicitly handle on isometric here
-    const sharedIsometricNode =
-      nonLabelNodes.length > 0 &&
-      nonLabelNodes.every(node =>
-        hasMatchingIsometricProjection(nonLabelNodes[0]!.renderProps, node.renderProps)
-      )
-        ? nonLabelNodes[0]!
-        : undefined;
+    const selectionProjection = resolveSelectionProjection(selection);
     const selectionTransform = [
       Transforms.rotate(bounds),
-      sharedIsometricNode
-        ? makeIsometricTransform(bounds, sharedIsometricNode.renderProps).svgForward()
-        : ''
+      selectionProjection?.transform(bounds) ?? ''
     ]
       .filter(Boolean)
       .join(' ');
@@ -91,9 +80,7 @@ export class SelectionComponent extends Component<CanvasState> {
                 {
                   transform: [
                     Transforms.rotate(node.bounds),
-                    sharedIsometricNode
-                      ? makeIsometricTransform(node.bounds, node.renderProps).svgForward()
-                      : ''
+                    selectionProjection?.transform(node.bounds) ?? ''
                   ]
                     .filter(Boolean)
                     .join(' ')
