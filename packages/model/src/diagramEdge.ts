@@ -45,6 +45,7 @@ import { assert, is, mustExist } from '@diagram-craft/utils/assert';
 import { DynamicAccessor, PropPath, PropPathValue } from '@diagram-craft/utils/propertyPath';
 import type { RegularLayer } from './diagramLayerRegular';
 import { assertRegularLayer, getAdjustments } from './diagramLayerUtils';
+import type { Layer } from './diagramLayer';
 import type { Reference, SerializedEndpoint } from './serialization/serializedTypes';
 import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { ModificationLayer } from './diagramLayerModification';
@@ -1152,6 +1153,24 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
     }
     if (scope === 'full') {
       this._recalculateIntersections(uow, true);
+    }
+  }
+
+  _attach(parent: DiagramElement | Layer, uow: UnitOfWork): void {
+    super._attach(parent, uow);
+
+    // After this edge is registered in the lookup, find any already-attached edges
+    // that have a PointOnEdgeEndpoint referencing this edge and register them as
+    // attached. This handles the undo case where a referencing edge was restored
+    // before this one.
+    for (const edge of this.diagram.edgeLookup.values()) {
+      if (edge === this) continue;
+      if (isEdgeConnectedEndpoint(edge.start) && edge.start.edge === this) {
+        this._addAttachedEdge(edge, uow);
+      }
+      if (isEdgeConnectedEndpoint(edge.end) && edge.end.edge === this) {
+        this._addAttachedEdge(edge, uow);
+      }
     }
   }
 

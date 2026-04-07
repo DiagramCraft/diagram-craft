@@ -9,6 +9,7 @@ import {
 import { DiagramEdge } from './diagramEdge';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import { ElementFactory } from './elementFactory';
+import { deleteElements } from './diagramElementUtils';
 
 describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   let edge1: DiagramEdge;
@@ -944,6 +945,91 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       expect(child.getText()).toBe('child text');
       expect(child.storedProps.fill?.color).toBe('#ff0000');
       expect(child.metadata.style).toBe('child-style');
+    });
+  });
+
+  describe('PointOnEdgeEndpoint undo/redo', () => {
+    const setupEdges = (m: StandardTestModel) => {
+      // edgeA: a simple edge with free endpoints
+      const edgeA = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 0, y: 0 }),
+        end: new FreeEndpoint({ x: 100, y: 0 }),
+        layer: m.layer1
+      });
+      UnitOfWork.execute(m.diagram1, uow => m.layer1.addElement(edgeA, uow));
+
+      // edgeB: endpoint attached to midpoint of edgeA via PointOnEdgeEndpoint
+      const edgeB = ElementFactory.edge({
+        start: new FreeEndpoint({ x: 50, y: -50 }),
+        end: new PointOnEdgeEndpoint(edgeA, 0.5),
+        layer: m.layer1
+      });
+      UnitOfWork.execute(m.diagram1, uow => {
+        m.layer1.addElement(edgeB, uow);
+        edgeB.setEnd(new PointOnEdgeEndpoint(edgeA, 0.5), uow);
+      });
+
+      return { edgeA, edgeB };
+    };
+
+    it('should restore PointOnEdgeEndpoint connection after deleting edgeA first then edgeB, then undoing', () => {
+      const { edgeA, edgeB } = setupEdges(model);
+      const edgeAId = edgeA.id;
+      const edgeBId = edgeB.id;
+
+      // Delete edgeA first, then edgeB
+      UnitOfWork.executeWithUndo(model.diagram1, 'Delete', uow => {
+        deleteElements([edgeA, edgeB], uow);
+      });
+
+      expect(model.diagram1.edgeLookup.get(edgeAId)).toBeUndefined();
+      expect(model.diagram1.edgeLookup.get(edgeBId)).toBeUndefined();
+
+      // Undo
+      expect(() => model.diagram1.undoManager.undo()).not.toThrow();
+
+      const restoredA = model.diagram1.edgeLookup.get(edgeAId)!;
+      const restoredB = model.diagram1.edgeLookup.get(edgeBId)!;
+
+      expect(restoredA).toBeDefined();
+      expect(restoredB).toBeDefined();
+
+      // edgeB's end should still be a PointOnEdgeEndpoint referencing edgeA
+      expect(restoredB.end).toBeInstanceOf(PointOnEdgeEndpoint);
+      expect((restoredB.end as PointOnEdgeEndpoint).edge).toBe(restoredA);
+
+      // edgeA should know about edgeB as an attached edge
+      expect(restoredA.attachedEdges.map(e => e.id)).toContain(edgeBId);
+    });
+
+    it('should restore PointOnEdgeEndpoint connection after deleting edgeB first then edgeA, then undoing', () => {
+      const { edgeA, edgeB } = setupEdges(model);
+      const edgeAId = edgeA.id;
+      const edgeBId = edgeB.id;
+
+      // Delete edgeB first, then edgeA
+      UnitOfWork.executeWithUndo(model.diagram1, 'Delete', uow => {
+        deleteElements([edgeB, edgeA], uow);
+      });
+
+      expect(model.diagram1.edgeLookup.get(edgeAId)).toBeUndefined();
+      expect(model.diagram1.edgeLookup.get(edgeBId)).toBeUndefined();
+
+      // Undo
+      expect(() => model.diagram1.undoManager.undo()).not.toThrow();
+
+      const restoredA = model.diagram1.edgeLookup.get(edgeAId)!;
+      const restoredB = model.diagram1.edgeLookup.get(edgeBId)!;
+
+      expect(restoredA).toBeDefined();
+      expect(restoredB).toBeDefined();
+
+      // edgeB's end should still be a PointOnEdgeEndpoint referencing edgeA
+      expect(restoredB.end).toBeInstanceOf(PointOnEdgeEndpoint);
+      expect((restoredB.end as PointOnEdgeEndpoint).edge).toBe(restoredA);
+
+      // edgeA should know about edgeB as an attached edge
+      expect(restoredA.attachedEdges.map(e => e.id)).toContain(edgeBId);
     });
   });
 });
