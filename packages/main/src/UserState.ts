@@ -23,6 +23,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #showRulers: boolean = true;
   #stencils: Array<{ id: string; isOpen?: boolean }> = DEFAULT_STENCILS;
   #stencilPickerViewMode: PickerViewMode = 'grid';
+  #stencilSearchAllPackages: boolean = true;
   #recentFiles: Array<string>;
   #themeMode: ThemeMode = 'dark';
   #toolWindowTabs: Record<string, string> = {};
@@ -54,6 +55,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
         id: stencil.id === 'basic-shapes' ? 'default' : stencil.id
       })) ?? DEFAULT_STENCILS;
     this.#stencilPickerViewMode = state.stencilPickerViewMode === 'list' ? 'list' : 'grid';
+    this.#stencilSearchAllPackages = state.stencilSearchAllPackages ?? true;
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
@@ -166,6 +168,16 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  get stencilSearchAllPackages(): boolean {
+    return this.#stencilSearchAllPackages;
+  }
+
+  set stencilSearchAllPackages(stencilSearchAllPackages: boolean) {
+    if (this.#stencilSearchAllPackages === stencilSearchAllPackages) return;
+    this.#stencilSearchAllPackages = stencilSearchAllPackages;
+    this.triggerChange();
+  }
+
   get showRulers() {
     return this.#showRulers;
   }
@@ -202,6 +214,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
       showRulers: this.#showRulers,
       stencils: this.#stencils,
       stencilPickerViewMode: this.#stencilPickerViewMode,
+      stencilSearchAllPackages: this.#stencilSearchAllPackages,
       recentFiles: this.#recentFiles,
       themeMode: this.#themeMode,
       toolWindowTabs: this.#toolWindowTabs

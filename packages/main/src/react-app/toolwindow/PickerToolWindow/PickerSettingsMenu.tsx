@@ -8,18 +8,27 @@ import { useState } from 'react';
 type Props = {
   pickerViewMode: PickerViewMode;
   onPickerViewModeChange: (mode: PickerViewMode) => void;
+  searchAllStencilPackages: boolean;
+  onSearchAllStencilPackagesChange: (searchAllStencilPackages: boolean) => void;
   onManageStencils: () => void;
 };
 
 export const PickerSettingsMenu = ({
   pickerViewMode,
   onPickerViewModeChange,
+  searchAllStencilPackages,
+  onSearchAllStencilPackagesChange,
   onManageStencils
 }: Props) => {
   const [open, setOpen] = useState(false);
 
   const onSelect = (mode: PickerViewMode) => {
     onPickerViewModeChange(mode);
+    setOpen(false);
+  };
+
+  const onSearchScopeSelect = (searchAllStencilPackages: boolean) => {
+    onSearchAllStencilPackagesChange(searchAllStencilPackages);
     setOpen(false);
   };
 
@@ -52,6 +61,13 @@ export const PickerSettingsMenu = ({
               List
             </Menu.RadioItem>
           </Menu.RadioGroup>
+          <Menu.Separator />
+          <Menu.CheckboxItem
+            checked={searchAllStencilPackages}
+            onCheckedChange={onSearchScopeSelect}
+          >
+            Search all stencil packages
+          </Menu.CheckboxItem>
           <Menu.Separator />
           <Menu.Item
             onClick={() => {

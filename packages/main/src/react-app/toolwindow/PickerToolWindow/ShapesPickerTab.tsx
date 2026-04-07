@@ -64,6 +64,9 @@ export const ShapesPickerTab = () => {
     ...userState.stencils.filter(s => s.isOpen).map(s => s.id)
   ]);
   const [pickerViewMode, setPickerViewMode] = useState(userState.stencilPickerViewMode);
+  const [searchAllStencilPackages, setSearchAllStencilPackages] = useState(
+    userState.stencilSearchAllPackages
+  );
   const [loaded, setLoaded] = useState(
     new Set(userState.stencils.filter(s => s.isOpen).map(s => s.id))
   );
@@ -160,6 +163,12 @@ export const ShapesPickerTab = () => {
             setPickerViewMode(mode);
             userState.stencilPickerViewMode = mode;
           }}
+          searchAllStencilPackages={searchAllStencilPackages}
+          onSearchAllStencilPackagesChange={searchAllStencilPackages => {
+            setSearchAllStencilPackages(searchAllStencilPackages);
+            userState.stencilSearchAllPackages = searchAllStencilPackages;
+          }}
+          visiblePackageIds={activePackageIds}
           onManageStencils={() => setManageStencilsOpen(true)}
         />
 

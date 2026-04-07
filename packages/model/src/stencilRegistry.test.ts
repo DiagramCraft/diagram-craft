@@ -69,6 +69,26 @@ describe('StencilRegistry', () => {
     expect(getStencilsInPackage(registry.get('uml'))).toEqual([rootStencil, subpackageStencil]);
   });
 
+  it('limits search to the requested packages', async () => {
+    const registry = new StencilRegistry();
+    const umlStencil = makeStencil('class-shape', 'Class Shape');
+    const bpmnStencil = makeStencil('task-shape', 'Task Shape');
+
+    registry.register('UML', {
+      id: 'uml',
+      type: 'default',
+      stencils: [umlStencil]
+    });
+    registry.register('BPMN', {
+      id: 'bpmn',
+      type: 'default',
+      stencils: [bpmnStencil]
+    });
+
+    await expect(registry.search('Shape', ['uml'])).resolves.toEqual([umlStencil]);
+    await expect(registry.search('Shape', ['bpmn'])).resolves.toEqual([bpmnStencil]);
+  });
+
   it('allows packages to mix root-owned and subpackage-owned stencils', () => {
     const registry = new StencilRegistry();
     const rootStencil = makeStencil('root-shape');
