@@ -1,0 +1,178 @@
+stencils:
+  - id: 'archimate-application-component'
+    name: Component
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-component-node
+        type: node
+        nodeType: rect
+        bounds: &archimate-application-structure-bounds
+          x: 0
+          y: 0
+          w: 160
+          h: 90
+          r: 0
+        children: []
+        props: {}
+        pickerProps: &archimate-picker-props
+          stroke:
+            width: 1.5
+        metadata: &archimate-application-metadata
+          style: archimate-application
+          textStyle: archimate-application-text
+        texts:
+          text: "<h1>Component</h1>\n\n<p><small>«Application Component»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-collaboration'
+    name: Collaboration
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-collaboration-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-application-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Collaboration</h1>\n\n<p><small>«Application Collaboration»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-interface'
+    name: Interface
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-interface-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-application-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Interface</h1>\n\n<p><small>«Application Interface»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-function'
+    name: Function
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-function-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-application-behavior-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 90
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Function</h1>\n\n<p><small>«Application Function»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-interaction'
+    name: Interaction
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-interaction-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-application-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Interaction</h1>\n\n<p><small>«Application Interaction»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-process'
+    name: Process
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-process-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-application-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Process</h1>\n\n<p><small>«Application Process»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-event'
+    name: Event
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-event-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-application-event-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 64
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Event</h1>\n\n<p><small>«Application Event»</small></p>"
+        tags: []
+
+  - id: 'archimate-application-service'
+    name: Service
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-service-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-application-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Service</h1>\n\n<p><small>«Application Service»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-application-data-object'
+    name: Data Object
+    styles: ['archimate-application', 'archimate-application-text']
+    elements:
+      - id: archimate-application-data-object-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-application-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-application-metadata
+        texts:
+          text: "<h1>Data Object</h1>\n\n<p><small>«Data Object»</small></p>\n\n<p>Description</p>"
+        tags: []

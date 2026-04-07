@@ -466,4 +466,67 @@ describe('YamlStencilLoader', () => {
       }
     ]);
   });
+
+  test('uses yaml name fallback order of name, title, then stencil label', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+    const loader = new YamlStencilLoader(pkg);
+    loader.registerPackage({
+      stencils: [
+        {
+          id: 'explicit-name',
+          name: 'Explicit Name',
+          title: 'Ignored Title',
+          stencil: 'Ignored Stencil',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        },
+        {
+          id: 'title-fallback',
+          title: 'Title Label',
+          stencil: 'Ignored Stencil',
+          node: {
+            id: 'node-2',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        },
+        {
+          id: 'stencil-fallback',
+          stencil: 'Stencil Label',
+          node: {
+            id: 'node-3',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+
+    loader.apply();
+
+    expect(pkg.stencils.map(stencil => stencil.name)).toEqual([
+      'Explicit Name',
+      'Title Label',
+      'Stencil Label'
+    ]);
+  });
 });

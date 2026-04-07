@@ -1,0 +1,242 @@
+stencils:
+  - id: 'archimate-technology-node'
+    name: Node
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-node-node
+        type: node
+        nodeType: rect
+        bounds: &archimate-technology-structure-bounds
+          x: 0
+          y: 0
+          w: 160
+          h: 90
+          r: 0
+        children: []
+        props: {}
+        pickerProps: &archimate-picker-props
+          stroke:
+            width: 1.5
+        metadata: &archimate-technology-metadata
+          style: archimate-technology
+          textStyle: archimate-technology-text
+        texts:
+          text: "<h1>Node</h1>\n\n<p><small>«Node»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-device'
+    name: Device
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-device-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Device</h1>\n\n<p><small>«Device»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-system-software'
+    name: System Software
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-system-software-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>System Software</h1>\n\n<p><small>«System Software»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-collaboration'
+    name: Collaboration
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-collaboration-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Collaboration</h1>\n\n<p><small>«Technology Collaboration»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-interface'
+    name: Interface
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-interface-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Interface</h1>\n\n<p><small>«Technology Interface»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-function'
+    name: Function
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-function-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-technology-behavior-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 90
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Function</h1>\n\n<p><small>«Technology Function»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-process'
+    name: Process
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-process-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-technology-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Process</h1>\n\n<p><small>«Technology Process»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-interaction'
+    name: Interaction
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-interaction-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-technology-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Interaction</h1>\n\n<p><small>«Technology Interaction»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-event'
+    name: Event
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-event-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-technology-event-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 64
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Event</h1>\n\n<p><small>«Technology Event»</small></p>"
+        tags: []
+
+  - id: 'archimate-technology-service'
+    name: Service
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-service-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-technology-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Service</h1>\n\n<p><small>«Technology Service»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-artifact'
+    name: Artifact
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-artifact-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Artifact</h1>\n\n<p><small>«Artifact»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-communication-network'
+    name: Communication Network
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-communication-network-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Communication Network</h1>\n\n<p><small>«Communication Network»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-technology-path'
+    name: Path
+    styles: ['archimate-technology', 'archimate-technology-text']
+    elements:
+      - id: archimate-technology-path-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-technology-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-technology-metadata
+        texts:
+          text: "<h1>Path</h1>\n\n<p><small>«Path»</small></p>\n\n<p>Description</p>"
+        tags: []

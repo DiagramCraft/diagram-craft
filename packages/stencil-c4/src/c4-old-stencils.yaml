@@ -1,6 +1,6 @@
 stencils:
   - id: 'c4-old-basic'
-    stencil: Element
+    name: Element
     styles: &c4-styles
       - id: 'c4-old-element'
         name: 'C4 Old Element'
@@ -59,7 +59,7 @@ stencils:
         tags:
 
   - id: 'c4-old-person'
-    stencil: Person
+    name: Person
     styles: *c4-styles
 
     settings:
@@ -87,7 +87,7 @@ stencils:
         tags:
 
   - id: 'c4-old-data-store'
-    stencil: Data Store
+    name: Data Store
     settings:
       scaleStrokes: true
     styles: *c4-styles
@@ -114,7 +114,7 @@ stencils:
         tags:
 
   - id: 'c4-old-folder'
-    stencil: Folder
+    name: Folder
     settings:
       scaleStrokes: true
     styles: *c4-styles
@@ -138,7 +138,7 @@ stencils:
         tags:
 
   - id: 'c4-old-bucket'
-    stencil: Bucket
+    name: Bucket
     settings:
       scaleStrokes: true
     styles: *c4-styles
@@ -168,7 +168,7 @@ stencils:
         tags:
 
   - id: 'c4-old-module'
-    stencil: Module
+    name: Module
     settings:
       scaleStrokes: true
     styles: *c4-styles
@@ -197,7 +197,7 @@ stencils:
           text: "<h1>Module</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
         tags:
   - id: 'c4-old-window'
-    stencil: Window
+    name: Window
     settings:
       scaleStrokes: true
     styles: *c4-styles
@@ -221,7 +221,7 @@ stencils:
         tags:
 
   - id: 'c4-old-relationship'
-    stencil: Relationship
+    name: Relationship
     settings:
       scaleStrokes: true
     styles:

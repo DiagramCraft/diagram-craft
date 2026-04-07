@@ -41,8 +41,6 @@ type YamlStencilStyle = NonNullable<Stencil['styles']>[number];
 export type YamlStencilDefinition = {
   id: string;
   name?: string;
-  title?: string;
-  stencil?: string;
   node?: SerializedElementWithPickerProps;
   elements?: Array<SerializedElementWithPickerProps>;
   settings?: YamlStencilSettings;
@@ -321,7 +319,7 @@ export class YamlStencilLoader {
       dest.push({
         stencil: {
           id: stencil.id,
-          name: stencil.name,
+          name: stencil.name ?? this.getLegacyYamlStencilName(stencil),
           styles: undefined,
           settings: stencil.settings,
           forPicker: registry => mkNode(registry, 'picker'),
@@ -345,6 +343,17 @@ export class YamlStencilLoader {
       variants: stencils.variants
     });
   };
+
+  private getLegacyYamlStencilName(stencil: YamlStencilDefinition): string | undefined {
+    const legacy = stencil as YamlStencilDefinition & {
+      title?: unknown;
+      stencil?: unknown;
+    };
+
+    if (typeof legacy.title === 'string') return legacy.title;
+    if (typeof legacy.stencil === 'string') return legacy.stencil;
+    return undefined;
+  }
 }
 
 const hasSerializedElementShape = (value: unknown): value is SerializedElementWithPickerProps => {

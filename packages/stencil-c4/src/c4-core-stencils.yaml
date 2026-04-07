@@ -1,6 +1,6 @@
 stencils:
   - id: 'c4-core-basic'
-    stencil: Element
+    name: Element
     styles: &c4-styles
       - id: 'c4-element'
         name: 'C4 Element'
@@ -59,7 +59,7 @@ stencils:
         tags:
 
   - id: 'c4-core-person'
-    stencil: Person
+    name: Person
     styles: *c4-styles
 
     elements:
@@ -87,7 +87,7 @@ stencils:
         tags:
 
   - id: 'c4-core-data-store'
-    stencil: Data Store
+    name: Data Store
     styles: *c4-styles
     elements:
       - id: esmm16v
@@ -115,7 +115,7 @@ stencils:
         tags:
 
   - id: 'c4-core-folder'
-    stencil: Folder
+    name: Folder
     styles: *c4-styles
     elements:
       - id: kn7nao0
@@ -140,7 +140,7 @@ stencils:
         tags:
 
   - id: 'c4-core-bucket'
-    stencil: Bucket
+    name: Bucket
     styles: *c4-styles
     elements:
       - id: 8cxofss
@@ -171,7 +171,7 @@ stencils:
         tags:
 
   - id: 'c4-core-module'
-    stencil: Module
+    name: Module
     styles: *c4-styles
     elements:
       - id: ltbe77f
@@ -201,7 +201,7 @@ stencils:
           text: "<h1>Module</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
         tags:
   - id: 'c4-core-cli'
-    stencil: CLI
+    name: CLI
     styles: *c4-styles
     elements:
       - id: 1cxyn6m
@@ -225,7 +225,7 @@ stencils:
           text: "<h1>CLI</h1>\n\n<small>[Type: Value]</small>\n\n<p>Description</p>"
         tags:
   - id: 'c4-core-window'
-    stencil: Window
+    name: Window
     styles: *c4-styles
     elements:
       - id: utbr5su
@@ -250,7 +250,7 @@ stencils:
         tags:
 
   - id: 'c4-core-relationship'
-    stencil: Relationship
+    name: Relationship
     styles:
       - id: 'c4-edge'
         name: 'C4 Edge'
