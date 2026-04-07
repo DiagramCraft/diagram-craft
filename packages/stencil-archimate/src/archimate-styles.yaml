@@ -1,0 +1,61 @@
+styles:
+  - id: 'archimate-business'
+    name: 'ArchiMate Business'
+    type: 'node'
+    props:
+      fill:
+        color: '#f6d77a'
+      stroke:
+        color: '#a77700'
+        width: 2
+  - id: 'archimate-business-text'
+    name: 'ArchiMate Business Text'
+    type: 'text'
+    props:
+      text:
+        color: '#5e4300'
+        fontSize: 12
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
+  - id: 'archimate-application'
+    name: 'ArchiMate Application'
+    type: 'node'
+    props:
+      fill:
+        color: '#a9d2f6'
+      stroke:
+        color: '#2e6ea6'
+        width: 2
+  - id: 'archimate-application-text'
+    name: 'ArchiMate Application Text'
+    type: 'text'
+    props:
+      text:
+        color: '#184f7e'
+        fontSize: 12
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
+  - id: 'archimate-technology'
+    name: 'ArchiMate Technology'
+    type: 'node'
+    props:
+      fill:
+        color: '#bfe3bf'
+      stroke:
+        color: '#4f8a4f'
+        width: 2
+  - id: 'archimate-technology-text'
+    name: 'ArchiMate Technology Text'
+    type: 'text'
+    props:
+      text:
+        color: '#2d5f2d'
+        fontSize: 12
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
