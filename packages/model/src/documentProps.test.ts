@@ -116,6 +116,37 @@ describe.each(Backends.all())('RecentEdgeStylesheets [%s]', (_name, backend) => 
   });
 });
 
+describe.each(Backends.all())('ActiveStencilPackages [%s]', (_name, backend) => {
+  it('should initialize with an empty list', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+
+    expect(documentProps.activeStencilPackages.ids).toEqual([]);
+  });
+
+  it('should set active packages and sync across collaborators', () => {
+    const { doc1, doc2 } = standardTestModel(backend);
+
+    doc1.props.activeStencilPackages.set(['default', 'uml']);
+
+    expect(doc1.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
+    if (doc2) {
+      expect(doc2.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
+    }
+  });
+
+  it('should support membership updates', () => {
+    const documentProps = new DocumentProps(new NoOpCRDTRoot(), TestModel.newDocument());
+
+    documentProps.activeStencilPackages.add('default');
+    documentProps.activeStencilPackages.add('uml');
+    documentProps.activeStencilPackages.remove('default');
+
+    expect(documentProps.activeStencilPackages.ids).toEqual(['uml']);
+    expect(documentProps.activeStencilPackages.has('uml')).toBe(true);
+    expect(documentProps.activeStencilPackages.has('default')).toBe(false);
+  });
+});
+
 describe.each(Backends.all())('Query [%s]', (_name, backend) => {
   it('should add a new entry to history', () => {
     // Setup

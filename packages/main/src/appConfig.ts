@@ -140,14 +140,20 @@ export const stencilEntry = <T extends keyof StencilLoaderOpts>(
   cfg: StencilRegistryConfigEntry<T>
 ) => cfg;
 
-type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
+export type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
   id: string;
   name: string;
+  includedByDefault: boolean;
   loader: K;
   opts: StencilLoaderOpts[K];
 };
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
+
+export const getDefaultStencilPackages = () =>
+  AppConfig.get()
+    .stencils.registry.filter(entry => entry.includedByDefault)
+    .map(entry => entry.id);
 
 type ElementDefinitionRegistryConfigEntry = LazyElementLoaderEntry;
 

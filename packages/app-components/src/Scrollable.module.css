@@ -8,6 +8,7 @@
 .cScrollable {
   box-sizing: border-box;
   border-radius: var(--cmp-radius);
+  overflow: scroll;
 
   .eViewport {
     height: 100%;

@@ -309,6 +309,63 @@ describe('deserializeDiagramDocument', () => {
   });
 
   describe('document props', () => {
+    it('should round-trip active stencil packages', async () => {
+      const originalDoc = TestModel.newDocument();
+      originalDoc.props.activeStencilPackages.set(['default', 'uml']);
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+
+      expect(serialized.props?.activeStencilPackages).toEqual(['default', 'uml']);
+      expect(serialized.props?.stencils).toEqual([]);
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id)
+      );
+
+      expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'uml']);
+      expect(newDoc.props.recentStencils.stencils).toEqual([]);
+    });
+
+    it('should apply default active stencil packages when missing from serialized props', async () => {
+      const originalDoc = TestModel.newDocument();
+      const serialized = await serializeDiagramDocument(originalDoc);
+      if (!serialized.props) {
+        throw new Error('Expected serialized props');
+      }
+
+      delete serialized.props.activeStencilPackages;
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id),
+        { includedPackages: ['default', 'arrow'] }
+      );
+
+      expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'arrow']);
+    });
+
+    it('should apply default active stencil packages when serialized props are empty', async () => {
+      const originalDoc = TestModel.newDocument();
+      const serialized = await serializeDiagramDocument(originalDoc);
+      serialized.props ??= {};
+      serialized.props.activeStencilPackages = [];
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id),
+        { includedPackages: ['default', 'arrow'] }
+      );
+
+      expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'arrow']);
+    });
+
     it('should round-trip recent edge stylesheets', async () => {
       const originalDoc = TestModel.newDocument();
       originalDoc.props.recentEdgeStylesheets.register('edge-style-1');

@@ -7,6 +7,7 @@ import { MULTI_WINDOW_DETECTOR } from './MultiWindowDetector';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 import type { CRDTRoot } from '@diagram-craft/collaboration/crdt';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { getDefaultStencilPackages } from '../../appConfig';
 
 const MAX_AUTOSAVES_PER_WINDOW = 3;
 const MAX_TOTAL_AUTOSAVES = 20;
@@ -92,7 +93,9 @@ export const MultiWindowAutosave = {
       const entry = sortedEntries.find(entry => entry.windowId === currentWindowId);
       if (entry) {
         const doc = await documentFactory.createDocument(root, entry.url, progressCallback);
-        await deserializeDiagramDocument(entry.diagram, doc, diagramFactory);
+        await deserializeDiagramDocument(entry.diagram, doc, diagramFactory, {
+          includedPackages: getDefaultStencilPackages()
+        });
         await doc.load();
 
         return {
@@ -141,7 +144,9 @@ export const MultiWindowAutosave = {
 
       // Load the selected autosave
       const doc = await documentFactory.createDocument(root, selectedEntry.url, progressCallback);
-      await deserializeDiagramDocument(selectedEntry.diagram, doc, diagramFactory);
+      await deserializeDiagramDocument(selectedEntry.diagram, doc, diagramFactory, {
+        includedPackages: getDefaultStencilPackages()
+      });
       await doc.load();
 
       return { document: doc, url: selectedEntry.url };

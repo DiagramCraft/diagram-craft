@@ -173,6 +173,47 @@ class RecentEdgeStylesheets extends RecentItems {
   }
 }
 
+class ActiveStencilPackages extends EventEmitter<{ change: EmptyObject }> {
+  #items: CRDTList<string>;
+
+  constructor(root: CRDTRoot) {
+    super();
+    this.#items = root.getList<string>('activeStencilPackages');
+  }
+
+  get ids() {
+    return this.#items.toArray();
+  }
+
+  has(id: string) {
+    return this.ids.includes(id);
+  }
+
+  set(ids: readonly string[]) {
+    this.#items.clear();
+    for (const id of ids) {
+      if (this.#items.toArray().includes(id)) continue;
+      this.#items.push(id);
+    }
+    this.emitAsync('change');
+  }
+
+  add(id: string) {
+    if (this.has(id)) return;
+    this.#items.push(id);
+    this.emitAsync('change');
+  }
+
+  remove(id: string) {
+    for (let i = 0; i < this.#items.length; i++) {
+      if (this.#items.get(i) !== id) continue;
+      this.#items.delete(i);
+      break;
+    }
+    this.emitAsync('change');
+  }
+}
+
 /**
  * The DocumentProps allows extra application data to be stored
  * By design; changing the extra data field, the document is not to be
@@ -182,11 +223,13 @@ export class DocumentProps implements Releasable {
   readonly query: Query;
   readonly recentStencils: RecentStencils;
   readonly recentEdgeStylesheets: RecentEdgeStylesheets;
+  readonly activeStencilPackages: ActiveStencilPackages;
 
   constructor(root: CRDTRoot, document: DiagramDocument) {
     this.query = new Query(root, document);
     this.recentStencils = new RecentStencils(root);
     this.recentEdgeStylesheets = new RecentEdgeStylesheets(root);
+    this.activeStencilPackages = new ActiveStencilPackages(root);
   }
 
   release() {}

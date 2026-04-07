@@ -7,7 +7,7 @@ import { useDocument } from '../../../application';
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
 import { ObjectPickerPanel } from './ObjectPickerPanel';
 import { ToolWindowPanel } from '../ToolWindowPanel';
-import { PickerViewModeMenu } from './PickerViewModeMenu';
+import { PickerSettingsMenu } from './PickerSettingsMenu';
 import type { PickerViewMode } from '../../../UserState';
 
 export const PickerSearchPanel = (props: Props) => {
@@ -65,9 +65,10 @@ export const PickerSearchPanel = (props: Props) => {
           <TbSearch />
         </Button>
 
-        <PickerViewModeMenu
+        <PickerSettingsMenu
           pickerViewMode={props.pickerViewMode}
           onPickerViewModeChange={props.onPickerViewModeChange}
+          onManageStencils={props.onManageStencils}
         />
       </div>
 
@@ -90,4 +91,5 @@ export const PickerSearchPanel = (props: Props) => {
 type Props = {
   pickerViewMode: PickerViewMode;
   onPickerViewModeChange: (mode: PickerViewMode) => void;
+  onManageStencils: () => void;
 };

@@ -72,8 +72,33 @@ export const defaultAppConfig: AppConfig = {
     },
     registry: [
       stencilEntry({
+        id: 'default',
+        name: 'Basic shapes',
+        includedByDefault: true,
+        loader: 'basic',
+        opts: {
+          stencils: () =>
+            Promise.resolve(async registry => {
+              return registry.stencils.get('default');
+            })
+        }
+      }),
+      stencilEntry({
+        id: 'arrow',
+        name: 'Arrow',
+        includedByDefault: true,
+        loader: 'basic',
+        opts: {
+          stencils: () =>
+            Promise.resolve(async registry => {
+              return registry.stencils.get('arrow');
+            })
+        }
+      }),
+      stencilEntry({
         id: 'bpmn2',
         name: 'BPMN 2.0',
+        includedByDefault: true,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -83,6 +108,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'uml',
         name: 'UML',
+        includedByDefault: true,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -92,6 +118,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'data-modelling',
         name: 'Data Modelling',
+        includedByDefault: true,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -103,6 +130,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'c4',
         name: 'C4',
+        includedByDefault: true,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -112,6 +140,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'archimate',
         name: 'ArchiMate',
+        includedByDefault: true,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -123,6 +152,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'drawioUml',
         name: 'UML (DrawIO)',
+        includedByDefault: false,
         loader: 'basic',
         opts: {
           stencils: () =>
@@ -134,6 +164,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'GCP',
         name: 'GCP',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/gcp2.xml`,
@@ -144,6 +175,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'AWS',
         name: 'AWS',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/aws3.xml`,
@@ -154,6 +186,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Azure',
         name: 'Azure',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/azure.xml`,
@@ -164,6 +197,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Fluid Power',
         name: 'Fluid Power',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/fluid_power.xml`,
@@ -174,6 +208,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'IBM',
         name: 'IBM',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/ibm.xml`,
@@ -184,6 +219,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Web Logos',
         name: 'Web Logos',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/weblogos.xml`,
@@ -194,6 +230,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Web Icons',
         name: 'Web Icons',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/webicons.xml`,
@@ -204,6 +241,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'EIP',
         name: 'EIP',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/eip.xml`,
@@ -214,6 +252,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Arrows',
         name: 'Arrows',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/arrows.xml`,
@@ -224,6 +263,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'Basic',
         name: 'Basic',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/basic.xml`,
@@ -234,6 +274,7 @@ export const defaultAppConfig: AppConfig = {
       stencilEntry({
         id: 'BPMN',
         name: 'BPMN',
+        includedByDefault: false,
         loader: 'drawioXml',
         opts: {
           url: `$STENCIL_ROOT/stencils/bpmn.xml`,
@@ -249,10 +290,18 @@ export const defaultAppConfig: AppConfig = {
         import('@diagram-craft/canvas-drawio/drawioLoaders').then(m => m.fileLoaderDrawio),
 
       '.json': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
+        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
+          includedPackages: defaultAppConfig.stencils.registry
+            .filter(entry => entry.includedByDefault)
+            .map(entry => entry.id)
+        }),
 
       '.dcd': async () => (content, doc, diagramFactory) =>
-        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory),
+        deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
+          includedPackages: defaultAppConfig.stencils.registry
+            .filter(entry => entry.includedByDefault)
+            .map(entry => entry.id)
+        }),
 
       '.diagramCraft.svg': fileLoaderDiagramCraftSvg
     }

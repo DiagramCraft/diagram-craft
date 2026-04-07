@@ -10,7 +10,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { UserState } from './UserState';
-import { AppConfig, type StencilRegistryConfig } from './appConfig';
+import { AppConfig, getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
@@ -143,7 +143,11 @@ export const AppLoader = (props: Props) => {
 
   useEffect(() => {
     if (!doc) return;
+    if (doc.props.activeStencilPackages.ids.length === 0) {
+      doc.props.activeStencilPackages.set(getDefaultStencilPackages());
+    }
     for (const def of props.stencils) {
+      if (doc.registry.stencils.getStencils().some(pkg => pkg.id === def.id)) continue;
       const typeLoader = stencilLoaderRegistry[def.loader];
       assert.present(typeLoader, `Stencil loader ${def.loader} not found`);
 

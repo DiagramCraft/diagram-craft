@@ -64,3 +64,4 @@ packages/server-main/data
 dist-electron
 /packages/test-ui-diagrams/src/local-tests-*.zip
 .codex/
+packages/main/public/.snapshot/*
