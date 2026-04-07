@@ -9,6 +9,7 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
+import { resolveSelectionProjection } from '../effects/selectionEffects';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -34,6 +35,13 @@ export class SelectionComponent extends Component<CanvasState> {
 
     const hasMultipleElements = selection.nodes.length + selection.edges.length > 1;
     const nonLabelNodes = selection.nodes.filter(n => !n.labelEdge());
+    const selectionProjection = resolveSelectionProjection(selection);
+    const selectionTransform = [
+      Transforms.rotate(bounds),
+      selectionProjection?.transform(bounds) ?? ''
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     return svg.g(
       {},
@@ -46,7 +54,7 @@ export class SelectionComponent extends Component<CanvasState> {
             this.subComponent(() => new GroupBoundsComponent(), { selection }),
             svg.g(
               {
-                transform: Transforms.rotate(bounds)
+                transform: selectionTransform
               },
               svg.rectFromBox(bounds, {
                 'class': $c('svg-selection__bb', {
@@ -70,7 +78,12 @@ export class SelectionComponent extends Component<CanvasState> {
             ...nonLabelNodes.map(node =>
               svg.g(
                 {
-                  transform: Transforms.rotate(node.bounds)
+                  transform: [
+                    Transforms.rotate(node.bounds),
+                    selectionProjection?.transform(node.bounds) ?? ''
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
                 },
                 svg.rectFromBox(node.bounds, {
                   'class': 'svg-selection__individual-node',

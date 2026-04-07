@@ -4,6 +4,7 @@ import * as svg from '../component/vdom-svg';
 import { RotateDrag } from '../drag/rotateDrag';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Zoom } from './zoom';
+import { EventHelper } from '@diagram-craft/utils/eventHelper';
 
 type Props = {
   diagram: Diagram;
@@ -28,7 +29,9 @@ export class RotationHandleComponent extends Component<Props> {
         on: {
           mousedown: e => {
             if (e.button !== 0) return;
-            DRAG_DROP_MANAGER.initiate(new RotateDrag(diagram));
+            DRAG_DROP_MANAGER.initiate(
+              new RotateDrag(diagram, diagram.viewBox.toDiagramPoint(EventHelper.point(e)))
+            );
             e.stopPropagation();
           }
         }

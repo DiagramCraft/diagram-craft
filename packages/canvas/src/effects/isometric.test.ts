@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { isometricBaseShape, makeIsometricTransform } from './isometric';
+import {
+  compensateIsometricResizeBounds,
+  hasMatchingIsometricProjection,
+  isometricBaseShape,
+  makeIsometricTransform
+} from './isometric';
 import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 import type { VNode } from '../component/vdom';
 
@@ -93,6 +98,61 @@ describe('makeIsometricTransform', () => {
       expect(restored.x).toBeCloseTo(point.x, 4);
       expect(restored.y).toBeCloseTo(point.y, 4);
     }
+  });
+});
+
+describe('hasMatchingIsometricProjection', () => {
+  test('matches nodes with the same isometric projection', () => {
+    const propsA = createProps({ tilt: 0.6, rotation: 45 });
+    const propsB = createProps({ tilt: 0.6, rotation: 45, color: '#ff00ff', size: 24 });
+
+    expect(hasMatchingIsometricProjection(propsA, propsB)).toBe(true);
+  });
+
+  test('rejects nodes with different projection settings or disabled isometric effect', () => {
+    const enabled = createProps({ tilt: 0.6, rotation: 45 });
+    const differentRotation = createProps({ tilt: 0.6, rotation: 30 });
+    const disabled = createProps({ enabled: false });
+
+    expect(hasMatchingIsometricProjection(enabled, differentRotation)).toBe(false);
+    expect(hasMatchingIsometricProjection(enabled, disabled)).toBe(false);
+  });
+});
+
+describe('compensateIsometricResizeBounds', () => {
+  test('keeps the opposite side visually anchored during horizontal resize', () => {
+    const before = { x: 20, y: 30, w: 100, h: 80, r: 0 };
+    const after = { x: 20, y: 30, w: 140, h: 80, r: 0 };
+    const props = createProps({ tilt: 0.6, rotation: 45 });
+
+    const compensated = compensateIsometricResizeBounds(before, after, 'e', props);
+    const beforeTransform = makeIsometricTransform(before, props);
+    const afterTransform = makeIsometricTransform(compensated, props);
+
+    const beforeAnchor = beforeTransform.point({ x: before.x, y: before.y + before.h / 2 });
+    const afterAnchor = afterTransform.point({
+      x: compensated.x,
+      y: compensated.y + compensated.h / 2
+    });
+
+    expect(afterAnchor.x).toBeCloseTo(beforeAnchor.x, 4);
+    expect(afterAnchor.y).toBeCloseTo(beforeAnchor.y, 4);
+  });
+
+  test('keeps the opposite corner visually anchored during corner resize', () => {
+    const before = { x: 20, y: 30, w: 100, h: 80, r: 0 };
+    const after = { x: 20, y: 30, w: 140, h: 110, r: 0 };
+    const props = createProps({ tilt: 0.5, rotation: 30 });
+
+    const compensated = compensateIsometricResizeBounds(before, after, 'se', props);
+    const beforeTransform = makeIsometricTransform(before, props);
+    const afterTransform = makeIsometricTransform(compensated, props);
+
+    const beforeAnchor = beforeTransform.point({ x: before.x, y: before.y });
+    const afterAnchor = afterTransform.point({ x: compensated.x, y: compensated.y });
+
+    expect(afterAnchor.x).toBeCloseTo(beforeAnchor.x, 4);
+    expect(afterAnchor.y).toBeCloseTo(beforeAnchor.y, 4);
   });
 });
 

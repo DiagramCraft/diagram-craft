@@ -10,11 +10,29 @@ import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
+const normalizeSignedAngle = (angle: number) => {
+  const normalized = Angle.normalize(angle);
+  return normalized > Math.PI ? normalized - Math.PI * 2 : normalized;
+};
+
+export const calculateTargetRotationAngle = (
+  center: { x: number; y: number },
+  initialOffset: { x: number; y: number },
+  currentOffset: { x: number; y: number },
+  initialRotation: number
+) => {
+  const startAngle = Vector.angle(Vector.from(center, initialOffset));
+  const currentAngle = Vector.angle(Vector.from(center, currentOffset));
+  return initialRotation + normalizeSignedAngle(currentAngle - startAngle);
+};
 
 export class RotateDrag extends Drag {
   private readonly uow: UnitOfWork;
 
-  constructor(private readonly diagram: Diagram) {
+  constructor(
+    private readonly diagram: Diagram,
+    private readonly initialOffset: { x: number; y: number }
+  ) {
     super();
     this.uow = UnitOfWork.begin(this.diagram);
   }
@@ -26,18 +44,13 @@ export class RotateDrag extends Drag {
     const snapManager = SnapManager.create(this.diagram);
 
     const before = selection.bounds;
-
     const center = Box.center(selection.source.boundingBox);
-
-    const handlePosition = { x: before.x + before.w, y: before.y };
-
-    // Calculate the initial angle from center to the handle position
-    const initialAngle = Vector.angle(Vector.from(center, handlePosition));
-
-    // Calculate the current angle from center to the mouse position
-    const currentAngle = Vector.angle(Vector.from(center, event.offset));
-
-    const targetAngle = currentAngle - initialAngle;
+    const targetAngle = calculateTargetRotationAngle(
+      center,
+      this.initialOffset,
+      event.offset,
+      selection.source.boundingBox.r
+    );
 
     const result = snapManager.snapRotate({ ...before, r: targetAngle });
     const adjustedAngle = isFreeDrag(event.modifiers) ? targetAngle : result.adjusted.r;

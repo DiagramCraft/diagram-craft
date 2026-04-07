@@ -11,6 +11,7 @@ import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
+import { resolveResizeCompensation } from '../effects/selectionEffects';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -136,6 +137,19 @@ export class ResizeDrag extends Drag {
 
     newBounds.w = Math.max(0.1, newBounds.w);
     newBounds.h = Math.max(0.1, newBounds.h);
+
+    const resizeCompensation = resolveResizeCompensation(selection);
+    if (resizeCompensation) {
+      const adjustedBounds = resizeCompensation.compensate(
+        selection.source.boundingBox,
+        WritableBox.asBox(newBounds),
+        this.type
+      );
+      newBounds.x = adjustedBounds.x;
+      newBounds.y = adjustedBounds.y;
+      newBounds.w = adjustedBounds.w;
+      newBounds.h = adjustedBounds.h;
+    }
 
     this.setState({
       label: `w: ${newBounds.w.toFixed(0)}, h: ${newBounds.h.toFixed(0)}`
