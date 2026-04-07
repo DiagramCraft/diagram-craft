@@ -1,4 +1,4 @@
-import { AppConfig, getIncludedByDefaultStencilPackageIds, stencilEntry } from './appConfig';
+import { AppConfig, stencilEntry } from './appConfig';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { Random } from '@diagram-craft/utils/random';
 import { MultiWindowAutosave } from './react-app/autosave/MultiWindowAutosave';
@@ -244,9 +244,6 @@ const defaultStencilRegistry = [
   })
 ];
 
-const defaultActiveStencilPackageIds =
-  getIncludedByDefaultStencilPackageIds(defaultStencilRegistry);
-
 export const defaultAppConfig: AppConfig = {
   elementDefinitions: {
     registry: [
@@ -296,12 +293,16 @@ export const defaultAppConfig: AppConfig = {
 
       '.json': async () => (content, doc, diagramFactory) =>
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
-          defaultActiveStencilPackages: defaultActiveStencilPackageIds
+          includedPackages: defaultStencilRegistry
+            .filter(entry => entry.includedByDefault)
+            .map(entry => entry.id)
         }),
 
       '.dcd': async () => (content, doc, diagramFactory) =>
         deserializeDiagramDocument(JSON.parse(content), doc, diagramFactory, {
-          defaultActiveStencilPackages: defaultActiveStencilPackageIds
+          includedPackages: defaultStencilRegistry
+            .filter(entry => entry.includedByDefault)
+            .map(entry => entry.id)
         }),
 
       '.diagramCraft.svg': fileLoaderDiagramCraftSvg

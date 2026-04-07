@@ -344,7 +344,7 @@ describe('deserializeDiagramDocument', () => {
         serialized,
         newDoc,
         (d, doc) => new TestDiagramBuilder(doc, d.id),
-        { defaultActiveStencilPackages: ['default', 'arrow'] }
+        { includedPackages: ['default', 'arrow'] }
       );
 
       expect(newDoc.props.activeStencilPackages.ids).toEqual(['default', 'arrow']);

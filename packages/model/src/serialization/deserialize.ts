@@ -71,9 +71,7 @@ const deserializeEndpoint = (
   return Endpoint.deserialize(e, nodeLookup, edgeLookup);
 };
 
-const normalizeNodeActions = (
-  props: NodeProps & { action?: Partial<NodeAction> }
-) => {
+const normalizeNodeActions = (props: NodeProps & { action?: Partial<NodeAction> }) => {
   const normalizedActions: NonNullable<NodeProps['actions']> = {};
 
   for (const [id, action] of Object.entries(props.actions ?? {})) {
@@ -249,7 +247,7 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
   doc: DiagramDocument,
   diagramFactory: DiagramFactory<T>,
   opts?: {
-    defaultActiveStencilPackages?: ReadonlyArray<string>;
+    includedPackages?: ReadonlyArray<string>;
   }
 ): Promise<void> => {
   const diagrams = document.diagrams;
@@ -351,8 +349,8 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
     }
     if (document.props?.activeStencilPackages) {
       doc.props.activeStencilPackages.set(document.props.activeStencilPackages);
-    } else if (opts?.defaultActiveStencilPackages) {
-      doc.props.activeStencilPackages.set(opts.defaultActiveStencilPackages);
+    } else if (opts?.includedPackages) {
+      doc.props.activeStencilPackages.set(opts.includedPackages);
     }
     if (document.props?.recentEdgeStylesheets) {
       doc.props.recentEdgeStylesheets.set(document.props.recentEdgeStylesheets);

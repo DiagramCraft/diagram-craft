@@ -10,11 +10,7 @@ import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
 import { UserState } from './UserState';
-import {
-  AppConfig,
-  getIncludedByDefaultStencilPackageIds,
-  type StencilRegistryConfig
-} from './appConfig';
+import { AppConfig, getDefaultStencilPackages, type StencilRegistryConfig } from './appConfig';
 import { Autosave } from './react-app/autosave/Autosave';
 import type { Progress, ProgressCallback } from '@diagram-craft/utils/progress';
 import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness';
@@ -148,7 +144,7 @@ export const AppLoader = (props: Props) => {
   useEffect(() => {
     if (!doc) return;
     if (!doc.props.activeStencilPackages.isInitialized) {
-      doc.props.activeStencilPackages.set(getIncludedByDefaultStencilPackageIds(props.stencils));
+      doc.props.activeStencilPackages.set(getDefaultStencilPackages());
     }
     for (const def of props.stencils) {
       if (doc.registry.stencils.getStencils().some(pkg => pkg.id === def.id)) continue;

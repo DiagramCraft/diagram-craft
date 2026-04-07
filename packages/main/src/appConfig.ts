@@ -150,8 +150,10 @@ export type StencilRegistryConfigEntry<K extends keyof StencilLoaderOpts> = {
 
 export type StencilRegistryConfig = Array<StencilRegistryConfigEntry<keyof StencilLoaderOpts>>;
 
-export const getIncludedByDefaultStencilPackageIds = (registry: StencilRegistryConfig) =>
-  registry.filter(entry => entry.includedByDefault).map(entry => entry.id);
+export const getDefaultStencilPackages = () =>
+  AppConfig.get()
+    .stencils.registry.filter(entry => entry.includedByDefault)
+    .map(entry => entry.id);
 
 type ElementDefinitionRegistryConfigEntry = LazyElementLoaderEntry;
 
