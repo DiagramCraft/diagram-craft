@@ -219,13 +219,27 @@ export class StencilRegistry extends EventEmitter<StencilEvents> {
     return [...this.stencils.values()];
   }
 
-  async search(s: string): Promise<Stencil[]> {
-    for (const pkg of this.stencils.values()) {
-      await this.loadStencilPackage(pkg.id);
+  async search(s: string, packageIds?: ReadonlyArray<string>): Promise<Stencil[]> {
+    const normalizedPackageIds = packageIds?.map(id => this.resolveId(id));
+
+    if (normalizedPackageIds) {
+      for (const id of normalizedPackageIds) {
+        await this.loadStencilPackage(id);
+      }
+    } else {
+      for (const pkg of this.stencils.values()) {
+        await this.loadStencilPackage(pkg.id);
+      }
     }
 
+    const packages = normalizedPackageIds
+      ? normalizedPackageIds
+          .map(id => this.stencils.get(id))
+          .filter((pkg): pkg is RegisteredStencilPackage => pkg !== undefined)
+      : [...this.stencils.values()];
+
     const results: Stencil[] = [];
-    for (const pkg of this.stencils.values()) {
+    for (const pkg of packages) {
       const stencils = getStencilsInPackage(pkg);
       if (pkg.name.toLowerCase().includes(s.toLowerCase())) {
         results.push(...stencils);

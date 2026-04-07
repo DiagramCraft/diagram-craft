@@ -1,7 +1,7 @@
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbSearch } from 'react-icons/tb';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { isEmptyString } from '@diagram-craft/utils/strings';
 import { useDocument } from '../../../application';
 import { Stencil } from '@diagram-craft/model/stencilRegistry';
@@ -17,6 +17,7 @@ export const PickerSearchPanel = (props: Props) => {
 
   const document = useDocument();
   const stencilRegistry = document.registry.stencils;
+  const searchablePackageIds = props.searchAllStencilPackages ? undefined : props.visiblePackageIds;
 
   const doSearch = useCallback(
     (query: string) => {
@@ -25,11 +26,16 @@ export const PickerSearchPanel = (props: Props) => {
       if (isEmptyString(query)) {
         setStencils([]);
       } else {
-        stencilRegistry.search(query).then(setStencils);
+        stencilRegistry.search(query, searchablePackageIds).then(setStencils);
       }
     },
-    [stencilRegistry]
+    [searchablePackageIds, stencilRegistry]
   );
+
+  useEffect(() => {
+    if (isEmptyString(search)) return;
+    stencilRegistry.search(search, searchablePackageIds).then(setStencils);
+  }, [search, searchablePackageIds, stencilRegistry]);
 
   return (
     <ToolWindowPanel mode={'headless'} id={'search'} title={'Search'}>
@@ -68,6 +74,8 @@ export const PickerSearchPanel = (props: Props) => {
         <PickerSettingsMenu
           pickerViewMode={props.pickerViewMode}
           onPickerViewModeChange={props.onPickerViewModeChange}
+          searchAllStencilPackages={props.searchAllStencilPackages}
+          onSearchAllStencilPackagesChange={props.onSearchAllStencilPackagesChange}
           onManageStencils={props.onManageStencils}
         />
       </div>
@@ -91,5 +99,8 @@ export const PickerSearchPanel = (props: Props) => {
 type Props = {
   pickerViewMode: PickerViewMode;
   onPickerViewModeChange: (mode: PickerViewMode) => void;
+  searchAllStencilPackages: boolean;
+  onSearchAllStencilPackagesChange: (searchAllStencilPackages: boolean) => void;
+  visiblePackageIds: ReadonlyArray<string>;
   onManageStencils: () => void;
 };
