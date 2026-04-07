@@ -64,7 +64,7 @@ jobs:
       - name: Print PR Biome diagnostics
         if: always()
         run: |
-          node -e "const fs = require('fs'); const data = JSON.parse(fs.readFileSync('biome-pr.json', 'utf8')); const summary = data.summary ?? {}; const diagnostics = Array.isArray(data.diagnostics) ? data.diagnostics : []; const errors = diagnostics.filter(d => d.severity === 'error'); console.log('Biome PR summary:', JSON.stringify(summary, null, 2)); if (errors.length === 0) { console.log('Biome PR errors: none'); } else { console.log('Biome PR errors:'); for (const [index, diagnostic] of errors.entries()) { const file = diagnostic.location?.path?.file ?? 'unknown'; const description = diagnostic.description ?? 'No description'; const category = diagnostic.category ?? 'unknown'; console.log((index + 1) + '. [' + category + '] ' + file); console.log(description); } }"
+          cat biome-pr.json
 
       - name: Checkout base branch
         uses: actions/checkout@v4
