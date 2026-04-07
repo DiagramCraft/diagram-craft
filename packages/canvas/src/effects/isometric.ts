@@ -1,7 +1,7 @@
 import { Box } from '@diagram-craft/geometry/box';
 import { g, path, rect } from '../component/vdom-svg';
 import type { VNode } from '../component/vdom';
-import type { Point } from '@diagram-craft/geometry/point';
+import { Point } from '@diagram-craft/geometry/point';
 import { SvgTransformBuilder } from '@diagram-craft/geometry/svgTransform';
 import type { NodePropsForRendering } from '@diagram-craft/model/diagramNode';
 
@@ -10,6 +10,8 @@ export type IsometricTransform = {
   svgReverse: () => string;
   point: (source: Point) => Point;
 };
+
+export type IsometricResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
 export const makeIsometricTransform = (
   bounds: Box,
@@ -30,6 +32,64 @@ export const makeIsometricTransform = (
     svgForward: () => fwd.asSvgString(),
     svgReverse: () => rev.asSvgString(),
     point: (source: Point) => fwd.transformPoint(source)
+  };
+};
+
+export const hasMatchingIsometricProjection = (
+  a: NodePropsForRendering,
+  b: NodePropsForRendering
+) => {
+  const isometricA = a.effects.isometric;
+  const isometricB = b.effects.isometric;
+
+  return (
+    isometricA.enabled === true &&
+    isometricB.enabled === true &&
+    isometricA.rotation === isometricB.rotation &&
+    isometricA.tilt === isometricB.tilt
+  );
+};
+
+const getFixedAnchorForResize = (box: Box, type: IsometricResizeType): Point => {
+  const corners = Box.corners(box);
+
+  switch (type) {
+    case 'e':
+      return Point.midpoint(corners[0], corners[3]);
+    case 'w':
+      return Point.midpoint(corners[1], corners[2]);
+    case 'n':
+      return Point.midpoint(corners[2], corners[3]);
+    case 's':
+      return Point.midpoint(corners[0], corners[1]);
+    case 'nw':
+      return corners[2];
+    case 'ne':
+      return corners[3];
+    case 'sw':
+      return corners[1];
+    case 'se':
+      return corners[0];
+  }
+};
+
+export const compensateIsometricResizeBounds = (
+  before: Box,
+  after: Box,
+  type: IsometricResizeType,
+  props: NodePropsForRendering
+): Box => {
+  const transformBefore = makeIsometricTransform(before, props);
+  const transformAfter = makeIsometricTransform(after, props);
+
+  const fixedBefore = transformBefore.point(getFixedAnchorForResize(before, type));
+  const fixedAfter = transformAfter.point(getFixedAnchorForResize(after, type));
+  const compensation = Point.subtract(fixedBefore, fixedAfter);
+
+  return {
+    ...after,
+    x: after.x + compensation.x,
+    y: after.y + compensation.y
   };
 };
 

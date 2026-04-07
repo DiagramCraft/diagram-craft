@@ -9,6 +9,7 @@ import * as svg from '../component/vdom-svg';
 import { Transforms } from '../component/vdom-svg';
 import type { CanvasState } from '../canvas/EditableCanvasComponent';
 import { $c } from '@diagram-craft/utils/classname';
+import { hasMatchingIsometricProjection, makeIsometricTransform } from '../effects/isometric';
 
 export class SelectionComponent extends Component<CanvasState> {
   render(props: CanvasState) {
@@ -35,6 +36,24 @@ export class SelectionComponent extends Component<CanvasState> {
     const hasMultipleElements = selection.nodes.length + selection.edges.length > 1;
     const nonLabelNodes = selection.nodes.filter(n => !n.labelEdge());
 
+    // REVIEW: Could we generalize this into having an array of (selection) => "Transform" | undefined
+    //         This way we don't need to explicitly handle on isometric here
+    const sharedIsometricNode =
+      nonLabelNodes.length > 0 &&
+      nonLabelNodes.every(node =>
+        hasMatchingIsometricProjection(nonLabelNodes[0]!.renderProps, node.renderProps)
+      )
+        ? nonLabelNodes[0]!
+        : undefined;
+    const selectionTransform = [
+      Transforms.rotate(bounds),
+      sharedIsometricNode
+        ? makeIsometricTransform(bounds, sharedIsometricNode.renderProps).svgForward()
+        : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return svg.g(
       {},
       !isOnlyEdges && this.subComponent($cmp(SnapMarkersComponent), { diagram }),
@@ -46,7 +65,7 @@ export class SelectionComponent extends Component<CanvasState> {
             this.subComponent(() => new GroupBoundsComponent(), { selection }),
             svg.g(
               {
-                transform: Transforms.rotate(bounds)
+                transform: selectionTransform
               },
               svg.rectFromBox(bounds, {
                 'class': $c('svg-selection__bb', {
@@ -70,7 +89,14 @@ export class SelectionComponent extends Component<CanvasState> {
             ...nonLabelNodes.map(node =>
               svg.g(
                 {
-                  transform: Transforms.rotate(node.bounds)
+                  transform: [
+                    Transforms.rotate(node.bounds),
+                    sharedIsometricNode
+                      ? makeIsometricTransform(node.bounds, node.renderProps).svgForward()
+                      : ''
+                  ]
+                    .filter(Boolean)
+                    .join(' ')
                 },
                 svg.rectFromBox(node.bounds, {
                   'class': 'svg-selection__individual-node',
