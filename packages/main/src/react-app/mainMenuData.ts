@@ -1,15 +1,16 @@
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
+import { $tStr } from '@diagram-craft/utils/localize';
 import { AppConfig } from '../appConfig';
 
 export const mainMenuStructure: MenuEntry[] = [
   {
     id: 'file',
-    label: 'File',
+    label: $tStr('menu.file', 'File'),
     type: 'submenu',
     submenu: [
       {
         id: 'new',
-        label: 'New',
+        label: $tStr('menu.file.new', 'New'),
         action: 'FILE_NEW',
         type: 'action'
       },
@@ -18,24 +19,24 @@ export const mainMenuStructure: MenuEntry[] = [
         : ([
             {
               id: 'open',
-              label: 'Open...',
+              label: $tStr('menu.file.open', 'Open...'),
               action: 'FILE_OPEN',
               type: 'action'
             },
             {
               id: 'recent',
-              label: 'Open Recent...',
+              label: $tStr('menu.file.open_recent', 'Open Recent...'),
               type: 'recent'
             },
             {
               id: 'save',
-              label: 'Save',
+              label: $tStr('menu.file.save', 'Save'),
               action: 'FILE_SAVE',
               type: 'action'
             },
             {
               id: 'save-as',
-              label: 'Save As...',
+              label: $tStr('menu.file.save_as', 'Save As...'),
               action: 'FILE_SAVE_AS',
               type: 'action'
             }
@@ -47,18 +48,18 @@ export const mainMenuStructure: MenuEntry[] = [
       },
       {
         id: 'export',
-        label: 'Export...',
+        label: $tStr('menu.file.export', 'Export...'),
         type: 'submenu',
         submenu: [
           {
             id: 'export-image',
-            label: 'Export as PNG...',
+            label: $tStr('menu.file.export_png', 'Export as PNG...'),
             action: 'FILE_EXPORT_IMAGE',
             type: 'action'
           },
           {
             id: 'export-svg',
-            label: 'Export as SVG...',
+            label: $tStr('menu.file.export_svg', 'Export as SVG...'),
             action: 'FILE_EXPORT_SVG',
             type: 'action'
           }
@@ -68,18 +69,18 @@ export const mainMenuStructure: MenuEntry[] = [
   },
   {
     id: 'edit',
-    label: 'Edit',
+    label: $tStr('menu.edit', 'Edit'),
     type: 'submenu',
     submenu: [
       {
         id: 'undo',
-        label: 'Undo',
+        label: $tStr('menu.edit.undo', 'Undo'),
         action: 'UNDO',
         type: 'action'
       },
       {
         id: 'redo',
-        label: 'Redo',
+        label: $tStr('menu.edit.redo', 'Redo'),
         action: 'REDO',
         type: 'action'
       },
@@ -90,19 +91,19 @@ export const mainMenuStructure: MenuEntry[] = [
       },
       {
         id: 'cut',
-        label: 'Cut',
+        label: $tStr('menu.edit.cut', 'Cut'),
         action: 'CLIPBOARD_CUT',
         type: 'action'
       },
       {
         id: 'copy',
-        label: 'Copy',
+        label: $tStr('menu.edit.copy', 'Copy'),
         action: 'CLIPBOARD_COPY',
         type: 'action'
       },
       {
         id: 'label',
-        label: 'Duplicate',
+        label: $tStr('menu.edit.duplicate', 'Duplicate'),
         action: 'DUPLICATE',
         type: 'action'
       }
@@ -110,18 +111,18 @@ export const mainMenuStructure: MenuEntry[] = [
   },
   {
     id: 'view',
-    label: 'View',
+    label: $tStr('menu.view', 'View'),
     type: 'submenu',
     submenu: [
       {
         id: 'zoom-in',
-        label: 'Zoom In',
+        label: $tStr('menu.view.zoom_in', 'Zoom In'),
         action: 'ZOOM_IN',
         type: 'action'
       },
       {
         id: 'zoom-out',
-        label: 'Zoom Out',
+        label: $tStr('menu.view.zoom_out', 'Zoom Out'),
         action: 'ZOOM_OUT',
         type: 'action'
       },
@@ -132,19 +133,19 @@ export const mainMenuStructure: MenuEntry[] = [
       },
       {
         id: 'ruler',
-        label: 'Ruler',
+        label: $tStr('menu.view.ruler', 'Ruler'),
         action: 'TOGGLE_RULER',
         type: 'toggle'
       },
       {
         id: 'help',
-        label: 'Help',
+        label: $tStr('menu.view.help', 'Help'),
         action: 'TOGGLE_HELP',
         type: 'toggle'
       },
       {
         id: 'dark-mode',
-        label: 'Dark Mode',
+        label: $tStr('menu.view.dark_mode', 'Dark Mode'),
         action: 'TOGGLE_DARK_MODE',
         type: 'toggle'
       }

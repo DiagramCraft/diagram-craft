@@ -11,7 +11,7 @@ import { FileSystem } from '@diagram-craft/canvas-app/loaders';
 import { mainMenuStructure } from './react-app/mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import { UserState } from './UserState';
-import { $tStr } from '@diagram-craft/utils/localize';
+import { $t, $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 
@@ -54,6 +54,20 @@ const getKeyBindings = (
     getKeyBindings(app, e.submenu ?? [], dest);
   }
 };
+
+const translateMenuEntry = (entry: MenuEntry): MenuEntry => {
+  const translateLabel = (label: string | TranslatedString) =>
+    typeof label === 'string' ? label : $t(label);
+
+  return {
+    ...entry,
+    label: translateLabel(entry.label),
+    submenu: entry.submenu?.map(translateMenuEntry)
+  };
+};
+
+const translateMenuStructure = (entries: MenuEntry[]): MenuEntry[] =>
+  entries.map(translateMenuEntry);
 export const ElectronIntegration = {
   bindActions: (app: Application) => {
     if (!window.electronAPI) return;
@@ -61,7 +75,7 @@ export const ElectronIntegration = {
     const keybindings: Record<string, string> = {};
     getKeyBindings(app, mainMenuStructure, keybindings);
 
-    window.electronAPI?.setMenu(mainMenuStructure, keybindings);
+    window.electronAPI?.setMenu(translateMenuStructure(mainMenuStructure), keybindings);
 
     app.actions.FILE_SAVE = CollaborationConfig.isNoOp
       ? new ElectronFileSaveAction(app)
@@ -161,7 +175,9 @@ class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
         this.context.file.clearDirty();
       }
     } else {
-      const serialized = JSON.stringify(await serializeDiagramDocument(this.context.model.activeDocument));
+      const serialized = JSON.stringify(
+        await serializeDiagramDocument(this.context.model.activeDocument)
+      );
       const result = await window.electronAPI?.fileSave(chosenPath, serialized);
       if (!result) {
         console.log('Error saving file');

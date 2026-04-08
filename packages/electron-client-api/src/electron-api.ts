@@ -1,3 +1,5 @@
+import type { TranslatedString } from '@diagram-craft/utils/localize';
+
 export type Channel = 'menu:action' | 'file:recentFileOpen';
 
 export type ElectronAPI = {
@@ -32,7 +34,7 @@ declare global {
 
 export interface MenuEntry {
   id: string;
-  label: string;
+  label: string | TranslatedString;
   action?: string;
   type?: 'action' | 'toggle' | 'separator' | 'submenu' | 'dynamic' | 'recent';
   submenu?: MenuEntry[];

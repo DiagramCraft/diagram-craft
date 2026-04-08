@@ -4,5 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "author": "Magnus Johansson",
-  "packageManager": "pnpm@9.3.0"
+  "packageManager": "pnpm@9.3.0",
+  "dependencies": {
+    "@diagram-craft/utils": "workspace:^"
+  }
 }

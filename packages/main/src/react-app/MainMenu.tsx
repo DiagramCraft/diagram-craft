@@ -1,5 +1,6 @@
 import { TbMenu2 } from 'react-icons/tb';
 import { urlToName } from '@diagram-craft/utils/url';
+import { $t, type TranslatedString } from '@diagram-craft/utils/localize';
 import { Application, useApplication } from '../application';
 import { mainMenuStructure } from './mainMenuData';
 import type { MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
@@ -9,9 +10,14 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { ActionMenuItem } from './components/ActionMenuItem';
 import { ActionToggleMenuItem } from './components/ActionToggleMenuItem';
 
+const getLabel = (label: string | TranslatedString) =>
+  typeof label === 'string' ? label : $t(label);
+
 const renderMenuItem = (item: MenuEntry, application: Application, userState: UserState) => {
+  const label = getLabel(item.label);
+
   if (item.type === 'separator') {
-    return <Menu.Separator key={item.label} />;
+    return <Menu.Separator key={label} />;
   }
 
   if (item.type === 'submenu' || item.type === 'recent') {
@@ -32,15 +38,15 @@ const renderMenuItem = (item: MenuEntry, application: Application, userState: Us
     }
 
     return (
-      <Menu.SubMenu key={item.label} label={item.label} disabled={isDisabled}>
+      <Menu.SubMenu key={label} label={label} disabled={isDisabled}>
         {submenuItems.map(subItem => {
-          if (item.label === 'Open Recent...') {
+          if (item.id === 'recent') {
             return (
               <Menu.Item
                 key={subItem.action}
                 onClick={() => application.file.loadDocument(subItem.action!)}
               >
-                {subItem.label}
+                {getLabel(subItem.label)}
               </Menu.Item>
             );
           }
@@ -52,17 +58,17 @@ const renderMenuItem = (item: MenuEntry, application: Application, userState: Us
 
   if (item.type === 'toggle' && item.action) {
     return (
-      <ActionToggleMenuItem key={item.label} action={item.action} arg={{}}>
-        {item.label}
+      <ActionToggleMenuItem key={label} action={item.action} arg={{}}>
+        {label}
       </ActionToggleMenuItem>
     );
   }
 
   if (item.action) {
-    return <ActionMenuItem key={item.label} action={item.action} arg={{}} />;
+    return <ActionMenuItem key={label} action={item.action} arg={{}} />;
   }
 
-  return <div key={item.label}>{item.label}</div>;
+  return <div key={label}>{label}</div>;
 };
 
 export const MainMenu = () => {
