@@ -10,6 +10,7 @@ import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSc
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { Menu } from '@diagram-craft/app-components/Menu';
+import { $t } from '@diagram-craft/utils/localize';
 
 type ConnectionItem = {
   id: string;
@@ -218,9 +219,11 @@ export const ConnectedNodesSubmenu = () => {
   const sel = diagram.selection;
 
   return (
-    <Menu.SubMenu label={'Connected Items'}>
+    <Menu.SubMenu label={$t('context.selection.connected_items', 'Connected Items')}>
       {connectedItems.length === 0 ? (
-        <Menu.Item disabled>No connected items</Menu.Item>
+        <Menu.Item disabled>
+          {$t('context.selection.no_connected_items', 'No connected items')}
+        </Menu.Item>
       ) : (
         connectedItems.map(item => {
           // Create display name with type indicator
@@ -235,7 +238,9 @@ export const ConnectedNodesSubmenu = () => {
               {/* Data-specific actions */}
               {(item.type === 'data' || item.type === 'both') && item.data && (
                 <>
-                  <Menu.Item disabled>Data Entry ({item.schemaName})</Menu.Item>
+                  <Menu.Item disabled>
+                    {$t('context.selection.data_entry', 'Data Entry')} ({item.schemaName})
+                  </Menu.Item>
 
                   {item.type === 'data' && (
                     <>
@@ -243,7 +248,7 @@ export const ConnectedNodesSubmenu = () => {
                       <Menu.Item
                         onClick={() => createNodeForData(item.data!, item.schemaName!, diagram)}
                       >
-                        Create Node
+                        {$t('context.selection.create_node', 'Create Node')}
                       </Menu.Item>
                     </>
                   )}
@@ -253,9 +258,11 @@ export const ConnectedNodesSubmenu = () => {
               {/* Node-specific actions */}
               {(item.type === 'node' || item.type === 'both') && item.node && (
                 <>
-                  <Menu.Item onClick={() => sel.setElements([item.node!])}>Select Node</Menu.Item>
+                  <Menu.Item onClick={() => sel.setElements([item.node!])}>
+                    {$t('context.selection.select_node', 'Select Node')}
+                  </Menu.Item>
                   <Menu.Item onClick={() => diagram.selection.toggle(item.node!)}>
-                    Add Node to Selection
+                    {$t('context.selection.add_node_to_selection', 'Add Node to Selection')}
                   </Menu.Item>
                 </>
               )}

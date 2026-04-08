@@ -8,14 +8,15 @@ import {
 } from '@diagram-craft/model/guides';
 import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 import { newid } from '@diagram-craft/utils/id';
+import { $t, $tStr, TranslatedString } from '@diagram-craft/utils/localize';
 
-const GUIDE_COLORS: { label: string; value: string }[] = [
-  { label: 'Default', value: DEFAULT_GUIDE_COLOR },
-  { label: 'Red', value: '#e5484d' },
-  { label: 'Blue', value: '#0090ff' },
-  { label: 'Green', value: '#30a46c' },
-  { label: 'Orange', value: '#f76b15' },
-  { label: 'Purple', value: '#8e4ec6' }
+const GUIDE_COLORS: { label: TranslatedString; value: string }[] = [
+  { label: $tStr('context.guide.color_default', 'Default'), value: DEFAULT_GUIDE_COLOR },
+  { label: $tStr('context.guide.color_red', 'Red'), value: '#e5484d' },
+  { label: $tStr('context.guide.color_blue', 'Blue'), value: '#0090ff' },
+  { label: $tStr('context.guide.color_green', 'Green'), value: '#30a46c' },
+  { label: $tStr('context.guide.color_orange', 'Orange'), value: '#f76b15' },
+  { label: $tStr('context.guide.color_purple', 'Purple'), value: '#8e4ec6' }
 ];
 
 const ColorSwatch = ({ color }: { color: string }) => (
@@ -42,7 +43,12 @@ export const GuideContextMenu = (props: Props) => {
   };
 
   const handleClone = () => {
-    const cloned = { id: newid(), type: guide.type, position: guide.position + 50, color: guide.color };
+    const cloned = {
+      id: newid(),
+      type: guide.type,
+      position: guide.position + 50,
+      color: guide.color
+    };
     diagram.undoManager.addAndExecute(new CreateGuideUndoableAction(diagram, cloned));
   };
 
@@ -61,16 +67,22 @@ export const GuideContextMenu = (props: Props) => {
 
   return (
     <>
-      <Menu.Item onClick={handleDelete}>Delete</Menu.Item>
-      <Menu.Item onClick={handleClone}>Clone</Menu.Item>
-      <Menu.SubMenu label={'Color'}>
+      <Menu.Item onClick={handleDelete}>{$t('context.guide.delete', 'Delete')}</Menu.Item>
+      <Menu.Item onClick={handleClone}>{$t('context.guide.clone', 'Clone')}</Menu.Item>
+      <Menu.SubMenu label={$t('context.guide.color', 'Color')}>
         {GUIDE_COLORS.map(({ label, value }) => (
-          <Menu.Item key={value} onClick={() => handleSetColor(value)} leftSlot={<ColorSwatch color={value} />}>
-            {label}
+          <Menu.Item
+            key={value}
+            onClick={() => handleSetColor(value)}
+            leftSlot={<ColorSwatch color={value} />}
+          >
+            {$t(label)}
           </Menu.Item>
         ))}
       </Menu.SubMenu>
-      <Menu.Item onClick={handleToggleOrientation}>Toggle orientation</Menu.Item>
+      <Menu.Item onClick={handleToggleOrientation}>
+        {$t('context.guide.toggle_orientation', 'Toggle orientation')}
+      </Menu.Item>
     </>
   );
 };

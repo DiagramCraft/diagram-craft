@@ -57,7 +57,7 @@ export type TranslatedString = {
  * const translated = $t(WELCOME_MSG);
  * ```
  */
-export const $tStr = (id: string, message: string) => {
+export const $tStr = (id: string, message: string): TranslatedString => {
   return { id, message };
 };
 

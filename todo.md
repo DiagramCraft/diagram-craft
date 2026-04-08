@@ -8,6 +8,22 @@ future phase.
 
 ---
 
+## When to Use `$t` vs `$tStr`
+
+**`$tStr(id, message)`** - Use for values initialized at startup or stored in constants/structures:
+
+- Action definitions
+- Menu structures
+- Any data that needs to be passed around before rendering
+
+**`$t(id, message)`** - Use directly in React components that re-render:
+
+- JSX content
+- Component props that are evaluated on each render
+- Context menu labels, panel labels, dialog text
+
+---
+
 ## Translation Key Naming Convention
 
 | Category      | Pattern                     | Example                      |
@@ -72,11 +88,11 @@ future phase.
 3. Translate labels in `MainMenu.tsx` at render time - DONE
 4. Translate labels in `electron.ts` before IPC - DONE
 
-### Phase 2: Context Menus
+### Phase 2: Context Menus - DONE
 
-1. Replace hard-coded strings in `SelectionContextMenu.tsx`
-2. Replace hard-coded strings in `ConnectedNodesSubmenu.tsx`
-3. Replace hard-coded strings in `GuideContextMenu.tsx`
+1. Replace hard-coded strings in `SelectionContextMenu.tsx` - DONE
+2. Replace hard-coded strings in `ConnectedNodesSubmenu.tsx` - DONE
+3. Replace hard-coded strings in `GuideContextMenu.tsx` - DONE
 
 ### Phase 3: Tool Windows
 
@@ -99,24 +115,24 @@ future phase.
 
 ## Files to Modify
 
-| File                                                                 | Phase    |
-| -------------------------------------------------------------------- | -------- |
-| `packages/main/src/react-app/mainMenuData.ts`                        | 1 - DONE |
-| `packages/electron-client-api/src/electron-api.ts`                   | 1 - DONE |
-| `packages/main/src/react-app/MainMenu.tsx`                           | 1 - DONE |
-| `packages/main/src/electron.ts`                                      | 1 - DONE |
-| `packages/electron-app/src/menu/menu.ts`                             | 1 - DONE |
-| `packages/main/src/react-app/context-menu/SelectionContextMenu.tsx`  | 2        |
-| `packages/main/src/react-app/context-menu/ConnectedNodesSubmenu.tsx` | 2        |
-| `packages/main/src/react-app/context-menu/GuideContextMenu.tsx`      | 2        |
-| `packages/main/src/react-app/toolwindow/ObjectToolWindow.tsx`        | 3        |
-| `packages/main/src/react-app/toolwindow/NodeTextPanel.tsx`           | 3        |
-| `packages/main/src/react-app/toolwindow/NodeFillPanel.tsx`           | 3        |
-| `packages/main/src/react-app/dialogs/FileDialog.tsx`                 | 4        |
-| `packages/main/src/react-app/dialogs/EditSchemaDialog.tsx`           | 4        |
-| `packages/main/src/react-app/toolwindow/CommandPalette.tsx`          | 4        |
-| Action files in `packages/canvas-app/src/actions/`                   | 5        |
-| Action files in `packages/main/src/react-app/actions/`               | 5        |
+| File                                                                            | Phase    |
+| ------------------------------------------------------------------------------- | -------- |
+| `packages/main/src/react-app/mainMenuData.ts`                                   | 1 - DONE |
+| `packages/electron-client-api/src/electron-api.ts`                              | 1 - DONE |
+| `packages/main/src/react-app/MainMenu.tsx`                                      | 1 - DONE |
+| `packages/main/src/electron.ts`                                                 | 1 - DONE |
+| `packages/electron-app/src/menu/menu.ts`                                        | 1 - DONE |
+| `packages/main/src/react-app/context-menu-dispatcher/SelectionContextMenu.tsx`  | 2 - DONE |
+| `packages/main/src/react-app/context-menu-dispatcher/ConnectedNodesSubmenu.tsx` | 2 - DONE |
+| `packages/main/src/react-app/context-menu-dispatcher/GuideContextMenu.tsx`      | 2 - DONE |
+| `packages/main/src/react-app/toolwindow/ObjectToolWindow.tsx`                   | 3        |
+| `packages/main/src/react-app/toolwindow/NodeTextPanel.tsx`                      | 3        |
+| `packages/main/src/react-app/toolwindow/NodeFillPanel.tsx`                      | 3        |
+| `packages/main/src/react-app/dialogs/FileDialog.tsx`                            | 4        |
+| `packages/main/src/react-app/dialogs/EditSchemaDialog.tsx`                      | 4        |
+| `packages/main/src/react-app/toolwindow/CommandPalette.tsx`                     | 4        |
+| Action files in `packages/canvas-app/src/actions/`                              | 5        |
+| Action files in `packages/main/src/react-app/actions/`                          | 5        |
 
 ---
 
