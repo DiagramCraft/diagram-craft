@@ -6,6 +6,7 @@ import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { $t } from '@diagram-craft/utils/localize';
 
 export class NodeTool extends AbstractTool {
   constructor(
@@ -67,10 +68,13 @@ export class NodeTool extends AbstractTool {
         this.context.ui.showDialog(
           new MessageDialogCommand(
             {
-              title: 'Convert to path',
-              message: 'Do you want to convert this shape to a editable path?',
-              okLabel: 'Yes',
-              cancelLabel: 'Cancel'
+              title: $t('dialog.geometry.convert_to_path_title', 'Convert to path'),
+              message: $t(
+                'dialog.geometry.convert_to_path_message',
+                'Do you want to convert this shape to an editable path?'
+              ),
+              okLabel: $t('common.yes', 'Yes'),
+              cancelLabel: $t('common.cancel', 'Cancel')
             },
             () => {
               UnitOfWork.executeWithUndo(this.diagram, 'Convert to path', uow =>

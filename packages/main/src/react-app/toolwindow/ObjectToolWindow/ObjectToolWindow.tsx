@@ -32,6 +32,7 @@ import { LayoutContainerPanel } from './LayoutContainerPanel';
 import { LayoutElementPanel } from './LayoutElementPanel';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { EdgeTransformPanel } from './EdgeTransformPanel';
+import { $t } from '@diagram-craft/utils/localize';
 
 type Type =
   | 'diagram'
@@ -104,7 +105,7 @@ export const ObjectToolWindow = () => {
   return (
     <ToolWindow.Root id={'object-tool'} defaultTab={'style'}>
       {tabs.includes('canvas') && (
-        <ToolWindow.Tab id={'canvas'} title={'Canvas'}>
+        <ToolWindow.Tab id={'canvas'} title={$t('panel.canvas', 'Canvas')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['canvas']}>
               <CanvasPanel mode={'headless'} />
@@ -113,7 +114,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('grid') && (
-        <ToolWindow.Tab id={'grid'} title={'Grid'}>
+        <ToolWindow.Tab id={'grid'} title={$t('panel.grid', 'Grid')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['grid', 'snap']}>
               <CanvasGridPanel />
@@ -123,7 +124,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('style') && (
-        <ToolWindow.Tab id={'style'} title={'Style'}>
+        <ToolWindow.Tab id={'style'} title={$t('panel.style', 'Style')}>
           <ToolWindow.TabContent>
             <Accordion.Root
               type="multiple"
@@ -157,7 +158,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('table') && (
-        <ToolWindow.Tab id={'table'} title={'Style'}>
+        <ToolWindow.Tab id={'table'} title={$t('panel.table', 'Table')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['custom', 'dimensions', 'stroke']}>
               <NodeTableToolbarPanel />
@@ -171,7 +172,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('cell') && (
-        <ToolWindow.Tab id={'cell'} title={'Style'}>
+        <ToolWindow.Tab id={'cell'} title={$t('panel.cell', 'Cell')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['fill', 'dimensions']}>
               <NodeTableToolbarPanel />
@@ -184,7 +185,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('text') && (
-        <ToolWindow.Tab id={'text'} title={'Text'}>
+        <ToolWindow.Tab id={'text'} title={$t('panel.text', 'Text')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" disabled={true} defaultValue={['text', 'label-node']}>
               <ElementStylesheetPanel type={'text'} />
@@ -194,7 +195,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('arrange') && (
-        <ToolWindow.Tab id={'arrange'} title={'Arrange'}>
+        <ToolWindow.Tab id={'arrange'} title={$t('panel.arrange', 'Arrange')}>
           <ToolWindow.TabContent>
             <Accordion.Root
               type="multiple"
@@ -222,7 +223,7 @@ export const ObjectToolWindow = () => {
         </ToolWindow.Tab>
       )}
       {tabs.includes('advanced') && (
-        <ToolWindow.Tab id={'advanced'} title={'Advanced'}>
+        <ToolWindow.Tab id={'advanced'} title={$t('panel.advanced', 'Advanced')}>
           <ToolWindow.TabContent>
             <Accordion.Root type="multiple" defaultValue={['anchors', 'action-props']}>
               {type === 'node' && (

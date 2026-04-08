@@ -4,7 +4,7 @@ import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
 import { FileDialog } from '../FileDialog';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { $tStr } from '@diagram-craft/utils/localize';
+import { $tStr, $t } from '@diagram-craft/utils/localize';
 import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 
 export const fileSaveAsActions = (application: Application) =>
@@ -47,11 +47,14 @@ async function saveToPath(context: Application, path: string): Promise<void> {
     context.ui.showDialog(
       new MessageDialogCommand(
         {
-          title: 'Overwrite File?',
-          message: `The file "${path}" already exists. Do you want to overwrite it?`,
-          okLabel: 'Overwrite',
+          title: $t('dialog.file.overwrite_title', 'Overwrite File?'),
+          message: $t(
+            'dialog.file.overwrite_message',
+            `The file "${path}" already exists. Do you want to overwrite it?`
+          ),
+          okLabel: $t('common.overwrite', 'Overwrite'),
           okType: 'danger',
-          cancelLabel: 'Cancel'
+          cancelLabel: $t('common.cancel', 'Cancel')
         },
         async () => await performSave(context, path),
         () => {}

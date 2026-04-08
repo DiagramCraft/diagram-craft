@@ -16,6 +16,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import buttonStyles from '@diagram-craft/app-components/Button.module.css';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 import { TbLine } from 'react-icons/tb';
+import { $t } from '@diagram-craft/utils/localize';
 
 const TEXTURES = [
   'bubbles1.jpeg',
@@ -55,7 +56,7 @@ const SPECIAL_FILL_COLORS = {
 
 const ImageScale = (props: { imageScale: Property<number> }) => (
   <>
-    <KeyValueTable.Label>Scale:</KeyValueTable.Label>
+    <KeyValueTable.Label>{$t('panel.fill.scale', 'Scale')}:</KeyValueTable.Label>
     <KeyValueTable.Value>
       <PropertyEditor
         property={props.imageScale}
@@ -72,9 +73,9 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
   const $d = useDiagram();
   return (
     <KeyValueTable.FullRow>
-      <Collapsible label={'Tint'}>
+      <Collapsible label={$t('panel.fill.tint', 'Tint')}>
         <KeyValueTable.Root>
-          <KeyValueTable.Label valign="top">Tint:</KeyValueTable.Label>
+          <KeyValueTable.Label valign="top">{$t('panel.fill.tint', 'Tint')}:</KeyValueTable.Label>
           <KeyValueTable.Value>
             <PropertyEditor
               property={props.tint}
@@ -90,7 +91,9 @@ const ImageTint = (props: { tint: Property<string>; tintStrength: Property<numbe
             />
           </KeyValueTable.Value>
 
-          <KeyValueTable.Label valign="top">Strength:</KeyValueTable.Label>
+          <KeyValueTable.Label valign="top">
+            {$t('panel.fill.strength', 'Strength')}:
+          </KeyValueTable.Label>
           <KeyValueTable.Value>
             <PropertyEditor
               property={props.tintStrength}
@@ -111,9 +114,11 @@ const ImageAdjustments = (props: {
   saturation: Property<number>;
 }) => (
   <KeyValueTable.FullRow>
-    <Collapsible label={'Adjustments'}>
+    <Collapsible label={$t('panel.fill.adjustments', 'Adjustments')}>
       <KeyValueTable.Root>
-        <KeyValueTable.Label valign={'top'}>Contrast:</KeyValueTable.Label>
+        <KeyValueTable.Label valign={'top'}>
+          {$t('panel.fill.contrast', 'Contrast')}:
+        </KeyValueTable.Label>
         <KeyValueTable.Value>
           <PropertyEditor
             property={props.contrast}
@@ -123,7 +128,9 @@ const ImageAdjustments = (props: {
           />
         </KeyValueTable.Value>
 
-        <KeyValueTable.Label valign={'top'}>Brightness:</KeyValueTable.Label>
+        <KeyValueTable.Label valign={'top'}>
+          {$t('panel.fill.brightness', 'Brightness')}:
+        </KeyValueTable.Label>
         <KeyValueTable.Value>
           <PropertyEditor
             property={props.brightness}
@@ -133,7 +140,9 @@ const ImageAdjustments = (props: {
           />
         </KeyValueTable.Value>
 
-        <KeyValueTable.Label valign={'top'}>Saturation:</KeyValueTable.Label>
+        <KeyValueTable.Label valign={'top'}>
+          {$t('panel.fill.saturation', 'Saturation')}:
+        </KeyValueTable.Label>
         <KeyValueTable.Value>
           <PropertyEditor
             property={props.saturation}
@@ -171,17 +180,17 @@ export const FillPanelForm = ({
 }: FormProps) => {
   return (
     <KeyValueTable.Root>
-      <KeyValueTable.Label>Type:</KeyValueTable.Label>
+      <KeyValueTable.Label>{$t('panel.fill.type', 'Type')}:</KeyValueTable.Label>
       <KeyValueTable.Value>
         <PropertyEditor
           property={type as Property<string>}
           render={props => (
             <Select.Root {...props}>
-              <Select.Item value={'solid'}>Solid</Select.Item>
-              <Select.Item value={'gradient'}>Gradient</Select.Item>
-              <Select.Item value={'pattern'}>Pattern</Select.Item>
-              <Select.Item value={'texture'}>Texture</Select.Item>
-              <Select.Item value={'image'}>Image</Select.Item>
+              <Select.Item value={'solid'}>{$t('panel.fill.solid', 'Solid')}</Select.Item>
+              <Select.Item value={'gradient'}>{$t('panel.fill.gradient', 'Gradient')}</Select.Item>
+              <Select.Item value={'pattern'}>{$t('panel.fill.pattern', 'Pattern')}</Select.Item>
+              <Select.Item value={'texture'}>{$t('panel.fill.texture', 'Texture')}</Select.Item>
+              <Select.Item value={'image'}>{$t('panel.fill.image', 'Image')}</Select.Item>
             </Select.Root>
           )}
         />
@@ -189,7 +198,7 @@ export const FillPanelForm = ({
 
       {(type.val === 'gradient' || type.val === 'solid') && (
         <>
-          <KeyValueTable.Label>Color:</KeyValueTable.Label>
+          <KeyValueTable.Label>{$t('panel.fill.color', 'Color')}:</KeyValueTable.Label>
           <KeyValueTable.Value stack={'horizontal'}>
             <PropertyEditor
               property={color}
@@ -227,14 +236,14 @@ export const FillPanelForm = ({
 
       {type.val === 'gradient' && (
         <>
-          <KeyValueTable.Label>Type:</KeyValueTable.Label>
+          <KeyValueTable.Label>{$t('panel.fill.gradient_type', 'Type')}:</KeyValueTable.Label>
           <KeyValueTable.Value>
             <PropertyEditor
               property={gradientType as Property<string>}
               render={props => (
                 <Select.Root {...props}>
-                  <Select.Item value={'linear'}>Linear</Select.Item>
-                  <Select.Item value={'radial'}>Radial</Select.Item>
+                  <Select.Item value={'linear'}>{$t('panel.fill.linear', 'Linear')}</Select.Item>
+                  <Select.Item value={'radial'}>{$t('panel.fill.radial', 'Radial')}</Select.Item>
                 </Select.Root>
               )}
             />
@@ -242,7 +251,7 @@ export const FillPanelForm = ({
 
           {gradientType.val === 'linear' && (
             <>
-              <KeyValueTable.Label>Direction:</KeyValueTable.Label>
+              <KeyValueTable.Label>{$t('panel.fill.direction', 'Direction')}:</KeyValueTable.Label>
               <KeyValueTable.Value>
                 <PropertyEditor
                   property={gradientDirection}
@@ -258,7 +267,9 @@ export const FillPanelForm = ({
 
       {type.val === 'pattern' && (
         <>
-          <KeyValueTable.Label valign={'top'}>Pattern:</KeyValueTable.Label>
+          <KeyValueTable.Label valign={'top'}>
+            {$t('panel.fill.pattern', 'Pattern')}:
+          </KeyValueTable.Label>
           <KeyValueTable.Value>
             {PATTERNS.map((p, idx) => (
               <svg
@@ -289,7 +300,7 @@ export const FillPanelForm = ({
             ))}
           </KeyValueTable.Value>
 
-          <KeyValueTable.Label>Color:</KeyValueTable.Label>
+          <KeyValueTable.Label>{$t('panel.fill.color', 'Color')}:</KeyValueTable.Label>
           <KeyValueTable.Value stack={'horizontal'}>
             <PropertyEditor
               property={color}
@@ -321,7 +332,9 @@ export const FillPanelForm = ({
 
       {type.val === 'texture' && (
         <>
-          <KeyValueTable.Label valign={'top'}>Texture:</KeyValueTable.Label>
+          <KeyValueTable.Label valign={'top'}>
+            {$t('panel.fill.texture', 'Texture')}:
+          </KeyValueTable.Label>
           <KeyValueTable.Value>
             {TEXTURES.map(t => (
               <img
@@ -368,7 +381,9 @@ export const FillPanelForm = ({
 
       {type.val === 'image' && (
         <>
-          <KeyValueTable.Label valign={'top'}>Image:</KeyValueTable.Label>
+          <KeyValueTable.Label valign={'top'}>
+            {$t('panel.fill.image', 'Image')}:
+          </KeyValueTable.Label>
           <KeyValueTable.Value>
             <div style={{ display: 'flex', alignItems: 'top' }}>
               <label
@@ -376,7 +391,7 @@ export const FillPanelForm = ({
                 style={{ fontSize: '11px', justifyContent: 'left' }}
                 htmlFor={'fill-file-upload'}
               >
-                Upload...
+                {$t('panel.fill.upload', 'Upload')}...
               </label>
               &nbsp;
               <Button
@@ -392,7 +407,7 @@ export const FillPanelForm = ({
                   (document.getElementById('fill-file-upload') as HTMLInputElement).value = '';
                 }}
               >
-                Clear
+                {$t('panel.fill.clear', 'Clear')}
               </Button>
               <input
                 id={'fill-file-upload'}
@@ -428,17 +443,17 @@ export const FillPanelForm = ({
             </div>
           </KeyValueTable.Value>
 
-          <KeyValueTable.Label valign={'top'}>Fit:</KeyValueTable.Label>
+          <KeyValueTable.Label valign={'top'}>{$t('panel.fill.fit', 'Fit')}:</KeyValueTable.Label>
           <KeyValueTable.Value>
             <PropertyEditor
               property={imageFit as Property<string>}
               render={props => (
                 <Select.Root {...props}>
-                  <Select.Item value={'fill'}>Fill</Select.Item>
-                  <Select.Item value={'contain'}>Contain</Select.Item>
-                  <Select.Item value={'cover'}>Cover</Select.Item>
-                  <Select.Item value={'keep'}>Keep</Select.Item>
-                  <Select.Item value={'tile'}>Tile</Select.Item>
+                  <Select.Item value={'fill'}>{$t('panel.fill.fill', 'Fill')}</Select.Item>
+                  <Select.Item value={'contain'}>{$t('panel.fill.contain', 'Contain')}</Select.Item>
+                  <Select.Item value={'cover'}>{$t('panel.fill.cover', 'Cover')}</Select.Item>
+                  <Select.Item value={'keep'}>{$t('panel.fill.keep', 'Keep')}</Select.Item>
+                  <Select.Item value={'tile'}>{$t('panel.fill.tile', 'Tile')}</Select.Item>
                 </Select.Root>
               )}
             />
@@ -458,7 +473,7 @@ export const FillPanelForm = ({
 
       {additionalFills && additionalFills.length > 0 && (
         <>
-          <KeyValueTable.Label>Additional:</KeyValueTable.Label>
+          <KeyValueTable.Label>{$t('panel.fill.additional', 'Additional')}:</KeyValueTable.Label>
           <KeyValueTable.Value stack={'vertical'}>
             {additionalFills.map(({ color, enabled }, idx) => (
               <div key={idx} className={'util-hstack'}>

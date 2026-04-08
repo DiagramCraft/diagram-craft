@@ -9,6 +9,7 @@ import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { Scrollable } from '@diagram-craft/app-components/Scrollable';
 import { ErrorMessage } from '@diagram-craft/app-components/ErrorMessage';
+import { $t } from '@diagram-craft/utils/localize';
 
 type Props = {
   title: string;
@@ -55,7 +56,7 @@ export const EditSchemaDialog = (props: Props) => {
       setOriginalFieldIds(new Set(props.schema.fields.map(f => f.id)));
       setErrors({});
     } else if (props.open && !props.schema) {
-      setName('New schema');
+      setName($t('dialog.schema.new_schema', 'New schema'));
       setFields(INITIAL_SCHEMA_FIELDS);
       setOriginalFieldIds(new Set());
       setErrors({});
@@ -66,7 +67,7 @@ export const EditSchemaDialog = (props: Props) => {
     const fieldNumber = fields.length + 1;
     const newField: DataSchemaField = {
       id: `field${fieldNumber}`,
-      name: `Field ${fieldNumber}`,
+      name: $t('dialog.schema.field', 'Field') + ` ${fieldNumber}`,
       type: 'text'
     };
     setFields(currentFields => currentFields.toSpliced(index + 1, 0, newField));
@@ -88,7 +89,7 @@ export const EditSchemaDialog = (props: Props) => {
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Schema name is required';
+      newErrors.name = $t('dialog.schema.error.name_required', 'Schema name is required');
     }
 
     const fieldNames = new Set<string>();
@@ -96,54 +97,87 @@ export const EditSchemaDialog = (props: Props) => {
 
     fields.forEach((field, index) => {
       if (!field.name.trim()) {
-        newErrors[`field-${index}-name`] = 'Field name is required';
+        newErrors[`field-${index}-name`] = $t(
+          'dialog.schema.error.field_name_required',
+          'Field name is required'
+        );
       }
 
       if (fieldNames.has(field.name.toLowerCase())) {
-        newErrors[`field-${index}-name`] = 'Field name must be unique';
+        newErrors[`field-${index}-name`] = $t(
+          'dialog.schema.error.field_name_unique',
+          'Field name must be unique'
+        );
       }
       fieldNames.add(field.name.toLowerCase());
 
       if (!field.id.trim()) {
-        newErrors[`field-${index}-id`] = 'Field ID is required';
+        newErrors[`field-${index}-id`] = $t(
+          'dialog.schema.error.field_id_required',
+          'Field ID is required'
+        );
       } else if (!/^[a-zA-Z0-9_]+$/.test(field.id)) {
-        newErrors[`field-${index}-id`] =
-          'Field ID must contain only letters, numbers, and underscores';
+        newErrors[`field-${index}-id`] = $t(
+          'dialog.schema.error.field_id_format',
+          'Field ID must contain only letters, numbers, and underscores'
+        );
       }
 
       if (fieldIds.has(field.id)) {
-        newErrors[`field-${index}-id`] = 'Field ID must be unique';
+        newErrors[`field-${index}-id`] = $t(
+          'dialog.schema.error.field_id_unique',
+          'Field ID must be unique'
+        );
       }
       fieldIds.add(field.id);
 
       if (field.type === 'reference') {
         if (!field.schemaId) {
-          newErrors[`field-${index}-schemaId`] = 'Referenced schema is required';
+          newErrors[`field-${index}-schemaId`] = $t(
+            'dialog.schema.error.schema_required',
+            'Referenced schema is required'
+          );
         }
         if (field.minCount < 0) {
-          newErrors[`field-${index}-minCount`] = 'Minimum count cannot be negative';
+          newErrors[`field-${index}-minCount`] = $t(
+            'dialog.schema.error.min_count_negative',
+            'Minimum count cannot be negative'
+          );
         }
         if (field.maxCount < field.minCount) {
-          newErrors[`field-${index}-maxCount`] =
-            'Maximum count must be greater than or equal to minimum count';
+          newErrors[`field-${index}-maxCount`] = $t(
+            'dialog.schema.error.max_count_range',
+            'Maximum count must be greater than or equal to minimum count'
+          );
         }
       }
 
       if (field.type === 'select') {
         if (!field.options || field.options.length === 0) {
-          newErrors[`field-${index}-options`] = 'At least one option is required';
+          newErrors[`field-${index}-options`] = $t(
+            'dialog.schema.error.options_required',
+            'At least one option is required'
+          );
         } else {
           const optionValues = new Set<string>();
           field.options.forEach((option, optionIndex) => {
             if (!option.value.trim()) {
-              newErrors[`field-${index}-option-${optionIndex}-value`] = 'Option value is required';
+              newErrors[`field-${index}-option-${optionIndex}-value`] = $t(
+                'dialog.schema.error.option_value_required',
+                'Option value is required'
+              );
             }
             if (!option.label.trim()) {
-              newErrors[`field-${index}-option-${optionIndex}-label`] = 'Option label is required';
+              newErrors[`field-${index}-option-${optionIndex}-label`] = $t(
+                'dialog.schema.error.option_label_required',
+                'Option label is required'
+              );
             }
             if (optionValues.has(option.value)) {
-              newErrors[`field-${index}-option-${optionIndex}-value`] =
-                'Option value must be unique';
+              newErrors[`field-${index}-option-${optionIndex}-value`] = $t(
+                'dialog.schema.error.option_value_unique',
+                'Option value must be unique'
+              );
             }
             optionValues.add(option.value);
           });
@@ -152,7 +186,10 @@ export const EditSchemaDialog = (props: Props) => {
     });
 
     if (fields.length === 0) {
-      newErrors.fields = 'At least one field is required';
+      newErrors.fields = $t(
+        'dialog.schema.error.fields_required',
+        'At least one field is required'
+      );
     }
 
     setErrors(newErrors);
@@ -181,24 +218,24 @@ export const EditSchemaDialog = (props: Props) => {
       onClose={props.onCancel}
       buttons={[
         {
-          label: 'Save',
+          label: $t('common.save', 'Save'),
           type: 'default',
           onClick: handleSave
         },
         {
-          label: 'Cancel',
+          label: $t('common.cancel', 'Cancel'),
           type: 'cancel',
           onClick: props.onCancel
         }
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        <label>Schema Name:</label>
+        <label>{$t('dialog.schema.schema_name', 'Schema Name')}:</label>
         <TextInput
           id="schema-name"
           value={name}
           onChange={value => setName(value ?? '')}
-          placeholder="Enter schema name"
+          placeholder={$t('dialog.schema.enter_schema_name', 'Enter schema name')}
         />
         {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
       </div>
@@ -213,7 +250,7 @@ export const EditSchemaDialog = (props: Props) => {
           marginTop: '0.5rem'
         }}
       >
-        <label style={{ display: 'block' }}>Fields:</label>
+        <label style={{ display: 'block' }}>{$t('dialog.schema.fields', 'Fields')}:</label>
 
         {errors.fields && <ErrorMessage>{errors.fields}</ErrorMessage>}
 
@@ -250,12 +287,18 @@ export const EditSchemaDialog = (props: Props) => {
                     <TextInput
                       value={field.id}
                       onChange={value => updateField(index, { id: value ?? '' })}
-                      placeholder="Field ID"
+                      placeholder={$t('dialog.schema.field_id', 'Field ID')}
                       disabled={isFieldIdReadOnly}
                       title={
                         isFieldIdReadOnly
-                          ? 'Field ID cannot be changed when schema has data'
-                          : 'Field ID (letters, numbers, hyphens, and underscores only)'
+                          ? $t(
+                              'dialog.schema.error.field_id_locked',
+                              'Field ID cannot be changed when schema has data'
+                            )
+                          : $t(
+                              'dialog.schema.field_id_format',
+                              'Field ID (letters, numbers, hyphens, and underscores only)'
+                            )
                       }
                     />
                     {errors[`field-${index}-id`] && (
@@ -269,7 +312,7 @@ export const EditSchemaDialog = (props: Props) => {
                     <TextInput
                       value={field.name}
                       onChange={value => updateField(index, { name: value ?? '' })}
-                      placeholder="Field name"
+                      placeholder={$t('dialog.schema.field_name', 'Field name')}
                     />
                     {errors[`field-${index}-name`] && (
                       <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
@@ -299,8 +342,14 @@ export const EditSchemaDialog = (props: Props) => {
                           updateField(index, {
                             type: newType,
                             options: [
-                              { value: 'option1', label: 'Option 1' },
-                              { value: 'option2', label: 'Option 2' }
+                              {
+                                value: 'option1',
+                                label: $t('dialog.schema.option', 'Option') + ' 1'
+                              },
+                              {
+                                value: 'option2',
+                                label: $t('dialog.schema.option', 'Option') + ' 2'
+                              }
                             ]
                           });
                         } else {
@@ -308,18 +357,28 @@ export const EditSchemaDialog = (props: Props) => {
                         }
                       }}
                     >
-                      <Select.Item value="text">Text</Select.Item>
-                      <Select.Item value="longtext">Long Text</Select.Item>
-                      <Select.Item value="reference">Reference</Select.Item>
-                      <Select.Item value="boolean">Boolean</Select.Item>
-                      <Select.Item value="select">Select</Select.Item>
+                      <Select.Item value="text">
+                        {$t('dialog.schema.type.text', 'Text')}
+                      </Select.Item>
+                      <Select.Item value="longtext">
+                        {$t('dialog.schema.type.long_text', 'Long Text')}
+                      </Select.Item>
+                      <Select.Item value="reference">
+                        {$t('dialog.schema.type.reference', 'Reference')}
+                      </Select.Item>
+                      <Select.Item value="boolean">
+                        {$t('dialog.schema.type.boolean', 'Boolean')}
+                      </Select.Item>
+                      <Select.Item value="select">
+                        {$t('dialog.schema.type.select', 'Select')}
+                      </Select.Item>
                     </Select.Root>
                   </div>
 
                   <Button
                     variant="icon-only"
                     onClick={() => addFieldAfter(index)}
-                    title="Add field below"
+                    title={$t('dialog.schema.add_field_below', 'Add field below')}
                   >
                     <TbPlus />
                   </Button>
@@ -328,7 +387,14 @@ export const EditSchemaDialog = (props: Props) => {
                     variant="icon-only"
                     onClick={() => removeField(index)}
                     disabled={fields.length === 1}
-                    title={fields.length === 1 ? 'Cannot remove the last field' : 'Remove field'}
+                    title={
+                      fields.length === 1
+                        ? $t(
+                            'dialog.schema.error.cannot_remove_last',
+                            'Cannot remove the last field'
+                          )
+                        : $t('dialog.schema.remove_field', 'Remove field')
+                    }
                   >
                     <TbTrash />
                   </Button>
@@ -336,7 +402,9 @@ export const EditSchemaDialog = (props: Props) => {
 
                 {field.type === 'select' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <label style={{ display: 'block' }}>Options:</label>
+                    <label style={{ display: 'block' }}>
+                      {$t('dialog.schema.options', 'Options')}:
+                    </label>
                     {errors[`field-${index}-options`] && (
                       <ErrorMessage>{errors[`field-${index}-options`]}</ErrorMessage>
                     )}
@@ -364,7 +432,7 @@ export const EditSchemaDialog = (props: Props) => {
                                 };
                                 updateField(index, { options: newOptions });
                               }}
-                              placeholder="Value"
+                              placeholder={$t('dialog.schema.value', 'Value')}
                             />
                             {errors[`field-${index}-option-${optionIndex}-value`] && (
                               <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
@@ -383,7 +451,7 @@ export const EditSchemaDialog = (props: Props) => {
                                 };
                                 updateField(index, { options: newOptions });
                               }}
-                              placeholder="Label"
+                              placeholder={$t('dialog.schema.label', 'Label')}
                             />
                             {errors[`field-${index}-option-${optionIndex}-label`] && (
                               <ErrorMessage style={{ fontSize: '0.8em', marginTop: '0.2rem' }}>
@@ -397,11 +465,11 @@ export const EditSchemaDialog = (props: Props) => {
                               const newOptions = [...field.options];
                               newOptions.splice(optionIndex + 1, 0, {
                                 value: `option${field.options.length + 1}`,
-                                label: `Option ${field.options.length + 1}`
+                                label: `${$t('dialog.schema.option', 'Option')} ${field.options.length + 1}`
                               });
                               updateField(index, { options: newOptions });
                             }}
-                            title="Add option below"
+                            title={$t('dialog.schema.add_option_below', 'Add option below')}
                           >
                             <TbPlus />
                           </Button>
@@ -414,8 +482,11 @@ export const EditSchemaDialog = (props: Props) => {
                             disabled={field.options.length === 1}
                             title={
                               field.options.length === 1
-                                ? 'Cannot remove the last option'
-                                : 'Remove option'
+                                ? $t(
+                                    'dialog.schema.error.cannot_remove_last_option',
+                                    'Cannot remove the last option'
+                                  )
+                                : $t('dialog.schema.remove_option', 'Remove option')
                             }
                           >
                             <TbTrash />
@@ -429,7 +500,9 @@ export const EditSchemaDialog = (props: Props) => {
                 {field.type === 'reference' && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
                     <div style={{ flex: 2 }}>
-                      <label style={{ display: 'block' }}>Referenced Schema:</label>
+                      <label style={{ display: 'block' }}>
+                        {$t('dialog.schema.referenced_schema', 'Referenced Schema')}:
+                      </label>
                       <Select.Root
                         value={field.schemaId}
                         onChange={value => updateField(index, { schemaId: value ?? '' })}
@@ -450,7 +523,9 @@ export const EditSchemaDialog = (props: Props) => {
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block' }}>Min Count:</label>
+                      <label style={{ display: 'block' }}>
+                        {$t('dialog.schema.min_count', 'Min Count')}:
+                      </label>
                       <TextInput
                         type="number"
                         value={field.minCount.toString()}
@@ -467,7 +542,9 @@ export const EditSchemaDialog = (props: Props) => {
                     </div>
 
                     <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block' }}>Max Count:</label>
+                      <label style={{ display: 'block' }}>
+                        {$t('dialog.schema.max_count', 'Max Count')}:
+                      </label>
                       <TextInput
                         type="number"
                         value={field.maxCount.toString()}

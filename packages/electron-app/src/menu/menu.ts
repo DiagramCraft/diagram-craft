@@ -4,6 +4,11 @@ import { convertKeybindingToAccelerator } from './keybinding';
 import { Channels, type IpcHandlers } from '../ipc';
 import { type MenuEntry } from '@diagram-craft/electron-client-api/electron-api';
 import { isLinux, isMac, isWindows } from '../utils/platform';
+import { type TranslatedString } from '@diagram-craft/utils/localize';
+
+const resolveLabel = (label: string | TranslatedString) => {
+  return typeof label === 'string' ? label : label.message;
+};
 
 export const menuHandlers: IpcHandlers = {
   register(mainWindow: BrowserWindow): void {
@@ -31,7 +36,7 @@ const createMenuItem = (
 
   const menuItem: Electron.MenuItemConstructorOptions = {
     id: entry.id,
-    label: entry.label,
+    label: resolveLabel(entry.label),
     submenu: entry.submenu
       ? entry.submenu.map(k => createMenuItem(k, keybindings, mainWindow))
       : undefined,

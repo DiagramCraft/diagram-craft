@@ -8,6 +8,7 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TableHelper } from '@diagram-craft/canvas/node-types/table/tableUtils';
+import { $t } from '@diagram-craft/utils/localize';
 
 const getTextIds = (node: DiagramNode): string[] =>
   Object.keys(node.texts).filter(k => node.texts[k] !== undefined);
@@ -38,10 +39,12 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
   return (
     <>
       {hasMultipleTexts ? (
-        <Menu.SubMenu label={'Edit Text'}>
+        <Menu.SubMenu label={$t('context.selection.edit_text', 'Edit Text')}>
           {textIds.map(id => (
             <ActionMenuItem key={id} action={'TEXT_EDIT'} arg={{ id }}>
-              {formatTextIdLabel(id)}
+              {id === 'text'
+                ? $t('context.selection.main_text', 'Main text')
+                : $t(`context.selection.${id}`, formatTextIdLabel(id))}
             </ActionMenuItem>
           ))}
         </Menu.SubMenu>
@@ -73,7 +76,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
 
       {diagram.selection.type === 'single-node' && (
         <>
-          <Menu.SubMenu label={'Shape Actions'}>
+          <Menu.SubMenu label={$t('context.selection.shape_actions', 'Shape Actions')}>
             {(diagram.selection.nodes[0]!.getDefinition() as ShapeNodeDefinition)
               .getShapeActions(diagram.selection.nodes[0]!)
               .map(e => (
@@ -87,7 +90,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         </>
       )}
 
-      <Menu.SubMenu label={'Selection'}>
+      <Menu.SubMenu label={$t('context.selection.selection', 'Selection')}>
         <ActionMenuItem action={'SELECT_ALL'} />
         <ActionMenuItem action={'SELECT_ALL_NODES'} />
         <ActionMenuItem action={'SELECT_ALL_EDGES'} />
@@ -112,7 +115,10 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       <ActionMenuItem action={'GROUP_UNGROUP'} />
       <Menu.Separator />
 
-      <Menu.SubMenu label={'Table'} disabled={!isSingleElementInTableRow}>
+      <Menu.SubMenu
+        label={$t('context.selection.table', 'Table')}
+        disabled={!isSingleElementInTableRow}
+      >
         <ActionMenuItem action={'TABLE_COLUMN_INSERT_BEFORE'} />
         <ActionMenuItem action={'TABLE_COLUMN_INSERT_AFTER'} />
         <ActionMenuItem action={'TABLE_COLUMN_REMOVE'} />
@@ -129,7 +135,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
       </Menu.SubMenu>
       <Menu.Separator />
 
-      <Menu.SubMenu label={'Debug'}>
+      <Menu.SubMenu label={$t('context.selection.debug', 'Debug')}>
         <ActionMenuItem action={'STENCIL_MAKE_STENCIL'} />
         <ActionMenuItem action={'SELECTION_DUMP'} />
         <ActionMenuItem action={'SELECTION_REDRAW'} />
@@ -138,9 +144,9 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
 
       {diagram.selection.type === 'single-node' && (
         <>
-          <Menu.SubMenu label={'External Data'}>
+          <Menu.SubMenu label={$t('context.selection.external_data', 'External Data')}>
             <ActionMenuItem action={'ELEMENT_CONVERT_TO_NAME_ELEMENT'}>
-              Convert to named element
+              {$t('context.selection.convert_to_named_element', 'Convert to named element')}
             </ActionMenuItem>
             <Menu.Separator />
             {diagram.document.data.db.schemas.map(schema => {
@@ -165,7 +171,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         </>
       )}
 
-      <Menu.SubMenu label={'Geometry'}>
+      <Menu.SubMenu label={$t('context.selection.geometry', 'Geometry')}>
         <ActionMenuItem action={'SELECTION_GEOMETRY_CONVERT_TO_CURVES'} />
         <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_UNION'} />
         <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_INTERSECTION'} />
@@ -174,7 +180,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <ActionMenuItem action={'SELECTION_GEOMETRY_BOOLEAN_DIVIDE'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Layout'}>
+      <Menu.SubMenu label={$t('context.selection.layout', 'Layout')}>
         <ActionMenuItem action={'LAYOUT_TREE'} />
         <ActionMenuItem action={'LAYOUT_LAYERED'} />
         <ActionMenuItem action={'LAYOUT_FORCE_DIRECTED'} />
@@ -182,7 +188,7 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <ActionMenuItem action={'LAYOUT_SERIES_PARALLEL'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Align'}>
+      <Menu.SubMenu label={$t('context.selection.align', 'Align')}>
         <ActionMenuItem action={'AUTO_ALIGN'} />
         <Menu.Separator />
         <ActionMenuItem action={'ALIGN_TOP'} />
@@ -197,19 +203,19 @@ export const SelectionContextMenu = (props: { target: ContextMenuTarget<'selecti
         <ActionMenuItem action={'ALIGN_HEIGHT'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Distribute'}>
+      <Menu.SubMenu label={$t('context.selection.distribute', 'Distribute')}>
         <ActionMenuItem action={'DISTRIBUTE_HORIZONTAL'} />
         <ActionMenuItem action={'DISTRIBUTE_VERTICAL'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Arrange'}>
+      <Menu.SubMenu label={$t('context.selection.arrange', 'Arrange')}>
         <ActionMenuItem action={'SELECTION_RESTACK_TOP'} />
         <ActionMenuItem action={'SELECTION_RESTACK_UP'} />
         <ActionMenuItem action={'SELECTION_RESTACK_BOTTOM'} />
         <ActionMenuItem action={'SELECTION_RESTACK_DOWN'} />
       </Menu.SubMenu>
 
-      <Menu.SubMenu label={'Move to'}>
+      <Menu.SubMenu label={$t('context.selection.move_to', 'Move to')}>
         <ActionMenuItem action={'LAYER_SELECTION_MOVE_NEW'} />
         <Menu.Separator />
         {layers.map(layer => (

@@ -9,6 +9,7 @@ import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { EdgeFlags } from '@diagram-craft/model/edgeDefinition';
 import { range, unique } from '@diagram-craft/utils/array';
 import { makePropertyFromArray } from '@diagram-craft/model/property';
+import { $t } from '@diagram-craft/utils/localize';
 
 export const NodeFillPanel = (props: Props) => {
   const $d = useDiagram();
@@ -90,7 +91,7 @@ export const NodeFillPanel = (props: Props) => {
     <ToolWindowPanel
       mode={props.mode ?? 'accordion'}
       id="fill"
-      title={'Fill'}
+      title={$t('panel.fill', 'Fill')}
       hasCheckbox={true}
       value={enabled.val}
       onChange={enabled.set}

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@diagram-craft/electron-client-api": "workspace:^",
+    "@diagram-craft/utils": "workspace:^",
     "electron-log": "^5.4.3"
   },
   "devDependencies": {

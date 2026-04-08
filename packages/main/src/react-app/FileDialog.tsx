@@ -6,6 +6,7 @@ import { DialogCommand } from '@diagram-craft/canvas/context';
 import { EmptyObject } from '@diagram-craft/utils/types';
 import { AppConfig } from '../appConfig';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { $t } from '@diagram-craft/utils/localize';
 
 type DirEntry = {
   name: string;
@@ -51,25 +52,27 @@ export const FileDialog = (props: Props) => {
     <Dialog
       open={props.open}
       onClose={props.onCancel!}
-      title={mode === 'saveAs' ? 'Save As' : 'Open'}
+      title={
+        mode === 'saveAs' ? $t('dialog.file.save_as', 'Save As') : $t('dialog.file.open', 'Open')
+      }
       buttons={
         mode === 'saveAs'
           ? [
               {
-                label: 'Save',
+                label: $t('common.save', 'Save'),
                 type: 'default',
                 onClick: handleSave
               },
-              { label: 'Cancel', type: 'cancel', onClick: props.onCancel! }
+              { label: $t('common.cancel', 'Cancel'), type: 'cancel', onClick: props.onCancel! }
             ]
-          : [{ label: 'Cancel', type: 'cancel', onClick: props.onCancel! }]
+          : [{ label: $t('common.cancel', 'Cancel'), type: 'cancel', onClick: props.onCancel! }]
       }
     >
       <div className={styles.icFileDialog}>
         <div className={styles.ePath}>
-          Path:{' '}
+          {$t('dialog.file.path', 'Path')}:{' '}
           <a href={'#'} onClick={() => setPath([])}>
-            Home
+            {$t('dialog.file.home', 'Home')}
           </a>
           {path.map((p, i) => (
             <React.Fragment key={`${i}__${p}`}>
@@ -88,7 +91,7 @@ export const FileDialog = (props: Props) => {
         </div>
 
         {list === undefined ? (
-          <p>Loading...</p>
+          <p>{$t('common.loading', 'Loading')}...</p>
         ) : (
           <div className={styles.eList}>
             <div>
@@ -119,7 +122,7 @@ export const FileDialog = (props: Props) => {
 
         {mode === 'saveAs' && (
           <div style={{ marginTop: '1rem' }}>
-            <label>Filename:</label>
+            <label>{$t('dialog.file.filename', 'Filename')}:</label>
             <TextInput
               type={'text'}
               value={filename}
@@ -134,7 +137,7 @@ export const FileDialog = (props: Props) => {
             />
             {!isValidFilename && filename.length > 0 && (
               <p style={{ color: 'var(--danger-fg)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                Filename cannot contain / or \ characters
+                {$t('dialog.file.filename_error', 'Filename cannot contain / or \\ characters')}
               </p>
             )}
           </div>

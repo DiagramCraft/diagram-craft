@@ -8,7 +8,7 @@ import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
 import { safeSplit } from '@diagram-craft/utils/safe';
-import { $tStr } from '@diagram-craft/utils/localize';
+import { $tStr, $t } from '@diagram-craft/utils/localize';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -38,10 +38,10 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
     this.context.ui.showDialog(
       new MessageDialogCommand(
         {
-          title: 'Delete layer',
-          message: 'Are you sure you want to delete this rule?',
-          okLabel: 'Yes',
-          cancelLabel: 'No'
+          title: $t('dialog.rule.delete_title', 'Delete rule'),
+          message: $t('dialog.rule.delete_message', 'Are you sure you want to delete this rule?'),
+          okLabel: $t('common.yes', 'Yes'),
+          cancelLabel: $t('common.no', 'No')
         },
         () => {
           precondition.is.present(id);

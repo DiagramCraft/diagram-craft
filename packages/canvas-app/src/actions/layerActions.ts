@@ -14,7 +14,7 @@ import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialog
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
-import { $tStr, TranslatedString } from '@diagram-craft/utils/localize';
+import { $tStr, $t, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const layerActions = (application: Application) => ({
   LAYER_DELETE_LAYER: new LayerDeleteAction(application),
@@ -79,10 +79,10 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
     this.context.ui.showDialog(
       new MessageDialogCommand(
         {
-          title: 'Delete layer',
-          message: 'Are you sure you want to delete this layer?',
-          okLabel: 'Yes',
-          cancelLabel: 'No'
+          title: $t('dialog.layer.delete_title', 'Delete layer'),
+          message: $t('dialog.layer.delete_message', 'Are you sure you want to delete this layer?'),
+          okLabel: $t('common.yes', 'Yes'),
+          cancelLabel: $t('common.no', 'No')
         },
         () => {
           precondition.is.present(id);
@@ -96,13 +96,13 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
                 // TODO: This should be a confirm dialog
                 new MessageDialogCommand(
                   {
-                    title: 'Delete layer',
-                    message:
-                      'This layer is referenced by other layers. ' +
-                      'Are you sure you want to delete this layer ' +
-                      '(all referencing layers will be deleted)?',
-                    okLabel: 'Yes',
-                    cancelLabel: 'No'
+                    title: $t('dialog.layer.delete_title', 'Delete layer'),
+                    message: $t(
+                      'dialog.layer.delete_referenced_message',
+                      'This layer is referenced by other layers. Are you sure you want to delete this layer (all referencing layers will be deleted)?'
+                    ),
+                    okLabel: $t('common.yes', 'Yes'),
+                    cancelLabel: $t('common.no', 'No')
                   },
                   () => {
                     performDelete(layer);
