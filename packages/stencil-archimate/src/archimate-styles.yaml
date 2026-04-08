@@ -99,3 +99,145 @@ styles:
         left: 0
         right: 0
         bottom: 0
+  - id: 'archimate-relationship-association'
+    name: 'ArchiMate Association'
+    type: 'edge'
+    props:
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-composition'
+    name: 'ArchiMate Composition'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: DIAMOND_THIN_FILLED
+          size: 150
+      stroke:
+        color: var(--canvas-fg)
+      fill:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-aggregation'
+    name: 'ArchiMate Aggregation'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: DIAMOND_THIN_OUTLINE
+          size: 150
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-assignment'
+    name: 'ArchiMate Assignment'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SQUARE_STICK_ARROW
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-realization'
+    name: 'ArchiMate Realization'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SQUARE_ARROW_THIN_OUTLINE
+      stroke:
+        color: var(--canvas-fg)
+        pattern: DASHED
+        patternSize: 50
+        patternSpacing: 50
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-serving'
+    name: 'ArchiMate Serving'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SHARP_ARROW_OUTLINE
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-access'
+    name: 'ArchiMate Access'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SHARP_ARROW_OUTLINE
+      stroke:
+        color: var(--canvas-fg)
+        pattern: DASHED
+        patternSize: 50
+        patternSpacing: 50
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-influence'
+    name: 'ArchiMate Influence'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SHARP_ARROW_OUTLINE
+      stroke:
+        color: var(--canvas-fg)
+        pattern: DASHED
+        patternSize: 50
+        patternSpacing: 50
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-triggering'
+    name: 'ArchiMate Triggering'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SQUARE_ARROW_THIN_FILLED
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-flow'
+    name: 'ArchiMate Flow'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SQUARE_STICK_ARROW
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
+  - id: 'archimate-relationship-specialization'
+    name: 'ArchiMate Specialization'
+    type: 'edge'
+    props:
+      arrow:
+        end:
+          type: SQUARE_ARROW_OUTLINE
+      stroke:
+        color: var(--canvas-fg)
+      type: orthogonal
+      effects:
+        rounding: true
