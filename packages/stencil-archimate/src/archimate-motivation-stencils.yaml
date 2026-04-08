@@ -1,0 +1,100 @@
+stencils:
+  - id: 'archimate-motivation-stakeholder'
+    name: Stakeholder
+    styles: ['archimate-motivation', 'archimate-motivation-text']
+    elements:
+      - id: archimate-motivation-stakeholder-node
+        type: node
+        nodeType: rect
+        bounds: &archimate-motivation-structure-bounds
+          x: 0
+          y: 0
+          w: 160
+          h: 90
+          r: 0
+        children: []
+        props: {}
+        pickerProps: &archimate-picker-props
+          stroke:
+            width: 1.5
+        metadata: &archimate-motivation-metadata
+          style: archimate-motivation
+          textStyle: archimate-motivation-text
+        texts:
+          text: "<h1>Stakeholder</h1>\n\n<p><small>«Stakeholder»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-motivation-goal'
+    name: Goal
+    styles: ['archimate-motivation', 'archimate-motivation-text']
+    elements:
+      - id: archimate-motivation-goal-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-motivation-behavior-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 90
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-motivation-metadata
+        texts:
+          text: "<h1>Goal</h1>\n\n<p><small>«Goal»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-motivation-outcome'
+    name: Outcome
+    styles: ['archimate-motivation', 'archimate-motivation-text']
+    elements:
+      - id: archimate-motivation-outcome-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-motivation-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-motivation-metadata
+        texts:
+          text: "<h1>Outcome</h1>\n\n<p><small>«Outcome»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-motivation-requirement'
+    name: Requirement
+    styles: ['archimate-motivation', 'archimate-motivation-text']
+    elements:
+      - id: archimate-motivation-requirement-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-motivation-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-motivation-metadata
+        texts:
+          text: "<h1>Requirement</h1>\n\n<p><small>«Requirement»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-motivation-constraint'
+    name: Constraint
+    styles: ['archimate-motivation', 'archimate-motivation-text']
+    elements:
+      - id: archimate-motivation-constraint-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-motivation-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-motivation-metadata
+        texts:
+          text: "<h1>Constraint</h1>\n\n<p><small>«Constraint»</small></p>\n\n<p>Description</p>"
+        tags: []

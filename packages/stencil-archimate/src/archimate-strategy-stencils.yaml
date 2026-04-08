@@ -1,0 +1,87 @@
+stencils:
+  - id: 'archimate-strategy-capability'
+    name: Capability
+    styles: ['archimate-strategy', 'archimate-strategy-text']
+    elements:
+      - id: archimate-strategy-capability-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-strategy-behavior-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 90
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: &archimate-picker-props
+          stroke:
+            width: 1.5
+        metadata: &archimate-strategy-metadata
+          style: archimate-strategy
+          textStyle: archimate-strategy-text
+        texts:
+          text: "<h1>Capability</h1>\n\n<p><small>«Capability»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-strategy-resource'
+    name: Resource
+    styles: ['archimate-strategy', 'archimate-strategy-text']
+    elements:
+      - id: archimate-strategy-resource-node
+        type: node
+        nodeType: rect
+        bounds: &archimate-strategy-structure-bounds
+          x: 0
+          y: 0
+          w: 160
+          h: 90
+          r: 0
+        children: []
+        props: {}
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-strategy-metadata
+        texts:
+          text: "<h1>Resource</h1>\n\n<p><small>«Resource»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-strategy-course-of-action'
+    name: Course of Action
+    styles: ['archimate-strategy', 'archimate-strategy-text']
+    elements:
+      - id: archimate-strategy-course-of-action-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-strategy-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-strategy-metadata
+        texts:
+          text: "<h1>Course of Action</h1>\n\n<p><small>«Course of Action»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-strategy-value-stream'
+    name: Value Stream
+    styles: ['archimate-strategy', 'archimate-strategy-text']
+    elements:
+      - id: archimate-strategy-value-stream-node
+        type: node
+        nodeType: rounded-rect
+        bounds: *archimate-strategy-behavior-bounds
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: *archimate-picker-props
+        metadata: *archimate-strategy-metadata
+        texts:
+          text: "<h1>Value Stream</h1>\n\n<p><small>«Value Stream»</small></p>\n\n<p>Description</p>"
+        tags: []
