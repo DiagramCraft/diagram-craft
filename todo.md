@@ -100,11 +100,11 @@ future phase.
 2. Replace hard-coded strings in `NodeTextPanel.tsx` - DONE
 3. Replace hard-coded strings in `NodeFillPanel.tsx` - DONE
 
-### Phase 4: Dialogs
+### Phase 4: Dialogs - DONE
 
-1. Replace hard-coded strings in `FileDialog.tsx`
-2. Replace hard-coded strings in `EditSchemaDialog.tsx`
-3. Replace hard-coded strings in `CommandPalette.tsx`
+1. Replace hard-coded strings in `FileDialog.tsx` - DONE
+2. Replace hard-coded strings in `EditSchemaDialog.tsx` - DONE
+3. Replace hard-coded strings in `CommandPalette.tsx` - DONE
 
 ### Phase 5: Actions & Remaining
 
@@ -129,9 +129,9 @@ future phase.
 | `packages/main/src/react-app/toolwindow/ObjectToolWindow/NodeTextPanel.tsx`     | 3 - DONE |
 | `packages/main/src/react-app/toolwindow/ObjectToolWindow/NodeFillPanel.tsx`     | 3 - DONE |
 | `packages/main/src/react-app/toolwindow/ObjectToolWindow/FillPanel.tsx`         | 3 - DONE |
-| `packages/main/src/react-app/dialogs/FileDialog.tsx`                            | 4        |
-| `packages/main/src/react-app/dialogs/EditSchemaDialog.tsx`                      | 4        |
-| `packages/main/src/react-app/toolwindow/CommandPalette.tsx`                     | 4        |
+| `packages/main/src/react-app/FileDialog.tsx`                                    | 4 - DONE |
+| `packages/main/src/react-app/components/EditSchemaDialog.tsx`                   | 4 - DONE |
+| `packages/main/src/react-app/components/CommandPalette.tsx`                     | 4 - DONE |
 | Action files in `packages/canvas-app/src/actions/`                              | 5        |
 | Action files in `packages/main/src/react-app/actions/`                          | 5        |
 
