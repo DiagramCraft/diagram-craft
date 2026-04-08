@@ -1,0 +1,316 @@
+stencils:
+  - id: 'archimate-association'
+    name: Association
+    styles: ['archimate-relationship-association']
+    elements:
+      - &archimate-edge
+        id: archimate-edge-association
+        type: edge
+        start: &archimate-edge-start
+          position:
+            x: 0
+            y: 0
+        end: &archimate-edge-end
+          position:
+            x: 80
+            y: 0
+        labelNodes: []
+        waypoints: []
+        props: &archimate-association-props
+          custom:
+            archimate:
+              relationship: association
+        metadata: &archimate-association-metadata
+          style: archimate-relationship-association
+        children: []
+
+  - id: 'archimate-composition'
+    name: Composition
+    styles: ['archimate-relationship-composition']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-composition
+        props:
+          custom:
+            archimate:
+              relationship: composition
+        metadata:
+          style: archimate-relationship-composition
+
+  - id: 'archimate-aggregation'
+    name: Aggregation
+    styles: ['archimate-relationship-aggregation']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-aggregation
+        props:
+          custom:
+            archimate:
+              relationship: aggregation
+        metadata:
+          style: archimate-relationship-aggregation
+
+  - id: 'archimate-assignment'
+    name: Assignment
+    styles: ['archimate-relationship-assignment']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-assignment
+        props:
+          custom:
+            archimate:
+              relationship: assignment
+        metadata:
+          style: archimate-relationship-assignment
+
+  - id: 'archimate-realization'
+    name: Realization
+    styles: ['archimate-relationship-realization']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-realization
+        props:
+          custom:
+            archimate:
+              relationship: realization
+        metadata:
+          style: archimate-relationship-realization
+
+  - id: 'archimate-serving'
+    name: Serving
+    styles: ['archimate-relationship-serving']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-serving
+        props:
+          custom:
+            archimate:
+              relationship: serving
+        metadata:
+          style: archimate-relationship-serving
+
+  - id: 'archimate-access'
+    name: Access
+    styles: ['archimate-relationship-access']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-access
+        props:
+          custom:
+            archimate: &archimate-access-custom
+              relationship: access
+              accessMode: access
+        metadata:
+          style: archimate-relationship-access
+
+  - id: 'archimate-access-read'
+    name: Access Read
+    styles: ['archimate-relationship-access']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-access-read
+        labelNodes:
+          - &archimate-access-label-node
+            id: archimate-access-read-label-node
+            type: horizontal
+            offset:
+              x: 0
+              y: -11
+            offsetType: absolute
+            timeOffset: 0.5
+        props:
+          custom:
+            archimate:
+              relationship: access
+              accessMode: read
+        metadata:
+          style: archimate-relationship-access
+        children:
+          - &archimate-access-read-label
+            id: archimate-access-read-label-node
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 0
+              w: 32
+              h: 12
+              r: 0
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: read
+
+  - id: 'archimate-access-write'
+    name: Access Write
+    styles: ['archimate-relationship-access']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-access-write
+        labelNodes:
+          - <<: *archimate-access-label-node
+            id: archimate-access-write-label-node
+        props:
+          custom:
+            archimate:
+              relationship: access
+              accessMode: write
+        metadata:
+          style: archimate-relationship-access
+        children:
+          - <<: *archimate-access-read-label
+            id: archimate-access-write-label-node
+            texts:
+              text: write
+
+  - id: 'archimate-access-read-write'
+    name: Access Read/Write
+    styles: ['archimate-relationship-access']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-access-read-write
+        labelNodes:
+          - <<: *archimate-access-label-node
+            id: archimate-access-read-write-label-node
+        props:
+          custom:
+            archimate:
+              relationship: access
+              accessMode: read-write
+        metadata:
+          style: archimate-relationship-access
+        children:
+          - <<: *archimate-access-read-label
+            id: archimate-access-read-write-label-node
+            bounds:
+              x: 0
+              y: 0
+              w: 52
+              h: 12
+              r: 0
+            texts:
+              text: read/write
+
+  - id: 'archimate-influence'
+    name: Influence
+    styles: ['archimate-relationship-influence']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-influence
+        props:
+          custom:
+            archimate:
+              relationship: influence
+        metadata:
+          style: archimate-relationship-influence
+
+  - id: 'archimate-influence-positive'
+    name: Influence +
+    styles: ['archimate-relationship-influence']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-influence-positive
+        labelNodes:
+          - &archimate-influence-label-node
+            id: archimate-influence-positive-label-node
+            type: horizontal
+            offset:
+              x: 0
+              y: -11
+            offsetType: absolute
+            timeOffset: 0.5
+        props:
+          custom:
+            archimate:
+              relationship: influence
+              influenceModifier: '+'
+        metadata:
+          style: archimate-relationship-influence
+        children:
+          - &archimate-influence-label
+            id: archimate-influence-positive-label-node
+            type: node
+            nodeType: text
+            bounds:
+              x: 0
+              y: 0
+              w: 12
+              h: 12
+              r: 0
+            props:
+              text:
+                align: center
+              fill:
+                enabled: false
+            metadata:
+              style: default-text
+              textStyle: default-text-default
+            texts:
+              text: +
+
+  - id: 'archimate-influence-negative'
+    name: Influence -
+    styles: ['archimate-relationship-influence']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-influence-negative
+        labelNodes:
+          - <<: *archimate-influence-label-node
+            id: archimate-influence-negative-label-node
+        props:
+          custom:
+            archimate:
+              relationship: influence
+              influenceModifier: '-'
+        metadata:
+          style: archimate-relationship-influence
+        children:
+          - <<: *archimate-influence-label
+            id: archimate-influence-negative-label-node
+            texts:
+              text: '-'
+
+  - id: 'archimate-triggering'
+    name: Triggering
+    styles: ['archimate-relationship-triggering']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-triggering
+        props:
+          custom:
+            archimate:
+              relationship: triggering
+        metadata:
+          style: archimate-relationship-triggering
+
+  - id: 'archimate-flow'
+    name: Flow
+    styles: ['archimate-relationship-flow']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-flow
+        props:
+          custom:
+            archimate:
+              relationship: flow
+        metadata:
+          style: archimate-relationship-flow
+
+  - id: 'archimate-specialization'
+    name: Specialization
+    styles: ['archimate-relationship-specialization']
+    elements:
+      - <<: *archimate-edge
+        id: archimate-edge-specialization
+        props:
+          custom:
+            archimate:
+              relationship: specialization
+        metadata:
+          style: archimate-relationship-specialization
