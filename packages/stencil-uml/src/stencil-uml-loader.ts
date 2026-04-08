@@ -4,6 +4,7 @@ import { UMLClassNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClas
 import { UMLClassTemplateNodeDefinition } from '@diagram-craft/stencil-uml/class/UMLClassTemplate.nodeType';
 import { UMLProvidedInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLProvidedInterface.nodeType';
 import { UMLRequiredInterfaceNodeDefinition } from '@diagram-craft/stencil-uml/component/UMLRequiredInterface.nodeType';
+import { UMLCollaborationNodeDefinition } from '@diagram-craft/stencil-uml/composite/UMLCollaboration.nodeType';
 import { UMLStructuredClassifierNodeDefinition } from '@diagram-craft/stencil-uml/composite/UMLStructuredClassifier.nodeType';
 import { UMLFrameNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLFrame.nodeType';
 import { UMLPortNodeDefinition } from '@diagram-craft/stencil-uml/common/UMLPort.nodeType';
@@ -41,6 +42,7 @@ import activityStencils from './activity/uml-activity-stencils.yaml';
 export const registerUMLNodes = async (nodes: NodeDefinitionRegistry) => {
   nodes.register(new UMLClassNodeDefinition());
   nodes.register(new UMLClassTemplateNodeDefinition());
+  nodes.register(new UMLCollaborationNodeDefinition());
   nodes.register(new UMLStructuredClassifierNodeDefinition());
   nodes.register(new UMLFrameNodeDefinition());
   nodes.register(new UMLPortNodeDefinition());

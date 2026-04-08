@@ -1,4 +1,73 @@
 stencils:
+  - id: 'uml-composite-collaboration-use'
+    name: Collaboration Use
+    styles: [ uml-shape, uml-shape-text ]
+    elements:
+      - id: umlcollaborationuse01
+        type: node
+        nodeType: umlUseCase
+        bounds:
+          x: 0
+          y: 0
+          w: 140
+          h: 70
+          r: 0
+        children: [ ]
+        props:
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+          text:
+            align: center
+            valign: middle
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+        metadata:
+          style: uml-shape
+          textStyle: uml-shape-text
+        texts:
+          text: "Collaboration Use"
+        tags:
+
+  - id: 'uml-composite-collaboration'
+    name: Collaboration
+    styles: [ uml-shape, uml-shape-text ]
+    elements:
+      - id: umlcollaboration01
+        type: node
+        nodeType: umlCollaboration
+        bounds:
+          x: 0
+          y: 0
+          w: 220
+          h: 160
+          r: 0
+        children: [ ]
+        props:
+          custom:
+            umlCollaboration:
+              size: 24
+          stroke:
+            pattern: DASHED
+            patternSize: 50
+            patternSpacing: 50
+          text:
+            align: center
+            top: 6
+            bottom: 6
+            left: 6
+            right: 6
+            bold: true
+        metadata:
+          style: uml-shape
+          textStyle: uml-shape-text
+        texts:
+          text: "Collaboration"
+        tags:
+
   - id: 'uml-composite-structured-classifier'
     name: Structured Classifier
     styles: [ uml-shape, uml-shape-text ]

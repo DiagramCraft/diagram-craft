@@ -126,3 +126,10 @@ test('tab 18 screenshot', async ({ page }) => {
   await setTab(page, 17);
   expect(await downloadDiagram(page)).toMatchSnapshot();
 });
+
+test('tab 19 screenshot', async ({ page }) => {
+  await page.goto('http://localhost:5173?crdtClear=true#/UML.json');
+  await waitForApplicationLoaded(page);
+  await setTab(page, 18);
+  expect(await downloadDiagram(page)).toMatchSnapshot();
+});
