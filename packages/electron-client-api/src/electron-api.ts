@@ -1,4 +1,4 @@
-import type { TranslatedString } from '@diagram-craft/utils/localize';
+import { type TranslatedString } from '@diagram-craft/utils/localize';
 
 export type Channel = 'menu:action' | 'file:recentFileOpen';
 
