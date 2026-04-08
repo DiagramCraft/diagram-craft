@@ -94,11 +94,11 @@ future phase.
 2. Replace hard-coded strings in `ConnectedNodesSubmenu.tsx` - DONE
 3. Replace hard-coded strings in `GuideContextMenu.tsx` - DONE
 
-### Phase 3: Tool Windows
+### Phase 3: Tool Windows - DONE
 
-1. Replace hard-coded strings in `ObjectToolWindow.tsx`
-2. Replace hard-coded strings in `NodeTextPanel.tsx`
-3. Replace hard-coded strings in `NodeFillPanel.tsx`
+1. Replace hard-coded strings in `ObjectToolWindow.tsx` - DONE
+2. Replace hard-coded strings in `NodeTextPanel.tsx` - DONE
+3. Replace hard-coded strings in `NodeFillPanel.tsx` - DONE
 
 ### Phase 4: Dialogs
 
@@ -125,9 +125,10 @@ future phase.
 | `packages/main/src/react-app/context-menu-dispatcher/SelectionContextMenu.tsx`  | 2 - DONE |
 | `packages/main/src/react-app/context-menu-dispatcher/ConnectedNodesSubmenu.tsx` | 2 - DONE |
 | `packages/main/src/react-app/context-menu-dispatcher/GuideContextMenu.tsx`      | 2 - DONE |
-| `packages/main/src/react-app/toolwindow/ObjectToolWindow.tsx`                   | 3        |
-| `packages/main/src/react-app/toolwindow/NodeTextPanel.tsx`                      | 3        |
-| `packages/main/src/react-app/toolwindow/NodeFillPanel.tsx`                      | 3        |
+| `packages/main/src/react-app/toolwindow/ObjectToolWindow/ObjectToolWindow.tsx`  | 3 - DONE |
+| `packages/main/src/react-app/toolwindow/ObjectToolWindow/NodeTextPanel.tsx`     | 3 - DONE |
+| `packages/main/src/react-app/toolwindow/ObjectToolWindow/NodeFillPanel.tsx`     | 3 - DONE |
+| `packages/main/src/react-app/toolwindow/ObjectToolWindow/FillPanel.tsx`         | 3 - DONE |
 | `packages/main/src/react-app/dialogs/FileDialog.tsx`                            | 4        |
 | `packages/main/src/react-app/dialogs/EditSchemaDialog.tsx`                      | 4        |
 | `packages/main/src/react-app/toolwindow/CommandPalette.tsx`                     | 4        |

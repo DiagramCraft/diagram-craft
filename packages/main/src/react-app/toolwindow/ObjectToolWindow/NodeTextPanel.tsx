@@ -30,6 +30,7 @@ import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Collapsible } from '@diagram-craft/app-components/Collapsible';
 import { unique } from '@diagram-craft/utils/array';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
+import { $t } from '@diagram-craft/utils/localize';
 
 type FormProps = {
   diagram: Diagram;
@@ -408,7 +409,7 @@ export const NodeTextPanel = (props: Props) => {
   const width = useNodeProperty($d, 'text.width');
 
   return (
-    <ToolWindowPanel mode={props.mode ?? 'accordion'} title={'Text'} id={'text'}>
+    <ToolWindowPanel mode={props.mode ?? 'accordion'} title={$t('panel.text', 'Text')} id={'text'}>
       <NodeTextPanelForm
         diagram={$d}
         config={$cfg}
