@@ -177,7 +177,7 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
           <input
             className={styles.eSearchInput}
             type="text"
-            placeholder="Type a command..."
+            placeholder={$t('placeholder.command', 'Type a command...')}
             value={searchText}
             onChange={e => setSearchText(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -192,7 +192,9 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
             data-mouse-enabled={hasMouseMoved}
           >
             {filteredCommands.length === 0 ? (
-              <div className={styles.eNoResults}>No commands found</div>
+              <div className={styles.eNoResults}>
+                {$t('dialog.command.no_commands', 'No commands found')}
+              </div>
             ) : (
               filteredCommands.map((command, index) => (
                 <div

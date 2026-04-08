@@ -5,7 +5,7 @@ import { DocumentBuilder } from '@diagram-craft/model/diagram';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
-import { $tStr } from '@diagram-craft/utils/localize';
+import { $tStr, $t } from '@diagram-craft/utils/localize';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const diagramActions = (application: Application) => ({
@@ -72,10 +72,13 @@ export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, 
     this.context.ui.showDialog(
       new MessageDialogCommand(
         {
-          title: 'Delete diagram',
-          message: `Are you sure you want to delete ${diagram.name}?`,
-          okLabel: 'Yes',
-          cancelLabel: 'No'
+          title: $t('dialog.diagram.delete_title', 'Delete diagram'),
+          message: $t(
+            'dialog.diagram.delete_message',
+            `Are you sure you want to delete ${diagram.name}?`
+          ),
+          okLabel: $t('common.yes', 'Yes'),
+          cancelLabel: $t('common.no', 'No')
         },
         () => {
           this.context.model.activeDiagram = diagramToFallbackTo;
@@ -101,9 +104,9 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
     this.context.ui.showDialog(
       new StringInputDialogCommand(
         {
-          title: 'Rename diagram',
-          description: 'Enter a new name for the diagram.',
-          saveButtonLabel: 'Rename',
+          title: $t('dialog.diagram.rename_title', 'Rename diagram'),
+          description: $t('dialog.diagram.rename_description', 'Enter a new name for the diagram.'),
+          saveButtonLabel: $t('common.rename', 'Rename'),
           value: diagram.name,
           selectOnOpen: true
         },

@@ -106,10 +106,10 @@ future phase.
 2. Replace hard-coded strings in `EditSchemaDialog.tsx` - DONE
 3. Replace hard-coded strings in `CommandPalette.tsx` - DONE
 
-### Phase 5: Actions & Remaining
+### Phase 5: Actions & Remaining - DONE
 
-1. Audit all action files for consistent `$tStr` usage
-2. Replace remaining hard-coded strings in geometry/layout/align operations
+1. Audit all action files for consistent `$tStr` usage - DONE
+2. Replace remaining hard-coded strings in geometry/layout/align operations - DONE
 
 ---
 
@@ -132,8 +132,8 @@ future phase.
 | `packages/main/src/react-app/FileDialog.tsx`                                    | 4 - DONE |
 | `packages/main/src/react-app/components/EditSchemaDialog.tsx`                   | 4 - DONE |
 | `packages/main/src/react-app/components/CommandPalette.tsx`                     | 4 - DONE |
-| Action files in `packages/canvas-app/src/actions/`                              | 5        |
-| Action files in `packages/main/src/react-app/actions/`                          | 5        |
+| Action files in `packages/canvas-app/src/actions/`                              | 5 - DONE |
+| Action files in `packages/main/src/react-app/actions/`                          | 5 - DONE |
 
 ---
 

@@ -12,7 +12,7 @@ import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { toUnitLCS } from '@diagram-craft/geometry/pathListBuilder';
 import { transformPathList } from '@diagram-craft/geometry/pathListUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
-import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
+import { $tStr, $t, type TranslatedString } from '@diagram-craft/utils/localize';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 
 declare global {
@@ -45,12 +45,12 @@ export const geometryActions = (context: Application) => ({
   ),
   SELECTION_GEOMETRY_BOOLEAN_XOR: new SelectionBooleanOperation(
     context,
-    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Exclusive Or'),
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_XOR.name', 'Exclusive Or'),
     'A xor B'
   ),
   SELECTION_GEOMETRY_BOOLEAN_DIVIDE: new SelectionBooleanOperation(
     context,
-    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_INTERSECTION.name', 'Divide'),
+    $tStr('action.SELECTION_GEOMETRY_BOOLEAN_DIVIDE.name', 'Divide'),
     'A divide B'
   )
 });
@@ -70,10 +70,13 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
     this.context.ui.showDialog(
       new MessageDialogCommand(
         {
-          title: 'Convert to path',
-          message: 'Do you want to convert this shape to a editable path?',
-          okLabel: 'Yes',
-          cancelLabel: 'Cancel'
+          title: $t('dialog.geometry.convert_to_path_title', 'Convert to path'),
+          message: $t(
+            'dialog.geometry.convert_to_path_message',
+            'Do you want to convert this shape to an editable path?'
+          ),
+          okLabel: $t('common.yes', 'Yes'),
+          cancelLabel: $t('common.cancel', 'Cancel')
         },
         () => {
           UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Convert to path', uow => {

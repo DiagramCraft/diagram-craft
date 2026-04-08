@@ -9,7 +9,7 @@ import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { $tStr } from '@diagram-craft/utils/localize';
+import { $tStr, $t } from '@diagram-craft/utils/localize';
 import { ActionCriteria } from '@diagram-craft/canvas/action';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 import { applyStencilToNode } from '@diagram-craft/model/stencilUtils';
@@ -67,9 +67,12 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
       this.context.ui.showDialog(
         new MessageDialogCommand(
           {
-            title: "Can't change shape",
-            message: 'Changing the shape of a node with children.',
-            okLabel: 'Ok',
+            title: $t('dialog.shape.cannot_change_title', "Can't change shape"),
+            message: $t(
+              'dialog.shape.cannot_change_message',
+              'Changing the shape of a node with children is not supported.'
+            ),
+            okLabel: $t('common.ok', 'Ok'),
             cancelLabel: undefined
           },
           () => {}
@@ -79,7 +82,6 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
       performChangeShape();
     }
   }
-
 }
 
 export class SelectionChangeToContainerAction extends AbstractSelectionAction<Application> {
