@@ -59,3 +59,43 @@ styles:
         left: 0
         right: 0
         bottom: 0
+  - id: 'archimate-motivation'
+    name: 'ArchiMate Motivation'
+    type: 'node'
+    props:
+      fill:
+        color: '#f4c6dc'
+      stroke:
+        color: '#a64d79'
+        width: 2
+  - id: 'archimate-motivation-text'
+    name: 'ArchiMate Motivation Text'
+    type: 'text'
+    props:
+      text:
+        color: '#6e244a'
+        fontSize: 10
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
+  - id: 'archimate-strategy'
+    name: 'ArchiMate Strategy'
+    type: 'node'
+    props:
+      fill:
+        color: '#d6c3f0'
+      stroke:
+        color: '#6f52a3'
+        width: 2
+  - id: 'archimate-strategy-text'
+    name: 'ArchiMate Strategy Text'
+    type: 'text'
+    props:
+      text:
+        color: '#4a3475'
+        fontSize: 10
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
