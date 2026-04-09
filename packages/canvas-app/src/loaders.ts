@@ -6,7 +6,6 @@ import type { AwarenessUserState } from '@diagram-craft/collaboration/awareness'
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
 
 export type FileLoader = (
-  // TODO: Need to extend with blob
   content: string,
   doc: DiagramDocument,
   diagramFactory: DiagramFactory
@@ -17,14 +16,15 @@ export const fileLoaderRegistry: Record<string, () => Promise<FileLoader>> = {};
 /* Now some utilities to make it easier to use the FileLoader infrastructure */
 
 export const getFileLoaderForUrl = (url: string) => {
+  const normalizedUrl = url.replace(/[?#].*$/, '');
   // Try compound extension first (e.g. ".diagramCraft.svg")
-  const filename = url.split('/').pop() ?? url;
-  const dotIdx = filename.indexOf('.');
-  if (dotIdx !== -1) {
-    const compoundExt = filename.slice(dotIdx); // e.g. ".diagramCraft.svg"
+  const filename = normalizedUrl.slice(normalizedUrl.lastIndexOf('/') + 1);
+  const dotSegments = filename.split('.').slice(1);
+  for (let i = 0; i < dotSegments.length; i++) {
+    const compoundExt = `.${dotSegments.slice(i).join('.')}`; // e.g. ".diagramCraft.svg"
     if (fileLoaderRegistry[compoundExt]) return fileLoaderRegistry[compoundExt];
   }
-  const ext = filename.split('.').pop();
+  const ext = dotSegments.at(-1);
   return fileLoaderRegistry[`.${ext}`];
 };
 
@@ -38,11 +38,10 @@ export const loadFileFromUrl = async (
     root?: CRDTRoot;
   }
 ) => {
-  const content = await FileSystem.loadFromUrl(url);
-
   const fileLoaderFactory = getFileLoaderForUrl(url);
   assert.present(fileLoaderFactory, `File loader for ${url} not found`);
   const fileLoader = await fileLoaderFactory();
+  const content = await FileSystem.loadFromUrl(url);
 
   const root = opts?.root ?? (await documentFactory.loadCRDT(url, userState, progressCallback));
   const doc = await documentFactory.createDocument(root, url, progressCallback);
