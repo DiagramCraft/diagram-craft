@@ -1,0 +1,65 @@
+stencils:
+  - id: 'archimate-implementation-work-package'
+    name: Work Package
+    styles: ['archimate-implementation', 'archimate-implementation-text']
+    elements:
+      - id: archimate-implementation-work-package-node
+        type: node
+        nodeType: rounded-rect
+        bounds: &archimate-impl-behavior-bounds
+          x: 0
+          y: 0
+          w: 170
+          h: 90
+          r: 0
+        children: []
+        props:
+          custom:
+            roundedRect:
+              radius: 14
+        pickerProps: &archimate-impl-picker-props
+          stroke:
+            width: 1.5
+        metadata: &archimate-implementation-metadata
+          style: archimate-implementation
+          textStyle: archimate-implementation-text
+        texts:
+          text: "<h1>Work Package</h1>\n\n<p><small>«Work Package»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-implementation-plateau'
+    name: Plateau
+    styles: ['archimate-implementation', 'archimate-implementation-text']
+    elements:
+      - id: archimate-implementation-plateau-node
+        type: node
+        nodeType: rect
+        bounds: &archimate-impl-structure-bounds
+          x: 0
+          y: 0
+          w: 160
+          h: 90
+          r: 0
+        children: []
+        props: {}
+        pickerProps: *archimate-impl-picker-props
+        metadata: *archimate-implementation-metadata
+        texts:
+          text: "<h1>Plateau</h1>\n\n<p><small>«Plateau»</small></p>\n\n<p>Description</p>"
+        tags: []
+
+  - id: 'archimate-implementation-gap'
+    name: Gap
+    styles: ['archimate-implementation', 'archimate-implementation-text']
+    elements:
+      - id: archimate-implementation-gap-node
+        type: node
+        nodeType: rect
+        bounds: *archimate-impl-structure-bounds
+        children: []
+        props: {}
+        pickerProps: *archimate-impl-picker-props
+        metadata: *archimate-implementation-metadata
+        texts:
+          text: "<h1>Gap</h1>\n\n<p><small>«Gap»</small></p>\n\n<p>Description</p>"
+        tags: []

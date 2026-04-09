@@ -241,3 +241,23 @@ styles:
       type: orthogonal
       effects:
         rounding: true
+  - id: 'archimate-implementation'
+    name: 'ArchiMate Implementation'
+    type: 'node'
+    props:
+      fill:
+        color: '#fef5bf'
+      stroke:
+        color: '#a07800'
+        width: 2
+  - id: 'archimate-implementation-text'
+    name: 'ArchiMate Implementation Text'
+    type: 'text'
+    props:
+      text:
+        color: '#7a5500'
+        fontSize: 10
+        top: 0
+        left: 0
+        right: 0
+        bottom: 0
