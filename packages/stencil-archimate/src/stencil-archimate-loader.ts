@@ -3,6 +3,7 @@ import { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import { YamlStencilLoader } from '@diagram-craft/canvas/yamlStencilLoader';
 import archimateApplicationStencils from './archimate-application-stencils.yaml';
 import archimateBusinessStencils from './archimate-business-stencils.yaml';
+import archimateImplementationStencils from './archimate-implementation-stencils.yaml';
 import archimateMotivationStencils from './archimate-motivation-stencils.yaml';
 import archimateRelationshipsStencils from './archimate-relationships-stencils.yaml';
 import archimateStrategyStencils from './archimate-strategy-stencils.yaml';
@@ -20,7 +21,8 @@ export const loadArchimateStencils = async (_registry: Registry) => {
       { id: 'technology', name: 'Technology', stencils: [] },
       { id: 'relationships', name: 'Relationships', stencils: [] },
       { id: 'motivation', name: 'Motivation', stencils: [] },
-      { id: 'strategy', name: 'Strategy', stencils: [] }
+      { id: 'strategy', name: 'Strategy', stencils: [] },
+      { id: 'implementation', name: 'Implementation & Migration', stencils: [] }
     ]
   };
 
@@ -32,6 +34,7 @@ export const loadArchimateStencils = async (_registry: Registry) => {
   loader.registerSubPackage('relationships', archimateRelationshipsStencils);
   loader.registerSubPackage('motivation', archimateMotivationStencils);
   loader.registerSubPackage('strategy', archimateStrategyStencils);
+  loader.registerSubPackage('implementation', archimateImplementationStencils);
 
   return loader.apply();
 };
