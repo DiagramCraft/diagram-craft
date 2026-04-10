@@ -1,4 +1,4 @@
-import { AbstractAction, NoopAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
 import { AppConfig } from '../../appConfig';
@@ -7,14 +7,9 @@ import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { $tStr, $t } from '@diagram-craft/utils/localize';
 import { generateDiagramCraftSvg } from '@diagram-craft/canvas-app/diagramCraftSvgFormat';
 
-export const fileSaveAsActions = (application: Application) =>
-  AppConfig.get().filesystem.provider === 'none'
-    ? {
-        FILE_SAVE_AS: new NoopAction(application)
-      }
-    : {
-        FILE_SAVE_AS: new FileSaveAsAction(application)
-      };
+export const fileSaveAsActions = (application: Application) => ({
+  FILE_SAVE_AS: new FileSaveAsAction(application)
+});
 
 declare global {
   namespace DiagramCraft {
@@ -24,6 +19,10 @@ declare global {
 
 class FileSaveAsAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.FILE_SAVE_AS.name', 'Save As...');
+
+  getCriteria() {
+    return [ActionCriteria.Simple(() => AppConfig.get().filesystem.provider !== 'none')];
+  }
 
   async execute(): Promise<void> {
     const currentFilename = this.context.model.activeDocument.url

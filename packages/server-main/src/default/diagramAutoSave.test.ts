@@ -41,7 +41,7 @@ describe('DiagramAutoSave', () => {
     vi.useFakeTimers();
 
     const yDoc = new Y.Doc();
-    const writer = vi.fn(async () => {});
+    const writer = vi.fn<(relPath: string, content: string) => Promise<void>>(async () => {});
     const autoSave = new DiagramAutoSave(yDoc, 'test.json', 'test.temp.json', writer);
 
     yDoc.transact(() => {
@@ -58,7 +58,7 @@ describe('DiagramAutoSave', () => {
     vi.useFakeTimers();
 
     const yDoc = new Y.Doc();
-    const writer = vi.fn(async () => {});
+    const writer = vi.fn<(relPath: string, content: string) => Promise<void>>(async () => {});
     const autoSave = new DiagramAutoSave(yDoc, 'test.json', 'test.temp.json', writer);
 
     const root = new YJSRoot(yDoc);
@@ -75,8 +75,12 @@ describe('DiagramAutoSave', () => {
     await vi.advanceTimersByTimeAsync(2500);
 
     expect(writer).toHaveBeenCalledTimes(1);
-    const [, content] = writer.mock.calls[0]!;
-    expect(JSON.parse(content as string).diagrams).toHaveLength(1);
+    const content = writer.mock.calls[0]?.[1];
+    expect(content).toBeDefined();
+    if (content === undefined) {
+      throw new Error('Expected autosave writer to receive serialized content');
+    }
+    expect(JSON.parse(content).diagrams).toHaveLength(1);
 
     autoSave.dispose();
     doc.release();

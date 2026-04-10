@@ -8,6 +8,7 @@ import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 import type { DiagramDocument } from './diagramDocument';
+import type { RegularLayer as RegularLayerType } from './diagramLayerRegular';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -43,7 +44,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(() => {
         doc2 = TestModel.newDocument(root2);
       }).not.toThrow();
-      expect(doc2?.diagrams[0]?.layers.all[0]?.elements).toHaveLength(1);
+      expect((doc2?.diagrams[0]?.layers.all[0] as RegularLayerType | undefined)?.elements).toHaveLength(
+        1
+      );
     });
   });
 

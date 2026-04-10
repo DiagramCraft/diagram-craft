@@ -87,7 +87,8 @@ describe.each(Backends.all())('DiagramNode CRDT [%s]', (_name, backend) => {
       });
 
       await vi.waitFor(() => {
-        const node = doc2.diagrams[0]?.layers.all[0]?.elements[0];
+        const layer = doc2.diagrams[0]?.layers.all[0] as RegularLayer | undefined;
+        const node = layer?.elements[0];
         expect(node && isNode(node) ? node.getDefinition().type : undefined).toBe('umlClass');
       });
 

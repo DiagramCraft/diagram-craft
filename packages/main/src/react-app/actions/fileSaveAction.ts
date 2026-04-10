@@ -1,4 +1,4 @@
-import { AbstractAction, ActionCriteria, NoopAction } from '@diagram-craft/canvas/action';
+import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { Application } from '../../application';
@@ -6,14 +6,9 @@ import { AppConfig } from '../../appConfig';
 import { $tStr } from '@diagram-craft/utils/localize';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
-export const fileSaveActions = (application: Application) =>
-  AppConfig.get().filesystem.provider === 'none' || !CollaborationConfig.isNoOp
-    ? {
-        FILE_SAVE: new NoopAction(application)
-      }
-    : {
-        FILE_SAVE: new FileSaveAction(application)
-      };
+export const fileSaveActions = (application: Application) => ({
+  FILE_SAVE: new FileSaveAction(application)
+});
 
 declare global {
   namespace DiagramCraft {
@@ -25,7 +20,14 @@ class FileSaveAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.FILE_SAVE.name', 'Save');
 
   getCriteria(application: Application) {
-    return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
+    return [
+      ActionCriteria.Simple(
+        () =>
+          AppConfig.get().filesystem.provider !== 'none' &&
+          CollaborationConfig.isNoOp &&
+          !!application.model.activeDocument.url
+      )
+    ];
   }
 
   execute(): void {

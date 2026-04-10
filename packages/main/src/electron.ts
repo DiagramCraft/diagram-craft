@@ -2,8 +2,7 @@ import type { Application } from './application';
 import {
   AbstractAction,
   AbstractToggleAction,
-  ActionCriteria,
-  NoopAction
+  ActionCriteria
 } from '@diagram-craft/canvas/action';
 import { assert } from '@diagram-craft/utils/assert';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
@@ -77,12 +76,8 @@ export const ElectronIntegration = {
 
     window.electronAPI?.setMenu(translateMenuStructure(mainMenuStructure), keybindings);
 
-    app.actions.FILE_SAVE = CollaborationConfig.isNoOp
-      ? new ElectronFileSaveAction(app)
-      : new NoopAction(app);
-    app.actions.FILE_SAVE_AS = CollaborationConfig.isNoOp
-      ? new ElectronFileSaveAsAction(app)
-      : new NoopAction(app);
+    app.actions.FILE_SAVE = new ElectronFileSaveAction(app);
+    app.actions.FILE_SAVE_AS = new ElectronFileSaveAsAction(app);
     app.actions.FILE_OPEN = new ElectronFileOpenAction(app);
 
     window.electronAPI.removeAllListeners('menu:action');
@@ -128,7 +123,11 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.FILE_SAVE.name', 'Save');
 
   getCriteria(application: Application) {
-    return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
+    return [
+      ActionCriteria.Simple(
+        () => CollaborationConfig.isNoOp && !!application.model.activeDocument.url
+      )
+    ];
   }
 
   execute(): void {
@@ -152,8 +151,8 @@ class ElectronFileSaveAction extends AbstractAction<undefined, Application> {
 class ElectronFileSaveAsAction extends AbstractAction<undefined, Application> {
   name = $tStr('action.FILE_SAVE_AS.name', 'Save As...');
 
-  getCriteria(application: Application) {
-    return [ActionCriteria.Simple(() => !!application.model.activeDocument.url)];
+  getCriteria() {
+    return [ActionCriteria.Simple(() => !!this.context.model.activeDocument.url)];
   }
 
   async execute(): Promise<void> {

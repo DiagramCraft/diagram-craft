@@ -93,6 +93,7 @@ import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dia
 import { AutoAlignActionDialog } from './react-app/actions/autoAlignAction.dialog';
 import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
 import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
@@ -334,6 +335,11 @@ export const App = (props: {
 
   // Check initial autosave state
   useEffect(() => {
+    if (!CollaborationConfig.isNoOp) {
+      setDirty(false);
+      return;
+    }
+
     Autosave.get()
       .exists()
       .then(setDirty)
@@ -357,6 +363,10 @@ export const App = (props: {
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   const autosave = (event: any) => {
+    if (!CollaborationConfig.isNoOp) {
+      if (dirty) setDirty(false);
+      return;
+    }
     if (event.silent) return;
 
     Autosave.get().asyncSave(url, doc, s => {
