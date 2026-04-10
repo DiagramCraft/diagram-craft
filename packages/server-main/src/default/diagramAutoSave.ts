@@ -61,10 +61,6 @@ export class DiagramAutoSave {
 
     this.handleUpdate = () => {
       if (this.disposed) return;
-      if (!this.document) {
-        log.debug(`First update for ${this.tempRelPath} — creating DiagramDocument`);
-        this.document = new DiagramDocument(makeServerRegistry(), false, new YJSRoot(yDoc));
-      }
       log.trace(`Update received for ${this.tempRelPath}, debouncing...`);
       debouncedSave();
     };
@@ -78,9 +74,24 @@ export class DiagramAutoSave {
   }
 
   private async save() {
-    if (this.disposed || !this.document) return;
+    if (this.disposed) return;
+    if (!this.document) {
+      // Bind lazily after the update burst has settled so we do not attach a
+      // DiagramDocument while the initial Yjs sync transaction is still in flight.
+      log.debug(`First debounced save for ${this.tempRelPath} — creating DiagramDocument`);
+      this.document = new DiagramDocument(makeServerRegistry(), false, new YJSRoot(this.yDoc));
+    }
+    if (this.document.diagrams.length === 0) {
+      log.warn(`Skipping save for ${this.tempRelPath}: document has no diagrams`);
+      return;
+    }
+
     log.debug(`Serializing ${this.tempRelPath}...`);
     const serialized = await serializeDiagramDocument(this.document);
+    if (serialized.diagrams.length === 0) {
+      log.warn(`Skipping save for ${this.tempRelPath}: serialized document has no diagrams`);
+      return;
+    }
     log.debug(`Serialized ${this.tempRelPath}: ${serialized.diagrams.length} diagram(s)`);
     await this.writer(this.tempRelPath, JSON.stringify(serialized, null, 2));
     log.info(`Saved ${this.tempRelPath}`);
