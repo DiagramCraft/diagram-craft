@@ -536,8 +536,10 @@ export class NodeDefinitionRegistry {
     const r = this.nodes.get(type);
 
     if (!r) {
-      missing.add(type);
-      if (this.lazyNodeLoaders) console.warn(`Cannot find shape '${type}'`, new Error().stack);
+      if (!missing.has(type)) {
+        missing.add(type);
+        if (this.logMissingShapes) console.warn(`Cannot find shape '${type}'`, new Error().stack);
+      }
       return this.nodes.get('rect')!;
     }
 

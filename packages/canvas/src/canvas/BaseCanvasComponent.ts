@@ -143,12 +143,12 @@ export abstract class BaseCanvasComponent<
         );
       } else if (isNode(e)) {
         const node = e;
-        const nodeDef = $d.document.registry.nodes.get(node.nodeType);
+        const nodeDef = node.getDefinition();
 
         return this.subComponent<NodeComponentProps>(
           () => new (nodeDef as ShapeNodeDefinition).component(nodeDef as ShapeNodeDefinition),
           {
-            key: `node-${node.nodeType}-${id}`,
+            key: `node-${nodeDef.type}-${id}`,
             element: node,
             onMouseDown: onMouseDown ?? (() => {}),
             context: this.currentProps.context,

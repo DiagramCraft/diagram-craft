@@ -36,7 +36,7 @@ export function isResolvableToModificationLayer(l: Layer): l is Layer<Modificati
 }
 
 export const getAdjustments = (diagram: Diagram, id: string) => {
-  return diagram.layers.visible
+  return (diagram.layers?.visible ?? [])
     .filter(l => isResolvableToRuleLayer(l) || isResolvableToModificationLayer(l))
     .map(
       l =>

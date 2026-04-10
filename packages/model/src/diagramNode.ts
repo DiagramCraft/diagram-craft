@@ -6,7 +6,8 @@ import {
   type DiagramElementCRDT,
   InvalidationScope,
   isEdge,
-  isNode
+  isNode,
+  scheduleNodeDefinitionLoad
 } from './diagramElement';
 import { getRemoteUnitOfWork, UnitOfWork, UOWTrackable } from './unitOfWork';
 import type { DiagramEdge, ResolvedLabelNode } from './diagramEdge';
@@ -327,7 +328,12 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
   }
 
   getDefinition() {
-    return this.diagram.document.registry.nodes.get(this.nodeType);
+    const registry = this.diagram.document.registry.nodes;
+    if (!registry.hasRegistration(this.nodeType)) {
+      scheduleNodeDefinitionLoad(this);
+      return registry.get('rect');
+    }
+    return registry.get(this.nodeType);
   }
 
   get nodeType() {

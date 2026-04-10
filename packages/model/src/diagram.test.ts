@@ -7,6 +7,7 @@ import { RegularLayer } from './diagramLayerRegular';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { ElementFactory } from './elementFactory';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import type { DiagramDocument } from './diagramDocument';
 
 const testBounds = { x: 0, y: 0, w: 100, h: 100, r: 0 };
 
@@ -18,6 +19,31 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(diagram.id).toBe('test-id');
       expect(diagram.name).toBe('test-name');
       expect(diagram.document).toBe(doc);
+    });
+
+    it('should initialize a synced diagram with a shaped container node', () => {
+      const [root1, root2] = backend.syncedDocs();
+      if (!root2) return;
+
+      const diagram1 = TestModel.newDiagram(root1);
+      const layer1 = diagram1.newLayer();
+
+      layer1.addNode({
+        type: 'container',
+        props: {
+          custom: {
+            container: {
+              shape: 'rect'
+            }
+          }
+        }
+      });
+
+      let doc2: DiagramDocument | undefined;
+      expect(() => {
+        doc2 = TestModel.newDocument(root2);
+      }).not.toThrow();
+      expect(doc2?.diagrams[0]?.layers.all[0]?.elements).toHaveLength(1);
     });
   });
 
