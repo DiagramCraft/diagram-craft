@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-business-actor'
     name: Actor
+    description: An organizational entity capable of performing business behavior.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-actor-node
@@ -26,6 +27,7 @@ stencils:
 
   - id: 'archimate-business-role'
     name: Role
+    description: The responsibility for performing specific business behavior.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-role-node
@@ -42,6 +44,7 @@ stencils:
 
   - id: 'archimate-business-collaboration'
     name: Collaboration
+    description: A grouping of business actors or roles that work together.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-collaboration-node
@@ -58,6 +61,7 @@ stencils:
 
   - id: 'archimate-business-interface'
     name: Interface
+    description: A point of access where a business service is exposed.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-interface-node
@@ -74,6 +78,7 @@ stencils:
 
   - id: 'archimate-business-process'
     name: Process
+    description: A sequence of business behaviors that produces a specific result.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-process-node
@@ -98,6 +103,7 @@ stencils:
 
   - id: 'archimate-business-function'
     name: Function
+    description: A collection of business behavior grouped by required skills or resources.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-function-node
@@ -117,6 +123,7 @@ stencils:
 
   - id: 'archimate-business-interaction'
     name: Interaction
+    description: Business behavior performed by multiple roles or actors together.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-interaction-node
@@ -136,6 +143,7 @@ stencils:
 
   - id: 'archimate-business-event'
     name: Event
+    description: A business state change or occurrence.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-event-node
@@ -160,6 +168,7 @@ stencils:
 
   - id: 'archimate-business-service'
     name: Service
+    description: Explicitly defined business behavior exposed to customers or other elements.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-service-node
@@ -179,6 +188,7 @@ stencils:
 
   - id: 'archimate-business-object'
     name: Object
+    description: A passive element with relevance from a business perspective.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-object-node
@@ -195,6 +205,7 @@ stencils:
 
   - id: 'archimate-business-contract'
     name: Contract
+    description: A specification of rights and obligations associated with a product or service.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-contract-node
@@ -211,6 +222,7 @@ stencils:
 
   - id: 'archimate-business-representation'
     name: Representation
+    description: A perceptible form in which a business object is presented.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-representation-node
@@ -227,6 +239,7 @@ stencils:
 
   - id: 'archimate-business-product'
     name: Product
+    description: A coherent collection of services and contract offered as a whole.
     styles: [ 'archimate-business', 'archimate-business-text' ]
     elements:
       - id: archimate-business-product-node

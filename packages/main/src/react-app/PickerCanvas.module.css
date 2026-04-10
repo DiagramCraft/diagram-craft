@@ -1,6 +1,6 @@
 .icPickerCanvasPreview {
   position: absolute;
-  width: 100px;
+  width: 150px;
   min-height: 110px;
   z-index: 200;
   background: var(--canvas-bg);

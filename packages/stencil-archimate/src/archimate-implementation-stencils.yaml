@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-implementation-work-package'
     name: Work Package
+    description: A series of actions designed to achieve a specific implementation result.
     styles: ['archimate-implementation', 'archimate-implementation-text']
     elements:
       - id: archimate-implementation-work-package-node
@@ -29,6 +30,7 @@ stencils:
 
   - id: 'archimate-implementation-plateau'
     name: Plateau
+    description: A relatively stable state of the architecture at a point in time.
     styles: ['archimate-implementation', 'archimate-implementation-text']
     elements:
       - id: archimate-implementation-plateau-node
@@ -50,6 +52,7 @@ stencils:
 
   - id: 'archimate-implementation-gap'
     name: Gap
+    description: A statement of difference between two plateaus.
     styles: ['archimate-implementation', 'archimate-implementation-text']
     elements:
       - id: archimate-implementation-gap-node

@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-technology-node'
     name: Node
+    description: A computational or physical resource that hosts and executes technology artifacts.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-node-node
@@ -26,6 +27,7 @@ stencils:
 
   - id: 'archimate-technology-device'
     name: Device
+    description: A physical IT resource on which system software or artifacts can run.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-device-node
@@ -42,6 +44,7 @@ stencils:
 
   - id: 'archimate-technology-system-software'
     name: System Software
+    description: The software environment that supports specific types of components or artifacts.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-system-software-node
@@ -58,6 +61,7 @@ stencils:
 
   - id: 'archimate-technology-collaboration'
     name: Collaboration
+    description: A grouping of technology nodes, devices, or system software working together.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-collaboration-node
@@ -74,6 +78,7 @@ stencils:
 
   - id: 'archimate-technology-interface'
     name: Interface
+    description: A point of access where a technology service is exposed.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-interface-node
@@ -90,6 +95,7 @@ stencils:
 
   - id: 'archimate-technology-function'
     name: Function
+    description: Technology behavior grouped around a required set of resources.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-function-node
@@ -114,6 +120,7 @@ stencils:
 
   - id: 'archimate-technology-process'
     name: Process
+    description: A sequence of technology behaviors that produces a specific result.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-process-node
@@ -133,6 +140,7 @@ stencils:
 
   - id: 'archimate-technology-interaction'
     name: Interaction
+    description: Technology behavior performed by multiple structural elements together.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-interaction-node
@@ -152,6 +160,7 @@ stencils:
 
   - id: 'archimate-technology-event'
     name: Event
+    description: A technology state change or occurrence.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-event-node
@@ -176,6 +185,7 @@ stencils:
 
   - id: 'archimate-technology-service'
     name: Service
+    description: Explicitly defined technology behavior exposed to its environment.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-service-node
@@ -195,6 +205,7 @@ stencils:
 
   - id: 'archimate-technology-artifact'
     name: Artifact
+    description: A piece of data used or produced in software development or operation.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-artifact-node
@@ -211,6 +222,7 @@ stencils:
 
   - id: 'archimate-technology-communication-network'
     name: Communication Network
+    description: A set of structures that connects nodes or devices for communication.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-communication-network-node
@@ -227,6 +239,7 @@ stencils:
 
   - id: 'archimate-technology-path'
     name: Path
+    description: A link between nodes used for communication or transport.
     styles: ['archimate-technology', 'archimate-technology-text']
     elements:
       - id: archimate-technology-path-node
