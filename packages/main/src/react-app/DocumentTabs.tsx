@@ -12,6 +12,7 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import { getDocumentTabKey, UserState } from '../UserState';
 import styles from './DocumentTabs.module.css';
 
 const MIME_TYPE = 'application/x-diagram-craft-diagram-instances';
@@ -152,6 +153,7 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
 
 export const DocumentTabs = (props: Props) => {
   const application = useApplication();
+  const userState = UserState.get();
   const redraw = useRedraw();
   const tabsListRef = useRef<HTMLDivElement>(null);
   const scrollToTabIdRef = useRef<string | null>(null);
@@ -172,6 +174,12 @@ export const DocumentTabs = (props: Props) => {
   // is the "root" of the activeDiagram
   const path = application.model.activeDocument.getDiagramPath(application.model.activeDiagram);
   const selection = path[0]?.id;
+  const documentKey = getDocumentTabKey(props.document.url, props.document.diagrams[0]?.id);
+
+  useEffect(() => {
+    if (!selection) return;
+    userState.setDocumentTab(documentKey, selection);
+  }, [documentKey, selection, userState]);
 
   useEffect(() => {
     if (scrollToTabIdRef.current && tabsListRef.current) {

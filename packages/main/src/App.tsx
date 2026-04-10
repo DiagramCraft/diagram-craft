@@ -65,7 +65,7 @@ import { AuxToolbar } from './react-app/AuxToolbar';
 import { RightSidebar } from './react-app/RightSidebar';
 import { LeftSidebar } from './react-app/LeftSidebar';
 import { Application, ApplicationContext, ApplicationUIActions } from './application';
-import { UserState } from './UserState';
+import { getDocumentTabKey, UserState } from './UserState';
 import { HelpState } from './react-app/HelpState';
 import { JSONDialog } from './react-app/components/JSONDialog';
 import { CanvasOutline } from './react-app/CanvasOutline';
@@ -93,6 +93,7 @@ import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dia
 import { AutoAlignActionDialog } from './react-app/actions/autoAlignAction.dialog';
 import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
 import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
 import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
 import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
@@ -138,9 +139,15 @@ const updateApplicationModel = (
   callback: ProgressCallback
 ) => {
   app.model.setActiveDocument(doc, app.userState.awarenessState, callback);
-  app.model.activeDiagram =
-    [...doc.diagramIterator({ nest: true })].find(d => d.id === doc.activeDiagramId)! ??
-    doc.diagrams[0];
+  const savedDiagramId = app.userState.getDocumentTab(
+    getDocumentTabKey(doc.url, doc.diagrams[0]?.id)
+  );
+  const initialDiagram =
+    [...doc.diagramIterator({ nest: true })].find(d => d.id === doc.activeDiagramId) ??
+    (savedDiagramId ? doc.byId(savedDiagramId) : undefined) ??
+    doc.diagrams[0]!;
+
+  app.model.activeDiagram = initialDiagram;
 
   if (!app.ready) {
     const keyMap = defaultMacAppKeymap;
@@ -334,6 +341,11 @@ export const App = (props: {
 
   // Check initial autosave state
   useEffect(() => {
+    if (!CollaborationConfig.isNoOp) {
+      setDirty(false);
+      return;
+    }
+
     Autosave.get()
       .exists()
       .then(setDirty)
@@ -357,6 +369,10 @@ export const App = (props: {
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
   const autosave = (event: any) => {
+    if (!CollaborationConfig.isNoOp) {
+      if (dirty) setDirty(false);
+      return;
+    }
     if (event.silent) return;
 
     Autosave.get().asyncSave(url, doc, s => {

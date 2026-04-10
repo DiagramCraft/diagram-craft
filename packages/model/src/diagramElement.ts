@@ -124,6 +124,48 @@ export interface DiagramElement extends Detachable<DiagramElement | Layer> {
   ): void;
 }
 
+const pendingNodeDefinitionLoads = new Set<string>();
+
+export const scheduleNodeDefinitionLoad = (node: DiagramNode) => {
+  const registry = node.diagram.document.registry.nodes;
+  if (registry.hasRegistration(node.nodeType)) return;
+
+  // CRDT-backed documents can materialize remote nodes before the async stencil loader
+  // for that node type has finished. Coalesce loads per diagram + node type so repeated
+  // render/attach paths do not start the same lazy import over and over.
+  const key = `${node.diagram.uid}:${node.nodeType}`;
+  if (pendingNodeDefinitionLoads.has(key)) return;
+  pendingNodeDefinitionLoads.add(key);
+
+  void registry
+    .load(node.nodeType)
+    .then(loaded => {
+      if (!loaded) return;
+
+      UnitOfWork.executeSilently(node.diagram, uow => {
+        for (const candidate of node.diagram.nodeLookup.values()) {
+          if (candidate.nodeType !== node.nodeType) continue;
+
+          const definition = candidate.getDefinition();
+          // Nodes may already be attached and temporarily rendered with the rect fallback.
+          // Once the real definition is available, rerun the definition lifecycle hooks and
+          // invalidate cached props/anchors so the canvas remounts the correct component.
+          if (candidate._isAttached) {
+            definition.onAdd(candidate, candidate.diagram, uow);
+          }
+          definition.onPropUpdate(candidate, uow);
+          candidate.invalidate('full', uow);
+          candidate.invalidateAnchors(uow);
+        }
+      });
+
+      node.diagram.emitDiagramChange('content');
+    })
+    .finally(() => {
+      pendingNodeDefinitionLoads.delete(key);
+    });
+};
+
 export abstract class AbstractDiagramElement
   implements DiagramElement, AttachmentConsumer, Releasable
 {
@@ -474,7 +516,11 @@ export abstract class AbstractDiagramElement
       layer.diagram.register(element);
 
       if (isNode(element)) {
-        element.getDefinition().onAdd(element, this.diagram, uow);
+        if (diagram.document.registry.nodes.hasRegistration(element.nodeType)) {
+          element.getDefinition().onAdd(element, this.diagram, uow);
+        } else {
+          scheduleNodeDefinitionLoad(element);
+        }
       }
 
       // TODO: Eventually we should use the layer _isAttached instead of true
