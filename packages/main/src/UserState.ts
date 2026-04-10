@@ -13,6 +13,10 @@ export type PickerViewMode = 'grid' | 'list';
 const DEFAULT_STENCILS = [{ id: 'default', isOpen: true }];
 
 const MAX_RECENT_FILES = 10;
+const MAX_PERSISTED_DOCUMENT_TABS = 10;
+
+export const getDocumentTabKey = (url: string | undefined, fallbackDiagramId: string | undefined) =>
+  url ?? `untitled:${fallbackDiagramId ?? 'default'}`;
 
 export class UserState extends EventEmitter<UserStateEvents> {
   #panelLeft?: number;
@@ -27,6 +31,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
   #recentFiles: Array<string>;
   #themeMode: ThemeMode = 'dark';
   #toolWindowTabs: Record<string, string> = {};
+  #documentTabs: Array<{ documentKey: string; tabId: string }> = [];
   #persistedState: string;
 
   private awarenessStateCache: AwarenessUserState | undefined;
@@ -59,6 +64,7 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.#recentFiles = state.recentFiles ?? [];
     this.#themeMode = state.themeMode === 'light' ? 'light' : 'dark';
     this.#toolWindowTabs = state.toolWindowTabs ?? {};
+    this.#documentTabs = state.documentTabs ?? [];
     this.#persistedState = this.serializeState();
   }
 
@@ -196,6 +202,20 @@ export class UserState extends EventEmitter<UserStateEvents> {
     this.triggerChange();
   }
 
+  getDocumentTab(documentKey: string): string | undefined {
+    if (CollaborationConfig.isNoOp) return undefined;
+    return this.#documentTabs.find(e => e.documentKey === documentKey)?.tabId;
+  }
+
+  setDocumentTab(documentKey: string, tabId: string) {
+    if (CollaborationConfig.isNoOp) return;
+    this.#documentTabs = [
+      { documentKey, tabId },
+      ...this.#documentTabs.filter(e => e.documentKey !== documentKey)
+    ].slice(0, MAX_PERSISTED_DOCUMENT_TABS);
+    this.triggerChange();
+  }
+
   private triggerChange() {
     const persistedState = this.serializeState();
     if (persistedState === this.#persistedState) return;
@@ -217,7 +237,8 @@ export class UserState extends EventEmitter<UserStateEvents> {
       stencilSearchAllPackages: this.#stencilSearchAllPackages,
       recentFiles: this.#recentFiles,
       themeMode: this.#themeMode,
-      toolWindowTabs: this.#toolWindowTabs
+      toolWindowTabs: this.#toolWindowTabs,
+      documentTabs: this.#documentTabs
     });
   }
 }
