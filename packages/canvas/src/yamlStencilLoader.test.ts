@@ -529,4 +529,36 @@ describe('YamlStencilLoader', () => {
       'Stencil Label'
     ]);
   });
+
+  test('preserves yaml stencil descriptions in registered stencil metadata', () => {
+    const pkg: StencilPackage = {
+      id: 'test',
+      stencils: [],
+      type: 'default' as const
+    };
+    const loader = new YamlStencilLoader(pkg);
+
+    loader.registerPackage({
+      stencils: [
+        {
+          id: 'described-stencil',
+          name: 'Described Stencil',
+          description: 'Shown in the hover popover.',
+          node: {
+            id: 'node-1',
+            type: 'node',
+            nodeType: 'rect',
+            bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 },
+            props: {},
+            texts: { text: '' },
+            metadata: {}
+          }
+        }
+      ]
+    });
+
+    loader.apply();
+
+    expect(pkg.stencils[0]?.description).toBe('Shown in the hover popover.');
+  });
 });
