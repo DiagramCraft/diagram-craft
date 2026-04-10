@@ -107,6 +107,11 @@ const getOrCreateYDoc = (docName: string) => {
   return doc;
 };
 
+const flushAutoSave = (docName: string, reason: 'room-enter' | 'room-leave' | 'dispose') => {
+  const autoSave = autoSaves.get(docName);
+  return autoSave?.flushPrimaryIfDirty(reason) ?? Promise.resolve();
+};
+
 const closeConn = (doc: WSSharedDoc, conn: WebSocket) => {
   const controlledIds = doc.conns.get(conn);
   doc.conns.delete(conn);
@@ -114,6 +119,10 @@ const closeConn = (doc: WSSharedDoc, conn: WebSocket) => {
   if (controlledIds) {
     awarenessProtocol.removeAwarenessStates(doc.awareness, [...controlledIds], null);
   }
+
+  flushAutoSave(doc.name, 'room-leave').catch(error => {
+    log.error(`Failed to flush auto-save on room leave: ${doc.name}`, error);
+  });
 
   if (doc.conns.size === 0) {
     docs.delete(doc.name);
@@ -174,6 +183,9 @@ const setupYjsWebSocketConnection = (conn: WebSocket, docName: string) => {
   const doc = getOrCreateYDoc(docName);
   log.debug(`WebSocket connected: docName=${docName} hasAutoSave=${autoSaves.has(docName)}`);
   doc.conns.set(conn, new Set());
+  flushAutoSave(docName, 'room-enter').catch(error => {
+    log.error(`Failed to flush auto-save on room enter: ${docName}`, error);
+  });
 
   conn.on('message', (message: Buffer | ArrayBuffer | Buffer[]) => {
     const raw =
@@ -298,7 +310,13 @@ export class YjsCollaborationServer implements CollaborationServer {
   }
 
   close() {
-    for (const autoSave of autoSaves.values()) {
+    const flushes: Promise<void>[] = [];
+    for (const [docName, autoSave] of autoSaves.entries()) {
+      flushes.push(
+        autoSave.flushPrimaryIfDirty('dispose').catch(error => {
+          log.error(`Failed to flush auto-save on shutdown: ${docName}`, error);
+        })
+      );
       autoSave.dispose();
     }
     autoSaves.clear();
@@ -308,15 +326,18 @@ export class YjsCollaborationServer implements CollaborationServer {
       this.boundServer = undefined;
     }
 
-    return new Promise<void>((resolve, reject) => {
-      this.webSocketServer.close((error?: Error) => {
-        if (error) {
-          reject(error);
-          return;
-        }
+    return Promise.all(flushes).then(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          this.webSocketServer.close((error?: Error) => {
+            if (error) {
+              reject(error);
+              return;
+            }
 
-        resolve();
-      });
-    });
+            resolve();
+          });
+        })
+    );
   }
 }

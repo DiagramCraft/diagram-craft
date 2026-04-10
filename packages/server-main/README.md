@@ -265,4 +265,4 @@ VITE_CRDT_BACKEND=yjs-websocket
 VITE_CRDT_BACKEND_YJS_URL=ws://localhost:3000/ws
 ```
 
-The websocket server uses the standard `y-websocket` protocol. When a `.json` diagram file is opened by a client, the server tracks changes and auto-saves them to `<filename>.temp.json` alongside the original.
+The websocket server uses the standard `y-websocket` protocol. When a `.json` diagram file is opened by a client, the server tracks changes, writes debounced recovery snapshots into `.temp/`, and flushes the actual file back to its original path every 5 minutes while there are unsaved changes. A pending real-file write is also flushed when someone enters or leaves the room.
