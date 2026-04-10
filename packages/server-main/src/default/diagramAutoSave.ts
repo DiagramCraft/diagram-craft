@@ -16,6 +16,7 @@ import { createLogger } from '../logger';
 const log = createLogger('DiagramAutoSave');
 
 const DEBOUNCE_MS = 2000;
+const PRIMARY_SAVE_INTERVAL_MS = 5 * 60 * 1000;
 
 class ServerEdgeDefinition extends AbstractEdgeDefinition {
   constructor() {
@@ -44,7 +45,11 @@ export class DiagramAutoSave {
   private document: DiagramDocument | undefined;
   private readonly handleUpdate: () => void;
   private disposed = false;
+  private readonly realRelPath: string;
   private readonly tempRelPath: string;
+  private readonly primarySaveInterval: ReturnType<typeof setInterval>;
+  private latestSerializedContent: string | undefined;
+  private hasPendingPrimarySave = false;
 
   constructor(
     private readonly yDoc: Y.Doc,
@@ -52,6 +57,7 @@ export class DiagramAutoSave {
     tempRelPath: string,
     private readonly writer: AutoSaveWriter
   ) {
+    this.realRelPath = relPath;
     this.tempRelPath = tempRelPath;
     log.debug(`Setting up auto-save for ${relPath} → ${this.tempRelPath}`);
 
@@ -71,6 +77,12 @@ export class DiagramAutoSave {
       );
     });
     yDoc.on('update', this.handleUpdate);
+
+    this.primarySaveInterval = setInterval(() => {
+      this.flushPrimaryIfDirty('interval').catch(err =>
+        log.error(`Failed to save ${this.realRelPath}`, err)
+      );
+    }, PRIMARY_SAVE_INTERVAL_MS);
   }
 
   private async save() {
@@ -93,14 +105,33 @@ export class DiagramAutoSave {
       return;
     }
     log.debug(`Serialized ${this.tempRelPath}: ${serialized.diagrams.length} diagram(s)`);
-    await this.writer(this.tempRelPath, JSON.stringify(serialized, null, 2));
+    const content = JSON.stringify(serialized, null, 2);
+    if (content === this.latestSerializedContent) {
+      log.trace(`Skipping unchanged auto-save payload for ${this.tempRelPath}`);
+      return;
+    }
+    this.latestSerializedContent = content;
+    this.hasPendingPrimarySave = true;
+    await this.writer(this.tempRelPath, content);
     log.info(`Saved ${this.tempRelPath}`);
+  }
+
+  async flushPrimaryIfDirty(reason: 'interval' | 'room-enter' | 'room-leave' | 'dispose') {
+    if (!this.hasPendingPrimarySave || this.latestSerializedContent === undefined) {
+      return;
+    }
+
+    log.debug(`Flushing primary file for ${this.realRelPath} (${reason})`);
+    await this.writer(this.realRelPath, this.latestSerializedContent);
+    this.hasPendingPrimarySave = false;
+    log.info(`Saved ${this.realRelPath}`);
   }
 
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
     log.debug(`Disposing auto-save for ${this.tempRelPath}`);
+    clearInterval(this.primarySaveInterval);
     this.yDoc.off('update', this.handleUpdate);
     this.document?.release();
   }
