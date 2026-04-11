@@ -70,7 +70,6 @@ export const defaultNodeRegistry = (lazyLoaders: Array<LazyElementLoaderEntry> =
   reg.register(new LineNodeDefinition());
   reg.register(new ParallelogramNodeDefinition());
   reg.register(new PartialRectNodeDefinition());
-  reg.register(new PartialRectNodeDefinition());
   reg.register(new ProcessNodeDefinition());
   reg.register(new RegularPolygonNodeDefinition());
   reg.register(new RoundedRectNodeDefinition());
