@@ -280,30 +280,32 @@ describe('Guide Undoable Actions', () => {
     test('should work correctly with undo manager add()', () => {
       // Setup
       const diagram = TestModel.newDiagram();
+      const undoManager = diagram.undoManager;
       const guide = createTestGuide();
       const action = new CreateGuideUndoableAction(diagram, guide);
 
       // Act
-      diagram.undoManager.add(action);
+      undoManager.add(action);
 
       // Verify
       expect(diagram.guides).toHaveLength(0);
-      expect(diagram.undoManager.undoableActions).toHaveLength(1);
+      expect(undoManager.canUndo()).toBe(true);
     });
 
     test('should work correctly with undo manager addAndExecute()', () => {
       // Setup
       const diagram = TestModel.newDiagram();
+      const undoManager = diagram.undoManager;
       const guide = createTestGuide();
       const action = new CreateGuideUndoableAction(diagram, guide);
 
       // Act
-      diagram.undoManager.addAndExecute(action);
+      undoManager.addAndExecute(action);
 
       // Verify
       expect(diagram.guides).toHaveLength(1);
       expect(diagram.guides[0]).toEqual(guide);
-      expect(diagram.undoManager.undoableActions).toHaveLength(1);
+      expect(undoManager.canUndo()).toBe(true);
     });
 
     test('should work correctly with undo manager undo/redo', () => {

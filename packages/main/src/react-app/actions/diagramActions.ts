@@ -45,11 +45,6 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
     });
 
     this.context.model.activeDiagram = newDiagram;
-
-    // The undo action was registered in activeDiagram's undoManager, but the new
-    // diagram is now active. Move it so Ctrl+Z works while on the new diagram.
-    const action = activeDiagram.undoManager.undoableActions.pop();
-    if (action) newDiagram.undoManager.add(action);
   }
 }
 

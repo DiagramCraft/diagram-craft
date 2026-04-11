@@ -73,11 +73,33 @@ export type UndoEvents = {
   change: Record<string, never>;
 };
 
+export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
+  canUndo(): boolean;
+  canRedo(): boolean;
+  setMark(markName?: string): void;
+  getToMark(markName?: string): UndoableAction[];
+  undoToMark(markName?: string): void;
+  clearRedo(): void;
+  combine(callback: () => void): void;
+  add(action: UndoableAction): void;
+  addAndExecute(action: UndoableAction): void;
+  undo(): void;
+  redo(): void;
+}
+
+export interface StackedUndoManager extends UndoManager {
+  readonly undoableActions: readonly UndoableAction[];
+  readonly redoableActions: readonly UndoableAction[];
+}
+
 const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';
 
-export class UndoManager extends EventEmitter<UndoEvents> implements Releasable {
+export class DefaultUndoManager
+  extends EventEmitter<UndoEvents>
+  implements StackedUndoManager, Releasable
+{
   undoableActions: UndoableAction[];
   redoableActions: UndoableAction[];
   private readonly marks = new Map<string, UndoableAction | undefined>();
@@ -90,6 +112,14 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   }
 
   release() {}
+
+  canUndo() {
+    return this.undoableActions.length > 0;
+  }
+
+  canRedo() {
+    return this.redoableActions.length > 0;
+  }
 
   setMark(markName?: string) {
     this.marks.set(markName ?? DEFAULT_MARK, this.undoableActions.at(-1));
@@ -160,7 +190,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   }
 
   undo() {
-    if (this.undoableActions.length === 0) return;
+    if (!this.canUndo()) return;
 
     const action = this.undoableActions.pop();
     assert.present(action);
@@ -174,7 +204,7 @@ export class UndoManager extends EventEmitter<UndoEvents> implements Releasable 
   }
 
   redo() {
-    if (this.redoableActions.length === 0) return;
+    if (!this.canRedo()) return;
 
     const action = this.redoableActions.pop();
     assert.present(action);

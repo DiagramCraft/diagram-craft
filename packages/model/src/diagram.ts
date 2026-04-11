@@ -2,7 +2,7 @@ import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { Selection } from './selection';
-import { UndoManager } from './undoManager';
+import { DefaultUndoManager, type UndoManager } from './undoManager';
 import { UnitOfWork, UOWRegistry } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
@@ -140,7 +140,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly viewBox: Viewbox;
   readonly nodeLookup = new ElementLookup<DiagramNode>();
   readonly edgeLookup = new ElementLookup<DiagramEdge>();
-  readonly undoManager = new UndoManager(this);
+  readonly undoManager: UndoManager = new DefaultUndoManager(this);
 
   readonly commentManager: CommentManager;
 

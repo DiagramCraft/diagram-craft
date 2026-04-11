@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { UndoManager } from './undoManager';
+import { DefaultUndoManager, type UndoManager } from './undoManager';
 import { TestModel } from './test-support/testModel';
 
 const makeCounterAction = (state: { x: number }) => ({
@@ -12,10 +12,10 @@ const makeCounterAction = (state: { x: number }) => ({
   }
 });
 
-describe('UndoManager', () => {
+describe('DefaultUndoManager', () => {
   test('add()', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     const state = { x: 0 };
 
     manager.add(makeCounterAction(state));
@@ -26,7 +26,7 @@ describe('UndoManager', () => {
 
   test('addAndExecute()', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     let x = 0;
 
     manager.addAndExecute({
@@ -44,7 +44,7 @@ describe('UndoManager', () => {
 
   test('undo()', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     let x = 0;
 
     manager.addAndExecute({
@@ -65,7 +65,7 @@ describe('UndoManager', () => {
 
   test('redo()', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     let x = 0;
 
     manager.addAndExecute({
@@ -87,7 +87,7 @@ describe('UndoManager', () => {
 
   test('getToMark() supports named marks and clears them after use', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     const state = { x: 0 };
 
     manager.setMark('popup');
@@ -105,7 +105,7 @@ describe('UndoManager', () => {
 
   test('undoToMark() supports named marks and clears them after use', () => {
     const d = TestModel.newDiagram();
-    const manager = new UndoManager(d);
+    const manager = new DefaultUndoManager(d);
     const state = { x: 0 };
 
     manager.setMark('popup');
@@ -123,5 +123,33 @@ describe('UndoManager', () => {
     manager.undoToMark('popup');
 
     expect(state.x).toBe(0);
+  });
+
+  test('can be used through the UndoManager interface', () => {
+    const d = TestModel.newDiagram();
+    const manager: UndoManager = new DefaultUndoManager(d);
+    const state = { x: 0 };
+
+    manager.addAndExecute(makeCounterAction(state));
+    manager.undo();
+    manager.redo();
+
+    expect(state.x).toBe(1);
+  });
+
+  test('canUndo() and canRedo() reflect available history through the interface', () => {
+    const d = TestModel.newDiagram();
+    const manager: UndoManager = new DefaultUndoManager(d);
+
+    expect(manager.canUndo()).toBe(false);
+    expect(manager.canRedo()).toBe(false);
+
+    manager.addAndExecute(makeCounterAction({ x: 0 }));
+    expect(manager.canUndo()).toBe(true);
+    expect(manager.canRedo()).toBe(false);
+
+    manager.undo();
+    expect(manager.canUndo()).toBe(false);
+    expect(manager.canRedo()).toBe(true);
   });
 });

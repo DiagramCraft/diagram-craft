@@ -17,10 +17,11 @@ export class UndoAction extends AbstractAction {
   name = $tStr('action.UNDO.name', 'Undo');
 
   getCriteria(context: ActionContext) {
+    const undoManager = context.model.activeDiagram.undoManager;
     return ActionCriteria.EventTriggered(
-      context.model.activeDiagram.undoManager,
+      undoManager,
       'change',
-      () => context.model.activeDiagram.undoManager.undoableActions.length > 0
+      () => undoManager.canUndo()
     );
   }
 
@@ -34,10 +35,11 @@ export class RedoAction extends AbstractAction {
   name = $tStr('action.REDO.name', 'Redo');
 
   getCriteria(context: ActionContext) {
+    const undoManager = context.model.activeDiagram.undoManager;
     return ActionCriteria.EventTriggered(
-      context.model.activeDiagram.undoManager,
+      undoManager,
       'change',
-      () => context.model.activeDiagram.undoManager.redoableActions.length > 0
+      () => undoManager.canRedo()
     );
   }
 
