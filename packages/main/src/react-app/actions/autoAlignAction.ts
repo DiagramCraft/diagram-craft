@@ -9,6 +9,7 @@ import type { Application } from '../../application';
 import { autoAlign, type AutoAlignMode } from '@diagram-craft/canvas/snap/autoAlign';
 import type { MagnetType } from '@diagram-craft/canvas/snap/magnet';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -48,6 +49,7 @@ export class AutoAlignAction extends AbstractSelectionAction<Application> {
       id: 'toolAutoAlign',
       props: {
         onChange: (config: AutoAlignConfig) => {
+          if (!isStackedUndoManager(undoManager)) return;
           undoManager.undoToMark();
           this.applyAutoAlign(config);
         }

@@ -13,6 +13,7 @@ import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -40,12 +41,14 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutTree',
       props: {
         onChange: (d: LayoutTreeActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }

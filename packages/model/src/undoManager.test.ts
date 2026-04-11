@@ -1,6 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import { DefaultUndoManager, type UndoManager } from './undoManager';
-import { TestModel } from './test-support/testModel';
+import {
+  CollaborationBackendUndoManager,
+  DefaultUndoManager,
+  type UndoManager,
+  createUndoManager
+} from './undoManager';
+import { TestDiagramBuilder, TestModel } from './test-support/testModel';
+import { YJSRoot } from '@diagram-craft/collaboration/yjs/yjsCrdt';
+import { createSyncedYJSCRDTs } from '@diagram-craft/collaboration/test-support/yjsTestUtils';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { YJSWebSocketCollaborationBackend } from '@diagram-craft/collaboration/yjs/yjsWebsocketCollaborationBackend';
 
 const makeCounterAction = (state: { x: number }) => ({
   description: '',
@@ -11,6 +20,16 @@ const makeCounterAction = (state: { x: number }) => ({
     state.x++;
   }
 });
+
+const withYjsBackend = <T>(callback: () => T): T => {
+  const backend = CollaborationConfig.Backend;
+  try {
+    CollaborationConfig.Backend = new YJSWebSocketCollaborationBackend('ws://localhost');
+    return callback();
+  } finally {
+    CollaborationConfig.Backend = backend;
+  }
+};
 
 describe('DefaultUndoManager', () => {
   test('add()', () => {
@@ -151,5 +170,177 @@ describe('DefaultUndoManager', () => {
     manager.undo();
     expect(manager.canUndo()).toBe(false);
     expect(manager.canRedo()).toBe(true);
+  });
+});
+
+describe('CollaborationBackendUndoManager', () => {
+  test('runUndoable() captures tracked local transactions for undo and redo', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+
+      manager.runUndoable('Set value', () => {
+        map.set('value', 1);
+      });
+
+      expect(map.get('value')).toBe(1);
+      expect(manager.canUndo()).toBe(true);
+
+      manager.undo();
+      expect(map.get('value')).toBeUndefined();
+      expect(manager.canRedo()).toBe(true);
+
+      manager.redo();
+      expect(map.get('value')).toBe(1);
+    });
+  });
+
+  test('stopCapturing() keeps successive undoable actions separate', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ first?: number; second?: number }>('undo-test');
+
+      manager.runUndoable('Set first', () => {
+        map.set('first', 1);
+      });
+      manager.runUndoable('Set second', () => {
+        map.set('second', 2);
+      });
+
+      manager.undo();
+      expect(map.get('first')).toBe(1);
+      expect(map.get('second')).toBeUndefined();
+
+      manager.undo();
+      expect(map.get('first')).toBeUndefined();
+    });
+  });
+
+  test('untracked local transactions do not become undoable', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+
+      root.transact(() => {
+        map.set('value', 1);
+      });
+
+      expect(map.get('value')).toBe(1);
+      expect(manager.canUndo()).toBe(false);
+    });
+  });
+
+  test('addAndExecute() applies the action and records it in collaboration-backed history', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+
+      manager.addAndExecute({
+        description: 'Set value',
+        undo: () => {},
+        redo: () => {
+          map.set('value', 1);
+        }
+      });
+
+      expect(map.get('value')).toBe(1);
+
+      manager.undo();
+      expect(map.get('value')).toBeUndefined();
+
+      manager.redo();
+      expect(map.get('value')).toBe(1);
+    });
+  });
+
+  test('setMark()/undoToMark() restores the undo depth', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ first?: number; second?: number; third?: number }>('undo-test');
+
+      manager.runUndoable('Set first', () => {
+        map.set('first', 1);
+      });
+      manager.setMark('preview');
+      manager.runUndoable('Set second', () => {
+        map.set('second', 2);
+      });
+      manager.runUndoable('Set third', () => {
+        map.set('third', 3);
+      });
+
+      manager.undoToMark('preview');
+
+      expect(map.get('first')).toBe(1);
+      expect(map.get('second')).toBeUndefined();
+      expect(map.get('third')).toBeUndefined();
+    });
+  });
+
+  test('remote replicated updates do not enter the local undo stack', () => {
+    withYjsBackend(() => {
+      const { doc1, doc2 } = createSyncedYJSCRDTs();
+      const document1 = TestModel.newDocument(doc1);
+      const document2 = TestModel.newDocument(doc2);
+      const diagram1 = new TestDiagramBuilder(document1, 'diagram-1');
+      const diagram2 = new TestDiagramBuilder(document2, 'diagram-2');
+      document1.addDiagram(diagram1);
+      document2.addDiagram(diagram2);
+      const manager1 = new CollaborationBackendUndoManager(
+        diagram1,
+        CollaborationConfig.Backend.createUndoAdapter!(doc1)!
+      );
+      const manager2 = new CollaborationBackendUndoManager(
+        diagram2,
+        CollaborationConfig.Backend.createUndoAdapter!(doc2)!
+      );
+      const map1 = doc1.getMap<{ value?: number }>('undo-test');
+      const map2 = doc2.getMap<{ value?: number }>('undo-test');
+
+      manager1.runUndoable('Set value', () => {
+        map1.set('value', 1);
+      });
+
+      expect(map2.get('value')).toBe(1);
+      expect(manager2.canUndo()).toBe(false);
+
+      manager1.undo();
+      expect(map1.get('value')).toBeUndefined();
+      expect(map2.get('value')).toBeUndefined();
+    });
+  });
+
+  test('createUndoManager() selects the collaboration-backed implementation when available', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+
+      expect(createUndoManager(diagram)).toBeInstanceOf(CollaborationBackendUndoManager);
+    });
   });
 });

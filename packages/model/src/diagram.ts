@@ -2,7 +2,7 @@ import { Viewbox } from './viewBox';
 import { DiagramNode } from './diagramNode';
 import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { Selection } from './selection';
-import { DefaultUndoManager, type UndoManager } from './undoManager';
+import { createUndoManager, type UndoManager } from './undoManager';
 import { UnitOfWork, UOWRegistry } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
@@ -140,7 +140,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly viewBox: Viewbox;
   readonly nodeLookup = new ElementLookup<DiagramNode>();
   readonly edgeLookup = new ElementLookup<DiagramEdge>();
-  readonly undoManager: UndoManager = new DefaultUndoManager(this);
+  readonly undoManager: UndoManager;
 
   readonly commentManager: CommentManager;
 
@@ -158,6 +158,7 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this._crdt = watch(crdt ?? document.root.factory.makeMap());
 
     this.#document = document;
+    this.undoManager = createUndoManager(this);
 
     this.#name = new CRDTProp(this._crdt, 'name', {
       onRemoteChange: () => this.emitDiagramChange('metadata'),

@@ -109,6 +109,10 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     return this.doc;
   }
 
+  get yData() {
+    return this.data;
+  }
+
   hasData() {
     return [...this.data.keys()].length > 0;
   }
@@ -133,8 +137,12 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     return wrap(this.data.get(name)) as YJSList<T>;
   }
 
-  transact(callback: () => void) {
-    this.doc.transact(callback);
+  transact<T>(callback: () => T, origin?: unknown): T {
+    let result!: T;
+    this.doc.transact(() => {
+      result = callback();
+    }, origin);
+    return result;
   }
 }
 
@@ -198,11 +206,15 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     return dest;
   }
 
-  transact(callback: () => void) {
+  transact<T>(callback: () => T, origin?: unknown): T {
     if (!this.delegate.doc) {
-      callback();
+      return callback();
     } else {
-      this.delegate.doc.transact(callback);
+      let result!: T;
+      this.delegate.doc.transact(() => {
+        result = callback();
+      }, origin);
+      return result;
     }
   }
 
@@ -350,11 +362,15 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     return dest;
   }
 
-  transact(callback: () => void) {
+  transact<T>(callback: () => T, origin?: unknown): T {
     if (!this.delegate.doc) {
-      callback();
+      return callback();
     } else {
-      this.delegate.doc.transact(callback);
+      let result!: T;
+      this.delegate.doc.transact(() => {
+        result = callback();
+      }, origin);
+      return result;
     }
   }
 

@@ -12,6 +12,7 @@ import { layoutSeriesParallel } from '@diagram-craft/graph/layout/seriesParallel
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -39,12 +40,14 @@ export class LayoutSeriesParallelAction extends AbstractSelectionAction<Applicat
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutSeriesParallel',
       props: {
         onChange: (d: LayoutSeriesParallelActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }

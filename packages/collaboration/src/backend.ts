@@ -1,6 +1,7 @@
 import { Awareness, NoOpAwareness, type AwarenessUserState } from './awareness';
 import type { CRDTRoot } from './crdt';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import type { CollaborationUndoAdapter } from './collaborationUndoAdapter';
 
 export interface CollaborationBackend {
   connect: (
@@ -10,6 +11,7 @@ export interface CollaborationBackend {
     callback: ProgressCallback
   ) => Promise<void>;
   disconnect: (callback: ProgressCallback) => void;
+  createUndoAdapter?: (root: CRDTRoot) => CollaborationUndoAdapter | undefined;
   awareness: Awareness | undefined;
   isMultiUser: boolean;
 }

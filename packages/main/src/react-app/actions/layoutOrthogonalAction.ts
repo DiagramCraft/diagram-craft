@@ -12,6 +12,7 @@ import { layoutOrthogonal } from '@diagram-craft/graph/layout/orthogonalLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -39,12 +40,14 @@ export class LayoutOrthogonalAction extends AbstractSelectionAction<Application>
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutOrthogonal',
       props: {
         onChange: (d: LayoutOrthogonalActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }

@@ -14,6 +14,7 @@ import type { Application } from '../../application';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -41,12 +42,14 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutForceDirected',
       props: {
         onChange: (d: LayoutForceDirectedActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }

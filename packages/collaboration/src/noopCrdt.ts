@@ -97,7 +97,7 @@ export class NoOpCRDTMap<T extends { [key: string]: CRDTCompatibleObject }>
     return this.backing.values();
   }
 
-  transact(callback: () => void) {
+  transact<T>(callback: () => T, _origin?: unknown): T {
     return callback();
   }
 
@@ -160,7 +160,7 @@ export class NoOpCRDTList<T extends CRDTCompatibleObject>
     return this.backing;
   }
 
-  transact(callback: () => void) {
+  transact<T>(callback: () => T, _origin?: unknown): T {
     return callback();
   }
 
@@ -205,7 +205,7 @@ export class NoOpCRDTRoot extends EventEmitter<CRDTRootEvents> implements CRDTRo
     this.list.clear();
   }
 
-  transact(callback: () => void) {
+  transact<T>(callback: () => T, _origin?: unknown): T {
     return callback();
   }
 }

@@ -1,13 +1,17 @@
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
+import { CompoundUndoableAction, type UndoManager, UndoableAction } from '@diagram-craft/model/undoManager';
 import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
+const nativeUndoCaptureStack: Array<{
+  manager: UndoManager;
+  register: (action: UndoableAction | undefined) => void;
+}> = [];
 
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
   let uow = remoteUnitOfWorkRegistry.get(diagram.id);
@@ -215,11 +219,26 @@ export class UnitOfWork {
   }
 
   static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram, true);
+    return diagram.undoManager.runUndoable(label, () => {
+      const uow = new UnitOfWork(diagram, true);
+      try {
+        return cb(uow);
+      } finally {
+        if (uow.state === 'pending') uow.commitWithUndo(label);
+      }
+    });
+  }
+
+  static withNativeUndoCapture<T>(
+    manager: UndoManager,
+    register: (action: UndoableAction | undefined) => void,
+    callback: () => T
+  ): T {
+    nativeUndoCaptureStack.push({ manager, register });
     try {
-      return cb(uow);
+      return callback();
     } finally {
-      if (uow.state === 'pending') uow.commitWithUndo(label);
+      nativeUndoCaptureStack.pop();
     }
   }
 
@@ -451,18 +470,16 @@ export class UnitOfWork {
 
   commitWithUndo(msg: string) {
     this.commit(true);
+    const action = this.buildUndoableAction(msg);
+    if (!action) return;
 
-    if (this.#undoableActions.length > 0) {
-      const action = new CompoundUndoableAction(this.#undoableActions, msg);
-      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
-      this.diagram.undoManager.add(action);
-    } else if (this.#operations.length === 0) {
+    const currentCapture = nativeUndoCaptureStack.at(-1);
+    if (currentCapture?.manager === this.diagram.undoManager) {
+      currentCapture.register(action);
       return;
-    } else {
-      this.diagram.undoManager.add(
-        new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks)
-      );
     }
+
+    this.diagram.undoManager.add(action);
   }
 
   abort() {
@@ -493,6 +510,20 @@ export class UnitOfWork {
         emitCount++;
       }
     } while (emitCount > 0);
+  }
+
+  private buildUndoableAction(msg: string): UndoableAction | undefined {
+    if (this.#undoableActions.length > 0) {
+      const action = new CompoundUndoableAction(this.#undoableActions, msg);
+      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
+      return action;
+    }
+
+    if (this.#operations.length === 0) {
+      return undefined;
+    }
+
+    return new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks);
   }
 }
 

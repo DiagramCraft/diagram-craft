@@ -6,6 +6,7 @@ import { CollaborationBackend } from '../backend';
 import { YJSAwareness } from './yjsAwareness';
 import type { AwarenessUserState } from '../awareness';
 import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { YjsCollaborationUndoAdapter } from './yjsCollaborationUndoAdapter';
 
 export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   private wsProvider: WebsocketProvider | undefined = undefined;
@@ -18,6 +19,14 @@ export class YJSWebSocketCollaborationBackend implements CollaborationBackend {
   #state: 'disconnected' | 'connecting' | 'connected' | 'synced' = 'disconnected';
 
   constructor(private readonly endpoint: string) {}
+
+  createUndoAdapter(root: CRDTRoot) {
+    if (!(root instanceof YJSRoot)) {
+      return undefined;
+    }
+
+    return new YjsCollaborationUndoAdapter(root);
+  }
 
   async connect(
     url: string,
