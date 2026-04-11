@@ -92,6 +92,12 @@ export interface StackedUndoManager extends UndoManager {
   readonly redoableActions: readonly UndoableAction[];
 }
 
+export const isStackedUndoManager = (
+  u: UndoManager
+): u is StackedUndoManager => {
+  return 'undoableActions' in u && 'redoableActions' in u;
+};
+
 const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';

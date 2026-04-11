@@ -1,5 +1,5 @@
 import { useDiagram } from '../../../application';
-import type { StackedUndoManager } from '@diagram-craft/model/undoManager';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
@@ -14,7 +14,9 @@ const formatTimestamp = (ts: Date | undefined) => {
 
 export const UndoStackPanel = () => {
   const diagram = useDiagram();
-  const undoManager = diagram.undoManager as StackedUndoManager;
+  const undoManager = diagram.undoManager;
+  if (!isStackedUndoManager(undoManager)) return null;
+
   const redraw = useRedraw();
   useEventListener(undoManager, 'change', redraw);
 
