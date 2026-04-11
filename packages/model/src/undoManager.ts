@@ -92,9 +92,7 @@ export interface StackedUndoManager extends UndoManager {
   readonly redoableActions: readonly UndoableAction[];
 }
 
-export const isStackedUndoManager = (
-  u: UndoManager
-): u is StackedUndoManager => {
+export const isStackedUndoManager = (u: UndoManager): u is StackedUndoManager => {
   return 'undoableActions' in u && 'redoableActions' in u;
 };
 
