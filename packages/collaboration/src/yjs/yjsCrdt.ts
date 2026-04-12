@@ -11,6 +11,10 @@ import {
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
 
+const shouldEmitObservableTransactionEvents = (transaction: Y.Transaction) => {
+  return !transaction.local || transaction.origin instanceof Y.UndoManager;
+};
+
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 const wrap = (e: any): any => {
   if (e instanceof Y.Array) {
@@ -75,14 +79,14 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
     this.data = this.doc.getMap('data');
 
     this.doc.on('beforeTransaction', t => {
-      if (!t.local) this.emit('remoteBeforeTransaction', {});
+      if (shouldEmitObservableTransactionEvents(t)) this.emit('remoteBeforeTransaction', {});
     });
     this.doc.on('afterTransaction', t => {
-      if (!t.local) this.emit('remoteAfterTransaction', {});
+      if (shouldEmitObservableTransactionEvents(t)) this.emit('remoteAfterTransaction', {});
     });
 
     this.data.observe((_e, t) => {
-      if (t.local) return;
+      if (!shouldEmitObservableTransactionEvents(t)) return;
       const keys = [...this.data.keys()];
       if (keys.length === 0) this.emit('remoteClear');
     });
@@ -162,7 +166,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
     this.delegate = delegate ?? new Y.Map();
 
     this.delegate.observe(e => {
-      if (e.transaction.local) return;
+      if (!shouldEmitObservableTransactionEvents(e.transaction)) return;
 
       this.initial = undefined;
 
@@ -313,16 +317,16 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     this.delegate = delegate ?? new Y.Array();
 
     this.delegate.observe(e => {
-      const isLocal = e.transaction.local;
+      const shouldEmitEvents = shouldEmitObservableTransactionEvents(e.transaction);
       this.initial = undefined;
 
       let idx = 0;
 
-      if (!isLocal) this.emitter.emit('remoteBeforeTransaction', {});
+      if (shouldEmitEvents) this.emitter.emit('remoteBeforeTransaction', {});
 
       for (const delta of e.changes.delta) {
         if (delta.delete !== undefined) {
-          if (!isLocal) {
+          if (shouldEmitEvents) {
             this.emitter.emit('remoteDelete', {
               index: idx,
               count: delta.delete
@@ -331,7 +335,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
         } else if (delta.retain !== undefined) {
           idx += delta.retain;
         } else if (delta.insert !== undefined) {
-          if (!isLocal) {
+          if (shouldEmitEvents) {
             this.emitter.emit('remoteInsert', {
               index: idx,
               // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -342,7 +346,7 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
         }
       }
 
-      if (!isLocal) this.emitter.emit('remoteAfterTransaction', {});
+      if (shouldEmitEvents) this.emitter.emit('remoteAfterTransaction', {});
     });
   }
 
