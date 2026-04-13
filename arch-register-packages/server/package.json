@@ -6,11 +6,14 @@
   "main": "src/main.ts",
   "scripts": {
     "dev": "pnpm exec tsx watch ./src/main.ts",
-    "start": "pnpm exec tsx ./src/main.ts"
+    "start": "pnpm exec tsx ./src/main.ts",
+    "bootstrap": "pnpm exec tsx ./src/scripts/bootstrap.ts"
   },
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "h3": "^1.15.6"
+    "dotenv": "^16.4.7",
+    "h3": "^1.15.6",
+    "postgres": "^3.4.5"
   }
 }
