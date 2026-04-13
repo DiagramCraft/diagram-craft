@@ -440,8 +440,18 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  _finishAsUndoableAction(msg: string): UndoableAction | undefined {
-    return this.buildUndoableAction(msg);
+  asUndoableAction(msg: string): UndoableAction | undefined {
+    if (this.#undoableActions.length > 0) {
+      const action = new CompoundUndoableAction(this.#undoableActions, msg);
+      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
+      return action;
+    }
+
+    if (this.#operations.length === 0) {
+      return undefined;
+    }
+
+    return new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks);
   }
 
   abort() {
@@ -472,20 +482,6 @@ export class UnitOfWork {
         emitCount++;
       }
     } while (emitCount > 0);
-  }
-
-  private buildUndoableAction(msg: string): UndoableAction | undefined {
-    if (this.#undoableActions.length > 0) {
-      const action = new CompoundUndoableAction(this.#undoableActions, msg);
-      action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
-      return action;
-    }
-
-    if (this.#operations.length === 0) {
-      return undefined;
-    }
-
-    return new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks);
   }
 }
 

@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import {
-  CollaborationBackendUndoManager,
-  DefaultUndoManager,
   type UndoManager,
-  createUndoManager
 } from './undoManager';
+import { createUndoManager } from './undoManager.factory';
+import { DefaultUndoManager } from './undoManager.default';
+import { CollaborationBackendUndoManager } from './undoManager.collaboration';
 import { TestDiagramBuilder, TestModel } from './test-support/testModel';
 import { YJSRoot } from '@diagram-craft/collaboration/yjs/yjsCrdt';
 import { createSyncedYJSCRDTs } from '@diagram-craft/collaboration/test-support/yjsTestUtils';
