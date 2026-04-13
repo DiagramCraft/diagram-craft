@@ -53,6 +53,7 @@ export type StencilElements = {
 export type Stencil = {
   id: string;
   name?: string;
+  description?: string;
   forPicker: (registry: Registry) => StencilElements;
   forCanvas: (registry: Registry) => StencilElements;
   styles?: Array<StencilStyle>;

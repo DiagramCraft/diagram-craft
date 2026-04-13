@@ -41,6 +41,7 @@ type YamlStencilStyle = NonNullable<Stencil['styles']>[number];
 export type YamlStencilDefinition = {
   id: string;
   name?: string;
+  description?: string;
   node?: SerializedElementWithPickerProps;
   elements?: Array<SerializedElementWithPickerProps>;
   settings?: YamlStencilSettings;
@@ -320,6 +321,7 @@ export class YamlStencilLoader {
         stencil: {
           id: stencil.id,
           name: stencil.name ?? this.getLegacyYamlStencilName(stencil),
+          description: stencil.description,
           styles: undefined,
           settings: stencil.settings,
           forPicker: registry => mkNode(registry, 'picker'),
