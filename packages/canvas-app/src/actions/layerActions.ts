@@ -3,7 +3,6 @@ import {
   AbstractToggleAction,
   ToggleActionUndoableAction
 } from '@diagram-craft/canvas/action';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { newid } from '@diagram-craft/utils/id';
@@ -14,6 +13,7 @@ import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialog
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 import { $tStr, $t, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const layerActions = (application: Application) => ({
@@ -65,7 +65,7 @@ export class LayerDeleteAction extends AbstractAction<LayerActionArg, Applicatio
 
     const performDelete = (layer: Layer) => {
       const diagram = this.context.model.activeDiagram;
-      UnitOfWork.executeWithUndo(diagram, 'Delete layer', uow => {
+      diagram.undoManager.execute('Delete layer', uow => {
         for (const ref of layer.getInboundReferences()) {
           ref.diagram.layers.remove(ref, uow);
         }
@@ -143,10 +143,16 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    diagram.layers.toggleVisibility(layer);
-    diagram.undoManager.add(
-      new ToggleActionUndoableAction('Toggle layer visibility', this, { id })
-    );
+    if (!isStackedUndoManager(diagram.undoManager)) {
+      diagram.undoManager.execute('Toggle layer visibility', () => {
+        diagram.layers.toggleVisibility(layer);
+      });
+    } else {
+      diagram.layers.toggleVisibility(layer);
+      diagram.undoManager.add(
+        new ToggleActionUndoableAction('Toggle layer visibility', this, { id })
+      );
+    }
   }
 }
 
@@ -177,7 +183,7 @@ export class LayerToggleLockedAction extends AbstractToggleAction<LayerActionArg
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    UnitOfWork.executeWithUndo(diagram, 'Toggle layer locked', uow => {
+    diagram.undoManager.execute('Toggle layer locked', uow => {
       layer.setLocked(!layer.isLocked(), uow);
     });
   }
@@ -205,7 +211,7 @@ export class LayerRenameAction extends AbstractAction<LayerActionArg, Applicatio
           value: layer.name
         },
         async name => {
-          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Rename layer', uow => {
+          this.context.model.activeDiagram.undoManager.execute('Rename layer', uow => {
             layer.setName(name, uow);
           });
         }
@@ -229,7 +235,7 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
         new ReferenceLayerDialogCommand(async ({ diagramId, layerId, name }) => {
           const diagram = this.context.model.activeDiagram;
 
-          UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+          diagram.undoManager.execute('Add layer', uow => {
             const layer = new ReferenceLayer(
               newid(),
               typeof name === 'string' ? name : 'New Layer',
@@ -257,7 +263,7 @@ export class LayerAddAction extends AbstractAction<undefined, Application> {
           async name => {
             const diagram = this.context.model.activeDiagram;
 
-            UnitOfWork.executeWithUndo(diagram, 'Add layer', uow => {
+            diagram.undoManager.execute('Add layer', uow => {
               const layer =
                 this.type === 'rule'
                   ? new RuleLayer(
@@ -298,7 +304,7 @@ export class LayerSelectionMoveAction extends AbstractAction<LayerActionArg> {
     const layer = diagram.layers.byId(id)!;
     assert.present(layer);
 
-    UnitOfWork.executeWithUndo(diagram, `Move to layer ${layer.name}`, uow => {
+    diagram.undoManager.execute(`Move to layer ${layer.name}`, uow => {
       diagram.moveElement(diagram.selection.elements, uow, layer);
     });
   }
@@ -310,7 +316,7 @@ export class LayerSelectionMoveNewAction extends AbstractAction {
   execute(): void {
     const diagram = this.context.model.activeDiagram;
 
-    UnitOfWork.executeWithUndo(diagram, 'Move to new layer', uow => {
+    diagram.undoManager.execute('Move to new layer', uow => {
       const layer = new RegularLayer(newid(), 'New Layer', [], diagram);
       diagram.layers.add(layer, uow);
 

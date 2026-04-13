@@ -68,19 +68,19 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
     if (this.#state === State.OUTSIDE) {
       this.cancel();
-      this.uow.abort();
-      this.uow = UnitOfWork.begin(this.diagram);
+      this.capture.abort();
+      this.resetCapture();
       super.onDragEnd();
       return;
     }
 
     const point = this.diagram.selection.bounds;
     this.removeElement();
-    this.uow.abort();
+    this.capture.abort();
 
-    this.uow = UnitOfWork.begin(this.diagram);
+    this.resetCapture();
     this.addElement(_p(0, 0));
-    transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);
+    transformElements(this.diagram.selection.elements, [new Translation(point)], this.capture.uow);
 
     super.onDragEnd();
   }
@@ -197,5 +197,9 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
   private isCanvasEvent(element: EventTarget): boolean {
     return this.#state === State.INSIDE && !!CanvasDomHelper.canvasElement(element);
+  }
+
+  private resetCapture() {
+    this.capture = this.diagram.undoManager.beginCapture('Move');
   }
 }

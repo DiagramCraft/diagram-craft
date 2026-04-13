@@ -7,7 +7,6 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import React, { useCallback } from 'react';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
 const DataField = (props: {
@@ -70,7 +69,7 @@ export const DataFields = (props: { schema: DataSchema; disabled?: boolean }) =>
 
   const changDataCallback = useCallback(
     (id: string, v: boolean | string | undefined) => {
-      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
+      $d.undoManager.execute('Update data', uow => {
         $d.selection.elements.forEach(e => {
           e.updateMetadata(p => {
             p.data ??= {};

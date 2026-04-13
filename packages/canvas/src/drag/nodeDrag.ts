@@ -1,12 +1,12 @@
 import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
 import { Context } from '../context';
 
 export class NodeDrag extends Drag {
   private readonly startTime: number;
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
   private readonly initialPositions: Point[];
 
   private lastPoint: Point | undefined;
@@ -20,7 +20,7 @@ export class NodeDrag extends Drag {
     super();
 
     this.startTime = Date.now();
-    this.uow = UnitOfWork.begin(this.editablePath.node.diagram);
+    this.capture = this.editablePath.node.diagram.undoManager.beginCapture('Edit path');
 
     this.initialPositions = this.waypointIndices.map(
       idx => this.editablePath.waypoints[idx]!.point
@@ -42,8 +42,8 @@ export class NodeDrag extends Drag {
       const newPosition = Point.add(this.initialPositions[i]!, delta);
       wp.point = this.editablePath.toLocalCoordinate(newPosition);
     }
-    this.editablePath.commitToNode(this.uow);
-    this.uow.notify();
+    this.editablePath.commitToNode(this.capture.uow);
+    this.capture.uow.notify();
 
     this.lastPoint = offset;
 
@@ -57,17 +57,17 @@ export class NodeDrag extends Drag {
       this.startPoint === undefined ||
       (Date.now() - this.startTime < 200 && Point.distance(this.lastPoint, this.startPoint) < 5)
     ) {
-      this.uow.abort();
+      this.capture.abort();
       return;
     }
 
-    this.editablePath.commitToNode(this.uow);
-    this.uow.commitWithUndo('Edit path');
+    this.editablePath.commitToNode(this.capture.uow);
+    this.capture.commit();
 
     this.context.help.pop('NodeDrag');
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

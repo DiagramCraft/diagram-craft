@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { UnitOfWork } from './unitOfWork';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
 
@@ -12,7 +11,7 @@ describe.each(Backends.all())('Layer [%s]', (_name, backend) => {
       const newName = 'New Name';
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Rename', uow => layer1.setName(newName, uow));
+      diagram1.undoManager.execute('Rename', uow => layer1.setName(newName, uow));
 
       // Verify
       expect(layer1.name).toBe(newName);
@@ -41,7 +40,7 @@ describe.each(Backends.all())('Layer [%s]', (_name, backend) => {
       const originalLocked = layer1.isLocked();
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Lock', uow => layer1.setLocked(true, uow));
+      diagram1.undoManager.execute('Lock', uow => layer1.setLocked(true, uow));
 
       // Verify
       expect(layer1.isLocked()).toBe(true);

@@ -76,7 +76,7 @@ export class DistributeAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Distribute ${this.mode}`, uow => {
+    this.context.model.activeDiagram.undoManager.execute(`Distribute ${this.mode}`, uow => {
       const boundsOrientation = this.mode === 'vertical' ? 'y' : 'x';
       const boundsSize = this.mode === 'vertical' ? 'h' : 'w';
 

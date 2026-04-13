@@ -183,7 +183,7 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, false, false, true);
   }
 
-  static begin(diagram: Diagram) {
+  static _begin(diagram: Diagram) {
     return new UnitOfWork(diagram, true);
   }
 
@@ -211,15 +211,6 @@ export class UnitOfWork {
       return await cb(uow);
     } finally {
       if (uow.state === 'pending') uow.commit();
-    }
-  }
-
-  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
-    const uow = new UnitOfWork(diagram, true);
-    try {
-      return cb(uow);
-    } finally {
-      if (uow.state === 'pending') uow.commitWithUndo(label);
     }
   }
 
@@ -423,7 +414,7 @@ export class UnitOfWork {
     }
   }
 
-  commit(_withUndo = false) {
+  commit() {
     this.state = 'committed';
 
     this.emitEvent('before-commit');
@@ -449,20 +440,18 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  commitWithUndo(msg: string) {
-    this.commit(true);
-
+  asUndoableAction(msg: string): UndoableAction | undefined {
     if (this.#undoableActions.length > 0) {
       const action = new CompoundUndoableAction(this.#undoableActions, msg);
       action.add(new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks));
-      this.diagram.undoManager.add(action);
-    } else if (this.#operations.length === 0) {
-      return;
-    } else {
-      this.diagram.undoManager.add(
-        new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks)
-      );
+      return action;
     }
+
+    if (this.#operations.length === 0) {
+      return undefined;
+    }
+
+    return new UOWUndoableAction(msg, this.diagram, this.#operations, this.#callbacks);
   }
 
   abort() {

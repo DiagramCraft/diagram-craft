@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -12,6 +11,7 @@ import { layoutLayered } from '@diagram-craft/graph/layout/layeredLayout';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -39,12 +39,14 @@ export class LayoutLayeredAction extends AbstractSelectionAction<Application> {
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutLayered',
       props: {
         onChange: (d: LayoutLayeredActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }
@@ -84,7 +86,7 @@ export class LayoutLayeredAction extends AbstractSelectionAction<Application> {
 
     if (positions.size === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Layout layered', uow => {
+    diagram.undoManager.execute('Layout layered', uow => {
       // Center all edge anchors for edges in the layout
       const adjacencyList = graph.adjacencyList();
       const edgesToCenter = new Set<string>();

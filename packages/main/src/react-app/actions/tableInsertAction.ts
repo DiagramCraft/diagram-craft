@@ -1,5 +1,4 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Application } from '../../application';
 import { TableInsertDialog } from '../TableInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -42,7 +41,7 @@ class TableInsertAction extends AbstractAction<undefined, Application> {
         const colWidth = 100;
         const rowHeight = 40;
 
-        UnitOfWork.executeWithUndo($d, 'Add table', uow => {
+        $d.undoManager.execute('Add table', uow => {
           const bounds = { w: colWidth * width, h: rowHeight * height, x: 0, y: 0, r: 0 };
 
           // Center the table in the current viewport

@@ -4,7 +4,6 @@ import { Anchor } from '@diagram-craft/model/anchor';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { Translation } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { AnchorEndpoint, PointInNodeEndpoint } from '@diagram-craft/model/endpoint';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
@@ -29,7 +28,7 @@ export const createLinkedNodeFromSource = (
 ) => {
   const diagram = node.diagram;
 
-  return UnitOfWork.executeWithUndo(diagram, 'Link to new node', uow => {
+  return diagram.undoManager.execute('Link to new node', uow => {
     const activeLayer = diagram.activeLayer;
     const nodeLayer = node.diagram.activeLayer;
 
@@ -149,7 +148,7 @@ export const createProvisionalLinkedNode = (
 ) => {
   const diagram = sourceNode.diagram;
 
-  return UnitOfWork.executeWithUndo(diagram, 'Link to new node', uow => {
+  return diagram.undoManager.execute('Link to new node', uow => {
     const layer = sourceNode.layer;
     assertRegularLayer(layer);
 

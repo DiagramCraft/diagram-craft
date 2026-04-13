@@ -1,7 +1,7 @@
 import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { Vector } from '@diagram-craft/geometry/vector';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
 import { ControlPoints, DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Context } from '../context';
 
@@ -11,7 +11,7 @@ const isSmoothDrag = (modifiers: Modifiers) => modifiers.metaKey;
 const isSymmetricDrag = (modifiers: Modifiers) => modifiers.altKey;
 
 export class EdgeControlPointDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
 
   constructor(
     private readonly edge: DiagramEdge,
@@ -20,7 +20,7 @@ export class EdgeControlPointDrag extends Drag {
     private readonly context: Context
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.edge.diagram);
+    this.capture = this.edge.diagram.undoManager.beginCapture('Move Control Point');
 
     this.context.help.push(
       'EdgeControlPointDrag',
@@ -52,20 +52,21 @@ export class EdgeControlPointDrag extends Drag {
       [ocIdx]: otherControlPoint
     } as ControlPoints;
 
-    this.edge.replaceWaypoint(this.waypointIdx, { ...wp, controlPoints: controlPoints }, this.uow);
+    const uow = this.capture.uow;
+    this.edge.replaceWaypoint(this.waypointIdx, { ...wp, controlPoints: controlPoints }, uow);
 
-    this.uow.notify();
+    uow.notify();
 
     this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Move Control Point');
+    this.capture.commit();
 
     this.context.help.pop('EdgeControlPointDrag');
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

@@ -4,7 +4,6 @@ import { useEventListener } from '../../hooks/useEventListener';
 import { ToolWindow } from '../ToolWindow';
 import { Select } from '@diagram-craft/app-components/Select';
 import { applyVariantToDocument } from '@diagram-craft/model/stencilUtils';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { StencilStyleVariant } from '@diagram-craft/model/stencilRegistry';
 import type { StencilPackage } from '@diagram-craft/model/stencilRegistry';
 import type { DiagramStyles } from '@diagram-craft/model/diagramStyles';
@@ -85,7 +84,7 @@ export const StyleVariantsTab = () => {
     .filter(pkg => isPackageUsedInDocument(pkg, diagram.document.styles));
 
   const handleSelect = (variant: StencilStyleVariant) => {
-    UnitOfWork.executeWithUndo(diagram, `Apply variant "${variant.name}"`, uow => {
+    diagram.undoManager.execute(`Apply variant "${variant.name}"`, uow => {
       applyVariantToDocument(variant, diagram.document, uow);
       diagram.elements.forEach(el => el.clearCache());
     });

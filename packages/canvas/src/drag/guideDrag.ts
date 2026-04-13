@@ -12,6 +12,7 @@ import { getSnapConfig, SnapManager } from '../snap/snapManager';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
@@ -127,7 +128,7 @@ export class GuideCreateDrag extends BaseGuideDrag {
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {
-    if (this.guide) {
+    if (this.guide && isStackedUndoManager(this.diagram.undoManager)) {
       this.diagram.undoManager.add(
         new CreateGuideUndoableAction(
           this.diagram,

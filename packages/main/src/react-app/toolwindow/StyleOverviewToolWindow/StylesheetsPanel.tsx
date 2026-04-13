@@ -18,7 +18,6 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
   ElementStylesheetDialog,
   STYLESHEET_EDITORS
@@ -192,7 +191,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           cancelLabel: 'No'
         },
         () => {
-          UnitOfWork.executeWithUndo(diagram, 'Delete style', uow => {
+          diagram.undoManager.execute('Delete style', uow => {
             diagram.document.styles.deleteStylesheet(stylesheet.id, uow);
           });
         }
@@ -211,7 +210,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
           value: stylesheet.name
         },
         v => {
-          UnitOfWork.executeWithUndo(diagram, 'Rename style', uow => stylesheet.setName(v, uow));
+          diagram.undoManager.execute('Rename style', uow => stylesheet.setName(v, uow));
         }
       )
     );
@@ -232,7 +231,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
 
     if (elementsToApply.length === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Apply stylesheet', uow => {
+    diagram.undoManager.execute('Apply stylesheet', uow => {
       for (const element of elementsToApply) {
         diagram.document.styles.setStylesheet(element, stylesheet.id, uow, true);
       }
@@ -332,7 +331,7 @@ export const StylesheetsPanel = ({ stylesheets }: StylesheetsPanelProps) => {
 
             const stylesheet = diagram.document.styles.get(style.id);
             if (stylesheet) {
-              UnitOfWork.executeWithUndo(diagram, 'Modify style', uow => {
+              diagram.undoManager.execute('Modify style', uow => {
                 stylesheet.setProps(e, uow);
                 stylesheet.setFillColors(fillColors, uow);
                 stylesheet.setStrokeColors(strokeColors, uow);

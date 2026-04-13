@@ -58,7 +58,7 @@ export class AnchorHandleDrag extends Drag {
 
     diagram.undoManager.setMark();
 
-    UnitOfWork.executeWithUndo(diagram, 'Add edge', uow => layer.addElement(this.edge, uow));
+    diagram.undoManager.execute('Add edge', uow => layer.addElement(this.edge, uow));
 
     diagram.selection.setElements([this.edge]);
 

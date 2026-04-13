@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { TbFlipHorizontal, TbFlipVertical } from 'react-icons/tb';
 import { Box } from '@diagram-craft/geometry/box';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useNodeProperty } from '../../hooks/useProperty';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { ToggleButton } from '@diagram-craft/app-components/ToggleButton';
@@ -112,7 +111,7 @@ export const NodeTransformPanel = (props: Props) => {
       newBounds.y += parent.bounds.y;
     }
 
-    UnitOfWork.executeWithUndo(diagram, 'Transform node', uow => {
+    diagram.undoManager.execute('Transform node', uow => {
       const transforms = TransformFactory.fromTo(selectedElement.bounds, newBounds);
       transformElements([selectedElement], transforms, uow);
       SnapMarkers.get(diagram).clear();

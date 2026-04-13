@@ -9,7 +9,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { CompoundUndoableAction } from '@diagram-craft/model/undoManager';
 import { ResizeDrag } from '@diagram-craft/canvas/drag/resizeDrag';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -53,7 +52,7 @@ export class RectTool extends AbstractTool {
     const undoManager = this.diagram.undoManager;
     undoManager.setMark();
 
-    UnitOfWork.executeWithUndo(this.diagram, 'Add rectangle', uow => {
+    this.diagram.undoManager.execute('Add rectangle', uow => {
       layer.addElement(this.node!, uow);
       uow.select(this.diagram, [this.node!]);
     });
@@ -66,7 +65,7 @@ export class RectTool extends AbstractTool {
       Point.subtract(this.startPoint, { x: 5, y: 5 })
     );
     drag.on('dragEnd', () => {
-      UnitOfWork.executeWithUndo(this.diagram, 'Set bounds', uow => {
+      this.diagram.undoManager.execute('Set bounds', uow => {
         this.node?.setBounds(
           {
             ...this.node.bounds,

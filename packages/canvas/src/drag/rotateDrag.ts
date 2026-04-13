@@ -2,7 +2,7 @@ import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
@@ -27,14 +27,14 @@ export const calculateTargetRotationAngle = (
 };
 
 export class RotateDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
 
   constructor(
     private readonly diagram: Diagram,
     private readonly initialOffset: { x: number; y: number }
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.diagram);
+    this.capture = this.diagram.undoManager.beginCapture('Rotate');
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -61,7 +61,7 @@ export class RotateDrag extends Drag {
         selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       TransformFactory.fromTo(before, { ...selection.bounds, r: adjustedAngle }),
-      this.uow
+      this.capture.uow
     );
 
     selection.forceRotation(adjustedAngle);
@@ -70,7 +70,7 @@ export class RotateDrag extends Drag {
       label: `angle: ${Angle.toDeg(adjustedAngle).toFixed(0)}°`
     });
 
-    this.uow.notify();
+    this.capture.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selection.recalculateBoundingBox();
@@ -81,17 +81,13 @@ export class RotateDrag extends Drag {
   onDragEnd(): void {
     const selection = this.diagram.selection;
 
-    if (selection.isChanged()) {
-      this.uow.commitWithUndo('Rotate');
-    } else {
-      this.uow.abort();
-    }
+    this.capture.commit();
 
     selection.forceRotation(undefined);
     selection.rebaseline();
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

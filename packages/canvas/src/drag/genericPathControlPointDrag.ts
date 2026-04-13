@@ -1,10 +1,10 @@
 import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
 import { Context } from '../context';
 
 export class GenericPathControlPointDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
 
   constructor(
     private readonly editablePath: EditablePath,
@@ -13,7 +13,7 @@ export class GenericPathControlPointDrag extends Drag {
     private readonly context: Context
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.editablePath.node.diagram);
+    this.capture = this.editablePath.node.diagram.undoManager.beginCapture('Edit path');
 
     this.context.help.push(
       'GenericPathControlPointDrag',
@@ -29,20 +29,20 @@ export class GenericPathControlPointDrag extends Drag {
       modifiers.metaKey ? 'symmetric' : modifiers.altKey ? 'smooth' : 'corner'
     );
 
-    this.editablePath.commitToNode(this.uow);
-    this.uow.notify();
+    this.editablePath.commitToNode(this.capture.uow);
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
-    this.editablePath.commitToNode(this.uow);
-    this.uow.commitWithUndo('Edit path');
+    this.editablePath.commitToNode(this.capture.uow);
+    this.capture.commit();
 
     this.context.help.pop('GenericPathControlPointDrag');
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

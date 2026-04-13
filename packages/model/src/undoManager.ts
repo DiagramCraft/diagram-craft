@@ -1,7 +1,5 @@
 import { UnitOfWork } from './unitOfWork';
-import type { Diagram } from './diagram';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export const makeUndoableAction = (
@@ -73,131 +71,157 @@ export type UndoEvents = {
   change: Record<string, never>;
 };
 
-const MAX_HISTORY = 100;
-const MAX_HISTORY_WITH_MARKS = 10_000;
-const DEFAULT_MARK = '__default__';
+/**
+ * Represents one long-lived undo boundary.
+ *
+ * A capture owns the {@link UnitOfWork} for the interaction and is responsible
+ * for either finalizing it into one undo step or aborting it entirely.
+ */
+export class UndoCapture implements Releasable {
+  #completed = false;
 
-export class UndoManager extends EventEmitter<UndoEvents> implements Releasable {
-  undoableActions: UndoableAction[];
-  redoableActions: UndoableAction[];
-  private readonly marks = new Map<string, UndoableAction | undefined>();
+  constructor(
+    readonly uow: UnitOfWork,
+    private readonly label: string,
+    private readonly session: Releasable,
+    private readonly finalize: (action: UndoableAction | undefined) => void
+  ) {}
 
-  constructor(private readonly diagram: Diagram) {
-    super();
-
-    this.undoableActions = [];
-    this.redoableActions = [];
-  }
-
-  release() {}
-
-  setMark(markName?: string) {
-    this.marks.set(markName ?? DEFAULT_MARK, this.undoableActions.at(-1));
-  }
-
-  getToMark(markName?: string) {
-    const resolvedMarkName = markName ?? DEFAULT_MARK;
-    const mark = this.marks.get(resolvedMarkName);
-    const actions: UndoableAction[] = [];
-    while (this.undoableActions.at(-1) !== mark) {
-      actions.push(this.undoableActions.pop()!);
-    }
-    actions.reverse();
-    this.marks.delete(resolvedMarkName);
-
-    return actions;
-  }
-
-  undoToMark(markName?: string) {
-    const resolvedMarkName = markName ?? DEFAULT_MARK;
-    const mark = this.marks.get(resolvedMarkName);
-    while (this.undoableActions.at(-1) !== mark) {
-      this.undo();
-    }
-    this.marks.delete(resolvedMarkName);
-  }
-
-  clearRedo() {
-    this.redoableActions = [];
-  }
-
-  combine(callback: () => void) {
-    const top = this.undoableActions.at(-1);
-    callback();
-
-    const actions: UndoableAction[] = [];
-    while (this.undoableActions.at(-1) !== top) {
-      actions.push(this.undoableActions.pop()!);
-    }
-    actions.reverse();
-
-    if (actions.length === 0) return;
-    this.add(new CompoundUndoableAction(actions));
-  }
-
-  add(action: UndoableAction) {
-    if (this.undoableActions.at(-1)?.merge?.(action)) {
-      return;
-    }
-
-    if (action instanceof CompoundUndoableAction && !action.hasActions()) {
-      VERIFY_NOT_REACHED();
-    }
-
-    action.timestamp = new Date();
-
-    this.undoableActions.push(action);
-    this.redoableActions = [];
-    this.prune();
-  }
-
-  addAndExecute(action: UndoableAction) {
-    this.add(action);
-
-    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
-
-    this.emit('execute', { action, type: 'redo' });
-  }
-
-  undo() {
-    if (this.undoableActions.length === 0) return;
-
-    const action = this.undoableActions.pop();
-    assert.present(action);
-
-    this.redoableActions.push(action);
-    this.prune();
-
-    UnitOfWork.execute(this.diagram, uow => action.undo(uow));
-
-    this.emit('execute', { action: action, type: 'undo' });
-  }
-
-  redo() {
-    if (this.redoableActions.length === 0) return;
-
-    const action = this.redoableActions.pop();
-    assert.present(action);
-
-    this.undoableActions.push(action);
-    this.prune();
-
-    UnitOfWork.execute(this.diagram, uow => action.redo(uow));
-
-    this.emit('execute', { action: action, type: 'undo' });
-  }
-
-  private prune() {
-    // TODO: Make mark retention more deliberate if multiple long-lived named marks are introduced.
-    const maxUndoHistory = this.marks.size > 0 ? MAX_HISTORY_WITH_MARKS : MAX_HISTORY;
-    this.undoableActions = this.undoableActions.slice(-maxUndoHistory);
-    this.redoableActions = this.redoableActions.slice(-MAX_HISTORY);
-    const remainingActions = new Set(this.undoableActions);
-    for (const [markName, action] of this.marks) {
-      if (action !== undefined && !remainingActions.has(action)) {
-        this.marks.delete(markName);
+  /**
+   * Commits the underlying {@link UnitOfWork} and finalizes the resulting
+   * structural undo action for the owning {@link UndoManager}.
+   */
+  commit() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.uow.state === 'pending') {
+        this.uow.commit();
       }
+      this.finalize(this.uow.asUndoableAction(this.label));
+    } finally {
+      this.session.release();
     }
-    this.emit('change');
+  }
+
+  /**
+   * Aborts the capture without producing an undo step.
+   */
+  abort() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.uow.state === 'pending') {
+        this.uow.abort();
+      }
+    } finally {
+      this.session.release();
+    }
+  }
+
+  /**
+   * Releases the capture.
+   *
+   * This is equivalent to {@link abort} and is primarily provided so captures
+   * can participate in generic releasable lifecycles.
+   */
+  release() {
+    this.abort();
   }
 }
+
+/**
+ * Public API for creating, grouping and replaying undoable work.
+ *
+ * Implementations may store history in local process memory or delegate it to a
+ * collaboration backend, but callers should interact with them through this
+ * abstraction.
+ */
+export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
+  /**
+   * Returns whether an undo operation can currently be performed.
+   */
+  canUndo(): boolean;
+
+  /**
+   * Returns whether a redo operation can currently be performed.
+   */
+  canRedo(): boolean;
+
+  /**
+   * Executes one short-lived undoable operation.
+   *
+   * The callback receives a {@link UnitOfWork} that should be used for the
+   * structural changes belonging to this single undo step.
+   */
+  execute<T>(label: string, callback: (uow: UnitOfWork) => T): T;
+
+  /**
+   * Starts a long-lived undo capture for interactions such as drag operations.
+   *
+   * The returned capture owns a {@link UnitOfWork} and is responsible for
+   * finalizing or aborting the undo step.
+   */
+  beginCapture(label: string): UndoCapture;
+
+  /**
+   * Stores the current undo position under an optional mark name.
+   */
+  setMark(markName?: string): void;
+
+  /**
+   * Returns undo actions from the current position back to the given mark and
+   * clears that mark.
+   *
+   * Stackless implementations may return an empty array.
+   */
+  getToMark(markName?: string): UndoableAction[];
+
+  /**
+   * Undoes actions until the given mark is reached and then clears that mark.
+   */
+  undoToMark(markName?: string): void;
+
+  /**
+   * Clears the redo history if supported by the implementation.
+   */
+  clearRedo(): void;
+
+  /**
+   * Groups undo work produced during the callback into a single visible history
+   * step where supported.
+   *
+   * TODO: See if this can be removed
+   */
+  combine(callback: () => void): void;
+
+  /**
+   * Adds an already constructed undo action to history without executing it.
+   */
+  add(action: UndoableAction): void;
+
+  /**
+   * Adds an already constructed undo action to history and executes its redo
+   * behavior.
+   */
+  addAndExecute(action: UndoableAction): void;
+
+  /**
+   * Undoes the most recent undoable step, if one exists.
+   */
+  undo(): void;
+
+  /**
+   * Redoes the most recent redoable step, if one exists.
+   */
+  redo(): void;
+}
+
+export interface StackedUndoManager extends UndoManager {
+  readonly undoableActions: readonly UndoableAction[];
+  readonly redoableActions: readonly UndoableAction[];
+}
+
+export const isStackedUndoManager = (u: UndoManager): u is StackedUndoManager => {
+  return 'undoableActions' in u && 'redoableActions' in u;
+};

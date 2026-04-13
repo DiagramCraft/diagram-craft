@@ -4,7 +4,6 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { useTable } from '../../hooks/useTable';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { useDiagram } from '../../../application';
 import { KeyValueTable } from '@diagram-craft/app-components/KeyValueTable';
 
@@ -23,14 +22,14 @@ export const NodeTableDimensionsPanel = (props: Props) => {
 
   const updateRows = (r: number) => {
     if (r > rows) {
-      UnitOfWork.executeWithUndo(diagram, 'Adding row', uow => {
+      diagram.undoManager.execute('Adding row', uow => {
         for (let n = 0; n < r - rows; n++) {
           const row = (table.children.at(-1) as DiagramNode).duplicate();
           table.addChild(row, uow);
         }
       });
     } else if (r < rows) {
-      UnitOfWork.executeWithUndo(diagram, 'Delete row', uow => {
+      diagram.undoManager.execute('Delete row', uow => {
         for (let n = 0; n < rows - r; n++) {
           const row = table.children.at(-1) as DiagramNode;
           table.removeChild(row, uow);
@@ -41,7 +40,7 @@ export const NodeTableDimensionsPanel = (props: Props) => {
 
   const updateColumns = (c: number) => {
     if (c > columns) {
-      UnitOfWork.executeWithUndo(diagram, 'Adding column', uow => {
+      diagram.undoManager.execute('Adding column', uow => {
         for (let n = 0; n < c - columns; n++) {
           for (let i = 0; i < rows; i++) {
             const row = table.children[i] as DiagramNode;
@@ -53,7 +52,7 @@ export const NodeTableDimensionsPanel = (props: Props) => {
         }
       });
     } else if (c < columns) {
-      UnitOfWork.executeWithUndo(diagram, 'Delete column', uow => {
+      diagram.undoManager.execute('Delete column', uow => {
         for (let n = 0; n < columns - c; n++) {
           for (let i = 0; i < rows; i++) {
             const row = table.children[i] as DiagramNode;

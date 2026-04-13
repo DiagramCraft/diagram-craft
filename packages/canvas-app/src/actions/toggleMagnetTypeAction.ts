@@ -2,7 +2,6 @@ import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-cr
 import { MagnetType } from '@diagram-craft/canvas/snap/magnet';
 import { createSnapConfig, getSnapConfig } from '@diagram-craft/canvas/snap/snapManager';
 import { $tStr, type TranslatedString } from '@diagram-craft/utils/localize';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 declare global {
   namespace DiagramCraft {
@@ -60,7 +59,7 @@ export class ToggleMagnetTypeAction extends AbstractToggleAction {
   }
 
   execute(): void {
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Toggle magnet type', uow =>
+    this.context.model.activeDiagram.undoManager.execute('Toggle magnet type', uow =>
       this.context.model.activeDiagram.updateProps(p => {
         p.snap = createSnapConfig(p.snap);
         p.snap.magnetTypes[this.magnetType] = !this.state;

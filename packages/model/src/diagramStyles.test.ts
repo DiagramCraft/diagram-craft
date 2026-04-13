@@ -60,7 +60,7 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
 
       // Act
       const newProps = { fill: { color: 'red' } };
-      UnitOfWork.executeWithUndo(diagram1, 'Set props', uow => stylesheet.setProps(newProps, uow));
+      diagram1.undoManager.execute('Set props', uow => stylesheet.setProps(newProps, uow));
 
       // Verify
       expect(stylesheet.props).toEqual(newProps);
@@ -106,7 +106,7 @@ describe.each(Backends.all())('Stylesheet [%s]', (_name, backend) => {
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, stylesheet, uow));
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Set name', uow => stylesheet.setName(newName, uow));
+      diagram1.undoManager.execute('Set name', uow => stylesheet.setName(newName, uow));
 
       expect(stylesheet.name).toBe(newName);
       if (styles2) expect(styles2.getNodeStyle(id)!.name).toBe(newName);
@@ -393,7 +393,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
         styles1.crdt.factory,
         styles1
       );
-      UnitOfWork.executeWithUndo(diagram1, 'add', uow =>
+      diagram1.undoManager.execute('add', uow =>
         styles1.addStylesheet(id, customNodeStyle, uow)
       );
 
@@ -524,7 +524,7 @@ describe.each(Backends.all())('DiagramStyles [%s]', (_name, backend) => {
       UnitOfWork.execute(diagram1, uow => styles1.addStylesheet(id, customNodeStyle, uow));
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'delete', uow => styles1.deleteStylesheet(id, uow));
+      diagram1.undoManager.execute('delete', uow => styles1.deleteStylesheet(id, uow));
 
       // Verify
       expect(styles1.getNodeStyle(id)).toBeUndefined();

@@ -51,7 +51,7 @@ export interface CRDTRoot extends Emitter<CRDTRootEvents> {
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): CRDTMap<T>;
   getList<T extends CRDTCompatibleObject>(name: string): CRDTList<T>;
 
-  transact(callback: () => void): void;
+  transact<T>(callback: () => T, origin?: unknown): T;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -82,7 +82,7 @@ export interface CRDTMap<
 
   clone(): CRDTMap<T>;
 
-  transact(callback: () => void): void;
+  transact<T>(callback: () => T, origin?: unknown): T;
 }
 
 export type CRDTListEvents<T> = {
@@ -103,7 +103,7 @@ export interface CRDTList<T extends CRDTCompatibleObject> extends Emitter<CRDTLi
   delete(index: number): void;
   toArray(): Array<T>;
 
-  transact(callback: () => void): void;
+  transact<T>(callback: () => T, origin?: unknown): T;
 
   clone(): CRDTList<T>;
 

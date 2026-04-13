@@ -105,7 +105,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
       const element = ElementFactory.emptyNode('id1', layer1);
       UnitOfWork.execute(d1, uow => layer1.addElement(element, uow));
 
-      UnitOfWork.executeWithUndo(d1, 'Metadata', uow =>
+      d1.undoManager.execute('Metadata', uow =>
         element.updateMetadata(m => (m.style = 'lorem'), uow)
       );
 
@@ -192,7 +192,7 @@ describe.for(Backends.all())('DiagramElement [%s]', ([_name, backend]) => {
 
       UnitOfWork.execute(d1, uow => element.setTags(['tag1'], uow));
 
-      UnitOfWork.executeWithUndo(d1, 'Set tags', uow => element.setTags(['tag1', 'tag2'], uow));
+      d1.undoManager.execute('Set tags', uow => element.setTags(['tag1', 'tag2'], uow));
 
       expect(element.tags).toEqual(['tag1', 'tag2']);
       if (doc2) expect(layer1_2!.elements[0]!.tags).toEqual(['tag1', 'tag2']);

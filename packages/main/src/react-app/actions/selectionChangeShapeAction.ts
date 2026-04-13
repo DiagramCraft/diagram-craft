@@ -5,7 +5,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -52,7 +51,7 @@ export class SelectionChangeShapeAction extends AbstractSelectionAction<Applicat
           assertRegularLayer(diagram.activeLayer);
           const layer = diagram.activeLayer;
 
-          UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+          diagram.undoManager.execute('Change shape', uow => {
             for (const e of diagram.selection.elements) {
               if (isNode(e)) {
                 applyStencilToNode(diagram, e, layer, stencil, uow);
@@ -113,7 +112,7 @@ export class SelectionChangeToContainerAction extends AbstractSelectionAction<Ap
     const diagram = this.context.model.activeDiagram;
     assertRegularLayer(diagram.activeLayer);
 
-    UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+    diagram.undoManager.execute('Change shape', uow => {
       const node = mustExist(diagram.selection.nodes[0]);
       const originalShape = node.nodeType;
 

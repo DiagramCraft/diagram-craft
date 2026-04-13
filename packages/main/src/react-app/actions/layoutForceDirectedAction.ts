@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -14,6 +13,7 @@ import type { Application } from '../../application';
 import type { Point } from '@diagram-craft/geometry/point';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -41,12 +41,14 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutForceDirected',
       props: {
         onChange: (d: LayoutForceDirectedActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }
@@ -99,7 +101,7 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
 
     if (positions.size === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Layout force-directed', uow => {
+    diagram.undoManager.execute('Layout force-directed', uow => {
       // Center all edge anchors for edges in the layout
       const adjacencyList = graph.adjacencyList();
       const edgesToCenter = new Set<string>();

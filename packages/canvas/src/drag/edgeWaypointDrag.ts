@@ -1,10 +1,10 @@
 import { Drag, DragEvents } from '../dragDropManager';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Context } from '../context';
 
 export class EdgeWaypointDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
 
   constructor(
     private readonly edge: DiagramEdge,
@@ -12,24 +12,24 @@ export class EdgeWaypointDrag extends Drag {
     private context: Context
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.edge.diagram);
+    this.capture = this.edge.diagram.undoManager.beginCapture('Move Waypoint');
 
     this.context.help.push('EdgeWaypointDrag', 'Move waypoint');
   }
 
   onDrag({ offset, modifiers }: DragEvents.DragStart) {
-    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx]!, offset, this.uow);
-    this.uow.notify();
+    this.edge.moveWaypoint(this.edge.waypoints[this.waypointIdx]!, offset, this.capture.uow);
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: offset, modifiers });
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Move Waypoint');
+    this.capture.commit();
     this.context.help.pop('EdgeWaypointDrag');
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

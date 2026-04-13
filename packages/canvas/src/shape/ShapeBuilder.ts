@@ -7,7 +7,6 @@ import { ControlPoint, ControlPointCallback } from './ShapeControlPoint';
 import { Path } from '@diagram-craft/geometry/path';
 import { Box } from '@diagram-craft/geometry/box';
 import { Extent } from '@diagram-craft/geometry/extent';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DASH_PATTERNS } from '../dashPatterns';
 import { DeepReadonly } from '@diagram-craft/utils/types';
 import { Point } from '@diagram-craft/geometry/point';
@@ -30,7 +29,7 @@ import { resolveFillForRendering } from './shapeFill';
 const defaultOnChange =
   (element: DiagramNode, textId: string = '1') =>
   (text: string) => {
-    UnitOfWork.executeWithUndo(element.diagram, 'Change text', uow =>
+    element.diagram.undoManager.execute('Change text', uow =>
       element.setText(text, uow, textId)
     );
   };

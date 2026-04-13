@@ -72,7 +72,7 @@ export const makePropertyFromArray = <TItem, TObj, TPath, TValue>(
   return {
     val: value as NonNullable<TValue>,
     set: (v: NonNullable<TValue> | undefined) => {
-      UnitOfWork.executeWithUndo(diagram, message, uow => {
+      diagram.undoManager.execute(message, uow => {
         array.forEach(n => {
           updateObj(n, v, uow);
         });

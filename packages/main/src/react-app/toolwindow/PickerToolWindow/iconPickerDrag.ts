@@ -80,7 +80,7 @@ export class IconPickerDrag extends AbstractPickerDrag {
     }, this.diagram.document.registry);
 
     this._elements = cloneElements(sourceLayer.elements, activeLayer);
-    this._elements.forEach(e => activeLayer.addElement(e, this.uow));
+    this._elements.forEach(e => activeLayer.addElement(e, this.capture.uow));
 
     UnitOfWork.execute(this.diagram, uow => {
       assignNewBounds(this._elements, point, Point.of(1, 1), uow);

@@ -3,7 +3,6 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { SelectionType } from '@diagram-craft/model/selection';
 import { Toolbar } from '@diagram-craft/app-components/Toolbar';
 import { isSelectionDirty } from '@diagram-craft/model/diagramStyles';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { TbBaseline, TbPalette } from 'react-icons/tb';
 import { DefaultStyles } from '@diagram-craft/model/diagramDefaults';
 import { PropertyEditor } from '../../components/PropertyEditor';
@@ -26,7 +25,7 @@ export const ElementStylesheetToolbarButton = (props: Props) => {
   if (props.selectionType === 'mixed') return null;
 
   const onValueChange = (v: string | undefined, type: 'style' | 'text-style' = 'style') => {
-    UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
+    $d.undoManager.execute('Change stylesheet', uow => {
       $d.selection.elements.forEach(n => {
         $d.document.styles.setStylesheet(n, v!, uow, true);
       });

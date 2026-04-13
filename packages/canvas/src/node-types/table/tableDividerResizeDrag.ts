@@ -1,7 +1,8 @@
 import { Drag, DragEvents } from '../../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TableHelper } from './tableUtils';
 
@@ -22,7 +23,7 @@ const adjustColumnWidth = (colIdx: number, table: TableHelper, w: number, uow: U
 };
 
 export class TableDividerResizeDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
   private readonly table: TableHelper;
   private readonly originalSize: number;
 
@@ -33,7 +34,9 @@ export class TableDividerResizeDrag extends Drag {
     private readonly initialPoint: Point
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.tableNode.diagram);
+    this.capture = this.tableNode.diagram.undoManager.beginCapture(
+      this.type === 'column' ? 'Resize table column' : 'Resize table row'
+    );
     this.table = new TableHelper(this.tableNode);
     this.originalSize = this.getOriginalSize();
   }
@@ -50,7 +53,7 @@ export class TableDividerResizeDrag extends Drag {
         MIN_TABLE_DIVIDER_SIZE,
         this.originalSize + (event.offset.x - this.initialPoint.x)
       );
-      adjustColumnWidth(this.index, this.table, width, this.uow);
+      adjustColumnWidth(this.index, this.table, width, this.capture.uow);
       this.setState({ label: `w: ${width.toFixed(0)}` });
     } else {
       const row = this.table.getRowsSorted()[this.index];
@@ -60,31 +63,27 @@ export class TableDividerResizeDrag extends Drag {
         MIN_TABLE_DIVIDER_SIZE,
         this.originalSize + (event.offset.y - this.initialPoint.y)
       );
-      adjustRowHeight(row, height, this.uow);
+      adjustRowHeight(row, height, this.capture.uow);
       this.setState({ label: `h: ${height.toFixed(0)}` });
     }
 
-    this.tableNode.getDefinition().onChildChanged(this.tableNode, this.uow);
+    this.tableNode.getDefinition().onChildChanged(this.tableNode, this.capture.uow);
 
-    this.uow.notify();
+    this.capture.uow.notify();
     this.tableNode.diagram.selection.recalculateBoundingBox();
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(): void {
     const selection = this.tableNode.diagram.selection;
-    if (selection.isChanged()) {
-      this.uow.commitWithUndo(this.type === 'column' ? 'Resize table column' : 'Resize table row');
-    } else {
-      this.uow.abort();
-    }
+    this.capture.commit();
 
     selection.rebaseline();
     this.emit('dragEnd');
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 
   private getOriginalSize() {

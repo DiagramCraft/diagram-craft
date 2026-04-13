@@ -1,5 +1,4 @@
 import { AbstractAction } from '@diagram-craft/canvas/action';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert, precondition } from '@diagram-craft/utils/assert';
 import { AdjustmentRule } from '@diagram-craft/model/diagramLayerRuleTypes';
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
@@ -8,7 +7,7 @@ import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
 import { safeSplit } from '@diagram-craft/utils/safe';
-import { $tStr, $t } from '@diagram-craft/utils/localize';
+import { $t, $tStr } from '@diagram-craft/utils/localize';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -54,7 +53,7 @@ export class RuleLayerDeleteAction extends AbstractAction<LayerActionArg, Applic
 
           assert.present(rule, `Rule with id ${ruleId} not found`);
 
-          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Delete rule', uow => {
+          this.context.model.activeDiagram.undoManager.execute('Delete rule', uow => {
             layer.removeRule(rule, uow);
           });
         }
@@ -87,7 +86,7 @@ export class RuleLayerEditAction extends AbstractAction<LayerActionArg, Applicat
           rule: rule
         },
         (rule: AdjustmentRule) => {
-          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Update rule', uow => {
+          this.context.model.activeDiagram.undoManager.execute('Update rule', uow => {
             layer.replaceRule(rule, rule, uow);
           });
         }
@@ -110,9 +109,7 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Applicati
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
-    const layerId = id;
-
-    const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
+    const layer = this.context.model.activeDiagram.layers.byId(id) as RuleLayer;
     const rule: AdjustmentRule = {
       id: newid(),
       clauses: [
@@ -137,7 +134,7 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Applicati
           rule: rule
         },
         (rule: AdjustmentRule) => {
-          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Add rule', uow => {
+          this.context.model.activeDiagram.undoManager.execute('Add rule', uow => {
             layer.addRule(rule, uow);
           });
         }

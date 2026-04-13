@@ -1,16 +1,18 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export class ShapeControlPointDrag extends Drag {
-  private readonly uow: UnitOfWork;
+  private readonly capture: UndoCapture;
+
   constructor(
     private readonly element: DiagramElement,
     private readonly callback: (pos: Point, uow: UnitOfWork) => string
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.element.diagram);
+    this.capture = this.element.diagram.undoManager.beginCapture('Adjust shape');
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -27,18 +29,18 @@ export class ShapeControlPointDrag extends Drag {
       y: bounds.y + bounds.h * (nodeProps.geometry.flipV ? 1 - p.y : p.y)
     };
 
-    const label = this.callback(transformedCoord, this.uow);
+    const label = this.callback(transformedCoord, this.capture.uow);
     this.setState({ label });
-    this.uow.notify();
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Adjust shape');
+    this.capture.commit();
   }
 
   cancel() {
-    this.uow.abort();
+    this.capture.abort();
   }
 }

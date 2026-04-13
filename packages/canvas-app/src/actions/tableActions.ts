@@ -106,7 +106,7 @@ export class TableDistributeAction extends AbstractSelectionAction {
     const table = helper.tableNode;
 
     if (this.type === 'row') {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Distribute rows', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Distribute rows', uow => {
         const titleSize = table.renderProps.custom.table.title
           ? table.renderProps.custom.table.titleSize
           : 0;
@@ -116,7 +116,7 @@ export class TableDistributeAction extends AbstractSelectionAction {
         helper.rows.forEach(r => adjustRowHeight(r, rowHeight, uow));
       });
     } else {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Distribute columns', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Distribute columns', uow => {
         const colCount = helper.getColumnCount();
         const columnWidth = table.bounds.w / colCount;
 
@@ -151,12 +151,12 @@ export class TableRemoveAction extends AbstractSelectionAction {
     assert.true(helper.isTable());
 
     if (this.type === 'row') {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Remove row', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Remove row', uow => {
         const row = helper.getCellRow()!;
         removeElement(row, uow);
       });
     } else {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Remove column', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Remove column', uow => {
         const colIdx = helper.getCellColumnIndex();
         if (colIdx === undefined) return;
 
@@ -201,7 +201,7 @@ export class TableInsertAction extends AbstractSelectionAction {
     const helper = TableHelper.get(this.context.model.activeDiagram);
 
     if (this.type === 'row') {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert row', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Insert row', uow => {
         const rowIdx = helper.getCellRowIndex();
         if (rowIdx === undefined) return;
 
@@ -226,7 +226,7 @@ export class TableInsertAction extends AbstractSelectionAction {
         });
       });
     } else {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert column', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Insert column', uow => {
         const colIdx = helper.getCellColumnIndex();
         if (colIdx === undefined) return;
 
@@ -300,8 +300,7 @@ export class TableRowMoveAction extends AbstractSelectionAction {
     const targetIdx = rowIdx + this.direction;
     if (targetIdx < 0 || targetIdx >= rows.length) return;
 
-    UnitOfWork.executeWithUndo(
-      this.context.model.activeDiagram,
+    this.context.model.activeDiagram.undoManager.execute(
       this.direction === -1 ? 'Move row up' : 'Move row down',
       uow => {
         const currentRow = rows[rowIdx]!;
@@ -361,8 +360,7 @@ export class TableColumnMoveAction extends AbstractSelectionAction {
     const colIdx = helper.getCellColumnIndex();
     if (colIdx === undefined) return;
 
-    UnitOfWork.executeWithUndo(
-      this.context.model.activeDiagram,
+    this.context.model.activeDiagram.undoManager.execute(
       this.direction === -1 ? 'Move column left' : 'Move column right',
       uow => {
         for (const row of helper.rows) {

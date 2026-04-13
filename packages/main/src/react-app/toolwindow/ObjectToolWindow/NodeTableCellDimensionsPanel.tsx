@@ -3,7 +3,6 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isEdge } from '@diagram-craft/model/diagramElement';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { useTable } from '../../hooks/useTable';
@@ -33,7 +32,7 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
     const row = helper.getCurrentRow();
     if (!row) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Row height', uow => {
+    diagram.undoManager.execute('Row height', uow => {
       for (const child of row.children) {
         const t = TransformFactory.fromTo(child.bounds, { ...child.bounds, h });
         child.transform(t, uow);
@@ -45,7 +44,7 @@ export const NodeTableCellDimensionsPanel = (props: Props) => {
     const colIdx = helper.getCellColumnIndex();
     if (colIdx === undefined) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Row height', uow => {
+    diagram.undoManager.execute('Row height', uow => {
       for (const r of table.children) {
         const cell = (r as DiagramNode).children[colIdx]!;
         const t = TransformFactory.fromTo(cell.bounds, { ...cell.bounds, w });

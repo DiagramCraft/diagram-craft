@@ -4,7 +4,6 @@ import {
   Stylesheet,
   StylesheetType
 } from '@diagram-craft/model/diagramStyles';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { newid } from '@diagram-craft/utils/id';
 import { useRedraw } from '../../hooks/useRedraw';
@@ -105,7 +104,7 @@ export const ElementStylesheetPanel = (props: Props) => {
               value={$s.val}
               isIndeterminate={$s.hasMultipleValues}
               onChange={v => {
-                UnitOfWork.executeWithUndo($d, 'Change stylesheet', uow => {
+                $d.undoManager.execute('Change stylesheet', uow => {
                   $d.selection.elements.forEach(n => {
                     $d.document.styles.setStylesheet(n, v!, uow, true);
                   });
@@ -127,7 +126,7 @@ export const ElementStylesheetPanel = (props: Props) => {
               <MenuButton.Menu>
                 <Menu.Item
                   onClick={() => {
-                    UnitOfWork.executeWithUndo($d, 'Reapply style', uow => {
+                    $d.undoManager.execute('Reapply style', uow => {
                       $d.selection.elements.forEach(n => {
                         $d.document.styles.setStylesheet(n, $s.val, uow, true);
                       });
@@ -139,7 +138,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                 <Menu.Item
                   onClick={() => {
                     // TODO: Maybe to ask confirmation to apply to all selected nodes or copy
-                    UnitOfWork.executeWithUndo($d, 'Redefine style', uow => {
+                    $d.undoManager.execute('Redefine style', uow => {
                       const stylesheet = $d.document.styles.get($s.val);
                       if (stylesheet) {
                         const commonProps = getCommonProps(
@@ -188,7 +187,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                               $d.document.styles
                             );
 
-                            UnitOfWork.executeWithUndo($d, 'Add style', uow => {
+                            $d.undoManager.execute('Add style', uow => {
                               $d.document.styles.addStylesheet(s.id, s, uow);
                               $d.document.styles.setStylesheet(
                                 $d.selection.elements[0]!,
@@ -248,7 +247,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                               $d.document.styles
                             );
 
-                            UnitOfWork.executeWithUndo($d, 'Add derived style', uow => {
+                            $d.undoManager.execute('Add derived style', uow => {
                               $d.document.styles.addStylesheet(s.id, s, uow);
                               $d.selection.elements.forEach(el => {
                                 $d.document.styles.setStylesheet(el, id, uow, true);
@@ -275,7 +274,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                           cancelLabel: 'No'
                         },
                         () => {
-                          UnitOfWork.executeWithUndo($d, 'Delete style', uow => {
+                          $d.undoManager.execute('Delete style', uow => {
                             $d.document.styles.deleteStylesheet($s.val, uow);
                           });
                         }
@@ -308,7 +307,7 @@ export const ElementStylesheetPanel = (props: Props) => {
                           value: $d.document.styles.get($s.val)?.name ?? ''
                         },
                         v => {
-                          UnitOfWork.executeWithUndo($d, 'Rename style', uow => {
+                          $d.undoManager.execute('Rename style', uow => {
                             const stylesheet = $d.document.styles.get($s.val)!;
                             stylesheet.setName(v, uow);
                           });
@@ -337,7 +336,7 @@ export const ElementStylesheetPanel = (props: Props) => {
 
             const stylesheet = $d.document.styles.get(style.id);
             if (stylesheet) {
-              UnitOfWork.executeWithUndo($d, 'Modify style', uow => {
+              $d.undoManager.execute('Modify style', uow => {
                 stylesheet.setProps(e, uow);
                 stylesheet.setFillColors(fillColors, uow);
                 stylesheet.setStrokeColors(strokeColors, uow);

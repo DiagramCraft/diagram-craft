@@ -3,7 +3,6 @@ import { TransformPanelForm } from './TransformPanelForm';
 import { useDiagram } from '../../../application';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import type { Box } from '@diagram-craft/geometry/box';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { SnapMarkers } from '@diagram-craft/canvas/snap/snapManager';
 import {
   applyEdgeTransform,
@@ -70,7 +69,7 @@ export const EdgeTransformPanel = (props: Props) => {
       origin
     );
 
-    UnitOfWork.executeWithUndo(diagram, 'Transform edge', uow => {
+    diagram.undoManager.execute('Transform edge', uow => {
       applyEdgeTransform(
         edge,
         { ...currentBounds, r: currentTransformedBounds.r },

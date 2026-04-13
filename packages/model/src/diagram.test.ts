@@ -324,7 +324,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       expect(layer2.elements).not.toContain(node);
 
       // Act
-      UnitOfWork.executeWithUndo(diagram, 'Move element', uow => {
+      diagram.undoManager.execute('Move element', uow => {
         diagram.moveElement([node], uow, layer2);
       });
 
@@ -370,7 +370,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const layer2Id = layer2.id;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram, 'Move multiple elements', uow => {
+      diagram.undoManager.execute('Move multiple elements', uow => {
         diagram.moveElement([node1, node2], uow, layer2);
       });
 
@@ -426,7 +426,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const getLayer = () => diagram.layers.byId(layerId)! as RegularLayer;
 
       // Act - move node1 above node3
-      UnitOfWork.executeWithUndo(diagram, 'Move element above', uow => {
+      diagram.undoManager.execute('Move element above', uow => {
         diagram.moveElement([node1], uow, layer, {
           relation: 'above',
           element: node3
@@ -484,7 +484,7 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const getNode = () => diagram.nodeLookup.get(nodeId)!;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram, 'Move into container', uow => {
+      diagram.undoManager.execute('Move into container', uow => {
         diagram.moveElement([node], uow, layer, {
           relation: 'on',
           element: container

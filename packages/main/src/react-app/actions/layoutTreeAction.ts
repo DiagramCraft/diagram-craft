@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -13,6 +12,7 @@ import { extractMaximalTree } from '@diagram-craft/graph/transformation';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { Application } from '../../application';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -40,12 +40,14 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
 
   execute(): void {
     const undoManager = this.context.model.activeDiagram.undoManager;
+    const isStacked = isStackedUndoManager(undoManager);
     undoManager.setMark();
 
     this.context.ui.showDialog({
       id: 'toolLayoutTree',
       props: {
         onChange: (d: LayoutTreeActionArgs) => {
+          if (!isStacked) return;
           undoManager.undoToMark();
           this.applyChanges(d);
         }
@@ -85,7 +87,7 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
 
     if (positions.size === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Layout tree', uow => {
+    diagram.undoManager.execute('Layout tree', uow => {
       // Ensure all anchors are centered
       for (const edge of tree.edges) {
         const e = edge.data;

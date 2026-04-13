@@ -35,7 +35,7 @@ export class AIModel {
    * and adds them to the diagram
    */
   applyChange(simplified: SimplifiedDiagram): void {
-    UnitOfWork.executeWithUndo(this.diagram, 'AI Changes', uow => {
+    this.diagram.undoManager.execute('AI Changes', uow => {
       switch (simplified.action) {
         case 'create':
         case 'add':

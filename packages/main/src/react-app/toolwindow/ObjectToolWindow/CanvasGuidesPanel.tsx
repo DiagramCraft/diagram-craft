@@ -16,6 +16,7 @@ import {
   type Guide,
   MoveGuideUndoableAction
 } from '@diagram-craft/model/guides';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 const SECTION_LABEL_COLOR = 'var(--base-fg-more-dim)';
 
@@ -102,29 +103,47 @@ export const CanvasGuidesPanel = (props: Props) => {
 
   const addGuide = () => {
     const existingGuides = [...diagram.guides];
-    let newGuide: Guide;
+    if (isStackedUndoManager(diagram.undoManager)) {
+      // TODO: Simplify this once guides participate in the normal UnitOfWork/UOWTrackable path.
+      // addGuide/updateGuide/removeGuide currently mutate the guide CRDT directly, so stacked undo
+      // still needs explicit guide undo actions instead of relying on structural UOW capture.
+      let newGuide: Guide;
 
-    if (existingGuides.length === 0) {
-      // First guide: vertical at center of bounds
-      const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-      newGuide = diagram.addGuide({
-        type: 'vertical',
-        position: centerX,
-        color: DEFAULT_GUIDE_COLOR
-      });
-    } else {
-      // Use the last guide as reference
-      const lastGuide = existingGuides[existingGuides.length - 1]!;
-      newGuide = diagram.addGuide({
-        type: lastGuide.type,
-        position: lastGuide.position + 100,
-        color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
-      });
-    }
+      if (existingGuides.length === 0) {
+        const centerX = diagram.bounds.x + diagram.bounds.w / 2;
+        newGuide = diagram.addGuide({
+          type: 'vertical',
+          position: centerX,
+          color: DEFAULT_GUIDE_COLOR
+        });
+      } else {
+        const lastGuide = existingGuides[existingGuides.length - 1]!;
+        newGuide = diagram.addGuide({
+          type: lastGuide.type,
+          position: lastGuide.position + 100,
+          color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
+        });
+      }
 
-    // Add to undo history
-    if (newGuide) {
       diagram.undoManager.add(new CreateGuideUndoableAction(diagram, newGuide));
+    } else {
+      diagram.undoManager.execute('Create guide', () => {
+        if (existingGuides.length === 0) {
+          const centerX = diagram.bounds.x + diagram.bounds.w / 2;
+          diagram.addGuide({
+            type: 'vertical',
+            position: centerX,
+            color: DEFAULT_GUIDE_COLOR
+          });
+        } else {
+          const lastGuide = existingGuides[existingGuides.length - 1]!;
+          diagram.addGuide({
+            type: lastGuide.type,
+            position: lastGuide.position + 100,
+            color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
+          });
+        }
+      });
     }
 
     // Scroll to bottom after adding

@@ -3,12 +3,12 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { Application } from '../../application';
 import { autoAlign, type AutoAlignMode } from '@diagram-craft/canvas/snap/autoAlign';
 import type { MagnetType } from '@diagram-craft/canvas/snap/magnet';
 import { $tStr } from '@diagram-craft/utils/localize';
+import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 
 declare global {
   namespace DiagramCraft {
@@ -48,6 +48,7 @@ export class AutoAlignAction extends AbstractSelectionAction<Application> {
       id: 'toolAutoAlign',
       props: {
         onChange: (config: AutoAlignConfig) => {
+          if (!isStackedUndoManager(undoManager)) return;
           undoManager.undoToMark();
           this.applyAutoAlign(config);
         }
@@ -72,7 +73,7 @@ export class AutoAlignAction extends AbstractSelectionAction<Application> {
 
     const magnetTypes = this.getEnabledMagnetTypes(config.magnetTypes);
 
-    UnitOfWork.executeWithUndo(diagram, 'Auto-align elements', uow =>
+    diagram.undoManager.execute('Auto-align elements', uow =>
       autoAlign(nodesToAlign, diagram, { ...config, magnetTypes }, uow)
     );
   }

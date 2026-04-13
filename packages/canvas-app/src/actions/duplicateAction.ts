@@ -95,7 +95,7 @@ export class DuplicateAction extends AbstractSelectionAction {
   execute() {
     const diagram = this.context.model.activeDiagram;
 
-    UnitOfWork.executeWithUndo(diagram, 'Duplicate selection', uow => {
+    diagram.undoManager.execute('Duplicate selection', uow => {
       // Check if all selected elements have the same parent
       const selection = [...diagram.selection.elements];
       const commonParent =

@@ -6,7 +6,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { useEventListener } from '../../hooks/useEventListener';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assert } from '@diagram-craft/utils/assert';
 import { unique } from '@diagram-craft/utils/array';
 import { TbFilter, TbFilterOff, TbLink, TbLinkOff, TbPencil } from 'react-icons/tb';
@@ -39,7 +38,7 @@ export const ExtendedDataTab = () => {
 
   const changeCustomCallback = useCallback(
     (id: string, v: string | undefined) => {
-      UnitOfWork.executeWithUndo($d, 'Update data', uow => {
+      $d.undoManager.execute('Update data', uow => {
         $d.selection.elements.forEach(e => {
           e.updateMetadata(p => {
             p.data ??= {};
@@ -67,7 +66,7 @@ export const ExtendedDataTab = () => {
       $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
         if (!entry) {
-          UnitOfWork.executeWithUndo($d, 'Add schema to selection', uow => {
+          $d.undoManager.execute('Add schema to selection', uow => {
             e.updateMetadata(p => {
               p.data ??= {};
               p.data.data ??= [];
@@ -75,7 +74,7 @@ export const ExtendedDataTab = () => {
             }, uow);
           });
         } else if (!entry.enabled) {
-          UnitOfWork.executeWithUndo($d, 'Add schema to selection', uow => {
+          $d.undoManager.execute('Add schema to selection', uow => {
             e.updateMetadata(p => {
               p.data!.data!.find(s => s.schema === schema)!.enabled = true;
             }, uow);
@@ -91,7 +90,7 @@ export const ExtendedDataTab = () => {
       $d.selection.elements.forEach(e => {
         const entry = findEntryBySchema(e, schema);
         if (entry) {
-          UnitOfWork.executeWithUndo($d, 'Remove schema from selection', uow => {
+          $d.undoManager.execute('Remove schema from selection', uow => {
             e.updateMetadata(p => {
               p.data ??= {};
               p.data.data ??= [];

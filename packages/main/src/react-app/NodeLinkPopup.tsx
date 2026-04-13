@@ -313,7 +313,7 @@ const useNodeLinkPopupController = ({
       if (nodeDef?.onNodeLinkSelection) {
         const edge = mustExist(diagram.edgeLookup.get(edgeId));
         const provisionalNode = currentNodeId ? diagram.nodeLookup.get(currentNodeId) : undefined;
-        UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+        diagram.undoManager.execute('Change shape', uow => {
           nodeDef.onNodeLinkSelection!(
             sourceNode!,
             edge,
@@ -335,7 +335,7 @@ const useNodeLinkPopupController = ({
           const node = mustExist(diagram.nodeLookup.get(currentNodeId));
           const diagramPoint = diagram.viewBox.toDiagramPoint(position);
 
-          UnitOfWork.executeWithUndo(diagram, 'Keep edge only', uow => {
+          diagram.undoManager.execute('Keep edge only', uow => {
             edge.setEnd(new FreeEndpoint(diagramPoint), uow);
             node.layer.removeElement(node, uow);
             uow.select(diagram, [edge]);
@@ -365,7 +365,7 @@ const useNodeLinkPopupController = ({
       const layer = node.layer;
       assertRegularLayer(layer);
 
-      UnitOfWork.executeWithUndo(diagram, 'Change shape', uow => {
+      diagram.undoManager.execute('Change shape', uow => {
         applyStencilToNode(diagram, node, layer, stencil, uow);
 
         const { bounds: stencilBounds, elements: stencilElements } = stencil.forCanvas(
@@ -420,7 +420,7 @@ const useNodeLinkPopupController = ({
 
       if (nodeDef?.onNodeLinkSelection) {
         const provisionalNode = currentNodeId ? diagram.nodeLookup.get(currentNodeId) : undefined;
-        UnitOfWork.executeWithUndo(diagram, 'Change edge style', uow => {
+        diagram.undoManager.execute('Change edge style', uow => {
           nodeDef.onNodeLinkSelection!(
             sourceNode!,
             edge,
@@ -433,7 +433,7 @@ const useNodeLinkPopupController = ({
         });
       } else {
         const edgeStyle = resolvedEdgeStyles.find(s => s.id === edgeStyleId);
-        UnitOfWork.executeWithUndo(diagram, 'Change edge style', uow => {
+        diagram.undoManager.execute('Change edge style', uow => {
           if (edgeStyle?.edgeStylesheetId) {
             edge.updateMetadata(meta => {
               meta.style = edgeStyle.edgeStylesheetId!;
