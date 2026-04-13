@@ -86,8 +86,6 @@ export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
   canRedo(): boolean;
   execute<T>(label: string, callback: (uow: UnitOfWork) => T): T;
   beginCapture(label: string): UndoCapture;
-  beginUndoableSession(label: string): Releasable;
-  runUndoable<T>(label: string, callback: () => T): T;
   setMark(markName?: string): void;
   getToMark(markName?: string): UndoableAction[];
   undoToMark(markName?: string): void;
@@ -185,21 +183,13 @@ export class DefaultUndoManager
     return new ManagedUndoCapture(
       UnitOfWork.begin(this.diagram),
       label,
-      this.beginUndoableSession(label),
+      { release() {} },
       action => {
         if (action) {
           this.add(action);
         }
       }
     );
-  }
-
-  beginUndoableSession(_label: string): Releasable {
-    return { release() {} };
-  }
-
-  runUndoable<T>(_label: string, callback: () => T): T {
-    return callback();
   }
 
   canUndo() {
@@ -398,12 +388,12 @@ export class CollaborationBackendUndoManager
     return new ManagedUndoCapture(
       UnitOfWork.begin(this.diagram),
       label,
-      this.beginUndoableSession(label),
+      this.beginTrackedSession(label),
       action => this.registerCapturedAction(label, action)
     );
   }
 
-  beginUndoableSession(label: string): Releasable {
+  private beginTrackedSession(label: string): Releasable {
     this.#captureDepth++;
     this.#sessionDepth++;
     this.#pendingCapture ??= { label };
@@ -429,7 +419,7 @@ export class CollaborationBackendUndoManager
     };
   }
 
-  runUndoable<T>(label: string, callback: () => T): T {
+  private runTracked<T>(label: string, callback: () => T): T {
     if (this.#captureDepth > 0) {
       return callback();
     }
@@ -466,13 +456,13 @@ export class CollaborationBackendUndoManager
   clearRedo() {}
 
   combine(callback: () => void) {
-    this.runUndoable('Combined action', callback);
+    this.runTracked('Combined action', callback);
   }
 
   add(_action: UndoableAction) {}
 
   addAndExecute(action: UndoableAction) {
-    this.runUndoable(action.description, () => {
+    this.runTracked(action.description, () => {
       this.#pendingCapture = { label: action.description, action };
       UnitOfWork.execute(this.diagram, uow => action.redo(uow));
     });

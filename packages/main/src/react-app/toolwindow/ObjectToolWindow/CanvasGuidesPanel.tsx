@@ -127,7 +127,7 @@ export const CanvasGuidesPanel = (props: Props) => {
 
       diagram.undoManager.add(new CreateGuideUndoableAction(diagram, newGuide));
     } else {
-      diagram.undoManager.runUndoable('Create guide', () => {
+      diagram.undoManager.execute('Create guide', () => {
         if (existingGuides.length === 0) {
           const centerX = diagram.bounds.x + diagram.bounds.w / 2;
           diagram.addGuide({

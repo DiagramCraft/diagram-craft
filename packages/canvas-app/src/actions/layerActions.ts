@@ -144,7 +144,7 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
     assert.present(layer);
 
     if (!isStackedUndoManager(diagram.undoManager)) {
-      diagram.undoManager.runUndoable('Toggle layer visibility', () => {
+      diagram.undoManager.execute('Toggle layer visibility', () => {
         diagram.layers.toggleVisibility(layer);
       });
     } else {

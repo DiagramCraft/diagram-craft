@@ -226,32 +226,6 @@ describe('DefaultUndoManager', () => {
 });
 
 describe('CollaborationBackendUndoManager', () => {
-  test('runUndoable() captures tracked local transactions for undo and redo', () => {
-    withYjsBackend(() => {
-      const root = new YJSRoot();
-      const diagram = TestModel.newDiagram(root);
-      const manager = new CollaborationBackendUndoManager(
-        diagram,
-        CollaborationConfig.Backend.createUndoAdapter!(root)!
-      );
-      const map = root.getMap<{ value?: number }>('undo-test');
-
-      manager.runUndoable('Set value', () => {
-        map.set('value', 1);
-      });
-
-      expect(map.get('value')).toBe(1);
-      expect(manager.canUndo()).toBe(true);
-
-      manager.undo();
-      expect(map.get('value')).toBeUndefined();
-      expect(manager.canRedo()).toBe(true);
-
-      manager.redo();
-      expect(map.get('value')).toBe(1);
-    });
-  });
-
   test('execute() captures tracked local transactions for undo and redo', () => {
     withYjsBackend(() => {
       const root = new YJSRoot();
@@ -271,6 +245,10 @@ describe('CollaborationBackendUndoManager', () => {
 
       manager.undo();
       expect(map.get('value')).toBeUndefined();
+      expect(manager.canRedo()).toBe(true);
+
+      manager.redo();
+      expect(map.get('value')).toBe(1);
     });
   });
 
@@ -315,10 +293,10 @@ describe('CollaborationBackendUndoManager', () => {
       );
       const map = root.getMap<{ first?: number; second?: number }>('undo-test');
 
-      manager.runUndoable('Set first', () => {
+      manager.execute('Set first', () => {
         map.set('first', 1);
       });
-      manager.runUndoable('Set second', () => {
+      manager.execute('Set second', () => {
         map.set('second', 2);
       });
 
@@ -388,14 +366,14 @@ describe('CollaborationBackendUndoManager', () => {
       );
       const map = root.getMap<{ first?: number; second?: number; third?: number }>('undo-test');
 
-      manager.runUndoable('Set first', () => {
+      manager.execute('Set first', () => {
         map.set('first', 1);
       });
       manager.setMark('preview');
-      manager.runUndoable('Set second', () => {
+      manager.execute('Set second', () => {
         map.set('second', 2);
       });
-      manager.runUndoable('Set third', () => {
+      manager.execute('Set third', () => {
         map.set('third', 3);
       });
 
@@ -449,7 +427,7 @@ describe('CollaborationBackendUndoManager', () => {
       const map1 = doc1.getMap<{ value?: number }>('undo-test');
       const map2 = doc2.getMap<{ value?: number }>('undo-test');
 
-      manager1.runUndoable('Set value', () => {
+      manager1.execute('Set value', () => {
         map1.set('value', 1);
       });
 

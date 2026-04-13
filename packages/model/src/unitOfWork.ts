@@ -448,14 +448,6 @@ export class UnitOfWork {
     return this.buildUndoableAction(msg);
   }
 
-  commitWithUndo(msg: string) {
-    this.commit();
-    const action = this.finishAsUndoableAction(msg);
-    if (action) {
-      this.diagram.undoManager.add(action);
-    }
-  }
-
   abort() {
     registry.unregister(this);
     this.state = 'aborted';
