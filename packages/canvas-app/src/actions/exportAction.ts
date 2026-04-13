@@ -54,7 +54,9 @@ export const prepareSvgForExport = async (context: ActionContext) => {
     true
   ) as SVGSVGElement;
 
-  clonedSvg.classList.remove('browser-chrome');
+  if (!window.location.search.includes('disable-export-fix')) {
+    clonedSvg.classList.remove('browser-chrome');
+  }
 
   const canvasFg = getComputedStyle(document.getElementById('app')!).getPropertyValue(
     '--canvas-fg'
