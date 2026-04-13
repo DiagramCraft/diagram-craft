@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -88,7 +87,7 @@ export class LayoutTreeAction extends AbstractSelectionAction<Application> {
 
     if (positions.size === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Layout tree', uow => {
+    diagram.undoManager.execute('Layout tree', uow => {
       // Ensure all anchors are centered
       for (const edge of tree.edges) {
         const e = edge.data;

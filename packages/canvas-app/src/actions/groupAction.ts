@@ -5,7 +5,6 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Box } from '@diagram-craft/geometry/box';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -80,7 +79,7 @@ export class GroupAction extends AbstractSelectionAction {
     const elements = diagram.selection.elements;
 
     if (this.type === 'ungroup') {
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Ungroup', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Ungroup', uow => {
         const group = elements[0] as DiagramNode;
         assertRegularLayer(group.layer);
 
@@ -101,7 +100,7 @@ export class GroupAction extends AbstractSelectionAction {
       const hasLabelNode = diagram.selection.nodes.some(n => n.isLabelNode());
       if (hasLabelNode) return;
 
-      UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Group', uow => {
+      this.context.model.activeDiagram.undoManager.execute('Group', uow => {
         const elements = diagram.selection.elements.toSorted((a, b) =>
           diagram.layers.isAbove(a, b) ? 1 : -1
         );

@@ -32,7 +32,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       UnitOfWork.execute(d1, uow => layer1.setElements([e1], uow));
       expect(layer1.elements).toHaveLength(1);
 
-      UnitOfWork.executeWithUndo(d1, 'Add', uow => layer1.setElements([e1, e2], uow));
+      d1.undoManager.execute('Add', uow => layer1.setElements([e1, e2], uow));
       expect(layer1.elements).toHaveLength(2);
 
       d1.undoManager.undo();
@@ -41,7 +41,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       d1.undoManager.redo();
       expect(layer1.elements).toHaveLength(2);
 
-      UnitOfWork.executeWithUndo(d1, 'Add', uow => layer1.setElements([e2], uow));
+      d1.undoManager.execute('Add', uow => layer1.setElements([e2], uow));
       expect(layer1.elements).toHaveLength(1);
 
       d1.undoManager.undo();
@@ -65,7 +65,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       const layer1 = new RegularLayer('layer1', 'layer1', [], d1);
       UnitOfWork.execute(d1, uow => d1.layers.add(layer1, uow));
 
-      UnitOfWork.executeWithUndo(d1, 'Add', uow =>
+      d1.undoManager.execute('Add', uow =>
         layer1.addElement(ElementFactory.emptyNode('id1', layer1), uow)
       );
 
@@ -97,7 +97,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       expect(layer1.elements.length).toEqual(2);
       if (layer2) expect(layer2.elements.length).toEqual(2);
 
-      UnitOfWork.executeWithUndo(diagram1, 'Remove', uow => layer1.removeElement(e1, uow));
+      diagram1.undoManager.execute('Remove', uow => layer1.removeElement(e1, uow));
 
       expect(layer1.elements.length).toEqual(1);
       if (layer2) expect(layer2.elements.length).toEqual(1);
@@ -166,7 +166,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       UnitOfWork.execute(diagram1, uow => layer1.addElement(e1, uow));
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Remove element', uow => layer1.removeElement(e1, uow));
+      diagram1.undoManager.execute('Remove element', uow => layer1.removeElement(e1, uow));
 
       // Verify
       expect(layer1.elements.length).toEqual(0);
@@ -194,7 +194,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
         edge.setStart(new AnchorEndpoint(start, 'c'), uow);
         edge.setEnd(new AnchorEndpoint(end, 'c'), uow);
       });
-      UnitOfWork.executeWithUndo(diagram1, 'Remove element', uow => layer1.removeElement(end, uow));
+      diagram1.undoManager.execute('Remove element', uow => layer1.removeElement(end, uow));
 
       expect(() => diagram1.undoManager.undo()).not.toThrow();
 
@@ -232,7 +232,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
       const g2 = diagram2 ? diagram2.lookup(g.id) : undefined;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Remove group', uow => layer1.removeElement(g, uow));
+      diagram1.undoManager.execute('Remove group', uow => layer1.removeElement(g, uow));
 
       // Verify
       expect(layer1.elements.length).toEqual(0);
@@ -270,7 +270,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
         edge.setEnd(new AnchorEndpoint(target, 'c'), uow);
       });
 
-      UnitOfWork.executeWithUndo(diagram1, 'Remove group', uow => layer1.removeElement(group, uow));
+      diagram1.undoManager.execute('Remove group', uow => layer1.removeElement(group, uow));
 
       expect(() => diagram1.undoManager.undo()).not.toThrow();
 
@@ -307,7 +307,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
         layer1.addElement(n3, uow);
       });
 
-      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+      diagram1.undoManager.execute('Restack', uow => {
         layer1.stackModify([n1], 1, uow);
       });
 
@@ -334,7 +334,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
 
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3']);
 
-      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+      diagram1.undoManager.execute('Restack', uow => {
         layer1.stackModify([n3], -1, uow);
       });
 
@@ -363,7 +363,7 @@ describe.each(Backends.all())('RegularLayer [%s]', (_name, backend) => {
 
       expect(layer1.elements.map(e => e.id)).toEqual(['n1', 'n2', 'n3', 'n4']);
 
-      UnitOfWork.executeWithUndo(diagram1, 'Restack', uow => {
+      diagram1.undoManager.execute('Restack', uow => {
         layer1.stackModify([n1, n2], 1, uow);
       });
 

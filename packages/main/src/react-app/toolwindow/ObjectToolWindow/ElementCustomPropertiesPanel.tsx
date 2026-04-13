@@ -312,7 +312,7 @@ export const ElementCustomPropertiesPanel = (props: Props) => {
   }
 
   const onChange = (value: CustomPropertyType) => (cb: (uow: UnitOfWork) => void) => {
-    UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
+    diagram.undoManager.execute(`Change ${value.label}`, cb);
   };
 
   return (

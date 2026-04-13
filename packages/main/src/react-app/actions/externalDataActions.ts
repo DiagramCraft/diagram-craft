@@ -1,7 +1,6 @@
 import { Application } from '../../application';
 import { assert } from '@diagram-craft/utils/assert';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import {
   AbstractSelectionAction,
   ElementType,
@@ -66,7 +65,7 @@ export class ExternalDataUnlinkAction extends AbstractSelectionAction<Applicatio
 
     const $d = elements[0]!.diagram;
 
-    UnitOfWork.executeWithUndo($d, 'Break external data link', uow => {
+    $d.undoManager.execute('Break external data link', uow => {
       for (const e of elements) {
         e.updateMetadata(p => {
           p.data ??= { data: [] };
@@ -101,7 +100,7 @@ export class ExternalDataClear extends AbstractSelectionAction<Application, Sche
     assert.arrayNotEmpty(elements as DiagramElement[]);
 
     const $d = elements[0]!.diagram;
-    UnitOfWork.executeWithUndo($d, 'Break external data link', uow => {
+    $d.undoManager.execute('Break external data link', uow => {
       for (const e of elements) {
         e.updateMetadata(p => {
           p.data!.data ??= [];
@@ -169,7 +168,7 @@ export class ExternalDataLinkAction extends AbstractSelectionAction<Application,
         }
 
         // Link to the data (either newly created or existing)
-        UnitOfWork.executeWithUndo($d, 'Link external data', uow => {
+        $d.undoManager.execute('Link external data', uow => {
           $d.selection.elements.forEach(e => {
             e.updateMetadata(p => {
               p.data ??= { data: [] };
@@ -418,7 +417,7 @@ export class ExternalDataLinkUpdateTemplate extends AbstractSelectionAction<
   ): void {
     // Iterate through all diagrams in the document
     for (const diagram of $doc.diagrams) {
-      UnitOfWork.executeWithUndo(diagram, 'Update elements from template', uow => {
+      diagram.undoManager.execute('Update elements from template', uow => {
         let hasUpdates = false;
 
         // Find all elements that use this template

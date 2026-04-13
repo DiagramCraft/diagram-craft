@@ -5,7 +5,6 @@ import {
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { deepClone, deepMerge } from '@diagram-craft/utils/object';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import type { EdgeProps, NodeProps } from '@diagram-craft/model/diagramProps';
@@ -79,7 +78,7 @@ export class StylePasteAction extends AbstractSelectionAction<ActionContext, Pas
   execute(arg: Partial<PasteArg>): void {
     const elements = arg.elements ?? this.context.model.activeDiagram.selection.elements;
 
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Style Paste', uow => {
+    this.context.model.activeDiagram.undoManager.execute('Style Paste', uow => {
       for (const e of elements) {
         if (isNode(e)) {
           e.updateProps(p => {

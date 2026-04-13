@@ -1,5 +1,4 @@
 import { AbstractToggleAction, ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Application } from '../application';
 import { StringInputDialogCommand } from '../dialogs';
 import {
@@ -79,7 +78,7 @@ export class TextAction extends AbstractToggleAction {
   execute(): void {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Text: ${this.prop}`, uow => {
+    this.context.model.activeDiagram.undoManager.execute(`Text: ${this.prop}`, uow => {
       node.updateProps(p => {
         p.text ??= {};
         p.text[this.prop] ??= false;
@@ -136,10 +135,8 @@ export class TextDecorationAction extends AbstractToggleAction {
   execute(): void {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
-    UnitOfWork.executeWithUndo(
-      this.context.model.activeDiagram,
-      `Text decoration: ${this.prop}`,
-      uow => {
+    
+      this.context.model.activeDiagram.undoManager.execute(`Text decoration: ${this.prop}`, uow => {
         node.updateProps(p => {
           p.text ??= {};
           if (p.text.textDecoration === this.prop) {
@@ -204,7 +201,7 @@ export class TextEditAction extends AbstractSelectionAction<Application, TextEdi
             htmlOutput = structuredTextInput;
           }
 
-          UnitOfWork.executeWithUndo(selectedItem.diagram, 'Edit text', uow =>
+          selectedItem.diagram.undoManager.execute('Edit text', uow =>
             selectedItem.setText(htmlOutput, uow, textId)
           );
         }

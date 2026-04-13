@@ -6,7 +6,6 @@ import { ToolWindowPanel } from '../ToolWindowPanel';
 import { useElementMetadata } from '../../hooks/useProperty';
 import { useDiagram } from '../../../application';
 import { useRedraw } from '../../hooks/useRedraw';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { unique } from '@diagram-craft/utils/array';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { DataFields } from './DataFields';
@@ -37,7 +36,7 @@ export const BasicInfoTab = ({ mode }: ObjectNamePanelProps) => {
 
   const handleTagsChange = useCallback(
     (newTags: string[]) => {
-      UnitOfWork.executeWithUndo($d, 'Update element tags', uow => {
+      $d.undoManager.execute('Update element tags', uow => {
         $d.selection.elements.forEach(element => {
           element.setTags(newTags, uow);
         });

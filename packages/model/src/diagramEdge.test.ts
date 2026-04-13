@@ -297,7 +297,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       );
 
       // Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'set bounds', uow => {
+      model.diagram1.undoManager.execute('set bounds', uow => {
         edge1.setBounds({ x: 10, y: 10, w: 10, h: 10, r: 0 }, uow);
       });
 
@@ -845,7 +845,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('updateProps', () => {
     it('should update simple props', () => {
       // Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'Set props', uow =>
+      model.diagram1.undoManager.execute('Set props', uow =>
         edge1.updateProps(p => {
           p.stroke ??= {};
           p.stroke.color = 'red';
@@ -873,7 +873,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
   describe('updateCustomProps', () => {
     it('should update custom props', () => {
       // Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'custom props', uow =>
+      model.diagram1.undoManager.execute('custom props', uow =>
         edge1.updateCustomProps(
           'blockArrow',
           p => {
@@ -978,7 +978,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const edgeBId = edgeB.id;
 
       // Delete edgeA first, then edgeB
-      UnitOfWork.executeWithUndo(model.diagram1, 'Delete', uow => {
+      model.diagram1.undoManager.execute('Delete', uow => {
         deleteElements([edgeA, edgeB], uow);
       });
 
@@ -1008,7 +1008,7 @@ describe.each(Backends.all())('DiagramEdge [%s]', (_name, backend) => {
       const edgeBId = edgeB.id;
 
       // Delete edgeB first, then edgeA
-      UnitOfWork.executeWithUndo(model.diagram1, 'Delete', uow => {
+      model.diagram1.undoManager.execute('Delete', uow => {
         deleteElements([edgeB, edgeA], uow);
       });
 

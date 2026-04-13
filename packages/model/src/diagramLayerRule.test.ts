@@ -43,7 +43,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer2 = diagram2 ? (diagram2.layers.byId('layer1') as RuleLayer) : undefined;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Add rule', uow =>
+      diagram1.undoManager.execute('Add rule', uow =>
         ruleLayer.addRule({ ...newRule, type: 'node' }, uow)
       );
 
@@ -77,7 +77,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const ruleLayer2 = diagram2 ? (diagram2.layers.byId('layer1') as RuleLayer) : undefined;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Remove rule', uow =>
+      diagram1.undoManager.execute('Remove rule', uow =>
         ruleLayer.removeRule(ruleLayer.rules[1]!, uow)
       );
 
@@ -113,7 +113,7 @@ describe.each(Backends.all())('RuleLayer [%s]', (_name, backend) => {
       const newRule = { id: 'rule3', name: 'Rule 3', clauses: [], actions: [] };
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Replace', uow =>
+      diagram1.undoManager.execute('Replace', uow =>
         ruleLayer.replaceRule(ruleLayer.rules[0]!, { type: 'node', ...newRule }, uow)
       );
 

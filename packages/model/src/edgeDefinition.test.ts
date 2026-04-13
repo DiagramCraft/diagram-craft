@@ -54,7 +54,7 @@ describe('baseEdgeDefinition', () => {
         const def = new TestBaseEdgeDefinition('test', 'test');
 
         // **** Act
-        UnitOfWork.executeWithUndo(dia1, 'Split', uow => {
+        dia1.undoManager.execute('Split', uow => {
           def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split');
         });
 
@@ -70,7 +70,7 @@ describe('baseEdgeDefinition', () => {
 
         const def = new TestBaseEdgeDefinition('test', 'test');
 
-        UnitOfWork.executeWithUndo(dia1, 'Split', uow =>
+        dia1.undoManager.execute('Split', uow =>
           def.onDrop({ x: 50, y: 50 }, edge, [node], uow, 'split')
         );
 

@@ -4,7 +4,6 @@ import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { AnchorEndpoint, NodeConnectedEndpoint } from '@diagram-craft/model/endpoint';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
@@ -180,7 +179,7 @@ const createNodeForData = (item: Data, schemaName: string, diagram: Diagram) => 
     layer: activeLayer
   });
 
-  UnitOfWork.executeWithUndo(diagram, 'Create node for data entry', uow => {
+  diagram.undoManager.execute('Create node for data entry', uow => {
     activeLayer.addElement(newNode, uow);
     activeLayer.addElement(newEdge, uow);
 

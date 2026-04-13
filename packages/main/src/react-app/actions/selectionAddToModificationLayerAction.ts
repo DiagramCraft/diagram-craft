@@ -4,7 +4,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { type DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { DelegatingDiagramNode } from '@diagram-craft/model/delegatingDiagramNode';
 import { DelegatingDiagramEdge } from '@diagram-craft/model/delegatingDiagramEdge';
@@ -56,7 +55,7 @@ export class SelectionAddToModificationLayerAction extends AbstractSelectionActi
 
     const newDelegatingElements: DiagramElement[] = [];
 
-    UnitOfWork.executeWithUndo(diagram, 'Add to modification layer', uow => {
+    diagram.undoManager.execute('Add to modification layer', uow => {
       for (const element of diagram.selection.elements) {
         let delegatingElement: DiagramElement;
 

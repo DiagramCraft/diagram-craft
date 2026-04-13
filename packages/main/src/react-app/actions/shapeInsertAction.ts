@@ -1,6 +1,5 @@
 import { AbstractAction, ActionCriteria } from '@diagram-craft/canvas/action';
 import { Application } from '../../application';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { assignNewBounds, cloneElements } from '@diagram-craft/model/diagramElementUtils';
 import { assert } from '@diagram-craft/utils/assert';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -56,7 +55,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
             const { bounds, elements } = stencil.forCanvas(document.registry);
             const newElements = cloneElements(elements, layer as RegularLayer);
 
-            UnitOfWork.executeWithUndo(diagram, 'Add element', uow => {
+            diagram.undoManager.execute('Add element', uow => {
               addStencilStylesToDocument(stencil, diagram.document, uow);
 
               for (const node of newElements) {
@@ -106,7 +105,7 @@ class ShapeInsertAction extends AbstractAction<undefined, Application> {
                 layer,
                 props: { custom: { svg: { svgContent } } } as NodeProps
               });
-              UnitOfWork.executeWithUndo(diagram, 'Add icon', uow => {
+              diagram.undoManager.execute('Add icon', uow => {
                 layer.addElement(node, uow);
               });
               diagram.selection.setElements([node]);

@@ -58,7 +58,7 @@ export const makePropertyHook = <
     return {
       val: value,
       set: (v: TValue) => {
-        UnitOfWork.executeWithUndo(diagram, message(path), uow => {
+        diagram.undoManager.execute(message(path), uow => {
           updateObj(diagram, uow, p => {
             new DynamicAccessor<TObj>().set(p, path, v);
           });
@@ -135,7 +135,7 @@ export const makePropertyArrayHook = <
     return {
       val: value,
       set: (v: TValue) => {
-        UnitOfWork.executeWithUndo(diagram, message(path), uow => {
+        diagram.undoManager.execute(message(path), uow => {
           getArr(diagram).forEach(n => {
             updateObj(n, uow, p => {
               accessor.set(p, path, v);

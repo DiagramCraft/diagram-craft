@@ -183,7 +183,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const layer = (diagram: Diagram) => diagram.layers.byId(layerId)! as RegularLayer;
 
       // Act
-      UnitOfWork.executeWithUndo(diagram1, 'Remove', uow => diagram1.layers.remove(layer1, uow));
+      diagram1.undoManager.execute('Remove', uow => diagram1.layers.remove(layer1, uow));
 
       // Verify
       expect(diagram1.layers.all).toHaveLength(0);
@@ -321,7 +321,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       expect(diagram1.layers.all.map(l => l.id)).toEqual([layer1.id, layer2.id, layer3.id]);
 
-      UnitOfWork.executeWithUndo(diagram1, 'Move', uow =>
+      diagram1.undoManager.execute('Move', uow =>
         diagram1.layers.move([layer3], uow, { layer: layer1, relation: 'below' })
       );
 
@@ -341,7 +341,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         diagram1.layers.add(layer3, uow);
       });
 
-      UnitOfWork.executeWithUndo(diagram1, 'Move', uow =>
+      diagram1.undoManager.execute('Move', uow =>
         diagram1.layers.move([layer3], uow, { layer: layer1, relation: 'below' })
       );
 
@@ -360,7 +360,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const initialLayerCount = diagram1.layers.all.length;
 
       const newLayer = new RegularLayer('new-layer', 'New Layer', [], diagram1);
-      UnitOfWork.executeWithUndo(diagram1, 'Add layer', uow => diagram1.layers.add(newLayer, uow));
+      diagram1.undoManager.execute('Add layer', uow => diagram1.layers.add(newLayer, uow));
 
       expect(diagram1.layers.all).toHaveLength(initialLayerCount + 1);
       expect(diagram1.layers.all).toContain(newLayer);
@@ -376,7 +376,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const initialLayerCount = diagram1.layers.all.length;
 
       const newLayer = new RegularLayer('new-layer', 'New Layer', [], diagram1);
-      UnitOfWork.executeWithUndo(diagram1, 'Add layer', uow => diagram1.layers.add(newLayer, uow));
+      diagram1.undoManager.execute('Add layer', uow => diagram1.layers.add(newLayer, uow));
 
       diagram1.undoManager.undo();
       expect(diagram1.layers.all).toHaveLength(initialLayerCount);
@@ -393,7 +393,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const initialLayerCount = diagram1.layers.all.length;
 
       const layerId = layer1.id;
-      UnitOfWork.executeWithUndo(diagram1, 'Remove layer', uow =>
+      diagram1.undoManager.execute('Remove layer', uow =>
         diagram1.layers.remove(layer1, uow)
       );
 
@@ -411,7 +411,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const layerId = layer1.id;
       const initialLayerCount = diagram1.layers.all.length;
 
-      UnitOfWork.executeWithUndo(diagram1, 'Remove layer', uow =>
+      diagram1.undoManager.execute('Remove layer', uow =>
         diagram1.layers.remove(layer1, uow)
       );
 

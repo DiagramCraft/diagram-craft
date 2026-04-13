@@ -1,7 +1,6 @@
 import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Point } from '@diagram-craft/geometry/point';
 import { Translation } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { isNode, transformElements } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
@@ -67,7 +66,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     }
 
     // Fall back to regular movement
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Move', uow => {
+    this.context.model.activeDiagram.undoManager.execute('Move', uow => {
       transformElements(selection.elements, [new Translation(offset)], uow);
     });
 
@@ -130,7 +129,7 @@ export class SelectionMoveAction extends AbstractSelectionAction {
     const translation = isHorizontal ? { x: delta, y: 0 } : { x: 0, y: delta };
 
     // Swap by nudging the selected node's position past the sibling
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Reorder', uow => {
+    this.context.model.activeDiagram.undoManager.execute('Reorder', uow => {
       transformElements([node], [new Translation(translation)], uow);
     });
 

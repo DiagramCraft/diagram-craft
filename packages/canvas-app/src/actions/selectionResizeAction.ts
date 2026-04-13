@@ -1,7 +1,6 @@
 import { AbstractSelectionAction } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Point } from '@diagram-craft/geometry/point';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext } from '@diagram-craft/canvas/action';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { $tStr } from '@diagram-craft/utils/localize';
@@ -55,7 +54,7 @@ export class SelectionResizeAction extends AbstractSelectionAction {
       r: 0
     };
 
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Resize', uow => {
+    this.context.model.activeDiagram.undoManager.execute('Resize', uow => {
       transformElements(
         this.context.model.activeDiagram.selection.elements,
         TransformFactory.fromTo($sel.bounds, newBox),

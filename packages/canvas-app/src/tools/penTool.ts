@@ -121,7 +121,7 @@ export class PenTool extends AbstractTool {
     const layer = this.diagram.activeLayer;
     assertRegularLayer(layer);
 
-    UnitOfWork.executeWithUndo(this.diagram, 'Add path', uow => layer.addElement(this.node!, uow));
+    this.diagram.undoManager.execute('Add path', uow => layer.addElement(this.node!, uow));
   }
 
   onMouseOver(id: string, point: Point, target: EventTarget) {

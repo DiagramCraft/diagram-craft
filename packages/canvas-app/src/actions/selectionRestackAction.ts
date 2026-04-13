@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -61,7 +60,7 @@ export class SelectionRestackAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Restack selection`, uow => {
+    this.context.model.activeDiagram.undoManager.execute(`Restack selection`, uow => {
       const activeLayer = this.context.model.activeDiagram.activeLayer;
       assertRegularLayer(activeLayer);
 

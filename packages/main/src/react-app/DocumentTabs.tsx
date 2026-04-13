@@ -11,7 +11,6 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { useDraggable, useDropTarget } from './hooks/dragAndDropHooks';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { getDocumentTabKey, UserState } from '../UserState';
 import styles from './DocumentTabs.module.css';
 
@@ -108,7 +107,7 @@ const TabItem = (props: { diagram: Diagram; path: Diagram[]; document: DiagramDo
       // Diagrams are a sequence: 'before' zone → insert before, 'after' zone → insert after
       const relation = ev[MIME_TYPE]?.before ? 'before' : 'after';
 
-      UnitOfWork.executeWithUndo(application.model.activeDiagram, 'Reorder diagram', uow => {
+      application.model.activeDiagram.undoManager.execute('Reorder diagram', uow => {
         document.moveDiagram(diagramToMove, { diagram: d, relation }, uow);
       });
     },

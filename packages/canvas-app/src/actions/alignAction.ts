@@ -96,7 +96,7 @@ export class AlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Align ${this.mode}`, uow => {
+    this.context.model.activeDiagram.undoManager.execute(`Align ${this.mode}`, uow => {
       // Get elements to align - either selected nodes or children of a single selected node
       const elements = this.getElementsToAlign();
       assert.arrayNotEmpty(elements);
@@ -188,7 +188,7 @@ export class DimensionAlignAction extends AbstractSelectionAction {
   }
 
   execute(): void {
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, `Align ${this.mode}`, uow => {
+    this.context.model.activeDiagram.undoManager.execute(`Align ${this.mode}`, uow => {
       const elements = this.context.model.activeDiagram.selection.elements;
       assert.arrayNotEmpty(elements);
 

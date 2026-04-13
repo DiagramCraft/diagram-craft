@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import { assert } from '@diagram-craft/utils/assert';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -102,7 +101,7 @@ export class LayoutForceDirectedAction extends AbstractSelectionAction<Applicati
 
     if (positions.size === 0) return;
 
-    UnitOfWork.executeWithUndo(diagram, 'Layout force-directed', uow => {
+    diagram.undoManager.execute('Layout force-directed', uow => {
       // Center all edge anchors for edges in the layout
       const adjacencyList = graph.adjacencyList();
       const edgesToCenter = new Set<string>();

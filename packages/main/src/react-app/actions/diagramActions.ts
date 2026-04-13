@@ -6,7 +6,6 @@ import { assert, precondition } from '@diagram-craft/utils/assert';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { StringInputDialogCommand } from '@diagram-craft/canvas-app/dialogs';
 import { $tStr, $t } from '@diagram-craft/utils/localize';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const diagramActions = (application: Application) => ({
   DIAGRAM_ADD: new DiagramAddAction(application),
@@ -40,7 +39,7 @@ class DiagramAddAction extends AbstractAction<{ parentId?: string }, Application
       y: -30
     });
 
-    UnitOfWork.executeWithUndo(activeDiagram, 'Add diagram', uow => {
+    activeDiagram.undoManager.execute('Add diagram', uow => {
       document.addDiagram(newDiagram, parent, uow);
     });
 
@@ -77,7 +76,7 @@ export class DiagramRemoveAction extends AbstractAction<{ diagramId?: string }, 
         },
         () => {
           this.context.model.activeDiagram = diagramToFallbackTo;
-          UnitOfWork.executeWithUndo(diagramToFallbackTo, 'Delete diagram', uow => {
+          diagramToFallbackTo.undoManager.execute('Delete diagram', uow => {
             document.removeDiagram(diagram, uow);
           });
         }
@@ -106,7 +105,7 @@ class DiagramRenameAction extends AbstractAction<{ diagramId?: string }, Applica
           selectOnOpen: true
         },
         async name => {
-          UnitOfWork.executeWithUndo(diagram, 'Rename diagram', uow => {
+          diagram.undoManager.execute('Rename diagram', uow => {
             diagram.setName(name, uow);
           });
         }

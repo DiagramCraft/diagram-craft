@@ -147,7 +147,7 @@ describe('edgeTransform', () => {
       edge.setEnd(new FreeEndpoint({ x: 100, y: 100 }), uow);
     });
 
-    UnitOfWork.executeWithUndo(diagram, 'Transform edge', uow => {
+    diagram.undoManager.execute('Transform edge', uow => {
       applyEdgeTransform(
         edge,
         { x: 0, y: 0, w: 100, h: 100, r: 0 },

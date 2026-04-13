@@ -14,7 +14,6 @@ import {
   type TextStyleCombination
 } from './stylesPanelUtils';
 import { debounce } from '@diagram-craft/utils/debounce';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramElement } from '@diagram-craft/model/diagramElement';
 import { isNode } from '@diagram-craft/model/diagramElement';
 import type { ElementProps } from '@diagram-craft/model/diagramProps';
@@ -93,7 +92,7 @@ export const StylesTab = () => {
 
   const handleStyleReset = useCallback(
     (elements: DiagramElement[], differences: Partial<ElementProps>) => {
-      UnitOfWork.executeWithUndo(diagram, 'Reset styles', uow => {
+      diagram.undoManager.execute('Reset styles', uow => {
         const accessor = new DynamicAccessor<ElementProps>();
         const paths = accessor.paths(differences);
 
@@ -150,7 +149,7 @@ export const StylesTab = () => {
               diagram.document.styles
             );
 
-            UnitOfWork.executeWithUndo(diagram, 'Create stylesheet', uow => {
+            diagram.undoManager.execute('Create stylesheet', uow => {
               // Add stylesheet to document
               diagram.document.styles.addStylesheet(id, stylesheet, uow);
 

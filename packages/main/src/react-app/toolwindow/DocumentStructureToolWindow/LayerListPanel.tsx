@@ -27,7 +27,6 @@ import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { LayerContextMenu } from './LayerContextMenu';
 import { Layer } from '@diagram-craft/model/diagramLayer';
 import { Diagram } from '@diagram-craft/model/diagram';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement, isEdge, isNode } from '@diagram-craft/model/diagramElement';
 import { shorten } from '@diagram-craft/utils/strings';
 import { useLayoutEffect, useRef } from 'react';
@@ -71,7 +70,7 @@ const LockToggle = (props: { layer: Layer; diagram: Diagram }) => {
       onClick={e => {
         if (props.layer.type === 'reference') return;
 
-        UnitOfWork.executeWithUndo(props.diagram, 'Toggle lock', uow => {
+        props.diagram.undoManager.execute('Toggle lock', uow => {
           props.layer.setLocked(!props.layer.isLocked(), uow);
         });
         e.preventDefault();
@@ -92,7 +91,7 @@ const LayerEntry = (props: { layer: Layer }) => {
   const dropTarget = useDropTarget(
     [LAYER_INSTANCES, ELEMENT_INSTANCES],
     ev => {
-      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+      diagram.undoManager.execute('Change stack', uow => {
         if (ev[ELEMENT_INSTANCES]) {
           diagram.moveElement(
             JSON.parse(ev[ELEMENT_INSTANCES].on!).map((id: string) => diagram.lookup(id)),
@@ -345,7 +344,7 @@ const ModificationEntry = (props: {
         <span
           style={{ cursor: 'pointer' }}
           onClick={e => {
-            UnitOfWork.executeWithUndo(props.diagram, 'Clear modification', uow => {
+            props.diagram.undoManager.execute('Clear modification', uow => {
               props.layer.clearModification(m.id, uow);
             });
             e.preventDefault();
@@ -385,7 +384,7 @@ const ElementEntry = (props: { element: DiagramElement }) => {
         VERIFY_NOT_REACHED();
       }
 
-      UnitOfWork.executeWithUndo(diagram, 'Change stack', uow => {
+      diagram.undoManager.execute('Change stack', uow => {
         diagram.moveElement(
           instances.map((id: string) => diagram.lookup(id)!),
           uow,

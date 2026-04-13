@@ -12,7 +12,7 @@ describe('ResizeCanvasUndoableAction', () => {
     UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(beforeCanvas, uow));
 
     // Act
-    UnitOfWork.executeWithUndo(diagram, 'Resize', uow => diagram.setBounds(afterCanvas, uow));
+    diagram.undoManager.execute('Resize', uow => diagram.setBounds(afterCanvas, uow));
     diagram.undoManager.undo();
 
     // Verify
@@ -26,7 +26,7 @@ describe('ResizeCanvasUndoableAction', () => {
     UnitOfWork.executeSilently(diagram, uow => diagram.setBounds(beforeCanvas, uow));
 
     // Act
-    UnitOfWork.executeWithUndo(diagram, 'Resize', uow => diagram.setBounds(afterCanvas, uow));
+    diagram.undoManager.execute('Resize', uow => diagram.setBounds(afterCanvas, uow));
     diagram.undoManager.undo();
     diagram.undoManager.redo();
 

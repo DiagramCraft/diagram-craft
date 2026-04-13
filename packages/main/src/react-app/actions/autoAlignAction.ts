@@ -3,7 +3,6 @@ import {
   ElementType,
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { Application } from '../../application';
 import { autoAlign, type AutoAlignMode } from '@diagram-craft/canvas/snap/autoAlign';
@@ -74,7 +73,7 @@ export class AutoAlignAction extends AbstractSelectionAction<Application> {
 
     const magnetTypes = this.getEnabledMagnetTypes(config.magnetTypes);
 
-    UnitOfWork.executeWithUndo(diagram, 'Auto-align elements', uow =>
+    diagram.undoManager.execute('Auto-align elements', uow =>
       autoAlign(nodesToAlign, diagram, { ...config, magnetTypes }, uow)
     );
   }

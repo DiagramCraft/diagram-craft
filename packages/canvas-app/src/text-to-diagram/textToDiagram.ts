@@ -108,7 +108,7 @@ export const textToDiagram = (elements: ParsedElement[], diagram: Diagram) => {
   const layer = diagram.activeLayer;
   assertRegularLayer(layer);
 
-  UnitOfWork.executeWithUndo(diagram, 'Update diagram', uow => {
+  diagram.undoManager.execute('Update diagram', uow => {
     // Collect all parsed element IDs
     const parsedIds = collectElementIds(elements);
 

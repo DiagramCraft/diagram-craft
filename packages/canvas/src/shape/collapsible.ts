@@ -1,5 +1,4 @@
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { VNode } from '../component/vdom';
 import { Component } from '../component/component';
 import * as svg from '../component/vdom-svg';
@@ -40,7 +39,7 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
         class: 'svg-collapsible__toggle svg-hover-overlay',
         on: {
           pointerdown: () => {
-            UnitOfWork.executeWithUndo(props.node.diagram, 'Toggle collapse/expand', uow =>
+            props.node.diagram.undoManager.execute('Toggle collapse/expand', uow =>
               def.toggle(props.node, uow)
             );
             this.redraw();
@@ -70,7 +69,7 @@ export class CollapsibleOverlayComponent extends Component<{ node: DiagramNode }
         'data-hover': 'true',
         'on': {
           pointerdown: () => {
-            UnitOfWork.executeWithUndo(props.node.diagram, 'Toggle collapse/expand', uow =>
+            props.node.diagram.undoManager.execute('Toggle collapse/expand', uow =>
               def.toggle(props.node, uow)
             );
             this.redraw();
@@ -141,7 +140,7 @@ export class CollapsibleToggleAction extends AbstractSelectionAction<Context> {
     const diagram = this.context.model.activeDiagram;
     assertRegularLayer(diagram.activeLayer);
 
-    UnitOfWork.executeWithUndo(diagram, 'Expand/Collapse', uow => {
+    diagram.undoManager.execute('Expand/Collapse', uow => {
       const node = mustExist(diagram.selection.nodes[0]);
       const nodeDefinition = node.getDefinition() as LayoutCapableShapeNodeDefinition;
       nodeDefinition.toggle(node, uow);

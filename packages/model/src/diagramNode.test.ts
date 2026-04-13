@@ -48,7 +48,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      UnitOfWork.executeWithUndo(model.diagram1, 'Move', uow2 => {
+      model.diagram1.undoManager.execute('Move', uow2 => {
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow2);
       });
 
@@ -111,7 +111,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const ref1 = serializeDiagram(model.diagram1);
       const ref2 = model.doc2 ? serializeDiagram(model.diagram2!) : undefined;
 
-      UnitOfWork.executeWithUndo(model.diagram1, 'Move', uow =>
+      model.diagram1.undoManager.execute('Move', uow =>
         node1.setBounds({ w: 100, h: 100, x: 20, y: 20, r: 0 }, uow)
       );
 
@@ -248,7 +248,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'Add child', uow => node1.addChild(child, uow));
+      model.diagram1.undoManager.execute('Add child', uow => node1.addChild(child, uow));
 
       // **** Verify
       expect(child.parent).toBe(node1);
@@ -324,7 +324,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       if (model.diagram2) model.diagram2.on('elementRemove', elementRemove[1]!);
 
       // **** Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'Remove', uow => node1.removeChild(child, uow));
+      model.diagram1.undoManager.execute('Remove', uow => node1.removeChild(child, uow));
 
       // **** Verify
       expect(node1.children.length).toBe(0);
@@ -379,7 +379,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
         edge.setEnd(new AnchorEndpoint(target, 'c'), uow);
       });
 
-      UnitOfWork.executeWithUndo(model.diagram1, 'Remove', uow => node1.removeChild(group, uow));
+      model.diagram1.undoManager.execute('Remove', uow => node1.removeChild(group, uow));
 
       expect(() => model.diagram1.undoManager.undo()).not.toThrow();
 
@@ -405,7 +405,7 @@ describe.each(Backends.all())('DiagramNode [%s]', (_name, backend) => {
       const child2 = model.layer1.createNode();
 
       // **** Act
-      UnitOfWork.executeWithUndo(model.diagram1, 'SetChildren', uow =>
+      model.diagram1.undoManager.execute('SetChildren', uow =>
         node1.setChildren([child1, child2], uow)
       );
 

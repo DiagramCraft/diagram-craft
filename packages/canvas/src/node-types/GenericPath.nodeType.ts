@@ -9,7 +9,6 @@ import * as svg from '../component/vdom-svg';
 import { ShapeBuilder } from '../shape/ShapeBuilder';
 import { fromUnitLCS, PathListBuilder } from '@diagram-craft/geometry/pathListBuilder';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { registerCustomNodeDefaults } from '@diagram-craft/model/diagramDefaults';
 import { Zoom } from '../components/zoom';
@@ -64,13 +63,13 @@ class GenericPathComponent extends BaseNodeComponent {
       if (e.metaKey) {
         editablePath.straighten(dp);
 
-        UnitOfWork.executeWithUndo(props.node.diagram, 'Convert to line', uow =>
+        props.node.diagram.undoManager.execute('Convert to line', uow =>
           editablePath.commitToNode(uow)
         );
       } else {
         const idx = editablePath.addWaypoint(editablePath.toLocalCoordinate(dp));
 
-        UnitOfWork.executeWithUndo(props.node.diagram, 'Add waypoint', uow =>
+        props.node.diagram.undoManager.execute('Add waypoint', uow =>
           editablePath.commitToNode(uow)
         );
 
@@ -217,7 +216,7 @@ class GenericPathComponent extends BaseNodeComponent {
               dblclick: e => {
                 const wp = editablePath.waypoints[idx]!;
                 if (e.metaKey) {
-                  UnitOfWork.executeWithUndo(props.node.diagram, 'Delete waypoint', uow => {
+                  props.node.diagram.undoManager.execute('Delete waypoint', uow => {
                     editablePath.deleteWaypoint(wp);
                     editablePath.commitToNode(uow);
                   });

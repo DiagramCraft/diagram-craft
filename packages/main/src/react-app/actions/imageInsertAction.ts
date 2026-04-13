@@ -5,7 +5,6 @@ import { ImageInsertDialog } from '../ImageInsertDialog';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { $tStr } from '@diagram-craft/utils/localize';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 export const imageInsertActions = (application: Application) => ({
   IMAGE_INSERT: new ImageInsertAction(application)
@@ -70,7 +69,7 @@ class ImageInsertAction extends AbstractAction<undefined, Application> {
           }
         });
 
-        UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Insert image', uow => {
+        this.context.model.activeDiagram.undoManager.execute('Insert image', uow => {
           layer.addElement(e, uow);
           uow.select(this.context.model.activeDiagram, [e]);
         });

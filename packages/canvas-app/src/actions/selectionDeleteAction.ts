@@ -3,7 +3,6 @@ import { isNode } from '@diagram-craft/model/diagramElement';
 import { ActionContext, ActionCriteria } from '@diagram-craft/canvas/action';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { $tStr } from '@diagram-craft/utils/localize';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { deleteElements } from '@diagram-craft/model/diagramElementUtils';
 import { NodeFlags } from '@diagram-craft/model/elementDefinitionRegistry';
 
@@ -53,7 +52,7 @@ export class SelectionDeleteAction extends AbstractSelectionAction {
 
     assertRegularLayer(diagram.activeLayer);
 
-    UnitOfWork.executeWithUndo(diagram, 'Delete selection', uow => {
+    diagram.undoManager.execute('Delete selection', uow => {
       deleteElements(deletableElements, uow);
       uow.select(diagram, []);
     });

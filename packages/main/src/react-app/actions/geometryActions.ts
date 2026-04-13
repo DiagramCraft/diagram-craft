@@ -4,7 +4,6 @@ import {
   MultipleType
 } from '@diagram-craft/canvas/actions/abstractSelectionAction';
 import { Application } from '../../application';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { applyBooleanOperation, BooleanOperation } from '@diagram-craft/geometry/pathClip';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
@@ -79,7 +78,7 @@ class SelectionGeometryConvertToCurves extends AbstractSelectionAction<Applicati
           cancelLabel: $t('common.cancel', 'Cancel')
         },
         () => {
-          UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Convert to path', uow => {
+          this.context.model.activeDiagram.undoManager.execute('Convert to path', uow => {
             for (const el of nodes) {
               el.convertToPath(uow);
             }
@@ -147,7 +146,7 @@ class SelectionBooleanOperation extends AbstractSelectionAction<Application> {
       });
     });
 
-    UnitOfWork.executeWithUndo(diagram, 'Boolean operation', uow => {
+    diagram.undoManager.execute('Boolean operation', uow => {
       const activeLayer = diagram.activeLayer;
       assertRegularLayer(activeLayer);
 

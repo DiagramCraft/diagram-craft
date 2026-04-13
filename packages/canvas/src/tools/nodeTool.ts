@@ -5,7 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { DragDopManager, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { isNode } from '@diagram-craft/model/diagramElement';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { $t } from '@diagram-craft/utils/localize';
 
 export class NodeTool extends AbstractTool {
@@ -77,7 +76,7 @@ export class NodeTool extends AbstractTool {
               cancelLabel: $t('common.cancel', 'Cancel')
             },
             () => {
-              UnitOfWork.executeWithUndo(this.diagram, 'Convert to path', uow =>
+              this.diagram.undoManager.execute('Convert to path', uow =>
                 el.convertToPath(uow)
               );
               this.diagram.selection.setElements([el]);

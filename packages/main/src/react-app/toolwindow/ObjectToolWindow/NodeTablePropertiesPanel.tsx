@@ -4,7 +4,6 @@ import { useRedraw } from '../../hooks/useRedraw';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { ToolWindowPanel } from '../ToolWindowPanel';
 import { Select } from '@diagram-craft/app-components/Select';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { asProperty, NodeDefinition } from '@diagram-craft/model/elementDefinitionRegistry';
 import { useTable } from '../../hooks/useTable';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
@@ -39,7 +38,7 @@ export const NodeTablePropertiesPanel = (props: Props) => {
           if (value.type === 'delimiter') return <div key={key}></div>;
 
           const prop = asProperty(value, cb => {
-            UnitOfWork.executeWithUndo(diagram, `Change ${value.label}`, cb);
+            diagram.undoManager.execute(`Change ${value.label}`, cb);
           });
 
           if (value.type === 'number') {

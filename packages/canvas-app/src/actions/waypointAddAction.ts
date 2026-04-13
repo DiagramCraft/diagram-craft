@@ -1,5 +1,4 @@
 import { AbstractAction, ActionContext } from '@diagram-craft/canvas/action';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Point } from '@diagram-craft/geometry/point';
 import { $tStr } from '@diagram-craft/utils/localize';
 
@@ -21,7 +20,7 @@ export class WaypointAddAction extends AbstractAction<WaypointAddActionArg> {
   execute(context: WaypointAddActionArg): void {
     const edge = this.context.model.activeDiagram.edgeLookup.get(context.id!);
 
-    UnitOfWork.executeWithUndo(this.context.model.activeDiagram, 'Add waypoint', uow =>
+    this.context.model.activeDiagram.undoManager.execute('Add waypoint', uow =>
       edge!.addWaypoint({ point: context.point! }, uow)
     );
   }

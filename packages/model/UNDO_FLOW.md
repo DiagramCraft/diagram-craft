@@ -9,7 +9,8 @@ This note describes how undo works in `@diagram-craft/model`, and why the flow d
 
 - `UndoManager`
   The app-facing undo contract. Callers mostly interact with:
-  - `runUndoable(label, callback)`
+  - `execute(label, callback)`
+  - `beginCapture(label)`
   - `addAndExecute(action)`
   - `undo()`
   - `redo()`
@@ -25,20 +26,20 @@ This note describes how undo works in `@diagram-craft/model`, and why the flow d
   A generic adapter interface supplied by the active collaboration backend.
   The current Yjs implementation is `YjsCollaborationUndoAdapter`.
 
-## Why `runUndoable(...)` exists
+## Why `execute(...)` exists
 
-`runUndoable(label, callback)` defines the execution boundary for one user-visible undo step.
+`execute(label, callback)` defines the public execution boundary for one user-visible undo step.
 
 That boundary is trivial for `DefaultUndoManager`, but it is essential for collaboration-backed undo.
 
 - In the default case, structural undo is built after the mutation by `UnitOfWork.commitWithUndo(...)`.
 - In the collaboration-backed case, the mutation must happen inside a backend-tracked transaction so the backend can decide that the change belongs on the local undo stack.
 
-Because of that, `UnitOfWork.executeWithUndo(...)` no longer assumes one specific undo implementation. Instead it delegates the execution boundary to the active manager:
+Because of that, callers no longer need to choose an undo implementation-specific path. They go through the active manager:
 
 ```ts
-diagram.undoManager.runUndoable(label, () => {
-  // perform the actual work in a UnitOfWork
+diagram.undoManager.execute(label, uow => {
+  // perform the actual work in the provided UnitOfWork
 })
 ```
 
@@ -54,33 +55,33 @@ diagram.undoManager.runUndoable(label, () => {
 
 So:
 
-- `runUndoable(...)` controls where and how the mutation executes
+- `execute(...)` controls the public execution boundary
 - `withNativeUndoCapture(...)` controls where the structural action built by `UnitOfWork` goes
 
 ## Default flow
 
 This is the path used by `DefaultUndoManager`.
 
-1. Caller invokes `UnitOfWork.executeWithUndo(diagram, label, callback)`.
-2. `executeWithUndo(...)` calls `diagram.undoManager.runUndoable(label, ...)`.
-3. `DefaultUndoManager.runUndoable(...)` just executes the callback.
-4. The callback mutates the model using a `UnitOfWork`.
-5. `UnitOfWork.commitWithUndo(...)` builds a structural `UndoableAction`.
-6. Because no native capture is active, `commitWithUndo(...)` calls `diagram.undoManager.add(action)`.
-7. `DefaultUndoManager` stores the action in its in-memory undo stack.
+1. Caller invokes `diagram.undoManager.execute(label, callback)`.
+2. `DefaultUndoManager.execute(...)` creates a capture and supplies its `UnitOfWork`.
+3. The callback mutates the model using that `UnitOfWork`.
+4. `capture.commit()` calls `UnitOfWork.commitWithUndo(...)`.
+5. Because no native capture is active, `commitWithUndo(...)` calls `diagram.undoManager.add(action)`.
+6. `DefaultUndoManager` stores the action in its in-memory undo stack.
 
 ```mermaid
 sequenceDiagram
     participant Caller
-    participant UOW as UnitOfWork.executeWithUndo
     participant Mgr as DefaultUndoManager
+    participant Capture as UndoCapture
     participant Work as UnitOfWork
 
-    Caller->>UOW: executeWithUndo(diagram, label, cb)
-    UOW->>Mgr: runUndoable(label, wrappedCb)
-    Mgr->>Work: execute wrapped callback
+    Caller->>Mgr: execute(label, cb)
+    Mgr->>Capture: beginCapture(label)
+    Mgr->>Work: create UnitOfWork
+    Capture->>Work: expose unitOfWork to callback
     Work->>Work: track add/remove/update operations
-    Work->>Work: commitWithUndo(label)
+    Capture->>Work: commitWithUndo(label)
     Work->>Mgr: add(structuralAction)
     Mgr->>Mgr: push action onto undo stack
 ```
@@ -89,32 +90,31 @@ sequenceDiagram
 
 This is the path used by `CollaborationBackendUndoManager`.
 
-1. Caller invokes `UnitOfWork.executeWithUndo(diagram, label, callback)`.
-2. `executeWithUndo(...)` calls `diagram.undoManager.runUndoable(label, ...)`.
-3. `CollaborationBackendUndoManager.runUndoable(...)` asks the `CollaborationUndoAdapter` to run the callback inside a tracked backend transaction.
-4. It also enters `UnitOfWork.withNativeUndoCapture(...)`.
-5. The callback mutates the model using a `UnitOfWork`.
-6. `UnitOfWork.commitWithUndo(...)` builds a structural `UndoableAction`.
-7. Because native capture is active, `commitWithUndo(...)` does not call `undoManager.add(action)`.
-8. Instead, it forwards the action to the manager's native-capture callback.
-9. The backend creates a native undo stack item for the tracked transaction.
-10. When the adapter emits `stackItemAdded`, the manager attaches the captured structural action as metadata on that stack item.
-11. The manager calls `stopCapturing()` so the next user action becomes a separate backend undo item.
+1. Caller invokes `diagram.undoManager.execute(label, callback)`.
+2. `CollaborationBackendUndoManager.execute(...)` creates a capture.
+3. That capture starts a tracked backend session and enters `UnitOfWork.withNativeUndoCapture(...)`.
+4. The callback mutates the model using the capture's `UnitOfWork`.
+5. `capture.commit()` calls `UnitOfWork.commitWithUndo(...)`.
+6. Because native capture is active, `commitWithUndo(...)` does not call `undoManager.add(action)`.
+7. Instead, it forwards the action to the manager's native-capture callback.
+8. The backend creates a native undo stack item for the tracked transaction.
+9. When the adapter emits `stackItemAdded`, the manager attaches the captured structural action as metadata on that stack item.
+10. The manager calls `stopCapturing()` so the next user action becomes a separate backend undo item.
 
 ```mermaid
 sequenceDiagram
     participant Caller
-    participant UOW as UnitOfWork.executeWithUndo
     participant Mgr as CollaborationBackendUndoManager
+    participant Capture as UndoCapture
     participant Adapter as CollaborationUndoAdapter
     participant Work as UnitOfWork
 
-    Caller->>UOW: executeWithUndo(diagram, label, cb)
-    UOW->>Mgr: runUndoable(label, wrappedCb)
-    Mgr->>Adapter: runTracked(root, callback)
-    Mgr->>Work: withNativeUndoCapture(registerAction, callback)
+    Caller->>Mgr: execute(label, cb)
+    Mgr->>Capture: beginCapture(label)
+    Capture->>Adapter: open tracked session
+    Capture->>Work: withNativeUndoCapture(registerAction, callback)
     Work->>Work: track add/remove/update operations
-    Work->>Work: commitWithUndo(label)
+    Capture->>Work: commitWithUndo(label)
     Work-->>Mgr: registerCapturedAction(structuralAction)
     Adapter-->>Mgr: stackItemAdded(tracked stack item)
     Mgr->>Mgr: attach action metadata to stack item
@@ -144,7 +144,7 @@ That means:
 - you cannot rely only on `UnitOfWork.commitWithUndo(...)` or `UndoManager.addAndExecute(...)` after the mutation
 - you must wrap the actual mutation in the backend's tracked transaction boundary
 
-This is the reason model code uses `runUndoable(...)` instead of directly assuming stack-backed undo.
+This is the reason model code uses `undoManager.execute(...)` instead of directly assuming stack-backed undo.
 
 ## Remote updates
 
@@ -214,7 +214,7 @@ That allows common call sites to stay uniform, while stack-inspection UI remains
 
 If you are writing new model code:
 
-- use `UnitOfWork.executeWithUndo(...)` for structural model changes
+- use `undoManager.execute(...)` for structural model changes
 - use `undoManager.addAndExecute(...)` only for explicit command-style undo actions
 - do not assume every `UndoManager` has a mutable in-memory stack
 - if a feature requires stack inspection or post-hoc stack rewriting, treat that as `StackedUndoManager`-specific behavior
