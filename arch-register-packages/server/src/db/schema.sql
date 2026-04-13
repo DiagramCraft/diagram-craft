@@ -1,7 +1,7 @@
 -- Enable uuid generation (no-op if already installed)
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Entity schema table: defines the "type" of an entity (Component, System, Server, etc.)
+-- Entity schema table: defines the "type" of an entity (Component, System, Domain, etc.)
 CREATE TABLE entity_schema (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT        NOT NULL UNIQUE,
@@ -12,12 +12,17 @@ CREATE TABLE entity_schema (
 
 -- Entity table: instances of a schema type
 CREATE TABLE entity (
-  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       TEXT        NOT NULL,
-  schema_id  UUID        NOT NULL REFERENCES entity_schema(id) ON DELETE RESTRICT,
-  data       JSONB       NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug        TEXT        NOT NULL,
+  namespace   TEXT        NOT NULL DEFAULT 'default',
+  name        TEXT        NOT NULL,
+  owner       TEXT,
+  lifecycle   TEXT        CHECK (lifecycle IN ('experimental', 'production', 'deprecated')),
+  schema_id   UUID        NOT NULL REFERENCES entity_schema(id) ON DELETE RESTRICT,
+  data        JSONB       NOT NULL DEFAULT '{}',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (schema_id, namespace, slug)
 );
 
 -- Index for filtering entities by schema type
