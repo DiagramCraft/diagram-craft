@@ -130,7 +130,7 @@ class ManagedUndoCapture implements UndoCapture {
       if (this.unitOfWork.state === 'pending') {
         this.unitOfWork.commit();
       }
-      this.finalize(this.unitOfWork.finishAsUndoableAction(this.label));
+      this.finalize(this.unitOfWork._finishAsUndoableAction(this.label));
     } finally {
       this.session.release();
     }
@@ -181,7 +181,7 @@ export class DefaultUndoManager
 
   beginCapture(label: string): UndoCapture {
     return new ManagedUndoCapture(
-      UnitOfWork.begin(this.diagram),
+      UnitOfWork._begin(this.diagram),
       label,
       { release() {} },
       action => {
@@ -386,7 +386,7 @@ export class CollaborationBackendUndoManager
 
   beginCapture(label: string): UndoCapture {
     return new ManagedUndoCapture(
-      UnitOfWork.begin(this.diagram),
+      UnitOfWork._begin(this.diagram),
       label,
       this.beginTrackedSession(label),
       action => this.registerCapturedAction(label, action)

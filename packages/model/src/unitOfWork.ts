@@ -183,7 +183,7 @@ export class UnitOfWork {
     return new UnitOfWork(diagram, false, false, true);
   }
 
-  static begin(diagram: Diagram) {
+  static _begin(diagram: Diagram) {
     return new UnitOfWork(diagram, true);
   }
 
@@ -212,10 +212,6 @@ export class UnitOfWork {
     } finally {
       if (uow.state === 'pending') uow.commit();
     }
-  }
-
-  static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
-    return diagram.undoManager.execute(label, cb);
   }
 
   add(action: UndoableAction) {
@@ -444,7 +440,7 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
-  finishAsUndoableAction(msg: string): UndoableAction | undefined {
+  _finishAsUndoableAction(msg: string): UndoableAction | undefined {
     return this.buildUndoableAction(msg);
   }
 
