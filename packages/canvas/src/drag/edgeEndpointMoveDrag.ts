@@ -2,16 +2,15 @@ import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Point } from '@diagram-craft/geometry/point';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
   AnchorEndpoint,
-  NodeConnectedEndpoint,
   Endpoint,
   FreeEndpoint,
-  PointOnEdgeEndpoint,
-  PointInNodeEndpoint
+  NodeConnectedEndpoint,
+  PointInNodeEndpoint,
+  PointOnEdgeEndpoint
 } from '@diagram-craft/model/endpoint';
 import { findCommonAncestor, isNode } from '@diagram-craft/model/diagramElement';
 import { isRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
@@ -32,7 +31,6 @@ import type {
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly capture: UndoCapture;
-  readonly uow: UnitOfWork;
   protected hoverElement: string | undefined;
   protected modifiers: Modifiers | undefined;
 
@@ -47,7 +45,6 @@ export class EdgeEndpointMoveDrag extends Drag {
   ) {
     super();
     this.capture = this.edge.diagram.undoManager.beginCapture('Move edge endpoint');
-    this.uow = this.capture.unitOfWork;
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'move';
 
@@ -114,7 +111,7 @@ export class EdgeEndpointMoveDrag extends Drag {
       this.setEndpoint(new FreeEndpoint(this.point));
     }
 
-    this.uow.notify();
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: offset, modifiers });
   }
@@ -196,7 +193,7 @@ export class EdgeEndpointMoveDrag extends Drag {
       return d > dimension / 3 && d < Point.distance(prev, midpoint) ? curr : prev;
     }, potentialWaypoints[0]!);
 
-    this.edge.addWaypoint({ point: closestWaypoint }, this.uow);
+    this.edge.addWaypoint({ point: closestWaypoint }, this.capture.uow);
   }
 
   cancel() {
@@ -362,9 +359,9 @@ export class EdgeEndpointMoveDrag extends Drag {
 
   private setEndpoint(endpoint: Endpoint) {
     if (this.type === 'start') {
-      this.edge.setStart(endpoint, this.uow);
+      this.edge.setStart(endpoint, this.capture.uow);
     } else {
-      this.edge.setEnd(endpoint, this.uow);
+      this.edge.setEnd(endpoint, this.capture.uow);
     }
   }
 
@@ -386,11 +383,11 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     // Remove from current parent if exists
     if (currentParent && isNode(currentParent)) {
-      currentParent.removeChild(this.edge, this.uow);
+      currentParent.removeChild(this.edge, this.capture.uow);
 
       // If moving to layer level (no targetParent), add back to layer
       if (!targetParent && isRegularLayer(this.edge.layer)) {
-        this.edge.layer.addElement(this.edge, this.uow);
+        this.edge.layer.addElement(this.edge, this.capture.uow);
       }
     }
 
@@ -402,12 +399,12 @@ export class EdgeEndpointMoveDrag extends Drag {
         if (elements.includes(this.edge)) {
           this.edge.layer.setElements(
             elements.filter(e => e !== this.edge),
-            this.uow
+            this.capture.uow
           );
         }
       }
 
-      targetParent.addChild(this.edge, this.uow);
+      targetParent.addChild(this.edge, this.capture.uow);
     }
   }
 }

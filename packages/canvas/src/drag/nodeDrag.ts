@@ -2,13 +2,11 @@ import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Context } from '../context';
 
 export class NodeDrag extends Drag {
   private readonly startTime: number;
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
   private readonly initialPositions: Point[];
 
   private lastPoint: Point | undefined;
@@ -23,7 +21,6 @@ export class NodeDrag extends Drag {
 
     this.startTime = Date.now();
     this.capture = this.editablePath.node.diagram.undoManager.beginCapture('Edit path');
-    this.uow = this.capture.unitOfWork;
 
     this.initialPositions = this.waypointIndices.map(
       idx => this.editablePath.waypoints[idx]!.point
@@ -45,8 +42,8 @@ export class NodeDrag extends Drag {
       const newPosition = Point.add(this.initialPositions[i]!, delta);
       wp.point = this.editablePath.toLocalCoordinate(newPosition);
     }
-    this.editablePath.commitToNode(this.uow);
-    this.uow.notify();
+    this.editablePath.commitToNode(this.capture.uow);
+    this.capture.uow.notify();
 
     this.lastPoint = offset;
 
@@ -64,7 +61,7 @@ export class NodeDrag extends Drag {
       return;
     }
 
-    this.editablePath.commitToNode(this.uow);
+    this.editablePath.commitToNode(this.capture.uow);
     this.capture.commit();
 
     this.context.help.pop('NodeDrag');

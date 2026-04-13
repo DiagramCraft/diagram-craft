@@ -24,7 +24,6 @@ const adjustColumnWidth = (colIdx: number, table: TableHelper, w: number, uow: U
 
 export class TableDividerResizeDrag extends Drag {
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
   private readonly table: TableHelper;
   private readonly originalSize: number;
 
@@ -38,7 +37,6 @@ export class TableDividerResizeDrag extends Drag {
     this.capture = this.tableNode.diagram.undoManager.beginCapture(
       this.type === 'column' ? 'Resize table column' : 'Resize table row'
     );
-    this.uow = this.capture.unitOfWork;
     this.table = new TableHelper(this.tableNode);
     this.originalSize = this.getOriginalSize();
   }
@@ -55,7 +53,7 @@ export class TableDividerResizeDrag extends Drag {
         MIN_TABLE_DIVIDER_SIZE,
         this.originalSize + (event.offset.x - this.initialPoint.x)
       );
-      adjustColumnWidth(this.index, this.table, width, this.uow);
+      adjustColumnWidth(this.index, this.table, width, this.capture.uow);
       this.setState({ label: `w: ${width.toFixed(0)}` });
     } else {
       const row = this.table.getRowsSorted()[this.index];
@@ -65,13 +63,13 @@ export class TableDividerResizeDrag extends Drag {
         MIN_TABLE_DIVIDER_SIZE,
         this.originalSize + (event.offset.y - this.initialPoint.y)
       );
-      adjustRowHeight(row, height, this.uow);
+      adjustRowHeight(row, height, this.capture.uow);
       this.setState({ label: `h: ${height.toFixed(0)}` });
     }
 
-    this.tableNode.getDefinition().onChildChanged(this.tableNode, this.uow);
+    this.tableNode.getDefinition().onChildChanged(this.tableNode, this.capture.uow);
 
-    this.uow.notify();
+    this.capture.uow.notify();
     this.tableNode.diagram.selection.recalculateBoundingBox();
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }

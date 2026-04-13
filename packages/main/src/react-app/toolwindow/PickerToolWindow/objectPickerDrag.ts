@@ -29,7 +29,9 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
   ) {
     const sourceBounds = Box.boundingBox(source.map(e => e.bounds));
     const svgElement =
-      event.target instanceof Element ? (event.target.closest('svg') as SVGSVGElement | null) : null;
+      event.target instanceof Element
+        ? (event.target.closest('svg') as SVGSVGElement | null)
+        : null;
 
     const dragOffset = svgElement
       ? (() => {
@@ -94,7 +96,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
           styleManager.crdt.factory,
           styleManager
         );
-        styleManager.addStylesheet(style.id, stylesheet, this.uow);
+        styleManager.addStylesheet(style.id, stylesheet, this.capture.uow);
       }
     }
 
@@ -113,7 +115,7 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
     const scaleX = sourceBounds.w / bounds.w;
     const scaleY = Math.max(0.1, sourceBounds.h) / Math.max(0.1, bounds.h);
 
-    this._elements.forEach(e => activeLayer.addElement(e, this.uow));
+    this._elements.forEach(e => activeLayer.addElement(e, this.capture.uow));
 
     if (this.nodeLinkOptions !== undefined) {
       UnitOfWork.execute(this.diagram, uow => {

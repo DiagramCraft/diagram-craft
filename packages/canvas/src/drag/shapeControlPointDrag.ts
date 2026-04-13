@@ -6,14 +6,13 @@ import { DiagramElement } from '@diagram-craft/model/diagramElement';
 
 export class ShapeControlPointDrag extends Drag {
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
+
   constructor(
     private readonly element: DiagramElement,
     private readonly callback: (pos: Point, uow: UnitOfWork) => string
   ) {
     super();
     this.capture = this.element.diagram.undoManager.beginCapture('Adjust shape');
-    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -30,9 +29,9 @@ export class ShapeControlPointDrag extends Drag {
       y: bounds.y + bounds.h * (nodeProps.geometry.flipV ? 1 - p.y : p.y)
     };
 
-    const label = this.callback(transformedCoord, this.uow);
+    const label = this.callback(transformedCoord, this.capture.uow);
     this.setState({ label });
-    this.uow.notify();
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }

@@ -3,7 +3,6 @@ import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
@@ -29,7 +28,6 @@ export const calculateTargetRotationAngle = (
 
 export class RotateDrag extends Drag {
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
 
   constructor(
     private readonly diagram: Diagram,
@@ -37,7 +35,6 @@ export class RotateDrag extends Drag {
   ) {
     super();
     this.capture = this.diagram.undoManager.beginCapture('Rotate');
-    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -64,7 +61,7 @@ export class RotateDrag extends Drag {
         selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       TransformFactory.fromTo(before, { ...selection.bounds, r: adjustedAngle }),
-      this.uow
+      this.capture.uow
     );
 
     selection.forceRotation(adjustedAngle);
@@ -73,7 +70,7 @@ export class RotateDrag extends Drag {
       label: `angle: ${Angle.toDeg(adjustedAngle).toFixed(0)}°`
     });
 
-    this.uow.notify();
+    this.capture.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selection.recalculateBoundingBox();

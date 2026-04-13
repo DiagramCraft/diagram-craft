@@ -5,7 +5,6 @@ import { Point } from '@diagram-craft/geometry/point';
 import { Direction } from '@diagram-craft/geometry/direction';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
@@ -21,7 +20,6 @@ const isFreeDrag = (m: Modifiers) => m.altKey;
 
 export class ResizeDrag extends Drag {
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
   private readonly originalBounds: Box;
 
   constructor(
@@ -31,7 +29,6 @@ export class ResizeDrag extends Drag {
   ) {
     super();
     this.capture = this.diagram.undoManager.beginCapture('Resize');
-    this.uow = this.capture.unitOfWork;
     this.originalBounds = this.diagram.selection.bounds;
   }
 
@@ -164,9 +161,9 @@ export class ResizeDrag extends Drag {
         selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       TransformFactory.fromTo(selection.bounds, WritableBox.asBox(newBounds)),
-      this.uow
+      this.capture.uow
     );
-    this.uow.notify();
+    this.capture.uow.notify();
 
     // This is mainly a performance optimization and not strictly necessary
     this.diagram.selection.recalculateBoundingBox();
@@ -178,7 +175,7 @@ export class ResizeDrag extends Drag {
     const selection = this.diagram.selection;
 
     if (selection.isChanged()) {
-      growBoundsForSelection(this.diagram, this.uow);
+      growBoundsForSelection(this.diagram, this.capture.uow);
     }
     this.capture.commit();
 

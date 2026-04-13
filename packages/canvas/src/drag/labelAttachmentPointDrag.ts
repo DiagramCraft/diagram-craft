@@ -3,12 +3,10 @@ import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
 
 export class LabelAttachmentPointDrag extends Drag {
   private readonly capture: UndoCapture;
-  private readonly uow: UnitOfWork;
 
   constructor(
     private labelNode: ResolvedLabelNode,
@@ -17,7 +15,6 @@ export class LabelAttachmentPointDrag extends Drag {
   ) {
     super();
     this.capture = this.edge.diagram.undoManager.beginCapture('Move label node');
-    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart): void {
@@ -35,9 +32,9 @@ export class LabelAttachmentPointDrag extends Drag {
         : this.labelNode.offset;
     this.labelNode
       .node()
-      .updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.uow);
+      .updateLabelNode({ timeOffset: timeOffset.pathT, offset: offset }, this.capture.uow);
 
-    this.uow.notify();
+    this.capture.uow.notify();
 
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
   }

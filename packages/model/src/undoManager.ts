@@ -85,7 +85,7 @@ export class UndoCapture implements Releasable {
   #completed = false;
 
   constructor(
-    readonly unitOfWork: UnitOfWork,
+    readonly uow: UnitOfWork,
     private readonly label: string,
     private readonly session: Releasable,
     private readonly finalize: (action: UndoableAction | undefined) => void
@@ -99,10 +99,10 @@ export class UndoCapture implements Releasable {
     if (this.#completed) return;
     this.#completed = true;
     try {
-      if (this.unitOfWork.state === 'pending') {
-        this.unitOfWork.commit();
+      if (this.uow.state === 'pending') {
+        this.uow.commit();
       }
-      this.finalize(this.unitOfWork._finishAsUndoableAction(this.label));
+      this.finalize(this.uow._finishAsUndoableAction(this.label));
     } finally {
       this.session.release();
     }
@@ -115,8 +115,8 @@ export class UndoCapture implements Releasable {
     if (this.#completed) return;
     this.#completed = true;
     try {
-      if (this.unitOfWork.state === 'pending') {
-        this.unitOfWork.abort();
+      if (this.uow.state === 'pending') {
+        this.uow.abort();
       }
     } finally {
       this.session.release();
@@ -257,7 +257,7 @@ export class DefaultUndoManager
   execute<T>(label: string, callback: (uow: UnitOfWork) => T): T {
     const capture = this.beginCapture(label);
     try {
-      return callback(capture.unitOfWork);
+      return callback(capture.uow);
     } finally {
       capture.commit();
     }
@@ -457,7 +457,7 @@ export class CollaborationBackendUndoManager
   execute<T>(label: string, callback: (uow: UnitOfWork) => T): T {
     const capture = this.beginCapture(label);
     try {
-      return callback(capture.unitOfWork);
+      return callback(capture.uow);
     } finally {
       capture.commit();
     }

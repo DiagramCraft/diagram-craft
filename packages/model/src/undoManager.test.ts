@@ -204,7 +204,7 @@ describe('DefaultUndoManager', () => {
     const state = { x: 0 };
     const capture = manager.beginCapture('Increment');
 
-    capture.unitOfWork.add({
+    capture.uow.add({
       description: 'increment',
       undo: () => {
         state.x--;
@@ -263,7 +263,7 @@ describe('CollaborationBackendUndoManager', () => {
       const map = root.getMap<{ value?: number }>('undo-test');
       const capture = manager.beginCapture('Set value');
 
-      capture.unitOfWork.add({
+      capture.uow.add({
         description: 'set value',
         undo: () => {
           map.delete('value');

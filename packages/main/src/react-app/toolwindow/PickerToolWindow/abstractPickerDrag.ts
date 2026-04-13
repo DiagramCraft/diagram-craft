@@ -80,7 +80,7 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
     this.resetCapture();
     this.addElement(_p(0, 0));
-    transformElements(this.diagram.selection.elements, [new Translation(point)], this.uow);
+    transformElements(this.diagram.selection.elements, [new Translation(point)], this.capture.uow);
 
     super.onDragEnd();
   }
@@ -201,6 +201,5 @@ export abstract class AbstractPickerDrag extends AbstractMoveDrag {
 
   private resetCapture() {
     this.capture = this.diagram.undoManager.beginCapture('Move');
-    this.uow = this.capture.unitOfWork;
   }
 }

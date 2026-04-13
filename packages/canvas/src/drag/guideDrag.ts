@@ -128,15 +128,13 @@ export class GuideCreateDrag extends BaseGuideDrag {
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {
-    if (this.guide) {
-      if (isStackedUndoManager(this.diagram.undoManager)) {
-        this.diagram.undoManager.add(
-          new CreateGuideUndoableAction(
-            this.diagram,
-            this.diagram.guides.find(g => g.id === this.guide!.id)!
-          )
-        );
-      }
+    if (this.guide && isStackedUndoManager(this.diagram.undoManager)) {
+      this.diagram.undoManager.add(
+        new CreateGuideUndoableAction(
+          this.diagram,
+          this.diagram.guides.find(g => g.id === this.guide!.id)!
+        )
+      );
     }
 
     this.emit('dragEnd');

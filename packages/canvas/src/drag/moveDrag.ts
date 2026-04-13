@@ -15,7 +15,6 @@ import {
   transformElements
 } from '@diagram-craft/model/diagramElement';
 import type { UndoCapture } from '@diagram-craft/model/undoManager';
-import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -59,10 +58,9 @@ export abstract class AbstractMoveDrag extends Drag {
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
   #disablePointerEventsFrame: number | undefined = undefined;
-  protected capture: UndoCapture;
 
+  protected capture: UndoCapture;
   protected dragStarted = false;
-  protected uow: UnitOfWork;
 
   protected constructor(
     protected readonly diagram: Diagram,
@@ -74,7 +72,6 @@ export abstract class AbstractMoveDrag extends Drag {
 
     precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
     this.capture = this.diagram.undoManager.beginCapture('Move');
-    this.uow = this.capture.unitOfWork;
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
@@ -170,7 +167,9 @@ export abstract class AbstractMoveDrag extends Drag {
       SnapMarkers.get(this.diagram).clear();
     } else {
       const potentialParent =
-        this.#currentElement && isNode(this.#currentElement) && this.#currentElement.getDefinition().onDrop
+        this.#currentElement &&
+        isNode(this.#currentElement) &&
+        this.#currentElement.getDefinition().onDrop
           ? this.#currentElement
           : undefined;
       const snapManager = SnapManager.create(this.diagram, potentialParent);
@@ -192,13 +191,13 @@ export abstract class AbstractMoveDrag extends Drag {
           selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
         ),
         [new Translation(Point.subtract(newBounds, selection.bounds))],
-        this.uow
+        this.capture.uow
       );
 
       // This is mainly a performance optimization and not strictly necessary
       this.diagram.selection.recalculateBoundingBox();
 
-      this.uow.notify();
+      this.capture.uow.notify();
     }
 
     this.emit('drag', { coord: offset, modifiers });
@@ -219,10 +218,10 @@ export abstract class AbstractMoveDrag extends Drag {
     }
     enablePointerEvents(selection.elements);
 
-    this.uow.compact();
+    this.capture.uow.compact();
 
     if (selection.isChanged()) {
-      growBoundsForSelection(this.diagram, this.uow);
+      growBoundsForSelection(this.diagram, this.capture.uow);
 
       // This means we are dropping onto an element
       if (this.#currentElement) {
@@ -237,17 +236,17 @@ export abstract class AbstractMoveDrag extends Drag {
               const pDef = e.getDefinition();
               if (!pDef.onDrop) continue;
 
-              this.uow.select(this.diagram, selection.elements);
+              this.capture.uow.select(this.diagram, selection.elements);
 
               const elementsToMove = selection.elements.filter(el => el.parent !== e);
               if (elementsToMove.length > 0) {
-                pDef.onDrop(p, e, selection.elements, this.uow, 'default');
+                pDef.onDrop(p, e, selection.elements, this.capture.uow, 'default');
               }
               break;
             }
           } else if (isEdge(el)) {
             const operation = this.getLastState(2) === 1 ? 'split' : 'attach';
-            el.getDefinition().onDrop(p, el, selection.elements, this.uow, operation);
+            el.getDefinition().onDrop(p, el, selection.elements, this.capture.uow, operation);
           } else {
             VERIFY_NOT_REACHED();
           }
@@ -263,7 +262,7 @@ export abstract class AbstractMoveDrag extends Drag {
       ) {
         this.diagram.moveElement(
           selection.elements,
-          this.uow,
+          this.capture.uow,
           activeLayer,
           activeLayer.elements.length > 0
             ? {
@@ -273,7 +272,6 @@ export abstract class AbstractMoveDrag extends Drag {
             : undefined
         );
       }
-
     }
     this.capture.commit();
     selection.rebaseline();
@@ -414,7 +412,7 @@ export class MoveDrag extends AbstractMoveDrag {
     // Clone the current selection to keep in its original position
     const newElements = selection.source.elementIds.map(e => this.diagram.lookup(e)!.duplicate());
     newElements.forEach(e => {
-      activeLayer.addElement(e, this.uow);
+      activeLayer.addElement(e, this.capture.uow);
     });
 
     // Reset current selection back to original
@@ -424,7 +422,7 @@ export class MoveDrag extends AbstractMoveDrag {
         selection.type === 'single-label-node' ? includeAll : excludeLabelNodes
       ),
       [new Translation(Point.subtract(selection.source.boundingBox, selection.bounds))],
-      this.uow
+      this.capture.uow
     );
 
     enablePointerEvents(selection.elements);
@@ -432,7 +430,7 @@ export class MoveDrag extends AbstractMoveDrag {
     SnapMarkers.get(this.diagram).clear();
     selection.setElements(newElements, false);
 
-    this.uow.notify();
+    this.capture.uow.notify();
 
     // To ensure that pointer events are disabled at the next drag event
     this.dragStarted = false;
@@ -452,15 +450,15 @@ export class MoveDrag extends AbstractMoveDrag {
     SnapMarkers.get(this.diagram).clear();
 
     elementsToRemove.forEach(e => {
-      e.layer.removeElement(e, this.uow);
+      e.layer.removeElement(e, this.capture.uow);
     });
 
     // Reset the original selection back to the position of the now
     // removed duplicates
     selection.elements.forEach((e, idx) => {
-      e.setBounds(posititions[idx]!, this.uow);
+      e.setBounds(posititions[idx]!, this.capture.uow);
     });
 
-    this.uow.notify();
+    this.capture.uow.notify();
   }
 }
