@@ -28,9 +28,11 @@ import type {
   AttachEdgeContext,
   AttachPhase
 } from '@diagram-craft/model/elementDefinitionRegistry';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class EdgeEndpointMoveDrag extends Drag {
   readonly uow: UnitOfWork;
+  readonly undoSession: Releasable;
   protected hoverElement: string | undefined;
   protected modifiers: Modifiers | undefined;
 
@@ -45,6 +47,7 @@ export class EdgeEndpointMoveDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.edge.diagram);
+    this.undoSession = this.edge.diagram.undoManager.beginUndoableSession('Move edge endpoint');
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'move';
 
@@ -142,6 +145,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     this.updateEdgeParent();
 
     this.uow.commitWithUndo('Move edge endpoint');
+    this.undoSession.release();
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
 
     this.context.help.pop('EdgeEndpointMoveDrag');
@@ -203,6 +207,7 @@ export class EdgeEndpointMoveDrag extends Drag {
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
     this.uow.abort();
+    this.undoSession.release();
   }
 
   private attachToClosestAnchor(p: Point, phase: AttachPhase = 'drag') {

@@ -4,6 +4,7 @@ import { Vector } from '@diagram-craft/geometry/vector';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { ControlPoints, DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Context } from '../context';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const otherCp = (cIdx: 'cp1' | 'cp2') => (cIdx === 'cp1' ? 'cp2' : 'cp1');
 
@@ -12,6 +13,7 @@ const isSymmetricDrag = (modifiers: Modifiers) => modifiers.altKey;
 
 export class EdgeControlPointDrag extends Drag {
   private readonly uow: UnitOfWork;
+  private readonly undoSession: Releasable;
 
   constructor(
     private readonly edge: DiagramEdge,
@@ -21,6 +23,7 @@ export class EdgeControlPointDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.edge.diagram);
+    this.undoSession = this.edge.diagram.undoManager.beginUndoableSession('Move Control Point');
 
     this.context.help.push(
       'EdgeControlPointDrag',
@@ -61,11 +64,13 @@ export class EdgeControlPointDrag extends Drag {
 
   onDragEnd(): void {
     this.uow.commitWithUndo('Move Control Point');
+    this.undoSession.release();
 
     this.context.help.pop('EdgeControlPointDrag');
   }
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 }

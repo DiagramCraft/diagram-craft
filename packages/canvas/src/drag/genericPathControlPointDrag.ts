@@ -2,9 +2,11 @@ import type { EditablePath } from '../editablePath';
 import { Drag, DragEvents } from '../dragDropManager';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Context } from '../context';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class GenericPathControlPointDrag extends Drag {
   private readonly uow: UnitOfWork;
+  private readonly undoSession: Releasable;
 
   constructor(
     private readonly editablePath: EditablePath,
@@ -14,6 +16,7 @@ export class GenericPathControlPointDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.editablePath.node.diagram);
+    this.undoSession = this.editablePath.node.diagram.undoManager.beginUndoableSession('Edit path');
 
     this.context.help.push(
       'GenericPathControlPointDrag',
@@ -38,11 +41,13 @@ export class GenericPathControlPointDrag extends Drag {
   onDragEnd(): void {
     this.editablePath.commitToNode(this.uow);
     this.uow.commitWithUndo('Edit path');
+    this.undoSession.release();
 
     this.context.help.pop('GenericPathControlPointDrag');
   }
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 }

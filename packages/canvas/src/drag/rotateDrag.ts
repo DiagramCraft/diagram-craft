@@ -8,6 +8,7 @@ import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 const normalizeSignedAngle = (angle: number) => {
@@ -28,6 +29,7 @@ export const calculateTargetRotationAngle = (
 
 export class RotateDrag extends Drag {
   private readonly uow: UnitOfWork;
+  private readonly undoSession: Releasable;
 
   constructor(
     private readonly diagram: Diagram,
@@ -35,6 +37,7 @@ export class RotateDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.diagram);
+    this.undoSession = this.diagram.undoManager.beginUndoableSession('Rotate');
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -86,6 +89,7 @@ export class RotateDrag extends Drag {
     } else {
       this.uow.abort();
     }
+    this.undoSession.release();
 
     selection.forceRotation(undefined);
     selection.rebaseline();
@@ -93,5 +97,6 @@ export class RotateDrag extends Drag {
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 }

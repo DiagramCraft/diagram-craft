@@ -10,9 +10,27 @@ import {
 } from '../crdt';
 import * as Y from 'yjs';
 import { EventEmitter, EventKey, EventReceiver } from '@diagram-craft/utils/event';
+import { getActiveYjsUndoOrigin } from './yjsUndoTrackingContext';
 
 const shouldEmitObservableTransactionEvents = (transaction: Y.Transaction) => {
   return !transaction.local || transaction.origin instanceof Y.UndoManager;
+};
+
+const withActiveUndoOrigin = <T>(doc: Y.Doc | null | undefined, callback: () => T): T => {
+  if (!doc || doc._transaction) {
+    return callback();
+  }
+
+  const origin = getActiveYjsUndoOrigin(doc);
+  if (origin === undefined) {
+    return callback();
+  }
+
+  let result!: T;
+  doc.transact(() => {
+    result = callback();
+  }, origin);
+  return result;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -122,7 +140,7 @@ export class YJSRoot extends EventEmitter<CRDTRootEvents> implements CRDTRoot {
   }
 
   clear() {
-    this.data.clear();
+    withActiveUndoOrigin(this.doc, () => this.data.clear());
   }
 
   getMap<T extends { [key: string]: CRDTCompatibleObject }>(name: string): YJSMap<T> {
@@ -224,12 +242,12 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
 
   clear() {
     this.initial?.clear();
-    this.delegate.clear();
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.clear());
   }
 
   delete<K extends keyof T & string>(key: K) {
     this.initial?.delete(key);
-    this.delegate.delete(key);
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.delete(key));
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -253,7 +271,7 @@ export class YJSMap<T extends { [key: string]: CRDTCompatibleObject }> implement
 
   set<K extends keyof T & string>(key: K, value: T[K]) {
     this.initial?.set(key, value);
-    this.delegate.set(key, unwrap(value));
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.set(key, unwrap(value)));
   }
 
   get size() {
@@ -382,9 +400,11 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
     if (this.initial) {
       this.initial.length = 0;
     }
-    while (this.delegate.length > 0) {
-      this.delegate.delete(0);
-    }
+    withActiveUndoOrigin(this.delegate.doc, () => {
+      while (this.delegate.length > 0) {
+        this.delegate.delete(0);
+      }
+    });
   }
 
   get length() {
@@ -403,21 +423,21 @@ export class YJSList<T extends CRDTCompatibleObject> implements CRDTList<T> {
       this.initial.splice(index, 0, ...value);
       return;
     }
-    this.delegate.insert(index, value.map(unwrap));
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.insert(index, value.map(unwrap)));
   }
 
   push(value: T): void {
     if (this.initial) {
       this.initial.push(value);
     }
-    this.delegate.push([unwrap(value)]);
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.push([unwrap(value)]));
   }
 
   delete(index: number): void {
     if (this.initial) {
       this.initial.splice(index, 1);
     }
-    this.delegate.delete(index);
+    withActiveUndoOrigin(this.delegate.doc, () => this.delegate.delete(index));
   }
 
   toArray(): T[] {

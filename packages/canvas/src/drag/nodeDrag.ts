@@ -3,11 +3,13 @@ import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Context } from '../context';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class NodeDrag extends Drag {
   private readonly startTime: number;
   private readonly uow: UnitOfWork;
   private readonly initialPositions: Point[];
+  private readonly undoSession: Releasable;
 
   private lastPoint: Point | undefined;
   private startPoint: Point | undefined;
@@ -21,6 +23,7 @@ export class NodeDrag extends Drag {
 
     this.startTime = Date.now();
     this.uow = UnitOfWork.begin(this.editablePath.node.diagram);
+    this.undoSession = this.editablePath.node.diagram.undoManager.beginUndoableSession('Edit path');
 
     this.initialPositions = this.waypointIndices.map(
       idx => this.editablePath.waypoints[idx]!.point
@@ -58,16 +61,19 @@ export class NodeDrag extends Drag {
       (Date.now() - this.startTime < 200 && Point.distance(this.lastPoint, this.startPoint) < 5)
     ) {
       this.uow.abort();
+      this.undoSession.release();
       return;
     }
 
     this.editablePath.commitToNode(this.uow);
     this.uow.commitWithUndo('Edit path');
+    this.undoSession.release();
 
     this.context.help.pop('NodeDrag');
   }
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 }

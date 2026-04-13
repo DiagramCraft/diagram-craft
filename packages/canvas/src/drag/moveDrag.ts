@@ -28,6 +28,7 @@ import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -58,6 +59,7 @@ export abstract class AbstractMoveDrag extends Drag {
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
   #disablePointerEventsFrame: number | undefined = undefined;
+  protected readonly undoSession: Releasable;
 
   protected dragStarted = false;
   protected uow: UnitOfWork;
@@ -72,6 +74,7 @@ export abstract class AbstractMoveDrag extends Drag {
 
     precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
     this.uow = UnitOfWork.begin(this.diagram);
+    this.undoSession = this.diagram.undoManager.beginUndoableSession('Move');
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
@@ -275,6 +278,7 @@ export abstract class AbstractMoveDrag extends Drag {
     } else {
       this.uow.commit();
     }
+    this.undoSession.release();
     selection.rebaseline();
   }
 
@@ -399,6 +403,7 @@ export class MoveDrag extends AbstractMoveDrag {
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 
   private duplicate() {

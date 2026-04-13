@@ -10,6 +10,7 @@ import { YJSRoot } from '@diagram-craft/collaboration/yjs/yjsCrdt';
 import { createSyncedYJSCRDTs } from '@diagram-craft/collaboration/test-support/yjsTestUtils';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { YJSWebSocketCollaborationBackend } from '@diagram-craft/collaboration/yjs/yjsWebsocketCollaborationBackend';
+import { UnitOfWork } from './unitOfWork';
 
 const makeCounterAction = (state: { x: number }) => ({
   description: '',
@@ -299,6 +300,33 @@ describe('CollaborationBackendUndoManager', () => {
       expect(map.get('first')).toBe(1);
       expect(map.get('second')).toBeUndefined();
       expect(map.get('third')).toBeUndefined();
+    });
+  });
+
+  test('beginUndoableSession() captures long-lived UnitOfWork changes', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+
+      const session = manager.beginUndoableSession('Drag move');
+      const uow = UnitOfWork.begin(diagram);
+      try {
+        map.set('value', 1);
+        uow.commitWithUndo('Drag move');
+      } finally {
+        session.release();
+      }
+
+      expect(map.get('value')).toBe(1);
+      expect(manager.canUndo()).toBe(true);
+
+      manager.undo();
+      expect(map.get('value')).toBeUndefined();
     });
   });
 

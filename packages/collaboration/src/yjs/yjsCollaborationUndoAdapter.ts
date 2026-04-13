@@ -6,6 +6,7 @@ import type {
 } from '../collaborationUndoAdapter';
 import { YJSRoot } from './yjsCrdt';
 import * as Y from 'yjs';
+import { openYjsUndoOriginSession } from './yjsUndoTrackingContext';
 
 const YJS_UNDO_ORIGIN = Symbol('diagram-craft-yjs-undo-origin');
 
@@ -66,6 +67,14 @@ export class YjsCollaborationUndoAdapter
 
   stopCapturing() {
     this.#undoManager.stopCapturing();
+  }
+
+  openTrackedSession(root: CRDTRoot) {
+    if (!(root instanceof YJSRoot)) {
+      return { release() {} };
+    }
+
+    return openYjsUndoOriginSession(root.yDoc, YJS_UNDO_ORIGIN);
   }
 
   runTracked<T>(root: CRDTRoot, callback: () => T): T {

@@ -12,6 +12,7 @@ import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
 import { resolveResizeCompensation } from '../effects/selectionEffects';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type ResizeType = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se';
 
@@ -21,6 +22,7 @@ const isFreeDrag = (m: Modifiers) => m.altKey;
 export class ResizeDrag extends Drag {
   private readonly uow: UnitOfWork;
   private readonly originalBounds: Box;
+  private readonly undoSession: Releasable;
 
   constructor(
     private readonly diagram: Diagram,
@@ -29,6 +31,7 @@ export class ResizeDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.diagram);
+    this.undoSession = this.diagram.undoManager.beginUndoableSession('Resize');
     this.originalBounds = this.diagram.selection.bounds;
   }
 
@@ -181,6 +184,7 @@ export class ResizeDrag extends Drag {
     } else {
       this.uow.abort();
     }
+    this.undoSession.release();
 
     selection.rebaseline();
     this.emit('dragEnd');
@@ -223,5 +227,6 @@ export class ResizeDrag extends Drag {
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 }

@@ -24,5 +24,6 @@ export interface CollaborationUndoAdapter
   stopCapturing(): void;
   getUndoStackSize(): number;
   getRedoStackSize(): number;
+  openTrackedSession(root: CRDTRoot): Releasable;
   runTracked<T>(root: CRDTRoot, callback: () => T): T;
 }

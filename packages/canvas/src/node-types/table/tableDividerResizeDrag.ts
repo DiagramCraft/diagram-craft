@@ -4,6 +4,7 @@ import { TransformFactory } from '@diagram-craft/geometry/transform';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramNode } from '@diagram-craft/model/diagramNode';
 import { TableHelper } from './tableUtils';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 type DividerType = 'row' | 'column';
 
@@ -25,6 +26,7 @@ export class TableDividerResizeDrag extends Drag {
   private readonly uow: UnitOfWork;
   private readonly table: TableHelper;
   private readonly originalSize: number;
+  private readonly undoSession: Releasable;
 
   constructor(
     private readonly tableNode: DiagramNode,
@@ -34,6 +36,9 @@ export class TableDividerResizeDrag extends Drag {
   ) {
     super();
     this.uow = UnitOfWork.begin(this.tableNode.diagram);
+    this.undoSession = this.tableNode.diagram.undoManager.beginUndoableSession(
+      this.type === 'column' ? 'Resize table column' : 'Resize table row'
+    );
     this.table = new TableHelper(this.tableNode);
     this.originalSize = this.getOriginalSize();
   }
@@ -78,6 +83,7 @@ export class TableDividerResizeDrag extends Drag {
     } else {
       this.uow.abort();
     }
+    this.undoSession.release();
 
     selection.rebaseline();
     this.emit('dragEnd');
@@ -85,6 +91,7 @@ export class TableDividerResizeDrag extends Drag {
 
   cancel() {
     this.uow.abort();
+    this.undoSession.release();
   }
 
   private getOriginalSize() {

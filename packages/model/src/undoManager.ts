@@ -78,6 +78,7 @@ export type UndoEvents = {
 export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
   canUndo(): boolean;
   canRedo(): boolean;
+  beginUndoableSession(label: string): Releasable;
   runUndoable<T>(label: string, callback: () => T): T;
   setMark(markName?: string): void;
   getToMark(markName?: string): UndoableAction[];
@@ -122,6 +123,10 @@ export class DefaultUndoManager
   }
 
   release() {}
+
+  beginUndoableSession(_label: string): Releasable {
+    return { release() {} };
+  }
 
   runUndoable<T>(_label: string, callback: () => T): T {
     return callback();
@@ -253,6 +258,7 @@ export class CollaborationBackendUndoManager
   readonly #undoAdapter: CollaborationUndoAdapter;
   readonly #marks = new Map<string, number>();
   #captureDepth = 0;
+  #sessionDepth = 0;
   #pendingCapture:
     | {
         label: string;
@@ -277,8 +283,10 @@ export class CollaborationBackendUndoManager
               redo: () => {}
             })
         );
-        this.#undoAdapter.stopCapturing();
-        this.#pendingCapture = undefined;
+        if (this.#sessionDepth === 0) {
+          this.#undoAdapter.stopCapturing();
+          this.#pendingCapture = undefined;
+        }
       }
       this.emit('change');
     });
@@ -310,6 +318,36 @@ export class CollaborationBackendUndoManager
 
   canRedo() {
     return this.#undoAdapter.canRedo();
+  }
+
+  beginUndoableSession(label: string): Releasable {
+    this.#captureDepth++;
+    this.#sessionDepth++;
+    this.#pendingCapture ??= { label };
+
+    const trackedSession = this.#undoAdapter.openTrackedSession(this.diagram.document.root);
+    const nativeCaptureSession = UnitOfWork.beginNativeUndoCaptureSession(this, action =>
+      this.registerCapturedAction(label, action)
+    );
+
+    let released = false;
+    return {
+      release: () => {
+        if (released) return;
+        released = true;
+
+        nativeCaptureSession.release();
+        trackedSession.release();
+
+        this.#sessionDepth--;
+        this.#captureDepth--;
+
+        if (this.#sessionDepth === 0) {
+          this.#undoAdapter.stopCapturing();
+          this.#pendingCapture = undefined;
+        }
+      }
+    };
   }
 
   runUndoable<T>(label: string, callback: () => T): T {
