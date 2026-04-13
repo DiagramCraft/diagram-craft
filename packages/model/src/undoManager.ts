@@ -75,25 +75,149 @@ export type UndoEvents = {
   change: Record<string, never>;
 };
 
-export interface UndoCapture extends Releasable {
-  readonly unitOfWork: UnitOfWork;
-  commit(): void;
-  abort(): void;
+/**
+ * Represents one long-lived undo boundary.
+ *
+ * A capture owns the {@link UnitOfWork} for the interaction and is responsible
+ * for either finalizing it into one undo step or aborting it entirely.
+ */
+export class UndoCapture implements Releasable {
+  #completed = false;
+
+  constructor(
+    readonly unitOfWork: UnitOfWork,
+    private readonly label: string,
+    private readonly session: Releasable,
+    private readonly finalize: (action: UndoableAction | undefined) => void
+  ) {}
+
+  /**
+   * Commits the underlying {@link UnitOfWork} and finalizes the resulting
+   * structural undo action for the owning {@link UndoManager}.
+   */
+  commit() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.unitOfWork.state === 'pending') {
+        this.unitOfWork.commit();
+      }
+      this.finalize(this.unitOfWork._finishAsUndoableAction(this.label));
+    } finally {
+      this.session.release();
+    }
+  }
+
+  /**
+   * Aborts the capture without producing an undo step.
+   */
+  abort() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.unitOfWork.state === 'pending') {
+        this.unitOfWork.abort();
+      }
+    } finally {
+      this.session.release();
+    }
+  }
+
+  /**
+   * Releases the capture.
+   *
+   * This is equivalent to {@link abort} and is primarily provided so captures
+   * can participate in generic releasable lifecycles.
+   */
+  release() {
+    this.abort();
+  }
 }
 
+/**
+ * Public API for creating, grouping and replaying undoable work.
+ *
+ * Implementations may store history in local process memory or delegate it to a
+ * collaboration backend, but callers should interact with them through this
+ * abstraction.
+ */
 export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
+  /**
+   * Returns whether an undo operation can currently be performed.
+   */
   canUndo(): boolean;
+
+  /**
+   * Returns whether a redo operation can currently be performed.
+   */
   canRedo(): boolean;
+
+  /**
+   * Executes one short-lived undoable operation.
+   *
+   * The callback receives a {@link UnitOfWork} that should be used for the
+   * structural changes belonging to this single undo step.
+   */
   execute<T>(label: string, callback: (uow: UnitOfWork) => T): T;
+
+  /**
+   * Starts a long-lived undo capture for interactions such as drag operations.
+   *
+   * The returned capture owns a {@link UnitOfWork} and is responsible for
+   * finalizing or aborting the undo step.
+   */
   beginCapture(label: string): UndoCapture;
+
+  /**
+   * Stores the current undo position under an optional mark name.
+   */
   setMark(markName?: string): void;
+
+  /**
+   * Returns undo actions from the current position back to the given mark and
+   * clears that mark.
+   *
+   * Stackless implementations may return an empty array.
+   */
   getToMark(markName?: string): UndoableAction[];
+
+  /**
+   * Undoes actions until the given mark is reached and then clears that mark.
+   */
   undoToMark(markName?: string): void;
+
+  /**
+   * Clears the redo history if supported by the implementation.
+   */
   clearRedo(): void;
+
+  /**
+   * Groups undo work produced during the callback into a single visible history
+   * step where supported.
+   *
+   * TODO: See if this can be removed
+   */
   combine(callback: () => void): void;
+
+  /**
+   * Adds an already constructed undo action to history without executing it.
+   */
   add(action: UndoableAction): void;
+
+  /**
+   * Adds an already constructed undo action to history and executes its redo
+   * behavior.
+   */
   addAndExecute(action: UndoableAction): void;
+
+  /**
+   * Undoes the most recent undoable step, if one exists.
+   */
   undo(): void;
+
+  /**
+   * Redoes the most recent redoable step, if one exists.
+   */
   redo(): void;
 }
 
@@ -112,46 +236,6 @@ const COLLABORATION_FALLBACK_DESCRIPTION = 'Undo';
 const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';
-
-class ManagedUndoCapture implements UndoCapture {
-  #completed = false;
-
-  constructor(
-    readonly unitOfWork: UnitOfWork,
-    private readonly label: string,
-    private readonly session: Releasable,
-    private readonly finalize: (action: UndoableAction | undefined) => void
-  ) {}
-
-  commit() {
-    if (this.#completed) return;
-    this.#completed = true;
-    try {
-      if (this.unitOfWork.state === 'pending') {
-        this.unitOfWork.commit();
-      }
-      this.finalize(this.unitOfWork._finishAsUndoableAction(this.label));
-    } finally {
-      this.session.release();
-    }
-  }
-
-  abort() {
-    if (this.#completed) return;
-    this.#completed = true;
-    try {
-      if (this.unitOfWork.state === 'pending') {
-        this.unitOfWork.abort();
-      }
-    } finally {
-      this.session.release();
-    }
-  }
-
-  release() {
-    this.abort();
-  }
-}
 
 export class DefaultUndoManager
   extends EventEmitter<UndoEvents>
@@ -180,16 +264,11 @@ export class DefaultUndoManager
   }
 
   beginCapture(label: string): UndoCapture {
-    return new ManagedUndoCapture(
-      UnitOfWork._begin(this.diagram),
-      label,
-      { release() {} },
-      action => {
-        if (action) {
-          this.add(action);
-        }
+    return new UndoCapture(UnitOfWork._begin(this.diagram), label, { release() {} }, action => {
+      if (action) {
+        this.add(action);
       }
-    );
+    });
   }
 
   canUndo() {
@@ -385,7 +464,7 @@ export class CollaborationBackendUndoManager
   }
 
   beginCapture(label: string): UndoCapture {
-    return new ManagedUndoCapture(
+    return new UndoCapture(
       UnitOfWork._begin(this.diagram),
       label,
       this.beginTrackedSession(label),
