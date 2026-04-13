@@ -1,21 +1,13 @@
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import type { Diagram } from './diagram';
 import { newid } from '@diagram-craft/utils/id';
-import { CompoundUndoableAction, type UndoManager, UndoableAction } from '@diagram-craft/model/undoManager';
+import { CompoundUndoableAction, UndoableAction } from '@diagram-craft/model/undoManager';
 import { groupBy, hasSameElements } from '@diagram-craft/utils/array';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { ArrayOrROArray, ArrayOrSingle } from '@diagram-craft/utils/types';
 
 const remoteUnitOfWorkRegistry = new Map<string, UnitOfWork>();
-const nativeUndoCaptureStack: Array<{
-  manager: UndoManager;
-  register: (action: UndoableAction | undefined) => void;
-}> = [];
-const nativeUndoCaptureSessions = new Map<
-  UndoManager,
-  Array<(action: UndoableAction | undefined) => void>
->();
 
 export const getRemoteUnitOfWork = (diagram: Diagram) => {
   let uow = remoteUnitOfWorkRegistry.get(diagram.id);
@@ -226,48 +218,6 @@ export class UnitOfWork {
     return diagram.undoManager.execute(label, cb);
   }
 
-  static withNativeUndoCapture<T>(
-    manager: UndoManager,
-    register: (action: UndoableAction | undefined) => void,
-    callback: () => T
-  ): T {
-    nativeUndoCaptureStack.push({ manager, register });
-    try {
-      return callback();
-    } finally {
-      nativeUndoCaptureStack.pop();
-    }
-  }
-
-  static beginNativeUndoCaptureSession(
-    manager: UndoManager,
-    register: (action: UndoableAction | undefined) => void
-  ) {
-    const captures = nativeUndoCaptureSessions.get(manager) ?? [];
-    captures.push(register);
-    nativeUndoCaptureSessions.set(manager, captures);
-
-    let released = false;
-    return {
-      release: () => {
-        if (released) return;
-        released = true;
-
-        const currentCaptures = nativeUndoCaptureSessions.get(manager);
-        if (!currentCaptures) return;
-
-        const idx = currentCaptures.lastIndexOf(register);
-        if (idx >= 0) {
-          currentCaptures.splice(idx, 1);
-        }
-
-        if (currentCaptures.length === 0) {
-          nativeUndoCaptureSessions.delete(manager);
-        }
-      }
-    };
-  }
-
   add(action: UndoableAction) {
     this.#undoableActions.push(action);
   }
@@ -468,7 +418,7 @@ export class UnitOfWork {
     }
   }
 
-  commit(_withUndo = false) {
+  commit() {
     this.state = 'committed';
 
     this.emitEvent('before-commit');
@@ -494,24 +444,16 @@ export class UnitOfWork {
     registry.unregister(this);
   }
 
+  finishAsUndoableAction(msg: string): UndoableAction | undefined {
+    return this.buildUndoableAction(msg);
+  }
+
   commitWithUndo(msg: string) {
-    this.commit(true);
-    const action = this.buildUndoableAction(msg);
-    if (!action) return;
-
-    const currentCapture = nativeUndoCaptureStack.at(-1);
-    if (currentCapture?.manager === this.diagram.undoManager) {
-      currentCapture.register(action);
-      return;
+    this.commit();
+    const action = this.finishAsUndoableAction(msg);
+    if (action) {
+      this.diagram.undoManager.add(action);
     }
-
-    const currentSessionCapture = nativeUndoCaptureSessions.get(this.diagram.undoManager)?.at(-1);
-    if (currentSessionCapture) {
-      currentSessionCapture(action);
-      return;
-    }
-
-    this.diagram.undoManager.add(action);
   }
 
   abort() {

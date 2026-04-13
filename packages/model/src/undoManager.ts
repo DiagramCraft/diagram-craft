@@ -115,13 +115,14 @@ const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';
 
-class CompatibilityUndoCapture implements UndoCapture {
+class ManagedUndoCapture implements UndoCapture {
   #completed = false;
 
   constructor(
     readonly unitOfWork: UnitOfWork,
     private readonly label: string,
-    private readonly session: Releasable
+    private readonly session: Releasable,
+    private readonly finalize: (action: UndoableAction | undefined) => void
   ) {}
 
   commit() {
@@ -129,8 +130,9 @@ class CompatibilityUndoCapture implements UndoCapture {
     this.#completed = true;
     try {
       if (this.unitOfWork.state === 'pending') {
-        this.unitOfWork.commitWithUndo(this.label);
+        this.unitOfWork.commit();
       }
+      this.finalize(this.unitOfWork.finishAsUndoableAction(this.label));
     } finally {
       this.session.release();
     }
@@ -180,7 +182,16 @@ export class DefaultUndoManager
   }
 
   beginCapture(label: string): UndoCapture {
-    return new CompatibilityUndoCapture(UnitOfWork.begin(this.diagram), label, this.beginUndoableSession(label));
+    return new ManagedUndoCapture(
+      UnitOfWork.begin(this.diagram),
+      label,
+      this.beginUndoableSession(label),
+      action => {
+        if (action) {
+          this.add(action);
+        }
+      }
+    );
   }
 
   beginUndoableSession(_label: string): Releasable {
@@ -322,6 +333,7 @@ export class CollaborationBackendUndoManager
     | {
         label: string;
         action?: UndoableAction;
+        stackItem?: { meta: Map<unknown, unknown> };
       }
     | undefined;
 
@@ -334,14 +346,8 @@ export class CollaborationBackendUndoManager
     this.#undoAdapter = undoAdapter;
     this.#undoAdapter.on('stackItemAdded', event => {
       if (event.type === 'undo' && event.tracked && this.#pendingCapture) {
-        event.stackItem.meta.set(
-          COLLABORATION_ACTION_META_KEY,
-          this.#pendingCapture.action ??
-            makeUndoableAction(this.#pendingCapture.label, {
-              undo: () => {},
-              redo: () => {}
-            })
-        );
+        this.#pendingCapture.stackItem = event.stackItem;
+        this.syncPendingCaptureMetadata();
         if (this.#sessionDepth === 0) {
           this.#undoAdapter.stopCapturing();
           this.#pendingCapture = undefined;
@@ -389,7 +395,12 @@ export class CollaborationBackendUndoManager
   }
 
   beginCapture(label: string): UndoCapture {
-    return new CompatibilityUndoCapture(UnitOfWork.begin(this.diagram), label, this.beginUndoableSession(label));
+    return new ManagedUndoCapture(
+      UnitOfWork.begin(this.diagram),
+      label,
+      this.beginUndoableSession(label),
+      action => this.registerCapturedAction(label, action)
+    );
   }
 
   beginUndoableSession(label: string): Releasable {
@@ -398,9 +409,6 @@ export class CollaborationBackendUndoManager
     this.#pendingCapture ??= { label };
 
     const trackedSession = this.#undoAdapter.openTrackedSession(this.diagram.document.root);
-    const nativeCaptureSession = UnitOfWork.beginNativeUndoCaptureSession(this, action =>
-      this.registerCapturedAction(label, action)
-    );
 
     let released = false;
     return {
@@ -408,7 +416,6 @@ export class CollaborationBackendUndoManager
         if (released) return;
         released = true;
 
-        nativeCaptureSession.release();
         trackedSession.release();
 
         this.#sessionDepth--;
@@ -430,9 +437,7 @@ export class CollaborationBackendUndoManager
     this.#captureDepth++;
     this.#pendingCapture = { label };
     try {
-      return UnitOfWork.withNativeUndoCapture(this, action => this.registerCapturedAction(label, action), () =>
-        this.#undoAdapter.runTracked(this.diagram.document.root, callback)
-      );
+      return this.#undoAdapter.runTracked(this.diagram.document.root, callback);
     } finally {
       this.#captureDepth--;
       if (this.#captureDepth === 0 && this.#pendingCapture?.label === label) {
@@ -490,6 +495,7 @@ export class CollaborationBackendUndoManager
   private registerCapturedAction(label: string, action: UndoableAction | undefined) {
     if (!this.#pendingCapture) {
       this.#pendingCapture = { label, action };
+      this.syncPendingCaptureMetadata();
       return;
     }
 
@@ -497,17 +503,33 @@ export class CollaborationBackendUndoManager
 
     if (!this.#pendingCapture.action) {
       this.#pendingCapture.action = action;
+      this.syncPendingCaptureMetadata();
       return;
     }
 
     if (this.#pendingCapture.action instanceof CompoundUndoableAction) {
       this.#pendingCapture.action.add(action);
+      this.syncPendingCaptureMetadata();
       return;
     }
 
     this.#pendingCapture.action = new CompoundUndoableAction(
       [this.#pendingCapture.action, action],
       label
+    );
+    this.syncPendingCaptureMetadata();
+  }
+
+  private syncPendingCaptureMetadata() {
+    if (!this.#pendingCapture?.stackItem) return;
+
+    this.#pendingCapture.stackItem.meta.set(
+      COLLABORATION_ACTION_META_KEY,
+      this.#pendingCapture.action ??
+        makeUndoableAction(this.#pendingCapture.label, {
+          undo: () => {},
+          redo: () => {}
+        })
     );
   }
 }

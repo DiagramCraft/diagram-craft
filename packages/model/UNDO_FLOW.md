@@ -32,7 +32,7 @@ This note describes how undo works in `@diagram-craft/model`, and why the flow d
 
 That boundary is trivial for `DefaultUndoManager`, but it is essential for collaboration-backed undo.
 
-- In the default case, structural undo is built after the mutation by `UnitOfWork.commitWithUndo(...)`.
+- In the default case, structural undo is built after the mutation by `UnitOfWork.finishAsUndoableAction(...)`.
 - In the collaboration-backed case, the mutation must happen inside a backend-tracked transaction so the backend can decide that the change belongs on the local undo stack.
 
 Because of that, callers no longer need to choose an undo implementation-specific path. They go through the active manager:
@@ -43,20 +43,24 @@ diagram.undoManager.execute(label, uow => {
 })
 ```
 
-## Why `withNativeUndoCapture(...)` exists
+## Why `finishAsUndoableAction(...)` exists
 
-`UnitOfWork` already knows how to derive a structural `UndoableAction` from tracked operations. That logic is still useful in the collaboration-backed case, but we do not want to push that action into a second app-managed stack.
+`UnitOfWork` already knows how to derive a structural `UndoableAction` from tracked operations.
 
-`UnitOfWork.withNativeUndoCapture(...)` is the bridge:
+The important phase-4 change is that `UnitOfWork` no longer decides where that action goes.
 
-- it temporarily tells `UnitOfWork.commitWithUndo(...)` not to call `undoManager.add(action)`
-- instead, it forwards the built structural action to a callback supplied by the collaboration-backed manager
-- that manager stores the action as metadata on the backend-native undo stack item
+Instead:
+
+- `capture.commit()` performs `uow.commit()`
+- `capture.commit()` then asks `UnitOfWork` for `finishAsUndoableAction(label)`
+- the concrete `UndoCapture` decides how to finalize that action:
+  - default manager: push to the in-memory stack
+  - collaboration-backed manager: attach it as metadata to the backend-native stack item
 
 So:
 
 - `execute(...)` controls the public execution boundary
-- `withNativeUndoCapture(...)` controls where the structural action built by `UnitOfWork` goes
+- `UndoCapture` controls how the structural action is finalized
 
 ## Default flow
 
@@ -65,9 +69,9 @@ This is the path used by `DefaultUndoManager`.
 1. Caller invokes `diagram.undoManager.execute(label, callback)`.
 2. `DefaultUndoManager.execute(...)` creates a capture and supplies its `UnitOfWork`.
 3. The callback mutates the model using that `UnitOfWork`.
-4. `capture.commit()` calls `UnitOfWork.commitWithUndo(...)`.
-5. Because no native capture is active, `commitWithUndo(...)` calls `diagram.undoManager.add(action)`.
-6. `DefaultUndoManager` stores the action in its in-memory undo stack.
+4. `capture.commit()` calls `UnitOfWork.commit()`.
+5. `capture.commit()` asks for `UnitOfWork.finishAsUndoableAction(label)`.
+6. `DefaultUndoManager` stores that action in its in-memory undo stack.
 
 ```mermaid
 sequenceDiagram
@@ -81,8 +85,9 @@ sequenceDiagram
     Mgr->>Work: create UnitOfWork
     Capture->>Work: expose unitOfWork to callback
     Work->>Work: track add/remove/update operations
-    Capture->>Work: commitWithUndo(label)
-    Work->>Mgr: add(structuralAction)
+    Capture->>Work: commit()
+    Capture->>Work: finishAsUndoableAction(label)
+    Capture->>Mgr: add(structuralAction)
     Mgr->>Mgr: push action onto undo stack
 ```
 
@@ -92,14 +97,13 @@ This is the path used by `CollaborationBackendUndoManager`.
 
 1. Caller invokes `diagram.undoManager.execute(label, callback)`.
 2. `CollaborationBackendUndoManager.execute(...)` creates a capture.
-3. That capture starts a tracked backend session and enters `UnitOfWork.withNativeUndoCapture(...)`.
+3. That capture starts a tracked backend session.
 4. The callback mutates the model using the capture's `UnitOfWork`.
-5. `capture.commit()` calls `UnitOfWork.commitWithUndo(...)`.
-6. Because native capture is active, `commitWithUndo(...)` does not call `undoManager.add(action)`.
-7. Instead, it forwards the action to the manager's native-capture callback.
-8. The backend creates a native undo stack item for the tracked transaction.
-9. When the adapter emits `stackItemAdded`, the manager attaches the captured structural action as metadata on that stack item.
-10. The manager calls `stopCapturing()` so the next user action becomes a separate backend undo item.
+5. `capture.commit()` calls `UnitOfWork.commit()`.
+6. `capture.commit()` asks for `UnitOfWork.finishAsUndoableAction(label)`.
+7. The backend creates a native undo stack item for the tracked transaction.
+8. The manager attaches the structural action as metadata on that stack item.
+9. The manager calls `stopCapturing()` so the next user action becomes a separate backend undo item.
 
 ```mermaid
 sequenceDiagram
@@ -112,10 +116,10 @@ sequenceDiagram
     Caller->>Mgr: execute(label, cb)
     Mgr->>Capture: beginCapture(label)
     Capture->>Adapter: open tracked session
-    Capture->>Work: withNativeUndoCapture(registerAction, callback)
     Work->>Work: track add/remove/update operations
-    Capture->>Work: commitWithUndo(label)
-    Work-->>Mgr: registerCapturedAction(structuralAction)
+    Capture->>Work: commit()
+    Capture->>Work: finishAsUndoableAction(label)
+    Capture-->>Mgr: registerCapturedAction(structuralAction)
     Adapter-->>Mgr: stackItemAdded(tracked stack item)
     Mgr->>Mgr: attach action metadata to stack item
     Mgr->>Adapter: stopCapturing()
@@ -141,7 +145,7 @@ Collaboration backends such as Yjs decide whether a change belongs on the local 
 That means:
 
 - you cannot mutate first and decide later that the mutation should be local undo history
-- you cannot rely only on `UnitOfWork.commitWithUndo(...)` or `UndoManager.addAndExecute(...)` after the mutation
+- you cannot rely only on post-mutation stack insertion such as `UndoManager.addAndExecute(...)`
 - you must wrap the actual mutation in the backend's tracked transaction boundary
 
 This is the reason model code uses `undoManager.execute(...)` instead of directly assuming stack-backed undo.
