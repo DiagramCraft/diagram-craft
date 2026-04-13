@@ -1,9 +1,9 @@
 import { useDiagram } from '../../../application';
 import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 import { useRedraw } from '../../hooks/useRedraw';
-import { useEventListener } from '../../hooks/useEventListener';
 import { TbCircleArrowRightFilled, TbCircleDotted } from 'react-icons/tb';
 import { ToolWindowPanel } from '../ToolWindowPanel';
+import { useEffect } from 'react';
 
 const formatTimestamp = (ts: Date | undefined) => {
   if (!ts) {
@@ -15,10 +15,15 @@ const formatTimestamp = (ts: Date | undefined) => {
 export const UndoStackPanel = () => {
   const diagram = useDiagram();
   const undoManager = diagram.undoManager;
-  if (!isStackedUndoManager(undoManager)) return null;
-
   const redraw = useRedraw();
-  useEventListener(undoManager, 'change', redraw);
+
+  useEffect(() => {
+    if (!isStackedUndoManager(undoManager)) return;
+    undoManager.on('change', redraw);
+    return () => undoManager.off('change', redraw);
+  }, [undoManager, redraw]);
+
+  if (!isStackedUndoManager(undoManager)) return null;
 
   const redoActions = undoManager.redoableActions;
   const undoActions = undoManager.undoableActions.toReversed();
