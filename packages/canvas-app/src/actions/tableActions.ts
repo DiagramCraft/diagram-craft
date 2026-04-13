@@ -300,8 +300,9 @@ export class TableRowMoveAction extends AbstractSelectionAction {
     const targetIdx = rowIdx + this.direction;
     if (targetIdx < 0 || targetIdx >= rows.length) return;
 
-    
-      this.context.model.activeDiagram.undoManager.execute(this.direction === -1 ? 'Move row up' : 'Move row down', uow => {
+    this.context.model.activeDiagram.undoManager.execute(
+      this.direction === -1 ? 'Move row up' : 'Move row down',
+      uow => {
         const currentRow = rows[rowIdx]!;
         const targetRow = rows[targetIdx]!;
 
@@ -359,8 +360,9 @@ export class TableColumnMoveAction extends AbstractSelectionAction {
     const colIdx = helper.getCellColumnIndex();
     if (colIdx === undefined) return;
 
-    
-      this.context.model.activeDiagram.undoManager.execute(this.direction === -1 ? 'Move column left' : 'Move column right', uow => {
+    this.context.model.activeDiagram.undoManager.execute(
+      this.direction === -1 ? 'Move column left' : 'Move column right',
+      uow => {
         for (const row of helper.rows) {
           const columns = helper.getColumnsSorted(row);
 

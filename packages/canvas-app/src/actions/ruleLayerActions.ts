@@ -7,7 +7,7 @@ import { Application } from '../application';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { RuleEditorDialogCommand } from '../dialogs';
 import { safeSplit } from '@diagram-craft/utils/safe';
-import { $tStr, $t } from '@diagram-craft/utils/localize';
+import { $t, $tStr } from '@diagram-craft/utils/localize';
 
 export const ruleLayerActions = (application: Application) => ({
   RULE_LAYER_EDIT: new RuleLayerEditAction(application),
@@ -109,9 +109,7 @@ export class RuleLayerAddAction extends AbstractAction<LayerActionArg, Applicati
   execute({ id }: LayerActionArg): void {
     precondition.is.present(id);
 
-    const layerId = id;
-
-    const layer = this.context.model.activeDiagram.layers.byId(layerId) as RuleLayer;
+    const layer = this.context.model.activeDiagram.layers.byId(id) as RuleLayer;
     const rule: AdjustmentRule = {
       id: newid(),
       clauses: [

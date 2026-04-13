@@ -52,7 +52,7 @@ The important phase-4 change is that `UnitOfWork` no longer decides where that a
 Instead:
 
 - `capture.commit()` performs `uow.commit()`
-- `capture.commit()` then asks `UnitOfWork` for `finishAsUndoableAction(label)`
+- `capture.commit()` then asks `UnitOfWork` for `_finishAsUndoableAction(label)`
 - the concrete `UndoCapture` decides how to finalize that action:
   - default manager: push to the in-memory stack
   - collaboration-backed manager: attach it as metadata to the backend-native stack item
@@ -70,7 +70,7 @@ This is the path used by `DefaultUndoManager`.
 2. `DefaultUndoManager.execute(...)` creates a capture and supplies its `UnitOfWork`.
 3. The callback mutates the model using that `UnitOfWork`.
 4. `capture.commit()` calls `UnitOfWork.commit()`.
-5. `capture.commit()` asks for `UnitOfWork.finishAsUndoableAction(label)`.
+5. `capture.commit()` asks for `UnitOfWork._finishAsUndoableAction(label)`.
 6. `DefaultUndoManager` stores that action in its in-memory undo stack.
 
 ```mermaid
@@ -86,7 +86,7 @@ sequenceDiagram
     Capture->>Work: expose unitOfWork to callback
     Work->>Work: track add/remove/update operations
     Capture->>Work: commit()
-    Capture->>Work: finishAsUndoableAction(label)
+    Capture->>Work: _finishAsUndoableAction(label)
     Capture->>Mgr: add(structuralAction)
     Mgr->>Mgr: push action onto undo stack
 ```
@@ -100,7 +100,7 @@ This is the path used by `CollaborationBackendUndoManager`.
 3. That capture starts a tracked backend session.
 4. The callback mutates the model using the capture's `UnitOfWork`.
 5. `capture.commit()` calls `UnitOfWork.commit()`.
-6. `capture.commit()` asks for `UnitOfWork.finishAsUndoableAction(label)`.
+6. `capture.commit()` asks for `UnitOfWork._finishAsUndoableAction(label)`.
 7. The backend creates a native undo stack item for the tracked transaction.
 8. The manager attaches the structural action as metadata on that stack item.
 9. The manager calls `stopCapturing()` so the next user action becomes a separate backend undo item.
@@ -118,7 +118,7 @@ sequenceDiagram
     Capture->>Adapter: open tracked session
     Work->>Work: track add/remove/update operations
     Capture->>Work: commit()
-    Capture->>Work: finishAsUndoableAction(label)
+    Capture->>Work: _finishAsUndoableAction(label)
     Capture-->>Mgr: registerCapturedAction(structuralAction)
     Adapter-->>Mgr: stackItemAdded(tracked stack item)
     Mgr->>Mgr: attach action metadata to stack item
@@ -203,6 +203,7 @@ But not every implementation supports them with full stack semantics.
 
 - `DefaultUndoManager`
   implements full in-memory stack behavior
+  - `combine()` post-processes the local undo stack and squashes newly-added entries into one `CompoundUndoableAction`
 
 - `CollaborationBackendUndoManager`
   supports only the safe subset needed by current callers:
@@ -211,6 +212,7 @@ But not every implementation supports them with full stack semantics.
   - `getToMark()` returns `[]`
   - `add()` is a no-op
   - `clearRedo()` is a no-op
+  - `combine()` runs the callback inside one tracked collaboration boundary via the manager's private `runTracked(...)` helper
 
 That allows common call sites to stay uniform, while stack-inspection UI remains explicitly tied to `StackedUndoManager`.
 

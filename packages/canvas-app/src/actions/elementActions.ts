@@ -55,12 +55,10 @@ class ElementConvertToNameAction extends AbstractSelectionAction {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
     const primaryText = node.getText();
 
-    
-      this.context.model.activeDiagram.undoManager.execute('Convert to named element', uow => {
-        node.updateMetadata(metadata => (metadata.name = primaryText), uow);
-        node.setText('%name%', uow);
-      }
-    );
+    this.context.model.activeDiagram.undoManager.execute('Convert to named element', uow => {
+      node.updateMetadata(metadata => (metadata.name = primaryText), uow);
+      node.setText('%name%', uow);
+    });
   }
 }
 

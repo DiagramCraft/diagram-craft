@@ -135,18 +135,16 @@ export class TextDecorationAction extends AbstractToggleAction {
   execute(): void {
     const node = this.context.model.activeDiagram.selection.nodes[0]!;
 
-    
-      this.context.model.activeDiagram.undoManager.execute(`Text decoration: ${this.prop}`, uow => {
-        node.updateProps(p => {
-          p.text ??= {};
-          if (p.text.textDecoration === this.prop) {
-            p.text.textDecoration = 'none';
-          } else {
-            p.text.textDecoration = this.prop;
-          }
-        }, uow);
-      }
-    );
+    this.context.model.activeDiagram.undoManager.execute(`Text decoration: ${this.prop}`, uow => {
+      node.updateProps(p => {
+        p.text ??= {};
+        if (p.text.textDecoration === this.prop) {
+          p.text.textDecoration = 'none';
+        } else {
+          p.text.textDecoration = this.prop;
+        }
+      }, uow);
+    });
 
     this.state = node.renderProps.text.textDecoration === this.prop;
     this.emit('actionChanged');
