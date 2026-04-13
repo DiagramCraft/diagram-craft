@@ -17,6 +17,25 @@ const COLLABORATION_ACTION_META_KEY = 'diagram-craft.undo-action';
 const COLLABORATION_FALLBACK_DESCRIPTION = 'Undo';
 const DEFAULT_MARK = '__default__';
 
+/**
+ * Undo manager backed by a collaboration backend's native undo support.
+ *
+ * Instead of storing local undo stacks directly, this implementation delegates
+ * history storage and replay to a {@link CollaborationUndoAdapter}. The model
+ * still builds structural {@link UndoableAction} objects, but those are attached
+ * as metadata to backend-native stack items so UI and events can refer to a
+ * higher-level action description.
+ *
+ * Key differences from {@link DefaultUndoManager}:
+ * - mutations that should be undoable must execute inside a backend-tracked
+ *   boundary
+ * - remote replicated changes are intentionally excluded from the local undo
+ *   stack
+ * - stack-surgery helpers such as {@link getToMark} and {@link add} only support
+ *   the small safe subset needed by current callers
+ * - {@link combine} groups work by running inside one tracked backend boundary
+ *   rather than by rewriting a local stack after the fact
+ */
 export class CollaborationBackendUndoManager
   extends EventEmitter<UndoEvents>
   implements UndoManager
@@ -161,6 +180,10 @@ export class CollaborationBackendUndoManager
 
   clearRedo() {}
 
+  /**
+   * Groups work by executing the callback inside one tracked collaboration
+   * boundary.
+   */
   combine(callback: () => void) {
     this.runTracked('Combined action', callback);
   }

@@ -15,6 +15,20 @@ const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';
 
+/**
+ * Default in-memory undo manager.
+ *
+ * This implementation keeps explicit undo and redo stacks inside the model
+ * process. A call to {@link execute} creates an {@link UndoCapture}, lets the
+ * caller mutate through its {@link UnitOfWork}, then finalizes the resulting
+ * structural action into the local stack on commit.
+ *
+ * This is the only implementation that currently supports full stack-oriented
+ * behavior such as:
+ * - inspecting undo and redo history through {@link StackedUndoManager}
+ * - extracting actions back to a mark via {@link getToMark}
+ * - post-processing newly added entries via {@link combine}
+ */
 export class DefaultUndoManager
   extends EventEmitter<UndoEvents>
   implements StackedUndoManager
@@ -87,6 +101,10 @@ export class DefaultUndoManager
     this.redoableActions = [];
   }
 
+  /**
+   * Squashes undo entries added during the callback into a single local
+   * {@link CompoundUndoableAction}.
+   */
   combine(callback: () => void) {
     const top = this.undoableActions.at(-1);
     callback();
