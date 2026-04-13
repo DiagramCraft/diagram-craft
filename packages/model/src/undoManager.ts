@@ -75,9 +75,17 @@ export type UndoEvents = {
   change: Record<string, never>;
 };
 
+export interface UndoCapture extends Releasable {
+  readonly unitOfWork: UnitOfWork;
+  commit(): void;
+  abort(): void;
+}
+
 export interface UndoManager extends EventEmitter<UndoEvents>, Releasable {
   canUndo(): boolean;
   canRedo(): boolean;
+  execute<T>(label: string, callback: (uow: UnitOfWork) => T): T;
+  beginCapture(label: string): UndoCapture;
   beginUndoableSession(label: string): Releasable;
   runUndoable<T>(label: string, callback: () => T): T;
   setMark(markName?: string): void;
@@ -107,6 +115,44 @@ const MAX_HISTORY = 100;
 const MAX_HISTORY_WITH_MARKS = 10_000;
 const DEFAULT_MARK = '__default__';
 
+class CompatibilityUndoCapture implements UndoCapture {
+  #completed = false;
+
+  constructor(
+    readonly unitOfWork: UnitOfWork,
+    private readonly label: string,
+    private readonly session: Releasable
+  ) {}
+
+  commit() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.unitOfWork.state === 'pending') {
+        this.unitOfWork.commitWithUndo(this.label);
+      }
+    } finally {
+      this.session.release();
+    }
+  }
+
+  abort() {
+    if (this.#completed) return;
+    this.#completed = true;
+    try {
+      if (this.unitOfWork.state === 'pending') {
+        this.unitOfWork.abort();
+      }
+    } finally {
+      this.session.release();
+    }
+  }
+
+  release() {
+    this.abort();
+  }
+}
+
 export class DefaultUndoManager
   extends EventEmitter<UndoEvents>
   implements StackedUndoManager, Releasable
@@ -123,6 +169,19 @@ export class DefaultUndoManager
   }
 
   release() {}
+
+  execute<T>(label: string, callback: (uow: UnitOfWork) => T): T {
+    const capture = this.beginCapture(label);
+    try {
+      return callback(capture.unitOfWork);
+    } finally {
+      capture.commit();
+    }
+  }
+
+  beginCapture(label: string): UndoCapture {
+    return new CompatibilityUndoCapture(UnitOfWork.begin(this.diagram), label, this.beginUndoableSession(label));
+  }
 
   beginUndoableSession(_label: string): Releasable {
     return { release() {} };
@@ -318,6 +377,19 @@ export class CollaborationBackendUndoManager
 
   canRedo() {
     return this.#undoAdapter.canRedo();
+  }
+
+  execute<T>(label: string, callback: (uow: UnitOfWork) => T): T {
+    const capture = this.beginCapture(label);
+    try {
+      return callback(capture.unitOfWork);
+    } finally {
+      capture.commit();
+    }
+  }
+
+  beginCapture(label: string): UndoCapture {
+    return new CompatibilityUndoCapture(UnitOfWork.begin(this.diagram), label, this.beginUndoableSession(label));
   }
 
   beginUndoableSession(label: string): Releasable {

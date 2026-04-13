@@ -172,6 +172,58 @@ describe('DefaultUndoManager', () => {
     expect(manager.canUndo()).toBe(false);
     expect(manager.canRedo()).toBe(true);
   });
+
+  test('execute() records structural work as one undo step', () => {
+    const d = TestModel.newDiagram();
+    const manager = d.undoManager;
+    const state = { x: 0 };
+
+    manager.execute('Increment', uow => {
+      uow.add({
+        description: 'increment',
+        undo: () => {
+          state.x--;
+        },
+        redo: () => {
+          state.x++;
+        }
+      });
+
+      state.x++;
+    });
+
+    expect(state.x).toBe(1);
+    expect(manager.canUndo()).toBe(true);
+
+    manager.undo();
+    expect(state.x).toBe(0);
+  });
+
+  test('beginCapture() exposes a UnitOfWork-backed capture session', () => {
+    const d = TestModel.newDiagram();
+    const manager = d.undoManager;
+    const state = { x: 0 };
+    const capture = manager.beginCapture('Increment');
+
+    capture.unitOfWork.add({
+      description: 'increment',
+      undo: () => {
+        state.x--;
+      },
+      redo: () => {
+        state.x++;
+      }
+    });
+
+    state.x++;
+    capture.commit();
+
+    expect(state.x).toBe(1);
+    expect(manager.canUndo()).toBe(true);
+
+    manager.undo();
+    expect(state.x).toBe(0);
+  });
 });
 
 describe('CollaborationBackendUndoManager', () => {
@@ -198,6 +250,59 @@ describe('CollaborationBackendUndoManager', () => {
 
       manager.redo();
       expect(map.get('value')).toBe(1);
+    });
+  });
+
+  test('execute() captures tracked local transactions for undo and redo', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+
+      manager.execute('Set value', () => {
+        map.set('value', 1);
+      });
+
+      expect(map.get('value')).toBe(1);
+      expect(manager.canUndo()).toBe(true);
+
+      manager.undo();
+      expect(map.get('value')).toBeUndefined();
+    });
+  });
+
+  test('beginCapture() captures long-lived tracked transactions', () => {
+    withYjsBackend(() => {
+      const root = new YJSRoot();
+      const diagram = TestModel.newDiagram(root);
+      const manager = new CollaborationBackendUndoManager(
+        diagram,
+        CollaborationConfig.Backend.createUndoAdapter!(root)!
+      );
+      const map = root.getMap<{ value?: number }>('undo-test');
+      const capture = manager.beginCapture('Set value');
+
+      capture.unitOfWork.add({
+        description: 'set value',
+        undo: () => {
+          map.delete('value');
+        },
+        redo: () => {
+          map.set('value', 1);
+        }
+      });
+      map.set('value', 1);
+      capture.commit();
+
+      expect(map.get('value')).toBe(1);
+      expect(manager.canUndo()).toBe(true);
+
+      manager.undo();
+      expect(map.get('value')).toBeUndefined();
     });
   });
 

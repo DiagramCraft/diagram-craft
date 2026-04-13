@@ -223,14 +223,7 @@ export class UnitOfWork {
   }
 
   static executeWithUndo<T>(diagram: Diagram, label: string, cb: (uow: UnitOfWork) => T): T {
-    return diagram.undoManager.runUndoable(label, () => {
-      const uow = new UnitOfWork(diagram, true);
-      try {
-        return cb(uow);
-      } finally {
-        if (uow.state === 'pending') uow.commitWithUndo(label);
-      }
-    });
+    return diagram.undoManager.execute(label, cb);
   }
 
   static withNativeUndoCapture<T>(
