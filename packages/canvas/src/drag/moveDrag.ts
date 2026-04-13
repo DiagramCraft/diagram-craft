@@ -14,7 +14,8 @@ import {
   isNode,
   transformElements
 } from '@diagram-craft/model/diagramElement';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { excludeLabelNodes, includeAll, Selection } from '@diagram-craft/model/selection';
 import { precondition, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -28,7 +29,6 @@ import { LayerCapabilities } from '@diagram-craft/model/diagramLayerManager';
 import { CanvasDomHelper } from '../utils/canvasDomHelper';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
 import { growBoundsForSelection } from '@diagram-craft/model/diagramUtils';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const enablePointerEvents = (elements: ReadonlyArray<DiagramElement>) => {
   for (const e of elements) {
@@ -59,7 +59,7 @@ export abstract class AbstractMoveDrag extends Drag {
   #currentElement: DiagramElement | undefined = undefined;
   #keys: string[] = [];
   #disablePointerEventsFrame: number | undefined = undefined;
-  protected readonly undoSession: Releasable;
+  protected capture: UndoCapture;
 
   protected dragStarted = false;
   protected uow: UnitOfWork;
@@ -73,8 +73,8 @@ export abstract class AbstractMoveDrag extends Drag {
     super();
 
     precondition.is.true(LayerCapabilities.canMove(this.diagram.activeLayer));
-    this.uow = UnitOfWork.begin(this.diagram);
-    this.undoSession = this.diagram.undoManager.beginUndoableSession('Move');
+    this.capture = this.diagram.undoManager.beginCapture('Move');
+    this.uow = this.capture.unitOfWork;
   }
 
   onDragEnter({ id }: DragEvents.DragEnter) {
@@ -274,11 +274,8 @@ export abstract class AbstractMoveDrag extends Drag {
         );
       }
 
-      this.uow.commitWithUndo('Move');
-    } else {
-      this.uow.commit();
     }
-    this.undoSession.release();
+    this.capture.commit();
     selection.rebaseline();
   }
 
@@ -402,8 +399,7 @@ export class MoveDrag extends AbstractMoveDrag {
   }
 
   cancel() {
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 
   private duplicate() {

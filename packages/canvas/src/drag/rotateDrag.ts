@@ -2,13 +2,13 @@ import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Box } from '@diagram-craft/geometry/box';
 import { Vector } from '@diagram-craft/geometry/vector';
 import { TransformFactory } from '@diagram-craft/geometry/transform';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { Angle } from '@diagram-craft/geometry/angle';
 import { excludeLabelNodes, includeAll } from '@diagram-craft/model/selection';
 import { transformElements } from '@diagram-craft/model/diagramElement';
 import { SnapManager, SnapMarkers } from '../snap/snapManager';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 const normalizeSignedAngle = (angle: number) => {
@@ -28,16 +28,16 @@ export const calculateTargetRotationAngle = (
 };
 
 export class RotateDrag extends Drag {
+  private readonly capture: UndoCapture;
   private readonly uow: UnitOfWork;
-  private readonly undoSession: Releasable;
 
   constructor(
     private readonly diagram: Diagram,
     private readonly initialOffset: { x: number; y: number }
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.diagram);
-    this.undoSession = this.diagram.undoManager.beginUndoableSession('Rotate');
+    this.capture = this.diagram.undoManager.beginCapture('Rotate');
+    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -84,19 +84,13 @@ export class RotateDrag extends Drag {
   onDragEnd(): void {
     const selection = this.diagram.selection;
 
-    if (selection.isChanged()) {
-      this.uow.commitWithUndo('Rotate');
-    } else {
-      this.uow.abort();
-    }
-    this.undoSession.release();
+    this.capture.commit();
 
     selection.forceRotation(undefined);
     selection.rebaseline();
   }
 
   cancel() {
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 }

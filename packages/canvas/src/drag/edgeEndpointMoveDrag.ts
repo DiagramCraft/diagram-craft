@@ -1,7 +1,8 @@
 import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { addHighlight, Highlights, removeHighlight } from '../highlight';
 import { Point } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import {
@@ -28,11 +29,10 @@ import type {
   AttachEdgeContext,
   AttachPhase
 } from '@diagram-craft/model/elementDefinitionRegistry';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class EdgeEndpointMoveDrag extends Drag {
+  readonly capture: UndoCapture;
   readonly uow: UnitOfWork;
-  readonly undoSession: Releasable;
   protected hoverElement: string | undefined;
   protected modifiers: Modifiers | undefined;
 
@@ -46,8 +46,8 @@ export class EdgeEndpointMoveDrag extends Drag {
     protected context: Context
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.edge.diagram);
-    this.undoSession = this.edge.diagram.undoManager.beginUndoableSession('Move edge endpoint');
+    this.capture = this.edge.diagram.undoManager.beginCapture('Move edge endpoint');
+    this.uow = this.capture.unitOfWork;
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'move';
 
@@ -144,8 +144,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     // Update edge parent based on connected nodes
     this.updateEdgeParent();
 
-    this.uow.commitWithUndo('Move edge endpoint');
-    this.undoSession.release();
+    this.capture.commit();
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
 
     this.context.help.pop('EdgeEndpointMoveDrag');
@@ -206,8 +205,7 @@ export class EdgeEndpointMoveDrag extends Drag {
     }
 
     CanvasDomHelper.diagramElement(this.diagram)!.style.cursor = 'unset';
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 
   private attachToClosestAnchor(p: Point, phase: AttachPhase = 'drag') {

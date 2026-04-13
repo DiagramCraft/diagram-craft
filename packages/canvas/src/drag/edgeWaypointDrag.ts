@@ -1,12 +1,12 @@
 import { Drag, DragEvents } from '../dragDropManager';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { Context } from '../context';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class EdgeWaypointDrag extends Drag {
+  private readonly capture: UndoCapture;
   private readonly uow: UnitOfWork;
-  private readonly undoSession: Releasable;
 
   constructor(
     private readonly edge: DiagramEdge,
@@ -14,8 +14,8 @@ export class EdgeWaypointDrag extends Drag {
     private context: Context
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.edge.diagram);
-    this.undoSession = this.edge.diagram.undoManager.beginUndoableSession('Move Waypoint');
+    this.capture = this.edge.diagram.undoManager.beginCapture('Move Waypoint');
+    this.uow = this.capture.unitOfWork;
 
     this.context.help.push('EdgeWaypointDrag', 'Move waypoint');
   }
@@ -28,13 +28,11 @@ export class EdgeWaypointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Move Waypoint');
-    this.undoSession.release();
+    this.capture.commit();
     this.context.help.pop('EdgeWaypointDrag');
   }
 
   cancel() {
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 }

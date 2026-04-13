@@ -1,19 +1,19 @@
 import { Drag, DragEvents } from '../dragDropManager';
 import { Point } from '@diagram-craft/geometry/point';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramElement } from '@diagram-craft/model/diagramElement';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class ShapeControlPointDrag extends Drag {
+  private readonly capture: UndoCapture;
   private readonly uow: UnitOfWork;
-  private readonly undoSession: Releasable;
   constructor(
     private readonly element: DiagramElement,
     private readonly callback: (pos: Point, uow: UnitOfWork) => string
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.element.diagram);
-    this.undoSession = this.element.diagram.undoManager.beginUndoableSession('Adjust shape');
+    this.capture = this.element.diagram.undoManager.beginCapture('Adjust shape');
+    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart) {
@@ -38,12 +38,10 @@ export class ShapeControlPointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Adjust shape');
-    this.undoSession.release();
+    this.capture.commit();
   }
 
   cancel() {
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 }

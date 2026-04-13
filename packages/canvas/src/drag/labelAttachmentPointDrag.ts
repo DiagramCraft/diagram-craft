@@ -2,13 +2,13 @@ import { Drag, DragEvents } from '../dragDropManager';
 import { Path } from '@diagram-craft/geometry/path';
 import { Point } from '@diagram-craft/geometry/point';
 import { LengthOffsetOnPath, TimeOffsetOnPath } from '@diagram-craft/geometry/pathPosition';
-import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import type { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { DiagramEdge, ResolvedLabelNode } from '@diagram-craft/model/diagramEdge';
-import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class LabelAttachmentPointDrag extends Drag {
+  private readonly capture: UndoCapture;
   private readonly uow: UnitOfWork;
-  private readonly undoSession: Releasable;
 
   constructor(
     private labelNode: ResolvedLabelNode,
@@ -16,8 +16,8 @@ export class LabelAttachmentPointDrag extends Drag {
     private path: Path
   ) {
     super();
-    this.uow = UnitOfWork.begin(this.edge.diagram);
-    this.undoSession = this.edge.diagram.undoManager.beginUndoableSession('Move label node');
+    this.capture = this.edge.diagram.undoManager.beginCapture('Move label node');
+    this.uow = this.capture.unitOfWork;
   }
 
   onDrag(event: DragEvents.DragStart): void {
@@ -43,12 +43,10 @@ export class LabelAttachmentPointDrag extends Drag {
   }
 
   onDragEnd(): void {
-    this.uow.commitWithUndo('Move label node');
-    this.undoSession.release();
+    this.capture.commit();
   }
 
   cancel() {
-    this.uow.abort();
-    this.undoSession.release();
+    this.capture.abort();
   }
 }
