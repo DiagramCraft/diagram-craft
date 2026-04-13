@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-association'
     name: Association
+    description: A generic structural relationship between two elements.
     styles: ['archimate-relationship-association']
     elements:
       - &archimate-edge
@@ -26,6 +27,7 @@ stencils:
 
   - id: 'archimate-composition'
     name: Composition
+    description: A strong whole-part relationship where the part belongs to a single whole.
     styles: ['archimate-relationship-composition']
     elements:
       - <<: *archimate-edge
@@ -39,6 +41,7 @@ stencils:
 
   - id: 'archimate-aggregation'
     name: Aggregation
+    description: A whole-part relationship where the part can exist independently.
     styles: ['archimate-relationship-aggregation']
     elements:
       - <<: *archimate-edge
@@ -52,6 +55,7 @@ stencils:
 
   - id: 'archimate-assignment'
     name: Assignment
+    description: A relationship that allocates responsibility, behavior, or execution.
     styles: ['archimate-relationship-assignment']
     elements:
       - <<: *archimate-edge
@@ -65,6 +69,7 @@ stencils:
 
   - id: 'archimate-realization'
     name: Realization
+    description: A relationship showing that one element implements or fulfills another.
     styles: ['archimate-relationship-realization']
     elements:
       - <<: *archimate-edge
@@ -78,6 +83,7 @@ stencils:
 
   - id: 'archimate-serving'
     name: Serving
+    description: A relationship where one element provides functionality to another.
     styles: ['archimate-relationship-serving']
     elements:
       - <<: *archimate-edge
@@ -91,6 +97,7 @@ stencils:
 
   - id: 'archimate-access'
     name: Access
+    description: A relationship indicating generic access to a passive element.
     styles: ['archimate-relationship-access']
     elements:
       - <<: *archimate-edge
@@ -105,6 +112,7 @@ stencils:
 
   - id: 'archimate-access-read'
     name: Access Read
+    description: A relationship indicating read access to a passive element.
     styles: ['archimate-relationship-access']
     elements:
       - <<: *archimate-edge
@@ -149,6 +157,7 @@ stencils:
 
   - id: 'archimate-access-write'
     name: Access Write
+    description: A relationship indicating write access to a passive element.
     styles: ['archimate-relationship-access']
     elements:
       - <<: *archimate-edge
@@ -171,6 +180,7 @@ stencils:
 
   - id: 'archimate-access-read-write'
     name: Access Read/Write
+    description: A relationship indicating both read and write access to a passive element.
     styles: ['archimate-relationship-access']
     elements:
       - <<: *archimate-edge
@@ -199,6 +209,7 @@ stencils:
 
   - id: 'archimate-influence'
     name: Influence
+    description: A relationship in which one element affects another.
     styles: ['archimate-relationship-influence']
     elements:
       - <<: *archimate-edge
@@ -212,6 +223,7 @@ stencils:
 
   - id: 'archimate-influence-positive'
     name: Influence +
+    description: A relationship in which one element positively affects another.
     styles: ['archimate-relationship-influence']
     elements:
       - <<: *archimate-edge
@@ -256,6 +268,7 @@ stencils:
 
   - id: 'archimate-influence-negative'
     name: Influence -
+    description: A relationship in which one element negatively affects another.
     styles: ['archimate-relationship-influence']
     elements:
       - <<: *archimate-edge
@@ -278,6 +291,7 @@ stencils:
 
   - id: 'archimate-triggering'
     name: Triggering
+    description: A temporal or causal relationship in which one element initiates another.
     styles: ['archimate-relationship-triggering']
     elements:
       - <<: *archimate-edge
@@ -291,6 +305,7 @@ stencils:
 
   - id: 'archimate-flow'
     name: Flow
+    description: A relationship representing transfer of information, value, or material.
     styles: ['archimate-relationship-flow']
     elements:
       - <<: *archimate-edge
@@ -304,6 +319,7 @@ stencils:
 
   - id: 'archimate-specialization'
     name: Specialization
+    description: A relationship indicating that one element is a more specific form of another.
     styles: ['archimate-relationship-specialization']
     elements:
       - <<: *archimate-edge

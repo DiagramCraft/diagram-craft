@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-strategy-capability'
     name: Capability
+    description: An ability that an active structure element possesses.
     styles: ['archimate-strategy', 'archimate-strategy-text']
     elements:
       - id: archimate-strategy-capability-node
@@ -29,6 +30,7 @@ stencils:
 
   - id: 'archimate-strategy-resource'
     name: Resource
+    description: An asset owned or controlled by an organization.
     styles: ['archimate-strategy', 'archimate-strategy-text']
     elements:
       - id: archimate-strategy-resource-node
@@ -50,6 +52,7 @@ stencils:
 
   - id: 'archimate-strategy-course-of-action'
     name: Course of Action
+    description: An approach or plan for configuring capabilities and resources.
     styles: ['archimate-strategy', 'archimate-strategy-text']
     elements:
       - id: archimate-strategy-course-of-action-node
@@ -69,6 +72,7 @@ stencils:
 
   - id: 'archimate-strategy-value-stream'
     name: Value Stream
+    description: A sequence of activities that creates value for a stakeholder or customer.
     styles: ['archimate-strategy', 'archimate-strategy-text']
     elements:
       - id: archimate-strategy-value-stream-node

@@ -1,6 +1,7 @@
 stencils:
   - id: 'archimate-motivation-stakeholder'
     name: Stakeholder
+    description: An individual, team, or organization with interests in the architecture.
     styles: ['archimate-motivation', 'archimate-motivation-text']
     elements:
       - id: archimate-motivation-stakeholder-node
@@ -26,6 +27,7 @@ stencils:
 
   - id: 'archimate-motivation-goal'
     name: Goal
+    description: A high-level statement of intent, direction, or desired end state.
     styles: ['archimate-motivation', 'archimate-motivation-text']
     elements:
       - id: archimate-motivation-goal-node
@@ -50,6 +52,7 @@ stencils:
 
   - id: 'archimate-motivation-outcome'
     name: Outcome
+    description: An end result achieved by realizing one or more goals.
     styles: ['archimate-motivation', 'archimate-motivation-text']
     elements:
       - id: archimate-motivation-outcome-node
@@ -69,6 +72,7 @@ stencils:
 
   - id: 'archimate-motivation-requirement'
     name: Requirement
+    description: A statement of need that must be realized by the architecture.
     styles: ['archimate-motivation', 'archimate-motivation-text']
     elements:
       - id: archimate-motivation-requirement-node
@@ -85,6 +89,7 @@ stencils:
 
   - id: 'archimate-motivation-constraint'
     name: Constraint
+    description: A restriction on the way the architecture can be realized.
     styles: ['archimate-motivation', 'archimate-motivation-text']
     elements:
       - id: archimate-motivation-constraint-node

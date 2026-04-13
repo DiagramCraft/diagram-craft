@@ -132,14 +132,12 @@ export const PickerCanvas = (props: PickerCanvasProps) => {
             />
 
             <div
-              style={{
-                lineHeight: '14px',
-                justifySelf: 'flex-end',
-                marginTop: 'auto',
-                textAlign: 'center'
-              }}
+              className={styles.ePreviewText}
             >
-              {props.name}
+              {props.name && <div className={styles.ePreviewName}>{props.name}</div>}
+              {props.description && (
+                <div className={styles.ePreviewDescription}>{props.description}</div>
+              )}
             </div>
           </div>,
           document.body
@@ -164,6 +162,7 @@ type PickerCanvasProps = {
   size?: number;
   showHover?: boolean;
   name?: string;
+  description?: string;
   onMouseDown?: (e: MouseEvent) => void;
   scaleStrokes?: boolean;
 };

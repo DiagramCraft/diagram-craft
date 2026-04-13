@@ -205,6 +205,7 @@ export const ObjectPickerPanel = (props: Props) => {
         diagram={stencil.stencilDiagram}
         showHover={showHover}
         name={name}
+        description={stencil.stencil.description}
         onMouseDown={startDrag}
         scaleStrokes={stencilScaleStrokes(stencil.stencil)}
       />
