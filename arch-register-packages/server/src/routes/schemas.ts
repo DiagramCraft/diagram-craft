@@ -4,6 +4,10 @@ import type { EntitySchema } from '../types.js';
 
 const BASE = '/api/schemas';
 
+// body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
+// is more restrictive than the `unknown` we get from readBody.
+const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
+
 type PostgresError = { code: string };
 
 const handleError = (error: unknown, fallback: string): never => {
@@ -64,7 +68,7 @@ export function createSchemaRoutes() {
       try {
         const [row] = await sql<EntitySchema[]>`
           INSERT INTO entity_schema (name, fields)
-          VALUES (${name}, ${sql.json(fields)})
+          VALUES (${name}, ${json(fields)})
           RETURNING *
         `;
         return row!;
@@ -90,7 +94,7 @@ export function createSchemaRoutes() {
         const [row] = await sql<EntitySchema[]>`
           UPDATE entity_schema SET
             name   = ${name},
-            fields = ${fields !== undefined ? sql.json(fields) : sql`fields`}
+            fields = ${fields !== undefined ? json(fields) : sql`fields`}
           WHERE id = ${id}
           RETURNING *
         `;

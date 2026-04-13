@@ -6,6 +6,10 @@ const BASE = '/api/data';
 
 const LIFECYCLE_VALUES = new Set<string>(['experimental', 'production', 'deprecated']);
 
+// body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
+// is more restrictive than the `unknown` we get from readBody.
+const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
+
 type PostgresError = { code: string };
 
 const handleError = (error: unknown, fallback: string): never => {
@@ -105,7 +109,7 @@ export function createDataRoutes() {
       try {
         const [row] = await sql<Entity[]>`
           INSERT INTO entity (slug, namespace, name, owner, lifecycle, schema_id, data)
-          VALUES (${slug}, ${namespace}, ${name}, ${owner}, ${lifecycle}, ${_schemaId}, ${sql.json(fields)})
+          VALUES (${slug}, ${namespace}, ${name}, ${owner}, ${lifecycle}, ${_schemaId}, ${json(fields)})
           RETURNING *
         `;
         return toApiFormat(row!);
@@ -153,7 +157,7 @@ export function createDataRoutes() {
             namespace = ${namespace},
             owner     = ${owner},
             lifecycle = ${lifecycle},
-            data      = ${sql.json(fields)}
+            data      = ${json(fields)}
           WHERE id = ${id}
           RETURNING *
         `;
