@@ -1,4 +1,4 @@
-import { createError } from 'h3';
+import { HTTPError } from 'h3';
 import type {
   AIGenerateRequest,
   AIResult,
@@ -64,10 +64,10 @@ export class OpenRouterAIServer implements AIServer {
           // Ignore invalid JSON error bodies and keep the default message.
         }
 
-        throw createError({
+        throw new HTTPError({
           status: response.status,
-          statusMessage: response.statusText,
-          data: { message: errorMessage }
+          statusText: response.statusText,
+          message: errorMessage
         });
       }
 
@@ -87,30 +87,30 @@ export class OpenRouterAIServer implements AIServer {
         body: await response.json()
       };
     } catch (error) {
-      if (error && typeof error === 'object' && 'statusCode' in error) {
+      if (HTTPError.isError(error)) {
         throw error;
       }
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw createError({
+        throw new HTTPError({
           status: 504,
-          statusMessage: 'Gateway Timeout',
-          data: { message: 'OpenRouter request timed out' }
+          statusText: 'Gateway Timeout',
+          message: 'OpenRouter request timed out'
         });
       }
 
       if (error instanceof Error) {
-        throw createError({
+        throw new HTTPError({
           status: 500,
-          statusMessage: 'Internal Server Error',
-          data: { message: `Failed to generate AI response: ${error.message}` }
+          statusText: 'Internal Server Error',
+          message: `Failed to generate AI response: ${error.message}`
         });
       }
 
-      throw createError({
+      throw new HTTPError({
         status: 500,
-        statusMessage: 'Internal Server Error',
-        data: { message: 'Failed to generate AI response' }
+        statusText: 'Internal Server Error',
+        message: 'Failed to generate AI response'
       });
     } finally {
       clearTimeout(timeoutId);

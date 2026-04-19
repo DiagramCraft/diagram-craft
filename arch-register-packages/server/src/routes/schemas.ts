@@ -1,4 +1,4 @@
-import { createError, createRouter, defineEventHandler, readBody } from 'h3';
+import { H3, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { EntitySchema } from '../types.js';
 
@@ -11,26 +11,26 @@ const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
 type PostgresError = { code: string };
 
 const handleError = (error: unknown, fallback: string): never => {
-  if (error != null && typeof error === 'object' && 'statusCode' in error) throw error;
+  if (HTTPError.isError(error)) throw error;
   if (error != null && typeof error === 'object' && 'code' in error) {
     const { code } = error as PostgresError;
     if (code === '23505') {
-      throw createError({ status: 409, statusMessage: 'Conflict', data: { message: 'A schema with that name already exists' } });
+      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'A schema with that name already exists' });
     }
     if (code === '23503') {
-      throw createError({ status: 409, statusMessage: 'Conflict', data: { message: 'Cannot delete schema: entities still reference it' } });
+      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'Cannot delete schema: entities still reference it' });
     }
   }
-  throw createError({ status: 500, statusMessage: 'Internal Server Error', data: { message: fallback } });
+  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
 export function createSchemaRoutes() {
-  const router = createRouter();
+  const router = new H3();
 
   // GET /api/schemas
   router.get(
     BASE,
-    defineEventHandler(async () => {
+    defineHandler(async () => {
       try {
         return await sql<EntitySchema[]>`SELECT * FROM entity_schema ORDER BY name`;
       } catch (e) {
@@ -42,12 +42,12 @@ export function createSchemaRoutes() {
   // GET /api/schemas/:id
   router.get(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const [row] = await sql<EntitySchema[]>`SELECT * FROM entity_schema WHERE id = ${id}`;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Schema '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
         return row;
       } catch (e) {
         handleError(e, 'Failed to retrieve schema');
@@ -58,13 +58,13 @@ export function createSchemaRoutes() {
   // POST /api/schemas
   router.post(
     BASE,
-    defineEventHandler(async event => {
-      const body = await readBody(event);
+    defineHandler(async event => {
+      const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'Request body must be a JSON object' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
       const { name, fields = [] } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'name is required and must be a string' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
         const [row] = await sql<EntitySchema[]>`
           INSERT INTO entity_schema (name, fields)
@@ -81,15 +81,15 @@ export function createSchemaRoutes() {
   // PUT /api/schemas/:id
   router.put(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
-      const body = await readBody(event);
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'Request body must be a JSON object' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
       const { name, fields } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'name is required and must be a string' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
         const [row] = await sql<EntitySchema[]>`
           UPDATE entity_schema SET
@@ -98,7 +98,7 @@ export function createSchemaRoutes() {
           WHERE id = ${id}
           RETURNING *
         `;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Schema '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
         return row;
       } catch (e) {
         handleError(e, 'Failed to update schema');
@@ -109,12 +109,12 @@ export function createSchemaRoutes() {
   // DELETE /api/schemas/:id
   router.delete(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const [row] = await sql<EntitySchema[]>`DELETE FROM entity_schema WHERE id = ${id} RETURNING id`;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Schema '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
         return { success: true, message: `Schema '${id}' deleted` };
       } catch (e) {
         handleError(e, 'Failed to delete schema');

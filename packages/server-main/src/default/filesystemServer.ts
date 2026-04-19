@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { createError } from 'h3';
+import { HTTPError } from 'h3';
 import { newid } from '@diagram-craft/utils/id';
 import type { CollaborationServer } from '../collaborationServer';
 import { createLogger } from '../logger';
@@ -87,10 +87,10 @@ export class LocalFileSystemServer implements FileSystemServer {
     }
 
     if ((request.contentLength ?? 0) > MAX_REQUEST_SIZE) {
-      throw createError({
+      throw new HTTPError({
         status: 413,
-        statusMessage: 'Payload Too Large',
-        data: { message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes` }
+        statusText: 'Payload Too Large',
+        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
       });
     }
 
@@ -162,10 +162,10 @@ export class LocalFileSystemServer implements FileSystemServer {
   }
 
   private badRequest(message: string) {
-    return createError({
+    return new HTTPError({
       status: 400,
-      statusMessage: 'Bad Request',
-      data: { message }
+      statusText: 'Bad Request',
+      message
     });
   }
 

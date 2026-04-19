@@ -1,13 +1,13 @@
 import { createServer } from 'node:http';
-import { createApp, defineEventHandler, handleCors, toNodeListener } from 'h3';
+import { H3, defineHandler, handleCors, toNodeListener } from 'h3';
 import { createDataRoutes } from './routes/data.js';
 import { createSchemaRoutes } from './routes/schemas.js';
 
-const app = createApp();
+const app = new H3();
 
 // CORS middleware
 app.use(
-  defineEventHandler(event => {
+  defineHandler(event => {
     const didHandleCors = handleCors(event, {
       origin: '*',
       preflight: { statusCode: 204 },
@@ -18,7 +18,7 @@ app.use(
 );
 
 // Health check
-app.use('/hello', defineEventHandler(() => ({ msg: 'Hello' })));
+app.use('/hello', defineHandler(() => ({ msg: 'Hello' })));
 
 // API routes
 app.use(createSchemaRoutes());
