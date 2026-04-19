@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Random } from './random';
+import type { NoneEmptyArray } from './types';
 
 describe('Random', () => {
   it('generates consistent float values with the same seed', () => {
@@ -53,7 +54,7 @@ describe('Random', () => {
   describe('pick', () => {
     it('returns an element from the provided array', () => {
       const random = new Random(12345);
-      const array = [1, 2, 3, 4, 5];
+      const array: NoneEmptyArray<number> = [1, 2, 3, 4, 5];
       const result = random.pick(array);
       expect(array).toContain(result);
     });
@@ -61,7 +62,7 @@ describe('Random', () => {
     it('returns the same element with the same seed', () => {
       const random1 = new Random(12345);
       const random2 = new Random(12345);
-      const array = [1, 2, 3, 4, 5];
+      const array: NoneEmptyArray<number> = [1, 2, 3, 4, 5];
       expect(random1.pick(array)).toBe(random2.pick(array));
     });
 
@@ -69,15 +70,15 @@ describe('Random', () => {
       const random = new Random(12345);
 
       // Test with array of numbers
-      const numArray = [1, 2, 3, 4, 5];
+      const numArray: NoneEmptyArray<number> = [1, 2, 3, 4, 5];
       expect(typeof random.pick(numArray)).toBe('number');
 
       // Test with array of strings
-      const strArray = ['a', 'b', 'c', 'd', 'e'];
+      const strArray: NoneEmptyArray<string> = ['a', 'b', 'c', 'd', 'e'];
       expect(typeof random.pick(strArray)).toBe('string');
 
       // Test with array of objects
-      const objArray = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const objArray: NoneEmptyArray<{ id: number }> = [{ id: 1 }, { id: 2 }, { id: 3 }];
       const result = random.pick(objArray);
       expect(typeof result).toBe('object');
       expect(result).toHaveProperty('id');
@@ -87,28 +88,26 @@ describe('Random', () => {
       const random = new Random(12345);
 
       // Test with short array
-      const shortArray = [1, 2];
+      const shortArray: NoneEmptyArray<number> = [1, 2];
       expect(shortArray).toContain(random.pick(shortArray));
 
       // Test with longer array
-      const longArray = Array.from({ length: 100 }, (_, i) => i);
+      const longArray = Array.from({ length: 100 }, (_, i) => i) as NoneEmptyArray<number>;
       expect(longArray).toContain(random.pick(longArray));
     });
 
     it('always returns the same element with array of length 1', () => {
       const random = new Random(12345);
-      const array = [42];
+      const array: NoneEmptyArray<number> = [42];
       expect(random.pick(array)).toBe(42);
       expect(random.pick(array)).toBe(42);
       expect(random.pick(array)).toBe(42);
     });
 
-    it('returns undefined with empty array', () => {
+    it('throws with empty array', () => {
       const random = new Random(12345);
-      const emptyArray: number[] = [];
-
-      // When accessing an undefined index in an empty array, JavaScript returns undefined
-      expect(random.pick(emptyArray)).toBeUndefined();
+      const emptyArray = [] as unknown as NoneEmptyArray<number>;
+      expect(() => random.pick(emptyArray)).toThrowError('Cannot pick from an empty array');
     });
   });
 });
