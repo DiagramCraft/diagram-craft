@@ -79,6 +79,8 @@ export const BooleanTest = (props: {
     }
   };
 
+  const hideText = true; //props.hideText;
+
   return (
     <svg
       width={600}
@@ -102,7 +104,7 @@ export const BooleanTest = (props: {
 
       {/* Main shape */}
       <g>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A = blue, B = green
           </text>
@@ -119,7 +121,7 @@ export const BooleanTest = (props: {
 
       {/* Clipped path */}
       <g transform={'translate(200, 0)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             Clipped paths A
           </text>
@@ -191,7 +193,7 @@ export const BooleanTest = (props: {
 
       {/* Clipped path */}
       <g transform={'translate(400, 0)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             Clipped paths B
           </text>
@@ -262,7 +264,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(0, 200)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A union B
           </text>
@@ -307,7 +309,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(200, 200)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A not B
           </text>
@@ -352,7 +354,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(400, 200)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             B not A
           </text>
@@ -397,7 +399,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(0, 400)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A intersection B
           </text>
@@ -444,7 +446,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(200, 400)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A XOR B
           </text>
@@ -498,7 +500,7 @@ export const BooleanTest = (props: {
       </g>
 
       <g transform={'translate(400, 400)'}>
-        {!props.hideText && (
+        {!hideText && (
           <text x={0} y={-80} width={200} textAnchor={'middle'}>
             A divide B
           </text>
