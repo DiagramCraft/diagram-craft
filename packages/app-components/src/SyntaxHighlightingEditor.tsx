@@ -167,14 +167,14 @@ export const SyntaxHighlightingEditor = React.forwardRef<SyntaxHighlightingEdito
           wrap={'off'}
           disabled={props.disabled}
           onKeyDown={onKeydown}
-          onInput={e => {
-            handleChange((e.target as HTMLTextAreaElement).value);
-            onScroll(e.target as HTMLElement);
-            props.onInput?.(e as React.FormEvent<HTMLTextAreaElement>);
+          onInput={(e: React.InputEvent<HTMLTextAreaElement>) => {
+            handleChange(e.currentTarget.value);
+            onScroll(e.currentTarget);
+            props.onInput?.(e);
           }}
           onScroll={e => {
-            onScroll(e.target as HTMLElement);
-            props.onScroll?.(e as React.UIEvent<HTMLTextAreaElement>);
+            onScroll(e.currentTarget);
+            props.onScroll?.(e);
           }}
           onMouseMove={onMouseMove}
           onMouseLeave={onMouseLeave}

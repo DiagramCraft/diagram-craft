@@ -2,6 +2,7 @@ import {
   appendResponseHeader,
   createRouter,
   defineEventHandler,
+  getRequestHeader,
   readRawBody,
   serveStatic
 } from 'h3';
@@ -56,15 +57,14 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
   router.put(
     API_FS_WILDCARD,
     defineEventHandler(async event => {
-      const contentType = event.node.req.headers['content-type'];
-      const contentTypeValue = Array.isArray(contentType) ? contentType[0] : contentType;
-      const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0', 10);
+      const contentTypeValue = getRequestHeader(event, 'content-type');
+      const contentLength = parseInt(getRequestHeader(event, 'content-length') ?? '0', 10);
       const body = await readRawBody(event, false);
 
       return fileSystemServer.put(event.context.params!._!, {
         contentType: contentTypeValue,
         contentLength,
-        body
+        body: body ? Buffer.from(body) : undefined
       });
     })
   );

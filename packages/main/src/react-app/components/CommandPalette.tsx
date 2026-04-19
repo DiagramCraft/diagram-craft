@@ -199,7 +199,9 @@ export const CommandPalette = ({ open, onClose }: CommandPaletteProps) => {
               filteredCommands.map((command, index) => (
                 <div
                   key={command.id}
-                  ref={el => (commandItemRefs.current[index] = el)}
+                  ref={el => {
+                    commandItemRefs.current[index] = el;
+                  }}
                   className={styles.eCommandItem}
                   data-selected={index === selectedIndex}
                   data-disabled={!command.isEnabled}

@@ -3,10 +3,12 @@ import {
   createRouter,
   defineEventHandler,
   EventHandlerRequest,
+  getRequestHeader,
   H3Event,
   readBody
 } from 'h3';
 import type { ModelServer } from '../modelServer';
+import type { DataSchema, DataWithSchema } from '../types';
 
 // Constants
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB limit for data requests
@@ -19,8 +21,7 @@ export function createDataRoutes(modelServer: ModelServer) {
 
   // Helper function to validate content type and size
   const validateRequest = (event: H3Event<EventHandlerRequest>) => {
-    const contentType = event.node.req.headers['content-type'];
-    const contentTypeStr = Array.isArray(contentType) ? contentType[0] : contentType;
+    const contentTypeStr = getRequestHeader(event, 'content-type');
     if (contentTypeStr && !contentTypeStr.startsWith(CONTENT_TYPE_JSON)) {
       throw createError({
         status: 415,
@@ -29,10 +30,7 @@ export function createDataRoutes(modelServer: ModelServer) {
       });
     }
 
-    const contentLengthHeader = event.node.req.headers['content-length'];
-    const contentLengthStr = Array.isArray(contentLengthHeader)
-      ? contentLengthHeader[0]
-      : contentLengthHeader;
+    const contentLengthStr = getRequestHeader(event, 'content-length');
     const contentLength = parseInt(contentLengthStr ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
@@ -41,6 +39,26 @@ export function createDataRoutes(modelServer: ModelServer) {
         data: { message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes` }
       });
     }
+  };
+
+  const isDataWithSchema = (body: unknown): body is DataWithSchema => {
+    return (
+      !!body &&
+      typeof body === 'object' &&
+      '_schemaId' in body &&
+      typeof body._schemaId === 'string'
+    );
+  };
+
+  const isDataSchema = (body: unknown): body is DataSchema => {
+    return (
+      !!body &&
+      typeof body === 'object' &&
+      'id' in body &&
+      typeof body.id === 'string' &&
+      'name' in body &&
+      typeof body.name === 'string'
+    );
   };
 
   // Helper function to handle errors consistently
@@ -119,21 +137,13 @@ export function createDataRoutes(modelServer: ModelServer) {
     defineEventHandler(async event => {
       validateRequest(event);
       try {
-        const body = await readBody(event);
+        const body = await readBody<unknown>(event);
 
-        if (!body || typeof body !== 'object') {
+        if (!isDataWithSchema(body)) {
           throw createError({
             status: 400,
             statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body._schemaId) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: '_schemaId is required' }
+            data: { message: 'Request body must be a valid JSON object with _schemaId' }
           });
         }
 
@@ -159,21 +169,13 @@ export function createDataRoutes(modelServer: ModelServer) {
       }
 
       try {
-        const body = await readBody(event);
+        const body = await readBody<unknown>(event);
 
-        if (!body || typeof body !== 'object') {
+        if (!isDataWithSchema(body)) {
           throw createError({
             status: 400,
             statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body._schemaId) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: '_schemaId is required' }
+            data: { message: 'Request body must be a valid JSON object with _schemaId' }
           });
         }
 
@@ -269,17 +271,9 @@ export function createDataRoutes(modelServer: ModelServer) {
     API_SCHEMAS_PATH,
     defineEventHandler(async event => {
       try {
-        const body = await readBody(event);
+        const body = await readBody<unknown>(event);
 
-        if (!body || typeof body !== 'object') {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body.id || !body.name) {
+        if (!isDataSchema(body)) {
           throw createError({
             status: 400,
             statusMessage: 'Bad Request',
@@ -309,21 +303,13 @@ export function createDataRoutes(modelServer: ModelServer) {
       }
 
       try {
-        const body = await readBody(event);
+        const body = await readBody<unknown>(event);
 
-        if (!body || typeof body !== 'object') {
+        if (!isDataSchema(body)) {
           throw createError({
             status: 400,
             statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body.name) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Schema must have a name field' }
+            data: { message: 'Schema must have id and name fields' }
           });
         }
 

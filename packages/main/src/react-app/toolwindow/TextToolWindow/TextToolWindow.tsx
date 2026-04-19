@@ -18,7 +18,7 @@ export const TextToolWindow = () => {
   const [errors, setErrors] = useState<ParseErrors>(new Map<number, string>());
   const [dirty, setDirty] = useState(false);
 
-  const parseTimer = useRef<ReturnType<typeof setTimeout>>();
+  const parseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const format = FormatRegistry['default'];
 
   const parseText = useCallback(
@@ -102,7 +102,6 @@ export const TextToolWindow = () => {
             mode={'headless-no-padding'}
             id={'text'}
             title={'Text'}
-            // @ts-expect-error - anchorName is a new CSS property
             style={{ anchorName: '--content', borderBottomWidth: 0 }}
           >
             <SyntaxHighlightingEditor

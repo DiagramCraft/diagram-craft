@@ -3,6 +3,7 @@ import {
   createRouter,
   defineEventHandler,
   EventHandlerRequest,
+  getRequestHeader,
   H3Event,
   readBody,
   setResponseHeader
@@ -19,8 +20,7 @@ export function createAIRoutes(aiServer: AIServer) {
 
   // Helper function to validate content type and size
   const validateRequest = (event: H3Event<EventHandlerRequest>) => {
-    const contentType = event.node.req.headers['content-type'];
-    const contentTypeStr = Array.isArray(contentType) ? contentType[0] : contentType;
+    const contentTypeStr = getRequestHeader(event, 'content-type');
     if (contentTypeStr && !contentTypeStr.startsWith(CONTENT_TYPE_JSON)) {
       throw createError({
         status: 415,
@@ -29,10 +29,7 @@ export function createAIRoutes(aiServer: AIServer) {
       });
     }
 
-    const contentLengthHeader = event.node.req.headers['content-length'];
-    const contentLengthStr = Array.isArray(contentLengthHeader)
-      ? contentLengthHeader[0]
-      : contentLengthHeader;
+    const contentLengthStr = getRequestHeader(event, 'content-length');
     const contentLength = parseInt(contentLengthStr ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
       throw createError({
