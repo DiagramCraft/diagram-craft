@@ -19,6 +19,7 @@
  */
 
 import type { NoneEmptyArray } from './types';
+import { precondition } from './assert';
 
 /**
  * Seeded pseudo-random number generator for reproducible randomness.
@@ -74,10 +75,7 @@ export class Random {
    * ```
    */
   pick<T>(arr: NoneEmptyArray<T>): T {
-    if (arr.length === 0) {
-      throw new Error('Cannot pick from an empty array');
-    }
-
+    precondition.is.arrayNotEmpty(arr, 'Cannot pick from an empty array');
     return arr[Math.floor(this.next() * arr.length)]!;
   }
 
