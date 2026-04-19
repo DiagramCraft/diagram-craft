@@ -1,4 +1,4 @@
-import { createError, createRouter, defineEventHandler, getQuery, readBody } from 'h3';
+import { H3, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import type { Entity, EntityApiResponse, LifecycleStatus } from '../types.js';
 
@@ -13,17 +13,17 @@ const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
 type PostgresError = { code: string };
 
 const handleError = (error: unknown, fallback: string): never => {
-  if (error != null && typeof error === 'object' && 'statusCode' in error) throw error;
+  if (HTTPError.isError(error)) throw error;
   if (error != null && typeof error === 'object' && 'code' in error) {
     const { code } = error as PostgresError;
     if (code === '23503') {
-      throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: '_schemaId references a schema that does not exist' } });
+      throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId references a schema that does not exist' });
     }
     if (code === '23505') {
-      throw createError({ status: 409, statusMessage: 'Conflict', data: { message: 'An entity with that slug already exists in this namespace for the given schema' } });
+      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'An entity with that slug already exists in this namespace for the given schema' });
     }
   }
-  throw createError({ status: 500, statusMessage: 'Internal Server Error', data: { message: fallback } });
+  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
 const toApiFormat = (row: Entity): EntityApiResponse => ({
@@ -43,12 +43,12 @@ const slugify = (name: string) =>
     .replace(/^-|-$/g, '');
 
 export function createDataRoutes() {
-  const router = createRouter();
+  const router = new H3();
 
   // GET /api/data[?_schemaId=...]
   router.get(
     BASE,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const { _schemaId } = getQuery(event);
       try {
         if (_schemaId && typeof _schemaId === 'string') {
@@ -66,12 +66,12 @@ export function createDataRoutes() {
   // GET /api/data/:id
   router.get(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const [row] = await sql<Entity[]>`SELECT * FROM entity WHERE id = ${id}`;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Data record '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return toApiFormat(row);
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
@@ -83,21 +83,21 @@ export function createDataRoutes() {
   // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.post(
     BASE,
-    defineEventHandler(async event => {
-      const body = await readBody(event);
+    defineHandler(async event => {
+      const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'Request body must be a JSON object' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
 
       const { _schemaId, _slug, _namespace = 'default', _owner = null, _lifecycle = null, ...fields } =
         body as Record<string, unknown>;
 
       if (!_schemaId || typeof _schemaId !== 'string')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: '_schemaId is required and must be a string (UUID)' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId is required and must be a string (UUID)' });
 
       const name = typeof fields['name'] === 'string' ? fields['name'] : '';
       const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
       if (!slug)
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: '_slug (or a name to derive it from) is required' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_slug (or a name to derive it from) is required' });
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const owner = typeof _owner === 'string' ? _owner : null;
@@ -123,23 +123,23 @@ export function createDataRoutes() {
   // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.put(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
-      const body = await readBody(event);
+      const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'Request body must be a JSON object' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
 
       const { _schemaId, _slug, _namespace, _owner, _lifecycle, ...fields } = body as Record<string, unknown>;
 
       if (!_schemaId || typeof _schemaId !== 'string')
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: '_schemaId is required and must be a string (UUID)' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId is required and must be a string (UUID)' });
 
       const name = typeof fields['name'] === 'string' ? fields['name'] : '';
       const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
       if (!slug)
-        throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: '_slug (or a name to derive it from) is required' } });
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_slug (or a name to derive it from) is required' });
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const owner = typeof _owner === 'string' ? _owner : null;
@@ -161,7 +161,7 @@ export function createDataRoutes() {
           WHERE id = ${id}
           RETURNING *
         `;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Data record '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return toApiFormat(row);
       } catch (e) {
         handleError(e, 'Failed to update data record');
@@ -172,12 +172,12 @@ export function createDataRoutes() {
   // DELETE /api/data/:id
   router.delete(
     `${BASE}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.['id'];
-      if (!id) throw createError({ status: 400, statusMessage: 'Bad Request', data: { message: 'id is required' } });
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const [row] = await sql<Entity[]>`DELETE FROM entity WHERE id = ${id} RETURNING id`;
-        if (!row) throw createError({ status: 404, statusMessage: 'Not Found', data: { message: `Data record '${id}' not found` } });
+        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return { success: true, message: `Data record '${id}' deleted` };
       } catch (e) {
         handleError(e, 'Failed to delete data record');

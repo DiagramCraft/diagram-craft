@@ -12,8 +12,11 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "dotenv": "^16.4.7",
-    "h3": "^1.15.6",
+    "dotenv": "^17.2.3",
+    "h3": "^2.0.1-rc.5",
     "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2"
   }
 }

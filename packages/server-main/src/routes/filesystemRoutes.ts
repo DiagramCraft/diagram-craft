@@ -1,8 +1,6 @@
 import {
-  appendResponseHeader,
-  createRouter,
-  defineEventHandler,
-  readRawBody,
+  defineHandler,
+  H3,
   serveStatic
 } from 'h3';
 import { readFile } from 'node:fs/promises';
@@ -13,15 +11,15 @@ const API_FS_PATH = '/api/fs';
 const API_FS_WILDCARD = '/api/fs/**';
 
 export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
-  const router = createRouter();
+  const router = new H3();
 
   // Add filesystem API routes
   router.get(
     API_FS_PATH,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const result = await fileSystemServer.get('');
       if (result.type === 'file') {
-        appendResponseHeader(event, 'Content-Type', result.contentType);
+        event.res.headers.append('Content-Type', result.contentType);
         return serveStatic(event, {
           getContents: () => readFile(result.path),
           getMeta: () => ({
@@ -36,10 +34,10 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
   );
   router.get(
     API_FS_WILDCARD,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const result = await fileSystemServer.get(event.context.params!._!);
       if (result.type === 'file') {
-        appendResponseHeader(event, 'Content-Type', result.contentType);
+        event.res.headers.append('Content-Type', result.contentType);
         return serveStatic(event, {
           getContents: () => readFile(result.path),
           getMeta: () => ({
@@ -55,16 +53,15 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
 
   router.put(
     API_FS_WILDCARD,
-    defineEventHandler(async event => {
-      const contentType = event.node.req.headers['content-type'];
-      const contentTypeValue = Array.isArray(contentType) ? contentType[0] : contentType;
-      const contentLength = parseInt(event.node.req.headers['content-length'] ?? '0', 10);
-      const body = await readRawBody(event, false);
+    defineHandler(async event => {
+      const contentTypeValue = event.req.headers.get('content-type') ?? undefined;
+      const contentLength = parseInt(event.req.headers.get('content-length') ?? '0', 10);
+      const body = await event.req.arrayBuffer().catch(() => undefined);
 
       return fileSystemServer.put(event.context.params!._!, {
         contentType: contentTypeValue,
         contentLength,
-        body
+        body: body ? Buffer.from(body) : undefined
       });
     })
   );

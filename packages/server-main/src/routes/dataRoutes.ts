@@ -1,12 +1,12 @@
 import {
-  createError,
-  createRouter,
-  defineEventHandler,
+  defineHandler,
   EventHandlerRequest,
+  H3,
   H3Event,
-  readBody
+  HTTPError
 } from 'h3';
 import type { ModelServer } from '../modelServer';
+import type { DataSchema, DataWithSchema } from '../types';
 
 // Constants
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024; // 10MB limit for data requests
@@ -15,37 +15,53 @@ const API_DATA_PATH = '/api/data';
 const API_SCHEMAS_PATH = '/api/schemas';
 
 export function createDataRoutes(modelServer: ModelServer) {
-  const router = createRouter();
+  const router = new H3();
 
   // Helper function to validate content type and size
   const validateRequest = (event: H3Event<EventHandlerRequest>) => {
-    const contentType = event.node.req.headers['content-type'];
-    const contentTypeStr = Array.isArray(contentType) ? contentType[0] : contentType;
+    const contentTypeStr = event.req.headers.get('content-type');
     if (contentTypeStr && !contentTypeStr.startsWith(CONTENT_TYPE_JSON)) {
-      throw createError({
+      throw new HTTPError({
         status: 415,
-        statusMessage: 'Unsupported Media Type',
-        data: { message: `Content-Type must be ${CONTENT_TYPE_JSON}` }
+        statusText: 'Unsupported Media Type',
+        message: `Content-Type must be ${CONTENT_TYPE_JSON}`
       });
     }
 
-    const contentLengthHeader = event.node.req.headers['content-length'];
-    const contentLengthStr = Array.isArray(contentLengthHeader)
-      ? contentLengthHeader[0]
-      : contentLengthHeader;
+    const contentLengthStr = event.req.headers.get('content-length');
     const contentLength = parseInt(contentLengthStr ?? '0', 10);
     if (contentLength > MAX_REQUEST_SIZE) {
-      throw createError({
+      throw new HTTPError({
         status: 413,
-        statusMessage: 'Payload Too Large',
-        data: { message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes` }
+        statusText: 'Payload Too Large',
+        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
       });
     }
   };
 
+  const isDataWithSchema = (body: unknown): body is DataWithSchema => {
+    return (
+      !!body &&
+      typeof body === 'object' &&
+      '_schemaId' in body &&
+      typeof body._schemaId === 'string'
+    );
+  };
+
+  const isDataSchema = (body: unknown): body is DataSchema => {
+    return (
+      !!body &&
+      typeof body === 'object' &&
+      'id' in body &&
+      typeof body.id === 'string' &&
+      'name' in body &&
+      typeof body.name === 'string'
+    );
+  };
+
   // Helper function to handle errors consistently
   const handleError = (error: unknown, fallbackMessage: string) => {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (HTTPError.isError(error)) {
       throw error;
     }
     if (
@@ -55,30 +71,30 @@ export function createDataRoutes(modelServer: ModelServer) {
       typeof error.message === 'string' &&
       error.message.includes('already exists')
     ) {
-      throw createError({
+      throw new HTTPError({
         status: 409,
-        statusMessage: 'Conflict',
-        data: { message: error.message }
+        statusText: 'Conflict',
+        message: error.message
       });
     }
-    throw createError({
+    throw new HTTPError({
       status: 500,
-      statusMessage: 'Internal Server Error',
-      data: { message: fallbackMessage }
+      statusText: 'Internal Server Error',
+      message: fallbackMessage
     });
   };
 
   // GET /api/data - Get all data
   router.get(
     API_DATA_PATH,
-    defineEventHandler(async _event => {
+    defineHandler(async () => {
       try {
         return modelServer.getAllData();
       } catch (_error) {
-        throw createError({
+        throw new HTTPError({
           status: 500,
-          statusMessage: 'Internal Server Error',
-          data: { message: 'Failed to retrieve data' }
+          statusText: 'Internal Server Error',
+          message: 'Failed to retrieve data'
         });
       }
     })
@@ -87,23 +103,23 @@ export function createDataRoutes(modelServer: ModelServer) {
   // GET /api/data/:id - Get data by ID
   router.get(
     `${API_DATA_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
         const data = modelServer.getDataById(id);
         if (!data) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Data with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Data with ID '${id}' not found`
           });
         }
         return data;
@@ -116,24 +132,16 @@ export function createDataRoutes(modelServer: ModelServer) {
   // POST /api/data - Create new data
   router.post(
     API_DATA_PATH,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       validateRequest(event);
       try {
-        const body = await readBody(event);
+        const body = await event.req.json().catch(() => undefined);
 
-        if (!body || typeof body !== 'object') {
-          throw createError({
+        if (!isDataWithSchema(body)) {
+          throw new HTTPError({
             status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body._schemaId) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: '_schemaId is required' }
+            statusText: 'Bad Request',
+            message: 'Request body must be a valid JSON object with _schemaId'
           });
         }
 
@@ -147,42 +155,34 @@ export function createDataRoutes(modelServer: ModelServer) {
   // PUT /api/data/:id - Update data
   router.put(
     `${API_DATA_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       validateRequest(event);
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
-        const body = await readBody(event);
+        const body = await event.req.json().catch(() => undefined);
 
-        if (!body || typeof body !== 'object') {
-          throw createError({
+        if (!isDataWithSchema(body)) {
+          throw new HTTPError({
             status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body._schemaId) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: '_schemaId is required' }
+            statusText: 'Bad Request',
+            message: 'Request body must be a valid JSON object with _schemaId'
           });
         }
 
         const updatedData = modelServer.updateData(id, body);
         if (!updatedData) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Data with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Data with ID '${id}' not found`
           });
         }
 
@@ -196,23 +196,23 @@ export function createDataRoutes(modelServer: ModelServer) {
   // DELETE /api/data/:id - Delete data
   router.delete(
     `${API_DATA_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
         const deleted = modelServer.deleteData(id);
         if (!deleted) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Data with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Data with ID '${id}' not found`
           });
         }
 
@@ -226,7 +226,7 @@ export function createDataRoutes(modelServer: ModelServer) {
   // GET /api/schemas - Get all schemas
   router.get(
     API_SCHEMAS_PATH,
-    defineEventHandler(async _event => {
+    defineHandler(async () => {
       try {
         return modelServer.getAllSchemas();
       } catch (error: unknown) {
@@ -238,23 +238,23 @@ export function createDataRoutes(modelServer: ModelServer) {
   // GET /api/schemas/:id - Get schema by ID
   router.get(
     `${API_SCHEMAS_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
         const schema = modelServer.getSchemaById(id);
         if (!schema) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Schema with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Schema with ID '${id}' not found`
           });
         }
         return schema;
@@ -267,23 +267,15 @@ export function createDataRoutes(modelServer: ModelServer) {
   // POST /api/schemas - Create new schema
   router.post(
     API_SCHEMAS_PATH,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       try {
-        const body = await readBody(event);
+        const body = await event.req.json().catch(() => undefined);
 
-        if (!body || typeof body !== 'object') {
-          throw createError({
+        if (!isDataSchema(body)) {
+          throw new HTTPError({
             status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body.id || !body.name) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Schema must have id and name fields' }
+            statusText: 'Bad Request',
+            message: 'Schema must have id and name fields'
           });
         }
 
@@ -298,41 +290,33 @@ export function createDataRoutes(modelServer: ModelServer) {
   // PUT /api/schemas/:id - Update schema
   router.put(
     `${API_SCHEMAS_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
-        const body = await readBody(event);
+        const body = await event.req.json().catch(() => undefined);
 
-        if (!body || typeof body !== 'object') {
-          throw createError({
+        if (!isDataSchema(body)) {
+          throw new HTTPError({
             status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Request body must be a valid JSON object' }
-          });
-        }
-
-        if (!body.name) {
-          throw createError({
-            status: 400,
-            statusMessage: 'Bad Request',
-            data: { message: 'Schema must have a name field' }
+            statusText: 'Bad Request',
+            message: 'Schema must have id and name fields'
           });
         }
 
         const updatedSchema = modelServer.updateSchema(id, body);
         if (!updatedSchema) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Schema with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Schema with ID '${id}' not found`
           });
         }
 
@@ -346,23 +330,23 @@ export function createDataRoutes(modelServer: ModelServer) {
   // DELETE /api/schemas/:id - Delete schema
   router.delete(
     `${API_SCHEMAS_PATH}/:id`,
-    defineEventHandler(async event => {
+    defineHandler(async event => {
       const id = event.context.params?.id;
       if (!id) {
-        throw createError({
+        throw new HTTPError({
           status: 400,
-          statusMessage: 'Bad Request',
-          data: { message: 'ID parameter is required' }
+          statusText: 'Bad Request',
+          message: 'ID parameter is required'
         });
       }
 
       try {
         const deleted = modelServer.deleteSchema(id);
         if (!deleted) {
-          throw createError({
+          throw new HTTPError({
             status: 404,
-            statusMessage: 'Not Found',
-            data: { message: `Schema with ID '${id}' not found` }
+            statusText: 'Not Found',
+            message: `Schema with ID '${id}' not found`
           });
         }
 

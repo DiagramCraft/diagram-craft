@@ -12,11 +12,12 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": true,
+    "rootDir": "..",
     "paths": {
       "@diagram-craft/electron-client-api/*": ["../electron-client-api/src/*"],
       "@diagram-craft/utils/*": ["../utils/src/*"]
     },
-    "rootDirs": ["./src", "../electron-client-api/src/*", "../utils/src/*"]
+    "rootDirs": ["./src", "../electron-client-api/src", "../utils/src"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

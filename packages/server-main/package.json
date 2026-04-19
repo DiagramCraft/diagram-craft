@@ -16,7 +16,7 @@
     "@diagram-craft/collaboration": "workspace:*",
     "@diagram-craft/model": "workspace:*",
     "@diagram-craft/utils": "workspace:*",
-    "h3": "^1.15.6",
+    "h3": "^2.0.1-rc.5",
     "lib0": "^0.2.117",
     "ws": "^8.20.0",
     "y-protocols": "^1.0.7",

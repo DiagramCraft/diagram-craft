@@ -1,4 +1,4 @@
-import { createApp, defineEventHandler, handleCors } from 'h3';
+import { H3, defineHandler, handleCors } from 'h3';
 import { createAIRoutes } from './routes/aiRoutes';
 import { createDataRoutes } from './routes/dataRoutes';
 import { createFilesystemRoutes } from './routes/filesystemRoutes';
@@ -9,9 +9,9 @@ const log = createLogger('app');
 import openapiSpec from './openapi.json';
 
 export const createServerApp = (servers: ServerModules) => {
-  const app = createApp();
+  const app = new H3();
   app.use(
-    defineEventHandler(event => {
+    defineHandler(event => {
       const didHandleCors = handleCors(event, {
         origin: '*',
         preflight: {
@@ -27,7 +27,7 @@ export const createServerApp = (servers: ServerModules) => {
 
   app.use(
     '/api/openapi.json',
-    defineEventHandler(() => {
+    defineHandler(() => {
       return openapiSpec;
     })
   );

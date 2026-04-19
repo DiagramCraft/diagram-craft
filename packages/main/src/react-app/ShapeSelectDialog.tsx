@@ -6,7 +6,7 @@ import styles from './ShapeSelectDialog.module.css';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { copyStyles, Stencil, stencilScaleStrokes } from '@diagram-craft/model/stencilRegistry';
 import { addStencilStylesToDocument } from '@diagram-craft/model/stencilUtils';
 import { isEmptyString } from '@diagram-craft/utils/strings';
@@ -269,7 +269,7 @@ export const ShapeSelectDialog = (props: Props) => {
 
   const activeTabs = props.tabs ?? ['recent', 'search', 'icons'];
 
-  const tabContent: Record<ShapeSelectTab, JSX.Element> = {
+  const tabContent: Record<ShapeSelectTab, ReactElement> = {
     recent: (
       <div
         className={`${objectPickerStyles.icObjectPicker} cmp-shape-select-dialog ${styles.icRecentStencils}`}
