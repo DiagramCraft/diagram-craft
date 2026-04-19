@@ -107,7 +107,7 @@ describe('Random', () => {
     it('throws with empty array', () => {
       const random = new Random(12345);
       const emptyArray = [] as unknown as NoneEmptyArray<number>;
-      expect(() => random.pick(emptyArray)).toThrowError('Cannot pick from an empty array');
+      expect(() => random.pick(emptyArray)).toThrowError('array has at least one element');
     });
   });
 });

@@ -75,7 +75,7 @@ export class Random {
    * ```
    */
   pick<T>(arr: NoneEmptyArray<T>): T {
-    precondition.is.arrayNotEmpty(arr, 'Cannot pick from an empty array');
+    precondition.is.arrayNotEmpty(arr);
     return arr[Math.floor(this.next() * arr.length)]!;
   }
 
