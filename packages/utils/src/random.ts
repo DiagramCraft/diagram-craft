@@ -4,17 +4,22 @@
  * @example
  * ```ts
  * import { Random } from '@diagram-craft/utils/random';
+ * import type { NoneEmptyArray } from '@diagram-craft/utils/types';
  *
  * const rng = new Random(12345); // Deterministic with seed
+ * const items: NoneEmptyArray<string> = ['a', 'b', 'c'];
  *
  * const value = rng.nextFloat(); // 0.0 to 1.0
  * const inRange = rng.nextRange(10, 20); // 10 to 20
  * const coin = rng.nextBoolean(); // true or false
- * const item = rng.pick(['a', 'b', 'c']); // Random element
+ * const item = rng.pick(items); // Random element
  * ```
  *
  * @module
  */
+
+import type { NoneEmptyArray } from './types';
+import { precondition } from './assert';
 
 /**
  * Seeded pseudo-random number generator for reproducible randomness.
@@ -59,16 +64,18 @@ export class Random {
    * Randomly picks an element from an array.
    *
    * @template T - The type of array elements
-   * @param arr - The array to pick from
+   * @param arr - The non-empty array to pick from
    * @returns A random element from the array
+   * @throws {Error} When the array is empty
    *
    * @example
    * ```ts
-   * const colors = ['red', 'green', 'blue'];
+   * const colors: NoneEmptyArray<string> = ['red', 'green', 'blue'];
    * const color = rng.pick(colors); // 'green'
    * ```
    */
-  pick<T>(arr: T[]): T {
+  pick<T>(arr: NoneEmptyArray<T>): T {
+    precondition.is.arrayNotEmpty(arr);
     return arr[Math.floor(this.next() * arr.length)]!;
   }
 
