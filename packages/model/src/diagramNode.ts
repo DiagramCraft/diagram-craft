@@ -205,11 +205,13 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
 
     const nodeCrdt = this._crdt as unknown as WatchableValue<CRDTMap<DiagramNodeCRDT>>;
 
+    const edgesMap = WatchableValue.from(
+      ([m]) => m.get().get('edges', () => layer.diagram.document.root.factory.makeMap())!,
+      [nodeCrdt]
+    );
+
     this.#edges = new MappedCRDTMap(
-      WatchableValue.from(
-        ([m]) => m.get().get('edges', () => layer.diagram.document.root.factory.makeMap())!,
-        [nodeCrdt]
-      ),
+      edgesMap,
       makeEdgesMapper(this),
       {
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
@@ -217,6 +219,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
         onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
+    this._releasables.add(this.#edges);
+    this._releasables.add(edgesMap);
 
     this.#nodeType = new CRDTProp<DiagramNodeCRDT, 'nodeType'>(nodeCrdt, 'nodeType', {
       onRemoteChange: () => {
@@ -232,6 +236,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       }
     });
     this.#nodeType.init('rect');
+    this._releasables.add(this.#nodeType);
 
     const textMap = WatchableValue.from(
       ([parent]) => parent.get().get('text', () => layer.crdt.factory.makeMap())!,
@@ -242,6 +247,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       this.clearCache();
     });
     this.#text.init({ text: '' });
+    this._releasables.add(this.#text);
+    this._releasables.add(textMap);
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
@@ -251,6 +258,8 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       getRemoteUnitOfWork(this.diagram).updateElement(this);
       this.clearCache();
     });
+    this._releasables.add(this.#props);
+    this._releasables.add(propsMap);
 
     this.#anchors = new CRDTProp<DiagramNodeCRDT, 'anchors'>(nodeCrdt, 'anchors', {
       onRemoteChange: () => {
@@ -258,6 +267,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       }
     });
     if (anchorCache) this.#anchors.init(anchorCache);
+    this._releasables.add(this.#anchors);
 
     this.#bounds = new MappedCRDTProp<DiagramNodeCRDT, 'bounds', Box>(
       nodeCrdt,
@@ -271,6 +281,7 @@ export class SimpleDiagramNode extends AbstractDiagramElement implements Diagram
       }
     );
     this.#bounds.init(DEFAULT_BOUNDS);
+    this._releasables.add(this.#bounds);
 
     // Note: It is important that this comes last, as it might trigger
     //       events etc - so important that everything is set up before

@@ -81,6 +81,8 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+    this._releasables.add(this.#localProps);
+    this._releasables.add(propsMap);
 
     // Initialize override waypoints
     this.#localWaypoints = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'waypoints'>(
@@ -95,8 +97,10 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       }
     );
     this.#localWaypoints.init([]);
+    this._releasables.add(this.#localWaypoints);
 
     this.#hasLocalWaypoints = new CRDTProp(edgeCrdt, 'hasLocalWaypoints');
+    this._releasables.add(this.#hasLocalWaypoints);
 
     // Initialize override endpoints
     const makeEndpointMapper = () => ({
@@ -114,6 +118,7 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       }
     );
     this.#localStart.init(delegate.start);
+    this._releasables.add(this.#localStart);
 
     this.#localEnd = new MappedCRDTProp<DelegatingDiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
@@ -124,9 +129,12 @@ export class DelegatingDiagramEdge extends DelegatingDiagramElement implements D
       }
     );
     this.#localEnd.init(delegate.end);
+    this._releasables.add(this.#localEnd);
 
     this.#hasLocalStart = new CRDTProp(edgeCrdt, 'hasLocalStart');
     this.#hasLocalEnd = new CRDTProp(edgeCrdt, 'hasLocalEnd');
+    this._releasables.add(this.#hasLocalStart);
+    this._releasables.add(this.#hasLocalEnd);
 
     if (opts?.props) this.#localProps.set(opts.props);
     if (opts?.start) {

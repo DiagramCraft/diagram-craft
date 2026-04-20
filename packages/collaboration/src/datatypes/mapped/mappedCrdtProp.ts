@@ -3,14 +3,17 @@ import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
 import { assert } from '@diagram-craft/utils/assert';
 import type { CRDTMapper } from './types';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export class MappedCRDTProp<
   C extends { [key: string]: CRDTCompatibleObject },
   N extends keyof C & string,
   T = C[N]
-> {
+> implements Releasable {
   #value: T | undefined;
   #current: CRDTMap<C>;
+  readonly #remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']>;
+  readonly #unsubscribeChange: () => void;
 
   constructor(
     crdt: WatchableValue<CRDTMap<C>>,
@@ -30,19 +33,19 @@ export class MappedCRDTProp<
       this.#value = this.mapper.fromCRDT(this.#current.get(this.name) as C[N]);
     }
 
-    const remoteUpdate: EventReceiver<CRDTMapEvents<C[string]>['remoteUpdate']> = p => {
+    this.#remoteUpdate = p => {
       if (p.key !== name) return;
       this.#value = this.mapper.fromCRDT(p.value as C[N]);
       props.onRemoteChange!();
     };
 
-    this.#current.on('remoteUpdate', remoteUpdate);
+    this.#current.on('remoteUpdate', this.#remoteUpdate);
 
-    crdt.on('change', () => {
-      this.#current.off('remoteUpdate', remoteUpdate);
+    this.#unsubscribeChange = crdt.on('change', () => {
+      this.#current.off('remoteUpdate', this.#remoteUpdate);
 
       this.#current = crdt.get();
-      this.#current.on('remoteUpdate', remoteUpdate);
+      this.#current.on('remoteUpdate', this.#remoteUpdate);
       this.#current.get(name, props.factory);
     });
   }
@@ -67,5 +70,10 @@ export class MappedCRDTProp<
       this.#value = v;
       this.#current.set(this.name, this.mapper.toCRDT(v));
     }
+  }
+
+  release() {
+    this.#unsubscribeChange();
+    this.#current.off('remoteUpdate', this.#remoteUpdate);
   }
 }

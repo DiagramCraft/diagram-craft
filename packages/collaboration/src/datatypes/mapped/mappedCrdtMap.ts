@@ -3,6 +3,7 @@ import { type CRDTMapper } from './types';
 import type { CRDTCompatibleObject, CRDTMap, CRDTMapEvents } from '../../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import type { EventReceiver } from '@diagram-craft/utils/event';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
 export type MappedCRDTMapMapType<T extends Record<string, CRDTCompatibleObject>> = Record<
   string,
@@ -19,9 +20,13 @@ type Props<T> = {
 export class MappedCRDTMap<
   T,
   C extends Record<string, CRDTCompatibleObject> = Record<string, string>
-> {
+> implements Releasable {
   #map: Map<string, T> = new Map<string, T>();
   #current: CRDTMap<MappedCRDTMapMapType<C>>;
+  readonly #remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']>;
+  readonly #remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']>;
+  readonly #remoteInsert: EventReceiver<CRDTMapEvents['remoteDelete']>;
+  readonly #unsubscribeChange: () => void;
 
   constructor(
     crdt: WatchableValue<CRDTMap<MappedCRDTMapMapType<C>>>,
@@ -40,34 +45,34 @@ export class MappedCRDTMap<
       }
     };
 
-    const remoteUpdate: EventReceiver<CRDTMapEvents['remoteUpdate']> = e => {
+    this.#remoteUpdate = e => {
       this.#map.set(e.key, mapper.fromCRDT(e.value));
       props?.onRemoteChange?.(this.#map.get(e.key)!);
     };
 
-    const remoteDelete: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
+    this.#remoteDelete = e => {
       props?.onRemoteRemove?.(e.key, mapper.fromCRDT(e.value));
       this.#map.delete(e.key);
     };
 
-    const remoteInsert: EventReceiver<CRDTMapEvents['remoteDelete']> = e => {
+    this.#remoteInsert = e => {
       this.#map.set(e.key, mapper.fromCRDT(e.value));
       props?.onRemoteAdd?.(this.#map.get(e.key)!);
     };
 
-    this.#current.on('remoteUpdate', remoteUpdate);
-    this.#current.on('remoteDelete', remoteDelete);
-    this.#current.on('remoteInsert', remoteInsert);
+    this.#current.on('remoteUpdate', this.#remoteUpdate);
+    this.#current.on('remoteDelete', this.#remoteDelete);
+    this.#current.on('remoteInsert', this.#remoteInsert);
 
-    crdt.on('change', () => {
-      this.#current.off('remoteUpdate', remoteUpdate);
-      this.#current.off('remoteDelete', remoteDelete);
-      this.#current.off('remoteInsert', remoteInsert);
+    this.#unsubscribeChange = crdt.on('change', () => {
+      this.#current.off('remoteUpdate', this.#remoteUpdate);
+      this.#current.off('remoteDelete', this.#remoteDelete);
+      this.#current.off('remoteInsert', this.#remoteInsert);
 
       this.#current = crdt.get();
-      this.#current.on('remoteUpdate', remoteUpdate);
-      this.#current.on('remoteDelete', remoteDelete);
-      this.#current.on('remoteInsert', remoteInsert);
+      this.#current.on('remoteUpdate', this.#remoteUpdate);
+      this.#current.on('remoteDelete', this.#remoteDelete);
+      this.#current.on('remoteInsert', this.#remoteInsert);
       setFromCRDT();
     });
 
@@ -116,5 +121,12 @@ export class MappedCRDTMap<
 
   toJSON() {
     return Object.fromEntries(this.#map.entries());
+  }
+
+  release() {
+    this.#unsubscribeChange();
+    this.#current.off('remoteUpdate', this.#remoteUpdate);
+    this.#current.off('remoteDelete', this.#remoteDelete);
+    this.#current.off('remoteInsert', this.#remoteInsert);
   }
 }

@@ -23,16 +23,21 @@
  */
 
 import { EventEmitter } from './event';
+import { Releasables, type Releasable } from './releasable';
 
 /**
  * A value container that emits events when its value changes.
  * Extends EventEmitter to provide change notifications when the value is updated.
  * @template T The type of value being watched
  */
-export class WatchableValue<T> extends EventEmitter<{
+export class WatchableValue<T>
+  extends EventEmitter<{
   change: { newValue: T };
-}> {
+}>
+  implements Releasable
+{
   #value: T;
+  readonly #releasables = new Releasables();
 
   /**
    * Creates a new WatchableValue instance
@@ -56,10 +61,15 @@ export class WatchableValue<T> extends EventEmitter<{
    * @param value - The new value to store
    */
   set(value: T) {
-    if (this.#value !== value) {
+    if (!Object.is(this.#value, value)) {
       this.#value = value;
       this.emit('change', { newValue: value });
     }
+  }
+
+  release() {
+    this.#releasables.release();
+    this.clearListeners();
   }
 
   /**
@@ -78,7 +88,7 @@ export class WatchableValue<T> extends EventEmitter<{
     const v = new WatchableValue(fn(arg));
 
     for (const wv of arg) {
-      wv.on('change', () => v.set(fn(arg)));
+      v.#releasables.add(wv.on('change', () => v.set(fn(arg))));
     }
 
     return v;

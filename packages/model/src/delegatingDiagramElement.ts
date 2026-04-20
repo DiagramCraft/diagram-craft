@@ -22,6 +22,7 @@ import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
 import { Layer } from '@diagram-craft/model/diagramLayer';
+import { Releasables } from '@diagram-craft/utils/releasable';
 
 // biome-ignore lint/suspicious/noExplicitAny: false positive
 type Snapshot = any;
@@ -30,6 +31,7 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
   readonly _trackableType = 'element';
 
   protected readonly delegate: DiagramElement;
+  protected readonly _releasables = new Releasables();
 
   protected _metadata: CRDTObject<ElementMetadata>;
   protected readonly _crdt: WatchableValue<CRDTMap<DiagramElementCRDT>>;
@@ -62,6 +64,9 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+
+    this._releasables.add(this._metadata);
+    this._releasables.add(metadataMap);
   }
 
   get id() {
@@ -126,6 +131,11 @@ export abstract class DelegatingDiagramElement implements DiagramElement {
 
   get crdt() {
     return this._crdt;
+  }
+
+  release() {
+    this._releasables.release();
+    this._crdt.release();
   }
 
   _setParent() {

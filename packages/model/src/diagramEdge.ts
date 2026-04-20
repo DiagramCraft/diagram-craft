@@ -248,20 +248,27 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
       initialValue: []
     });
+    this._releasables.add(this.#waypoints);
+
+    const labelNodesMap = WatchableValue.from(
+      ([m]) => m.get().get('labelNodes', () => layer.diagram.document.root.factory.makeMap())!,
+      [edgeCrdt]
+    );
 
     this.#labelNodes = new MappedCRDTOrderedMap<ResolvedLabelNode, LabelNodeCRDTEntry>(
-      WatchableValue.from(
-        ([m]) => m.get().get('labelNodes', () => layer.diagram.document.root.factory.makeMap())!,
-        [edgeCrdt]
-      ),
+      labelNodesMap,
       makeLabelNodeMapper(this)
+    );
+    this._releasables.add(this.#labelNodes);
+    this._releasables.add(labelNodesMap);
+
+    const attachedEdgesMap = WatchableValue.from(
+      ([m]) => m.get().get('attachedEdges', () => layer.diagram.document.root.factory.makeMap())!,
+      [edgeCrdt]
     );
 
     this.#attachedEdges = new MappedCRDTMap(
-      WatchableValue.from(
-        ([m]) => m.get().get('attachedEdges', () => layer.diagram.document.root.factory.makeMap())!,
-        [edgeCrdt]
-      ),
+      attachedEdgesMap,
       makeAttachedEdgesMapper(this),
       {
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this),
@@ -269,6 +276,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         onRemoteRemove: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
+    this._releasables.add(this.#attachedEdges);
+    this._releasables.add(attachedEdgesMap);
 
     this.#start = new MappedCRDTProp<DiagramEdgeCRDT, 'start', Endpoint>(
       edgeCrdt,
@@ -278,6 +287,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
+    this._releasables.add(this.#start);
 
     this.#end = new MappedCRDTProp<DiagramEdgeCRDT, 'end', Endpoint>(
       edgeCrdt,
@@ -287,6 +297,7 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
         onRemoteChange: () => getRemoteUnitOfWork(this.diagram).updateElement(this)
       }
     );
+    this._releasables.add(this.#end);
 
     const propsMap = WatchableValue.from(
       ([parent]) => parent.get().get('props', () => layer.crdt.factory.makeMap())!,
@@ -297,6 +308,8 @@ export class SimpleDiagramEdge extends AbstractDiagramElement implements Diagram
       getRemoteUnitOfWork(this.diagram).updateElement(this);
       this.clearCache();
     });
+    this._releasables.add(this.#props);
+    this._releasables.add(propsMap);
   }
 
   /* Factory ************************************************************************************************* */

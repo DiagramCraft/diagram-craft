@@ -45,6 +45,15 @@ describe('WatchableValue', () => {
     expect(changeListener).toHaveBeenCalledWith({ newValue: null });
   });
 
+  it('should not emit a change event when setting NaN repeatedly', () => {
+    const watchable = new WatchableValue(Number.NaN);
+    const changeListener = vi.fn();
+    watchable.on('change', changeListener);
+
+    watchable.set(Number.NaN);
+    expect(changeListener).not.toHaveBeenCalled();
+  });
+
   describe('from', () => {
     it('should create a WatchableValue with the computed initial value', () => {
       const a = new WatchableValue(3);
@@ -107,6 +116,40 @@ describe('WatchableValue', () => {
 
       c.set(4);
       expect(product.get()).toBe(8);
+    });
+
+    it('should stop recomputing after release', () => {
+      const a = new WatchableValue(3);
+      const b = new WatchableValue(4);
+      const compute = vi.fn((args: [WatchableValue<number>, WatchableValue<number>]) =>
+        args.reduce((acc, val) => acc + val.get(), 0)
+      );
+
+      const sum = WatchableValue.from(compute, [a, b] as const);
+      expect(sum.get()).toBe(7);
+      expect(compute).toHaveBeenCalledTimes(1);
+
+      sum.release();
+      a.set(5);
+
+      expect(sum.get()).toBe(7);
+      expect(compute).toHaveBeenCalledTimes(1);
+    });
+
+    it('should allow release to be called multiple times', () => {
+      const a = new WatchableValue(3);
+      const b = new WatchableValue(4);
+      const sum = WatchableValue.from(
+        args => args.reduce((acc, val) => acc + val.get(), 0),
+        [a, b]
+      );
+
+      sum.release();
+      sum.release();
+
+      a.set(5);
+      b.set(6);
+      expect(sum.get()).toBe(7);
     });
   });
 });
