@@ -72,6 +72,8 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+    this._releasables.add(this.#localProps);
+    this._releasables.add(propsMap);
 
     this.#localBounds = new MappedCRDTProp<DelegatingDiagramNodeCRDT, 'bounds', Box>(
       nodeCrdt,
@@ -85,8 +87,10 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       }
     );
     this.#localBounds.init({ x: 0, y: 0, w: 0, h: 0, r: 0 });
+    this._releasables.add(this.#localBounds);
 
     this.#hasLocalBounds = new CRDTProp(nodeCrdt, 'hasLocalBounds');
+    this._releasables.add(this.#hasLocalBounds);
 
     // Initialize override texts
     const textsMap = WatchableValue.from(
@@ -99,6 +103,8 @@ export class DelegatingDiagramNode extends DelegatingDiagramElement implements D
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+    this._releasables.add(this.#localTexts);
+    this._releasables.add(textsMap);
 
     if (opts?.bounds) {
       this.#localBounds.set(opts?.bounds);

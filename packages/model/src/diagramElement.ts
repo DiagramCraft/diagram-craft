@@ -27,7 +27,7 @@ import {
 import { CRDTObject } from '@diagram-craft/collaboration/datatypes/crdtObject';
 import { MappedCRDTProp } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtProp';
 import type { EdgeProps, ElementMetadata, ElementProps, NodeProps } from './diagramProps';
-import type { Releasable, Releasables } from '@diagram-craft/utils/releasable';
+import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { Stylesheet } from '@diagram-craft/model/diagramStyles';
 import { Detachable } from '@diagram-craft/model/detachable';
 import { Layer } from '@diagram-craft/model/diagramLayer';
@@ -177,6 +177,7 @@ export abstract class AbstractDiagramElement
   protected _diagram: Diagram | undefined;
   protected _layer: RegularLayer | ModificationLayer | undefined;
   protected _activeDiagram: Diagram;
+  protected readonly _releasables = new Releasables();
 
   // The cache is created lazily for performance reasons
   private _cache: Map<CacheKeys, unknown> | undefined = undefined;
@@ -209,11 +210,13 @@ export abstract class AbstractDiagramElement
       this._crdt.get().set('tags', []);
     }
 
+    const childrenMap = WatchableValue.from(
+      ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
+      [this._crdt]
+    );
+
     this._children = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      WatchableValue.from(
-        ([m]) => m.get().get('children', () => layer.crdt.factory.makeMap())!,
-        [this._crdt]
-      ),
+      childrenMap,
       makeElementMapper(this.layer, undefined),
       {
         onRemoteAdd: e => {
@@ -257,9 +260,18 @@ export abstract class AbstractDiagramElement
       this.diagram.emit('elementChange', { element: this });
       this.clearCache();
     });
+
+    this._releasables.add(this._children);
+    this._releasables.add(childrenMap);
+    this._releasables.add(this._parent);
+    this._releasables.add(this._metadata);
+    this._releasables.add(metadataMap);
   }
 
-  release() {}
+  release() {
+    this._releasables.release();
+    this._crdt.release();
+  }
 
   abstract getAttachmentsInUse(): Array<string>;
 

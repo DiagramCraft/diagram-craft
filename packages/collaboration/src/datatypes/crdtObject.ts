@@ -3,19 +3,23 @@ import type { CRDTCompatibleObject, CRDTMap } from '../crdt';
 import type { WatchableValue } from '@diagram-craft/utils/watchableValue';
 import { DynamicValue } from '@diagram-craft/utils/dynamicValue';
 import { FlatObjectMapProxy, fromFlatObjectMap } from '@diagram-craft/utils/flatObject';
+import type { Releasable } from '@diagram-craft/utils/releasable';
 
-export class CRDTObject<T extends CRDTCompatibleObject & object> {
+export class CRDTObject<T extends CRDTCompatibleObject & object> implements Releasable {
   #proxy: T | undefined;
   #current: CRDTMap;
+  readonly #unsubscribeChange: () => void;
+  readonly #onRemoteChange: () => void;
 
   constructor(
     crdt: WatchableValue<CRDTMap>,
     readonly onRemoteChange: () => void
   ) {
     this.#current = crdt.get();
+    this.#onRemoteChange = onRemoteChange;
     this.#current.on('remoteAfterTransaction', onRemoteChange);
 
-    crdt.on('change', () => {
+    this.#unsubscribeChange = crdt.on('change', () => {
       this.#current.off('remoteAfterTransaction', onRemoteChange);
 
       this.#current = crdt.get();
@@ -78,5 +82,10 @@ export class CRDTObject<T extends CRDTCompatibleObject & object> {
 
   createProxy(): T {
     return FlatObjectMapProxy.create<T, CRDTCompatibleObject>(new DynamicValue(() => this.crdt));
+  }
+
+  release() {
+    this.#unsubscribeChange();
+    this.#current.off('remoteAfterTransaction', this.#onRemoteChange);
   }
 }
