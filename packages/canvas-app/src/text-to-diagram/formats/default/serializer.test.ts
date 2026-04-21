@@ -401,8 +401,8 @@ describe('serializer', () => {
     const node = layer.addNode({ id: 'node1', type: 'rect' });
     UnitOfWork.execute(diagram, uow => {
       node.updateProps(props => {
-        props.custom = {
-          data: 'before;middle=after'
+        props.fill = {
+          pattern: 'before;middle=after'
         };
       }, uow);
       node.updateMetadata(metadata => {
@@ -416,8 +416,8 @@ describe('serializer', () => {
     expect(parsed.errors.size).toBe(0);
     expect(parsed.elements[0]).toMatchObject({
       props: {
-        custom: {
-          data: 'before;middle=after'
+        fill: {
+          pattern: 'before;middle=after'
         }
       },
       metadata: {
