@@ -193,6 +193,13 @@ describe('utils', () => {
         arrow: { start: { type: 'SQUARE_ARROW_OUTLINE' } }
       });
     });
+
+    test('parses escaped delimiters in values', () => {
+      const result = parsePropsString('custom.data=before\\;middle\\=after');
+      expect(result).toEqual({
+        custom: { data: 'before;middle=after' }
+      });
+    });
   });
 
   describe('parseMetadataString', () => {
@@ -204,6 +211,11 @@ describe('utils', () => {
     test('ignores unknown metadata keys', () => {
       const result = parseMetadataString('name=Test;unknown=value');
       expect(result).toEqual({ name: 'Test' });
+    });
+
+    test('parses escaped delimiters in metadata values', () => {
+      const result = parseMetadataString('name=alpha\\;beta\\=gamma');
+      expect(result).toEqual({ name: 'alpha;beta=gamma' });
     });
   });
 });

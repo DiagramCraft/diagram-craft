@@ -28,7 +28,8 @@ import { defaultSyntaxHighlighter } from './syntaxHighlighter';
  * (* Edge definition *)
  * edge = "edge" [connection] [label] [body] ;
  * connection = [id] [arrow] [id] ;
- * arrow = "->" ;
+ * arrow = ARROW ;
+ * ARROW = "->" | "--" | ".." | "-." | "==" | "::" | "=:" | [arrow_head] line [arrow_head] ;
  * label = STRING ;
  *
  * (* Body with properties and children *)
@@ -58,9 +59,11 @@ import { defaultSyntaxHighlighter } from './syntaxHighlighter';
  * - Custom shapes can be registered via the node registry
  *
  * **Edge Connections:**
- * - Full connection: `edge node1 -> node2`
- * - From only: `edge node1 ->`
- * - To only: `edge -> node2`
+ * - Full connection: `edge node1 -- node2`
+ * - Backwards-compatible arrow: `edge node1 -> node2`
+ * - Rich arrow notation: `edge node1 <|--|> node2`
+ * - From only: `edge node1 --`
+ * - To only: `edge -- node2`
  * - Unconnected: `edge`
  *
  * **Properties Format:**
@@ -89,7 +92,10 @@ import { defaultSyntaxHighlighter } from './syntaxHighlighter';
  * }
  *
  * // Edge with connection
- * e1: edge node1 -> node2 "connects to"
+ * e1: edge node1 -- node2 "connects to"
+ *
+ * // Edge with custom arrowheads / line style
+ * e2: edge node1 <|--|> node2
  *
  * // Edge with auto-generated ID
  * : edge node2 -> node3

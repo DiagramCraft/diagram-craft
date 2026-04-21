@@ -70,6 +70,7 @@ export type ParsedElement = {
   props?: Partial<NodeProps | EdgeProps>;
   metadata?: Partial<ElementMetadata>;
   stylesheet?: string;
+  textStylesheet?: string;
   children?: ParsedElement[];
 } & (
   | {
@@ -82,7 +83,6 @@ export type ParsedElement = {
       type: 'node';
       shape: string;
       name?: string;
-      textStylesheet?: string;
     }
 );
 
