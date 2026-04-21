@@ -17,6 +17,8 @@ type ElementMetadata = {
 type ElementProps = any;
 
 const escapeString = (value: string) => value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+const escapeValue = (value: string) =>
+  value.replaceAll('\\', '\\\\').replaceAll(';', '\\;').replaceAll('=', '\\=');
 
 const needsQuotes = (id: string) => !/^[a-zA-Z0-9_-]+$/.test(id);
 
@@ -26,8 +28,11 @@ const formatId = (id: string) => (needsQuotes(id) ? formatString(id) : id);
 
 const serializeMetadata = (data: ElementMetadata | undefined) => {
   if (!data) return undefined;
-  if (data.name) return `name=${data.name}`;
-  return undefined;
+  const result: string[] = [];
+  if (data.name) {
+    result.push(`name=${escapeValue(data.name)}`);
+  }
+  return result.length > 0 ? result.join(';') : undefined;
 };
 
 const serializeProps = (data: ElementProps | undefined) => {
@@ -41,7 +46,7 @@ const serializeProps = (data: ElementProps | undefined) => {
       if (typeof value === 'object' && value !== null) {
         result.push(...collect(value, `${prefix}${key}.`));
       } else {
-        result.push(`${prefix}${key}=${value}`);
+        result.push(`${prefix}${key}=${escapeValue(String(value))}`);
       }
     }
     return result;
@@ -50,6 +55,39 @@ const serializeProps = (data: ElementProps | undefined) => {
   const res = collect(data);
   if (res.length === 0) return undefined;
   return res.join(';');
+};
+
+const getSerializedStyles = (metadata: ElementMetadata) => {
+  let style = metadata.style;
+  let textStyle = metadata.textStyle;
+  if (style === 'default' || style === 'default-text' || style === 'default-edge') style = undefined;
+  if (textStyle === 'default-text-default') textStyle = undefined;
+  return { style, textStyle };
+};
+
+const appendMetadataSublines = (
+  sublines: string[],
+  metadata: ElementMetadata,
+  props: ElementProps | undefined,
+  indent: string
+) => {
+  const { style, textStyle } = getSerializedStyles(metadata);
+
+  if (style || textStyle) {
+    sublines.push(
+      `${indent}  stylesheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
+    );
+  }
+
+  const propsS = serializeProps(props);
+  if (propsS) {
+    sublines.push(`${indent}  props: ${formatString(propsS)}`);
+  }
+
+  const metadataS = serializeMetadata(metadata);
+  if (metadataS) {
+    sublines.push(`${indent}  metadata: ${formatString(metadataS)}`);
+  }
 };
 
 const elementToText = (element: DiagramElement, lines: string[], indent = '') => {
@@ -68,26 +106,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
       elementToText(child, sublines, `${indent}  `);
     }
 
-    let style = element.metadata.style;
-    let textStyle = element.metadata.textStyle;
-    if (style === 'default' || style === 'default-text') style = undefined;
-    if (textStyle === 'default-text-default') textStyle = undefined;
-
-    if (style || textStyle) {
-      sublines.push(
-        `${indent}  stylesheet: ${[style ? `${style} ` : '', textStyle ? ` ${textStyle}` : ''].join('/')}`
-      );
-    }
-
-    const propsS = serializeProps(element.storedProps);
-    if (propsS) {
-      sublines.push(`${indent}  props: ${formatString(propsS)}`);
-    }
-
-    const metadataS = serializeMetadata(element.metadata);
-    if (metadataS) {
-      sublines.push(`${indent}  metadata: ${formatString(metadataS)}`);
-    }
+    appendMetadataSublines(sublines, element.metadata, element.storedProps, indent);
 
     if (sublines.length > 0) {
       lines.push(`${node} {`);
@@ -151,10 +170,7 @@ const elementToText = (element: DiagramElement, lines: string[], indent = '') =>
       }
     }
 
-    const propsS = serializeProps(propsWithoutArrow);
-    if (propsS) {
-      sublines.push(`${indent}  props: ${formatString(propsS)}`);
-    }
+    appendMetadataSublines(sublines, element.metadata, propsWithoutArrow, indent);
 
     if (sublines.length > 0) {
       lines.push(`${edge} {`);

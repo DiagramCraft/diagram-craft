@@ -2,6 +2,48 @@ import { MultiMap } from '@diagram-craft/utils/multimap';
 import type { ParsedElement } from './types';
 import type { EdgeProps, ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
 
+const splitEscaped = (value: string, separator: string): string[] => {
+  const parts: string[] = [];
+  let current = '';
+  let escaped = false;
+
+  for (const char of value) {
+    if (escaped) {
+      current += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+
+    if (char === separator) {
+      parts.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (escaped) {
+    current += '\\';
+  }
+
+  parts.push(current);
+  return parts;
+};
+
+const parseAssignments = (value: string): Array<[string, string]> =>
+  splitEscaped(value, ';')
+    .map(pair => {
+      const [key, ...rest] = splitEscaped(pair, '=');
+      return key && rest.length > 0 ? [key, rest.join('=')] : undefined;
+    })
+    .filter((entry): entry is [string, string] => entry !== undefined);
+
 /**
  * Recursively collect all element IDs and their line numbers from parsed elements
  */
@@ -29,10 +71,7 @@ export const collectElementIds = (elements: ParsedElement[]): MultiMap<string, n
 export const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProps> => {
   const result: Record<string, unknown> = {};
 
-  for (const pair of propsStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
+  for (const [key, value] of parseAssignments(propsStr)) {
     const parts = key.split('.');
 
     let current: Record<string, unknown> = result;
@@ -66,10 +105,7 @@ export const parsePropsString = (propsStr: string): Partial<NodeProps | EdgeProp
 export const parseMetadataString = (metadataStr: string): Partial<ElementMetadata> => {
   const result: Partial<ElementMetadata> = {};
 
-  for (const pair of metadataStr.split(';')) {
-    const [key, value] = pair.split('=');
-    if (!key || value === undefined) continue;
-
+  for (const [key, value] of parseAssignments(metadataStr)) {
     if (key === 'name') {
       result.name = value;
     }

@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { defaultSerializer } from './serializer';
+import { defaultParser } from './parser';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import { AnchorEndpoint } from '@diagram-craft/model/endpoint';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 
 const serialize = (layer: RegularLayer) => defaultSerializer.serialize(layer);
+const parse = (text: string) => defaultParser.parse(text);
 
 describe('serializer', () => {
   test('converts simple node', () => {
@@ -392,5 +394,67 @@ describe('serializer', () => {
     const edgeLine = result.find(line => line.startsWith('"edge \\"1\\"":'));
 
     expect(edgeLine).toBe('"edge \\"1\\"": edge "node \\"1\\"" -- "node 2" "says \\"hi\\""');
+  });
+
+  test('round-trips props and metadata values containing delimiters', () => {
+    const { layer, diagram } = TestModel.newDiagramWithLayer();
+    const node = layer.addNode({ id: 'node1', type: 'rect' });
+    UnitOfWork.execute(diagram, uow => {
+      node.updateProps(props => {
+        props.custom = {
+          data: 'before;middle=after'
+        };
+      }, uow);
+      node.updateMetadata(metadata => {
+        metadata.name = 'alpha;beta=gamma';
+      }, uow);
+    });
+
+    const serialized = serialize(layer).join('\n');
+    const parsed = parse(serialized);
+
+    expect(parsed.errors.size).toBe(0);
+    expect(parsed.elements[0]).toMatchObject({
+      props: {
+        custom: {
+          data: 'before;middle=after'
+        }
+      },
+      metadata: {
+        name: 'alpha;beta=gamma'
+      }
+    });
+  });
+
+  test('round-trips edge metadata and stylesheet fields', () => {
+    const { layer, diagram } = TestModel.newDiagramWithLayer();
+    const from = layer.addNode({ id: 'from', type: 'rect' });
+    const to = layer.addNode({ id: 'to', type: 'rect' });
+    const edge = layer.addEdge({ id: 'edge1' });
+
+    UnitOfWork.execute(diagram, uow => {
+      edge.setStart(new AnchorEndpoint(from, 'c'), uow);
+      edge.setEnd(new AnchorEndpoint(to, 'c'), uow);
+      edge.updateMetadata(metadata => {
+        metadata.name = 'Named Edge';
+        metadata.style = 'custom-edge-style';
+        metadata.textStyle = 'custom-edge-text-style';
+      }, uow);
+    });
+
+    const serialized = serialize(layer).join('\n');
+    const parsed = parse(serialized);
+    const parsedEdge = parsed.elements.find(
+      element => element.type === 'edge' && element.id === 'edge1'
+    );
+
+    expect(parsed.errors.size).toBe(0);
+    expect(parsedEdge).toMatchObject({
+      metadata: {
+        name: 'Named Edge'
+      },
+      stylesheet: 'custom-edge-style',
+      textStylesheet: 'custom-edge-text-style'
+    });
   });
 });

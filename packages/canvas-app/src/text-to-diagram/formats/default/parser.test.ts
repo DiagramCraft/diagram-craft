@@ -377,6 +377,22 @@ invalid line without colon
     });
   });
 
+  test('parses edge with style and textStyle', () => {
+    const input = `e1: edge {
+  stylesheet: arrow-style / edge-label
+}`;
+    const result = parse(input);
+
+    expect(result.errors.size).toBe(0);
+    expect(result.elements).toHaveLength(1);
+    expect(result.elements[0]).toMatchObject({
+      id: 'e1',
+      type: 'edge',
+      stylesheet: 'arrow-style',
+      textStylesheet: 'edge-label'
+    });
+  });
+
   test('flags unterminated string in node name', () => {
     const input = '4: rect "jkjskd';
     const result = parse(input);

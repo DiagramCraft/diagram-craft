@@ -563,11 +563,6 @@ class Parser {
       finalProps = this.mergeProps(arrowNotationProps, props);
     }
 
-    // Warn if textStylesheet was specified for an edge
-    if (textStylesheet) {
-      this.addError(this.peek().line, 'Edges cannot have textStylesheet');
-    }
-
     return {
       id,
       line: ctx.line,
@@ -578,6 +573,7 @@ class Parser {
       props: finalProps,
       metadata,
       stylesheet,
+      textStylesheet,
       children
     };
   }
