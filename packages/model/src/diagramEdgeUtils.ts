@@ -2,7 +2,6 @@ import { DiagramEdge, Intersection } from './diagramEdge';
 import { AnchorEndpoint, NodeConnectedEndpoint } from './endpoint';
 import {
   LengthOffsetOnPath,
-  LengthOffsetOnSegment,
   PointOnPath,
   TimeOffsetOnSegment
 } from '@diagram-craft/geometry/pathPosition';
