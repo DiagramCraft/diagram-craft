@@ -16,7 +16,7 @@
     "analyze": "pnpx vite-bundle-visualizer"
   },
   "dependencies": {
-    "@base-ui/react": "1.4.0",
+    "@base-ui/react": "1.4.1",
     "@diagram-craft/app-components": "workspace:^",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
@@ -49,10 +49,10 @@
     "@storybook/react-vite": "^10.3.5",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@vitejs/devtools": "0.1.14",
+    "@vitejs/devtools": "0.1.15",
     "@vitejs/plugin-react": "^6.0.1",
     "storybook": "^10.3.5",
-    "vite": "^8.0.8",
-    "vitest": "^4.1.4"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
   }
 }
