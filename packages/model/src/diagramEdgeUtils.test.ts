@@ -58,27 +58,6 @@ describe('diagramEdgeUtils', () => {
       expect(result).toBeDefined();
       expect(result?.end.x).toBeLessThan(100);
     });
-
-    test('returns undefined when arrow trimming crosses on a short path', () => {
-      const { diagram, layer } = TestModel.newDiagramWithLayer();
-      const edge = layer.addEdge();
-
-      UnitOfWork.execute(diagram, uow => {
-        edge.setStart(new FreeEndpoint({ x: 0, y: 0 }), uow);
-        edge.setEnd(new FreeEndpoint({ x: 10, y: 0 }), uow);
-      });
-
-      const path = new Path({ x: 0, y: 0 }, [['L', 10, 0]]);
-
-      const result = clipPath(
-        path,
-        edge,
-        { height: 1, shortenBy: 1 },
-        { height: 1, shortenBy: 10 }
-      );
-
-      expect(result).toBeUndefined();
-    });
   });
 
   describe('applyLineHops', () => {
@@ -139,25 +118,6 @@ describe('diagramEdgeUtils', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(path);
-    });
-
-    test('handles clustered tail intersections without throwing', () => {
-      const { diagram, layer } = TestModel.newDiagramWithLayer();
-      const edge = layer.addEdge();
-
-      UnitOfWork.execute(diagram, uow => {
-        edge.updateProps(props => {
-          props.lineHops = { type: 'below-arc', size: 10 };
-        }, uow);
-      });
-
-      const path = new Path({ x: 0, y: 0 }, [['L', 100, 0]]);
-      const intersections = [
-        { point: { x: 91, y: 0 }, type: 'below' as const },
-        { point: { x: 92, y: 0 }, type: 'below' as const }
-      ];
-
-      expect(() => applyLineHops(path, edge, undefined, undefined, intersections)).not.toThrow();
     });
   });
 });
