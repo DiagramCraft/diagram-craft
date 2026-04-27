@@ -2,7 +2,6 @@ import { DiagramEdge, Intersection } from './diagramEdge';
 import { AnchorEndpoint, NodeConnectedEndpoint } from './endpoint';
 import {
   LengthOffsetOnPath,
-  LengthOffsetOnSegment,
   PointOnPath,
   TimeOffsetOnSegment
 } from '@diagram-craft/geometry/pathPosition';
@@ -18,23 +17,22 @@ type ArrowShape = {
   shortenBy?: number;
 };
 
+type PathOffset = TimeOffsetOnSegment & LengthOffsetOnPath;
+
 const adjustForArrow = (
   pointOnPath: PointOnPath | undefined,
   arrow: ArrowShape | undefined,
   path: Path,
   adjust: -1 | 1
-): TimeOffsetOnSegment | undefined => {
+): PathOffset | undefined => {
   if (!pointOnPath) return undefined;
 
-  if (arrow) {
-    const baseTOS = PointOnPath.toTimeOffset(pointOnPath, path, false);
-    const arrowL1 = TimeOffsetOnSegment.toLengthOffsetOnSegment(baseTOS, path);
-    arrowL1.segmentD += (arrow.shortenBy ?? 0) * adjust;
+  const baseOffset = PointOnPath.toTimeOffset(pointOnPath, path, false);
+  if (!arrow) return baseOffset;
 
-    return LengthOffsetOnSegment.toTimeOffsetOnSegment(arrowL1, path);
-  } else {
-    return PointOnPath.toTimeOffset(pointOnPath, path);
-  }
+  const pathD = Math.max(0, Math.min(path.length(), baseOffset.pathD + (arrow.shortenBy ?? 0) * adjust));
+
+  return LengthOffsetOnPath.toTimeOffsetOnSegment({ ...baseOffset, pathD }, path);
 };
 
 const adjustForPerimeterSpacing = (
@@ -130,7 +128,7 @@ export const clipPath = (
   if (!startOffset && !endOffset) {
     basePath = path;
   } else if (startOffset && endOffset) {
-    if (startOffset.segment === endOffset.segment && startOffset.segmentT === endOffset.segmentT) {
+    if (startOffset.pathD >= endOffset.pathD) {
       return undefined;
     }
     basePath = path.split(startOffset, endOffset)[1];
@@ -175,24 +173,28 @@ export const applyLineHops = (
     .filter(i => i.pathD < length - (endArrow?.height ?? 0) - gapSize / 2)
 
     // Sort by offset, ascending
-    .sort((a, b) => a.pathD - b.pathD)
-    .map(i => i.intersection);
+    .sort((a, b) => a.pathD - b.pathD);
 
   // No need to proceed if there are no valid intersections
   if (validIntersections.length === 0) return [basePath];
 
   const dest: Path[] = [];
-  for (const intersection of validIntersections) {
+  for (const { intersection, pathD } of validIntersections) {
     const toSplit = dest.at(-1) ?? basePath;
 
     if (
       (thisType.startsWith('below') && intersection.type === 'below') ||
       (thisType.startsWith('above') && intersection.type === 'above')
     ) {
-      const projection = toSplit.projectPoint(intersection.point);
+      const suffixStartD = length - toSplit.length();
+      const localPathD = pathD - suffixStartD;
 
-      const pathD1 = Math.max(0, projection.pathD - gapSize / 2);
-      const pathD2 = Math.min(length, projection.pathD + gapSize / 2);
+      if (localPathD <= 0 || localPathD >= toSplit.length()) continue;
+
+      const pathD1 = Math.max(0, localPathD - gapSize / 2);
+      const pathD2 = Math.min(toSplit.length(), localPathD + gapSize / 2);
+
+      if (pathD1 >= pathD2) continue;
 
       const [before, , after] = toSplit.split(
         LengthOffsetOnPath.toTimeOffsetOnSegment({ pathD: pathD1 }, toSplit),
