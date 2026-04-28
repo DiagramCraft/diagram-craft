@@ -78,8 +78,11 @@ export const assignNewIdsToSerializedElements = (
         }
       }
 
-      for (const ln of e.labelNodes ?? []) {
-        ln.id = mustExist(nodeIdMapping.get(ln.id));
+      if (e.labelNodes) {
+        e.labelNodes = e.labelNodes.map(ln => ({
+          ...ln,
+          id: mustExist(nodeIdMapping.get(ln.id))
+        }));
       }
     }
 
