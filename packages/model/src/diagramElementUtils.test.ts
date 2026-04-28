@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { assignNewIdsToSerializedElements, cloneElements } from './diagramElementUtils';
+import {
+  assignNewBounds,
+  assignNewIdsToSerializedElements,
+  cloneElements,
+  deleteElements
+} from './diagramElementUtils';
 import type { SerializedEdge, SerializedNode } from './serialization/serializedTypes';
 import { TestModel } from './test-support/testModel';
 import { UnitOfWork } from './unitOfWork';
 import { isEdge, isNode } from './diagramElement';
 import { NodeConnectedEndpoint, FreeEndpoint } from './endpoint';
+import { Point } from '@diagram-craft/geometry/point';
 
 describe('cloneHelper', () => {
   describe('assignNewIdsToSerializedElements', () => {
@@ -184,6 +190,28 @@ describe('cloneHelper', () => {
       if ('position' in edge.end) {
         expect(edge.end.position).toEqual({ x: 200, y: 50 });
       }
+    });
+
+    it('should throw when a label node cannot be remapped', () => {
+      const edge: SerializedEdge = {
+        id: 'edge-1',
+        type: 'edge',
+        start: { position: { x: 0, y: 0 } },
+        end: { position: { x: 100, y: 100 } },
+        labelNodes: [
+          {
+            id: 'missing-label-node',
+            type: 'parallel',
+            offset: { x: 0, y: 0 },
+            offsetType: 'absolute',
+            timeOffset: 0
+          }
+        ],
+        props: {},
+        metadata: {}
+      };
+
+      expect(() => assignNewIdsToSerializedElements([edge])).toThrow();
     });
   });
 
@@ -408,6 +436,99 @@ describe('cloneHelper', () => {
       expect(cloned).toHaveLength(1);
       expect(cloned[0]!.layer).toBe(targetLayer);
       expect(node.layer).toBe(sourceLayer);
+    });
+  });
+
+  describe('deleteElements', () => {
+    it('should delete both root elements and child elements in one operation', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const parent = layer.addNode({ id: 'parent' });
+      const child = layer.createNode({ id: 'child' });
+      const rootEdge = layer.addEdge({ id: 'root-edge' });
+
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child, uow);
+      });
+
+      expect(layer.elements.map(e => e.id)).toEqual(['parent', 'root-edge']);
+      expect(parent.children.map(e => e.id)).toEqual(['child']);
+
+      UnitOfWork.execute(diagram, uow => {
+        deleteElements([child, rootEdge], uow);
+      });
+
+      expect(layer.elements.map(e => e.id)).toEqual(['parent']);
+      expect(parent.children).toHaveLength(0);
+      expect(diagram.lookup('child')).toBeUndefined();
+      expect(diagram.lookup('root-edge')).toBeUndefined();
+    });
+
+    it('should delete child edges before child nodes sharing the same parent', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const parent = layer.addNode({ id: 'parent' });
+      const childA = layer.createNode({ id: 'child-a', bounds: { x: 0, y: 0, w: 40, h: 40, r: 0 } });
+      const childB = layer.createNode({
+        id: 'child-b',
+        bounds: { x: 100, y: 0, w: 40, h: 40, r: 0 }
+      });
+
+      UnitOfWork.execute(diagram, uow => {
+        parent.setChildren([childA, childB], uow);
+      });
+
+      const childEdge = UnitOfWork.execute(diagram, uow => {
+        const edge = layer.createEdge({
+          id: 'child-edge',
+          startNodeId: childA.id,
+          endNodeId: childB.id
+        });
+        parent.addChild(edge, uow);
+        return edge;
+      });
+
+      expect(parent.children.map(e => e.id)).toContain(childEdge.id);
+
+      UnitOfWork.execute(diagram, uow => {
+        deleteElements([childA, childEdge], uow);
+      });
+
+      expect(parent.children.map(e => e.id)).toEqual(['child-b']);
+      expect(diagram.lookup('child-a')).toBeUndefined();
+      expect(diagram.lookup('child-edge')).toBeUndefined();
+    });
+  });
+
+  describe('assignNewBounds', () => {
+    it('should reposition and scale top-level elements relative to their shared bounds', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const first = layer.addNode({ id: 'first', bounds: { x: 10, y: 20, w: 20, h: 30, r: 0 } });
+      const second = layer.addNode({ id: 'second', bounds: { x: 40, y: 60, w: 10, h: 20, r: 0 } });
+
+      UnitOfWork.execute(diagram, uow => {
+        assignNewBounds([first, second], Point.of(100, 200), Point.of(2, 3), uow);
+      });
+
+      expect(first.bounds).toEqual({ x: 100, y: 200, w: 40, h: 90, r: 0 });
+      expect(second.bounds).toEqual({ x: 160, y: 320, w: 20, h: 60, r: 0 });
+    });
+
+    it('should apply the same top-level reference bounds to nested children', () => {
+      const { diagram, layer } = TestModel.newDiagramWithLayer();
+      const parent = layer.addNode({ id: 'parent', bounds: { x: 10, y: 20, w: 40, h: 30, r: 0 } });
+      const sibling = layer.addNode({ id: 'sibling', bounds: { x: 60, y: 20, w: 20, h: 20, r: 0 } });
+      const child = layer.createNode({ id: 'child', bounds: { x: 20, y: 25, w: 10, h: 5, r: 0 } });
+
+      UnitOfWork.execute(diagram, uow => {
+        parent.addChild(child, uow);
+      });
+
+      UnitOfWork.execute(diagram, uow => {
+        assignNewBounds([parent, sibling], Point.of(200, 300), Point.of(2, 2), uow);
+      });
+
+      expect(parent.bounds).toEqual({ x: 200, y: 300, w: 80, h: 60, r: 0 });
+      expect(sibling.bounds).toEqual({ x: 300, y: 300, w: 40, h: 40, r: 0 });
+      expect(child.bounds).toEqual({ x: 220, y: 310, w: 20, h: 10, r: 0 });
     });
   });
 });

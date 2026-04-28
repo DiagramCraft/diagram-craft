@@ -12,6 +12,7 @@ import type { DiagramNode } from './diagramNode';
 import type { DiagramEdge } from './diagramEdge';
 import { ElementLookup } from './elementLookup';
 import { groupBy } from '@diagram-craft/utils/array';
+import { mustExist } from '@diagram-craft/utils/assert';
 import {
   isSerializedEndpointAnchor,
   isSerializedEndpointPointInNode,
@@ -78,8 +79,7 @@ export const assignNewIdsToSerializedElements = (
       }
 
       for (const ln of e.labelNodes ?? []) {
-        // @ts-expect-error
-        ln.id = nodeIdMapping.get(ln.id)!;
+        ln.id = mustExist(nodeIdMapping.get(ln.id));
       }
     }
 
