@@ -15,6 +15,7 @@ dist-ssr
 # AI settings
 .claude
 .junie
+.sessionry
 CLAUDE.md
 AGENTS.md
 
