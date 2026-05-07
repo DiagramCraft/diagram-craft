@@ -329,10 +329,10 @@ export const defaultAppConfig: AppConfig = {
   autosave: window.electronAPI ? ElectronAutosave : MultiWindowAutosave,
   filesystem: {
     provider: import.meta.env.VITE_FS_PROVIDER ?? 'remote',
-    endpoint: import.meta.env.VITE_FS_ENDPOINT ?? 'http://localhost:3000'
+    endpoint: import.meta.env.VITE_FS_ENDPOINT ?? ''
   },
   ai: {
     provider: import.meta.env.VITE_AI_PROVIDER ?? 'none',
-    endpoint: import.meta.env.VITE_AI_ENDPOINT ?? 'http://localhost:3000'
+    endpoint: import.meta.env.VITE_AI_ENDPOINT ?? ''
   }
 };
