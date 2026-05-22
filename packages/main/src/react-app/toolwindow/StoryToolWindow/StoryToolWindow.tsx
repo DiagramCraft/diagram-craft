@@ -7,6 +7,7 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbPlus } from 'react-icons/tb';
 import { useState } from 'react';
 import { useDocument } from '../../../application';
+import { newid } from '@diagram-craft/utils/id';
 
 export const StoryToolWindow = () => {
   const document = useDocument();
@@ -15,7 +16,7 @@ export const StoryToolWindow = () => {
 
   const handleCreateStory = () => {
     if (newStoryName.trim()) {
-      document.stories.addStory(newStoryName);
+      document.stories.addStory(newid(), newStoryName);
       setNewStoryName('');
       setShowNewStoryDialog(false);
     }

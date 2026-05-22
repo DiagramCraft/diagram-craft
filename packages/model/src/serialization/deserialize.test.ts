@@ -11,6 +11,7 @@ import { ModificationLayer } from '../diagramLayerModification';
 import { AnchorEndpoint } from '../endpoint';
 import { DelegatingDiagramEdge } from '../delegatingDiagramEdge';
 import type { Diagram } from '../diagram';
+import { newid } from '@diagram-craft/utils/id';
 
 const createModificationLayer = (diagram: TestDiagramBuilder) => {
   const modLayer = new ModificationLayer('mod-layer', 'Modifications', diagram, []);
@@ -23,6 +24,16 @@ const getModificationLayer = (diagram: Diagram) => {
   expect(modLayer).toBeDefined();
   return modLayer!;
 };
+
+const addStory = (doc: ReturnType<typeof TestModel.newDocument>, name: string) =>
+  doc.stories.addStory(newid(), name);
+
+const addStep = (
+  doc: ReturnType<typeof TestModel.newDocument>,
+  story: { id: string },
+  title: string,
+  description: string
+) => doc.stories.addStep(doc.stories.getStory(story.id)!, newid(), title, description);
 
 describe('deserializeDiagramDocument', () => {
   describe('duplicate ids', () => {
@@ -82,6 +93,47 @@ describe('deserializeDiagramDocument', () => {
       expect(warnSpy).toHaveBeenCalledTimes(2);
 
       warnSpy.mockRestore();
+    });
+  });
+
+  describe('stories', () => {
+    it('should preserve story and step ids during serialization round-trip', async () => {
+      const originalDoc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(originalDoc, 'diagram-1');
+      diagram.newLayer();
+      originalDoc.addDiagram(diagram);
+
+      const story = addStory(originalDoc, 'Walkthrough');
+      const step = addStep(originalDoc, story, 'Step 1', 'Explain the first state');
+      originalDoc.stories.addAction(story, step, {
+        type: 'switch-diagram',
+        diagramId: 'diagram-1'
+      });
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+      expect(serialized.stories).toEqual([
+        {
+          id: story.id,
+          name: 'Walkthrough',
+          steps: [
+            {
+              id: step.id,
+              title: 'Step 1',
+              description: 'Explain the first state',
+              actions: [{ type: 'switch-diagram', diagramId: 'diagram-1' }]
+            }
+          ]
+        }
+      ]);
+
+      const newDoc = TestModel.newDocument();
+      await deserializeDiagramDocument(
+        serialized,
+        newDoc,
+        (d, doc) => new TestDiagramBuilder(doc, d.id)
+      );
+
+      expect(newDoc.stories.stories).toEqual(serialized.stories);
     });
   });
 
@@ -263,7 +315,7 @@ describe('deserializeDiagramDocument', () => {
         throw new Error('Expected regular layer');
       }
       const serializedNode = serializedLayer.elements[0]!;
-      if (serializedNode.type !== 'node' && serializedNode.type !== 'delegating-node') {
+      if (serializedNode.type !== 'node') {
         throw new Error('Expected node');
       }
 
@@ -298,7 +350,7 @@ describe('deserializeDiagramDocument', () => {
         throw new Error('Expected regular layer');
       }
       const reserializedNode = reserializedLayer.elements[0]!;
-      if (reserializedNode.type !== 'node' && reserializedNode.type !== 'delegating-node') {
+      if (reserializedNode.type !== 'node') {
         throw new Error('Expected node');
       }
 
@@ -658,6 +710,27 @@ describe('deserializeDiagramDocument', () => {
   });
 
   describe('modification layers', () => {
+    it('should serialize modification elements using delegating element types', async () => {
+      const originalDoc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(originalDoc);
+      const regularLayer = diagram.newLayer();
+      const baseNode = regularLayer.addNode({ id: 'base-node' });
+
+      const modLayer = createModificationLayer(diagram);
+      const delegatingNode = new DelegatingDiagramNode('delegating-1', baseNode, modLayer);
+      UnitOfWork.execute(diagram, uow => modLayer.modifyAdd('base-node', delegatingNode, uow));
+
+      originalDoc.addDiagram(diagram);
+
+      const serialized = await serializeDiagramDocument(originalDoc);
+      const serializedModificationLayer = serialized.diagrams[0]?.layers.find(
+        layer => layer.layerType === 'modification'
+      );
+
+      expect(serializedModificationLayer?.layerType).toBe('modification');
+      expect(serializedModificationLayer?.modifications[0]?.element?.type).toBe('delegating-node');
+    });
+
     it('should serialize and deserialize modification layer with add, remove, and change modifications', async () => {
       // Setup
       const originalDoc = TestModel.newDocument();

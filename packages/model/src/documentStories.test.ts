@@ -1,7 +1,13 @@
 import { describe, test, expect } from 'vitest';
-import type { StoryAction } from './documentStories';
+import type { DocumentStories, Story, StoryAction, Step } from './documentStories';
 import { standardTestModel } from './test-support/collaborationModelTestUtils';
 import { Backends } from '@diagram-craft/collaboration/test-support/collaborationTestUtils';
+import { newid } from '@diagram-craft/utils/id';
+
+const addStory = (stories: DocumentStories, name: string): Story => stories.addStory(newid(), name);
+
+const addStep = (stories: DocumentStories, story: Story, title: string, description: string): Step =>
+  stories.addStep(story, newid(), title, description);
 
 describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
   test('should replicate story creation', () => {
@@ -11,7 +17,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add a story in instance 1
-    const story = stories1.addStory('My Story');
+    const story = addStory(stories1, 'My Story');
 
     expect(stories1.stories).toHaveLength(1);
     expect(stories1.stories[0]?.name).toBe('My Story');
@@ -31,7 +37,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create a story
-    const story1 = stories1.addStory('Original Name');
+    const story1 = addStory(stories1, 'Original Name');
 
     // Update the story in instance 1
     stories1.updateStory(story1, { name: 'Updated Name' });
@@ -54,7 +60,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add a story
-    const story = stories1.addStory('To Delete');
+    const story = addStory(stories1, 'To Delete');
 
     expect(stories1.stories).toHaveLength(1);
     if (stories2) {
@@ -77,9 +83,9 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add multiple stories
-    const story1 = stories1.addStory('Story 1');
-    const story2 = stories1.addStory('Story 2');
-    const story3 = stories1.addStory('Story 3');
+    const story1 = addStory(stories1, 'Story 1');
+    const story2 = addStory(stories1, 'Story 2');
+    const story3 = addStory(stories1, 'Story 3');
 
     // Verify order is maintained in both instances
     expect(stories1.stories).toHaveLength(3);
@@ -102,10 +108,10 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Add a story
-    const story1 = stories1.addStory('Story with Steps');
+    const story1 = addStory(stories1, 'Story with Steps');
 
     // Add a step to the story
-    const step = stories1.addStep(story1, 'Step 1', 'First step');
+    const step = addStep(stories1, story1, 'Step 1', 'First step');
 
     // Verify in instance 1
     const updatedStory1 = stories1.getStory(story1.id)!;
@@ -130,8 +136,8 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create story and step
-    const story1 = stories1.addStory('Story');
-    const step1 = stories1.addStep(story1, 'Original Title', 'Original Description');
+    const story1 = addStory(stories1, 'Story');
+    const step1 = addStep(stories1, story1, 'Original Title', 'Original Description');
 
     // Update the step
     const updatedStory1 = stories1.getStory(story1.id)!;
@@ -160,10 +166,10 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create story with multiple steps
-    const story1 = stories1.addStory('Story');
-    const step1 = stories1.addStep(story1, 'Step 1', 'First');
+    const story1 = addStory(stories1, 'Story');
+    const step1 = addStep(stories1, story1, 'Step 1', 'First');
     const updatedStory1 = stories1.getStory(story1.id)!;
-    const step2 = stories1.addStep(updatedStory1, 'Step 2', 'Second');
+    const step2 = addStep(stories1, updatedStory1, 'Step 2', 'Second');
 
     // Verify both steps exist
     let currentStory1 = stories1.getStory(story1.id)!;
@@ -196,8 +202,8 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create story and step
-    const story1 = stories1.addStory('Story');
-    const step1 = stories1.addStep(story1, 'Step 1', 'First step');
+    const story1 = addStory(stories1, 'Story');
+    const step1 = addStep(stories1, story1, 'Step 1', 'First step');
 
     // Add actions to the step
     const updatedStory1 = stories1.getStory(story1.id)!;
@@ -239,8 +245,8 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create story and step with actions
-    const story1 = stories1.addStory('Story');
-    const step1 = stories1.addStep(story1, 'Step 1', 'First step');
+    const story1 = addStory(stories1, 'Story');
+    const step1 = addStep(stories1, story1, 'Step 1', 'First step');
 
     let updatedStory1 = stories1.getStory(story1.id)!;
     const action1: StoryAction = { type: 'switch-diagram', diagramId: 'diagram-1' };
@@ -293,8 +299,8 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2.stories;
 
     // Add stories from both instances concurrently
-    const story1 = stories1.addStory('Story from Instance 1');
-    const story2 = stories2.addStory('Story from Instance 2');
+    const story1 = addStory(stories1, 'Story from Instance 1');
+    const story2 = addStory(stories2, 'Story from Instance 2');
 
     // Both instances should have both stories
     expect(stories1.stories).toHaveLength(2);
@@ -319,11 +325,11 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
     const stories2 = doc2?.stories;
 
     // Create a complex story with multiple steps and actions
-    const story1 = stories1.addStory('Complex Story');
+    const story1 = addStory(stories1, 'Complex Story');
 
     // Add first step with actions
     let updatedStory = stories1.getStory(story1.id)!;
-    const step1 = stories1.addStep(updatedStory, 'Step 1', 'First step');
+    const step1 = addStep(stories1, updatedStory, 'Step 1', 'First step');
     updatedStory = stories1.getStory(story1.id)!;
     stories1.addAction(updatedStory, step1, { type: 'switch-diagram', diagramId: 'diagram-1' });
     updatedStory = stories1.getStory(story1.id)!;
@@ -335,7 +341,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
 
     // Add second step with actions
     updatedStory = stories1.getStory(story1.id)!;
-    const step2 = stories1.addStep(updatedStory, 'Step 2', 'Second step');
+    const step2 = addStep(stories1, updatedStory, 'Step 2', 'Second step');
     updatedStory = stories1.getStory(story1.id)!;
     stories1.addAction(updatedStory, step2, {
       type: 'hide-layer',
@@ -353,7 +359,7 @@ describe.each(Backends.all())('DocumentStories - %s', (_name, backend) => {
 
     // Add third step with actions
     updatedStory = stories1.getStory(story1.id)!;
-    const step3 = stories1.addStep(updatedStory, 'Step 3', 'Third step');
+    const step3 = addStep(stories1, updatedStory, 'Step 3', 'Third step');
     updatedStory = stories1.getStory(story1.id)!;
     stories1.addAction(updatedStory, step3, { type: 'switch-diagram', diagramId: 'diagram-2' });
 

@@ -25,7 +25,7 @@ export interface Reference {
 export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
   | {
       layerType: 'regular' | 'basic';
-      elements: ReadonlyArray<SerializedElement>;
+      elements: ReadonlyArray<SerializedRegularElement>;
       isLocked?: boolean;
     }
   | {
@@ -42,7 +42,7 @@ export type SerializedLayer = { id: string; name: string; type: 'layer' } & (
       modifications: ReadonlyArray<{
         id: string;
         type: ModificationType;
-        element?: SerializedElement;
+        element?: SerializedModificationElement;
       }>;
       isLocked?: boolean;
     }
@@ -172,4 +172,24 @@ export interface SerializedEdge {
   tags?: ReadonlyArray<string>;
 }
 
+export type SerializedRegularNode = Omit<SerializedNode, 'type' | 'children'> & {
+  type: 'node';
+  children?: ReadonlyArray<SerializedRegularElement>;
+};
+
+export type SerializedDelegatingNode = Omit<SerializedNode, 'type'> & {
+  type: 'delegating-node';
+};
+
+export type SerializedRegularEdge = Omit<SerializedEdge, 'type' | 'children'> & {
+  type: 'edge';
+  children?: ReadonlyArray<SerializedRegularElement>;
+};
+
+export type SerializedDelegatingEdge = Omit<SerializedEdge, 'type'> & {
+  type: 'delegating-edge';
+};
+
+export type SerializedRegularElement = SerializedRegularNode | SerializedRegularEdge;
+export type SerializedModificationElement = SerializedDelegatingNode | SerializedDelegatingEdge;
 export type SerializedElement = SerializedNode | SerializedEdge;
