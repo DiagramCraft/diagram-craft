@@ -4,6 +4,7 @@ import {
   SimpleShapeNodeDefinitionProps
 } from '@diagram-craft/canvas/components/BaseNodeComponent';
 import { ShapeBuilder } from '@diagram-craft/canvas/shape/ShapeBuilder';
+import { clamp } from '@diagram-craft/utils/math';
 
 const THUMB = { w: 6, h: 20 };
 
@@ -26,7 +27,7 @@ export class AndroidQuickscroll3 extends SimpleShapeNodeDefinition {
 
   buildShape(props: SimpleShapeNodeDefinitionProps, builder: ShapeBuilder) {
     const { w, h } = props.node.bounds;
-    const { dy } = props.nodeProps.custom.androidQuickscroll3;
+    const dy = clamp(props.nodeProps.custom.androidQuickscroll3.dy, 0, 1);
 
     const b = builder.buildBoundary();
     b.path(w - THUMB.w / 2, 0).line(w - THUMB.w / 2, h);
