@@ -227,7 +227,7 @@ describe('selection', () => {
     const node2 = layer2.addNode();
 
     selection.setElements([node1, node2]);
-    diagram.layers.toggleVisibility(layer2);
+    UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer2, uow));
     selection.filterSelectionToVisibleElements();
 
     expect(selection.elements).toHaveLength(1);

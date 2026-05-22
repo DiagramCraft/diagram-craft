@@ -203,16 +203,16 @@ export class LayerManager
     });
   }
 
-  toggleVisibility(layer: Layer) {
-    if (this.#visibleLayers.has(layer.id)) {
-      this.#visibleLayers.delete(layer.id);
-    } else {
-      this.#visibleLayers.set(layer.id, true);
-    }
+  toggleVisibility(layer: Layer, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      if (this.#visibleLayers.has(layer.id)) {
+        this.#visibleLayers.delete(layer.id);
+      } else {
+        this.#visibleLayers.set(layer.id, true);
+      }
 
-    this.diagram.selection.filterSelectionToVisibleElements();
-
-    this.emit('layerStructureChange', {});
+      this.diagram.selection.filterSelectionToVisibleElements();
+    });
   }
 
   set active(layer: Layer) {
@@ -277,7 +277,8 @@ export class LayerManager
   _snapshot(): LayersSnapshot {
     return {
       _snapshotType: 'layers',
-      layers: this.all.map(l => l.id)
+      layers: this.all.map(l => l.id),
+      visibleLayers: this.visible.map(l => l.id)
     };
   }
 
@@ -289,6 +290,15 @@ export class LayerManager
       }
     }
     this.#layers.setOrder(snapshot.layers);
+    const visibleLayerIds = new Set(snapshot.visibleLayers);
+    for (const layer of this.#layers.values) {
+      if (visibleLayerIds.has(layer.id)) {
+        this.#visibleLayers.set(layer.id, true);
+      } else {
+        this.#visibleLayers.delete(layer.id);
+      }
+    }
+    this.diagram.selection.filterSelectionToVisibleElements();
     uow.updateElement(this);
   }
 

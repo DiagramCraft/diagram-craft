@@ -25,13 +25,15 @@ const deriveActiveViewId = (diagram: Diagram): string | undefined => {
 };
 
 const applyView = (diagram: Diagram, targetLayerIds: Set<string>) => {
-  for (const layer of diagram.layers.all) {
-    const shouldBeVisible = targetLayerIds.has(layer.id);
-    const isVisible = diagram.layers.visible.includes(layer);
-    if (shouldBeVisible !== isVisible) {
-      diagram.layers.toggleVisibility(layer);
+  diagram.undoManager.execute('Apply view', uow => {
+    for (const layer of diagram.layers.all) {
+      const shouldBeVisible = targetLayerIds.has(layer.id);
+      const isVisible = diagram.layers.visible.includes(layer);
+      if (shouldBeVisible !== isVisible) {
+        diagram.layers.toggleVisibility(layer, uow);
+      }
     }
-  }
+  });
 };
 
 export const ViewSelectorToolbarButton = () => {

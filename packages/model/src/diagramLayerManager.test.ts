@@ -86,7 +86,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
       // Act
-      diagram1.layers.toggleVisibility(layer1);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer1, uow));
 
       // Expect
       expect(diagram1.layers.visible).toEqual([layer2]);
@@ -101,10 +101,60 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       const layer2 = new RegularLayer('newLayer', 'newLayer', [], diagram1);
       UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
 
-      diagram1.layers.toggleVisibility(layer1 as any);
-      diagram1.layers.toggleVisibility(layer1 as any);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer1 as any, uow));
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer1 as any, uow));
       const visibleLayers = diagram1.layers.visible;
       expect(visibleLayers).toEqual([layer1, layer2]);
+    });
+
+    it('should support undo and redo for visibility changes', () => {
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
+
+      diagram1.undoManager.execute('Toggle layer visibility', uow => {
+        diagram1.layers.toggleVisibility(layer1, uow);
+      });
+
+      expect(diagram1.layers.visible.map(l => l.id)).not.toContain(layer1.id);
+      if (diagram2) {
+        expect(diagram2.layers.visible.map(l => l.id)).not.toContain(layer1.id);
+      }
+
+      diagram1.undoManager.undo();
+
+      expect(diagram1.layers.visible.map(l => l.id)).toContain(layer1.id);
+      if (diagram2) {
+        expect(diagram2.layers.visible.map(l => l.id)).toContain(layer1.id);
+      }
+
+      diagram1.undoManager.redo();
+
+      expect(diagram1.layers.visible.map(l => l.id)).not.toContain(layer1.id);
+      if (diagram2) {
+        expect(diagram2.layers.visible.map(l => l.id)).not.toContain(layer1.id);
+      }
+    });
+
+    it('should restore the exact visible set across multiple toggles', () => {
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
+      const layer2 = new RegularLayer('layer2', 'layer2', [], diagram1);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer2, uow));
+
+      diagram1.undoManager.execute('Apply visibility', uow => {
+        diagram1.layers.toggleVisibility(layer1, uow);
+        diagram1.layers.toggleVisibility(layer2, uow);
+      });
+
+      expect(diagram1.layers.visible).toHaveLength(0);
+      if (diagram2) {
+        expect(diagram2.layers.visible).toHaveLength(0);
+      }
+
+      diagram1.undoManager.undo();
+
+      expect(diagram1.layers.visible.map(l => l.id)).toEqual([layer1.id, layer2.id]);
+      if (diagram2) {
+        expect(diagram2.layers.visible.map(l => l.id)).toEqual([layer1.id, layer2.id]);
+      }
     });
   });
 
@@ -558,7 +608,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         eventCount++;
       });
 
-      diagram1.layers.toggleVisibility(layer1);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer1, uow));
 
       expect(eventCount).toBe(1);
     });
@@ -572,7 +622,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
         eventCount++;
       });
 
-      diagram1.layers.toggleVisibility(layer1);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer1, uow));
 
       expect(eventCount).toBe(1);
     });

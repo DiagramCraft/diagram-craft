@@ -1,11 +1,6 @@
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { useDiagram } from '../../application';
-import {
-  CreateGuideUndoableAction,
-  DEFAULT_GUIDE_COLOR,
-  DeleteGuideUndoableAction,
-  EditGuideUndoableAction
-} from '@diagram-craft/model/guides';
+import { DEFAULT_GUIDE_COLOR } from '@diagram-craft/model/guides';
 import type { ContextMenuTarget } from '@diagram-craft/canvas/context';
 import { newid } from '@diagram-craft/utils/id';
 import { $t, $tStr, TranslatedString } from '@diagram-craft/utils/localize';
@@ -39,7 +34,9 @@ export const GuideContextMenu = (props: Props) => {
   if (!guide) return null;
 
   const handleDelete = () => {
-    diagram.undoManager.addAndExecute(new DeleteGuideUndoableAction(diagram, guide));
+    diagram.undoManager.execute('Delete guide', uow => {
+      diagram.removeGuide(guide.id, uow);
+    });
   };
 
   const handleClone = () => {
@@ -49,20 +46,22 @@ export const GuideContextMenu = (props: Props) => {
       position: guide.position + 50,
       color: guide.color
     };
-    diagram.undoManager.addAndExecute(new CreateGuideUndoableAction(diagram, cloned));
+    diagram.undoManager.execute('Create guide', uow => {
+      diagram.addGuide(cloned, uow);
+    });
   };
 
   const handleSetColor = (color: string) => {
-    diagram.undoManager.addAndExecute(
-      new EditGuideUndoableAction(diagram, guide, { color: guide.color }, { color })
-    );
+    diagram.undoManager.execute('Edit guide', uow => {
+      diagram.updateGuide(guide.id, { color }, uow);
+    });
   };
 
   const handleToggleOrientation = () => {
     const newType = guide.type === 'horizontal' ? 'vertical' : 'horizontal';
-    diagram.undoManager.addAndExecute(
-      new EditGuideUndoableAction(diagram, guide, { type: guide.type }, { type: newType })
-    );
+    diagram.undoManager.execute('Edit guide', uow => {
+      diagram.updateGuide(guide.id, { type: newType }, uow);
+    });
   };
 
   return (

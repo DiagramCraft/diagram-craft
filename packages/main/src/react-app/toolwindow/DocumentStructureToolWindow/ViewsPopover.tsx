@@ -8,13 +8,15 @@ import { Button } from '@diagram-craft/app-components/Button';
 import styles from './ViewsPopover.module.css';
 
 const applyView = (diagram: Diagram, targetLayerIds: Set<string>) => {
-  for (const layer of diagram.layers.all) {
-    const shouldBeVisible = targetLayerIds.has(layer.id);
-    const isVisible = diagram.layers.visible.includes(layer);
-    if (shouldBeVisible !== isVisible) {
-      diagram.layers.toggleVisibility(layer);
+  diagram.undoManager.execute('Apply view', uow => {
+    for (const layer of diagram.layers.all) {
+      const shouldBeVisible = targetLayerIds.has(layer.id);
+      const isVisible = diagram.layers.visible.includes(layer);
+      if (shouldBeVisible !== isVisible) {
+        diagram.layers.toggleVisibility(layer, uow);
+      }
     }
-  }
+  });
 };
 
 export const ViewsPopover = (props: { diagram: Diagram; onClose: () => void }) => {

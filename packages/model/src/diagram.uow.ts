@@ -4,6 +4,7 @@ import { Diagram } from '@diagram-craft/model/diagram';
 import { Box } from '@diagram-craft/geometry/box';
 import { assert } from '@diagram-craft/utils/assert';
 import { deepClone } from '@diagram-craft/utils/object';
+import type { Guide } from './guides';
 
 export interface DiagramSnapshot extends Snapshot {
   _snapshotType: 'diagram';
@@ -11,6 +12,7 @@ export interface DiagramSnapshot extends Snapshot {
   name: string;
   props: DiagramProps;
   bounds: Omit<Box, 'r'>;
+  guides: ReadonlyArray<Guide>;
 }
 
 export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
@@ -20,6 +22,7 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
     element.setBounds(snapshot.bounds, uow);
     element.setName(snapshot.name, uow);
     element._setProps(snapshot.props, uow);
+    element._restoreGuides(snapshot.guides, uow);
   }
 
   snapshot(element: Diagram): DiagramSnapshot {
@@ -28,7 +31,8 @@ export class DiagramUOWAdapter implements UOWAdapter<DiagramSnapshot, Diagram> {
       _ref: element,
       name: element.name,
       props: deepClone(element.props),
-      bounds: deepClone(element.bounds)
+      bounds: deepClone(element.bounds),
+      guides: deepClone(element.guides)
     };
   }
 

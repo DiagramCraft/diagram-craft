@@ -595,11 +595,14 @@ const deserializeDiagrams = async <T extends Diagram>(
       }
 
       if ($d.visibleLayers) {
-        for (const layer of newDiagram.layers.all) {
-          if (!$d.visibleLayers.includes(layer.id)) {
-            newDiagram.layers.toggleVisibility(layer);
+        const visibleLayers = $d.visibleLayers;
+        UnitOfWork.executeSilently(newDiagram, uow => {
+          for (const layer of newDiagram.layers.all) {
+            if (!visibleLayers.includes(layer.id)) {
+              newDiagram.layers.toggleVisibility(layer, uow);
+            }
           }
-        }
+        });
       }
 
       if ($d.views) {
@@ -614,9 +617,12 @@ const deserializeDiagrams = async <T extends Diagram>(
       }
 
       if ($d.guides && $d.guides.length > 0) {
-        for (const guide of $d.guides) {
-          newDiagram.addGuide(guide);
-        }
+        const guides = $d.guides;
+        UnitOfWork.executeSilently(newDiagram, uow => {
+          for (const guide of guides) {
+            newDiagram.addGuide(guide, uow);
+          }
+        });
       }
 
       dest.push(newDiagram);

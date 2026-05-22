@@ -196,9 +196,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       });
 
       expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
-      diagram.layers.toggleVisibility(layer1);
+      UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer1, uow));
       expect(diagram.visibleElements()).toStrictEqual([node2]);
-      diagram.layers.toggleVisibility(layer2);
+      UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer2, uow));
       expect(diagram.visibleElements()).toStrictEqual([]);
     });
   });
@@ -224,7 +224,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       const diagram = doc1.diagrams[0]!;
 
       // Act - add horizontal guide
-      const hGuide = diagram.addGuide({ type: 'horizontal', position: 100, color: 'red' });
+      const hGuide = UnitOfWork.execute(diagram, uow =>
+        diagram.addGuide({ type: 'horizontal', position: 100, color: 'red' }, uow)
+      );
 
       // Verify
       expect(hGuide.type).toBe('horizontal');
@@ -241,7 +243,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       }
 
       // Act - add vertical guide
-      const vGuide = diagram.addGuide({ type: 'vertical', position: 200 });
+      const vGuide = UnitOfWork.execute(diagram, uow =>
+        diagram.addGuide({ type: 'vertical', position: 200 }, uow)
+      );
 
       // Verify
       expect(vGuide.type).toBe('vertical');
@@ -258,14 +262,16 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
       const diagram = doc1.diagrams[0]!;
-      const guide = diagram.addGuide({ type: 'horizontal', position: 100, color: 'blue' });
+      const guide = UnitOfWork.execute(diagram, uow =>
+        diagram.addGuide({ type: 'horizontal', position: 100, color: 'blue' }, uow)
+      );
 
       const diagramChange = [vi.fn(), vi.fn()];
       doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
       doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       // Act
-      diagram.removeGuide(guide.id);
+      UnitOfWork.execute(diagram, uow => diagram.removeGuide(guide.id, uow));
 
       // Verify
       expect(diagram.guides).toHaveLength(0);
@@ -281,14 +287,18 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       // Setup
       const { doc1, doc2 } = standardTestModel(backend);
       const diagram = doc1.diagrams[0]!;
-      const guide = diagram.addGuide({ type: 'vertical', position: 150 });
+      const guide = UnitOfWork.execute(diagram, uow =>
+        diagram.addGuide({ type: 'vertical', position: 150 }, uow)
+      );
 
       const diagramChange = [vi.fn(), vi.fn()];
       doc1.diagrams[0]!.on('diagramChange', diagramChange[0]!);
       doc2?.diagrams[0]?.on?.('diagramChange', diagramChange[1]!);
 
       // Act
-      diagram.updateGuide(guide.id, { position: 300, color: 'green' });
+      UnitOfWork.execute(diagram, uow =>
+        diagram.updateGuide(guide.id, { position: 300, color: 'green' }, uow)
+      );
 
       // Verify
       const updatedGuide = diagram.guides.find(g => g.id === guide.id);
@@ -302,6 +312,78 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
         expect(remoteGuide?.position).toBe(300);
         expect(remoteGuide?.color).toBe('green');
         expect(diagramChange[1]).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('should support undo and redo for guide creation', () => {
+      const { doc1, doc2 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0]!;
+
+      let guideId: string | undefined;
+      diagram.undoManager.execute('Create guide', uow => {
+        guideId = diagram.addGuide({ type: 'horizontal', position: 80, color: 'red' }, uow).id;
+      });
+
+      expect(diagram.guides.map(g => g.id)).toContain(guideId);
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.map(g => g.id)).toContain(guideId);
+      }
+
+      diagram.undoManager.undo();
+
+      expect(diagram.guides.map(g => g.id)).not.toContain(guideId);
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.map(g => g.id)).not.toContain(guideId);
+      }
+
+      diagram.undoManager.redo();
+
+      expect(diagram.guides.map(g => g.id)).toContain(guideId);
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.map(g => g.id)).toContain(guideId);
+      }
+    });
+
+    it('should support undo and redo for guide edits and deletion', () => {
+      const { doc1, doc2 } = standardTestModel(backend);
+      const diagram = doc1.diagrams[0]!;
+      const guide = UnitOfWork.execute(diagram, uow =>
+        diagram.addGuide({ type: 'vertical', position: 120, color: 'blue' }, uow)
+      );
+
+      diagram.undoManager.execute('Edit guide', uow => {
+        diagram.updateGuide(guide.id, { position: 240, color: 'green' }, uow);
+      });
+
+      expect(diagram.guides.find(g => g.id === guide.id)?.position).toBe(240);
+      expect(diagram.guides.find(g => g.id === guide.id)?.color).toBe('green');
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.find(g => g.id === guide.id)?.position).toBe(240);
+      }
+
+      diagram.undoManager.undo();
+
+      expect(diagram.guides.find(g => g.id === guide.id)?.position).toBe(120);
+      expect(diagram.guides.find(g => g.id === guide.id)?.color).toBe('blue');
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.find(g => g.id === guide.id)?.position).toBe(120);
+      }
+
+      diagram.undoManager.execute('Delete guide', uow => {
+        diagram.removeGuide(guide.id, uow);
+      });
+
+      expect(diagram.guides.find(g => g.id === guide.id)).toBeUndefined();
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.find(g => g.id === guide.id)).toBeUndefined();
+      }
+
+      diagram.undoManager.undo();
+
+      expect(diagram.guides.find(g => g.id === guide.id)?.position).toBe(120);
+      expect(diagram.guides.find(g => g.id === guide.id)?.color).toBe('blue');
+      if (doc2) {
+        expect(doc2.diagrams[0]!.guides.find(g => g.id === guide.id)?.position).toBe(120);
       }
     });
   });

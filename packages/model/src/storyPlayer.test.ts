@@ -5,6 +5,7 @@ import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import type { StoryAction } from './documentStories';
 import { newid } from '@diagram-craft/utils/id';
+import { UnitOfWork } from './unitOfWork';
 
 const addStory = (document: DiagramDocument, name: string) => document.stories.addStory(newid(), name);
 
@@ -394,7 +395,7 @@ describe('StoryPlayer', () => {
       const layer = diagram1.layers.all[0]!;
 
       // First hide the layer
-      diagram1.layers.toggleVisibility(layer);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer, uow));
       const visibleCountBefore = diagram1.layers.visible.length;
 
       const action: StoryAction = {
@@ -425,7 +426,7 @@ describe('StoryPlayer', () => {
       const layer = diagram1.layers.all[0]!;
 
       // First hide the layer
-      diagram1.layers.toggleVisibility(layer);
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.toggleVisibility(layer, uow));
       const wasVisible = diagram1.layers.visible.includes(layer);
 
       const action: StoryAction = {

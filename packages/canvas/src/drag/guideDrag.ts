@@ -1,18 +1,13 @@
 import { Drag, DragEvents, Modifiers } from '../dragDropManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { round } from '@diagram-craft/utils/math';
-import {
-  CreateGuideUndoableAction,
-  DEFAULT_GUIDE_COLOR,
-  type Guide,
-  type GuideType,
-  MoveGuideUndoableAction
-} from '@diagram-craft/model/guides';
+import { DEFAULT_GUIDE_COLOR, type Guide, type GuideType } from '@diagram-craft/model/guides';
 import { getSnapConfig, SnapManager } from '../snap/snapManager';
 import { assert } from '@diagram-craft/utils/assert';
 import { Line } from '@diagram-craft/geometry/line';
 import { Range } from '@diagram-craft/geometry/range';
-import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
+import type { UndoCapture } from '@diagram-craft/model/undoManager';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 const isFreeDrag = (m: Modifiers) => m.altKey;
 
@@ -49,6 +44,7 @@ abstract class BaseGuideDrag extends Drag {
 }
 
 export class GuideMoveDrag extends BaseGuideDrag {
+  private readonly capture: UndoCapture;
   private readonly originalPosition: number;
 
   constructor(
@@ -56,6 +52,7 @@ export class GuideMoveDrag extends BaseGuideDrag {
     private guide: Guide
   ) {
     super(diagram, guide.type);
+    this.capture = this.diagram.undoManager.beginCapture('Move guide');
     this.originalPosition = guide.position;
   }
 
@@ -63,7 +60,8 @@ export class GuideMoveDrag extends BaseGuideDrag {
     const rawPosition = this.guideType === 'horizontal' ? event.offset.y : event.offset.x;
     const snappedPosition = this.snapGuidePosition(rawPosition, event.modifiers);
 
-    this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) });
+    this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) }, this.capture.uow);
+    this.capture.uow.notify();
     this.setState({ label: `${this.guide.type} guide: ${round(snappedPosition)}px` });
 
     this.emit('drag', { coord: event.offset, modifiers: event.modifiers });
@@ -72,33 +70,33 @@ export class GuideMoveDrag extends BaseGuideDrag {
   onDragEnd(_event: DragEvents.DragEnd): void {
     const currentGuide = this.diagram.guides.find(g => g.id === this.guide.id);
     if (currentGuide && currentGuide.position !== this.originalPosition) {
-      this.diagram.undoManager.addAndExecute(
-        new MoveGuideUndoableAction(
-          this.diagram,
-          this.guide,
-          this.originalPosition,
-          currentGuide.position
-        )
-      );
+      this.capture.commit();
+    } else {
+      this.capture.abort();
     }
 
     this.emit('dragEnd');
   }
 
   cancel() {
-    this.diagram.updateGuide(this.guide.id, { position: this.originalPosition });
+    UnitOfWork.executeSilently(this.diagram, uow => {
+      this.diagram.updateGuide(this.guide.id, { position: this.originalPosition }, uow);
+    });
+    this.capture.abort();
   }
 }
 
 export class GuideCreateDrag extends BaseGuideDrag {
   isGlobal = true;
 
+  private readonly capture: UndoCapture;
   private guide: Guide | undefined;
   private readonly mainSvg: SVGSVGElement;
   private rect: DOMRect;
 
   constructor(diagram: Diagram, guideType: GuideType) {
     super(diagram, guideType);
+    this.capture = this.diagram.undoManager.beginCapture('Create guide');
 
     this.mainSvg = document.querySelector('svg.canvas.editable-canvas') as SVGSVGElement;
     assert.present(this.mainSvg);
@@ -117,10 +115,11 @@ export class GuideCreateDrag extends BaseGuideDrag {
         type: this.guideType,
         position: round(snappedPosition),
         color: DEFAULT_GUIDE_COLOR
-      });
+      }, this.capture.uow);
     } else {
-      this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) });
+      this.diagram.updateGuide(this.guide.id, { position: round(snappedPosition) }, this.capture.uow);
     }
+    this.capture.uow.notify();
 
     this.setState({ label: `Creating ${this.guideType} guide: ${round(snappedPosition)}px` });
 
@@ -128,17 +127,21 @@ export class GuideCreateDrag extends BaseGuideDrag {
   }
 
   onDragEnd(_event: DragEvents.DragEnd): void {
-    if (this.guide && isStackedUndoManager(this.diagram.undoManager)) {
-      this.diagram.undoManager.add(
-        new CreateGuideUndoableAction(
-          this.diagram,
-          this.diagram.guides.find(g => g.id === this.guide!.id)!
-        )
-      );
+    if (this.guide) {
+      this.capture.commit();
+    } else {
+      this.capture.abort();
     }
 
     this.emit('dragEnd');
   }
 
-  cancel() {}
+  cancel() {
+    if (this.guide) {
+      UnitOfWork.executeSilently(this.diagram, uow => {
+        this.diagram.removeGuide(this.guide!.id, uow);
+      });
+    }
+    this.capture.abort();
+  }
 }

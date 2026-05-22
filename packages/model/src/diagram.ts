@@ -477,24 +477,56 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     return Array.from(this.#guides.values());
   }
 
-  addGuide(guide: Omit<Guide, 'id'> & { id?: string }): Guide {
+  addGuide(guide: Omit<Guide, 'id'> & { id?: string }, uow: UnitOfWork): Guide {
     const fullGuide: Guide = { id: guide.id ?? newid(), ...guide };
-    this.#guides.set(fullGuide.id, fullGuide);
+    uow.executeUpdate(this, () => {
+      this.#guides.set(fullGuide.id, fullGuide);
+    });
     this.emitDiagramChange('content');
     return fullGuide;
   }
 
-  removeGuide(id: string) {
-    this.#guides.delete(id);
+  removeGuide(id: string, uow: UnitOfWork) {
+    uow.executeUpdate(this, () => {
+      this.#guides.delete(id);
+    });
     this.emitDiagramChange('content');
   }
 
-  updateGuide(id: string, updates: Partial<Omit<Guide, 'id'>>) {
+  updateGuide(id: string, updates: Partial<Omit<Guide, 'id'>>, uow: UnitOfWork) {
     const existing = this.#guides.get(id);
     assert.present(existing);
 
-    this.#guides.set(id, { ...existing, ...updates });
+    uow.executeUpdate(this, () => {
+      this.#guides.set(id, { ...existing, ...updates });
+    });
     this.emitDiagramChange('content');
+  }
+
+  _restoreGuides(guides: ReadonlyArray<Guide>, uow: UnitOfWork) {
+    let changed = false;
+    const incomingGuideIds = new Set(guides.map(guide => guide.id));
+    for (const [id] of this.#guides.entries()) {
+      if (!incomingGuideIds.has(id)) {
+        this.#guides.delete(id);
+        changed = true;
+      }
+    }
+    for (const guide of guides) {
+      const existing = this.#guides.get(guide.id);
+      if (
+        existing?.type !== guide.type ||
+        existing?.position !== guide.position ||
+        existing?.color !== guide.color
+      ) {
+        changed = true;
+      }
+      this.#guides.set(guide.id, guide);
+    }
+    if (changed) {
+      uow.updateElement(this);
+      this.emitDiagramChange('content');
+    }
   }
 
   emitDiagramChange(type: 'content' | 'metadata') {

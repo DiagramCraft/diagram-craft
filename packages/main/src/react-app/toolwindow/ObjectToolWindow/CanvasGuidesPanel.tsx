@@ -8,15 +8,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useConfiguration } from '../../context/ConfigurationContext';
-import {
-  CreateGuideUndoableAction,
-  DEFAULT_GUIDE_COLOR,
-  DeleteGuideUndoableAction,
-  EditGuideUndoableAction,
-  type Guide,
-  MoveGuideUndoableAction
-} from '@diagram-craft/model/guides';
-import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
+import { DEFAULT_GUIDE_COLOR, type Guide } from '@diagram-craft/model/guides';
 
 const SECTION_LABEL_COLOR = 'var(--base-fg-more-dim)';
 
@@ -32,31 +24,33 @@ const GuideRow = (props: GuideRowProps) => {
   const handleTypeToggle = () => {
     const newType = guide.type === 'horizontal' ? 'vertical' : 'horizontal';
 
-    diagram.undoManager.addAndExecute(
-      new EditGuideUndoableAction(diagram, guide, { type: guide.type }, { type: newType })
-    );
+    diagram.undoManager.execute('Edit guide', uow => {
+      diagram.updateGuide(guide.id, { type: newType }, uow);
+    });
   };
 
   const handlePositionChange = (n: number | undefined) => {
     const newPosition = n ?? 0;
     if (newPosition === guide.position) return;
 
-    diagram.undoManager.addAndExecute(
-      new MoveGuideUndoableAction(diagram, guide, guide.position, newPosition)
-    );
+    diagram.undoManager.execute('Move guide', uow => {
+      diagram.updateGuide(guide.id, { position: newPosition }, uow);
+    });
   };
 
   const handleColorChange = (color: string | undefined) => {
     const newColor = color ?? DEFAULT_GUIDE_COLOR;
     if (newColor === guide.color) return;
 
-    diagram.undoManager.addAndExecute(
-      new EditGuideUndoableAction(diagram, guide, { color: guide.color }, { color: newColor })
-    );
+    diagram.undoManager.execute('Edit guide', uow => {
+      diagram.updateGuide(guide.id, { color: newColor }, uow);
+    });
   };
 
   const handleRemove = () => {
-    diagram.undoManager.addAndExecute(new DeleteGuideUndoableAction(diagram, guide));
+    diagram.undoManager.execute('Delete guide', uow => {
+      diagram.removeGuide(guide.id, uow);
+    });
   };
 
   return (
@@ -103,48 +97,23 @@ export const CanvasGuidesPanel = (props: Props) => {
 
   const addGuide = () => {
     const existingGuides = [...diagram.guides];
-    if (isStackedUndoManager(diagram.undoManager)) {
-      // TODO: Simplify this once guides participate in the normal UnitOfWork/UOWTrackable path.
-      // addGuide/updateGuide/removeGuide currently mutate the guide CRDT directly, so stacked undo
-      // still needs explicit guide undo actions instead of relying on structural UOW capture.
-      let newGuide: Guide;
-
+    diagram.undoManager.execute('Create guide', uow => {
       if (existingGuides.length === 0) {
         const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-        newGuide = diagram.addGuide({
+        diagram.addGuide({
           type: 'vertical',
           position: centerX,
           color: DEFAULT_GUIDE_COLOR
-        });
+        }, uow);
       } else {
         const lastGuide = existingGuides[existingGuides.length - 1]!;
-        newGuide = diagram.addGuide({
+        diagram.addGuide({
           type: lastGuide.type,
           position: lastGuide.position + 100,
           color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
-        });
+        }, uow);
       }
-
-      diagram.undoManager.add(new CreateGuideUndoableAction(diagram, newGuide));
-    } else {
-      diagram.undoManager.execute('Create guide', () => {
-        if (existingGuides.length === 0) {
-          const centerX = diagram.bounds.x + diagram.bounds.w / 2;
-          diagram.addGuide({
-            type: 'vertical',
-            position: centerX,
-            color: DEFAULT_GUIDE_COLOR
-          });
-        } else {
-          const lastGuide = existingGuides[existingGuides.length - 1]!;
-          diagram.addGuide({
-            type: lastGuide.type,
-            position: lastGuide.position + 100,
-            color: lastGuide.color ?? DEFAULT_GUIDE_COLOR
-          });
-        }
-      });
-    }
+    });
 
     // Scroll to bottom after adding
     setTimeout(() => {

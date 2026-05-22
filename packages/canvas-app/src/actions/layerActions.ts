@@ -1,7 +1,6 @@
 import {
   AbstractAction,
-  AbstractToggleAction,
-  ToggleActionUndoableAction
+  AbstractToggleAction
 } from '@diagram-craft/canvas/action';
 import { Layer, LayerType } from '@diagram-craft/model/diagramLayer';
 import { assert, precondition } from '@diagram-craft/utils/assert';
@@ -13,7 +12,6 @@ import { ReferenceLayerDialogCommand, StringInputDialogCommand } from '../dialog
 import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
 import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
-import { isStackedUndoManager } from '@diagram-craft/model/undoManager';
 import { $tStr, $t, TranslatedString } from '@diagram-craft/utils/localize';
 
 export const layerActions = (application: Application) => ({
@@ -143,16 +141,9 @@ export class LayerToggleVisibilityAction extends AbstractToggleAction<LayerActio
     const layer = diagram.layers.byId(id);
     assert.present(layer);
 
-    if (!isStackedUndoManager(diagram.undoManager)) {
-      diagram.undoManager.execute('Toggle layer visibility', () => {
-        diagram.layers.toggleVisibility(layer);
-      });
-    } else {
-      diagram.layers.toggleVisibility(layer);
-      diagram.undoManager.add(
-        new ToggleActionUndoableAction('Toggle layer visibility', this, { id })
-      );
-    }
+    diagram.undoManager.execute('Toggle layer visibility', uow => {
+      diagram.layers.toggleVisibility(layer, uow);
+    });
   }
 }
 
