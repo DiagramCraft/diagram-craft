@@ -21,9 +21,12 @@ import {
   LayerUOWAdapter
 } from '@diagram-craft/model/diagramLayer.uow';
 import { Detachable } from './detachable';
-import { LayerManager } from './diagramLayerManager';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
+
+type LayerAttachParent = {
+  _trackableType: 'layerManager';
+};
 
 export function isReferenceLayer(l: Layer): l is ReferenceLayer {
   return l.type === 'reference';
@@ -35,7 +38,7 @@ export abstract class Layer<
     | RuleLayer
     | ModificationLayer
 >
-  implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerManager>
+  implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerAttachParent>
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
@@ -177,7 +180,7 @@ export abstract class Layer<
     this._isAttached = false;
   }
 
-  _attach(_parent: LayerManager, uow: UnitOfWork): void {
+  _attach(_parent: LayerAttachParent, uow: UnitOfWork): void {
     assert.true(uow.isRemote || !this._isAttached);
 
     this._isAttached = true;
