@@ -163,6 +163,20 @@ describe('StyleManager', () => {
       sm.set('fillColor', 'blue');
       expect(sm.get('fillColor')).toBe('blue');
     });
+
+    test('keeps cached shape in sync when shape is updated', () => {
+      const sm = new StyleManager('shape=ellipse');
+      sm.set('shape', 'rectangle');
+      expect(sm.shape).toBe('rectangle');
+      expect(sm.str('shape')).toBe('rectangle');
+    });
+
+    test('hydrates cached shape when set after construction', () => {
+      const sm = new StyleManager('');
+      expect(sm.shape).toBeUndefined();
+      sm.set('shape', 'diamond');
+      expect(sm.shape).toBe('diamond');
+    });
   });
 
   describe('getOverride method', () => {
