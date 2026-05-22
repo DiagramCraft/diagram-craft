@@ -614,9 +614,12 @@ const deserializeDiagrams = async <T extends Diagram>(
       }
 
       if ($d.guides && $d.guides.length > 0) {
-        for (const guide of $d.guides) {
-          newDiagram.addGuide(guide);
-        }
+        const guides = $d.guides;
+        UnitOfWork.executeSilently(newDiagram, uow => {
+          for (const guide of guides) {
+            newDiagram.addGuide(guide, uow);
+          }
+        });
       }
 
       dest.push(newDiagram);

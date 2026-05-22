@@ -3,6 +3,7 @@ import { GuidesSnapProvider } from './guidesSnapProvider';
 import { TestModel } from '@diagram-craft/model/test-support/testModel';
 import { Axis } from '@diagram-craft/geometry/axis';
 import { Line } from '@diagram-craft/geometry/line';
+import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 
 describe('GuidesSnapProvider', () => {
   test('should generate magnets for horizontal guides', () => {
@@ -10,8 +11,10 @@ describe('GuidesSnapProvider', () => {
     const diagram = TestModel.newDiagram();
     const provider = new GuidesSnapProvider(diagram);
 
-    diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' });
-    diagram.addGuide({ type: 'horizontal', position: 200, color: '#00ff00' });
+    UnitOfWork.executeSilently(diagram, uow => {
+      diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' }, uow);
+      diagram.addGuide({ type: 'horizontal', position: 200, color: '#00ff00' }, uow);
+    });
 
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
@@ -31,8 +34,10 @@ describe('GuidesSnapProvider', () => {
     const diagram = TestModel.newDiagram();
     const provider = new GuidesSnapProvider(diagram);
 
-    diagram.addGuide({ type: 'vertical', position: 150, color: '#ff0000' });
-    diagram.addGuide({ type: 'vertical', position: 300, color: '#00ff00' });
+    UnitOfWork.executeSilently(diagram, uow => {
+      diagram.addGuide({ type: 'vertical', position: 150, color: '#ff0000' }, uow);
+      diagram.addGuide({ type: 'vertical', position: 300, color: '#00ff00' }, uow);
+    });
 
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
@@ -49,8 +54,10 @@ describe('GuidesSnapProvider', () => {
   test('magnet axis', () => {
     // Setup
     const diagram = TestModel.newDiagram();
-    diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' });
-    diagram.addGuide({ type: 'vertical', position: 150, color: '#00ff00' });
+    UnitOfWork.executeSilently(diagram, uow => {
+      diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' }, uow);
+      diagram.addGuide({ type: 'vertical', position: 150, color: '#00ff00' }, uow);
+    });
     const provider = new GuidesSnapProvider(diagram);
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
@@ -69,8 +76,10 @@ describe('GuidesSnapProvider', () => {
     const diagram = TestModel.newDiagram();
     const provider = new GuidesSnapProvider(diagram);
 
-    diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' });
-    diagram.addGuide({ type: 'vertical', position: 150, color: '#00ff00' });
+    UnitOfWork.executeSilently(diagram, uow => {
+      diagram.addGuide({ type: 'horizontal', position: 100, color: '#ff0000' }, uow);
+      diagram.addGuide({ type: 'vertical', position: 150, color: '#00ff00' }, uow);
+    });
 
     const box = { x: 50, y: 50, w: 100, h: 50, r: 0 };
 
