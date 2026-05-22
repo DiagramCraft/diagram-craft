@@ -115,60 +115,64 @@ type NumKey =
 type AllKeys = StringKey | BooleanKey | NumKey;
 
 type Style = Partial<Record<AllKeys, string>>;
+type StyleDefaults = Readonly<Partial<Record<string, Readonly<Style>>> & { default: Readonly<Style> }>;
+
+const DEFAULTS = {
+  default: {
+    _imageMargin: '0',
+    imageWidth: '100%',
+    imageHeight: '100%',
+    imageAlign: 'left',
+    imageVerticalAlign: 'middle',
+    spacing: '2',
+    spacingLeft: '0',
+    spacingRight: '0',
+    spacingTop: '0',
+    spacingBottom: '0',
+    align: 'center',
+    verticalAlign: 'middle',
+    overflow: 'visible',
+    whiteSpace: 'noWrap'
+  },
+  image: {
+    imageWidth: '100%',
+    imageHeight: '100%',
+    imageAlign: 'left',
+    verticalAlign: 'top',
+    verticalLabelPosition: 'bottom'
+  },
+  label: {
+    _imageMargin: '7',
+    imageWidth: '42',
+    imageHeight: '42',
+    imageAlign: 'left',
+    spacingLeft: '52',
+    fontSize: '12',
+    fontStyle: '1',
+    verticalAlign: 'middle'
+  },
+  icon: {
+    spacing: '0',
+    imageWidth: '48',
+    imageHeight: '48',
+    imageAlign: 'center',
+    verticalLabelPosition: 'bottom',
+    verticalAlign: 'top'
+  },
+  text: {
+    spacingTop: '0',
+    spacingBottom: '0',
+    align: 'left',
+    verticalAlign: 'top'
+  },
+  group: {
+    verticalAlign: 'top'
+  }
+} as const satisfies StyleDefaults;
 
 export class StyleManager {
-  defaults: Partial<Record<string, Style>> & { default: Style } = {
-    default: {
-      _imageMargin: '0',
-      imageWidth: '100%',
-      imageHeight: '100%',
-      imageAlign: 'left',
-      imageVerticalAlign: 'middle',
-      spacing: '2',
-      spacingLeft: '0',
-      spacingRight: '0',
-      spacingTop: '0',
-      spacingBottom: '0',
-      align: 'center',
-      verticalAlign: 'middle',
-      overflow: 'visible',
-      whiteSpace: 'noWrap'
-    },
-    image: {
-      imageWidth: '100%',
-      imageHeight: '100%',
-      imageAlign: 'left',
-      verticalAlign: 'top',
-      verticalLabelPosition: 'bottom'
-    },
-    label: {
-      _imageMargin: '7',
-      imageWidth: '42',
-      imageHeight: '42',
-      imageAlign: 'left',
-      spacingLeft: '52',
-      fontSize: '12',
-      fontStyle: '1',
-      verticalAlign: 'middle'
-    },
-    icon: {
-      spacing: '0',
-      imageWidth: '48',
-      imageHeight: '48',
-      imageAlign: 'center',
-      verticalLabelPosition: 'bottom',
-      verticalAlign: 'top'
-    },
-    text: {
-      spacingTop: '0',
-      spacingBottom: '0',
-      align: 'left',
-      verticalAlign: 'top'
-    },
-    group: {
-      verticalAlign: 'top'
-    }
-  };
+  private static readonly defaults: StyleDefaults = DEFAULTS;
+
   styleName: string;
   shape: string | undefined;
   styles: Style;
@@ -220,13 +224,14 @@ export class StyleManager {
   get(key: string) {
     return (
       this.styles[key as AllKeys] ??
-      this.defaults[this.styleKey]?.[key as AllKeys] ??
-      this.defaults['default'][key as AllKeys]
+      StyleManager.defaults[this.styleKey]?.[key as AllKeys] ??
+      StyleManager.defaults.default[key as AllKeys]
     );
   }
 
   set(key: string, value: string) {
     this.styles[key as AllKeys] = value;
+    if (key === 'shape') this.shape = value;
   }
 
   // TODO: This is a bad implementation
