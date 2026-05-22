@@ -196,9 +196,9 @@ describe.each(Backends.all())('Diagram [%s]', (_name, backend) => {
       });
 
       expect(diagram.visibleElements()).toStrictEqual([node1, node2]);
-      diagram.layers.toggleVisibility(layer1);
+      UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer1, uow));
       expect(diagram.visibleElements()).toStrictEqual([node2]);
-      diagram.layers.toggleVisibility(layer2);
+      UnitOfWork.execute(diagram, uow => diagram.layers.toggleVisibility(layer2, uow));
       expect(diagram.visibleElements()).toStrictEqual([]);
     });
   });

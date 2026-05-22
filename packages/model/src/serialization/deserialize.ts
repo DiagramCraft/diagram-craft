@@ -595,11 +595,14 @@ const deserializeDiagrams = async <T extends Diagram>(
       }
 
       if ($d.visibleLayers) {
-        for (const layer of newDiagram.layers.all) {
-          if (!$d.visibleLayers.includes(layer.id)) {
-            newDiagram.layers.toggleVisibility(layer);
+        const visibleLayers = $d.visibleLayers;
+        UnitOfWork.executeSilently(newDiagram, uow => {
+          for (const layer of newDiagram.layers.all) {
+            if (!visibleLayers.includes(layer.id)) {
+              newDiagram.layers.toggleVisibility(layer, uow);
+            }
           }
-        }
+        });
       }
 
       if ($d.views) {

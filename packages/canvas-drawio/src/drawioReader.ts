@@ -1006,7 +1006,7 @@ const parseMxGraphModel = async ($mxGraphModel: Element, diagram: Diagram) => {
         const layer = new RegularLayer(id, value ?? 'Background', [], diagram);
         diagram.layers.add(layer, uow);
         if ($cell.getAttribute('visible') === '0') {
-          diagram.layers.toggleVisibility(layer);
+          diagram.layers.toggleVisibility(layer, uow);
         }
 
         parents.set(id, layer);

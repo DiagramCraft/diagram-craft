@@ -4,6 +4,7 @@ import { EventEmitter } from '@diagram-craft/utils/event';
 import type { Diagram } from './diagram';
 import { assert } from '@diagram-craft/utils/assert';
 import type { Releasable } from '@diagram-craft/utils/releasable';
+import { UnitOfWork } from './unitOfWork';
 
 type StoryPlayerEvents = {
   stateChange: {
@@ -135,7 +136,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> implements Rele
         if (diagram) {
           const layer = diagram.layers.byId(action.layerId);
           if (layer && diagram.layers.visible.includes(layer)) {
-            diagram.layers.toggleVisibility(layer);
+            UnitOfWork.executeSilently(diagram, uow => diagram.layers.toggleVisibility(layer, uow));
           }
         } else {
           throw new Error(`Diagram ${action.diagramId} not found`);
@@ -147,7 +148,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> implements Rele
         if (diagram) {
           const layer = diagram.layers.byId(action.layerId);
           if (layer && !diagram.layers.visible.includes(layer)) {
-            diagram.layers.toggleVisibility(layer);
+            UnitOfWork.executeSilently(diagram, uow => diagram.layers.toggleVisibility(layer, uow));
           }
         } else {
           throw new Error(`Diagram ${action.diagramId} not found`);
@@ -210,7 +211,7 @@ export class StoryPlayer extends EventEmitter<StoryPlayerEvents> implements Rele
       const isVisible = diagram.layers.visible.includes(layer);
 
       if (wasVisible !== undefined && wasVisible !== isVisible) {
-        diagram.layers.toggleVisibility(layer);
+        UnitOfWork.executeSilently(diagram, uow => diagram.layers.toggleVisibility(layer, uow));
       }
     }
 

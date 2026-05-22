@@ -91,4 +91,5 @@ export class LayerManagerUOWAdapter implements UOWAdapter<LayersSnapshot, LayerM
 export interface LayersSnapshot extends Snapshot {
   _snapshotType: 'layers';
   layers: string[];
+  visibleLayers: string[];
 }
