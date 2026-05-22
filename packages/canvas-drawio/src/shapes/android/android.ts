@@ -24,6 +24,9 @@ import { StyleManager } from '../../styleManager';
 import type { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import type { ElementMetadata, NodeProps } from '@diagram-craft/model/diagramProps';
+import { clamp } from '@diagram-craft/utils/math';
+
+const clampNormalized = (value: number) => clamp(value, 0, 1);
 
 const registerStencil = (
   registry: NodeDefinitionRegistry,
@@ -54,10 +57,10 @@ export const parseAndroidShapes = async (
     $c.androidProgressBar.dx2 = style.num('dx2', 0.75);
   } else if (style.str('shape')?.startsWith('mxgraph.android.quickscroll2')) {
     $c.androidQuickscroll2 ??= {};
-    $c.androidQuickscroll2.dy = style.num('dy', 0.5);
+    $c.androidQuickscroll2.dy = clampNormalized(style.num('dy', 0.5));
   } else if (style.str('shape')?.startsWith('mxgraph.android.quickscroll3')) {
     $c.androidQuickscroll3 ??= {};
-    $c.androidQuickscroll3.dy = style.num('dy', 0.5);
+    $c.androidQuickscroll3.dy = clampNormalized(style.num('dy', 0.5));
   } else if (style.str('shape')?.startsWith('mxgraph.android.progressScrubber')) {
     $c.androidProgressScrubber ??= {};
     $c.androidProgressScrubber.dx = style.num('dx', 0.5);
