@@ -1,7 +1,6 @@
 import type { DiagramDocument } from './diagramDocument';
 import type { EmptyObject } from '@diagram-craft/utils/types';
 import { EventEmitter } from '@diagram-craft/utils/event';
-import { newid } from '@diagram-craft/utils/id';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
 import { watch } from '@diagram-craft/utils/watchableValue';
 import type { CRDTMap, CRDTRoot } from '@diagram-craft/collaboration/crdt';
@@ -103,9 +102,9 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> impleme
     return this.#stories.get(id);
   }
 
-  addStory(name: string): Story {
+  addStory(id: string, name: string): Story {
     const story: Story = {
-      id: newid(),
+      id,
       name,
       steps: []
     };
@@ -130,9 +129,9 @@ export class DocumentStories extends EventEmitter<DocumentStoriesEvents> impleme
     this.emitAsync('change');
   }
 
-  addStep(story: Story, title: string, description: string): Step {
+  addStep(story: Story, id: string, title: string, description: string): Step {
     const step: Step = {
-      id: newid(),
+      id,
       title,
       description,
       actions: []

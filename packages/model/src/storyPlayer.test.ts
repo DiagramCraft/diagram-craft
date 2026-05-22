@@ -4,6 +4,12 @@ import { TestDiagramBuilder, TestModel } from './test-support/testModel';
 import type { DiagramDocument } from './diagramDocument';
 import type { Diagram } from './diagram';
 import type { StoryAction } from './documentStories';
+import { newid } from '@diagram-craft/utils/id';
+
+const addStory = (document: DiagramDocument, name: string) => document.stories.addStory(newid(), name);
+
+const addStep = (document: DiagramDocument, story: { id: string }, title: string, description: string) =>
+  document.stories.addStep(document.stories.getStory(story.id)!, newid(), title, description);
 
 describe('StoryPlayer', () => {
   let document: DiagramDocument;
@@ -39,7 +45,7 @@ describe('StoryPlayer', () => {
 
   describe('loadStory()', () => {
     test('should load a story from the document', () => {
-      const story = document.stories.addStory('Test Story');
+      const story = addStory(document, 'Test Story');
 
       storyPlayer.loadStory(story);
 
@@ -47,7 +53,7 @@ describe('StoryPlayer', () => {
     });
 
     test('should reset step index to -1 when loading a story', () => {
-      const story = document.stories.addStory('Test Story');
+      const story = addStory(document, 'Test Story');
 
       storyPlayer.loadStory(story);
 
@@ -55,7 +61,7 @@ describe('StoryPlayer', () => {
     });
 
     test('should emit stateChange event when loading a story', () => {
-      const story = document.stories.addStory('Test Story');
+      const story = addStory(document, 'Test Story');
 
       const listener = vi.fn();
       storyPlayer.on('stateChange', listener);
@@ -71,8 +77,8 @@ describe('StoryPlayer', () => {
 
   describe('start()', () => {
     test('should save current state and advance to first step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', 'First step');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', 'First step');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -81,8 +87,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should save and restore diagram state including layer visibility', () => {
-      const story = document.stories.addStory('Test Story');
-      const step = document.stories.addStep(story, 'Step 1', 'First step');
+      const story = addStory(document, 'Test Story');
+      const step = addStep(document, story, 'Step 1', 'First step');
 
       const hideAction: StoryAction = {
         type: 'hide-layer',
@@ -108,8 +114,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should save and restore viewBox state', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', 'First step');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', 'First step');
 
       const originalOffset = { ...diagram1.viewBox.offset };
       const originalZoom = diagram1.viewBox.zoomLevel;
@@ -131,9 +137,9 @@ describe('StoryPlayer', () => {
 
   describe('next()', () => {
     test('should advance to the next step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -147,8 +153,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should return false when at the last step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -160,9 +166,9 @@ describe('StoryPlayer', () => {
     });
 
     test('should emit stateChange event', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -185,9 +191,9 @@ describe('StoryPlayer', () => {
 
   describe('previous()', () => {
     test('should go back to the previous step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -202,8 +208,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should return false when at the first step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -215,9 +221,9 @@ describe('StoryPlayer', () => {
     });
 
     test('should emit stateChange event', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -241,10 +247,10 @@ describe('StoryPlayer', () => {
 
   describe('goToStep()', () => {
     test('should execute all actions up to and including the target step', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
-      document.stories.addStep(story, 'Step 3', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
+      addStep(document, story, 'Step 3', '');
 
       storyPlayer.loadStory(story);
 
@@ -255,14 +261,14 @@ describe('StoryPlayer', () => {
     });
 
     test('should execute all actions up to the target step', () => {
-      const story = document.stories.addStory('Test Story');
-      const step1 = document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      const step1 = addStep(document, story, 'Step 1', '');
       document.stories.addAction(story, step1, {
         type: 'switch-diagram',
         diagramId: diagram1.id
       });
 
-      const step2 = document.stories.addStep(story, 'Step 2', '');
+      const step2 = addStep(document, story, 'Step 2', '');
       document.stories.addAction(story, step2, {
         type: 'switch-diagram',
         diagramId: diagram2.id
@@ -278,8 +284,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should throw error if step index is out of bounds', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
 
@@ -293,8 +299,8 @@ describe('StoryPlayer', () => {
 
   describe('stop()', () => {
     test('should reset step index to -1', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -307,8 +313,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should restore saved diagram state', () => {
-      const story = document.stories.addStory('Test Story');
-      const step = document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      const step = addStep(document, story, 'Step 1', '');
       document.stories.addAction(story, step, {
         type: 'switch-diagram',
         diagramId: diagram2.id
@@ -327,8 +333,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should emit stateChange event', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);
@@ -511,8 +517,8 @@ describe('StoryPlayer', () => {
     });
 
     test('should return undefined when step index is -1', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
 
       storyPlayer.loadStory(story);
 
@@ -520,9 +526,9 @@ describe('StoryPlayer', () => {
     });
 
     test('should return the current step when playing', () => {
-      const story = document.stories.addStory('Test Story');
-      document.stories.addStep(story, 'Step 1', '');
-      document.stories.addStep(story, 'Step 2', '');
+      const story = addStory(document, 'Test Story');
+      addStep(document, story, 'Step 1', '');
+      addStep(document, story, 'Step 2', '');
 
       storyPlayer.loadStory(story);
       storyPlayer.start(diagram1);

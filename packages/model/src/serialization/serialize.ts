@@ -7,8 +7,10 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedLayer,
+  type SerializedModificationElement,
   SerializedNode,
   type SerializedOverride,
+  type SerializedRegularElement,
   SerializedStyles
 } from './serializedTypes';
 import { NotImplementedYet, VerifyNotReached } from '@diagram-craft/utils/assert';
@@ -147,7 +149,9 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       name: layer.name,
       type: 'layer',
       layerType: 'regular',
-      elements: (layer as RegularLayer).elements.map(serializeDiagramElement),
+      elements: (layer as RegularLayer).elements.map(
+        element => serializeDiagramElement(element) as SerializedRegularElement
+      ),
       isLocked: layer.isLocked()
     };
   } else if (layer.type === 'reference') {
@@ -176,7 +180,9 @@ export const serializeLayer = (layer: Layer): SerializedLayer => {
       modifications: (layer as ModificationLayer).modifications.map(m => ({
         id: m.id,
         type: m.type,
-        element: m.element ? serializeDiagramElement(m.element) : undefined
+        element: m.element
+          ? (serializeDiagramElement(m.element) as SerializedModificationElement)
+          : undefined
       })),
       isLocked: layer.isLocked()
     };

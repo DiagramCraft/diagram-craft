@@ -22,6 +22,7 @@ import type { Step, Story, StoryAction } from '@diagram-craft/model/documentStor
 import { useToolWindowControls } from '../ToolWindow';
 import { MessageDialogCommand } from '@diagram-craft/canvas/context';
 import { assert, mustExist } from '@diagram-craft/utils/assert';
+import { newid } from '@diagram-craft/utils/id';
 import type { Diagram } from '@diagram-craft/model/diagram';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 
@@ -125,7 +126,7 @@ export const StoriesPanel = () => {
       const story = document.stories.getStory(selectedStoryIdForNewStep);
       assert.present(story);
 
-      const step = document.stories.addStep(story, newStepTitle, newStepDescription);
+      const step = document.stories.addStep(story, newid(), newStepTitle, newStepDescription);
       recordCurrentState(diagram, story, step);
 
       setNewStepTitle('');

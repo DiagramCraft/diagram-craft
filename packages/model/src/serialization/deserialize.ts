@@ -15,6 +15,7 @@ import {
   SerializedDiagramDocument,
   SerializedElement,
   SerializedFreeEndpoint,
+  type SerializedModificationElement,
   SerializedPointOnEdgeEndpoint,
   type SerializedOverride,
   SerializedPointInNodeEndpoint,
@@ -110,6 +111,9 @@ export const deserializeDiagramElements = (
   // Pass 1: create placeholders for all nodes
   for (const n of diagramElements) {
     for (const c of unfoldGroup(n)) {
+      if (c.type === 'delegating-node' || c.type === 'delegating-edge') {
+        assert.fail('Delegating elements can only be deserialized in modification layers');
+      }
       if (c.type !== 'node') continue;
 
       COMPATIBILITY: {
@@ -359,9 +363,9 @@ export const deserializeDiagramDocument = async <T extends Diagram>(
 
     if (document.stories) {
       for (const story of document.stories) {
-        const newStory = doc.stories.addStory(story.name);
+        const newStory = doc.stories.addStory(story.id, story.name);
         for (const step of story.steps) {
-          const newStep = doc.stories.addStep(newStory, step.title, step.description);
+          const newStep = doc.stories.addStep(newStory, step.id, step.title, step.description);
           if (newStep) {
             for (const action of step.actions) {
               doc.stories.addAction(newStory, newStep, action);
@@ -532,39 +536,40 @@ const deserializeDiagrams = async <T extends Diagram>(
         for (const modification of l.modifications) {
           if (modification.element) {
             let element: DiagramElement | undefined;
+            const serializedElement = modification.element as SerializedModificationElement;
 
-            if (modification.element.type === 'delegating-node') {
+            if (serializedElement.type === 'delegating-node') {
               element = new DelegatingDiagramNode(
-                modification.element.id,
+                serializedElement.id,
                 nodeLookup.get(modification.id)!,
                 layer,
                 {
                   bounds: Box.isEqual(
-                    modification.element.bounds,
+                    serializedElement.bounds,
                     nodeLookup.get(modification.id)!.bounds
                   )
                     ? undefined
-                    : modification.element.bounds,
-                  props: modification.element.props,
-                  metadata: modification.element.metadata,
-                  texts: modification.element.texts
+                    : serializedElement.bounds,
+                  props: serializedElement.props,
+                  metadata: serializedElement.metadata,
+                  texts: serializedElement.texts
                 }
               );
-              nodeLookup.set(modification.element.id, element as DiagramNode);
-            } else if (modification.element.type === 'delegating-edge') {
+              nodeLookup.set(serializedElement.id, element as DiagramNode);
+            } else if (serializedElement.type === 'delegating-edge') {
               element = new DelegatingDiagramEdge(
-                modification.element.id,
+                serializedElement.id,
                 edgeLookup.get(modification.id)!,
                 layer,
                 {
-                  props: modification.element.props,
-                  metadata: modification.element.metadata,
-                  start: deserializeEndpoint(modification.element.start, nodeLookup, edgeLookup),
-                  end: deserializeEndpoint(modification.element.end, nodeLookup, edgeLookup),
-                  waypoints: modification.element.waypoints
+                  props: serializedElement.props,
+                  metadata: serializedElement.metadata,
+                  start: deserializeEndpoint(serializedElement.start, nodeLookup, edgeLookup),
+                  end: deserializeEndpoint(serializedElement.end, nodeLookup, edgeLookup),
+                  waypoints: serializedElement.waypoints
                 }
               );
-              edgeLookup.set(modification.element.id, element as DiagramEdge);
+              edgeLookup.set(serializedElement.id, element as DiagramEdge);
             } else {
               throw new VerifyNotReached();
             }
