@@ -7,7 +7,7 @@ import { assert } from '@diagram-craft/utils/assert';
 import type { ReferenceLayer } from './diagramLayerReference';
 import type { RegularLayer } from './diagramLayerRegular';
 import type { AdjustmentRule } from './diagramLayerRuleTypes';
-import { watch } from '@diagram-craft/utils/watchableValue';
+import { WatchableValue, watch } from '@diagram-craft/utils/watchableValue';
 import type { ModificationCRDT, ModificationLayer } from './diagramLayerModification';
 import { CRDTProp } from '@diagram-craft/collaboration/datatypes/crdtProp';
 import type { CRDTList, CRDTMap } from '@diagram-craft/collaboration/crdt';
@@ -20,6 +20,8 @@ import {
   LayerSnapshot,
   LayerUOWAdapter
 } from '@diagram-craft/model/diagramLayer.uow';
+import { Detachable } from './detachable';
+import { LayerManager } from './diagramLayerManager';
 
 export type LayerType = 'regular' | 'rule' | 'reference' | 'modification';
 
@@ -33,17 +35,18 @@ export abstract class Layer<
     | RuleLayer
     | ModificationLayer
 >
-  implements UOWTrackable, AttachmentConsumer, Releasable
+  implements UOWTrackable, AttachmentConsumer, Releasable, Detachable<LayerManager>
 {
   #locked = false;
   #id: CRDTProp<LayerCRDT, 'id'>;
   #name: CRDTProp<LayerCRDT, 'name'>;
   protected _type: LayerType = 'regular';
+  _isAttached = false;
 
   readonly diagram: Diagram;
   protected readonly _releasables = new Releasables();
 
-  readonly crdt: CRDTMap<LayerCRDT>;
+  readonly _crdt: WatchableValue<CRDTMap<LayerCRDT>>;
   readonly _trackableType = 'layer';
 
   protected constructor(
@@ -53,21 +56,26 @@ export abstract class Layer<
     type?: LayerType,
     crdt?: CRDTMap<LayerCRDT>
   ) {
-    this.crdt = crdt ?? diagram.document.root.factory.makeMap();
-    this.crdt.set('id', id);
-    this.crdt.set('name', name);
+    this._crdt = watch(crdt ?? diagram.document.root.factory.makeMap());
+    const current = this._crdt.get();
+    current.set('id', id);
+    current.set('name', name);
 
     this._type = type ?? 'regular';
-    this.crdt.set('type', this._type);
+    current.set('type', this._type);
 
-    this.#name = new CRDTProp(watch(this.crdt), 'name', {
+    this.#name = new CRDTProp(this._crdt, 'name', {
       onRemoteChange: () => {
         diagram.layers.emit('layerUpdated', { layer: this });
       }
     });
-    this.#id = new CRDTProp(watch(this.crdt), 'id');
+    this.#id = new CRDTProp(this._crdt, 'id');
 
     this.diagram = diagram;
+  }
+
+  get crdt() {
+    return this._crdt.get();
   }
 
   release() {
@@ -149,6 +157,31 @@ export abstract class Layer<
 
   getAttachmentsInUse(): string[] {
     return [];
+  }
+
+  protected watchCrdtField<T>(getter: (crdt: CRDTMap<LayerCRDT>) => T): WatchableValue<T> {
+    return WatchableValue.from(([crdt]) => getter(crdt.get()), [this._crdt]);
+  }
+
+  protected _onAttach(_uow: UnitOfWork): void {}
+
+  protected _onDetach(_uow: UnitOfWork): void {}
+
+  _detach(callback: () => void, uow: UnitOfWork): void {
+    assert.true(this._isAttached);
+
+    const clone = this._crdt.get().clone();
+    this._onDetach(uow);
+    callback();
+    this._crdt.set(clone);
+    this._isAttached = false;
+  }
+
+  _attach(_parent: LayerManager, uow: UnitOfWork): void {
+    assert.true(uow.isRemote || !this._isAttached);
+
+    this._isAttached = true;
+    this._onAttach(uow);
   }
 }
 

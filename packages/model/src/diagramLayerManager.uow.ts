@@ -9,11 +9,6 @@ import {
 import { LayerManager } from '@diagram-craft/model/diagramLayerManager';
 import { Diagram } from '@diagram-craft/model/diagram';
 import { mustExist } from '@diagram-craft/utils/assert';
-import { RegularLayer } from '@diagram-craft/model/diagramLayerRegular';
-import { Layer } from '@diagram-craft/model/diagramLayer';
-import { RuleLayer } from '@diagram-craft/model/diagramLayerRule';
-import { ReferenceLayer } from '@diagram-craft/model/diagramLayerReference';
-import { ModificationLayer } from '@diagram-craft/model/diagramLayerModification';
 import { isDebug } from '@diagram-craft/utils/debug';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
 
@@ -28,27 +23,8 @@ export class LayerManagerChildUOWAdapter implements UOWChildAdapter<LayerSnapsho
   ): void {
     if (isDebug()) console.log(`Adding layer ${childId}`);
 
-    let child: Layer;
-    switch (childSnapshot.type) {
-      case 'regular':
-        child = new RegularLayer(childId, childSnapshot.name, [], diagram);
-        child.restore(childSnapshot, uow);
-        break;
-      case 'rule':
-        child = new RuleLayer(childId, childSnapshot.name, diagram, []);
-        child.restore(childSnapshot, uow);
-        break;
-      case 'reference':
-        child = new ReferenceLayer(childId, childSnapshot.name, diagram, undefined!);
-        child.restore(childSnapshot, uow);
-        break;
-      case 'modification':
-        child = new ModificationLayer(childId, childSnapshot.name, diagram, []);
-        child.restore(childSnapshot, uow);
-        break;
-      default:
-        throw new Error(`Unsupported layer type: ${childSnapshot.type}`);
-    }
+    const child = mustExist(childSnapshot._ref);
+    child.restore(childSnapshot, uow);
 
     const layerManager = diagram.layers;
     if (idx === -1) {

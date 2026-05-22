@@ -50,7 +50,7 @@ export class LayerUOWAdapter implements UOWAdapter<LayerSnapshot, Layer> {
   }
 
   snapshot(element: Layer): LayerSnapshot {
-    return element.snapshot();
+    return { ...element.snapshot(), _ref: element };
   }
 }
 
@@ -97,6 +97,7 @@ export class LayerChildUOWAdapter implements UOWChildAdapter<
 
 export interface LayerSnapshot extends Snapshot {
   _snapshotType: 'layer';
+  _ref?: Layer;
   name: string;
   locked: boolean;
   elements?: string[];

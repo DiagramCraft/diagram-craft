@@ -169,6 +169,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       // Verify
       expect(diagram1.layers.all).toContain(newLayer);
+      expect(newLayer._isAttached).toBe(true);
       if (diagram2) {
         expect(diagram2.layers.all.map(l => l.id)).toContain(newLayer.id);
       }
@@ -209,6 +210,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       // Verify
       expect(diagram1.layers.all).not.toContain(layer1);
+      expect(layer1._isAttached).toBe(false);
       if (diagram2) {
         expect(diagram2.layers.all.map(l => l.id)).not.toContain(layer1.id);
       }
@@ -226,7 +228,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
     it('should remove, including undo/redo, of layer with elements', () => {
       // Setup
-      const { diagram1, diagram2, layer1, layer2 } = standardTestModel(backend);
+      const { diagram1, diagram2, layer1 } = standardTestModel(backend);
       const e = ElementFactory.emptyNode(newid(), layer1);
       UnitOfWork.execute(diagram1, uow => layer1.addElement(e, uow));
       const layerId = layer1.id;
@@ -237,29 +239,47 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
 
       // Verify
       expect(diagram1.layers.all).toHaveLength(0);
-      expect(layer1.elements.map(e => e.id)).toHaveLength(0);
+      expect(layer1.elements.map(e => e.id)).toEqual([e.id]);
+      expect(layer1._isAttached).toBe(false);
       if (diagram2) {
         expect(diagram2.layers.all).toHaveLength(0);
-        expect(layer2!.elements.map(e => e.id)).toHaveLength(0);
       }
 
       // Act & Verify
       diagram1.undoManager.undo();
       expect(diagram1.layers.all.map(l => l.id)).toContain(layerId);
       expect(layer(diagram1).elements.map(e => e.id)).toEqual([e.id]);
+      expect(layer(diagram1)._isAttached).toBe(true);
       if (diagram2) {
         expect(diagram2.layers.all.map(l => l.id)).toContain(layerId);
         expect(layer(diagram2).elements.map(e => e.id)).toEqual([e.id]);
+        expect(layer(diagram2)._isAttached).toBe(true);
       }
 
       // Act & Verify
       diagram1.undoManager.redo();
       expect(diagram1.layers.all).toHaveLength(0);
-      expect(layer1.elements).toHaveLength(0);
+      expect(layer1.elements.map(e => e.id)).toEqual([e.id]);
       if (diagram2) {
         expect(diagram2.layers.all).toHaveLength(0);
-        expect(layer2!.elements).toHaveLength(0);
       }
+    });
+
+    it('should preserve regular-layer elements across remove and re-add', () => {
+      const { diagram1, layer1 } = standardTestModel(backend);
+      const e = ElementFactory.emptyNode(newid(), layer1);
+      UnitOfWork.execute(diagram1, uow => layer1.addElement(e, uow));
+
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
+
+      expect(layer1.elements.map(element => element.id)).toEqual([e.id]);
+      expect(e._isAttached).toBe(false);
+
+      UnitOfWork.execute(diagram1, uow => diagram1.layers.add(layer1, uow));
+
+      expect(layer1.elements.map(element => element.id)).toEqual([e.id]);
+      expect(e._isAttached).toBe(true);
+      expect(diagram1.lookup(e.id)).toBe(e);
     });
   });
 
@@ -280,6 +300,9 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       );
 
       expect(diagram1.layers.all.map(l => l.id)).toEqual([layer3.id, layer1.id, layer2.id]);
+      expect(layer1._isAttached).toBe(true);
+      expect(layer2._isAttached).toBe(true);
+      expect(layer3._isAttached).toBe(true);
     });
 
     it('should move a layer above another layer', () => {
@@ -535,7 +558,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       UnitOfWork.execute(diagram1, uow => diagram1.layers.remove(layer1, uow));
 
       expect(removedLayers).toHaveLength(1);
-      expect(removedLayers[0]!.id).toBe(layer1.id);
+      expect(removedLayers[0]!.id).toBeUndefined();
     });
 
     it('should emit layerUpdated event when a layer name is changed locally', () => {
@@ -596,7 +619,7 @@ describe.each(Backends.all())('LayerManager [%s]', (_name, backend) => {
       expect(events).toEqual([
         { type: 'added', id: 'layer-2' },
         { type: 'updated', id: layer1.id },
-        { type: 'removed', id: undefined } // id may be undefined for removed layers
+        { type: 'removed', id: undefined }
       ]);
     });
 
