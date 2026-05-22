@@ -18,6 +18,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       // Verify
       expect(doc1.diagrams).toHaveLength(1);
       expect(doc1.diagrams).toContain(diagram);
+      expect(diagram._isAttached).toBe(true);
       if (doc2) expect(doc2.diagrams).toHaveLength(1);
     });
 
@@ -37,6 +38,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
 
       // Verify
       expect(parentDiagram.diagrams).toContain(childDiagram);
+      expect(childDiagram._isAttached).toBe(true);
       if (doc2) expect(doc2.diagrams[0]!.diagrams).toHaveLength(1);
     });
   });
@@ -58,6 +60,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       // Verify
       expect(doc1.diagrams).toHaveLength(0);
       expect(doc1.diagrams).not.toContain(diagram);
+      expect(diagram._isAttached).toBe(false);
       if (doc2) expect(doc2.diagrams).toHaveLength(0);
     });
 
@@ -72,12 +75,50 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       doc1.addDiagram(parentDiagram);
 
       const childDiagram = new TestDiagramBuilder(doc1, 'child');
+      doc1.addDiagram(childDiagram, parentDiagram);
 
       // Act
       doc1.removeDiagram(childDiagram);
 
       expect(parentDiagram.diagrams).not.toContain(childDiagram);
+      expect(childDiagram._isAttached).toBe(false);
       if (doc2) expect(doc2.diagrams[0]!.diagrams).toHaveLength(0);
+    });
+
+    it('should preserve a root diagram across remove and re-add', () => {
+      const doc = TestModel.newDocument();
+      const diagram = new TestDiagramBuilder(doc, 'diagram');
+
+      doc.addDiagram(diagram);
+      const layer = diagram.newLayer('layer-1');
+
+      doc.removeDiagram(diagram);
+
+      expect(diagram._isAttached).toBe(false);
+      expect(diagram.layers.byId(layer.id)).toBe(layer);
+
+      doc.addDiagram(diagram);
+
+      expect(diagram._isAttached).toBe(true);
+      expect(doc.diagrams).toContain(diagram);
+      expect(diagram.layers.byId(layer.id)).toBe(layer);
+    });
+
+    it('should preserve a nested diagram parent relationship across remove and re-add', () => {
+      const doc = TestModel.newDocument();
+      const parent = new TestDiagramBuilder(doc, 'parent');
+      const child = new TestDiagramBuilder(doc, 'child');
+
+      doc.addDiagram(parent);
+      doc.addDiagram(child, parent);
+      doc.removeDiagram(child);
+
+      expect(child._isAttached).toBe(false);
+
+      doc.addDiagram(child, parent);
+
+      expect(child._isAttached).toBe(true);
+      expect(parent.diagrams).toContain(child);
     });
   });
 
@@ -110,7 +151,7 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
     it('should return undefined if no diagram with the specified ID is found', () => {
       const document = TestModel.newDocument();
 
-      const diagram = TestModel.newDiagram();
+      const diagram = new TestDiagramBuilder(document, 'diagram');
       document.addDiagram(diagram);
 
       const result = document.byId('nonExistentId');
@@ -221,6 +262,9 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       // Verify
       expect(doc.diagrams.map(d => d.id)).toEqual(['c', 'a', 'b']);
       expect(changed).toEqual(['c']);
+      expect(c._isAttached).toBe(true);
+      expect(a._isAttached).toBe(true);
+      expect(b._isAttached).toBe(true);
 
       // Act: move a after b => [c, b, a]
       doc.moveDiagram(a, { diagram: b, relation: 'after' });
@@ -228,6 +272,9 @@ describe.each(Backends.all())('DiagramDocument [%s]', (_name, backend) => {
       // Verify
       expect(doc.diagrams.map(d => d.id)).toEqual(['c', 'b', 'a']);
       expect(changed).toEqual(['c', 'a']);
+      expect(c._isAttached).toBe(true);
+      expect(a._isAttached).toBe(true);
+      expect(b._isAttached).toBe(true);
     });
 
     it('should reorder nested diagrams only within their parent', () => {

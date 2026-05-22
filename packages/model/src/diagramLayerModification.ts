@@ -1,7 +1,6 @@
 import { Layer, type LayerCRDT } from './diagramLayer';
 import type { Diagram } from './diagram';
 import { type DiagramElement, type DiagramElementCRDT, isEdge, isNode } from './diagramElement';
-import { watch } from '@diagram-craft/utils/watchableValue';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { assert, mustExist, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
@@ -76,7 +75,9 @@ export class ModificationLayer extends Layer<ModificationLayer> {
     super(id, name, diagram, 'modification', crdt);
 
     this.#modifications = new MappedCRDTOrderedMap<Modification, ModificationCRDT>(
-      watch(this.crdt.get('modifications', () => diagram.document.root.factory.makeMap())!),
+      this.watchCrdtField(crdt =>
+        crdt.get('modifications', () => diagram.document.root.factory.makeMap())!
+      ),
       {
         fromCRDT: (e: CRDTMap<ModificationCRDT>) => {
           const id = e.get('id')!;
@@ -264,6 +265,22 @@ export class ModificationLayer extends Layer<ModificationLayer> {
       this.diagram.edgeLookup.set(e.id, e);
     } else {
       VERIFY_NOT_REACHED();
+    }
+  }
+
+  protected _onDetach(uow: UnitOfWork): void {
+    for (const element of this.elements.toReversed()) {
+      if (element._isAttached) {
+        element._detach(() => {}, uow);
+      }
+    }
+  }
+
+  protected _onAttach(uow: UnitOfWork): void {
+    for (const element of this.elements) {
+      if (!element._isAttached) {
+        element._attach(this, uow);
+      }
     }
   }
 }

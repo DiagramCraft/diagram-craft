@@ -4,7 +4,7 @@ import { Diagram, DiagramCRDT, diagramIterator, DiagramIteratorOpts } from './di
 import { AttachmentConsumer, AttachmentManager } from './attachment';
 import { EventEmitter } from '@diagram-craft/utils/event';
 import { Registry } from './elementDefinitionRegistry';
-import { getRemoteUnitOfWork, type UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, type UOWTrackable, UOWRegistry } from './unitOfWork';
 import {
   DiagramDocumentUOWAdapter,
   DocumentDiagramChildAdapter
@@ -97,15 +97,13 @@ export class DiagramDocument
       watch(this.root.getMap('diagrams')),
       makeDiagramMapper(this),
       {
-        onRemoteAdd: e =>
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), {
-            id: e.id
-          }),
-        onRemoteRemove: e => this.root.off('remoteAfterTransaction', e.id),
-        onInit: e =>
-          this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(e).commit(), {
-            id: e.id
-          })
+        onRemoteAdd: e => e._attach(this, getRemoteUnitOfWork(e)),
+        onRemoteRemove: e => {
+          if (e._isAttached) {
+            e._detach(() => {}, getRemoteUnitOfWork(e));
+          }
+        },
+        onInit: e => e._attach(this, getRemoteUnitOfWork(e))
       }
     );
 
@@ -179,23 +177,20 @@ export class DiagramDocument
 
   insertDiagram(diagram: Diagram, position: number, parent?: Diagram, uow?: UnitOfWork) {
     if (uow) {
-      uow.executeAdd(diagram, this, position, () => this.#doInsertDiagram(diagram, position, parent));
+      uow.executeAdd(diagram, this, position, () => this.#doInsertDiagram(diagram, position, parent, uow));
     } else {
-      this.#doInsertDiagram(diagram, position, parent);
+      UnitOfWork.executeSilently(diagram, localUow =>
+        this.#doInsertDiagram(diagram, position, parent, localUow)
+      );
     }
   }
 
-  #doInsertDiagram(diagram: Diagram, position: number, parent?: Diagram) {
+  #doInsertDiagram(diagram: Diagram, position: number, parent: Diagram | undefined, uow: UnitOfWork) {
     precondition.is.false(!!this.byId(diagram.id));
 
-    diagram._parent = parent?.id;
-    diagram._document = this;
-
+    diagram._prepareAttach(parent);
     this.#diagrams.insert(diagram.id, diagram, position);
-
-    this.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(diagram).commit(), {
-      id: diagram.id
-    });
+    diagram._attach(this, uow);
 
     this.emit('diagramAdded', { diagram: diagram });
   }
@@ -208,17 +203,14 @@ export class DiagramDocument
     if (uow) {
       const peerDiagrams = diagram.parent ? this.byId(diagram.parent)!.diagrams : this.diagrams;
       const idx = peerDiagrams.indexOf(diagram);
-      uow.executeRemove(diagram, this, idx, () => this.#doRemoveDiagram(diagram));
+      uow.executeRemove(diagram, this, idx, () => this.#doRemoveDiagram(diagram, uow));
     } else {
-      this.#doRemoveDiagram(diagram);
+      UnitOfWork.executeSilently(diagram, localUow => this.#doRemoveDiagram(diagram, localUow));
     }
   }
 
-  #doRemoveDiagram(diagram: Diagram) {
-    this.#diagrams.remove(diagram.id);
-
-    this.root.off('remoteAfterTransaction', diagram.id);
-
+  #doRemoveDiagram(diagram: Diagram, uow: UnitOfWork) {
+    diagram._detach(() => this.#diagrams.remove(diagram.id), uow);
     this.emit('diagramRemoved', { diagram: diagram });
   }
 

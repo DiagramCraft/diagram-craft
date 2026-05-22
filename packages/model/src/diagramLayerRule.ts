@@ -23,6 +23,7 @@ import { type DiagramElement, isEdge, isNode } from './diagramElement';
 import { MultiMap } from '@diagram-craft/utils/multimap';
 import { type Releasable, TimerReleasable } from '@diagram-craft/utils/releasable';
 import { LayerSnapshot } from '@diagram-craft/model/diagramLayer.uow';
+import { WatchableValue } from '@diagram-craft/utils/watchableValue';
 
 type Result = Map<string, Adjustment>;
 
@@ -90,7 +91,7 @@ type TimerTrigger = {
 };
 
 export class RuleLayer extends Layer<RuleLayer> {
-  #rules: CRDTList<AdjustmentRule>;
+  #rules: WatchableValue<CRDTList<AdjustmentRule>>;
   #cache = new Map<string | symbol, Result>();
 
   #dependencies = {
@@ -109,13 +110,13 @@ export class RuleLayer extends Layer<RuleLayer> {
   ) {
     super(id, name, diagram, 'rule', crdt);
 
-    this.#rules = this.crdt.get('rules', () => diagram.document.root.factory.makeList())!;
+    this.#rules = this.watchCrdtField(crdt => crdt.get('rules', () => diagram.document.root.factory.makeList())!);
     for (const rule of rules) {
-      this.#rules.push(rule);
+      this.#rules.get().push(rule);
     }
 
     this._releasables.add(
-      this.#rules.on('remoteAfterTransaction', () => this.updateDependencies())
+      this.#rules.get().on('remoteAfterTransaction', () => this.updateDependencies())
     );
 
     this.updateDependencies();
@@ -217,7 +218,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     this.#dependencies.timers = [];
 
     // Re-add dependencies based on the new rules
-    for (const rule of this.#rules.toArray()) {
+    for (const rule of this.#rules.get().toArray()) {
       if (rule.type === 'edge') {
         this.#dependencies.edge.add(rule.id);
       } else if (rule.type === 'node') {
@@ -296,7 +297,7 @@ export class RuleLayer extends Layer<RuleLayer> {
     if (this.#cache.has(RESULT)) return this.#cache.get(RESULT)!;
 
     const res: Result = new Map<string, Adjustment>();
-    for (const rule of this.#rules.toArray()) {
+    for (const rule of this.#rules.get().toArray()) {
       const interim = this.#cache.get(rule.id) ?? this.runRule(rule);
       for (const k of interim.keys()) {
         // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -311,7 +312,7 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   byId(id: string): AdjustmentRule | undefined {
-    return this.#rules.toArray().find(r => r.id === id);
+    return this.#rules.get().toArray().find(r => r.id === id);
   }
 
   runRule(rule: AdjustmentRule): Result {
@@ -372,12 +373,12 @@ export class RuleLayer extends Layer<RuleLayer> {
   }
 
   get rules() {
-    return this.#rules.toArray();
+    return this.#rules.get().toArray();
   }
 
   addRule(rule: AdjustmentRule, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      this.#rules.push(rule);
+      this.#rules.get().push(rule);
     });
     this.#cache.clear();
     this.updateDependencies();
@@ -385,8 +386,8 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   removeRule(rule: AdjustmentRule, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      const idx = this.#rules.toArray().findIndex(r => r.id === rule.id);
-      this.#rules.delete(idx);
+      const idx = this.#rules.get().toArray().findIndex(r => r.id === rule.id);
+      this.#rules.get().delete(idx);
     });
     this.#cache.clear();
     this.updateDependencies();
@@ -394,9 +395,9 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   replaceRule(existing: AdjustmentRule, newRule: AdjustmentRule, uow: UnitOfWork) {
     uow.executeUpdate(this, () => {
-      const idx = this.#rules.toArray().findIndex(r => r.id === existing.id);
-      this.#rules.delete(idx);
-      this.#rules.insert(idx, [newRule]);
+      const idx = this.#rules.get().toArray().findIndex(r => r.id === existing.id);
+      this.#rules.get().delete(idx);
+      this.#rules.get().insert(idx, [newRule]);
     });
     this.#cache.clear();
     this.updateDependencies();
@@ -411,10 +412,10 @@ export class RuleLayer extends Layer<RuleLayer> {
 
   restore(snapshot: LayerSnapshot, uow: UnitOfWork) {
     super.restore(snapshot, uow);
-    this.#rules.clear();
-    this.#rules.transact(() => {
+    this.#rules.get().clear();
+    this.#rules.get().transact(() => {
       for (const rule of snapshot.rules ?? []) {
-        this.#rules.push(rule);
+        this.#rules.get().push(rule);
       }
     });
   }

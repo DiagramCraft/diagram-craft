@@ -4,7 +4,7 @@ import { DiagramEdge, SimpleDiagramEdge } from './diagramEdge';
 import { Selection } from './selection';
 import type { UndoManager } from './undoManager';
 import { createUndoManager } from './undoManager.factory';
-import { UnitOfWork, UOWRegistry } from './unitOfWork';
+import { getRemoteUnitOfWork, UnitOfWork, UOWRegistry } from './unitOfWork';
 import { bindElementListeners, DiagramElement, isEdge, isNode } from './diagramElement';
 import type { DiagramDocument } from './diagramDocument';
 import { Box } from '@diagram-craft/geometry/box';
@@ -31,10 +31,9 @@ import type { DiagramProps } from './diagramProps';
 import { type Releasable, Releasables } from '@diagram-craft/utils/releasable';
 import { DiagramUOWAdapter } from '@diagram-craft/model/diagram.uow';
 import { DiagramViewManager } from './diagramViewManager';
-import type {
-  MappedCRDTOrderedMapMapType
-} from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
+import type { MappedCRDTOrderedMapMapType } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { StoredDiagramView } from './diagramViewManager';
+import { Detachable } from './detachable';
 
 export type DiagramIteratorOpts = {
   nest?: boolean;
@@ -113,7 +112,10 @@ export type DiagramCRDT = {
   views: CRDTMap<MappedCRDTOrderedMapMapType<StoredDiagramView>>;
 };
 
-export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentConsumer, Releasable {
+export class Diagram
+  extends EventEmitter<DiagramEvents>
+  implements AttachmentConsumer, Releasable, Detachable<DiagramDocument>
+{
   _trackableType = 'diagram';
 
   // Transient properties
@@ -144,6 +146,8 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
   readonly undoManager: UndoManager;
 
   readonly commentManager: CommentManager;
+  _isAttached = false;
+  #attachParentId: string | undefined;
 
   constructor(
     id: string,
@@ -322,6 +326,10 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
 
   get document(): DiagramDocument {
     return this.#document!;
+  }
+
+  _prepareAttach(parent?: Diagram) {
+    this.#attachParentId = parent?.id;
   }
 
   *allElements(): Generator<DiagramElement> {
@@ -533,6 +541,40 @@ export class Diagram extends EventEmitter<DiagramEvents> implements AttachmentCo
     this.emit('diagramChange', { diagram: this });
     if (type === 'metadata') {
       this.document.emit('diagramChanged', { diagram: this });
+    }
+  }
+
+  _detach(callback: () => void, _uow: UnitOfWork): void {
+    assert.true(this._isAttached);
+
+    for (const layer of this.layers.all.toReversed()) {
+      if (layer._isAttached) {
+        layer._detach(() => {}, _uow);
+      }
+    }
+
+    callback();
+    this.document.root.off('remoteAfterTransaction', this.id);
+    this._parent = undefined;
+    this.#document = undefined;
+    this._isAttached = false;
+  }
+
+  _attach(parent: DiagramDocument, uow: UnitOfWork): void {
+    assert.true(uow.isRemote || !this._isAttached);
+
+    this.#document = parent;
+    this._parent = this.#attachParentId ?? this.parent;
+    this.#attachParentId = undefined;
+    parent.root.on('remoteAfterTransaction', () => getRemoteUnitOfWork(this).commit(), {
+      id: this.id
+    });
+    this._isAttached = true;
+
+    for (const layer of this.layers.all) {
+      if (!layer._isAttached) {
+        layer._attach(this.layers, uow);
+      }
     }
   }
 }

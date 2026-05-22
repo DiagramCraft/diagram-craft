@@ -24,8 +24,9 @@ import {
   LayerManagerUOWAdapter,
   LayersSnapshot
 } from '@diagram-craft/model/diagramLayerManager.uow';
-import { isRegularLayer, isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
+import { isResolvableToRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { Box } from '@diagram-craft/geometry/box';
+import { getRemoteUnitOfWork } from './unitOfWork';
 
 export type LayerManagerCRDT = {
   // TODO: Should we move visibility to be a property of the layer instead
@@ -100,8 +101,16 @@ export class LayerManager
       watch(crdt.get('layers', () => diagram.document.root.factory.makeMap())!),
       makeLayerMapper(diagram),
       {
-        onRemoteAdd: layer => this.emit('layerAdded', { layer }),
-        onRemoteRemove: layer => this.emit('layerRemoved', { layer }),
+        onRemoteAdd: layer => {
+          layer._attach(this, getRemoteUnitOfWork(diagram));
+          this.emit('layerAdded', { layer });
+        },
+        onRemoteRemove: layer => {
+          if (layer._isAttached) {
+            layer._detach(() => {}, getRemoteUnitOfWork(diagram));
+          }
+          this.emit('layerRemoved', { layer });
+        },
         onRemoteChange: layer => this.emit('layerUpdated', { layer })
       }
     );
@@ -257,20 +266,19 @@ export class LayerManager
         );
       }
     });
+    layer._attach(this, uow);
   }
 
   remove(layer: Layer, uow: UnitOfWork) {
-    if (isRegularLayer(layer)) {
-      layer.elements.forEach(e => layer.removeElement(e, uow));
-    }
-
     uow.executeRemove(layer, this, this.#layers.getIndex(layer.id), () => {
-      this.#layers.remove(layer.id);
-      this.#visibleLayers.delete(layer.id);
-      // TODO: Need to understand why this is needed
-      if (this.diagram.selection.nodes.some(e => !e._isAttached || e.layer === layer)) {
-        this.diagram.selection.clear();
-      }
+      layer._detach(() => {
+        this.#layers.remove(layer.id);
+        this.#visibleLayers.delete(layer.id);
+        // TODO: Need to understand why this is needed
+        if (this.diagram.selection.nodes.some(e => !e._isAttached || e.layer === layer)) {
+          this.diagram.selection.clear();
+        }
+      }, uow);
     });
   }
 

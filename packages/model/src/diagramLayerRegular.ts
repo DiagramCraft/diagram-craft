@@ -4,7 +4,6 @@ import type { Diagram } from './diagram';
 import { getRemoteUnitOfWork, UnitOfWork } from './unitOfWork';
 import { groupBy } from '@diagram-craft/utils/array';
 import { makeElementMapper, registerElementFactory } from './diagramElementMapper';
-import { watch } from '@diagram-craft/utils/watchableValue';
 import { ElementFactory } from './elementFactory';
 import { MappedCRDTOrderedMap } from '@diagram-craft/collaboration/datatypes/mapped/mappedCrdtOrderedMap';
 import type { CRDTMap } from '@diagram-craft/collaboration/crdt';
@@ -30,7 +29,7 @@ export class RegularLayer extends Layer<RegularLayer> {
     super(id, name, diagram, 'regular', crdt);
 
     this.#elements = new MappedCRDTOrderedMap<DiagramElement, DiagramElementCRDT>(
-      watch(this.crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
+      this.watchCrdtField(crdt => crdt.get('elements', () => diagram.document.root.factory.makeMap())!),
       makeElementMapper(this, undefined),
       {
         onRemoteAdd: e => {
@@ -184,7 +183,9 @@ export class RegularLayer extends Layer<RegularLayer> {
     super.restore(snapshot, uow);
 
     this.setElements(
-      (snapshot.elements ?? []).map(id => this.diagram.lookup(id)!),
+      (snapshot.elements ?? [])
+        .map(id => this.diagram.lookup(id) ?? this.#elements.get(id))
+        .filter((element): element is DiagramElement => element !== undefined),
       uow
     );
   }
@@ -198,5 +199,21 @@ export class RegularLayer extends Layer<RegularLayer> {
 
   getAttachmentsInUse() {
     return this.elements.flatMap(e => e.getAttachmentsInUse());
+  }
+
+  protected _onDetach(uow: UnitOfWork): void {
+    for (const element of this.elements.toReversed()) {
+      if (element._isAttached) {
+        element._detach(() => {}, uow);
+      }
+    }
+  }
+
+  protected _onAttach(uow: UnitOfWork): void {
+    for (const element of this.elements) {
+      if (!element._isAttached) {
+        element._attach(this, uow);
+      }
+    }
   }
 }
