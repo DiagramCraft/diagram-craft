@@ -38,7 +38,9 @@ export const executeNodeAction = (application: Application, action: ResolvedNode
       const layer = diagram.layers.byId(targetLayerId);
       if (layer === undefined) return;
 
-      diagram.layers.toggleVisibility(layer);
+      diagram.undoManager.execute('Toggle layer visibility', uow => {
+        diagram.layers.toggleVisibility(layer, uow);
+      });
       return;
     }
 

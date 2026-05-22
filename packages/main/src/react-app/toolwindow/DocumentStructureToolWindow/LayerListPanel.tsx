@@ -53,7 +53,9 @@ const VisibilityToggle = (props: { layer: Layer; diagram: Diagram }) => {
     <span
       style={{ cursor: 'pointer' }}
       onClick={e => {
-        props.diagram.layers.toggleVisibility(props.layer);
+        props.diagram.undoManager.execute('Toggle layer visibility', uow => {
+          props.diagram.layers.toggleVisibility(props.layer, uow);
+        });
         e.preventDefault();
         e.stopPropagation();
       }}
