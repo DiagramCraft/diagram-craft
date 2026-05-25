@@ -43,7 +43,7 @@ const App = () => {
     [],
   );
 
-  const ws = WORKSPACES.find(w => w.id === route.workspaceId) ?? WORKSPACES[0];
+  const ws = WORKSPACES.find(w => w.id === route.workspaceId) ?? WORKSPACES[0]!;
 
   const trail = buildTrail(route, navigate);
 

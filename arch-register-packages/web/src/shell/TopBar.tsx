@@ -3,10 +3,9 @@ import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
   TbMenu2, TbChevronDown, TbChevronRight, TbSearch, TbBell,
-  TbSettings, TbCheck, TbPlus, TbHome,
+  TbSettings, TbCheck, TbPlus,
 } from 'react-icons/tb';
 import type { Workspace } from '../data';
-import type { NavigateFn } from '../routing';
 
 type BreadcrumbItem = {
   label: string;
@@ -85,7 +84,7 @@ const WorkspaceSwitcher = ({
   onOpenSettings: () => void;
 }) => {
   const [open, setOpen] = useState(false);
-  const ws = workspaces.find(w => w.id === current) ?? workspaces[0];
+  const ws = workspaces.find(w => w.id === current) ?? workspaces[0]!;
 
   return (
     <div className={styles.wsSwitcher} onMouseLeave={() => setOpen(false)}>

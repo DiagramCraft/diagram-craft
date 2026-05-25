@@ -1,5 +1,4 @@
 import styles from './WorkspaceHome.module.css';
-import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import {

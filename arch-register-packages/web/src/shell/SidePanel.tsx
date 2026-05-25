@@ -4,7 +4,7 @@ import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
 import {
   TbStack2, TbDatabase, TbPlus, TbFilter, TbStar,
-  TbChartDots3, TbFolder, TbFolderOpen, TbCode, TbTag, TbUsers,
+  TbChartDots3, TbFolderOpen, TbCode, TbTag, TbUsers,
 } from 'react-icons/tb';
 import {
   PROJECTS, ENTITY_TYPES, ENTITIES, TEAMS, STATUS_TONE,
@@ -240,7 +240,7 @@ const EntitiesSidebar = ({
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: STATUS_TONE[s].dot,
+                background: STATUS_TONE[s]!.dot,
               }}
             />
           }

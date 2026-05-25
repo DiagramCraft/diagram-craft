@@ -6,9 +6,9 @@ type StatusChipProps = {
 };
 
 export const StatusChip = ({ value }: StatusChipProps) => {
-  const t = STATUS_TONE[value] ?? STATUS_TONE.Active;
+  const t = STATUS_TONE[value] ?? STATUS_TONE['Active']!;
   return (
-    <Chip dot={t.dot} tone="ghost">
+    <Chip dot={t!.dot} tone="ghost">
       {value}
     </Chip>
   );
