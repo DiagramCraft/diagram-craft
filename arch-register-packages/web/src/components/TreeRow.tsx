@@ -34,6 +34,7 @@ export const TreeRow = ({
   >
     {expandable ? (
       <button
+        type="button"
         className={styles.chev}
         onClick={e => {
           e.stopPropagation();

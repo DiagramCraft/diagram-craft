@@ -31,10 +31,10 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
           <div className={styles.sub}>{workspace.description}</div>
         </div>
         <div className={styles.actions}>
-          <button className={styles.btn}>
+          <button type="button" className={styles.btn}>
             <TbPlus size={12} /> New project
           </button>
-          <button className={`${styles.btn} ${styles.btnPrimary}`}>
+          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`}>
             <TbPlus size={12} /> New entity
           </button>
         </div>
@@ -71,7 +71,7 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
       <div className={styles.homeGrid}>
         <Panel
           title="Projects"
-          actions={<button className={styles.link}>View all &rarr;</button>}
+          actions={<button type="button" className={styles.link}>View all &rarr;</button>}
         >
           <div className={styles.projectList}>
             {PROJECTS.map(p => (
@@ -88,6 +88,7 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
           <div className={styles.typecardList}>
             {ENTITY_TYPES.map(t => (
               <button
+                type="button"
                 key={t.id}
                 className={styles.typecard}
                 onClick={() => navigate({ view: 'entity-browser', typeFilter: t.id })}
@@ -106,6 +107,7 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
               </button>
             ))}
             <button
+              type="button"
               className={`${styles.typecard} ${styles.typecardAdd}`}
               onClick={() => navigate({ view: 'data-model' })}
             >
@@ -122,7 +124,7 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
 
         <Panel
           title="Recent activity"
-          actions={<button className={styles.link}>All activity &rarr;</button>}
+          actions={<button type="button" className={styles.link}>All activity &rarr;</button>}
           span2
         >
           <div className={styles.activityList}>
@@ -190,7 +192,7 @@ const ProjectRow = ({
   project: Project;
   onClick: () => void;
 }) => (
-  <button className={styles.projectRow} onClick={onClick}>
+  <button type="button" className={styles.projectRow} onClick={onClick}>
     <div className={styles.projectRowL}>
       <TbStack2 size={14} />
       <span className={styles.projectName}>{project.name}</span>
@@ -202,7 +204,7 @@ const ProjectRow = ({
       <div className={styles.progress}>
         <div
           className={styles.progressBar}
-          style={{ width: project.progress + '%' }}
+          style={{ width: `${project.progress}%` }}
         />
       </div>
       <span className="dim mono tabular" style={{ width: 34, textAlign: 'right' }}>

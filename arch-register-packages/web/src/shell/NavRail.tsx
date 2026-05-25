@@ -36,6 +36,7 @@ export const NavRail = ({ view, onPick }: NavRailProps) => {
           const Ic = item.icon;
           return (
             <button
+              type="button"
               key={item.id}
               title={item.title}
               className={`${styles.btn} ${active === item.id ? styles.active : ''}`}
@@ -47,10 +48,10 @@ export const NavRail = ({ view, onPick }: NavRailProps) => {
         })}
       </div>
       <div className={styles.bottom}>
-        <button title="Help" className={styles.btn}>
+        <button type="button" title="Help" className={styles.btn}>
           <TbLifebuoy size={14} />
         </button>
-        <button title="Account" className={styles.btn}>
+        <button type="button" title="Account" className={styles.btn}>
           <TbUser size={14} />
         </button>
       </div>

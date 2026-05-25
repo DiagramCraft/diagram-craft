@@ -17,6 +17,7 @@ export const IconButton = ({
   tone = 'default',
 }: IconButtonProps) => (
   <button
+    type="button"
     title={title}
     onClick={onClick}
     className={`${styles.btn} ${active ? styles.active : ''} ${tone === 'primary' ? styles.primary : ''} ${tone === 'ghost' ? styles.ghost : ''}`}

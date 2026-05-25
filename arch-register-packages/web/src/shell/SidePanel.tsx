@@ -125,7 +125,7 @@ const ProjectsSidebar = ({
     <SectionHeader
       title="Projects"
       actions={
-        <button className={styles.action}>
+        <button type="button" className={styles.action}>
           <TbPlus size={12} />
         </button>
       }
@@ -201,7 +201,7 @@ const EntitiesSidebar = ({
     <SectionHeader
       title="Types"
       actions={
-        <button className={styles.action}>
+        <button type="button" className={styles.action}>
           <TbFilter size={12} />
         </button>
       }
@@ -274,7 +274,7 @@ const DataModelSidebar = () => (
     <SectionHeader
       title="Types"
       actions={
-        <button className={styles.action}>
+        <button type="button" className={styles.action}>
           <TbPlus size={12} />
         </button>
       }

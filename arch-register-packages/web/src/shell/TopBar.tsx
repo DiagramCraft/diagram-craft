@@ -88,7 +88,7 @@ const WorkspaceSwitcher = ({
 
   return (
     <div className={styles.wsSwitcher} onMouseLeave={() => setOpen(false)}>
-      <button className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
+      <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
         <span className={styles.wsBadge}>{ws.short}</span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
@@ -98,6 +98,7 @@ const WorkspaceSwitcher = ({
           <div className={styles.menuLabel}>Workspaces</div>
           {workspaces.map(w => (
             <button
+              type="button"
               key={w.id}
               className={`${styles.menuItem} ${w.id === current ? styles.menuItemActive : ''}`}
               onClick={() => {
@@ -118,10 +119,11 @@ const WorkspaceSwitcher = ({
             </button>
           ))}
           <div className={styles.menuSep} />
-          <button className={styles.menuItem}>
+          <button type="button" className={styles.menuItem}>
             <TbPlus size={12} /> New workspace...
           </button>
           <button
+            type="button"
             className={styles.menuItem}
             onClick={() => {
               setOpen(false);
@@ -142,6 +144,7 @@ const Breadcrumbs = ({ trail }: { trail: BreadcrumbItem[] }) => (
       <span key={i} style={{ display: 'contents' }}>
         {i > 0 && <TbChevronRight size={10} />}
         <button
+          type="button"
           className={`${styles.crumb} ${i === trail.length - 1 ? styles.crumbLast : ''}`}
           onClick={c.onClick}
         >
