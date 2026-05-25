@@ -42,6 +42,8 @@ Then run:
 CREATE USER arch_register WITH PASSWORD 'yourpassword';
 CREATE DATABASE arch_register OWNER arch_register;
 GRANT ALL PRIVILEGES ON DATABASE arch_register TO arch_register;
+GRANT USAGE, CREATE ON SCHEMA public TO arch_register;
+ALTER SCHEMA public OWNER TO arch_register;
 \q
 ```
 

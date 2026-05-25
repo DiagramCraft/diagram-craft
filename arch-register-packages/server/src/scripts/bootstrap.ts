@@ -17,6 +17,11 @@ if (!connectionString) {
 
 const sql = postgres(connectionString, { max: 1 });
 
+type PostgresError = {
+  code?: string;
+  message?: string;
+};
+
 async function validate() {
   const workspaces = await sql<Workspace[]>`SELECT id, name FROM workspace`;
   const workspaceIds = new Set(workspaces.map(w => w.id));
@@ -124,6 +129,16 @@ async function main() {
 }
 
 main().catch(err => {
+  const error = err as PostgresError;
+  if (error.code === '42501') {
+    console.error('Bootstrap failed: database user lacks permission to create objects in the target schema.');
+    console.error('Grant CREATE and USAGE on schema public to the application user, for example:');
+    console.error('  GRANT USAGE, CREATE ON SCHEMA public TO arch_register;');
+    console.error('  ALTER SCHEMA public OWNER TO arch_register;');
+    console.error('Original error:', err);
+    process.exit(1);
+  }
+
   console.error('Bootstrap failed:', err);
   process.exit(1);
 });
