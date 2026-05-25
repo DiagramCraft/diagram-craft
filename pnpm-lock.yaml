@@ -96,12 +96,24 @@ importers:
 
   arch-register-packages/web:
     dependencies:
+      '@diagram-craft/app-components':
+        specifier: workspace:^
+        version: link:../../packages/app-components
+      '@diagram-craft/utils':
+        specifier: workspace:^
+        version: link:../../packages/utils
+      '@radix-ui/colors':
+        specifier: ^3.0.0
+        version: 3.0.0
       react:
         specifier: ^19.2.5
         version: 19.2.5
       react-dom:
         specifier: ^19.2.5
         version: 19.2.5(react@19.2.5)
+      react-icons:
+        specifier: ^5.3.0
+        version: 5.5.0(react@19.2.5)
     devDependencies:
       '@types/react':
         specifier: ^19.2.2

@@ -1,0 +1,47 @@
+.rail {
+  background: var(--bg-2);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.top,
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-2);
+  border-radius: var(--r);
+  position: relative;
+}
+
+.btn:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+.active {
+  color: var(--accent-strong);
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}

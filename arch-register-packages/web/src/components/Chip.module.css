@@ -1,0 +1,26 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-1);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--fg-2);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}

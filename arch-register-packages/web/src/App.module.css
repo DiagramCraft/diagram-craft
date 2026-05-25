@@ -1,0 +1,30 @@
+/* App shell — 3-row outer grid, 3-column body */
+.shell {
+  display: grid;
+  grid-template-rows: var(--topbar) 1fr;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  color: var(--fg-1);
+  font-size: 13px;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: var(--rail) 280px 1fr;
+  min-height: 0;
+}
+
+.main {
+  overflow: auto;
+  background: var(--bg-1);
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--fg-3);
+  font-size: 14px;
+}

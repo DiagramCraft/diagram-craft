@@ -1,0 +1,86 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--row);
+  padding-right: 8px;
+  font-size: 12px;
+  color: var(--fg-1);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.row:hover {
+  background: var(--bg-3);
+}
+
+.active {
+  background: var(--accent-bg);
+  color: var(--fg-0);
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
+
+.chev {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  border-radius: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.chev:hover {
+  color: var(--fg-1);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-2);
+  width: 16px;
+  height: 16px;
+}
+
+.active .icon {
+  color: var(--fg-0);
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trailing {
+  color: var(--fg-3);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag {
+  display: inline-block;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
