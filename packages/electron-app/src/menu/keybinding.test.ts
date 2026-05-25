@@ -59,13 +59,24 @@ describe('keybinding utilities', () => {
     });
 
     test('should handle arrow keys with modifiers', () => {
-      const result = convertKeybindingToAccelerator('S-KeyArrowUp');
-      expect(result).toBe('Shift+ArrowUp');
+      const result = convertKeybindingToAccelerator('A-ArrowUp');
+      expect(result).toBe('Alt+Up');
     });
 
     test('should handle numbers with modifiers', () => {
-      const result = convertKeybindingToAccelerator('M-Key1');
+      const result = convertKeybindingToAccelerator('M-Digit1');
       expect(result).toBe('CommandOrControl+1');
+    });
+
+    test('should handle punctuation keys used in the app keymap', () => {
+      expect(convertKeybindingToAccelerator('M-Equal')).toBe('CommandOrControl+=');
+      expect(convertKeybindingToAccelerator('M-Minus')).toBe('CommandOrControl+-');
+      expect(convertKeybindingToAccelerator('M-Slash')).toBe('CommandOrControl+/');
+    });
+
+    test('should handle bracket keys', () => {
+      expect(convertKeybindingToAccelerator('M-BracketLeft')).toBe('CommandOrControl+[');
+      expect(convertKeybindingToAccelerator('M-BracketRight')).toBe('CommandOrControl+]');
     });
 
     test('should handle empty string', () => {
