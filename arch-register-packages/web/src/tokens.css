@@ -1,0 +1,151 @@
+/* Arch Register — design tokens built on @radix-ui/colors */
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/gray-dark-alpha.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/red-dark.css';
+@import '@radix-ui/colors/orange-dark.css';
+
+:root {
+  /* Surfaces */
+  --bg-0: var(--gray-1);
+  --bg-1: var(--gray-1);
+  --bg-2: var(--gray-2);
+  --bg-3: var(--gray-4);
+  --bg-4: var(--gray-5);
+  --bg-input: var(--gray-3);
+
+  /* Borders & dividers */
+  --border-subtle: var(--gray-4);
+  --border: var(--gray-6);
+  --border-strong: var(--gray-7);
+
+  /* Text */
+  --fg-0: var(--gray-12);
+  --fg-1: var(--gray-11);
+  --fg-2: var(--gray-9);
+  --fg-3: var(--gray-8);
+  --fg-disabled: var(--gray-7);
+
+  /* Accent — blue */
+  --accent: var(--blue-9);
+  --accent-strong: var(--blue-11);
+  --accent-dim: var(--blue-6);
+  --accent-bg: var(--blue-4);
+
+  /* Type-tag swatches */
+  --tag-component: var(--green-9);
+  --tag-api: var(--blue-9);
+  --tag-service: var(--orange-9);
+  --tag-database: oklch(0.62 0.14 295);
+  --tag-system: oklch(0.66 0.14 80);
+
+  /* Status */
+  --ok: var(--green-9);
+  --warn: var(--orange-9);
+  --danger: var(--red-9);
+
+  /* Type */
+  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo,
+  Consolas, monospace;
+
+  /* Sizing */
+  --row: 28px;
+  --row-lg: 32px;
+  --rail: 44px;
+  --topbar: 44px;
+  --r-sm: 3px;
+  --r: 4px;
+  --r-md: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: "cv11" 1, "ss01" 1;
+}
+
+#root {
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-5);
+  border: 2px solid var(--bg-1);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-7);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Utility */
+.mono {
+  font-family: var(--font-mono);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.dim {
+  color: var(--fg-3);
+}
