@@ -1,8 +1,8 @@
-import { H3, HTTPError, defineHandler } from 'h3';
+import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { EntitySchema } from '../types.js';
 
-const BASE = '/api/schemas';
+const BASE = '/api/:workspace/schemas';
 
 // body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
 // is more restrictive than the `unknown` we get from readBody.
@@ -15,7 +15,11 @@ const handleError = (error: unknown, fallback: string): never => {
   if (error != null && typeof error === 'object' && 'code' in error) {
     const { code } = error as PostgresError;
     if (code === '23505') {
-      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'A schema with that name already exists' });
+      throw new HTTPError({
+        status: 409,
+        statusText: 'Conflict',
+        message: 'A schema with that name already exists in this workspace'
+      });
     }
     if (code === '23503') {
       throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'Cannot delete schema: entities still reference it' });
@@ -24,29 +28,41 @@ const handleError = (error: unknown, fallback: string): never => {
   throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
+const getWorkspace = (event: H3Event) => {
+  const workspace = event.context.params?.['workspace'];
+  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
+  return workspace;
+};
+
 export function createSchemaRoutes() {
   const router = new H3();
 
-  // GET /api/schemas
+  // GET /api/:workspace/schemas
   router.get(
     BASE,
-    defineHandler(async () => {
+    defineHandler(async event => {
+      const workspace = getWorkspace(event);
       try {
-        return await sql<EntitySchema[]>`SELECT * FROM entity_schema ORDER BY name`;
+        return await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace} ORDER BY name
+        `;
       } catch (e) {
         handleError(e, 'Failed to retrieve schemas');
       }
     })
   );
 
-  // GET /api/schemas/:id
+  // GET /api/:workspace/schemas/:id
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<EntitySchema[]>`SELECT * FROM entity_schema WHERE id = ${id}`;
+        const [row] = await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}
+        `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
         return row;
       } catch (e) {
@@ -55,10 +71,11 @@ export function createSchemaRoutes() {
     })
   );
 
-  // POST /api/schemas
+  // POST /api/:workspace/schemas
   router.post(
     BASE,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -67,8 +84,8 @@ export function createSchemaRoutes() {
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
         const [row] = await sql<EntitySchema[]>`
-          INSERT INTO entity_schema (name, fields)
-          VALUES (${name}, ${json(fields)})
+          INSERT INTO entity_schema (workspace, name, fields)
+          VALUES (${workspace}, ${name}, ${json(fields)})
           RETURNING *
         `;
         return row!;
@@ -78,10 +95,11 @@ export function createSchemaRoutes() {
     })
   );
 
-  // PUT /api/schemas/:id
+  // PUT /api/:workspace/schemas/:id
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -95,7 +113,7 @@ export function createSchemaRoutes() {
           UPDATE entity_schema SET
             name   = ${name},
             fields = ${fields !== undefined ? json(fields) : sql`fields`}
-          WHERE id = ${id}
+          WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
@@ -106,14 +124,17 @@ export function createSchemaRoutes() {
     })
   );
 
-  // DELETE /api/schemas/:id
+  // DELETE /api/:workspace/schemas/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<EntitySchema[]>`DELETE FROM entity_schema WHERE id = ${id} RETURNING id`;
+        const [row] = await sql<EntitySchema[]>`
+          DELETE FROM entity_schema WHERE workspace = ${workspace} AND id = ${id} RETURNING id
+        `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
         return { success: true, message: `Schema '${id}' deleted` };
       } catch (e) {

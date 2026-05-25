@@ -1,8 +1,8 @@
-import { H3, HTTPError, defineHandler, getQuery } from 'h3';
+import { H3, H3Event, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import type { Entity, EntityApiResponse, LifecycleStatus } from '../types.js';
 
-const BASE = '/api/data';
+const BASE = '/api/:workspace/data';
 
 const LIFECYCLE_VALUES = new Set<string>(['experimental', 'production', 'deprecated']);
 
@@ -20,14 +20,25 @@ const handleError = (error: unknown, fallback: string): never => {
       throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId references a schema that does not exist' });
     }
     if (code === '23505') {
-      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'An entity with that slug already exists in this namespace for the given schema' });
+      throw new HTTPError({
+        status: 409,
+        statusText: 'Conflict',
+        message: 'An entity with that slug already exists in this namespace for the given schema in this workspace'
+      });
     }
   }
   throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
+const getWorkspace = (event: H3Event) => {
+  const workspace = event.context.params?.['workspace'];
+  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
+  return workspace;
+};
+
 const toApiFormat = (row: Entity): EntityApiResponse => ({
   _uid: row.id,
+  _workspace: row.workspace,
   _schemaId: row.schema_id,
   _slug: row.slug,
   _namespace: row.namespace,
@@ -45,17 +56,20 @@ const slugify = (name: string) =>
 export function createDataRoutes() {
   const router = new H3();
 
-  // GET /api/data[?_schemaId=...]
+  // GET /api/:workspace/data[?_schemaId=...]
   router.get(
     BASE,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const { _schemaId } = getQuery(event);
       try {
         if (_schemaId && typeof _schemaId === 'string') {
-          const rows = await sql<Entity[]>`SELECT * FROM entity WHERE schema_id = ${_schemaId} ORDER BY name`;
+          const rows = await sql<Entity[]>`
+            SELECT * FROM entity WHERE workspace = ${workspace} AND schema_id = ${_schemaId} ORDER BY name
+          `;
           return rows.map(toApiFormat);
         }
-        const rows = await sql<Entity[]>`SELECT * FROM entity ORDER BY name`;
+        const rows = await sql<Entity[]>`SELECT * FROM entity WHERE workspace = ${workspace} ORDER BY name`;
         return rows.map(toApiFormat);
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
@@ -63,14 +77,15 @@ export function createDataRoutes() {
     })
   );
 
-  // GET /api/data/:id
+  // GET /api/:workspace/data/:id
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<Entity[]>`SELECT * FROM entity WHERE id = ${id}`;
+        const [row] = await sql<Entity[]>`SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return toApiFormat(row);
       } catch (e) {
@@ -79,11 +94,12 @@ export function createDataRoutes() {
     })
   );
 
-  // POST /api/data
+  // POST /api/:workspace/data
   // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.post(
     BASE,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -108,8 +124,8 @@ export function createDataRoutes() {
 
       try {
         const [row] = await sql<Entity[]>`
-          INSERT INTO entity (slug, namespace, name, owner, lifecycle, schema_id, data)
-          VALUES (${slug}, ${namespace}, ${name}, ${owner}, ${lifecycle}, ${_schemaId}, ${json(fields)})
+          INSERT INTO entity (workspace, slug, namespace, name, owner, lifecycle, schema_id, data)
+          VALUES (${workspace}, ${slug}, ${namespace}, ${name}, ${owner}, ${lifecycle}, ${_schemaId}, ${json(fields)})
           RETURNING *
         `;
         return toApiFormat(row!);
@@ -119,11 +135,12 @@ export function createDataRoutes() {
     })
   );
 
-  // PUT /api/data/:id  (full replacement)
+  // PUT /api/:workspace/data/:id  (full replacement)
   // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
@@ -158,7 +175,7 @@ export function createDataRoutes() {
             owner     = ${owner},
             lifecycle = ${lifecycle},
             data      = ${json(fields)}
-          WHERE id = ${id}
+          WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
@@ -169,14 +186,17 @@ export function createDataRoutes() {
     })
   );
 
-  // DELETE /api/data/:id
+  // DELETE /api/:workspace/data/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const workspace = getWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<Entity[]>`DELETE FROM entity WHERE id = ${id} RETURNING id`;
+        const [row] = await sql<Entity[]>`
+          DELETE FROM entity WHERE workspace = ${workspace} AND id = ${id} RETURNING id
+        `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return { success: true, message: `Data record '${id}' deleted` };
       } catch (e) {
