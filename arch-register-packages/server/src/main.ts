@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { H3, defineHandler, handleCors, toNodeListener } from 'h3';
 import { createDataRoutes } from './routes/data.js';
 import { createSchemaRoutes } from './routes/schemas.js';
+import { createWorkspaceRoutes } from './routes/workspaces.js';
 
 const app = new H3();
 
@@ -21,6 +22,7 @@ app.use(
 app.use('/hello', defineHandler(() => ({ msg: 'Hello' })));
 
 // API routes
+app.use(createWorkspaceRoutes());
 app.use(createSchemaRoutes());
 app.use(createDataRoutes());
 

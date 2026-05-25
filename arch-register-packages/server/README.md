@@ -101,23 +101,36 @@ The server listens on `http://localhost:3000` by default. Set `PORT` in `.env` t
 
 ## API
 
+### Workspaces
+
+Workspaces define the top-level isolation boundary for schemas and data.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/workspaces` | List all workspaces |
+
+**Example — list workspaces:**
+```bash
+curl http://localhost:3000/api/workspaces
+```
+
 ### Schemas
 
 Schemas define the available entity types and their fields.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/schemas` | List all schemas |
-| GET | `/api/schemas/:id` | Get a schema by ID |
-| POST | `/api/schemas` | Create a schema |
-| PUT | `/api/schemas/:id` | Update a schema |
-| DELETE | `/api/schemas/:id` | Delete a schema (fails if data records exist) |
+| GET | `/api/:workspace/schemas` | List all schemas |
+| GET | `/api/:workspace/schemas/:id` | Get a schema by ID |
+| POST | `/api/:workspace/schemas` | Create a schema |
+| PUT | `/api/:workspace/schemas/:id` | Update a schema |
+| DELETE | `/api/:workspace/schemas/:id` | Delete a schema (fails if data records exist) |
 
 Response format matches `packages/main/public/data/dataset1/schemas.json`. `source` is always returned as `"external"` and is not stored in the database.
 
 **Example — create a schema:**
 ```bash
-curl -X POST http://localhost:3000/api/schemas \
+curl -X POST http://localhost:3000/api/default/schemas \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "Database",
@@ -133,29 +146,29 @@ curl -X POST http://localhost:3000/api/schemas \
 
 ### Data
 
-Data records are instances of a schema type. The wire format is flat: `{ _uid, _schemaId, ...fields }`, matching `packages/main/public/data/dataset1/data.json`.
+Data records are instances of a schema type. The wire format is flat: `{ _uid, _workspace, _schemaId, ...fields }`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/data` | List all records |
-| GET | `/api/data?_schemaId=<uuid>` | List records of a specific schema type |
-| GET | `/api/data/:id` | Get a record by ID |
-| POST | `/api/data` | Create a record |
-| PUT | `/api/data/:id` | Update a record |
-| DELETE | `/api/data/:id` | Delete a record |
+| GET | `/api/:workspace/data` | List all records |
+| GET | `/api/:workspace/data?_schemaId=<uuid>` | List records of a specific schema type |
+| GET | `/api/:workspace/data/:id` | Get a record by ID |
+| POST | `/api/:workspace/data` | Create a record |
+| PUT | `/api/:workspace/data/:id` | Update a record |
+| DELETE | `/api/:workspace/data/:id` | Delete a record |
 
 **Example — list all Component records:**
 ```bash
 # Get the Component schema ID first
-curl http://localhost:3000/api/schemas
+curl http://localhost:3000/api/default/schemas
 
 # Then filter by that ID
-curl "http://localhost:3000/api/data?_schemaId=00000000-0000-0000-0000-000000000001"
+curl "http://localhost:3000/api/default/data?_schemaId=00000000-0000-0000-0000-000000000001"
 ```
 
 **Example — create a record:**
 ```bash
-curl -X POST http://localhost:3000/api/data \
+curl -X POST http://localhost:3000/api/default/data \
   -H 'Content-Type: application/json' \
   -d '{
     "_schemaId": "00000000-0000-0000-0000-000000000001",
@@ -171,6 +184,7 @@ curl -X POST http://localhost:3000/api/data \
 ```json
 {
   "_uid": "a1b2c3d4-...",
+  "_workspace": "default",
   "_schemaId": "00000000-0000-0000-0000-000000000001",
   "name": "payment-service",
   "technology": "Java",
@@ -183,17 +197,25 @@ curl -X POST http://localhost:3000/api/data \
 ## Database schema
 
 ```
+workspace
+  id         TEXT  (primary key)
+  name       TEXT
+  created_at TIMESTAMPTZ
+  updated_at TIMESTAMPTZ
+
 entity_schema
   id         UUID  (primary key)
-  name       TEXT  (unique)
+  workspace  TEXT  (foreign key → workspace.id)
+  name       TEXT  (unique within workspace)
   fields     JSONB (array of field descriptors)
   created_at TIMESTAMPTZ
   updated_at TIMESTAMPTZ
 
 entity
   id         UUID  (primary key)
+  workspace  TEXT  (foreign key → workspace.id)
   name       TEXT
-  schema_id  UUID  (foreign key → entity_schema)
+  schema_id  UUID  (workspace-scoped foreign key → entity_schema)
   data       JSONB (dynamic fields, flattened in API responses)
   created_at TIMESTAMPTZ
   updated_at TIMESTAMPTZ

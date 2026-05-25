@@ -41,8 +41,16 @@ export type ContainmentField = {
 
 export type SchemaField = TextField | BooleanField | SelectField | ReferenceField | ContainmentField;
 
+export type Workspace = {
+  id: string;
+  name: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
 export type EntitySchema = {
   id: string;
+  workspace: string;
   name: string;
   fields: SchemaField[];
   created_at: Date;
@@ -53,6 +61,7 @@ export type LifecycleStatus = 'experimental' | 'production' | 'deprecated';
 
 export type Entity = {
   id: string;
+  workspace: string;
   slug: string;
   namespace: string;
   name: string;
@@ -67,6 +76,7 @@ export type Entity = {
 // Wire format returned by the API: first-class metadata prefixed with _ to avoid clashing with data fields.
 export type EntityApiResponse = {
   _uid: string;
+  _workspace: string;
   _schemaId: string;
   _slug: string;
   _namespace: string;

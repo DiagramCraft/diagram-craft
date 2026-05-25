@@ -10,9 +10,16 @@
 --   API       : 00000000-0000-0000-0000-000000000004
 --   Resource  : 00000000-0000-0000-0000-000000000005
 
-INSERT INTO entity_schema (id, name, fields) VALUES
+INSERT INTO workspace (id, name) VALUES
+(
+  'default',
+  'Default Workspace'
+);
+
+INSERT INTO entity_schema (id, workspace, name, fields) VALUES
 (
   '00000000-0000-0000-0000-000000000001',
+  'default',
   'Domain',
   '[
     {"id": "description", "name": "Description", "type": "longtext"}
@@ -20,6 +27,7 @@ INSERT INTO entity_schema (id, name, fields) VALUES
 ),
 (
   '00000000-0000-0000-0000-000000000002',
+  'default',
   'System',
   '[
     {"id": "description",  "name": "Description",  "type": "longtext"},
@@ -29,6 +37,7 @@ INSERT INTO entity_schema (id, name, fields) VALUES
 ),
 (
   '00000000-0000-0000-0000-000000000003',
+  'default',
   'Component',
   '[
     {"id": "description",  "name": "Description",  "type": "longtext"},
@@ -45,6 +54,7 @@ INSERT INTO entity_schema (id, name, fields) VALUES
 ),
 (
   '00000000-0000-0000-0000-000000000004',
+  'default',
   'API',
   '[
     {"id": "description",  "name": "Description",  "type": "longtext"},
@@ -61,6 +71,7 @@ INSERT INTO entity_schema (id, name, fields) VALUES
 ),
 (
   '00000000-0000-0000-0000-000000000005',
+  'default',
   'Resource',
   '[
     {"id": "description",  "name": "Description",  "type": "longtext"},
@@ -87,48 +98,54 @@ INSERT INTO entity_schema (id, name, fields) VALUES
 --   Resource "postgres-main"    : 00000000-0000-0000-0005-000000000001
 
 -- Domain
-INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
 (
   '00000000-0000-0000-0001-000000000001',
+  'default',
   'engineering', 'default', 'Engineering', 'platform-team', 'production',
   '00000000-0000-0000-0000-000000000001',
   '{"description": "The core engineering domain covering all customer-facing products and infrastructure."}'
 );
 
 -- Systems (containment: domain → Engineering)
-INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
 (
   '00000000-0000-0000-0002-000000000001',
+  'default',
   'customer-portal', 'default', 'Customer Portal', 'ux-team', 'production',
   '00000000-0000-0000-0000-000000000002',
   '{"description": "Public-facing portal for customer self-service.", "domain": "00000000-0000-0000-0001-000000000001"}'
 ),
 (
   '00000000-0000-0000-0002-000000000002',
+  'default',
   'identity-platform', 'default', 'Identity Platform', 'security-team', 'production',
   '00000000-0000-0000-0000-000000000002',
   '{"description": "Centralised authentication and authorisation service.", "domain": "00000000-0000-0000-0001-000000000001"}'
 );
 
 -- APIs (containment: system; inserted before Components so Component refs are valid)
-INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
 (
   '00000000-0000-0000-0004-000000000001',
+  'default',
   'customer-api', 'default', 'Customer API', 'platform-team', 'production',
   '00000000-0000-0000-0000-000000000004',
   '{"description": "REST API exposing customer data to the portal frontend.", "api_type": "openapi", "system": "00000000-0000-0000-0002-000000000001"}'
 ),
 (
   '00000000-0000-0000-0004-000000000002',
+  'default',
   'auth-api', 'default', 'Auth API', 'security-team', 'production',
   '00000000-0000-0000-0000-000000000004',
   '{"description": "gRPC API for token issuance and validation.", "api_type": "grpc", "system": "00000000-0000-0000-0002-000000000002"}'
 );
 
 -- Components (containment: system; reference: provides_apis, consumes_apis, depends_on)
-INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
 (
   '00000000-0000-0000-0003-000000000001',
+  'default',
   'api-gateway', 'default', 'API Gateway', 'platform-team', 'production',
   '00000000-0000-0000-0000-000000000003',
   '{
@@ -141,6 +158,7 @@ INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data
 ),
 (
   '00000000-0000-0000-0003-000000000002',
+  'default',
   'frontend-app', 'default', 'Frontend App', 'ux-team', 'production',
   '00000000-0000-0000-0000-000000000003',
   '{
@@ -153,6 +171,7 @@ INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data
 ),
 (
   '00000000-0000-0000-0003-000000000003',
+  'default',
   'auth-service', 'default', 'Auth Service', 'security-team', 'production',
   '00000000-0000-0000-0000-000000000003',
   '{
@@ -164,9 +183,10 @@ INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data
 );
 
 -- Resource (containment: system; optional)
-INSERT INTO entity (id, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
 (
   '00000000-0000-0000-0005-000000000001',
+  'default',
   'postgres-main', 'default', 'Postgres Main', 'platform-team', 'production',
   '00000000-0000-0000-0000-000000000005',
   '{"description": "Primary PostgreSQL cluster used by the Customer Portal system.", "resource_type": "database", "system": "00000000-0000-0000-0002-000000000001"}'
