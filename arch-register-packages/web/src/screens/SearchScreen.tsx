@@ -76,15 +76,15 @@ const Hi = ({ s, q }: { s: string; q: string }) => {
     idx = lower.indexOf(needle, cur);
   }
   if (cur < text.length) parts.push(<span key="tail">{text.slice(cur)}</span>);
-  return parts.length ? <>{parts}</> : <>{text}</>;
+  return parts.length ? parts : text;
 };
 
 const snippetAround = (text: string | null | undefined, q: string, max = 140) => {
   if (!text) return '';
   const t = String(text);
-  if (!q) return t.length > max ? t.slice(0, max) + '…' : t;
+  if (!q) return t.length > max ? `${t.slice(0, max)}…` : t;
   const k = t.toLowerCase().indexOf(q.toLowerCase());
-  if (k < 0) return t.length > max ? t.slice(0, max) + '…' : t;
+  if (k < 0) return t.length > max ? `${t.slice(0, max)}…` : t;
   const start = Math.max(0, k - 40);
   const end = Math.min(t.length, k + q.length + 80);
   return (start > 0 ? '…' : '') + t.slice(start, end) + (end < t.length ? '…' : '');

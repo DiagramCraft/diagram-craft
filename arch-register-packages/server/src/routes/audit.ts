@@ -69,7 +69,7 @@ export const createAuditRoutes = () => {
         `;
 
         return rows.map(toApiFormat);
-      } catch (e) {
+      } catch (_e) {
         throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit log' });
       }
     })
@@ -120,7 +120,7 @@ export const createAuditRoutes = () => {
           byEntityType,
           recentActivity,
         };
-      } catch (e) {
+      } catch (_e) {
         throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit stats' });
       }
     })

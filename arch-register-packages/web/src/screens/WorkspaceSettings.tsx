@@ -375,7 +375,7 @@ const DangerSection = ({
     } catch {
       setDeleting(false);
     }
-  }, [workspace.id, workspace.name, canDelete, navigate, onWorkspaceDeleted]);
+  }, [workspace.id, canDelete, navigate, onWorkspaceDeleted]);
 
   return (
     <div className={styles.blockList}>
