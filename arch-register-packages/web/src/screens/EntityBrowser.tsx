@@ -8,7 +8,7 @@ import {
   TbChevronDown, TbDots, TbUsers,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
-import { fetchEntities, fetchEntityFacets, resolveSchemaColor } from '../api';
+import { fetchEntities, fetchEntityFacets, resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntityFacets, EntitySchema, WorkspaceLifecycleState } from '../api';
 
 type BrowserView = 'table' | 'cards' | 'tree';
@@ -69,6 +69,30 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
   const setStatusFilter = (v: string) => navigate({ statusFilter: v || null });
   const setOwnerFilter = (v: string) => navigate({ ownerFilter: v || null });
 
+  const handleExport = async () => {
+    try {
+      const blob = await exportEntitiesToCSV(workspaceId, {
+        schemaId: typeFilter,
+        owner: ownerFilter,
+        lifecycle: statusFilter,
+        q,
+      });
+      
+      // Trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `entities-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export entities. Please try again.');
+    }
+  };
+
   const typeName = typeFilter
     ? schemaMap.get(typeFilter)?.schema.name ?? 'Entities'
     : 'All entities';
@@ -87,7 +111,7 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
           <div className={styles.sub}>Search, filter, and inspect everything in the IT landscape.</div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btn}><TbDownload size={12} /> Export CSV</button>
+          <button type="button" className={styles.btn} onClick={handleExport}><TbDownload size={12} /> Export CSV</button>
           <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAddEntity}><TbPlus size={12} /> New entity</button>
         </div>
       </div>

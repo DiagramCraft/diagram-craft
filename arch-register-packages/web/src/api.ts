@@ -251,6 +251,21 @@ export const fetchEntities = (workspace: string, options: FetchEntitiesOptions =
     })}`
   );
 
+export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOptions = {}): Promise<Blob> => {
+  const url = `${BASE}/api/${workspace}/data/export${buildQuery({
+    _schemaId: options.schemaId ?? null,
+    owner: options.owner ?? null,
+    lifecycle: options.lifecycle ?? null,
+    q: options.q ?? null,
+  })}`;
+  
+  return fetch(url)
+    .then(res => {
+      if (!res.ok) throw new ApiError(res.status, res.statusText);
+      return res.blob();
+    });
+};
+
 export const fetchEntity = (workspace: string, id: string) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data/${id}`);
 

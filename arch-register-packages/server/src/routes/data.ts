@@ -3,6 +3,7 @@ import sql from '../db/client.js';
 import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type SchemaField } from '../types.js';
 import { logAudit, extractEntityFields } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
+import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
 
 const BASE = '/api/:workspace/data';
 
@@ -216,6 +217,176 @@ export function createDataRoutes() {
         };
       } catch (e) {
         handleError(e, 'Failed to retrieve data facets');
+      }
+    })
+  );
+
+  // GET /api/:workspace/data/export - Export entities to CSV
+  router.get(
+    `${BASE}/export`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event);
+      const query = getQuery(event);
+      const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
+      const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
+      const lifecycle = typeof query['lifecycle'] === 'string' ? query['lifecycle'] : null;
+      const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
+      const pattern = q ? `%${q}%` : null;
+
+      try {
+        // Fetch all schemas to resolve schema names
+        const schemas = await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace}
+        `;
+        const schemaMap = new Map(schemas.map(s => [s.id, s]));
+
+        // Fetch entities with same filters as list endpoint
+        const entities = await sql<Entity[]>`
+          SELECT *
+          FROM entity
+          WHERE workspace = ${workspace}
+            ${schemaId ? sql`AND schema_id = ${schemaId}` : sql``}
+            ${owner ? sql`AND owner = ${owner}` : sql``}
+            ${lifecycle ? sql`AND lifecycle = ${lifecycle}` : sql``}
+            ${pattern ? sql`
+              AND (
+                name ILIKE ${pattern}
+                OR slug ILIKE ${pattern}
+                OR description ILIKE ${pattern}
+                OR COALESCE(owner, '') ILIKE ${pattern}
+                OR EXISTS (
+                  SELECT 1
+                  FROM unnest(tags) AS tag
+                  WHERE tag ILIKE ${pattern}
+                )
+              )
+            ` : sql``}
+          ORDER BY name
+        `;
+
+        let csvContent: string;
+
+        if (schemaId) {
+          // Mode 2: Type-filtered export with schema fields
+          const schema = schemaMap.get(schemaId);
+          if (!schema) {
+            throw new HTTPError({ status: 404, statusText: 'Not Found', message: 'Schema not found' });
+          }
+
+          // Collect all reference/containment field IDs that need resolution
+          const refFields = relationFields(schema.fields);
+          const allRefIds = new Set<string>();
+          
+          for (const entity of entities) {
+            for (const field of refFields) {
+              const refs = decodeRefs(entity.data[field.id]);
+              refs.forEach(id => allRefIds.add(id));
+            }
+          }
+
+          // Batch resolve all referenced entities
+          const refEntities = allRefIds.size > 0
+            ? await sql<Pick<Entity, 'id' | 'name' | 'slug'>[]>`
+                SELECT id, name, slug
+                FROM entity
+                WHERE workspace = ${workspace} AND id IN ${sql([...allRefIds])}
+              `
+            : [];
+          const refLookup = new Map(refEntities.map(e => [e.id, e.name || e.slug]));
+
+          // Build columns: metadata + schema type + schema fields
+          const columns = [
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Tags',
+            'Links',
+            'Schema Type',
+            ...schema.fields.map(f => f.name)
+          ];
+
+          // Build rows with resolved references
+          const rows = entities.map(entity => {
+            const row: Record<string, unknown> = {
+              'Name': entity.name,
+              'Slug': entity.slug,
+              'Namespace': entity.namespace,
+              'Description': entity.description,
+              'Owner': entity.owner ?? '',
+              'Lifecycle': entity.lifecycle ?? '',
+              'Tags': formatArrayForCsv(entity.tags),
+              'Links': entity.links.length.toString(),
+              'Schema Type': schema.name
+            };
+
+            // Add schema-specific fields
+            for (const field of schema.fields) {
+              const value = entity.data[field.id];
+              
+              if (field.type === 'reference' || field.type === 'containment') {
+                // Resolve references to entity names
+                const refs = decodeRefs(value);
+                const names = refs.map(id => refLookup.get(id) ?? id);
+                row[field.name] = formatArrayForCsv(names);
+              } else if (field.type === 'boolean') {
+                row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
+              } else if (Array.isArray(value)) {
+                row[field.name] = formatArrayForCsv(value);
+              } else {
+                row[field.name] = value ?? '';
+              }
+            }
+
+            return row;
+          });
+
+          csvContent = generateCsv(rows, columns);
+        } else {
+          // Mode 1: All types export with metadata only
+          const columns = [
+            'Name',
+            'Slug',
+            'Namespace',
+            'Description',
+            'Owner',
+            'Lifecycle',
+            'Tags',
+            'Links',
+            'Schema Type'
+          ];
+
+          const rows = entities.map(entity => ({
+            'Name': entity.name,
+            'Slug': entity.slug,
+            'Namespace': entity.namespace,
+            'Description': entity.description,
+            'Owner': entity.owner ?? '',
+            'Lifecycle': entity.lifecycle ?? '',
+            'Tags': formatArrayForCsv(entity.tags),
+            'Links': entity.links.length.toString(),
+            'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
+          }));
+
+          csvContent = generateCsv(rows, columns);
+        }
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const schemaName = schemaId ? schemaMap.get(schemaId)?.name.toLowerCase().replace(/\s+/g, '-') : 'entities';
+        const filename = `${schemaName}-${timestamp}.csv`;
+
+        // Set response headers for CSV download
+        if (event.node?.res) {
+          event.node.res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+          event.node.res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        }
+        
+        return csvContent;
+      } catch (e) {
+        handleError(e, 'Failed to export data');
       }
     })
   );
