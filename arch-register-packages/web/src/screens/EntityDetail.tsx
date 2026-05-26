@@ -884,6 +884,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
   const entityBoxRef = useRef<HTMLDivElement>(null);
   const refCardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [edges, setEdges] = useState<EdgePath[]>([]);
+  const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}`;
 
   const resolveRelColor = useCallback((rel: Relation) => {
     const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
@@ -897,6 +898,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
   }, []);
 
   useLayoutEffect(() => {
+    void topologyVersion;
     const container = containerRef.current;
     const entityBox = entityBoxRef.current;
     if (!container || !entityBox) { setEdges([]); return; }
@@ -954,7 +956,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
     const observer = new ResizeObserver(debouncedCompute);
     observer.observe(container);
     return () => { observer.disconnect(); cancelAnimationFrame(raf); };
-  }, [parents.length, children.length, consumesRefs.length, usedByRefs.length]);
+  }, [topologyVersion]);
 
   const isEmpty = parents.length + children.length + consumesRefs.length + usedByRefs.length === 0;
 

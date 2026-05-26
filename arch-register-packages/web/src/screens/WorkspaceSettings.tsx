@@ -377,33 +377,33 @@ const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
   { value: 'delete', label: 'Deleted' },
 ];
 
-const getOperationLabel = (operation: AuditOperation): string => {
-  switch (operation) {
-    case 'create': return 'created';
-    case 'update': return 'updated';
-    case 'delete': return 'deleted';
-  }
+const OPERATION_LABELS: Record<AuditOperation, string> = {
+  create: 'created',
+  update: 'updated',
+  delete: 'deleted',
 };
 
-const getEntityTypeLabel = (entityType: AuditEntityType): string => {
-  switch (entityType) {
-    case 'entity': return 'entity';
-    case 'project': return 'project';
-    case 'project_file': return 'diagram';
-    case 'entity_schema': return 'schema';
-    case 'workspace': return 'workspace';
-  }
+const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
+  entity: 'entity',
+  project: 'project',
+  project_file: 'diagram',
+  entity_schema: 'schema',
+  workspace: 'workspace',
 };
 
-const getEntityTypeTone = (entityType: AuditEntityType): string => {
-  switch (entityType) {
-    case 'workspace': return styles.typeWorkspace;
-    case 'entity_schema': return styles.typeSchema;
-    case 'entity': return styles.typeEntity;
-    case 'project': return styles.typeProject;
-    case 'project_file': return styles.typeFile;
-  }
+const ENTITY_TYPE_TONES: Record<AuditEntityType, string> = {
+  workspace: styles.typeWorkspace ?? '',
+  entity_schema: styles.typeSchema ?? '',
+  entity: styles.typeEntity ?? '',
+  project: styles.typeProject ?? '',
+  project_file: styles.typeFile ?? '',
 };
+
+const getOperationLabel = (operation: AuditOperation): string => OPERATION_LABELS[operation];
+
+const getEntityTypeLabel = (entityType: AuditEntityType): string => ENTITY_TYPE_LABELS[entityType];
+
+const getEntityTypeTone = (entityType: AuditEntityType): string => ENTITY_TYPE_TONES[entityType];
 
 const formatRelativeTime = (timestamp: string): string => {
   const now = new Date();
@@ -462,7 +462,7 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
       case 'project_file': {
         const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
-        const folderFilter = path && path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
+        const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
           navigate({ view: 'project-detail', projectId, projectSidebarTab: 'projects', folderFilter });
         }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import styles from './EntityBrowser.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -33,9 +33,8 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>('table');
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const refreshEntities = useCallback(() => {
     fetchEntities(workspaceId, {
       schemaId: typeFilter,
       owner: ownerFilter,
@@ -43,22 +42,39 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
       q,
       view: 'summary',
     }).then(setEntities).catch(() => setEntities([]));
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q, refreshKey]);
+  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
 
-  useEffect(() => {
-    if (view !== 'tree') return;
+  const refreshTree = useCallback(() => {
     fetchEntityTree(workspaceId, {
       schemaId: typeFilter,
       owner: ownerFilter,
       lifecycle: statusFilter,
       q,
-    }).then(r => { setTreeNodes(r.nodes); setTreeEdges(r.edges); })
-      .catch(() => { setTreeNodes([]); setTreeEdges([]); });
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q, refreshKey, view]);
+    }).then(r => {
+      setTreeNodes(r.nodes);
+      setTreeEdges(r.edges);
+    }).catch(() => {
+      setTreeNodes([]);
+      setTreeEdges([]);
+    });
+  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
 
-  useEffect(() => {
+  const refreshFacets = useCallback(() => {
     fetchEntityFacets(workspaceId).then(setFacets).catch(() => setFacets(null));
   }, [workspaceId]);
+
+  useEffect(() => {
+    refreshEntities();
+  }, [refreshEntities]);
+
+  useEffect(() => {
+    if (view !== 'tree') return;
+    refreshTree();
+  }, [refreshTree, view]);
+
+  useEffect(() => {
+    refreshFacets();
+  }, [refreshFacets]);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -112,7 +128,9 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
     if (!confirm(`Delete "${entity._name || entity._slug}"?`)) return;
     try {
       await deleteEntity(workspaceId, entity._uid);
-      setRefreshKey(k => k + 1);
+      refreshEntities();
+      refreshFacets();
+      if (view === 'tree') refreshTree();
     } catch {
       // ignore
     }
