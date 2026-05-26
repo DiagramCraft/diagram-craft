@@ -4,6 +4,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE workspace (
   id          TEXT        PRIMARY KEY,
   name        TEXT        NOT NULL UNIQUE,
+  url_slug    TEXT        NOT NULL UNIQUE,
+  short_code  TEXT        NOT NULL DEFAULT '',
   description TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()

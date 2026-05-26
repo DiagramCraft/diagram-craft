@@ -10,10 +10,12 @@
 --   API       : 00000000-0000-0000-0000-000000000004
 --   Resource  : 00000000-0000-0000-0000-000000000005
 
-INSERT INTO workspace (id, name, description) VALUES
+INSERT INTO workspace (id, name, url_slug, short_code, description) VALUES
 (
   'default',
   'Default Workspace',
+  'default',
+  'DW',
   'The default workspace'
 );
 

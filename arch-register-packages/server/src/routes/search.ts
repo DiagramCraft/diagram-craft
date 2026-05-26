@@ -1,6 +1,7 @@
-import { H3, H3Event, HTTPError, defineHandler, getQuery } from 'h3';
+import { H3, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import type { Entity, EntitySchema, SchemaField } from '../types.js';
+import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/search';
 
@@ -55,11 +56,6 @@ type SearchResponse = {
   schemas: SchemaSearchResult[];
 };
 
-const getWorkspace = (event: H3Event) => {
-  const workspace = event.context.params?.['workspace'];
-  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
-  return workspace;
-};
 
 const parsePositiveInt = (value: unknown, field: string) => {
   if (value == null || value === '') return null;
@@ -129,7 +125,7 @@ export function createSearchRoutes() {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
       const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? 10;

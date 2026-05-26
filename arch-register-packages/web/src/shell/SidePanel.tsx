@@ -5,10 +5,12 @@ import { TypeBadge } from '../components/TypeBadge';
 import {
   TbStack2, TbDatabase,
   TbUsers, TbChartDots3, TbFolderOpen,
+  TbSettings, TbTrash,
 } from 'react-icons/tb';
 import {
   STATUS_TONE,
 } from '../data';
+import type { Workspace } from '../data';
 import type { ViewId, NavigateFn, RoutePatch } from '../routing';
 import { fetchEntityFacets, fetchProjectFiles, resolveSchemaColor } from '../api';
 import type { EntityFacets, EntitySchema, Project, FileTree } from '../api';
@@ -27,6 +29,7 @@ type SidePanelProps = {
   navigate: NavigateFn;
   schemas: EntitySchema[];
   projects: Project[];
+  workspace: Workspace | null;
   workspaceId: string | null;
   projectId: string | null;
   projectSidebarTab: ProjectSidebarTab;
@@ -35,6 +38,7 @@ type SidePanelProps = {
   typeFilter: string | null;
   statusFilter: string | null;
   ownerFilter: string | null;
+  settingsSection: string;
   refreshKey: number;
   setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
   setTypeFilter: (id: string | null) => void;
@@ -47,6 +51,7 @@ export const SidePanel = ({
   navigate,
   schemas,
   projects,
+  workspace,
   workspaceId,
   projectId,
   projectSidebarTab,
@@ -55,6 +60,7 @@ export const SidePanel = ({
   typeFilter,
   statusFilter,
   ownerFilter,
+  settingsSection,
   refreshKey,
   setProjectSidebarTab,
   setTypeFilter,
@@ -86,6 +92,7 @@ export const SidePanel = ({
         typeFilter={typeFilter}
         statusFilter={statusFilter}
         ownerFilter={ownerFilter}
+        navigate={navigate}
         setTypeFilter={setTypeFilter}
         setStatusFilter={setStatusFilter}
         setOwnerFilter={setOwnerFilter}
@@ -95,6 +102,16 @@ export const SidePanel = ({
     body = <DataModelSidebar schemas={schemas} navigate={navigate} schemaId={schemaId} />;
   } else if (view === 'search') {
     body = <SearchSidebar />;
+  } else if (view === 'workspace-settings') {
+    body = (
+      <SettingsSidebar
+        workspace={workspace}
+        section={settingsSection}
+        navigate={navigate}
+        schemas={schemas}
+        projects={projects}
+      />
+    );
   }
 
   return <div className={styles.panel}>{body}</div>;
@@ -354,6 +371,7 @@ const EntitiesSidebar = ({
   typeFilter,
   statusFilter,
   ownerFilter,
+  navigate,
   setTypeFilter,
   setStatusFilter,
   setOwnerFilter,
@@ -363,6 +381,7 @@ const EntitiesSidebar = ({
   typeFilter: string | null;
   statusFilter: string | null;
   ownerFilter: string | null;
+  navigate: NavigateFn;
   setTypeFilter: (id: string | null) => void;
   setStatusFilter: (id: string | null) => void;
   setOwnerFilter: (id: string | null) => void;
@@ -404,7 +423,7 @@ const EntitiesSidebar = ({
           icon={<TbDatabase size={12} />}
           label="All entities"
           active={!typeFilter && !statusFilter && !ownerFilter}
-          onClick={() => { setTypeFilter(null); setStatusFilter(null); setOwnerFilter(null); }}
+          onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setStatusFilter(null); setOwnerFilter(null); }}
           trailing={<span className="dim mono">{totalEntities}</span>}
         />
         <GroupLabel>By type</GroupLabel>
@@ -414,7 +433,7 @@ const EntitiesSidebar = ({
             icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
             label={s.name}
             active={typeFilter === s.id}
-            onClick={() => { setStatusFilter(null); setOwnerFilter(null); setTypeFilter(typeFilter === s.id ? null : s.id); }}
+            onClick={() => { navigate({ view: 'entity-browser' }); setStatusFilter(null); setOwnerFilter(null); setTypeFilter(typeFilter === s.id ? null : s.id); }}
             trailing={<span className="dim mono">{s.entity_count}</span>}
             tagColor={resolveSchemaColor(s, i)}
           />
@@ -440,7 +459,7 @@ const EntitiesSidebar = ({
               }
               label={tone?.label ?? s}
               active={statusFilter === s}
-              onClick={() => { setTypeFilter(null); setOwnerFilter(null); setStatusFilter(statusFilter === s ? null : s); }}
+              onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setOwnerFilter(null); setStatusFilter(statusFilter === s ? null : s); }}
               trailing={<span className="dim mono">{count}</span>}
             />
           );
@@ -452,7 +471,7 @@ const EntitiesSidebar = ({
             icon={<TbUsers size={12} />}
             label={owner}
             active={ownerFilter === owner}
-            onClick={() => { setTypeFilter(null); setStatusFilter(null); setOwnerFilter(ownerFilter === owner ? null : owner); }}
+            onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setStatusFilter(null); setOwnerFilter(ownerFilter === owner ? null : owner); }}
             trailing={<span className="dim mono">{count}</span>}
           />
         ))}
@@ -497,3 +516,76 @@ const SearchSidebar = () => (
     </div>
   </>
 );
+
+type SettingsNavItem = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  group: string;
+  tone?: string;
+};
+
+const SETTINGS_SECTIONS: SettingsNavItem[] = [
+  { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
+  { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
+];
+
+const SettingsSidebar = ({
+  workspace,
+  section,
+  navigate,
+  schemas,
+  projects,
+}: {
+  workspace: Workspace | null;
+  section: string;
+  navigate: NavigateFn;
+  schemas: EntitySchema[];
+  projects: Project[];
+}) => {
+  const groups = useMemo(() => {
+    const g: Record<string, SettingsNavItem[]> = {};
+    SETTINGS_SECTIONS.forEach(s => {
+      (g[s.group] ??= []).push(s);
+    });
+    return Object.entries(g);
+  }, []);
+
+  const entityCount = schemas.reduce((sum, s) => sum + s.entity_count, 0);
+
+  return (
+    <>
+      <SectionHeader title="Settings" />
+      <div className={styles.scroll}>
+        {workspace && (
+          <div className={styles.settingsWsHead}>
+            <div className={styles.settingsWsBadge}>
+              {workspace.short_code}
+            </div>
+            <div>
+              <div className={styles.settingsWsName}>{workspace.name}</div>
+              <div className="dim" style={{ fontSize: 11 }}>
+                {entityCount} entities · {projects.length} projects
+              </div>
+            </div>
+          </div>
+        )}
+        {groups.map(([group, items]) => (
+          <div key={group}>
+            <GroupLabel>{group}</GroupLabel>
+            {items.map(s => (
+              <TreeRow
+                key={s.id}
+                icon={s.icon}
+                label={s.label}
+                active={section === s.id}
+                onClick={() => navigate({ view: 'workspace-settings', settingsSection: s.id })}
+                className={s.tone === 'danger' ? styles.dangerRow : undefined}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};

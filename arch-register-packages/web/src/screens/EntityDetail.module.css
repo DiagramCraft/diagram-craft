@@ -453,20 +453,27 @@
 
 .changeWhen {
   color: var(--fg-3);
+  font-size: 12px;
 }
 
 .changeWho {
   color: var(--fg-0);
+  font-size: 12px;
 }
 
 .changeWhat {
   color: var(--fg-3);
+  font-size: 12px;
 }
 
 .changeFrom,
 .changeTo {
   color: var(--fg-1);
   font-family: var(--font-mono);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Relations */

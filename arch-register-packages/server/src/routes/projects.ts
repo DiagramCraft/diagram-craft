@@ -3,6 +3,7 @@ import sql from '../db/client.js';
 import type { Project, ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
+import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -32,11 +33,6 @@ const handleError = (error: unknown, fallback: string): never => {
   throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
-const getWorkspace = (event: H3Event) => {
-  const workspace = event.context.params?.['workspace'];
-  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
-  return workspace;
-};
 
 const getParam = (event: H3Event, name: string) => {
   const value = event.context.params?.[name];
@@ -114,7 +110,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       try {
         return await sql<(Project & { file_count: number })[]>`
           SELECT p.*, COALESCE(c.cnt, 0)::int AS file_count
@@ -141,7 +137,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       try {
         const [project] = await sql<Project[]>`
@@ -165,7 +161,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -205,7 +201,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
@@ -258,7 +254,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       try {
         // Fetch project before deletion for audit log
@@ -298,7 +294,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.get(
     `${BASE}/:id/files`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       try {
         const files = await sql<ProjectFile[]>`
@@ -315,7 +311,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.get(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -334,7 +330,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.put(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
 
@@ -410,7 +406,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.delete(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
@@ -456,7 +452,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.post(
     `${BASE}/:id/folders`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
@@ -504,7 +500,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.put(
     `${BASE}/:id/folders/rename`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
@@ -544,7 +540,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
   router.delete(
     `${BASE}/:id/folders/**:path`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = getParam(event, 'id');
       const folderPath = getParam(event, 'path');
       try {

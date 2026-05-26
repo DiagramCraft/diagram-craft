@@ -10,6 +10,7 @@ import { EntityDetail } from './screens/EntityDetail';
 import { DataModelEditor } from './screens/DataModelEditor';
 import { ProjectDetail } from './screens/ProjectDetail';
 import { SearchScreen } from './screens/SearchScreen';
+import { WorkspaceSettings } from './screens/WorkspaceSettings';
 import { AddWorkspaceDialog } from './components/AddWorkspaceDialog';
 import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
@@ -83,7 +84,8 @@ const App = () => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  const wsId = route.workspaceId ?? workspaces[0]?.id;
+  const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
+  const wsId = ws?.url_slug ?? '';
 
   const refreshSchemas = useCallback(() => {
     if (!wsId) return;
@@ -114,7 +116,6 @@ const App = () => {
     [],
   );
 
-  const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
   const showSidebar = route.view !== 'search';
 
   const trail = buildTrail(route, navigate, schemas, projects);
@@ -204,6 +205,17 @@ const App = () => {
         />
       ) : null;
       break;
+    case 'workspace-settings':
+      screen = ws ? (
+        <WorkspaceSettings
+          workspace={ws}
+          section={route.settingsSection}
+          navigate={navigate}
+          onWorkspaceUpdated={fetchWorkspaces}
+          onWorkspaceDeleted={fetchWorkspaces}
+        />
+      ) : null;
+      break;
     default:
       screen = (
         <div className={styles.placeholder}>
@@ -239,6 +251,7 @@ const App = () => {
             navigate={navigate}
             schemas={schemas}
             projects={projects}
+            workspace={ws ?? null}
             workspaceId={wsId ?? null}
             projectId={route.projectId}
             projectSidebarTab={route.projectSidebarTab}
@@ -247,6 +260,7 @@ const App = () => {
             typeFilter={route.typeFilter}
             statusFilter={route.statusFilter}
             ownerFilter={route.ownerFilter}
+            settingsSection={route.settingsSection}
             refreshKey={sidebarRefreshKey}
             setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
             setTypeFilter={id => navigate({ typeFilter: id })}

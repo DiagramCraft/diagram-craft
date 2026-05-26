@@ -1,0 +1,327 @@
+/* Workspace Settings */
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  max-width: 1080px;
+}
+
+/* Header */
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 12px;
+}
+
+.headLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.backLink {
+  color: var(--accent-strong);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSep {
+  color: var(--fg-3);
+  margin: 0 4px;
+  font-size: 12px;
+}
+
+.breadcrumbCurrent {
+  color: var(--fg-2);
+  font-size: 12px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.title {
+  font-size: 22px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.sub {
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 720px;
+  margin-top: 4px;
+  color: var(--fg-3);
+}
+
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Block list */
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+/* Section (Block) */
+.section {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.sectionHead {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.sectionTitle {
+  color: var(--fg-0);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.sectionSub {
+  font-size: 11.5px;
+  margin-top: 2px;
+  color: var(--fg-3);
+}
+
+.sectionBody {
+  padding: 8px 16px 14px;
+}
+
+/* Field row */
+.field {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--border-subtle);
+  align-items: flex-start;
+}
+
+.field:last-child {
+  border-bottom: 0;
+}
+
+.fieldLeft {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.fieldHint {
+  font-size: 11px;
+  margin-top: 4px;
+  line-height: 1.5;
+  max-width: 200px;
+  color: var(--fg-3);
+}
+
+.fieldRight {
+  min-width: 0;
+}
+
+/* Input */
+.input {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--fg-0);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.textarea {
+  composes: input;
+  height: auto;
+  padding: 6px 8px;
+  min-height: 64px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Input with prefix */
+.inputPrefix {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  height: 28px;
+  padding: 0 8px;
+  max-width: 340px;
+  width: 100%;
+}
+
+.inputPrefix:focus-within {
+  border-color: var(--accent);
+}
+
+.prefixText {
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.inputUnstyled {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--fg-0);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.inputUnstyled:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: var(--r);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--bg-4);
+  color: var(--fg-0);
+  border-color: var(--border-strong);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  composes: btn;
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+}
+
+.btnPrimary:hover {
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+/* Section actions (save/cancel row) */
+.sectionActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Danger button */
+.btnDanger {
+  composes: btn;
+  background: transparent;
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--border));
+  color: oklch(0.72 0.16 25);
+}
+
+.btnDanger:hover {
+  background: color-mix(in oklch, var(--danger) 12%, transparent);
+}
+
+/* Danger card */
+.dangerCard {
+  background: var(--bg-2);
+  border: 1px solid color-mix(in oklch, var(--danger) 30%, var(--border-subtle));
+  border-radius: var(--r-md);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+
+.dangerCardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.dangerCardTitle {
+  color: oklch(0.72 0.16 25);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.dangerCardText {
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.dangerCardControls {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dangerCardActions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}

@@ -8,8 +8,8 @@ import {
   TbTrash, TbPlus, TbX,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
-import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor } from '../api';
-import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField } from '../api';
+import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog } from '../api';
+import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry } from '../api';
 
 type EntityDetailProps = {
   workspaceId: string;
@@ -45,6 +45,8 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
   const [refLookup, setRefLookup] = useState<RefLookup>(new Map());
   const [relations, setRelations] = useState<EntityRelations>({ outgoing: [], incoming: [] });
   const [referenceOptions, setReferenceOptions] = useState<Record<string, EntitySummary[]>>({});
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
 
   const refreshRelations = useCallback(() => {
     fetchEntityRelations(workspaceId, entityId)
@@ -94,6 +96,21 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
   useEffect(() => {
     refreshRelations();
   }, [refreshRelations]);
+
+  useEffect(() => {
+    if (tab === 'changes' && entityId) {
+      setLoadingAudit(true);
+      fetchAuditLog(workspaceId, { entityId, limit: 100 })
+        .then(log => {
+          setAuditLog(log);
+          setLoadingAudit(false);
+        })
+        .catch(() => {
+          setAuditLog([]);
+          setLoadingAudit(false);
+        });
+    }
+  }, [tab, entityId, workspaceId]);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -469,10 +486,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
 
       {/* Change history */}
       {tab === 'changes' && (
-        <div className={styles.empty}>
-          <div className={styles.emptyTitle}>No change history yet</div>
-          <div>Changes will appear here as properties are edited.</div>
-        </div>
+        <ChangeHistory auditLog={auditLog} loading={loadingAudit} />
       )}
     </div>
   );
@@ -672,5 +686,121 @@ const RelationRow = ({
       <span className={styles.relationName}>{relation.entityName}</span>
       <span className={styles.dim}>{relation.entitySlug}</span>
     </button>
+  );
+};
+
+const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+};
+
+const formatValue = (val: unknown) => {
+  if (val == null || val === '') return '—';
+  if (typeof val === 'object') return JSON.stringify(val);
+  return String(val);
+};
+
+const getOperationLabel = (op: string) => {
+  switch (op) {
+    case 'create': return 'created entity';
+    case 'update': return 'updated';
+    case 'delete': return 'deleted entity';
+    default: return op;
+  }
+};
+
+type ChangeRowData = {
+  when: string;
+  who: string;
+  what: string;
+  from: string;
+  to: string;
+};
+
+const flattenAuditEntries = (entries: AuditLogEntry[]): ChangeRowData[] => {
+  const rows: ChangeRowData[] = [];
+  for (const entry of entries) {
+    const when = formatTimestamp(entry.timestamp);
+    const who = entry.user_id;
+
+    if (entry.operation === 'create') {
+      rows.push({ when, who, what: 'created entity', from: '—', to: '—' });
+      continue;
+    }
+
+    if (entry.operation === 'delete') {
+      rows.push({ when, who, what: 'deleted entity', from: '—', to: '—' });
+      continue;
+    }
+
+    const oldData = entry.changes.old ?? {};
+    const newData = entry.changes.new ?? {};
+    const allKeys = new Set([...Object.keys(oldData), ...Object.keys(newData)]);
+    let hasChanges = false;
+
+    allKeys.forEach(key => {
+      if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
+        hasChanges = true;
+        const label = key.startsWith('_') ? key.slice(1) : key;
+        rows.push({
+          when,
+          who,
+          what: `changed ${label}`,
+          from: formatValue(oldData[key]),
+          to: formatValue(newData[key]),
+        });
+      }
+    });
+
+    if (!hasChanges) {
+      rows.push({ when, who, what: getOperationLabel(entry.operation), from: '—', to: '—' });
+    }
+  }
+  return rows;
+};
+
+const ChangeRow = ({ row }: { row: ChangeRowData }) => (
+  <div className={styles.changeRow}>
+    <span className={styles.changeWhen}>{row.when}</span>
+    <span className={styles.changeWho}>{row.who}</span>
+    <span className={styles.changeWhat}>{row.what}</span>
+    <span className={styles.changeFrom}>{row.from}</span>
+    <TbChevronRight size={10} className={styles.dim} />
+    <span className={styles.changeTo}>{row.to}</span>
+  </div>
+);
+
+const ChangeHistory = ({ auditLog, loading }: { auditLog: AuditLogEntry[]; loading: boolean }) => {
+  const rows = useMemo(() => flattenAuditEntries(auditLog), [auditLog]);
+
+  if (loading) {
+    return <div className={styles.loading}>Loading change history...</div>;
+  }
+
+  if (auditLog.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <div className={styles.emptyTitle}>No change history yet</div>
+        <div>Changes will appear here as properties are edited.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.changesList}>
+      {rows.map((row, i) => (
+        <ChangeRow key={i} row={row} />
+      ))}
+    </div>
   );
 };

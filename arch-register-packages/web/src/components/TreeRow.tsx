@@ -13,6 +13,7 @@ type TreeRowProps = {
   expanded?: boolean;
   onExpand?: () => void;
   tagColor?: string;
+  className?: string;
 };
 
 export const TreeRow = ({
@@ -26,9 +27,10 @@ export const TreeRow = ({
   expanded,
   onExpand,
   tagColor,
+  className,
 }: TreeRowProps) => (
   <div
-    className={`${styles.row} ${active ? styles.active : ''}`}
+    className={`${styles.row} ${active ? styles.active : ''} ${className ?? ''}`}
     style={{ paddingLeft: 8 + depth * 12 }}
     onClick={onClick}
   >

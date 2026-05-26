@@ -25,6 +25,9 @@ const handleError = (error: unknown, fallback: string): never => {
 const slugify = (name: string): string =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
+const shortCode = (name: string): string =>
+  name.split(/\s+/).map(w => (w[0] ?? '').toUpperCase()).join('').slice(0, 2);
+
 export function createWorkspaceRoutes() {
   const router = new H3();
 
@@ -53,10 +56,12 @@ export function createWorkspaceRoutes() {
       const id = slugify(name);
       if (!id)
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name must contain at least one alphanumeric character' });
+      const urlSlug = id;
+      const sc = shortCode(name as string);
       try {
         const [row] = await sql<Workspace[]>`
-          INSERT INTO workspace (id, name, description)
-          VALUES (${id}, ${name}, ${typeof description === 'string' ? description : ''})
+          INSERT INTO workspace (id, name, url_slug, short_code, description)
+          VALUES (${id}, ${name}, ${urlSlug}, ${sc}, ${typeof description === 'string' ? description : ''})
           RETURNING *
         `;
         
@@ -88,19 +93,26 @@ export function createWorkspaceRoutes() {
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
-      const { name, description } = body as Record<string, unknown>;
+      const { name, description, url_slug, short_code: sc } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
+      if (url_slug != null && typeof url_slug === 'string') {
+        const cleaned = slugify(url_slug);
+        if (!cleaned)
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'url_slug must contain at least one alphanumeric character' });
+      }
       try {
         // Fetch old state for audit log
         const [oldRow] = await sql<Workspace[]>`
           SELECT * FROM workspace WHERE id = ${id}
         `;
         if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
-        
+
         const [row] = await sql<Workspace[]>`
           UPDATE workspace SET
             name = ${name},
+            url_slug = ${typeof url_slug === 'string' ? slugify(url_slug) : sql`url_slug`},
+            short_code = ${typeof sc === 'string' ? sc : sql`short_code`},
             description = ${typeof description === 'string' ? description : sql`description`}
           WHERE id = ${id}
           RETURNING *

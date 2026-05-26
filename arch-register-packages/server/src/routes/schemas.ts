@@ -1,7 +1,8 @@
-import { H3, H3Event, HTTPError, defineHandler } from 'h3';
+import { H3, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
+import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/schemas';
 
@@ -29,11 +30,6 @@ const handleError = (error: unknown, fallback: string): never => {
   throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
-const getWorkspace = (event: H3Event) => {
-  const workspace = event.context.params?.['workspace'];
-  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
-  return workspace;
-};
 
 export function createSchemaRoutes() {
   const router = new H3();
@@ -42,7 +38,7 @@ export function createSchemaRoutes() {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       try {
         return await sql<(EntitySchema & { entity_count: number })[]>`
           SELECT s.*, COALESCE(c.cnt, 0)::int AS entity_count
@@ -63,7 +59,7 @@ export function createSchemaRoutes() {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
@@ -82,7 +78,7 @@ export function createSchemaRoutes() {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -121,7 +117,7 @@ export function createSchemaRoutes() {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -173,7 +169,7 @@ export function createSchemaRoutes() {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {

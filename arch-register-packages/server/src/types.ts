@@ -44,6 +44,8 @@ export type SchemaField = TextField | BooleanField | SelectField | ReferenceFiel
 export type Workspace = {
   id: string;
   name: string;
+  url_slug: string;
+  short_code: string;
   description: string;
   created_at: Date;
   updated_at: Date;

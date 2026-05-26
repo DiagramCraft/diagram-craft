@@ -6,7 +6,6 @@ import {
   TbSettings, TbCheck, TbPlus,
 } from 'react-icons/tb';
 import type { Workspace } from '../data';
-import { workspaceShort } from '../data';
 
 type BreadcrumbItem = {
   label: string;
@@ -136,7 +135,7 @@ const WorkspaceSwitcher = ({
   return (
     <div className={styles.wsSwitcher} ref={ref}>
       <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
-        <span className={styles.wsBadge}>{workspaceShort(ws.name)}</span>
+        <span className={styles.wsBadge}>{ws.short_code}</span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
       </button>
@@ -154,7 +153,7 @@ const WorkspaceSwitcher = ({
               }}
             >
               <span className={styles.wsBadge} style={{ marginRight: 8 }}>
-                {workspaceShort(w.name)}
+                {w.short_code}
               </span>
               <span style={{ flex: 1 }}>
                 <div>{w.name}</div>

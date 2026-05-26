@@ -1,7 +1,8 @@
-import { H3, H3Event, HTTPError, defineHandler, getQuery } from 'h3';
+import { H3, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type LifecycleStatus, type SchemaField } from '../types.js';
 import { logAudit, extractEntityFields } from '../db/audit.js';
+import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/data';
 
@@ -31,11 +32,6 @@ const handleError = (error: unknown, fallback: string): never => {
   throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
 };
 
-const getWorkspace = (event: H3Event) => {
-  const workspace = event.context.params?.['workspace'];
-  if (!workspace) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
-  return workspace;
-};
 
 const parsePositiveInt = (value: unknown, field: string) => {
   if (value == null || value === '') return null;
@@ -125,7 +121,7 @@ export function createDataRoutes() {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
@@ -171,7 +167,7 @@ export function createDataRoutes() {
   router.get(
     `${BASE}/facets`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       try {
         const [totalRow] = await sql<{ count: number }[]>`
           SELECT COUNT(*)::int AS count
@@ -216,7 +212,7 @@ export function createDataRoutes() {
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
@@ -233,7 +229,7 @@ export function createDataRoutes() {
   router.get(
     `${BASE}/:id/relations`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
@@ -330,7 +326,7 @@ export function createDataRoutes() {
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -392,7 +388,7 @@ export function createDataRoutes() {
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
@@ -474,7 +470,7 @@ export function createDataRoutes() {
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = getWorkspace(event);
+      const workspace = await resolveWorkspace(event);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
