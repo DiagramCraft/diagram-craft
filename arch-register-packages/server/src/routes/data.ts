@@ -4,8 +4,15 @@ import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type 
 import { logAudit, extractEntityFields } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
+import { handlePgError, parsePositiveInt, slugify, json } from '../utils/http.js';
 
 const BASE = '/api/:workspace/data';
+
+const handleError = (error: unknown, fallback: string): never =>
+  handlePgError(error, fallback, {
+    '23503': '_schemaId references a schema that does not exist',
+    '23505': 'An entity with that slug already exists in this namespace for the given schema in this workspace'
+  });
 
 const getLifecycleValues = async (workspace: string): Promise<Set<string>> => {
   const rows = await sql<{ id: string }[]>`
@@ -19,44 +26,6 @@ const getOwnerValues = async (workspace: string): Promise<Set<string>> => {
     SELECT id FROM workspace_owner WHERE workspace = ${workspace}
   `;
   return new Set(rows.map(r => r.id));
-};
-
-// body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
-// is more restrictive than the `unknown` we get from readBody.
-const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
-
-type PostgresError = { code: string };
-
-const handleError = (error: unknown, fallback: string): never => {
-  if (HTTPError.isError(error)) throw error;
-  if (error != null && typeof error === 'object' && 'code' in error) {
-    const { code } = error as PostgresError;
-    if (code === '23503') {
-      throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId references a schema that does not exist' });
-    }
-    if (code === '23505') {
-      throw new HTTPError({
-        status: 409,
-        statusText: 'Conflict',
-        message: 'An entity with that slug already exists in this namespace for the given schema in this workspace'
-      });
-    }
-  }
-  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
-};
-
-
-const parsePositiveInt = (value: unknown, field: string) => {
-  if (value == null || value === '') return null;
-  const parsed = Number.parseInt(String(value), 10);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new HTTPError({
-      status: 400,
-      statusText: 'Bad Request',
-      message: `${field} must be a non-negative integer`
-    });
-  }
-  return parsed;
 };
 
 const toApiFormat = (row: Entity): EntityApiResponse => ({
@@ -120,12 +89,6 @@ const relationFields = (fields: SchemaField[]) =>
   fields.filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
     field.type === 'reference' || field.type === 'containment'
   );
-
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 
 export function createDataRoutes() {
   const router = new H3();

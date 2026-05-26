@@ -4,34 +4,17 @@ import type { Project, ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
+import { handlePgError } from '../utils/http.js';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
-type PostgresError = { code: string };
-
-const handleError = (error: unknown, fallback: string): never => {
-  if (HTTPError.isError(error)) throw error;
-  if (error != null && typeof error === 'object' && 'code' in error) {
-    const { code } = error as PostgresError;
-    if (code === '23505') {
-      throw new HTTPError({
-        status: 409,
-        statusText: 'Conflict',
-        message: 'A project with that name already exists in this workspace'
-      });
-    }
-    if (code === '23503') {
-      throw new HTTPError({
-        status: 409,
-        statusText: 'Conflict',
-        message: 'Foreign key constraint violation'
-      });
-    }
-  }
-  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
-};
+const handleError = (error: unknown, fallback: string): never =>
+  handlePgError(error, fallback, {
+    '23505': 'A project with that name already exists in this workspace',
+    '23503': 'Foreign key constraint violation'
+  });
 
 
 const getParam = (event: H3Event, name: string) => {

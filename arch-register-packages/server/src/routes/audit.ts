@@ -2,22 +2,9 @@ import { H3, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
+import { parsePositiveInt } from '../utils/http.js';
 
 const BASE = '/api/:workspace/audit';
-
-
-const parsePositiveInt = (value: unknown, field: string) => {
-  if (value == null || value === '') return null;
-  const parsed = Number.parseInt(String(value), 10);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new HTTPError({
-      status: 400,
-      statusText: 'Bad Request',
-      message: `${field} must be a non-negative integer`
-    });
-  }
-  return parsed;
-};
 
 const toApiFormat = (row: AuditLogEntry): AuditLogApiResponse => ({
   id: row.id,

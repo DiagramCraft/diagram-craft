@@ -3,32 +3,15 @@ import sql from '../db/client.js';
 import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
+import { handlePgError, json } from '../utils/http.js';
 
 const BASE = '/api/:workspace/schemas';
 
-// body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
-// is more restrictive than the `unknown` we get from readBody.
-const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);
-
-type PostgresError = { code: string };
-
-const handleError = (error: unknown, fallback: string): never => {
-  if (HTTPError.isError(error)) throw error;
-  if (error != null && typeof error === 'object' && 'code' in error) {
-    const { code } = error as PostgresError;
-    if (code === '23505') {
-      throw new HTTPError({
-        status: 409,
-        statusText: 'Conflict',
-        message: 'A schema with that name already exists in this workspace'
-      });
-    }
-    if (code === '23503') {
-      throw new HTTPError({ status: 409, statusText: 'Conflict', message: 'Cannot delete schema: entities still reference it' });
-    }
-  }
-  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
-};
+const handleError = (error: unknown, fallback: string): never =>
+  handlePgError(error, fallback, {
+    '23505': 'A schema with that name already exists in this workspace',
+    '23503': 'Cannot delete schema: entities still reference it'
+  });
 
 
 export function createSchemaRoutes() {

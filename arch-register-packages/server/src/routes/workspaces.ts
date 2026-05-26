@@ -2,28 +2,12 @@ import { H3, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
+import { handlePgError, slugify } from '../utils/http.js';
 
 const BASE = '/api/workspaces';
 
-type PostgresError = { code: string };
-
-const handleError = (error: unknown, fallback: string): never => {
-  if (HTTPError.isError(error)) throw error;
-  if (error != null && typeof error === 'object' && 'code' in error) {
-    const { code } = error as PostgresError;
-    if (code === '23505') {
-      throw new HTTPError({
-        status: 409,
-        statusText: 'Conflict',
-        message: 'A workspace with that name already exists'
-      });
-    }
-  }
-  throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: fallback });
-};
-
-const slugify = (name: string): string =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const handleError = (error: unknown, fallback: string): never =>
+  handlePgError(error, fallback, { '23505': 'A workspace with that name already exists' });
 
 const shortCode = (name: string): string =>
   name.split(/\s+/).map(w => (w[0] ?? '').toUpperCase()).join('').slice(0, 2);
