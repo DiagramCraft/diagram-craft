@@ -542,3 +542,307 @@
 .dim {
   color: var(--fg-3);
 }
+
+/* ── Topology tab ──────────────────────────────────────────── */
+.topologyPage {
+  position: relative;
+  padding: 14px 16px;
+  margin: 16px 24px 32px;
+  background:
+    radial-gradient(circle at 1px 1px, oklch(0.24 0.005 260) 1px, transparent 1px) 0 0 / 16px 16px,
+    var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topologyHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.topologySubtitle {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.topoAxisLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  font-weight: 500;
+}
+
+/* Parent containment */
+.topoParents {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.topoParentsItems {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.topoParentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  color: var(--fg-1);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.topoParentChip:hover {
+  background: var(--bg-3);
+  border-color: var(--border-strong);
+}
+
+.topoParentName {
+  font-weight: 500;
+  color: var(--fg-0);
+}
+
+.topoParentArrow {
+  line-height: 0;
+  opacity: 0.7;
+}
+
+/* Main entity box */
+.topoEntityBox {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border-radius: var(--r-md);
+  padding: 0 14px 14px;
+  margin: 0 5%;
+  box-shadow:
+    0 0 0 4px color-mix(in oklch, var(--accent) 6%, transparent),
+    0 1px 0 var(--border) inset;
+}
+
+.topoEntityAccent {
+  height: 3px;
+  background: var(--accent);
+  margin: 0 -14px;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+
+.topoEntityHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 10px;
+}
+
+.topoEntityMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.topoEntityEyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+.topoEntityName {
+  font-size: 16px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+.topoEntitySection {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  border-top: 1px dashed var(--border-subtle);
+  padding: 10px 0 8px;
+  font-weight: 500;
+}
+
+.topoEntityEmpty {
+  font-size: 11.5px;
+  font-style: italic;
+  border-top: 1px dashed var(--border-subtle);
+  padding-top: 10px;
+}
+
+/* Contained children grid */
+.topoChildrenGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.topoChildCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 9px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.topoChildCard:hover {
+  background: var(--bg-3);
+  border-color: var(--border-strong);
+}
+
+.topoChildHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.topoChildMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  flex-wrap: wrap;
+}
+
+/* References area */
+.topoRefsGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  column-gap: 90px;
+  row-gap: 6px;
+  padding-top: 44px;
+  margin-top: -8px;
+}
+
+.topoRefsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.topoRefsColIn {
+  align-items: flex-start;
+}
+
+.topoRefsColIn .topoAxisLabel {
+  align-self: flex-start;
+}
+
+.topoRefsColOut {
+  align-items: flex-end;
+}
+
+.topoRefsColOut .topoAxisLabel {
+  align-self: flex-end;
+}
+
+.topoRefGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topoRefsEmpty {
+  font-size: 11px;
+  font-style: italic;
+  padding: 6px 2px;
+}
+
+.topoRefCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  width: 240px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.topoRefCard:hover {
+  background: var(--bg-3);
+  border-color: var(--accent-dim);
+}
+
+.topoRefBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topoRefKind {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+}
+
+/* Shared card elements */
+.topoCardBar {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+}
+
+.topoCardName {
+  font-size: 12.5px;
+  color: var(--fg-0);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* SVG edge overlay */
+.topoEdgeSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}

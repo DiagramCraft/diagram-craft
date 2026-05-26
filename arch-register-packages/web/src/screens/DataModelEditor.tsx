@@ -249,16 +249,20 @@ export const DataModelEditor = ({
                       <span style={{ textAlign: 'center' }}>Req</span>
                       <span />
                     </div>
-                    {fields.map((f) => (
-                      <FieldRow
-                        key={f.id}
-                        field={f}
-                        schemas={schemas}
-                        onUpdate={(patch) => updateField(f.id, patch)}
-                        onChangeType={(t) => changeFieldType(f.id, t)}
-                        onRemove={() => removeField(f.id)}
-                      />
-                    ))}
+                    {fields.map((f) => {
+                      const hasOtherContainment = fields.some(other => other.id !== f.id && other.type === 'containment');
+                      return (
+                        <FieldRow
+                          key={f.id}
+                          field={f}
+                          schemas={schemas}
+                          onUpdate={(patch) => updateField(f.id, patch)}
+                          onChangeType={(t) => changeFieldType(f.id, t)}
+                          onRemove={() => removeField(f.id)}
+                          containmentDisabled={hasOtherContainment}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className={styles.fieldsTable}>
@@ -314,12 +318,14 @@ const FieldRow = ({
   onUpdate,
   onChangeType,
   onRemove,
+  containmentDisabled,
 }: {
   field: SchemaField;
   schemas: EntitySchema[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove: () => void;
+  containmentDisabled: boolean;
 }) => {
   const optionsDisplay = () => {
     if (field.type === 'select') {
@@ -366,7 +372,7 @@ const FieldRow = ({
         onChange={e => onChangeType(e.target.value as FieldType)}
       >
         {FIELD_TYPES.map(t => (
-          <option key={t.value} value={t.value}>{t.label}</option>
+          <option key={t.value} value={t.value} disabled={t.value === 'containment' && containmentDisabled}>{t.label}</option>
         ))}
       </select>
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
