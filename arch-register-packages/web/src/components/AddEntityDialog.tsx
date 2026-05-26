@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Dialog } from './Dialog';
 import { apiFetch, fetchEntities, ApiError } from '../api';
-import type { EntitySchema, EntitySummary, SchemaField } from '../api';
+import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
 import { TbInfoCircle } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 
@@ -16,6 +16,8 @@ type AddEntityDialogProps = {
   onCreated: (entity: EntityApiResponse) => void;
   workspaceId: string;
   schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  ownerOptions: WorkspaceOwnerOption[];
   preselectedSchemaId?: string | null;
 };
 
@@ -25,6 +27,8 @@ export const AddEntityDialog = ({
   onCreated,
   workspaceId,
   schemas,
+  lifecycleStates,
+  ownerOptions,
   preselectedSchemaId,
 }: AddEntityDialogProps) => {
   const [schemaId, setSchemaId] = useState('');
@@ -215,20 +219,20 @@ export const AddEntityDialog = ({
             <div className={styles.row}>
               <div className={styles.field}>
                 <label>Owner</label>
-                <input
-                  value={meta.owner}
-                  onChange={e => setMetaField('owner', e.target.value)}
-                  placeholder="e.g. Platform"
-                />
+                <select value={meta.owner} onChange={e => setMetaField('owner', e.target.value)}>
+                  <option value="">—</option>
+                  {ownerOptions.map(o => (
+                    <option key={o.id} value={o.id}>{o.id}</option>
+                  ))}
+                </select>
               </div>
               <div className={styles.field}>
                 <label>Lifecycle</label>
                 <select value={meta.lifecycle} onChange={e => setMetaField('lifecycle', e.target.value)}>
                   <option value="">—</option>
-                  <option value="proposed">Proposed</option>
-                  <option value="experimental">Experimental</option>
-                  <option value="production">Production</option>
-                  <option value="deprecated">Deprecated</option>
+                  {lifecycleStates.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
                 </select>
               </div>
             </div>

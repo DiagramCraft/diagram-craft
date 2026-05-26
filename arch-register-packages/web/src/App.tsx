@@ -16,8 +16,8 @@ import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import type { Workspace } from './data';
 import type { Route, RoutePatch, ViewId } from './routing';
-import { apiFetch, fetchProjects } from './api';
-import type { EntitySchema, Project } from './api';
+import { apiFetch, fetchProjects, fetchLifecycleStates, fetchOwnerOptions } from './api';
+import type { EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from './api';
 import { TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings } from 'react-icons/tb';
 
 const getProjectSidebarTab = (project: Project | undefined): Route['projectSidebarTab'] =>
@@ -58,6 +58,8 @@ const App = () => {
   });
   const [schemas, setSchemas] = useState<EntitySchema[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [lifecycleStates, setLifecycleStates] = useState<WorkspaceLifecycleState[]>([]);
+  const [ownerOptions, setOwnerOptions] = useState<WorkspaceOwnerOption[]>([]);
   const [query, setQuery] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
@@ -98,6 +100,12 @@ const App = () => {
     setSidebarRefreshKey(k => k + 1);
   }, [wsId]);
 
+  const refreshWorkspaceConfig = useCallback(() => {
+    if (!wsId) return;
+    fetchLifecycleStates(wsId).then(setLifecycleStates).catch(() => setLifecycleStates([]));
+    fetchOwnerOptions(wsId).then(setOwnerOptions).catch(() => setOwnerOptions([]));
+  }, [wsId]);
+
   useEffect(() => {
     refreshSchemas();
   }, [refreshSchemas]);
@@ -105,6 +113,10 @@ const App = () => {
   useEffect(() => {
     refreshProjects();
   }, [refreshProjects]);
+
+  useEffect(() => {
+    refreshWorkspaceConfig();
+  }, [refreshWorkspaceConfig]);
 
   const navigate = useCallback(
     (patch: RoutePatch) =>
@@ -160,6 +172,7 @@ const App = () => {
         <EntityBrowser
           workspaceId={wsId}
           schemas={schemas}
+          lifecycleStates={lifecycleStates}
           typeFilter={route.typeFilter}
           statusFilter={route.statusFilter}
           ownerFilter={route.ownerFilter}
@@ -174,6 +187,8 @@ const App = () => {
           workspaceId={wsId}
           entityId={route.entityId}
           schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          ownerOptions={ownerOptions}
           navigate={navigate}
         />
       ) : null;
@@ -213,6 +228,9 @@ const App = () => {
           navigate={navigate}
           onWorkspaceUpdated={fetchWorkspaces}
           onWorkspaceDeleted={fetchWorkspaces}
+          lifecycleStates={lifecycleStates}
+          ownerOptions={ownerOptions}
+          onConfigUpdated={refreshWorkspaceConfig}
         />
       ) : null;
       break;
@@ -251,6 +269,7 @@ const App = () => {
             navigate={navigate}
             schemas={schemas}
             projects={projects}
+            lifecycleStates={lifecycleStates}
             workspace={ws ?? null}
             workspaceId={wsId ?? null}
             projectId={route.projectId}
@@ -298,6 +317,8 @@ const App = () => {
           }}
           workspaceId={wsId}
           schemas={schemas}
+          lifecycleStates={lifecycleStates}
+          ownerOptions={ownerOptions}
           preselectedSchemaId={route.typeFilter}
         />
       )}

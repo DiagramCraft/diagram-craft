@@ -9,12 +9,14 @@ import {
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
 import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog } from '../api';
-import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry } from '../api';
+import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
 
 type EntityDetailProps = {
   workspaceId: string;
   entityId: string;
   schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  ownerOptions: WorkspaceOwnerOption[];
   navigate: NavigateFn;
 };
 
@@ -34,7 +36,7 @@ type RefLookup = Map<string, EntitySummary>;
 const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: EntityDetailProps) => {
+export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate }: EntityDetailProps) => {
   const [entity, setEntity] = useState<EntityRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('overview');
@@ -274,7 +276,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
               <div className={styles.eyebrow}>{schema?.name ?? 'Entity'}</div>
               <div className={styles.title}>{entityName}</div>
             </div>
-            {entity._lifecycle && <StatusChip value={entity._lifecycle} />}
+            {entity._lifecycle && <StatusChip value={entity._lifecycle} lifecycleStates={lifecycleStates} />}
           </div>
           {entity._description && <div className={styles.desc}>{entity._description}</div>}
         </div>
@@ -377,8 +379,8 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
                 </span>
               </div>
             )}
-            <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} />
-            <MetaPropRow label="Lifecycle" value={entity._lifecycle ?? '—'} editing={editing} editValue={editState['_lifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))} selectOptions={['', 'proposed', 'experimental', 'production', 'deprecated']} />
+            <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} selectOptions={['', ...ownerOptions.map(o => o.id)]} />
+            <MetaPropRow label="Lifecycle" value={entity._lifecycle ?? '—'} editing={editing} editValue={editState['_lifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
             {(entity._tags.length > 0 || editing) && (
               <div className={styles.metaPropRow}>
                 <span className={styles.metaPropLabel}>Tags</span>

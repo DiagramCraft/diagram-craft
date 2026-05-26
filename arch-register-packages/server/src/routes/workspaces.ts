@@ -65,6 +65,23 @@ export function createWorkspaceRoutes() {
           RETURNING *
         `;
         
+        // Seed default lifecycle states
+        await sql`
+          INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order) VALUES
+            ('proposed',     ${id}, 'Proposed',     'var(--accent)', 0),
+            ('experimental', ${id}, 'Experimental', 'var(--accent)', 1),
+            ('production',   ${id}, 'Production',   'var(--ok)',     2),
+            ('deprecated',   ${id}, 'Deprecated',   'var(--warn)',   3)
+        `;
+
+        // Seed default owners
+        await sql`
+          INSERT INTO workspace_owner (id, workspace, sort_order) VALUES
+            ('platform-team', ${id}, 0),
+            ('ux-team',       ${id}, 1),
+            ('security-team', ${id}, 2)
+        `;
+
         // Log audit entry
         await logAudit({
           workspace: row!.id,
@@ -76,7 +93,7 @@ export function createWorkspaceRoutes() {
             new: extractEntityFields(row!),
           },
         });
-        
+
         return row!;
       } catch (e) {
         handleError(e, 'Failed to create workspace');

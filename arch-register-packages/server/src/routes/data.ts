@@ -1,12 +1,24 @@
 import { H3, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
-import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type LifecycleStatus, type SchemaField } from '../types.js';
+import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type SchemaField } from '../types.js';
 import { logAudit, extractEntityFields } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/data';
 
-const LIFECYCLE_VALUES = new Set<string>(['proposed', 'experimental', 'production', 'deprecated']);
+const getLifecycleValues = async (workspace: string): Promise<Set<string>> => {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM workspace_lifecycle_state WHERE workspace = ${workspace}
+  `;
+  return new Set(rows.map(r => r.id));
+};
+
+const getOwnerValues = async (workspace: string): Promise<Set<string>> => {
+  const rows = await sql<{ id: string }[]>`
+    SELECT id FROM workspace_owner WHERE workspace = ${workspace}
+  `;
+  return new Set(rows.map(r => r.id));
+};
 
 // body is already parsed JSON; cast is safe but needed because postgres's JSONValue type
 // is more restrictive than the `unknown` we get from readBody.
@@ -70,7 +82,7 @@ type EntitySummaryResponse = {
   _namespace: string;
   _description: string;
   _owner: string | null;
-  _lifecycle: LifecycleStatus | null;
+  _lifecycle: string | null;
   _tags: string[];
   _links: EntityLink[];
 };
@@ -347,11 +359,15 @@ export function createDataRoutes() {
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
-      const owner = typeof _owner === 'string' ? _owner : null;
+
+      const lifecycleValues = await getLifecycleValues(workspace);
       const lifecycle =
-        typeof _lifecycle === 'string' && LIFECYCLE_VALUES.has(_lifecycle)
-          ? (_lifecycle as LifecycleStatus)
-          : null;
+        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+
+      const ownerValues = await getOwnerValues(workspace);
+      const owner =
+        typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
+
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
 
@@ -410,11 +426,15 @@ export function createDataRoutes() {
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
-      const owner = typeof _owner === 'string' ? _owner : null;
+
+      const lifecycleValues = await getLifecycleValues(workspace);
       const lifecycle =
-        typeof _lifecycle === 'string' && LIFECYCLE_VALUES.has(_lifecycle)
-          ? (_lifecycle as LifecycleStatus)
-          : null;
+        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+
+      const ownerValues = await getOwnerValues(workspace);
+      const owner =
+        typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
+
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
 

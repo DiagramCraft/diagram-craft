@@ -507,3 +507,35 @@ export const fetchAuditLog = (workspace: string, options: FetchAuditLogOptions =
 
 export const fetchAuditStats = (workspace: string) =>
   apiFetch<AuditStats>(`/api/${workspace}/audit/stats`);
+
+// ── Workspace Config API ─────────────────────────────────────
+
+export type WorkspaceLifecycleState = {
+  id: string;
+  label: string;
+  color: string;
+  sort_order: number;
+};
+
+export type WorkspaceOwnerOption = {
+  id: string;
+  sort_order: number;
+};
+
+export const fetchLifecycleStates = (workspace: string) =>
+  apiFetch<WorkspaceLifecycleState[]>(`/api/${workspace}/config/lifecycle-states`);
+
+export const updateLifecycleStates = (workspace: string, states: WorkspaceLifecycleState[]) =>
+  apiFetch<WorkspaceLifecycleState[]>(`/api/${workspace}/config/lifecycle-states`, {
+    method: 'PUT',
+    body: JSON.stringify(states),
+  });
+
+export const fetchOwnerOptions = (workspace: string) =>
+  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`);
+
+export const updateOwnerOptions = (workspace: string, owners: WorkspaceOwnerOption[]) =>
+  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`, {
+    method: 'PUT',
+    body: JSON.stringify(owners),
+  });

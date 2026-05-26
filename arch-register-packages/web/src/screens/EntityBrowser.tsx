@@ -9,13 +9,14 @@ import {
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
 import { fetchEntities, fetchEntityFacets, resolveSchemaColor } from '../api';
-import type { EntityRecord, EntityFacets, EntitySchema } from '../api';
+import type { EntityRecord, EntityFacets, EntitySchema, WorkspaceLifecycleState } from '../api';
 
 type BrowserView = 'table' | 'cards' | 'tree';
 
 type EntityBrowserProps = {
   workspaceId: string;
   schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
   typeFilter: string | null;
   statusFilter: string | null;
   ownerFilter: string | null;
@@ -23,7 +24,7 @@ type EntityBrowserProps = {
   onAddEntity?: () => void;
 };
 
-export const EntityBrowser = ({ workspaceId, schemas, typeFilter, statusFilter, ownerFilter, navigate, onAddEntity }: EntityBrowserProps) => {
+export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilter, statusFilter, ownerFilter, navigate, onAddEntity }: EntityBrowserProps) => {
   const [entities, setEntities] = useState<EntityRecord[]>([]);
   const [facets, setFacets] = useState<EntityFacets | null>(null);
   const [q, setQ] = useState('');
@@ -72,7 +73,7 @@ export const EntityBrowser = ({ workspaceId, schemas, typeFilter, statusFilter, 
     ? schemaMap.get(typeFilter)?.schema.name ?? 'Entities'
     : 'All entities';
 
-  const lifecycles = ['proposed', 'experimental', 'production', 'deprecated'];
+  const lifecycles = lifecycleStates;
 
   return (
     <div className={styles.screen}>
@@ -116,7 +117,7 @@ export const EntityBrowser = ({ workspaceId, schemas, typeFilter, statusFilter, 
           onChange={setStatusFilter}
           options={[
             { value: '', label: 'Any' },
-            ...lifecycles.map(s => ({ value: s, label: s.charAt(0).toUpperCase() + s.slice(1) })),
+            ...lifecycles.map(s => ({ value: s.id, label: s.label })),
           ]}
         />
         <FilterDropdown

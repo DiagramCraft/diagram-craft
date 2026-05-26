@@ -62,7 +62,23 @@ export type EntitySchema = {
   updated_at: Date;
 };
 
-export type LifecycleStatus = 'proposed' | 'experimental' | 'production' | 'deprecated';
+export type LifecycleStatus = string;
+
+export type WorkspaceLifecycleState = {
+  id: string;
+  workspace: string;
+  label: string;
+  color: string;
+  sort_order: number;
+  created_at: Date;
+};
+
+export type WorkspaceOwner = {
+  id: string;
+  workspace: string;
+  sort_order: number;
+  created_at: Date;
+};
 
 export type EntityLink = {
   url: string;

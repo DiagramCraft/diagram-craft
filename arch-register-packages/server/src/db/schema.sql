@@ -11,6 +11,28 @@ CREATE TABLE workspace (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Workspace lifecycle states: configurable per workspace
+CREATE TABLE workspace_lifecycle_state (
+  id          TEXT        NOT NULL,
+  workspace   TEXT        NOT NULL,
+  label       TEXT        NOT NULL,
+  color       TEXT        NOT NULL DEFAULT 'var(--fg-3)',
+  sort_order  INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace, id),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
+);
+
+-- Workspace owners: configurable per workspace
+CREATE TABLE workspace_owner (
+  id          TEXT        NOT NULL,
+  workspace   TEXT        NOT NULL,
+  sort_order  INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace, id),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
+);
+
 -- Entity schema table: defines the "type" of an entity (Component, System, Domain, etc.)
 CREATE TABLE entity_schema (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -35,7 +57,7 @@ CREATE TABLE entity (
   name        TEXT        NOT NULL,
   description TEXT        NOT NULL DEFAULT '',
   owner       TEXT,
-  lifecycle   TEXT        CHECK (lifecycle IN ('proposed', 'experimental', 'production', 'deprecated')),
+  lifecycle   TEXT,
   tags        TEXT[]      NOT NULL DEFAULT '{}',
   links       JSONB       NOT NULL DEFAULT '[]',
   schema_id   UUID        NOT NULL,

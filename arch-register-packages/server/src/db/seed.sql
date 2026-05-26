@@ -19,6 +19,17 @@ INSERT INTO workspace (id, name, url_slug, short_code, description) VALUES
   'The default workspace'
 );
 
+INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order) VALUES
+  ('proposed',     'default', 'Proposed',     'var(--accent)', 0),
+  ('experimental', 'default', 'Experimental', 'var(--accent)', 1),
+  ('production',   'default', 'Production',   'var(--ok)',     2),
+  ('deprecated',   'default', 'Deprecated',   'var(--warn)',   3);
+
+INSERT INTO workspace_owner (id, workspace, sort_order) VALUES
+  ('platform-team', 'default', 0),
+  ('ux-team',       'default', 1),
+  ('security-team', 'default', 2);
+
 INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
 (
   '00000000-0000-0000-0000-000000000001',

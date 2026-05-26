@@ -5,15 +5,12 @@ import { TypeBadge } from '../components/TypeBadge';
 import {
   TbStack2, TbDatabase,
   TbUsers, TbChartDots3, TbFolderOpen,
-  TbSettings, TbTrash,
+  TbSettings, TbTrash, TbTag,
 } from 'react-icons/tb';
-import {
-  STATUS_TONE,
-} from '../data';
 import type { Workspace } from '../data';
 import type { ViewId, NavigateFn, RoutePatch } from '../routing';
 import { fetchEntityFacets, fetchProjectFiles, resolveSchemaColor } from '../api';
-import type { EntityFacets, EntitySchema, Project, FileTree } from '../api';
+import type { EntityFacets, EntitySchema, Project, FileTree, WorkspaceLifecycleState } from '../api';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
@@ -29,6 +26,7 @@ type SidePanelProps = {
   navigate: NavigateFn;
   schemas: EntitySchema[];
   projects: Project[];
+  lifecycleStates: WorkspaceLifecycleState[];
   workspace: Workspace | null;
   workspaceId: string | null;
   projectId: string | null;
@@ -51,6 +49,7 @@ export const SidePanel = ({
   navigate,
   schemas,
   projects,
+  lifecycleStates,
   workspace,
   workspaceId,
   projectId,
@@ -88,6 +87,7 @@ export const SidePanel = ({
     body = (
       <EntitiesSidebar
         schemas={schemas}
+        lifecycleStates={lifecycleStates}
         workspaceId={workspaceId}
         typeFilter={typeFilter}
         statusFilter={statusFilter}
@@ -363,10 +363,9 @@ const ProjectsSidebar = ({
   );
 };
 
-const LIFECYCLES = ['proposed', 'experimental', 'production', 'deprecated'] as const;
-
 const EntitiesSidebar = ({
   schemas,
+  lifecycleStates,
   workspaceId,
   typeFilter,
   statusFilter,
@@ -377,6 +376,7 @@ const EntitiesSidebar = ({
   setOwnerFilter,
 }: {
   schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
   workspaceId: string | null;
   typeFilter: string | null;
   statusFilter: string | null;
@@ -439,13 +439,12 @@ const EntitiesSidebar = ({
           />
         ))}
         <GroupLabel>By status</GroupLabel>
-        {LIFECYCLES.map(s => {
-          const count = statusCounts[s] ?? 0;
+        {lifecycleStates.map(s => {
+          const count = statusCounts[s.id] ?? 0;
           if (!count) return null;
-          const tone = STATUS_TONE[s];
           return (
             <TreeRow
-              key={s}
+              key={s.id}
               icon={
                 <span
                   style={{
@@ -453,13 +452,13 @@ const EntitiesSidebar = ({
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    background: tone?.dot ?? 'var(--fg-3)',
+                    background: s.color,
                   }}
                 />
               }
-              label={tone?.label ?? s}
-              active={statusFilter === s}
-              onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setOwnerFilter(null); setStatusFilter(statusFilter === s ? null : s); }}
+              label={s.label}
+              active={statusFilter === s.id}
+              onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setOwnerFilter(null); setStatusFilter(statusFilter === s.id ? null : s.id); }}
               trailing={<span className="dim mono">{count}</span>}
             />
           );
@@ -527,6 +526,7 @@ type SettingsNavItem = {
 
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
+  { id: 'lifecycle-owners', label: 'Lifecycle & Owners', icon: <TbTag size={12} />, group: 'Workspace' },
   { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
 ];
 
