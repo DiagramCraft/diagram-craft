@@ -14,10 +14,9 @@ import { WorkspaceSettings } from './screens/WorkspaceSettings';
 import { AddWorkspaceDialog } from './components/AddWorkspaceDialog';
 import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
-import type { Workspace } from './data';
 import type { Route, RoutePatch, ViewId } from './routing';
 import { apiFetch, fetchProjects, fetchLifecycleStates, fetchOwnerOptions } from './api';
-import type { EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from './api';
+import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from './api';
 import { TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings } from 'react-icons/tb';
 
 const getProjectSidebarTab = (project: Project | undefined): Route['projectSidebarTab'] =>

@@ -7,7 +7,7 @@ import {
   TbUsers, TbChartDots3, TbFolderOpen,
   TbSettings, TbTrash, TbTag,
 } from 'react-icons/tb';
-import type { Workspace } from '../data';
+import type { Workspace } from '../api';
 import type { ViewId, NavigateFn, RoutePatch } from '../routing';
 import { fetchEntityFacets, fetchProjectFiles, resolveSchemaColor } from '../api';
 import type { EntityFacets, EntitySchema, Project, FileTree, WorkspaceLifecycleState } from '../api';

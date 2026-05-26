@@ -1,3 +1,17 @@
+// ── Workspace types ───────────────────────────────────────────
+
+export type Workspace = {
+  id: string;
+  name: string;
+  url_slug: string;
+  short_code: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// ── Schema field types ────────────────────────────────────────
+
 export type TextField = {
   id: string;
   name: string;

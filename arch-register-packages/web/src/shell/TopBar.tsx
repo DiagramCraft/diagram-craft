@@ -5,7 +5,7 @@ import {
   TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
   TbSettings, TbCheck, TbPlus,
 } from 'react-icons/tb';
-import type { Workspace } from '../data';
+import type { Workspace } from '../api';
 
 type BreadcrumbItem = {
   label: string;

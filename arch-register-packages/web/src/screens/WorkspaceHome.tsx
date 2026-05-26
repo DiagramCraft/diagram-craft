@@ -6,9 +6,7 @@ import {
   TbDatabase, TbStack2, TbChartDots3, TbGitBranch,
   TbPlus, TbChevronRight,
 } from 'react-icons/tb';
-import {
-  type Workspace,
-} from '../data';
+import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
 import { resolveSchemaColor, fetchAuditLog } from '../api';
 import type { EntitySchema, Project, AuditLogEntry } from '../api';

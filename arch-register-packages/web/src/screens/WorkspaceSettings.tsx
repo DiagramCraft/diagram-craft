@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import styles from './WorkspaceSettings.module.css';
-import type { Workspace } from '../data';
+import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
 import { apiFetch, updateLifecycleStates, updateOwnerOptions } from '../api';
 import type { WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
