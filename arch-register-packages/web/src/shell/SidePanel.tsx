@@ -35,6 +35,7 @@ type SidePanelProps = {
   typeFilter: string | null;
   statusFilter: string | null;
   ownerFilter: string | null;
+  refreshKey: number;
   setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
   setTypeFilter: (id: string | null) => void;
   setStatusFilter: (id: string | null) => void;
@@ -54,6 +55,7 @@ export const SidePanel = ({
   typeFilter,
   statusFilter,
   ownerFilter,
+  refreshKey,
   setProjectSidebarTab,
   setTypeFilter,
   setStatusFilter,
@@ -72,6 +74,7 @@ export const SidePanel = ({
         folderFilter={folderFilter}
         workspaceId={workspaceId}
         navigate={navigate}
+        refreshKey={refreshKey}
         setProjectSidebarTab={setProjectSidebarTab}
       />
     );
@@ -171,6 +174,7 @@ const ProjectsSidebar = ({
   folderFilter,
   workspaceId,
   navigate,
+  refreshKey,
   setProjectSidebarTab,
 }: {
   projects: Project[];
@@ -179,6 +183,7 @@ const ProjectsSidebar = ({
   folderFilter: string | null;
   workspaceId: string | null;
   navigate: NavigateFn;
+  refreshKey: number;
   setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
 }) => {
   const [fileTree, setFileTree] = useState<FileTree | null>(null);
@@ -193,7 +198,7 @@ const ProjectsSidebar = ({
     fetchProjectFiles(workspaceId, projectId)
       .then(setFileTree)
       .catch(() => setFileTree(null));
-  }, [workspaceId, projectId]);
+  }, [workspaceId, projectId, refreshKey]);
 
   const toggle = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));

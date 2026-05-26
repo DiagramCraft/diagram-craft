@@ -1,6 +1,7 @@
 import { H3, H3Event, HTTPError, defineHandler, getQuery } from 'h3';
 import sql from '../db/client.js';
 import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type LifecycleStatus, type SchemaField } from '../types.js';
+import { logAudit, extractEntityFields } from '../db/audit.js';
 
 const BASE = '/api/:workspace/data';
 
@@ -364,6 +365,21 @@ export function createDataRoutes() {
           VALUES (${workspace}, ${slug}, ${namespace}, ${name}, ${description}, ${owner}, ${lifecycle}, ${tags}, ${json(links)}, ${_schemaId}, ${json(fields)})
           RETURNING *
         `;
+        
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'create',
+          entityType: 'entity',
+          entityId: row!.id,
+          entityName: row!.name,
+          entitySlug: row!.slug,
+          schemaId: row!.schema_id,
+          changes: {
+            new: extractEntityFields(row!),
+          },
+        });
+        
         return toApiFormat(row!);
       } catch (e) {
         handleError(e, 'Failed to create data record');
@@ -407,6 +423,12 @@ export function createDataRoutes() {
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
 
       try {
+        // Fetch old state for audit log
+        const [oldRow] = await sql<Entity[]>`
+          SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}
+        `;
+        if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        
         const [row] = await sql<Entity[]>`
           UPDATE entity SET
             name        = ${name},
@@ -422,8 +444,26 @@ export function createDataRoutes() {
           WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
-        return toApiFormat(row);
+        
+        // Log audit entry with field-level changes
+        const { computeChanges } = await import('../db/audit.js');
+        const changes = computeChanges(
+          extractEntityFields(oldRow),
+          extractEntityFields(row!)
+        );
+        
+        await logAudit({
+          workspace,
+          operation: 'update',
+          entityType: 'entity',
+          entityId: id,
+          entityName: row!.name,
+          entitySlug: row!.slug,
+          schemaId: row!.schema_id,
+          changes,
+        });
+        
+        return toApiFormat(row!);
       } catch (e) {
         handleError(e, 'Failed to update data record');
       }
@@ -438,10 +478,29 @@ export function createDataRoutes() {
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
+        // Fetch entity before deletion for audit log
         const [row] = await sql<Entity[]>`
-          DELETE FROM entity WHERE workspace = ${workspace} AND id = ${id} RETURNING id
+          SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}
         `;
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        
+        // Delete entity
+        await sql`DELETE FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
+        
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'delete',
+          entityType: 'entity',
+          entityId: id,
+          entityName: row.name,
+          entitySlug: row.slug,
+          schemaId: row.schema_id,
+          changes: {
+            old: extractEntityFields(row),
+          },
+        });
+        
         return { success: true, message: `Data record '${id}' deleted` };
       } catch (e) {
         handleError(e, 'Failed to delete data record');

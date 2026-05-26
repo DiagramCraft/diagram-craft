@@ -1,6 +1,7 @@
 import { H3, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { Workspace } from '../types.js';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 
 const BASE = '/api/workspaces';
 
@@ -58,6 +59,19 @@ export function createWorkspaceRoutes() {
           VALUES (${id}, ${name}, ${typeof description === 'string' ? description : ''})
           RETURNING *
         `;
+        
+        // Log audit entry
+        await logAudit({
+          workspace: row!.id,
+          operation: 'create',
+          entityType: 'workspace',
+          entityId: row!.id,
+          entityName: row!.name,
+          changes: {
+            new: extractEntityFields(row!),
+          },
+        });
+        
         return row!;
       } catch (e) {
         handleError(e, 'Failed to create workspace');
@@ -78,6 +92,12 @@ export function createWorkspaceRoutes() {
       if (!name || typeof name !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
+        // Fetch old state for audit log
+        const [oldRow] = await sql<Workspace[]>`
+          SELECT * FROM workspace WHERE id = ${id}
+        `;
+        if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
+        
         const [row] = await sql<Workspace[]>`
           UPDATE workspace SET
             name = ${name},
@@ -85,8 +105,23 @@ export function createWorkspaceRoutes() {
           WHERE id = ${id}
           RETURNING *
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
-        return row;
+        
+        // Log audit entry with field-level changes
+        const changes = computeChanges(
+          extractEntityFields(oldRow),
+          extractEntityFields(row!)
+        );
+        
+        await logAudit({
+          workspace: id,
+          operation: 'update',
+          entityType: 'workspace',
+          entityId: id,
+          entityName: row!.name,
+          changes,
+        });
+        
+        return row!;
       } catch (e) {
         handleError(e, 'Failed to update workspace');
       }

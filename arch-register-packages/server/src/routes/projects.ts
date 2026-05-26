@@ -2,6 +2,7 @@ import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { Project, ProjectFile } from '../types.js';
 import type { StorageAdapter } from '../storage/storage.js';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -180,6 +181,19 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
           VALUES (${workspace}, ${name}, ${typeof description === 'string' ? description : ''}, ${projectStatus})
           RETURNING *
         `;
+        
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'create',
+          entityType: 'project',
+          entityId: row!.id,
+          entityName: row!.name,
+          changes: {
+            new: extractEntityFields(row!),
+          },
+        });
+        
         return row!;
       } catch (e) {
         handleError(e, 'Failed to create project');
@@ -203,6 +217,12 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
       const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
 
       try {
+        // Fetch old state for audit log
+        const [oldRow] = await sql<Project[]>`
+          SELECT * FROM project WHERE workspace = ${workspace} AND id = ${id}
+        `;
+        if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
+        
         const [row] = await sql<Project[]>`
           UPDATE project SET
             name        = ${name},
@@ -211,8 +231,23 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
           WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
-        return row;
+        
+        // Log audit entry with field-level changes
+        const changes = computeChanges(
+          extractEntityFields(oldRow),
+          extractEntityFields(row!)
+        );
+        
+        await logAudit({
+          workspace,
+          operation: 'update',
+          entityType: 'project',
+          entityId: id,
+          entityName: row!.name,
+          changes,
+        });
+        
+        return row!;
       } catch (e) {
         handleError(e, 'Failed to update project');
       }
@@ -226,10 +261,26 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
       const workspace = getWorkspace(event);
       const id = getParam(event, 'id');
       try {
-        const [row] = await sql<Project[]>`
-          DELETE FROM project WHERE workspace = ${workspace} AND id = ${id} RETURNING id
+        // Fetch project before deletion for audit log
+        const [project] = await sql<Project[]>`
+          SELECT * FROM project WHERE workspace = ${workspace} AND id = ${id}
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
+        if (!project) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
+        
+        // Delete project
+        await sql`DELETE FROM project WHERE workspace = ${workspace} AND id = ${id}`;
+
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'delete',
+          entityType: 'project',
+          entityId: id,
+          entityName: project.name,
+          changes: {
+            old: extractEntityFields(project),
+          },
+        });
 
         // Clean up storage (orphaned files on disk are harmless if this fails)
         await storage.deleteAll(workspace, id).catch(() => {});
@@ -300,6 +351,13 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
         (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
 
       try {
+        // Check if file exists for audit log
+        const [existingFile] = await sql<ProjectFile[]>`
+          SELECT * FROM project_file 
+          WHERE workspace = ${workspace} AND project_id = ${id} AND path = ${filePath}
+        `;
+        const isUpdate = !!existingFile;
+        
         // Upsert file metadata
         const [row] = await sql<ProjectFile[]>`
           INSERT INTO project_file (workspace, project_id, path, name, size_bytes)
@@ -311,6 +369,35 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
 
         // Write to storage
         await storage.write(workspace, id, filePath, content);
+
+        // Log audit entry
+        if (isUpdate) {
+          const changes = computeChanges(
+            extractEntityFields(existingFile),
+            extractEntityFields(row!)
+          );
+          await logAudit({
+            workspace,
+            operation: 'update',
+            entityType: 'project_file',
+            entityId: row!.id,
+            entityName: row!.name,
+            changes,
+            metadata: { project_id: id, path: filePath },
+          });
+        } else {
+          await logAudit({
+            workspace,
+            operation: 'create',
+            entityType: 'project_file',
+            entityId: row!.id,
+            entityName: row!.name,
+            changes: {
+              new: extractEntityFields(row!),
+            },
+            metadata: { project_id: id, path: filePath },
+          });
+        }
 
         return row!;
       } catch (e) {
@@ -327,13 +414,32 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
-        const [row] = await sql<ProjectFile[]>`
+        // Fetch file before deletion for audit log
+        const [file] = await sql<ProjectFile[]>`
+          SELECT * FROM project_file
+          WHERE workspace = ${workspace} AND project_id = ${id} AND path = ${filePath}
+        `;
+        if (!file)
+          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+
+        // Delete file
+        await sql`
           DELETE FROM project_file
           WHERE workspace = ${workspace} AND project_id = ${id} AND path = ${filePath}
-          RETURNING id
         `;
-        if (!row)
-          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'delete',
+          entityType: 'project_file',
+          entityId: file.id,
+          entityName: file.name,
+          changes: {
+            old: extractEntityFields(file),
+          },
+          metadata: { project_id: id, path: filePath },
+        });
 
         await storage.delete(workspace, id, filePath).catch(() => {});
 
@@ -371,6 +477,21 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
 
         // Write empty marker to storage
         await storage.write(workspace, id, markerPath, Buffer.alloc(0));
+
+        // Log audit entry for folder creation (if marker was created)
+        if (row) {
+          await logAudit({
+            workspace,
+            operation: 'create',
+            entityType: 'project_file',
+            entityId: row.id,
+            entityName: folderPath,
+            changes: {
+              new: { path: folderPath, type: 'folder' },
+            },
+            metadata: { project_id: id, path: folderPath, is_folder: true },
+          });
+        }
 
         return { success: true, path: folderPath, marker: row ?? null };
       } catch (e) {

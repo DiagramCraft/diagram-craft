@@ -62,6 +62,7 @@ const App = () => {
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -92,6 +93,7 @@ const App = () => {
   const refreshProjects = useCallback(() => {
     if (!wsId) return;
     fetchProjects(wsId).then(setProjects).catch(() => setProjects([]));
+    setSidebarRefreshKey(k => k + 1);
   }, [wsId]);
 
   useEffect(() => {
@@ -245,6 +247,7 @@ const App = () => {
             typeFilter={route.typeFilter}
             statusFilter={route.statusFilter}
             ownerFilter={route.ownerFilter}
+            refreshKey={sidebarRefreshKey}
             setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
             setTypeFilter={id => navigate({ typeFilter: id })}
             setStatusFilter={id => navigate({ statusFilter: id })}

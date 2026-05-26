@@ -130,3 +130,43 @@ export const decodeRefs = (raw: unknown): string[] => {
     .map(s => s.trim())
     .filter(Boolean);
 };
+
+export type AuditOperation = 'create' | 'update' | 'delete';
+
+export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
+
+export type AuditLogEntry = {
+  id: string;
+  workspace: string;
+  timestamp: Date;
+  user_id: string;
+  operation: AuditOperation;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string | null;
+  schema_id: string | null;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  metadata: Record<string, unknown>;
+};
+
+export type AuditLogApiResponse = {
+  id: string;
+  workspace: string;
+  timestamp: string;
+  user_id: string;
+  operation: AuditOperation;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string | null;
+  schema_id: string | null;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  metadata: Record<string, unknown>;
+};

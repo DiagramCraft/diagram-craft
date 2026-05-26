@@ -111,3 +111,29 @@ CREATE TRIGGER project_updated_at
 CREATE TRIGGER project_file_updated_at
   BEFORE UPDATE ON project_file
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Audit log table: tracks all mutations with field-level changes
+CREATE TABLE audit_log (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace       TEXT        NOT NULL,
+  timestamp       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  user_id         TEXT        NOT NULL,
+  operation       TEXT        NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
+  entity_type     TEXT        NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'entity', 'project', 'project_file')),
+  entity_id       TEXT        NOT NULL,
+  entity_name     TEXT        NOT NULL,
+  entity_slug     TEXT,
+  schema_id       UUID,
+  changes         JSONB       NOT NULL DEFAULT '{}',
+  metadata        JSONB       NOT NULL DEFAULT '{}',
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
+);
+
+-- Indexes for efficient querying
+CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
+CREATE INDEX audit_log_workspace_entity_type_idx ON audit_log(workspace, entity_type);
+CREATE INDEX audit_log_workspace_entity_id_idx ON audit_log(workspace, entity_id);
+CREATE INDEX audit_log_workspace_user_idx ON audit_log(workspace, user_id);
+CREATE INDEX audit_log_workspace_operation_idx ON audit_log(workspace, operation);
+CREATE INDEX audit_log_timestamp_idx ON audit_log(timestamp DESC);
+CREATE INDEX audit_log_changes_gin_idx ON audit_log USING GIN (changes);

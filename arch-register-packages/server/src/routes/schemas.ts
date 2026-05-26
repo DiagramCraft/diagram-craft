@@ -1,6 +1,7 @@
 import { H3, H3Event, HTTPError, defineHandler } from 'h3';
 import sql from '../db/client.js';
 import type { EntitySchema } from '../types.js';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 
 const BASE = '/api/:workspace/schemas';
 
@@ -96,6 +97,19 @@ export function createSchemaRoutes() {
           VALUES (${workspace}, ${name}, ${json(fields)}, ${colorVal}, ${iconVal})
           RETURNING *
         `;
+        
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'create',
+          entityType: 'entity_schema',
+          entityId: row!.id,
+          entityName: row!.name,
+          changes: {
+            new: extractEntityFields(row!),
+          },
+        });
+        
         return row!;
       } catch (e) {
         handleError(e, 'Failed to create schema');
@@ -117,6 +131,12 @@ export function createSchemaRoutes() {
       if (!name || typeof name !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
+        // Fetch old state for audit log
+        const [oldRow] = await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}
+        `;
+        if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
+        
         const [row] = await sql<EntitySchema[]>`
           UPDATE entity_schema SET
             name   = ${name},
@@ -126,8 +146,23 @@ export function createSchemaRoutes() {
           WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
-        return row;
+        
+        // Log audit entry with field-level changes
+        const changes = computeChanges(
+          extractEntityFields(oldRow),
+          extractEntityFields(row!)
+        );
+        
+        await logAudit({
+          workspace,
+          operation: 'update',
+          entityType: 'entity_schema',
+          entityId: id,
+          entityName: row!.name,
+          changes,
+        });
+        
+        return row!;
       } catch (e) {
         handleError(e, 'Failed to update schema');
       }
@@ -142,10 +177,27 @@ export function createSchemaRoutes() {
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<EntitySchema[]>`
-          DELETE FROM entity_schema WHERE workspace = ${workspace} AND id = ${id} RETURNING id
+        // Fetch schema before deletion for audit log
+        const [schema] = await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}
         `;
-        if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
+        if (!schema) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${id}' not found` });
+        
+        // Delete schema
+        await sql`DELETE FROM entity_schema WHERE workspace = ${workspace} AND id = ${id}`;
+        
+        // Log audit entry
+        await logAudit({
+          workspace,
+          operation: 'delete',
+          entityType: 'entity_schema',
+          entityId: id,
+          entityName: schema.name,
+          changes: {
+            old: extractEntityFields(schema),
+          },
+        });
+        
         return { success: true, message: `Schema '${id}' deleted` };
       } catch (e) {
         handleError(e, 'Failed to delete schema');

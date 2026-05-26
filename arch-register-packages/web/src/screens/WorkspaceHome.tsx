@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './WorkspaceHome.module.css';
 import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
@@ -7,12 +7,11 @@ import {
   TbPlus, TbChevronRight,
 } from 'react-icons/tb';
 import {
-  RECENT_ACTIVITY,
   type Workspace,
 } from '../data';
 import type { NavigateFn } from '../routing';
-import { resolveSchemaColor } from '../api';
-import type { EntitySchema, Project } from '../api';
+import { resolveSchemaColor, fetchAuditLog } from '../api';
+import type { EntitySchema, Project, AuditLogEntry } from '../api';
 
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },
@@ -39,6 +38,9 @@ export const WorkspaceHome = ({
 }: WorkspaceHomeProps) => {
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<AuditLogEntry[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
   const nonArchivedProjects = projects.filter(p => p.status !== 'archived');
@@ -46,6 +48,68 @@ export const WorkspaceHome = ({
   const visibleProjects = showAllProjects
     ? projects
     : nonArchivedProjects.slice(0, collapsedProjectCount);
+
+  // Fetch recent activity from audit log
+  useEffect(() => {
+    setActivityLoading(true);
+    fetchAuditLog(workspace.id, { limit: 20 })
+      .then(setRecentActivity)
+      .catch(err => {
+        console.error('Failed to load audit log:', err);
+        setRecentActivity([]);
+      })
+      .finally(() => setActivityLoading(false));
+  }, [workspace.id]);
+
+  const formatRelativeTime = (timestamp: string): string => {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  };
+
+  const handleActivityClick = (entry: AuditLogEntry) => {
+    switch (entry.entity_type) {
+      case 'entity':
+        navigate({ view: 'entity-detail', entityId: entry.entity_id });
+        break;
+      case 'project':
+        navigate({ view: 'project-detail', projectId: entry.entity_id, projectSidebarTab: 'projects' });
+        break;
+      case 'entity_schema':
+        navigate({ view: 'data-model' });
+        break;
+      // workspace and project_file don't have dedicated detail views yet
+    }
+  };
+
+  const getOperationLabel = (operation: string): string => {
+    switch (operation) {
+      case 'create': return 'created';
+      case 'update': return 'updated';
+      case 'delete': return 'deleted';
+      default: return operation;
+    }
+  };
+
+  const getEntityTypeLabel = (entityType: string): string => {
+    switch (entityType) {
+      case 'entity': return 'entity';
+      case 'project': return 'project';
+      case 'project_file': return 'diagram';
+      case 'entity_schema': return 'schema';
+      case 'workspace': return 'workspace';
+      default: return entityType;
+    }
+  };
 
   return (
     <div className={styles.screen}>
@@ -174,15 +238,30 @@ export const WorkspaceHome = ({
               span2
             >
               <div className={styles.activityList}>
-                {RECENT_ACTIVITY.map((a, i) => (
-                  <div key={i} className={styles.activityRow}>
-                    <span className={styles.activityWho}>{a.who}</span>
-                    <span className="dim"> {a.what} </span>
-                    <span className={styles.activityTarget}>{a.target}</span>
-                    <span className="dim">&middot; {a.project}</span>
-                    <span className={styles.activityTime}>{a.time}</span>
+                {activityLoading ? (
+                  <div className={`${styles.emptyInline} dim`}>
+                    Loading activity...
                   </div>
-                ))}
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((entry) => (
+                    <button
+                      key={entry.id}
+                      type="button"
+                      className={styles.activityRow}
+                      onClick={() => handleActivityClick(entry)}
+                    >
+                      <span className={styles.activityWho}>{entry.user_id}</span>
+                      <span className="dim"> {getOperationLabel(entry.operation)} </span>
+                      <span className={styles.activityTarget}>{entry.entity_name}</span>
+                      <span className="dim">&middot; {getEntityTypeLabel(entry.entity_type)}</span>
+                      <span className={styles.activityTime}>{formatRelativeTime(entry.timestamp)}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className={`${styles.emptyInline} dim`}>
+                    No recent activity.
+                  </div>
+                )}
               </div>
             </Panel>
           </>

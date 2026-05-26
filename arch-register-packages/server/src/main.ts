@@ -6,6 +6,7 @@ import { createProjectRoutes } from './routes/projects.js';
 import { createSearchRoutes } from './routes/search.js';
 import { createSchemaRoutes } from './routes/schemas.js';
 import { createWorkspaceRoutes } from './routes/workspaces.js';
+import { createAuditRoutes } from './routes/audit.js';
 import { createStorage } from './storage/storage.js';
 
 const storage = createStorage();
@@ -43,6 +44,7 @@ app.use(createSchemaRoutes());
 app.use(createDataRoutes());
 app.use(createSearchRoutes());
 app.use(createProjectRoutes(storage));
+app.use(createAuditRoutes());
 
 const server = createServer(toNodeListener(app));
 const PORT = Number(process.env['PORT'] ?? 3010);
