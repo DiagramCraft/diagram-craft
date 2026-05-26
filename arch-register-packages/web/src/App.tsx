@@ -9,6 +9,7 @@ import { EntityBrowser } from './screens/EntityBrowser';
 import { EntityDetail } from './screens/EntityDetail';
 import { DataModelEditor } from './screens/DataModelEditor';
 import { ProjectDetail } from './screens/ProjectDetail';
+import { SearchScreen } from './screens/SearchScreen';
 import { AddWorkspaceDialog } from './components/AddWorkspaceDialog';
 import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
@@ -57,6 +58,7 @@ const App = () => {
   const [schemas, setSchemas] = useState<EntitySchema[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [query, setQuery] = useState('');
+  const [submittedQuery, setSubmittedQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
@@ -111,6 +113,7 @@ const App = () => {
   );
 
   const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
+  const showSidebar = route.view !== 'search';
 
   const trail = buildTrail(route, navigate, schemas, projects);
 
@@ -183,6 +186,22 @@ const App = () => {
         />
       ) : null;
       break;
+    case 'search':
+      screen = wsId ? (
+        <SearchScreen
+          workspaceId={wsId}
+          query={submittedQuery}
+          schemas={schemas}
+          navigate={navigate}
+          onQueryChange={setQuery}
+          onQuerySubmit={q => {
+            const trimmed = q.trim();
+            setSubmittedQuery(trimmed);
+            setQuery(trimmed);
+          }}
+        />
+      ) : null;
+      break;
     default:
       screen = (
         <div className={styles.placeholder}>
@@ -199,30 +218,39 @@ const App = () => {
         onPickWs={id => navigate({ workspaceId: id })}
         trail={trail}
         query={query}
-        onQuery={setQuery}
+        onQueryChange={setQuery}
+        onQuerySubmit={nextQuery => {
+          const trimmed = nextQuery.trim();
+          setSubmittedQuery(trimmed);
+          if (trimmed !== '') {
+            navigate({ view: 'search' });
+          }
+        }}
         onOpenSettings={() => navigate({ view: 'workspace-settings' })}
         onAddWorkspace={() => setAddWsOpen(true)}
       />
-      <div className={styles.body}>
+      <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
         <NavRail view={route.view} onPick={handleRailPick} />
-        <SidePanel
-          view={route.view}
-          navigate={navigate}
-          schemas={schemas}
-          projects={projects}
-          workspaceId={wsId ?? null}
-          projectId={route.projectId}
-          projectSidebarTab={route.projectSidebarTab}
-          schemaId={route.schemaId}
-          folderFilter={route.folderFilter}
-          typeFilter={route.typeFilter}
-          statusFilter={route.statusFilter}
-          ownerFilter={route.ownerFilter}
-          setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
-          setTypeFilter={id => navigate({ typeFilter: id })}
-          setStatusFilter={id => navigate({ statusFilter: id })}
-          setOwnerFilter={id => navigate({ ownerFilter: id })}
-        />
+        {showSidebar && (
+          <SidePanel
+            view={route.view}
+            navigate={navigate}
+            schemas={schemas}
+            projects={projects}
+            workspaceId={wsId ?? null}
+            projectId={route.projectId}
+            projectSidebarTab={route.projectSidebarTab}
+            schemaId={route.schemaId}
+            folderFilter={route.folderFilter}
+            typeFilter={route.typeFilter}
+            statusFilter={route.statusFilter}
+            ownerFilter={route.ownerFilter}
+            setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
+            setTypeFilter={id => navigate({ typeFilter: id })}
+            setStatusFilter={id => navigate({ statusFilter: id })}
+            setOwnerFilter={id => navigate({ ownerFilter: id })}
+          />
+        )}
         <main className={styles.main}>{screen}</main>
       </div>
       <AddWorkspaceDialog

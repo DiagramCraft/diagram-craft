@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
@@ -20,7 +20,8 @@ type TopBarProps = {
   onPickWs: (id: string) => void;
   trail: BreadcrumbItem[];
   query: string;
-  onQuery: (q: string) => void;
+  onQueryChange: (q: string) => void;
+  onQuerySubmit: (q: string) => void;
   onOpenSettings: () => void;
   onAddWorkspace: () => void;
 };
@@ -31,47 +32,71 @@ export const TopBar = ({
   onPickWs,
   trail,
   query,
-  onQuery,
+  onQueryChange,
+  onQuerySubmit,
   onOpenSettings,
   onAddWorkspace,
-}: TopBarProps) => (
-  <div className={styles.topbar}>
-    <div className={styles.left}>
-      <IconButton title="Menu">
-        <TbMenu2 size={14} />
-      </IconButton>
-      <div className={styles.sep} />
-      <WorkspaceSwitcher
-        workspaces={workspaces}
-        current={currentWs}
-        onPick={onPickWs}
-        onOpenSettings={onOpenSettings}
-        onAddWorkspace={onAddWorkspace}
-      />
-      <div className={styles.sep} />
-      <Breadcrumbs trail={trail} />
-    </div>
-    <div className={styles.center}>
-      <div className={styles.search}>
-        <TbSearch size={12} />
-        <input
-          placeholder="Search entities, diagrams, projects..."
-          value={query}
-          onChange={e => onQuery(e.target.value)}
+}: TopBarProps) => {
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    onQuerySubmit(query);
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  return (
+    <div className={styles.topbar}>
+      <div className={styles.left}>
+        <IconButton title="Menu">
+          <TbMenu2 size={14} />
+        </IconButton>
+        <div className={styles.sep} />
+        <WorkspaceSwitcher
+          workspaces={workspaces}
+          current={currentWs}
+          onPick={onPickWs}
+          onOpenSettings={onOpenSettings}
+          onAddWorkspace={onAddWorkspace}
         />
-        <span className={styles.kbd}>&#8984;K</span>
+        <div className={styles.sep} />
+        <Breadcrumbs trail={trail} />
+      </div>
+      <div className={styles.center}>
+        <div className={styles.search}>
+          <TbSearch size={12} />
+          <input
+            ref={searchRef}
+            placeholder="Search entities, diagrams, projects..."
+            value={query}
+            onChange={e => onQueryChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <span className={styles.kbd}>&#8984;K</span>
+        </div>
+      </div>
+      <div className={styles.right}>
+        <IconButton title="Workspace settings" onClick={onOpenSettings}>
+          <TbSettings size={14} />
+        </IconButton>
+        <div className={styles.avatar} title="Anika P.">
+          AP
+        </div>
       </div>
     </div>
-    <div className={styles.right}>
-      <IconButton title="Workspace settings" onClick={onOpenSettings}>
-        <TbSettings size={14} />
-      </IconButton>
-      <div className={styles.avatar} title="Anika P.">
-        AP
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const WorkspaceSwitcher = ({
   workspaces,

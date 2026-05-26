@@ -275,6 +275,48 @@ export type FileTree = {
 
 export type ProjectDetail = Project & { files: FileTree };
 
+export type ProjectSearchResult = {
+  id: string;
+  name: string;
+  description: string;
+  status: Project['status'];
+};
+
+export type ProjectFileSearchResult = {
+  projectId: string;
+  projectName: string;
+  fileId: string;
+  path: string;
+  name: string;
+};
+
+export type EntitySearchResult = {
+  entityId: string;
+  schemaId: string;
+  schemaName: string;
+  _name: string;
+  _slug: string;
+  _description: string;
+  _owner: string | null;
+  _lifecycle: string | null;
+  matchedFields: string[];
+  matchedMetadata: string[];
+};
+
+export type SchemaSearchResult = {
+  schemaId: string;
+  name: string;
+  fieldMatches: Array<{ fieldId: string; fieldName: string }>;
+};
+
+export type SearchResponse = {
+  query: string;
+  projects: ProjectSearchResult[];
+  files: ProjectFileSearchResult[];
+  entities: EntitySearchResult[];
+  schemas: SchemaSearchResult[];
+};
+
 // ── Project API ───────────────────────────────────────────────
 
 export const fetchProjects = (workspace: string) =>
@@ -285,6 +327,22 @@ export const fetchProject = (workspace: string, id: string) =>
 
 export const fetchProjectFiles = (workspace: string, id: string) =>
   apiFetch<FileTree>(`/api/${workspace}/projects/${id}/files`);
+
+export const searchArchRegister = (
+  workspace: string,
+  options: {
+    q: string;
+    limitPerType?: number | null;
+    types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
+  }
+) =>
+  apiFetch<SearchResponse>(
+    `/api/${workspace}/search${buildQuery({
+      q: options.q,
+      limitPerType: options.limitPerType ?? null,
+      types: options.types?.join(',') ?? null,
+    })}`
+  );
 
 export const createProject = (
   workspace: string,

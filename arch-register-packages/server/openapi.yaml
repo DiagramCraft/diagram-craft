@@ -11,6 +11,7 @@ tags:
   - name: Schemas
   - name: Entities
   - name: Projects
+  - name: Search
 paths:
   /api/workspaces:
     get:
@@ -386,6 +387,42 @@ paths:
         '400':
           $ref: '#/components/responses/Error'
         '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/search:
+    get:
+      tags: [Search]
+      summary: Search across projects, files, entities, and schemas
+      operationId: searchWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limitPerType
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 10
+        - name: types
+          in: query
+          description: Comma-separated list of result groups to search
+          schema:
+            type: string
+            example: projects,files,entities,schemas
+      responses:
+        '200':
+          description: Grouped search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
           $ref: '#/components/responses/Error'
         default:
           $ref: '#/components/responses/Error'
@@ -1103,6 +1140,118 @@ components:
           items:
             $ref: '#/components/schemas/EntityRelation'
       required: [outgoing, incoming]
+
+    ProjectSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pinned, active, archived]
+      required: [id, name, description, status]
+
+    ProjectFileSearchResult:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+        fileId:
+          type: string
+          format: uuid
+        path:
+          type: string
+        name:
+          type: string
+      required: [projectId, projectName, fileId, path, name]
+
+    EntitySearchResult:
+      type: object
+      properties:
+        entityId:
+          type: string
+          format: uuid
+        schemaId:
+          type: string
+          format: uuid
+        schemaName:
+          type: string
+        _name:
+          type: string
+        _slug:
+          type: string
+        _description:
+          type: string
+        _owner:
+          type: [string, 'null']
+        _lifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        matchedFields:
+          type: array
+          items:
+            type: string
+        matchedMetadata:
+          type: array
+          items:
+            type: string
+      required:
+        [entityId, schemaId, schemaName, _name, _slug, _description, _owner, _lifecycle, matchedFields, matchedMetadata]
+
+    SchemaFieldMatch:
+      type: object
+      properties:
+        fieldId:
+          type: string
+        fieldName:
+          type: string
+      required: [fieldId, fieldName]
+
+    SchemaSearchResult:
+      type: object
+      properties:
+        schemaId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        fieldMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaFieldMatch'
+      required: [schemaId, name, fieldMatches]
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSearchResult'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFileSearchResult'
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitySearchResult'
+        schemas:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaSearchResult'
+      required: [query, projects, files, entities, schemas]
 
     Project:
       type: object
