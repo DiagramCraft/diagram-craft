@@ -4,7 +4,7 @@ import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
 import {
-  TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink, TbStar,
+  TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink,
   TbTrash, TbPlus, TbX,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
@@ -281,7 +281,6 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
           {entity._description && <div className={styles.desc}>{entity._description}</div>}
         </div>
         <div className={styles.headActions}>
-          <button type="button" className={styles.iconBtn} title="Star"><TbStar size={14} /></button>
           {!editing ? (
             <button type="button" className={styles.btn} onClick={startEdit}><TbEdit size={12} /> Edit</button>
           ) : (

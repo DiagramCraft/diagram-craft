@@ -249,7 +249,6 @@ const TableView = ({ rows, schemaMap, navigate }: ViewProps) => (
     <table className={styles.table}>
       <thead>
         <tr>
-          <th className={styles.tableCheckbox}><input type="checkbox" /></th>
           <th style={{ minWidth: 240 }}>Name</th>
           <th>Type</th>
           <th>Owner</th>
@@ -266,9 +265,6 @@ const TableView = ({ rows, schemaMap, navigate }: ViewProps) => (
               key={e._uid}
               onClick={() => navigate({ view: 'entity-detail', entityId: e._uid })}
             >
-              <td className={styles.tableCheckbox} onClick={ev => ev.stopPropagation()}>
-                <input type="checkbox" />
-              </td>
               <td>
                 <div className={styles.tableName}>
                   {s && <TypeBadge color={resolveSchemaColor(s.schema, s.index)} name={s.schema.name} icon={s.schema.icon} size={18} />}

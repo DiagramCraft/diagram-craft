@@ -390,13 +390,7 @@ export const SearchScreen = ({
       <div className={styles.body}>
         <div className={styles.resultsList}>
           {trimmed === '' ? (
-            <EmptyRecents
-              onPick={s => {
-                setLocalQ(s);
-                onQueryChange(s);
-                onQuerySubmit(s);
-              }}
-            />
+            <EmptyState title="Start searching" sub="Search across entities, projects, diagrams, and schemas." />
           ) : loading ? (
             <EmptyState title="Searching…" sub="Looking through projects, files, entities, and schemas." />
           ) : totalResults === 0 ? (
@@ -872,22 +866,6 @@ const PreviewPane = ({
 };
 
 // ── Empty states ─────────────────────────────────────────────
-
-const EmptyRecents = ({ onPick }: { onPick: (s: string) => void }) => {
-  const recents = ['api', 'database', 'service', 'deprecated'];
-  return (
-    <div className={styles.emptyRecents}>
-      <div className={styles.sectionLabel}>Recent searches</div>
-      <div className={styles.recentChips}>
-        {recents.map(r => (
-          <button key={r} type="button" className={styles.recentChip} onClick={() => onPick(r)}>
-            <TbSearch size={10} /> {r}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const EmptyState = ({ title, sub }: { title: string; sub: string }) => (
   <div className={styles.empty}>
