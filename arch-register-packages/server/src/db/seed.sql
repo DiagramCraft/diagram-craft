@@ -10,37 +10,49 @@
 --   API       : 00000000-0000-0000-0000-000000000004
 --   Resource  : 00000000-0000-0000-0000-000000000005
 
-INSERT INTO workspace (id, name) VALUES
+INSERT INTO workspace (id, name, url_slug, short_code, description) VALUES
 (
   'default',
-  'Default Workspace'
+  'Default Workspace',
+  'default',
+  'DW',
+  'The default workspace'
 );
 
-INSERT INTO entity_schema (id, workspace, name, fields) VALUES
+INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order) VALUES
+  ('proposed',     'default', 'Proposed',     'var(--accent)', 0),
+  ('experimental', 'default', 'Experimental', 'var(--accent)', 1),
+  ('production',   'default', 'Production',   'var(--ok)',     2),
+  ('deprecated',   'default', 'Deprecated',   'var(--warn)',   3);
+
+INSERT INTO workspace_owner (id, workspace, sort_order) VALUES
+  ('platform-team', 'default', 0),
+  ('ux-team',       'default', 1),
+  ('security-team', 'default', 2);
+
+INSERT INTO entity_schema (id, workspace, name, fields, color, icon) VALUES
 (
   '00000000-0000-0000-0000-000000000001',
   'default',
   'Domain',
-  '[
-    {"id": "description", "name": "Description", "type": "longtext"}
-  ]'
+  '[]',
+  'var(--tag-system)', 'globe'
 ),
 (
   '00000000-0000-0000-0000-000000000002',
   'default',
   'System',
   '[
-    {"id": "description",  "name": "Description",  "type": "longtext"},
     {"id": "domain",       "name": "Domain",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000001", "minCount": 1, "maxCount": 1}
-  ]'
+  ]',
+  'var(--tag-database)', 'layers'
 ),
 (
   '00000000-0000-0000-0000-000000000003',
   'default',
   'Component',
   '[
-    {"id": "description",  "name": "Description",  "type": "longtext"},
     {"id": "technology",   "name": "Technology",   "type": "text"},
     {"id": "system",       "name": "System",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 1, "maxCount": 1},
@@ -50,14 +62,14 @@ INSERT INTO entity_schema (id, workspace, name, fields) VALUES
      "schemaId": "00000000-0000-0000-0000-000000000004", "minCount": 0, "maxCount": -1},
     {"id": "depends_on",   "name": "Depends On",   "type": "reference",
      "schemaId": "00000000-0000-0000-0000-000000000003", "minCount": 0, "maxCount": -1}
-  ]'
+  ]',
+  'var(--tag-component)', 'box'
 ),
 (
   '00000000-0000-0000-0000-000000000004',
   'default',
   'API',
   '[
-    {"id": "description",  "name": "Description",  "type": "longtext"},
     {"id": "api_type",     "name": "Type",          "type": "select",
      "options": [
        {"value": "openapi",  "label": "OpenAPI"},
@@ -67,18 +79,19 @@ INSERT INTO entity_schema (id, workspace, name, fields) VALUES
      ]},
     {"id": "system",       "name": "System",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 1, "maxCount": 1}
-  ]'
+  ]',
+  'var(--tag-api)', 'api'
 ),
 (
   '00000000-0000-0000-0000-000000000005',
   'default',
   'Resource',
   '[
-    {"id": "description",  "name": "Description",  "type": "longtext"},
     {"id": "resource_type","name": "Type",          "type": "text"},
     {"id": "system",       "name": "System",        "type": "containment",
      "schemaId": "00000000-0000-0000-0000-000000000002", "minCount": 0, "maxCount": 1}
-  ]'
+  ]',
+  'var(--tag-service)', 'database'
 );
 
 
@@ -98,58 +111,81 @@ INSERT INTO entity_schema (id, workspace, name, fields) VALUES
 --   Resource "postgres-main"    : 00000000-0000-0000-0005-000000000001
 
 -- Domain
-INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data) VALUES
 (
   '00000000-0000-0000-0001-000000000001',
   'default',
-  'engineering', 'default', 'Engineering', 'platform-team', 'production',
+  'engineering', 'default', 'Engineering',
+  'The core engineering domain covering all customer-facing products and infrastructure.',
+  'platform-team', 'production',
+  '{"core", "customer-facing"}',
+  '[]',
   '00000000-0000-0000-0000-000000000001',
-  '{"description": "The core engineering domain covering all customer-facing products and infrastructure."}'
+  '{}'
 );
 
 -- Systems (containment: domain → Engineering)
-INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data) VALUES
 (
   '00000000-0000-0000-0002-000000000001',
   'default',
-  'customer-portal', 'default', 'Customer Portal', 'ux-team', 'production',
+  'customer-portal', 'default', 'Customer Portal',
+  'Public-facing portal for customer self-service.',
+  'ux-team', 'production',
+  '{"tier-0", "customer-facing"}',
+  '[{"url": "https://wiki.example.com/customer-portal", "title": "Wiki", "type": "docs"}]',
   '00000000-0000-0000-0000-000000000002',
-  '{"description": "Public-facing portal for customer self-service.", "domain": "00000000-0000-0000-0001-000000000001"}'
+  '{"domain": "00000000-0000-0000-0001-000000000001"}'
 ),
 (
   '00000000-0000-0000-0002-000000000002',
   'default',
-  'identity-platform', 'default', 'Identity Platform', 'security-team', 'production',
+  'identity-platform', 'default', 'Identity Platform',
+  'Centralised authentication and authorisation service.',
+  'security-team', 'production',
+  '{"tier-0", "security"}',
+  '[]',
   '00000000-0000-0000-0000-000000000002',
-  '{"description": "Centralised authentication and authorisation service.", "domain": "00000000-0000-0000-0001-000000000001"}'
+  '{"domain": "00000000-0000-0000-0001-000000000001"}'
 );
 
 -- APIs (containment: system; inserted before Components so Component refs are valid)
-INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data) VALUES
 (
   '00000000-0000-0000-0004-000000000001',
   'default',
-  'customer-api', 'default', 'Customer API', 'platform-team', 'production',
+  'customer-api', 'default', 'Customer API',
+  'REST API exposing customer data to the portal frontend.',
+  'platform-team', 'production',
+  '{"rest", "public"}',
+  '[{"url": "https://api.example.com/docs/customer", "title": "API Docs", "type": "docs"}]',
   '00000000-0000-0000-0000-000000000004',
-  '{"description": "REST API exposing customer data to the portal frontend.", "api_type": "openapi", "system": "00000000-0000-0000-0002-000000000001"}'
+  '{"api_type": "openapi", "system": "00000000-0000-0000-0002-000000000001"}'
 ),
 (
   '00000000-0000-0000-0004-000000000002',
   'default',
-  'auth-api', 'default', 'Auth API', 'security-team', 'production',
+  'auth-api', 'default', 'Auth API',
+  'gRPC API for token issuance and validation.',
+  'security-team', 'production',
+  '{"grpc", "internal"}',
+  '[]',
   '00000000-0000-0000-0000-000000000004',
-  '{"description": "gRPC API for token issuance and validation.", "api_type": "grpc", "system": "00000000-0000-0000-0002-000000000002"}'
+  '{"api_type": "grpc", "system": "00000000-0000-0000-0002-000000000002"}'
 );
 
 -- Components (containment: system; reference: provides_apis, consumes_apis, depends_on)
-INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data) VALUES
 (
   '00000000-0000-0000-0003-000000000001',
   'default',
-  'api-gateway', 'default', 'API Gateway', 'platform-team', 'production',
+  'api-gateway', 'default', 'API Gateway',
+  'Edge gateway that routes requests and enforces rate limits.',
+  'platform-team', 'production',
+  '{"nodejs", "tier-0"}',
+  '[{"url": "https://github.com/example/api-gateway", "title": "Source", "type": "source"}]',
   '00000000-0000-0000-0000-000000000003',
   '{
-    "description": "Edge gateway that routes requests and enforces rate limits.",
     "technology": "Node.js",
     "system": "00000000-0000-0000-0002-000000000001",
     "provides_apis": "00000000-0000-0000-0004-000000000001",
@@ -159,10 +195,13 @@ INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, sche
 (
   '00000000-0000-0000-0003-000000000002',
   'default',
-  'frontend-app', 'default', 'Frontend App', 'ux-team', 'production',
+  'frontend-app', 'default', 'Frontend App',
+  'React single-page application served to end users.',
+  'ux-team', 'production',
+  '{"react", "frontend"}',
+  '[]',
   '00000000-0000-0000-0000-000000000003',
   '{
-    "description": "React single-page application served to end users.",
     "technology": "React",
     "system": "00000000-0000-0000-0002-000000000001",
     "consumes_apis": "00000000-0000-0000-0004-000000000001",
@@ -172,10 +211,13 @@ INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, sche
 (
   '00000000-0000-0000-0003-000000000003',
   'default',
-  'auth-service', 'default', 'Auth Service', 'security-team', 'production',
+  'auth-service', 'default', 'Auth Service',
+  'Issues and validates JWTs; integrates with the identity platform.',
+  'security-team', 'production',
+  '{"go", "security"}',
+  '[]',
   '00000000-0000-0000-0000-000000000003',
   '{
-    "description": "Issues and validates JWTs; integrates with the identity platform.",
     "technology": "Go",
     "system": "00000000-0000-0000-0002-000000000002",
     "provides_apis": "00000000-0000-0000-0004-000000000002"
@@ -183,11 +225,307 @@ INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, sche
 );
 
 -- Resource (containment: system; optional)
-INSERT INTO entity (id, workspace, slug, namespace, name, owner, lifecycle, schema_id, data) VALUES
+INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data) VALUES
 (
   '00000000-0000-0000-0005-000000000001',
   'default',
-  'postgres-main', 'default', 'Postgres Main', 'platform-team', 'production',
+  'postgres-main', 'default', 'Postgres Main',
+  'Primary PostgreSQL cluster used by the Customer Portal system.',
+  'platform-team', 'production',
+  '{"postgres", "managed"}',
+  '[{"url": "https://grafana.example.com/d/postgres-main", "title": "Dashboard", "type": "dashboard"}]',
   '00000000-0000-0000-0000-000000000005',
-  '{"description": "Primary PostgreSQL cluster used by the Customer Portal system.", "resource_type": "database", "system": "00000000-0000-0000-0002-000000000001"}'
+  '{"resource_type": "database", "system": "00000000-0000-0000-0002-000000000001"}'
+);
+
+-- ============================================================
+-- Seed projects and files
+-- Folders are represented by `.keep` marker files.
+-- ============================================================
+
+-- Project IDs
+--   "Customer Portal Modernisation" : 10000000-0000-0000-0000-000000000001
+--   "Identity Hardening"            : 10000000-0000-0000-0000-000000000002
+--   "Architecture Reviews"          : 10000000-0000-0000-0000-000000000003
+
+INSERT INTO project (id, workspace, name, description, status) VALUES
+(
+  '10000000-0000-0000-0000-000000000001',
+  'default',
+  'Customer Portal Modernisation',
+  'Current-state and target-state diagrams for the customer portal platform.',
+  'pinned'
+),
+(
+  '10000000-0000-0000-0000-000000000002',
+  'default',
+  'Identity Hardening',
+  'Security-focused diagrams for authentication, token flows, and boundary reviews.',
+  'active'
+),
+(
+  '10000000-0000-0000-0000-000000000003',
+  'default',
+  'Architecture Reviews',
+  'Archived review packs and historical diagrams from earlier architecture forums.',
+  'archived'
+);
+
+-- Project file IDs
+--   Root and folder marker files for seeded project trees
+INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes) VALUES
+(
+  '11000000-0000-0000-0000-000000000001',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'overview.dgc',
+  'overview.dgc',
+  32768
+),
+(
+  '11000000-0000-0000-0000-000000000002',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'current-state/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000003',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'current-state/container-view.dgc',
+  'container-view.dgc',
+  58312
+),
+(
+  '11000000-0000-0000-0000-000000000004',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'target-state/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000005',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'target-state/domain-alignment.dgc',
+  'domain-alignment.dgc',
+  44190
+),
+(
+  '11000000-0000-0000-0000-000000000006',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'auth-boundaries/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000007',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'auth-boundaries/trust-zones.dgc',
+  'trust-zones.dgc',
+  28640
+),
+(
+  '11000000-0000-0000-0000-000000000008',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'flows/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000009',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'flows/login-sequence.dgc',
+  'login-sequence.dgc',
+  39112
+),
+(
+  '11000000-0000-0000-0000-000000000010',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  '2024-q4-review.dgc',
+  '2024-q4-review.dgc',
+  21504
+),
+(
+  '11000000-0000-0000-0000-000000000011',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  'review-pack/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000012',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  'review-pack/decision-summary.dgc',
+  'decision-summary.dgc',
+  19456
+);
+
+-- ============================================================
+-- Seed audit log
+-- ============================================================
+
+INSERT INTO audit_log (
+  id,
+  workspace,
+  timestamp,
+  user_id,
+  operation,
+  entity_type,
+  entity_id,
+  entity_name,
+  entity_slug,
+  schema_id,
+  changes,
+  metadata
+) VALUES
+(
+  '12000000-0000-0000-0000-000000000001',
+  'default',
+  '2026-05-10T09:00:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000001',
+  'Customer Portal Modernisation',
+  NULL,
+  NULL,
+  '{"new":{"name":"Customer Portal Modernisation","description":"Current-state and target-state diagrams for the customer portal platform.","status":"pinned"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000002',
+  'default',
+  '2026-05-10T09:05:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000002',
+  'current-state',
+  NULL,
+  NULL,
+  '{"new":{"path":"current-state","type":"folder"}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000001","path":"current-state","is_folder":true}'
+),
+(
+  '12000000-0000-0000-0000-000000000003',
+  'default',
+  '2026-05-10T09:12:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000003',
+  'container-view.dgc',
+  NULL,
+  NULL,
+  '{"new":{"path":"current-state/container-view.dgc","name":"container-view.dgc","size_bytes":58312}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000001","path":"current-state/container-view.dgc"}'
+),
+(
+  '12000000-0000-0000-0000-000000000004',
+  'default',
+  '2026-05-11T13:45:00Z',
+  'system',
+  'update',
+  'entity',
+  '00000000-0000-0000-0002-000000000001',
+  'Customer Portal',
+  'customer-portal',
+  '00000000-0000-0000-0000-000000000002',
+  '{"old":{"description":"Public-facing portal for customer self-service."},"new":{"description":"Public-facing portal for customer self-service and account management."}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000005',
+  'default',
+  '2026-05-12T08:30:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000002',
+  'Identity Hardening',
+  NULL,
+  NULL,
+  '{"new":{"name":"Identity Hardening","description":"Security-focused diagrams for authentication, token flows, and boundary reviews.","status":"active"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000006',
+  'default',
+  '2026-05-12T08:34:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000006',
+  'auth-boundaries',
+  NULL,
+  NULL,
+  '{"new":{"path":"auth-boundaries","type":"folder"}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000002","path":"auth-boundaries","is_folder":true}'
+),
+(
+  '12000000-0000-0000-0000-000000000007',
+  'default',
+  '2026-05-12T08:41:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000009',
+  'login-sequence.dgc',
+  NULL,
+  NULL,
+  '{"new":{"path":"flows/login-sequence.dgc","name":"login-sequence.dgc","size_bytes":39112}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000002","path":"flows/login-sequence.dgc"}'
+),
+(
+  '12000000-0000-0000-0000-000000000008',
+  'default',
+  '2026-05-15T16:20:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000003',
+  'Architecture Reviews',
+  NULL,
+  NULL,
+  '{"new":{"name":"Architecture Reviews","description":"Archived review packs and historical diagrams from earlier architecture forums.","status":"archived"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000009',
+  'default',
+  '2026-05-18T11:10:00Z',
+  'system',
+  'update',
+  'project',
+  '10000000-0000-0000-0000-000000000003',
+  'Architecture Reviews',
+  NULL,
+  NULL,
+  '{"old":{"status":"active"},"new":{"status":"archived"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000010',
+  'default',
+  '2026-05-20T07:55:00Z',
+  'system',
+  'update',
+  'entity',
+  '00000000-0000-0000-0003-000000000003',
+  'Auth Service',
+  'auth-service',
+  '00000000-0000-0000-0000-000000000003',
+  '{"old":{"lifecycle":"experimental"},"new":{"lifecycle":"production"}}',
+  '{}'
 );

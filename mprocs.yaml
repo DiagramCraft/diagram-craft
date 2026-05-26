@@ -1,0 +1,32 @@
+procs:
+  "DC web :5173":
+    shell: |
+      PORT=5173 pnpm client:dev
+    stop: SIGKILL
+    log:
+      file: dc-web.log
+  "DC server :3000":
+    shell: |
+      cd packages/server-main && \
+      pnpm run dev --data-dir ./data --fs-root ../main/public --bootstrap-data /Users/magnusjohansson/Documents/Private/projects/diagram-craft/packages/main/public/data/dataset1/data.json --bootstrap-schemas /Users/magnusjohansson/Documents/Private/projects/diagram-craft/packages/main/public/data/dataset1/schemas.json
+    stop: SIGKILL
+    log:
+      file: dc-web.log
+  "AR web :5174":
+    shell: |
+      cd arch-register-packages/web && \
+      PORT=5174 pnpm dev
+    stop: SIGKILL
+    log:
+      file: ar-web.log
+  "AR server :3010":
+    shell: |
+      cd arch-register-packages/server && \
+      pnpm dev
+    stop: SIGKILL
+    log:
+      file: ar-server.log
+
+proc_log:
+  dir: .logs
+  mode: truncate

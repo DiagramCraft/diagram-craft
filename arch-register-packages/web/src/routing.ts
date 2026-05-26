@@ -10,11 +10,16 @@ export type ViewId =
 
 export type Route = {
   view: ViewId;
-  workspaceId: string;
+  workspaceId: string | null;
   projectId: string | null;
   entityId: string | null;
   diagramId: string | null;
+  schemaId: string | null;
+  projectSidebarTab: 'projects' | 'archive';
   typeFilter: string | null;
+  statusFilter: string | null;
+  ownerFilter: string | null;
+  folderFilter: string | null;
   settingsSection: string;
   prev: Route | null;
 };

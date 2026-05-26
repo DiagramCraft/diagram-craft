@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
-  TbMenu2, TbChevronDown, TbChevronRight, TbSearch, TbBell,
+  TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
   TbSettings, TbCheck, TbPlus,
 } from 'react-icons/tb';
-import type { Workspace } from '../data';
+import type { Workspace } from '../api';
 
 type BreadcrumbItem = {
   label: string;
@@ -19,8 +19,10 @@ type TopBarProps = {
   onPickWs: (id: string) => void;
   trail: BreadcrumbItem[];
   query: string;
-  onQuery: (q: string) => void;
+  onQueryChange: (q: string) => void;
+  onQuerySubmit: (q: string) => void;
   onOpenSettings: () => void;
+  onAddWorkspace: () => void;
 };
 
 export const TopBar = ({
@@ -29,67 +31,108 @@ export const TopBar = ({
   onPickWs,
   trail,
   query,
-  onQuery,
+  onQueryChange,
+  onQuerySubmit,
   onOpenSettings,
-}: TopBarProps) => (
-  <div className={styles.topbar}>
-    <div className={styles.left}>
-      <IconButton title="Menu">
-        <TbMenu2 size={14} />
-      </IconButton>
-      <div className={styles.sep} />
-      <WorkspaceSwitcher
-        workspaces={workspaces}
-        current={currentWs}
-        onPick={onPickWs}
-        onOpenSettings={onOpenSettings}
-      />
-      <div className={styles.sep} />
-      <Breadcrumbs trail={trail} />
-    </div>
-    <div className={styles.center}>
-      <div className={styles.search}>
-        <TbSearch size={12} />
-        <input
-          placeholder="Search entities, diagrams, projects..."
-          value={query}
-          onChange={e => onQuery(e.target.value)}
+  onAddWorkspace,
+}: TopBarProps) => {
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Enter') return;
+    onQuerySubmit(query);
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  return (
+    <div className={styles.topbar}>
+      <div className={styles.left}>
+        <IconButton title="Menu">
+          <TbMenu2 size={14} />
+        </IconButton>
+        <div className={styles.sep} />
+        <WorkspaceSwitcher
+          workspaces={workspaces}
+          current={currentWs}
+          onPick={onPickWs}
+          onAddWorkspace={onAddWorkspace}
         />
-        <span className={styles.kbd}>&#8984;K</span>
+        <div className={styles.sep} />
+        <Breadcrumbs trail={trail} />
+      </div>
+      <div className={styles.center}>
+        <div className={styles.search}>
+          <TbSearch size={12} />
+          <input
+            ref={searchRef}
+            placeholder="Search entities, diagrams, projects..."
+            value={query}
+            onChange={e => onQueryChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <span className={styles.kbd}>&#8984;K</span>
+        </div>
+      </div>
+      <div className={styles.right}>
+        <IconButton title="Workspace settings" onClick={onOpenSettings}>
+          <TbSettings size={14} />
+        </IconButton>
+        <div className={styles.avatar} title="Anika P.">
+          AP
+        </div>
       </div>
     </div>
-    <div className={styles.right}>
-      <IconButton title="Notifications">
-        <TbBell size={14} />
-      </IconButton>
-      <IconButton title="Workspace settings" onClick={onOpenSettings}>
-        <TbSettings size={14} />
-      </IconButton>
-      <div className={styles.avatar} title="Anika P.">
-        AP
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const WorkspaceSwitcher = ({
   workspaces,
   current,
   onPick,
-  onOpenSettings,
+  onAddWorkspace,
 }: {
   workspaces: Workspace[];
   current: string;
   onPick: (id: string) => void;
-  onOpenSettings: () => void;
+  onAddWorkspace: () => void;
 }) => {
   const [open, setOpen] = useState(false);
-  const ws = workspaces.find(w => w.id === current) ?? workspaces[0]!;
+  const ref = useRef<HTMLDivElement>(null);
+  const ws = workspaces.find(w => w.id === current) ?? workspaces[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  if (!ws) return null;
 
   return (
-    <div className={styles.wsSwitcher} onMouseLeave={() => setOpen(false)}>
+    <div className={styles.wsSwitcher} ref={ref}>
       <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
-        <span className={styles.wsBadge}>{ws.short}</span>
+        <span className={styles.wsBadge}>{ws.short_code}</span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
       </button>
@@ -107,30 +150,20 @@ const WorkspaceSwitcher = ({
               }}
             >
               <span className={styles.wsBadge} style={{ marginRight: 8 }}>
-                {w.short}
+                {w.short_code}
               </span>
               <span style={{ flex: 1 }}>
                 <div>{w.name}</div>
-                <div className={styles.menuSub}>
-                  {w.entities} entities &middot; {w.projects} projects
-                </div>
+                {w.description && (
+                  <div className={styles.menuSub}>{w.description}</div>
+                )}
               </span>
               {w.id === current && <TbCheck size={14} />}
             </button>
           ))}
           <div className={styles.menuSep} />
-          <button type="button" className={styles.menuItem}>
+          <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
             <TbPlus size={12} /> New workspace...
-          </button>
-          <button
-            type="button"
-            className={styles.menuItem}
-            onClick={() => {
-              setOpen(false);
-              onOpenSettings();
-            }}
-          >
-            <TbSettings size={12} /> Workspace settings
           </button>
         </div>
       )}

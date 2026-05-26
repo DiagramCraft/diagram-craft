@@ -1,0 +1,848 @@
+/* Entity Detail */
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header */
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 12px;
+}
+
+.headLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.backLink {
+  color: var(--accent-strong);
+  background: none;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.headRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+}
+
+.title {
+  font-size: 22px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 720px;
+  margin-top: 8px;
+  color: var(--fg-3);
+}
+
+.headActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tabs bar */
+.tabBar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 24px;
+  margin-bottom: 0;
+}
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.tab {
+  height: 32px;
+  padding: 0 10px;
+  color: var(--fg-2);
+  border-bottom: 1.5px solid transparent;
+  font-size: 12px;
+  position: relative;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--fg-0);
+}
+
+.tabActive {
+  color: var(--fg-0);
+  border-bottom-color: var(--accent);
+}
+
+/* Overview grid */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+  padding: 16px 24px 32px;
+}
+
+.propsPanel,
+.sidePanel {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 12px 14px 16px;
+}
+
+/* Section label */
+.sectionLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sectionLabel:first-child {
+  margin-top: 0;
+}
+
+/* Metadata bar */
+.metaBar {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  margin-bottom: 4px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--fg-2);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.metaItem:last-child {
+  border-right: 0;
+}
+
+.metaLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fg-3);
+  margin-right: 4px;
+}
+
+.metaValue {
+  color: var(--fg-1);
+}
+
+/* Property rows */
+.propList {
+  display: flex;
+  flex-direction: column;
+}
+
+.propRow {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.propRow:last-child {
+  border-bottom: 0;
+}
+
+.propLabel {
+  font-size: 12px;
+  color: var(--fg-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.propReq {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+.propType {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+}
+
+.propValue {
+  font-size: 12.5px;
+  color: var(--fg-0);
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.propLink {
+  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.propLink:hover {
+  text-decoration: underline;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Metadata section - distinct visual treatment */
+.metaSection {
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 10px 14px 12px;
+  margin-bottom: 12px;
+}
+
+.metaSectionLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metaPropRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.metaPropLabel {
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.metaPropValue {
+  color: var(--fg-1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Divider */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 8px 0;
+}
+
+/* Link editing */
+.linksEdit {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linkRow .inputInline {
+  flex: 1;
+  min-width: 0;
+}
+
+.addLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--accent-strong);
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.addLinkBtn:hover {
+  text-decoration: underline;
+}
+
+/* Inline input for edit mode */
+.inputInline {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--fg-0);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+.inputInline:focus {
+  border-color: var(--accent);
+}
+
+.selectInline {
+  composes: inputInline;
+  appearance: none;
+  padding-right: 22px;
+  cursor: pointer;
+}
+
+.textareaInline {
+  composes: inputInline;
+  height: auto;
+  padding: 6px 8px;
+  min-height: 48px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: var(--r);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--bg-4);
+  color: var(--fg-0);
+  border-color: var(--border-strong);
+}
+
+.btnPrimary {
+  composes: btn;
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+}
+
+.btnPrimary:hover {
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+.btnDanger {
+  composes: btn;
+  background: transparent;
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--border));
+  color: oklch(0.72 0.16 25);
+}
+
+.btnDanger:hover {
+  background: color-mix(in oklch, var(--danger) 12%, transparent);
+}
+
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+/* Change history */
+.changesList {
+  padding: 16px 24px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.changeRow {
+  display: grid;
+  grid-template-columns: 100px 100px 1fr 120px 14px 120px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+
+.changeRow:last-child {
+  border-bottom: 0;
+}
+
+.changeWhen {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.changeWho {
+  color: var(--fg-0);
+  font-size: 12px;
+}
+
+.changeWhat {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.changeFrom,
+.changeTo {
+  color: var(--fg-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Relations */
+.relationsPage {
+  padding: 16px 24px 32px;
+}
+
+.relationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.relation:hover {
+  border-color: var(--border-strong);
+}
+
+.relationName {
+  color: var(--fg-0);
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 8px;
+  color: var(--fg-2);
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-1);
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  color: var(--fg-2);
+}
+
+.dim {
+  color: var(--fg-3);
+}
+
+/* ── Topology tab ──────────────────────────────────────────── */
+.topologyPage {
+  position: relative;
+  padding: 14px 16px;
+  margin: 16px 24px 32px;
+  background:
+    radial-gradient(circle at 1px 1px, oklch(0.24 0.005 260) 1px, transparent 1px) 0 0 / 16px 16px,
+    var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topologyHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.topologySubtitle {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.topoAxisLabel {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  font-weight: 500;
+}
+
+/* Parent containment */
+.topoParents {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.topoParentsItems {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.topoParentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  color: var(--fg-1);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.topoParentChip:hover {
+  background: var(--bg-3);
+  border-color: var(--border-strong);
+}
+
+.topoParentName {
+  font-weight: 500;
+  color: var(--fg-0);
+}
+
+.topoParentArrow {
+  line-height: 0;
+  opacity: 0.7;
+}
+
+/* Main entity box */
+.topoEntityBox {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--accent-dim);
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border-radius: var(--r-md);
+  padding: 0 14px 14px;
+  margin: 0 5%;
+  box-shadow:
+    0 0 0 4px color-mix(in oklch, var(--accent) 6%, transparent),
+    0 1px 0 var(--border) inset;
+}
+
+.topoEntityAccent {
+  height: 3px;
+  background: var(--accent);
+  margin: 0 -14px;
+  border-radius: var(--r-md) var(--r-md) 0 0;
+}
+
+.topoEntityHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0 10px;
+}
+
+.topoEntityMeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.topoEntityEyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+
+.topoEntityName {
+  font-size: 16px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+.topoEntitySection {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  border-top: 1px dashed var(--border-subtle);
+  padding: 10px 0 8px;
+  font-weight: 500;
+}
+
+.topoEntityEmpty {
+  font-size: 11.5px;
+  font-style: italic;
+  border-top: 1px dashed var(--border-subtle);
+  padding-top: 10px;
+}
+
+/* Contained children grid */
+.topoChildrenGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.topoChildCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 9px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.topoChildCard:hover {
+  background: var(--bg-3);
+  border-color: var(--border-strong);
+}
+
+.topoChildHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.topoChildMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  flex-wrap: wrap;
+}
+
+/* References area */
+.topoRefsGrid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  column-gap: 90px;
+  row-gap: 6px;
+  padding-top: 44px;
+  margin-top: -8px;
+}
+
+.topoRefsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.topoRefsColIn {
+  align-items: flex-start;
+}
+
+.topoRefsColIn .topoAxisLabel {
+  align-self: flex-start;
+}
+
+.topoRefsColOut {
+  align-items: flex-end;
+}
+
+.topoRefsColOut .topoAxisLabel {
+  align-self: flex-end;
+}
+
+.topoRefGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topoRefsEmpty {
+  font-size: 11px;
+  font-style: italic;
+  padding: 6px 2px;
+}
+
+.topoRefCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 7px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  width: 240px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.topoRefCard:hover {
+  background: var(--bg-3);
+  border-color: var(--accent-dim);
+}
+
+.topoRefBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topoRefKind {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+}
+
+/* Shared card elements */
+.topoCardBar {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+}
+
+.topoCardName {
+  font-size: 12.5px;
+  color: var(--fg-0);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* SVG edge overlay */
+.topoEdgeSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}

@@ -44,6 +44,9 @@ export type SchemaField = TextField | BooleanField | SelectField | ReferenceFiel
 export type Workspace = {
   id: string;
   name: string;
+  url_slug: string;
+  short_code: string;
+  description: string;
   created_at: Date;
   updated_at: Date;
 };
@@ -53,11 +56,35 @@ export type EntitySchema = {
   workspace: string;
   name: string;
   fields: SchemaField[];
+  color: string | null;
+  icon: string | null;
   created_at: Date;
   updated_at: Date;
 };
 
-export type LifecycleStatus = 'experimental' | 'production' | 'deprecated';
+export type LifecycleStatus = string;
+
+export type WorkspaceLifecycleState = {
+  id: string;
+  workspace: string;
+  label: string;
+  color: string;
+  sort_order: number;
+  created_at: Date;
+};
+
+export type WorkspaceOwner = {
+  id: string;
+  workspace: string;
+  sort_order: number;
+  created_at: Date;
+};
+
+export type EntityLink = {
+  url: string;
+  title: string;
+  type?: string;
+};
 
 export type Entity = {
   id: string;
@@ -65,8 +92,11 @@ export type Entity = {
   slug: string;
   namespace: string;
   name: string;
+  description: string;
   owner: string | null;
   lifecycle: LifecycleStatus | null;
+  tags: string[];
+  links: EntityLink[];
   schema_id: string;
   data: Record<string, unknown>;
   created_at: Date;
@@ -78,11 +108,36 @@ export type EntityApiResponse = {
   _uid: string;
   _workspace: string;
   _schemaId: string;
+  _name: string;
   _slug: string;
   _namespace: string;
+  _description: string;
   _owner: string | null;
   _lifecycle: LifecycleStatus | null;
+  _tags: string[];
+  _links: EntityLink[];
   [field: string]: unknown;
+};
+
+export type Project = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  status: 'pinned' | 'active' | 'archived';
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type ProjectFile = {
+  id: string;
+  workspace: string;
+  project_id: string;
+  path: string;
+  name: string;
+  size_bytes: number;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export const encodeRefs = (refs: string[]): string => refs.join(',');
@@ -92,4 +147,44 @@ export const decodeRefs = (raw: unknown): string[] => {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
+};
+
+export type AuditOperation = 'create' | 'update' | 'delete';
+
+export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
+
+export type AuditLogEntry = {
+  id: string;
+  workspace: string;
+  timestamp: Date;
+  user_id: string;
+  operation: AuditOperation;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string | null;
+  schema_id: string | null;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  metadata: Record<string, unknown>;
+};
+
+export type AuditLogApiResponse = {
+  id: string;
+  workspace: string;
+  timestamp: string;
+  user_id: string;
+  operation: AuditOperation;
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_name: string;
+  entity_slug: string | null;
+  schema_id: string | null;
+  changes: {
+    old?: Record<string, unknown>;
+    new?: Record<string, unknown>;
+  };
+  metadata: Record<string, unknown>;
 };

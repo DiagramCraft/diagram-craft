@@ -1,7 +1,6 @@
 import styles from './NavRail.module.css';
 import {
   TbHome, TbStack2, TbDatabase, TbCode, TbSearch,
-  TbLifebuoy, TbUser,
 } from 'react-icons/tb';
 import type { ViewId } from '../routing';
 
@@ -46,14 +45,6 @@ export const NavRail = ({ view, onPick }: NavRailProps) => {
             </button>
           );
         })}
-      </div>
-      <div className={styles.bottom}>
-        <button type="button" title="Help" className={styles.btn}>
-          <TbLifebuoy size={14} />
-        </button>
-        <button type="button" title="Account" className={styles.btn}>
-          <TbUser size={14} />
-        </button>
       </div>
     </div>
   );

@@ -1,39 +1,88 @@
-import { ENTITY_TYPES } from '../data';
 import styles from './TypeBadge.module.css';
 import {
-  TbBox, TbApi, TbServer, TbDatabase, TbCpu,
+  TbBox, TbApi, TbServer, TbDatabase, TbCloud,
+  TbLock, TbUsers, TbWorld, TbCpu, TbTopologyRing,
+  TbFolder, TbTerminal, TbPlug, TbStack2, TbGitBranch, TbShield,
+  TbCode, TbMessage, TbSettings, TbChartBar, TbBell,
+  TbKey, TbMail, TbMapPin, TbClipboard, TbTag,
+  TbLink, TbTruck, TbHeart, TbRocket,
+  TbBuilding, TbPackage, TbPuzzle, TbWand, TbEye,
+  TbFlame, TbSnowflake, TbCompass, TbAntenna, TbCertificate,
+  TbBolt, TbPalette, TbMicroscope,
 } from 'react-icons/tb';
+import type { SchemaIconId } from '../api';
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-  Component: TbCpu,
-  Api: TbApi,
-  Service: TbServer,
-  Database: TbDatabase,
-  Box: TbBox,
+const ICON_MAP: Record<SchemaIconId, React.ComponentType<{ size: number }>> = {
+  box: TbBox,
+  api: TbApi,
+  server: TbServer,
+  database: TbDatabase,
+  cloud: TbCloud,
+  lock: TbLock,
+  users: TbUsers,
+  globe: TbWorld,
+  cpu: TbCpu,
+  network: TbTopologyRing,
+  folder: TbFolder,
+  terminal: TbTerminal,
+  plug: TbPlug,
+  layers: TbStack2,
+  'git-branch': TbGitBranch,
+  shield: TbShield,
+  code: TbCode,
+  message: TbMessage,
+  settings: TbSettings,
+  chart: TbChartBar,
+  bell: TbBell,
+  key: TbKey,
+  mail: TbMail,
+  'map-pin': TbMapPin,
+  clipboard: TbClipboard,
+  tag: TbTag,
+  link: TbLink,
+  truck: TbTruck,
+  heart: TbHeart,
+  rocket: TbRocket,
+  building: TbBuilding,
+  package: TbPackage,
+  puzzle: TbPuzzle,
+  wand: TbWand,
+  eye: TbEye,
+  flame: TbFlame,
+  snowflake: TbSnowflake,
+  compass: TbCompass,
+  antenna: TbAntenna,
+  certificate: TbCertificate,
+  bolt: TbBolt,
+  palette: TbPalette,
+  microscope: TbMicroscope,
 };
 
 type TypeBadgeProps = {
-  typeId: string;
+  color: string;
+  name?: string;
   size?: number;
+  icon?: string | null;
 };
 
-export const TypeBadge = ({ typeId, size = 18 }: TypeBadgeProps) => {
-  const t = ENTITY_TYPES.find(x => x.id === typeId);
-  if (!t) return null;
-  const Ic = ICON_MAP[t.icon] ?? TbBox;
+export const TypeBadge = ({ color, name, size = 18, icon }: TypeBadgeProps) => {
+  const IconComponent = (icon ? ICON_MAP[icon as SchemaIconId] : null) ?? TbBox;
+  const iconSize = Math.round(size * 0.66);
   return (
     <span
       className={styles.badge}
-      title={t.name}
+      title={name}
       style={{
         width: size,
         height: size,
-        background: `color-mix(in oklch, ${t.color} 22%, transparent)`,
-        color: t.color,
-        borderColor: `color-mix(in oklch, ${t.color} 40%, transparent)`,
+        background: `color-mix(in oklch, ${color} 22%, transparent)`,
+        color: color,
+        borderColor: `color-mix(in oklch, ${color} 40%, transparent)`,
       }}
     >
-      <Ic size={Math.round(size * 0.66)} />
+      <IconComponent size={iconSize} />
     </span>
   );
 };
+
+export { ICON_MAP };

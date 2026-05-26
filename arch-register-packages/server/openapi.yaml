@@ -1,0 +1,1378 @@
+openapi: 3.1.0
+info:
+  title: Arch Register API
+  version: 1.0.0
+  description: REST API for the Architecture Register.
+servers:
+  - url: http://localhost:3010
+    description: Local development server
+tags:
+  - name: Workspaces
+  - name: Schemas
+  - name: Entities
+  - name: Projects
+  - name: Search
+paths:
+  /api/workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List workspaces
+      operationId: listWorkspaces
+      responses:
+        '200':
+          description: Workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      tags: [Workspaces]
+      summary: Create workspace
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '200':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/workspaces/{id}:
+    put:
+      tags: [Workspaces]
+      summary: Update workspace
+      operationId: updateWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+      responses:
+        '200':
+          description: Workspace updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/schemas:
+    get:
+      tags: [Schemas]
+      summary: List schemas
+      operationId: listSchemas
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Schemas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EntitySchemaWithCount'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      tags: [Schemas]
+      summary: Create schema
+      operationId: createSchema
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertSchemaRequest'
+      responses:
+        '200':
+          description: Schema created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitySchema'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/schemas/{id}:
+    get:
+      tags: [Schemas]
+      summary: Get schema
+      operationId: getSchema
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Schema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitySchema'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Schemas]
+      summary: Update schema
+      operationId: updateSchema
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertSchemaRequest'
+      responses:
+        '200':
+          description: Schema updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntitySchema'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      tags: [Schemas]
+      summary: Delete schema
+      operationId: deleteSchema
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Schema deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data:
+    get:
+      tags: [Entities]
+      summary: List entities
+      operationId: listEntities
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: _schemaId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: owner
+          in: query
+          schema:
+            type: string
+        - name: lifecycle
+          in: query
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+        - name: q
+          in: query
+          description: Case-insensitive substring match on name, slug, description, owner, and tags.
+          schema:
+            type: string
+        - name: view
+          in: query
+          schema:
+            type: string
+            enum: [full, summary]
+            default: full
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: Entities in either summary or full view
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/EntitySummary'
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/EntityRecord'
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      tags: [Entities]
+      summary: Create entity
+      operationId: createEntity
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityWriteRequest'
+      responses:
+        '200':
+          description: Entity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRecord'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/facets:
+    get:
+      tags: [Entities]
+      summary: Aggregate entity facets
+      operationId: getEntityFacets
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Entity facet counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityFacets'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/{id}:
+    get:
+      tags: [Entities]
+      summary: Get entity
+      operationId: getEntity
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRecord'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Entities]
+      summary: Replace entity
+      operationId: updateEntity
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityWriteRequest'
+      responses:
+        '200':
+          description: Entity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRecord'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      tags: [Entities]
+      summary: Delete entity
+      operationId: deleteEntity
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Entity deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/{id}/relations:
+    get:
+      tags: [Entities]
+      summary: Get entity relations
+      operationId: getEntityRelations
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Outgoing and incoming relations for the entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRelations'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/search:
+    get:
+      tags: [Search]
+      summary: Search across projects, files, entities, and schemas
+      operationId: searchWorkspace
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limitPerType
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 10
+        - name: types
+          in: query
+          description: Comma-separated list of result groups to search
+          schema:
+            type: string
+            example: projects,files,entities,schemas
+      responses:
+        '200':
+          description: Grouped search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      operationId: listProjects
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectWithFileCount'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      tags: [Projects]
+      summary: Create project
+      operationId: createProject
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertProjectRequest'
+      responses:
+        '200':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Get project with file tree
+      operationId: getProject
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Project with files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Projects]
+      summary: Update project
+      operationId: updateProject
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertProjectRequest'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      tags: [Projects]
+      summary: Delete project
+      operationId: deleteProject
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Project deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/files:
+    get:
+      tags: [Projects]
+      summary: List project files as a tree
+      operationId: listProjectFiles
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: File tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileTree'
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/files/{path}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspacePath'
+      - $ref: '#/components/parameters/UuidIdPath'
+      - $ref: '#/components/parameters/FilePathPath'
+    get:
+      tags: [Projects]
+      summary: Read project file JSON content
+      operationId: getProjectFile
+      responses:
+        '200':
+          description: Parsed JSON file content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArbitraryJson'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Projects]
+      summary: Create or replace project file
+      operationId: putProjectFile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArbitraryJson'
+      responses:
+        '200':
+          description: File metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectFile'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    delete:
+      tags: [Projects]
+      summary: Delete project file
+      operationId: deleteProjectFile
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/folders:
+    post:
+      tags: [Projects]
+      summary: Create folder
+      operationId: createProjectFolder
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+      responses:
+        '200':
+          description: Folder created via .keep marker
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateFolderResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/folders/rename:
+    put:
+      tags: [Projects]
+      summary: Rename folder
+      operationId: renameProjectFolder
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameFolderRequest'
+      responses:
+        '200':
+          description: Folder renamed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountSuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/folders/{path}:
+    delete:
+      tags: [Projects]
+      summary: Delete folder recursively
+      operationId: deleteProjectFolder
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+        - $ref: '#/components/parameters/FilePathPath'
+      responses:
+        '200':
+          description: Folder deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountSuccessMessage'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+components:
+  parameters:
+    WorkspacePath:
+      name: workspace
+      in: path
+      required: true
+      schema:
+        type: string
+    WorkspaceIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    UuidIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FilePathPath:
+      name: path
+      in: path
+      required: true
+      description: Relative project file or folder path. May contain slashes.
+      schema:
+        type: string
+
+  responses:
+    Error:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        statusText:
+          type: string
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/ArbitraryJson'
+      additionalProperties: true
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+      required: [success, message]
+
+    CountSuccessMessage:
+      allOf:
+        - $ref: '#/components/schemas/SuccessMessage'
+        - type: object
+          properties:
+            count:
+              type: integer
+          required: [count]
+
+    ArbitraryJson:
+      oneOf:
+        - type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ArbitraryJson'
+        - type: array
+          items:
+            $ref: '#/components/schemas/ArbitraryJson'
+        - type: string
+        - type: number
+        - type: integer
+        - type: boolean
+        - type: 'null'
+
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, description, created_at, updated_at]
+
+    CreateWorkspaceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+      additionalProperties: false
+
+    UpdateWorkspaceRequest:
+      $ref: '#/components/schemas/CreateWorkspaceRequest'
+
+    TextField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [text, longtext]
+      required: [id, name, type]
+      additionalProperties: false
+
+    BooleanField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [boolean]
+      required: [id, name, type]
+      additionalProperties: false
+
+    SelectOption:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required: [value, label]
+      additionalProperties: false
+
+    SelectField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [select]
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/SelectOption'
+      required: [id, name, type, options]
+      additionalProperties: false
+
+    ReferenceField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [reference]
+        schemaId:
+          type: string
+          format: uuid
+        minCount:
+          type: integer
+        maxCount:
+          type: integer
+      required: [id, name, type, schemaId, minCount, maxCount]
+      additionalProperties: false
+
+    ContainmentField:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [containment]
+        schemaId:
+          type: string
+          format: uuid
+        minCount:
+          type: integer
+        maxCount:
+          type: integer
+      required: [id, name, type, schemaId, minCount, maxCount]
+      additionalProperties: false
+
+    SchemaField:
+      oneOf:
+        - $ref: '#/components/schemas/TextField'
+        - $ref: '#/components/schemas/BooleanField'
+        - $ref: '#/components/schemas/SelectField'
+        - $ref: '#/components/schemas/ReferenceField'
+        - $ref: '#/components/schemas/ContainmentField'
+
+    EntitySchema:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace:
+          type: string
+        name:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaField'
+        color:
+          type: [string, 'null']
+        icon:
+          type: [string, 'null']
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, workspace, name, fields, color, icon, created_at, updated_at]
+
+    EntitySchemaWithCount:
+      allOf:
+        - $ref: '#/components/schemas/EntitySchema'
+        - type: object
+          properties:
+            entity_count:
+              type: integer
+          required: [entity_count]
+
+    UpsertSchemaRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaField'
+        color:
+          type: [string, 'null']
+        icon:
+          type: [string, 'null']
+      required: [name]
+      additionalProperties: false
+
+    LifecycleStatus:
+      type: string
+      enum: [proposed, experimental, production, deprecated]
+
+    EntityLink:
+      type: object
+      properties:
+        url:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+      required: [url, title]
+      additionalProperties: false
+
+    EntitySummary:
+      type: object
+      properties:
+        _uid:
+          type: string
+          format: uuid
+        _workspace:
+          type: string
+        _schemaId:
+          type: string
+          format: uuid
+        _name:
+          type: string
+        _slug:
+          type: string
+        _namespace:
+          type: string
+        _description:
+          type: string
+        _owner:
+          type: [string, 'null']
+        _lifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        _tags:
+          type: array
+          items:
+            type: string
+        _links:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityLink'
+      required:
+        - _uid
+        - _workspace
+        - _schemaId
+        - _name
+        - _slug
+        - _namespace
+        - _description
+        - _owner
+        - _lifecycle
+        - _tags
+        - _links
+
+    EntityRecord:
+      allOf:
+        - $ref: '#/components/schemas/EntitySummary'
+        - type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ArbitraryJson'
+
+    EntityWriteRequest:
+      type: object
+      properties:
+        _schemaId:
+          type: string
+          format: uuid
+        _name:
+          type: string
+        _slug:
+          type: string
+        _namespace:
+          type: string
+        _description:
+          type: string
+        _owner:
+          type: [string, 'null']
+        _lifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        _tags:
+          type: array
+          items:
+            type: string
+        _links:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityLink'
+      required: [_schemaId]
+      additionalProperties:
+        $ref: '#/components/schemas/ArbitraryJson'
+
+    EntityFacetBucket:
+      type: object
+      properties:
+        value:
+          type: [string, 'null']
+        count:
+          type: integer
+      required: [value, count]
+
+    EntitySchemaFacetBucket:
+      type: object
+      properties:
+        schemaId:
+          type: string
+          format: uuid
+        count:
+          type: integer
+      required: [schemaId, count]
+
+    EntityFacets:
+      type: object
+      properties:
+        total:
+          type: integer
+        lifecycle:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityFacetBucket'
+        owner:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityFacetBucket'
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitySchemaFacetBucket'
+      required: [total, lifecycle, owner, schema]
+
+    EntityRelation:
+      type: object
+      properties:
+        entityId:
+          type: string
+          format: uuid
+        entitySlug:
+          type: string
+        entityName:
+          type: string
+        entitySchemaId:
+          type: string
+          format: uuid
+        fieldName:
+          type: string
+        kind:
+          type: string
+          enum: [reference, containment]
+      required: [entityId, entitySlug, entityName, entitySchemaId, fieldName, kind]
+
+    EntityRelations:
+      type: object
+      properties:
+        outgoing:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityRelation'
+        incoming:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityRelation'
+      required: [outgoing, incoming]
+
+    ProjectSearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pinned, active, archived]
+      required: [id, name, description, status]
+
+    ProjectFileSearchResult:
+      type: object
+      properties:
+        projectId:
+          type: string
+          format: uuid
+        projectName:
+          type: string
+        fileId:
+          type: string
+          format: uuid
+        path:
+          type: string
+        name:
+          type: string
+      required: [projectId, projectName, fileId, path, name]
+
+    EntitySearchResult:
+      type: object
+      properties:
+        entityId:
+          type: string
+          format: uuid
+        schemaId:
+          type: string
+          format: uuid
+        schemaName:
+          type: string
+        _name:
+          type: string
+        _slug:
+          type: string
+        _description:
+          type: string
+        _owner:
+          type: [string, 'null']
+        _lifecycle:
+          oneOf:
+            - $ref: '#/components/schemas/LifecycleStatus'
+            - type: 'null'
+        matchedFields:
+          type: array
+          items:
+            type: string
+        matchedMetadata:
+          type: array
+          items:
+            type: string
+      required:
+        [entityId, schemaId, schemaName, _name, _slug, _description, _owner, _lifecycle, matchedFields, matchedMetadata]
+
+    SchemaFieldMatch:
+      type: object
+      properties:
+        fieldId:
+          type: string
+        fieldName:
+          type: string
+      required: [fieldId, fieldName]
+
+    SchemaSearchResult:
+      type: object
+      properties:
+        schemaId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        fieldMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaFieldMatch'
+      required: [schemaId, name, fieldMatches]
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSearchResult'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFileSearchResult'
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntitySearchResult'
+        schemas:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaSearchResult'
+      required: [query, projects, files, entities, schemas]
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, workspace, name, description, created_at, updated_at]
+
+    ProjectWithFileCount:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            file_count:
+              type: integer
+          required: [file_count]
+
+    UpsertProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+      additionalProperties: false
+
+    ProjectFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        path:
+          type: string
+        name:
+          type: string
+        size_bytes:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, path, name, size_bytes, created_at, updated_at]
+
+    FileFolder:
+      type: object
+      properties:
+        path:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFile'
+      required: [path, files]
+
+    FileTree:
+      type: object
+      properties:
+        folders:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileFolder'
+        rootFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFile'
+      required: [folders, rootFiles]
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            files:
+              $ref: '#/components/schemas/FileTree'
+          required: [files]
+
+    CreateFolderRequest:
+      type: object
+      properties:
+        path:
+          type: string
+      required: [path]
+      additionalProperties: false
+
+    CreateFolderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          const: true
+        path:
+          type: string
+        marker:
+          oneOf:
+            - $ref: '#/components/schemas/ProjectFile'
+            - type: 'null'
+      required: [success, path, marker]
+
+    RenameFolderRequest:
+      type: object
+      properties:
+        oldPath:
+          type: string
+        newPath:
+          type: string
+      required: [oldPath, newPath]
+      additionalProperties: false

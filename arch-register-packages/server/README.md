@@ -99,7 +99,11 @@ pnpm dev      # watch mode — restarts on file changes
 pnpm start    # single run
 ```
 
-The server listens on `http://localhost:3000` by default. Set `PORT` in `.env` to use a different port.
+The server listens on `http://localhost:3010` by default. Set `PORT` in `.env` to use a different port.
+
+## OpenAPI
+
+The OpenAPI 3.1 spec for this server lives at [openapi.yaml](./openapi.yaml) and is served by the running server at `GET /openapi.yaml`.
 
 ## API
 

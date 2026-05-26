@@ -15,6 +15,10 @@
   min-height: 0;
 }
 
+.bodyNoSidebar {
+  grid-template-columns: var(--rail) 1fr;
+}
+
 .main {
   overflow: auto;
   background: var(--bg-1);
