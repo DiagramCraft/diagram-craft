@@ -5,7 +5,7 @@ import { TypeBadge } from '../components/TypeBadge';
 import {
   TbStack2, TbDatabase,
   TbUsers, TbChartDots3, TbFolderOpen,
-  TbSettings, TbTrash, TbTag,
+  TbSettings, TbTrash, TbTag, TbHistory,
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
 import type { ViewId, NavigateFn, RoutePatch } from '../routing';
@@ -522,6 +522,7 @@ type SettingsNavItem = {
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'lifecycle-owners', label: 'Lifecycle & Owners', icon: <TbTag size={12} />, group: 'Workspace' },
+  { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
 ];
 

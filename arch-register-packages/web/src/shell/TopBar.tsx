@@ -66,7 +66,6 @@ export const TopBar = ({
           workspaces={workspaces}
           current={currentWs}
           onPick={onPickWs}
-          onOpenSettings={onOpenSettings}
           onAddWorkspace={onAddWorkspace}
         />
         <div className={styles.sep} />
@@ -101,13 +100,11 @@ const WorkspaceSwitcher = ({
   workspaces,
   current,
   onPick,
-  onOpenSettings,
   onAddWorkspace,
 }: {
   workspaces: Workspace[];
   current: string;
   onPick: (id: string) => void;
-  onOpenSettings: () => void;
   onAddWorkspace: () => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -167,16 +164,6 @@ const WorkspaceSwitcher = ({
           <div className={styles.menuSep} />
           <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
             <TbPlus size={12} /> New workspace...
-          </button>
-          <button
-            type="button"
-            className={styles.menuItem}
-            onClick={() => {
-              setOpen(false);
-              onOpenSettings();
-            }}
-          >
-            <TbSettings size={12} /> Workspace settings
           </button>
         </div>
       )}

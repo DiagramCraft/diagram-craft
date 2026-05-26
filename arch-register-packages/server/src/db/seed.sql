@@ -237,3 +237,295 @@ INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, li
   '00000000-0000-0000-0000-000000000005',
   '{"resource_type": "database", "system": "00000000-0000-0000-0002-000000000001"}'
 );
+
+-- ============================================================
+-- Seed projects and files
+-- Folders are represented by `.keep` marker files.
+-- ============================================================
+
+-- Project IDs
+--   "Customer Portal Modernisation" : 10000000-0000-0000-0000-000000000001
+--   "Identity Hardening"            : 10000000-0000-0000-0000-000000000002
+--   "Architecture Reviews"          : 10000000-0000-0000-0000-000000000003
+
+INSERT INTO project (id, workspace, name, description, status) VALUES
+(
+  '10000000-0000-0000-0000-000000000001',
+  'default',
+  'Customer Portal Modernisation',
+  'Current-state and target-state diagrams for the customer portal platform.',
+  'pinned'
+),
+(
+  '10000000-0000-0000-0000-000000000002',
+  'default',
+  'Identity Hardening',
+  'Security-focused diagrams for authentication, token flows, and boundary reviews.',
+  'active'
+),
+(
+  '10000000-0000-0000-0000-000000000003',
+  'default',
+  'Architecture Reviews',
+  'Archived review packs and historical diagrams from earlier architecture forums.',
+  'archived'
+);
+
+-- Project file IDs
+--   Root and folder marker files for seeded project trees
+INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes) VALUES
+(
+  '11000000-0000-0000-0000-000000000001',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'overview.dgc',
+  'overview.dgc',
+  32768
+),
+(
+  '11000000-0000-0000-0000-000000000002',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'current-state/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000003',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'current-state/container-view.dgc',
+  'container-view.dgc',
+  58312
+),
+(
+  '11000000-0000-0000-0000-000000000004',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'target-state/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000005',
+  'default',
+  '10000000-0000-0000-0000-000000000001',
+  'target-state/domain-alignment.dgc',
+  'domain-alignment.dgc',
+  44190
+),
+(
+  '11000000-0000-0000-0000-000000000006',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'auth-boundaries/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000007',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'auth-boundaries/trust-zones.dgc',
+  'trust-zones.dgc',
+  28640
+),
+(
+  '11000000-0000-0000-0000-000000000008',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'flows/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000009',
+  'default',
+  '10000000-0000-0000-0000-000000000002',
+  'flows/login-sequence.dgc',
+  'login-sequence.dgc',
+  39112
+),
+(
+  '11000000-0000-0000-0000-000000000010',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  '2024-q4-review.dgc',
+  '2024-q4-review.dgc',
+  21504
+),
+(
+  '11000000-0000-0000-0000-000000000011',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  'review-pack/.keep',
+  '.keep',
+  0
+),
+(
+  '11000000-0000-0000-0000-000000000012',
+  'default',
+  '10000000-0000-0000-0000-000000000003',
+  'review-pack/decision-summary.dgc',
+  'decision-summary.dgc',
+  19456
+);
+
+-- ============================================================
+-- Seed audit log
+-- ============================================================
+
+INSERT INTO audit_log (
+  id,
+  workspace,
+  timestamp,
+  user_id,
+  operation,
+  entity_type,
+  entity_id,
+  entity_name,
+  entity_slug,
+  schema_id,
+  changes,
+  metadata
+) VALUES
+(
+  '12000000-0000-0000-0000-000000000001',
+  'default',
+  '2026-05-10T09:00:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000001',
+  'Customer Portal Modernisation',
+  NULL,
+  NULL,
+  '{"new":{"name":"Customer Portal Modernisation","description":"Current-state and target-state diagrams for the customer portal platform.","status":"pinned"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000002',
+  'default',
+  '2026-05-10T09:05:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000002',
+  'current-state',
+  NULL,
+  NULL,
+  '{"new":{"path":"current-state","type":"folder"}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000001","path":"current-state","is_folder":true}'
+),
+(
+  '12000000-0000-0000-0000-000000000003',
+  'default',
+  '2026-05-10T09:12:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000003',
+  'container-view.dgc',
+  NULL,
+  NULL,
+  '{"new":{"path":"current-state/container-view.dgc","name":"container-view.dgc","size_bytes":58312}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000001","path":"current-state/container-view.dgc"}'
+),
+(
+  '12000000-0000-0000-0000-000000000004',
+  'default',
+  '2026-05-11T13:45:00Z',
+  'system',
+  'update',
+  'entity',
+  '00000000-0000-0000-0002-000000000001',
+  'Customer Portal',
+  'customer-portal',
+  '00000000-0000-0000-0000-000000000002',
+  '{"old":{"description":"Public-facing portal for customer self-service."},"new":{"description":"Public-facing portal for customer self-service and account management."}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000005',
+  'default',
+  '2026-05-12T08:30:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000002',
+  'Identity Hardening',
+  NULL,
+  NULL,
+  '{"new":{"name":"Identity Hardening","description":"Security-focused diagrams for authentication, token flows, and boundary reviews.","status":"active"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000006',
+  'default',
+  '2026-05-12T08:34:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000006',
+  'auth-boundaries',
+  NULL,
+  NULL,
+  '{"new":{"path":"auth-boundaries","type":"folder"}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000002","path":"auth-boundaries","is_folder":true}'
+),
+(
+  '12000000-0000-0000-0000-000000000007',
+  'default',
+  '2026-05-12T08:41:00Z',
+  'system',
+  'create',
+  'project_file',
+  '11000000-0000-0000-0000-000000000009',
+  'login-sequence.dgc',
+  NULL,
+  NULL,
+  '{"new":{"path":"flows/login-sequence.dgc","name":"login-sequence.dgc","size_bytes":39112}}',
+  '{"project_id":"10000000-0000-0000-0000-000000000002","path":"flows/login-sequence.dgc"}'
+),
+(
+  '12000000-0000-0000-0000-000000000008',
+  'default',
+  '2026-05-15T16:20:00Z',
+  'system',
+  'create',
+  'project',
+  '10000000-0000-0000-0000-000000000003',
+  'Architecture Reviews',
+  NULL,
+  NULL,
+  '{"new":{"name":"Architecture Reviews","description":"Archived review packs and historical diagrams from earlier architecture forums.","status":"archived"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000009',
+  'default',
+  '2026-05-18T11:10:00Z',
+  'system',
+  'update',
+  'project',
+  '10000000-0000-0000-0000-000000000003',
+  'Architecture Reviews',
+  NULL,
+  NULL,
+  '{"old":{"status":"active"},"new":{"status":"archived"}}',
+  '{}'
+),
+(
+  '12000000-0000-0000-0000-000000000010',
+  'default',
+  '2026-05-20T07:55:00Z',
+  'system',
+  'update',
+  'entity',
+  '00000000-0000-0000-0003-000000000003',
+  'Auth Service',
+  'auth-service',
+  '00000000-0000-0000-0000-000000000003',
+  '{"old":{"lifecycle":"experimental"},"new":{"lifecycle":"production"}}',
+  '{}'
+);

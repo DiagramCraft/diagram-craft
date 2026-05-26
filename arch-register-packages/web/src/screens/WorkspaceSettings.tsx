@@ -1,9 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
-import { apiFetch, updateLifecycleStates, updateOwnerOptions } from '../api';
-import type { WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import { apiFetch, fetchAuditLog, updateLifecycleStates, updateOwnerOptions } from '../api';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption,
+  AuditEntityType,
+  AuditLogEntry,
+  AuditOperation,
+} from '../api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 
 type WorkspaceSettingsProps = {
@@ -20,6 +26,7 @@ type WorkspaceSettingsProps = {
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
   'lifecycle-owners': { title: 'Lifecycle & Owners', sub: 'Configure valid lifecycle states and owner values for entities in this workspace.' },
+  audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
 
@@ -60,6 +67,9 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
           ownerOptions={ownerOptions}
           onConfigUpdated={onConfigUpdated}
         />
+      )}
+      {section === 'audit' && (
+        <AuditLogSection workspace={workspace} navigate={navigate} />
       )}
       {section === 'danger' && (
         <DangerSection workspace={workspace} navigate={navigate} onWorkspaceDeleted={onWorkspaceDeleted} />
@@ -345,6 +355,200 @@ const LifecycleOwnersSection = ({
           <button type="button" className={styles.btn} onClick={addOwner} style={{ marginTop: 8 }}>
             <TbPlus size={12} /> Add owner
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AUDIT_ENTITY_TYPES: Array<{ value: '' | AuditEntityType; label: string }> = [
+  { value: '', label: 'All object types' },
+  { value: 'workspace', label: 'Workspace' },
+  { value: 'entity_schema', label: 'Schema' },
+  { value: 'entity', label: 'Entity' },
+  { value: 'project', label: 'Project' },
+  { value: 'project_file', label: 'Diagram / folder' },
+];
+
+const AUDIT_OPERATIONS: Array<{ value: '' | AuditOperation; label: string }> = [
+  { value: '', label: 'All actions' },
+  { value: 'create', label: 'Created' },
+  { value: 'update', label: 'Updated' },
+  { value: 'delete', label: 'Deleted' },
+];
+
+const getOperationLabel = (operation: AuditOperation): string => {
+  switch (operation) {
+    case 'create': return 'created';
+    case 'update': return 'updated';
+    case 'delete': return 'deleted';
+  }
+};
+
+const getEntityTypeLabel = (entityType: AuditEntityType): string => {
+  switch (entityType) {
+    case 'entity': return 'entity';
+    case 'project': return 'project';
+    case 'project_file': return 'diagram';
+    case 'entity_schema': return 'schema';
+    case 'workspace': return 'workspace';
+  }
+};
+
+const getEntityTypeTone = (entityType: AuditEntityType): string => {
+  switch (entityType) {
+    case 'workspace': return styles.typeWorkspace;
+    case 'entity_schema': return styles.typeSchema;
+    case 'entity': return styles.typeEntity;
+    case 'project': return styles.typeProject;
+    case 'project_file': return styles.typeFile;
+  }
+};
+
+const formatRelativeTime = (timestamp: string): string => {
+  const now = new Date();
+  const then = new Date(timestamp);
+  const diffMs = now.getTime() - then.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return then.toLocaleDateString();
+};
+
+const toStartOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString();
+const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999`).toISOString();
+
+const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; navigate: NavigateFn }) => {
+  const [entityType, setEntityType] = useState<'' | AuditEntityType>('');
+  const [operation, setOperation] = useState<'' | AuditOperation>('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [entries, setEntries] = useState<AuditLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchAuditLog(workspace.id, {
+      entityType: entityType || null,
+      operation: operation || null,
+      startDate: startDate ? toStartOfDay(startDate) : null,
+      endDate: endDate ? toEndOfDay(endDate) : null,
+      limit: 100,
+    })
+      .then(setEntries)
+      .catch(error => {
+        console.error('Failed to load audit log:', error);
+        setEntries([]);
+      })
+      .finally(() => setLoading(false));
+  }, [workspace.id, entityType, operation, startDate, endDate]);
+
+  const handleEntryClick = (entry: AuditLogEntry) => {
+    switch (entry.entity_type) {
+      case 'entity':
+        navigate({ view: 'entity-detail', entityId: entry.entity_id });
+        return;
+      case 'project':
+        navigate({ view: 'project-detail', projectId: entry.entity_id, projectSidebarTab: 'projects', folderFilter: null });
+        return;
+      case 'entity_schema':
+        navigate({ view: 'data-model' });
+        return;
+      case 'project_file': {
+        const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
+        const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
+        const folderFilter = path && path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
+        if (projectId) {
+          navigate({ view: 'project-detail', projectId, projectSidebarTab: 'projects', folderFilter });
+        }
+      }
+    }
+  };
+
+  return (
+    <div className={styles.blockList}>
+      <div className={styles.auditFilters}>
+        <div className={styles.filterGrid}>
+          <label className={styles.filterField}>
+            <select
+              aria-label="Object type"
+              className={styles.input}
+              value={entityType}
+              onChange={e => setEntityType(e.target.value as '' | AuditEntityType)}
+            >
+              {AUDIT_ENTITY_TYPES.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.filterField}>
+            <select
+              aria-label="Action"
+              className={styles.input}
+              value={operation}
+              onChange={e => setOperation(e.target.value as '' | AuditOperation)}
+            >
+              {AUDIT_OPERATIONS.map(option => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.filterField}>
+            <input
+              aria-label="From"
+              className={styles.input}
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+            />
+          </label>
+
+          <label className={styles.filterField}>
+            <input
+              aria-label="To"
+              className={styles.input}
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+            />
+          </label>
+        </div>
+
+      </div>
+
+      <div className={styles.section}>
+        <div className={`${styles.sectionBody} ${styles.auditSectionBody}`}>
+          <div className={styles.activityList}>
+            {loading ? (
+              <div className={styles.emptyState}>Loading activity...</div>
+            ) : entries.length > 0 ? (
+              entries.map(entry => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  className={styles.activityRow}
+                  onClick={() => handleEntryClick(entry)}
+                >
+                  <span className={`${styles.activityTypeBadge} ${getEntityTypeTone(entry.entity_type)}`}>
+                    {getEntityTypeLabel(entry.entity_type)}
+                  </span>
+                  <span className={styles.activityDate}>{formatRelativeTime(entry.timestamp)}</span>
+                  <span className={styles.activityWho}>{entry.user_id}</span>
+                  <span className={styles.activityVerb}>{getOperationLabel(entry.operation)}</span>
+                  <span className={styles.activityTarget}>{entry.entity_name}</span>
+                </button>
+              ))
+            ) : (
+              <div className={styles.emptyState}>No audit log entries match the current filters.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

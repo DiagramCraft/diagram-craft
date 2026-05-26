@@ -232,7 +232,15 @@ export const WorkspaceHome = ({
 
             <Panel
               title="Recent activity"
-              actions={<button type="button" className={styles.link}>All activity &rarr;</button>}
+              actions={(
+                <button
+                  type="button"
+                  className={styles.link}
+                  onClick={() => navigate({ view: 'workspace-settings', settingsSection: 'audit' })}
+                >
+                  All activity &rarr;
+                </button>
+              )}
               span2
             >
               <div className={styles.activityList}>
