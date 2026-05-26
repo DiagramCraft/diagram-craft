@@ -50,14 +50,14 @@ export const WorkspaceHome = ({
   // Fetch recent activity from audit log
   useEffect(() => {
     setActivityLoading(true);
-    fetchAuditLog(workspace.id, { limit: 20 })
+    fetchAuditLog(workspace.url_slug, { limit: 20 })
       .then(setRecentActivity)
       .catch(err => {
         console.error('Failed to load audit log:', err);
         setRecentActivity([]);
       })
       .finally(() => setActivityLoading(false));
-  }, [workspace.id]);
+  }, [workspace.url_slug]);
 
   const formatRelativeTime = (timestamp: string): string => {
     const now = new Date();

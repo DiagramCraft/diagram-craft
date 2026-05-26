@@ -40,7 +40,7 @@ app.use(
 );
 
 // API routes
-app.use(createWorkspaceRoutes());
+app.use(createWorkspaceRoutes(storage));
 app.use(createSchemaRoutes());
 app.use(createDataRoutes());
 app.use(createSearchRoutes());

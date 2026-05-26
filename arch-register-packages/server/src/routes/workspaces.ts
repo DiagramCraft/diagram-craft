@@ -3,6 +3,7 @@ import sql from '../db/client.js';
 import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { handlePgError, slugify } from '../utils/http.js';
+import type { StorageAdapter } from '../storage/storage.js';
 
 const BASE = '/api/workspaces';
 
@@ -12,7 +13,7 @@ const handleError = (error: unknown, fallback: string): never =>
 const shortCode = (name: string): string =>
   name.split(/\s+/).map(w => (w[0] ?? '').toUpperCase()).join('').slice(0, 2);
 
-export function createWorkspaceRoutes() {
+export function createWorkspaceRoutes(storage?: StorageAdapter) {
   const router = new H3();
 
   // GET /api/workspaces
@@ -137,6 +138,45 @@ export function createWorkspaceRoutes() {
         return row!;
       } catch (e) {
         handleError(e, 'Failed to update workspace');
+      }
+    })
+  );
+
+  // DELETE /api/workspaces/:id
+  router.delete(
+    `${BASE}/:id`,
+    defineHandler(async event => {
+      const id = event.context.params?.['id'];
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+
+      try {
+        const [workspace] = await sql<Workspace[]>`
+          SELECT * FROM workspace WHERE id = ${id}
+        `;
+        if (!workspace) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
+
+        const projects = await sql<{ id: string }[]>`
+          SELECT id FROM project WHERE workspace = ${id}
+        `;
+
+        await sql.begin(async tx => {
+          await tx`DELETE FROM project_file WHERE workspace = ${id}`;
+          await tx`DELETE FROM project WHERE workspace = ${id}`;
+          await tx`DELETE FROM entity WHERE workspace = ${id}`;
+          await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
+          await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
+          await tx`DELETE FROM workspace_owner WHERE workspace = ${id}`;
+          await tx`DELETE FROM audit_log WHERE workspace = ${id}`;
+          await tx`DELETE FROM workspace WHERE id = ${id}`;
+        });
+
+        if (storage) {
+          await Promise.all(projects.map(project => storage.deleteAll(id, project.id).catch(() => {})));
+        }
+
+        return { success: true, message: `Workspace '${workspace.name}' deleted` };
+      } catch (e) {
+        handleError(e, 'Failed to delete workspace');
       }
     })
   );

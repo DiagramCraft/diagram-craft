@@ -433,7 +433,7 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
 
   useEffect(() => {
     setLoading(true);
-    fetchAuditLog(workspace.id, {
+    fetchAuditLog(workspace.url_slug, {
       entityType: entityType || null,
       operation: operation || null,
       startDate: startDate ? toStartOfDay(startDate) : null,
@@ -446,7 +446,7 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
         setEntries([]);
       })
       .finally(() => setLoading(false));
-  }, [workspace.id, entityType, operation, startDate, endDate]);
+  }, [workspace.url_slug, entityType, operation, startDate, endDate]);
 
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {

@@ -298,7 +298,14 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
-        const content = await storage.read(workspace, id, filePath);
+        const [file] = await sql<ProjectFile[]>`
+          SELECT * FROM project_file
+          WHERE workspace = ${workspace} AND project_id = ${id} AND path = ${filePath}
+        `;
+        if (!file)
+          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+
+        const content = await storage.read(workspace, id, file.id);
         return JSON.parse(content.toString('utf8'));
       } catch (e) {
         if (e != null && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'ENOENT') {
@@ -347,7 +354,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
         `;
 
         // Write to storage
-        await storage.write(workspace, id, filePath, content);
+        await storage.write(workspace, id, row!.id, content);
 
         // Log audit entry
         if (isUpdate) {
@@ -420,7 +427,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
           metadata: { project_id: id, path: filePath },
         });
 
-        await storage.delete(workspace, id, filePath).catch(() => {});
+        await storage.delete(workspace, id, file.id).catch(() => {});
 
         return { success: true, message: `File '${filePath}' deleted` };
       } catch (e) {
@@ -455,7 +462,9 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
         `;
 
         // Write empty marker to storage
-        await storage.write(workspace, id, markerPath, Buffer.alloc(0));
+        if (row) {
+          await storage.write(workspace, id, row.id, Buffer.alloc(0));
+        }
 
         // Log audit entry for folder creation (if marker was created)
         if (row) {
