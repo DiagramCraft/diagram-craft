@@ -1,0 +1,600 @@
+/* Project Detail */
+.screen {
+  padding: 20px 24px 32px;
+  max-width: 100%;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin-bottom: 4px;
+}
+
+.eyebrow button {
+  color: var(--accent-strong);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+}
+
+.eyebrow button:hover {
+  text-decoration: underline;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  font-size: 22px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.sub {
+  color: var(--fg-2);
+  margin-top: 4px;
+  max-width: 640px;
+}
+
+.pinBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms, color 80ms;
+}
+
+.pinBtn:hover:not(:disabled) {
+  background: var(--bg-3);
+  border-color: var(--border);
+  color: var(--warn);
+}
+
+.pinBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.pinBtnActive {
+  color: var(--warn);
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 6px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: var(--r);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms, color 80ms;
+}
+
+.btn:hover {
+  background: var(--bg-4);
+  color: var(--fg-0);
+  border-color: var(--border-strong);
+}
+
+.btnPrimary {
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+}
+
+.btnPrimary:hover {
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+.btnDanger {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 40%, var(--border));
+}
+
+.btnDanger:hover {
+  background: color-mix(in oklch, var(--danger) 12%, var(--bg-3));
+  border-color: var(--danger);
+}
+
+/* Meta bar */
+.meta {
+  display: flex;
+  gap: 24px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  margin-bottom: 12px;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metaLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+}
+
+.metaValue {
+  color: var(--fg-1);
+}
+
+.progressInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress {
+  height: 4px;
+  width: 120px;
+  background: var(--bg-1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* Tab bar */
+.tabBar {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0;
+  margin-bottom: 12px;
+}
+
+.tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: -3px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  color: var(--fg-2);
+  border-bottom: 1.5px solid transparent;
+  font-size: 12px;
+  position: relative;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--fg-0);
+}
+
+.tabActive {
+  color: var(--fg-0);
+  border-bottom-color: var(--accent);
+}
+
+.tabBarRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
+  padding-bottom: 3px;
+}
+
+.searchInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  height: 26px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r);
+  font-size: 12px;
+  color: var(--fg-1);
+}
+
+.searchInline input {
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--fg-0);
+  font-size: 12px;
+  width: 120px;
+}
+
+.searchInline input::placeholder {
+  color: var(--fg-3);
+}
+
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+.iconBtnActive {
+  background: var(--bg-3);
+  border-color: var(--border);
+  color: var(--fg-0);
+}
+
+/* Diagram grid */
+.diagramGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.diagramCard {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  text-align: left;
+  color: var(--fg-1);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 80ms, background 80ms;
+  cursor: pointer;
+}
+
+.diagramCard:hover {
+  border-color: var(--accent);
+}
+
+.diagramThumb {
+  position: relative;
+  background: var(--bg-1);
+  height: 120px;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+
+.diagramThumbGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, oklch(0.21 0.005 260) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0.21 0.005 260) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.diagramThumbNodes {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+}
+
+.diagramThumbNodes svg {
+  width: 100%;
+  height: 100%;
+}
+
+.diagramPin {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warn);
+  border: 1px solid var(--border);
+}
+
+.diagramMeta {
+  padding: 10px 12px;
+}
+
+.diagramName {
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.diagramSub {
+  font-size: 11px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-3);
+}
+
+.diagramCardAdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 188px;
+  color: var(--fg-2);
+  border-style: dashed;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.diagramCardAdd:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+/* Diagram list */
+.diagramList {
+  display: flex;
+  flex-direction: column;
+}
+
+.diagramRow {
+  display: grid;
+  grid-template-columns: 1fr 120px 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  font-size: 12.5px;
+}
+
+.diagramRow:hover {
+  background: var(--bg-3);
+}
+
+.diagramRowName {
+  color: var(--fg-0);
+  font-weight: 500;
+}
+
+.diagramRowFolder {
+  font-size: 11px;
+  color: var(--fg-3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.diagramRowDate {
+  font-size: 11px;
+  color: var(--fg-3);
+  text-align: right;
+}
+
+.diagramRowAdd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  border: 1px dashed var(--border);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.diagramRowAdd:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+/* Entities tab */
+.entityList {
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entityRow {
+  display: grid;
+  grid-template-columns: 28px 1fr 120px 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--r);
+  text-align: left;
+  color: var(--fg-1);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+}
+
+.entityRow:hover {
+  background: var(--bg-3);
+}
+
+.entityRowName {
+  color: var(--fg-0);
+  font-weight: 500;
+}
+
+.entityRowMeta {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-2);
+}
+
+.emptyIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-3);
+  color: var(--fg-2);
+  margin-bottom: 10px;
+}
+
+.emptyTitle {
+  color: var(--fg-0);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.emptySub {
+  font-size: 12px;
+  max-width: 360px;
+  margin: 6px 0 14px;
+  color: var(--fg-3);
+}
+
+/* Settings form */
+.settings {
+  max-width: 580px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.formLabel {
+  font-size: 11px;
+  color: var(--fg-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.formInput {
+  height: 28px;
+  padding: 0 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.formInput:focus {
+  border-color: var(--accent);
+}
+
+.formTextarea {
+  height: auto;
+  min-height: 60px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.formActions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.formSpacer {
+  flex: 1;
+}

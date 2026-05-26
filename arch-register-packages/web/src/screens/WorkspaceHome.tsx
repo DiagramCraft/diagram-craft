@@ -1,26 +1,51 @@
+import { useState } from 'react';
 import styles from './WorkspaceHome.module.css';
+import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
-import { StatusChip } from '../components/StatusChip';
 import {
   TbDatabase, TbStack2, TbChartDots3, TbGitBranch,
-  TbPlus, TbChevronRight, TbStar,
+  TbPlus, TbChevronRight,
 } from 'react-icons/tb';
 import {
-  PROJECTS, ENTITY_TYPES, ENTITIES, RECENT_ACTIVITY,
-  type Workspace, type Project,
+  RECENT_ACTIVITY,
+  type Workspace,
 } from '../data';
 import type { NavigateFn } from '../routing';
+import { resolveSchemaColor } from '../api';
+import type { EntitySchema, Project } from '../api';
+
+const PROJECT_STATUS_META = {
+  pinned: { label: 'Pinned' },
+  active: { label: 'Active' },
+  archived: { label: 'Archived' },
+} as const;
 
 type WorkspaceHomeProps = {
   workspace: Workspace;
+  schemas: EntitySchema[];
+  projects: Project[];
   navigate: NavigateFn;
+  onAddProject: () => void;
+  onAddEntity: () => void;
 };
 
-export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
-  const totalEntities = ENTITIES.length;
-  const active = ENTITIES.filter(e => e.status === 'Active').length;
-  const deprecated = ENTITIES.filter(e => e.status === 'Deprecated').length;
-  const proposed = ENTITIES.filter(e => e.status === 'Proposed').length;
+export const WorkspaceHome = ({
+  workspace,
+  schemas,
+  projects,
+  navigate,
+  onAddProject,
+  onAddEntity,
+}: WorkspaceHomeProps) => {
+  const collapsedProjectCount = 6;
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
+  const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
+  const nonArchivedProjects = projects.filter(p => p.status !== 'archived');
+  const hasMoreProjects = nonArchivedProjects.length > collapsedProjectCount;
+  const visibleProjects = showAllProjects
+    ? projects
+    : nonArchivedProjects.slice(0, collapsedProjectCount);
 
   return (
     <div className={styles.screen}>
@@ -31,10 +56,14 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
           <div className={styles.sub}>{workspace.description}</div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btn}>
+          <button type="button" className={styles.btn} onClick={onAddProject}>
             <TbPlus size={12} /> New project
           </button>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`}>
+          <button
+            type="button"
+            className={`${styles.btn} ${styles.btnPrimary}`}
+            onClick={onAddEntity}
+          >
             <TbPlus size={12} /> New entity
           </button>
         </div>
@@ -44,101 +73,120 @@ export const WorkspaceHome = ({ workspace, navigate }: WorkspaceHomeProps) => {
         <StatCard
           label="Entities"
           value={totalEntities}
-          sub={`${active} active \u00b7 ${deprecated} deprecated`}
+          sub={`${schemas.length} types`}
           icon={<TbDatabase size={14} />}
         />
         <StatCard
           label="Projects"
-          value={PROJECTS.length}
-          sub={`${PROJECTS.filter(p => p.status === 'Active').length} in flight`}
+          value={projects.length}
+          sub={`${totalFiles} diagrams`}
           icon={<TbStack2 size={14} />}
         />
         <StatCard
           label="Diagrams"
-          value={PROJECTS.reduce((n, p) => n + p.diagrams, 0)}
+          value={totalFiles}
           sub="across all projects"
           icon={<TbChartDots3 size={14} />}
         />
         <StatCard
-          label="Pending changes"
-          value={proposed}
-          sub="proposed entities"
+          label="Entity types"
+          value={schemas.length}
+          sub="defined schemas"
           icon={<TbGitBranch size={14} />}
-          accent
         />
       </div>
 
       <div className={styles.homeGrid}>
         <Panel
           title="Projects"
-          actions={<button type="button" className={styles.link}>View all &rarr;</button>}
-        >
-          <div className={styles.projectList}>
-            {PROJECTS.map(p => (
-              <ProjectRow
-                key={p.id}
-                project={p}
-                onClick={() => navigate({ view: 'project-detail', projectId: p.id })}
-              />
-            ))}
-          </div>
-        </Panel>
-
-        <Panel title="Data model">
-          <div className={styles.typecardList}>
-            {ENTITY_TYPES.map(t => (
-              <button
-                type="button"
-                key={t.id}
-                className={styles.typecard}
-                onClick={() => navigate({ view: 'entity-browser', typeFilter: t.id })}
-              >
-                <span className={styles.typecardBar} style={{ background: t.color }} />
-                <span className={styles.typecardIcon}>
-                  <TypeBadge typeId={t.id} size={22} />
-                </span>
-                <span className={styles.typecardBody}>
-                  <div className={styles.typecardName}>{t.plural}</div>
-                  <div className={styles.typecardMeta}>
-                    {t.fields.length} fields &middot; {t.count} records
-                  </div>
-                </span>
-                <TbChevronRight size={12} />
-              </button>
-            ))}
+          span2={showAllProjects}
+          actions={hasMoreProjects ? (
             <button
               type="button"
-              className={`${styles.typecard} ${styles.typecardAdd}`}
-              onClick={() => navigate({ view: 'data-model' })}
+              className={styles.link}
+              onClick={() => setShowAllProjects(current => !current)}
             >
-              <span className={styles.typecardIcon}>
-                <TbPlus size={14} />
-              </span>
-              <span className={styles.typecardBody}>
-                <div className={styles.typecardName}>Add entity type</div>
-                <div className={styles.typecardMeta}>Define a new schema</div>
-              </span>
+              {showAllProjects ? 'Collapse' : 'View all'} &rarr;
             </button>
+          ) : undefined}
+        >
+          <div className={styles.projectList}>
+            {visibleProjects.length > 0 ? (
+              visibleProjects.map(p => (
+                <ProjectRow
+                  key={p.id}
+                  project={p}
+                  expanded={showAllProjects}
+                  onClick={() => navigate({ view: 'project-detail', projectId: p.id, projectSidebarTab: 'projects' })}
+                />
+              ))
+            ) : (
+              <div className={`${styles.emptyInline} dim`}>
+                No pinned or active projects.
+              </div>
+            )}
           </div>
         </Panel>
 
-        <Panel
-          title="Recent activity"
-          actions={<button type="button" className={styles.link}>All activity &rarr;</button>}
-          span2
-        >
-          <div className={styles.activityList}>
-            {RECENT_ACTIVITY.map((a, i) => (
-              <div key={i} className={styles.activityRow}>
-                <span className={styles.activityWho}>{a.who}</span>
-                <span className="dim"> {a.what} </span>
-                <span className={styles.activityTarget}>{a.target}</span>
-                <span className="dim">&middot; {a.project}</span>
-                <span className={styles.activityTime}>{a.time}</span>
+        {!showAllProjects && (
+          <>
+            <Panel title="Data model">
+              <div className={styles.typecardList}>
+                {schemas.map((s, i) => (
+                  <button
+                    type="button"
+                    key={s.id}
+                    className={styles.typecard}
+                    onClick={() => navigate({ view: 'entity-browser', typeFilter: s.id })}
+                  >
+                    <span className={styles.typecardBar} style={{ background: resolveSchemaColor(s, i) }} />
+                    <span className={styles.typecardIcon}>
+                      <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={22} />
+                    </span>
+                    <span className={styles.typecardBody}>
+                      <div className={styles.typecardName}>{s.name}</div>
+                      <div className={styles.typecardMeta}>
+                        {s.fields.length} fields &middot; {s.entity_count} records
+                      </div>
+                    </span>
+                    <TbChevronRight size={12} />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`${styles.typecard} ${styles.typecardAdd}`}
+                  onClick={() => navigate({ view: 'data-model' })}
+                >
+                  <span className={styles.typecardIcon}>
+                    <TbPlus size={14} />
+                  </span>
+                  <span className={styles.typecardBody}>
+                    <div className={styles.typecardName}>Add entity type</div>
+                    <div className={styles.typecardMeta}>Define a new schema</div>
+                  </span>
+                </button>
               </div>
-            ))}
-          </div>
-        </Panel>
+            </Panel>
+
+            <Panel
+              title="Recent activity"
+              actions={<button type="button" className={styles.link}>All activity &rarr;</button>}
+              span2
+            >
+              <div className={styles.activityList}>
+                {RECENT_ACTIVITY.map((a, i) => (
+                  <div key={i} className={styles.activityRow}>
+                    <span className={styles.activityWho}>{a.who}</span>
+                    <span className="dim"> {a.what} </span>
+                    <span className={styles.activityTarget}>{a.target}</span>
+                    <span className="dim">&middot; {a.project}</span>
+                    <span className={styles.activityTime}>{a.time}</span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </>
+        )}
       </div>
     </div>
   );
@@ -187,36 +235,25 @@ const Panel = ({
 
 const ProjectRow = ({
   project,
+  expanded,
   onClick,
 }: {
   project: Project;
+  expanded: boolean;
   onClick: () => void;
 }) => (
   <button type="button" className={styles.projectRow} onClick={onClick}>
     <div className={styles.projectRowL}>
       <TbStack2 size={14} />
       <span className={styles.projectName}>{project.name}</span>
-      {project.starred && (
-        <TbStar size={11} style={{ color: 'var(--warn)' }} />
-      )}
-    </div>
-    <div className={styles.projectRowC}>
-      <div className={styles.progress}>
-        <div
-          className={styles.progressBar}
-          style={{ width: `${project.progress}%` }}
-        />
-      </div>
-      <span className="dim mono tabular" style={{ width: 34, textAlign: 'right' }}>
-        {project.progress}%
-      </span>
     </div>
     <div className={styles.projectRowR}>
-      <span className="dim">{project.diagrams} diagrams</span>
-      <StatusChip value={project.status} />
-      <span className="dim" style={{ width: 90, textAlign: 'right' }}>
-        {project.updated}
-      </span>
+      {expanded && (
+        <Chip tone="ghost">
+          {PROJECT_STATUS_META[project.status].label}
+        </Chip>
+      )}
+      <span className="dim">{project.file_count} diagrams</span>
     </div>
   </button>
 );

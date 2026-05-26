@@ -77,11 +77,9 @@ export type Project = {
 export type Workspace = {
   id: string;
   name: string;
-  short: string;
-  active: boolean;
   description: string;
-  entities: number;
-  projects: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ActivityEntry = {
@@ -468,11 +466,8 @@ export const PROJECTS: Project[] = [
   },
 ];
 
-export const WORKSPACES: Workspace[] = [
-  { id: 'ws-commerce', name: 'Acme Commerce', short: 'AC', active: true, description: 'Customer-facing commerce platform.', entities: 36, projects: 6 },
-  { id: 'ws-internal', name: 'Acme Internal Tools', short: 'AI', active: false, description: 'Back-office and ops systems.', entities: 22, projects: 3 },
-  { id: 'ws-data', name: 'Acme Data Platform', short: 'AD', active: false, description: 'Warehouse, lake, and pipelines.', entities: 18, projects: 4 },
-];
+export const workspaceShort = (name: string): string =>
+  name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
 export const RECENT_ACTIVITY: ActivityEntry[] = [
   { who: 'Maya R.', what: 'edited diagram', target: 'Target — service decomposition', project: 'Checkout Modernization', time: '2h ago' },
@@ -490,4 +485,8 @@ export const STATUS_TONE: Record<string, { dot: string; label: string }> = {
   Retired: { dot: 'var(--fg-3)', label: 'Retired' },
   Planning: { dot: 'var(--accent)', label: 'Planning' },
   'On hold': { dot: 'var(--fg-3)', label: 'On hold' },
+  proposed: { dot: 'var(--accent)', label: 'Proposed' },
+  experimental: { dot: 'var(--accent)', label: 'Experimental' },
+  production: { dot: 'var(--ok)', label: 'Production' },
+  deprecated: { dot: 'var(--warn)', label: 'Deprecated' },
 };

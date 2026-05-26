@@ -1,6 +1,5 @@
 .topbar {
-  display: grid;
-  grid-template-columns: 1fr minmax(260px, 520px) 1fr;
+  display: flex;
   align-items: center;
   height: var(--topbar);
   background: var(--bg-1);
@@ -14,6 +13,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .right {
@@ -23,6 +24,8 @@
 .center {
   display: flex;
   justify-content: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .sep {

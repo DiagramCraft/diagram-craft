@@ -7,8 +7,7 @@
   padding: 6px 0;
 }
 
-.top,
-.bottom {
+.top {
   display: flex;
   flex-direction: column;
   gap: 2px;

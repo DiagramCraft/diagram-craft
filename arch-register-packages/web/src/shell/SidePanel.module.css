@@ -17,11 +17,34 @@
   gap: 6px;
 }
 
-.headerTitle {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.tabHeader {
+  padding: 0 8px;
+  gap: 0;
+}
+
+.headerTab {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
   color: var(--fg-2);
+  border-bottom: 1.5px solid transparent;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+  margin-bottom: -2px;
+}
+
+.headerTab:hover {
+  color: var(--fg-0);
+}
+
+.headerTabActive {
+  color: var(--fg-0);
+  border-bottom-color: var(--accent);
 }
 
 .headerActions {
@@ -60,4 +83,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.emptyState {
+  padding: 12px 8px;
 }

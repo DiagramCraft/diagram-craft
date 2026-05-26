@@ -105,6 +105,8 @@ async function main() {
   console.log('Bootstrapping database...');
 
   console.log('Dropping existing tables...');
+  await sql`DROP TABLE IF EXISTS project_file CASCADE`;
+  await sql`DROP TABLE IF EXISTS project CASCADE`;
   await sql`DROP TABLE IF EXISTS entity CASCADE`;
   await sql`DROP TABLE IF EXISTS entity_schema CASCADE`;
   await sql`DROP TABLE IF EXISTS workspace CASCADE`;

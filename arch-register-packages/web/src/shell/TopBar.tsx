@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
-  TbMenu2, TbChevronDown, TbChevronRight, TbSearch, TbBell,
+  TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
   TbSettings, TbCheck, TbPlus,
 } from 'react-icons/tb';
 import type { Workspace } from '../data';
+import { workspaceShort } from '../data';
 
 type BreadcrumbItem = {
   label: string;
@@ -21,6 +22,7 @@ type TopBarProps = {
   query: string;
   onQuery: (q: string) => void;
   onOpenSettings: () => void;
+  onAddWorkspace: () => void;
 };
 
 export const TopBar = ({
@@ -31,6 +33,7 @@ export const TopBar = ({
   query,
   onQuery,
   onOpenSettings,
+  onAddWorkspace,
 }: TopBarProps) => (
   <div className={styles.topbar}>
     <div className={styles.left}>
@@ -43,6 +46,7 @@ export const TopBar = ({
         current={currentWs}
         onPick={onPickWs}
         onOpenSettings={onOpenSettings}
+        onAddWorkspace={onAddWorkspace}
       />
       <div className={styles.sep} />
       <Breadcrumbs trail={trail} />
@@ -59,9 +63,6 @@ export const TopBar = ({
       </div>
     </div>
     <div className={styles.right}>
-      <IconButton title="Notifications">
-        <TbBell size={14} />
-      </IconButton>
       <IconButton title="Workspace settings" onClick={onOpenSettings}>
         <TbSettings size={14} />
       </IconButton>
@@ -77,19 +78,40 @@ const WorkspaceSwitcher = ({
   current,
   onPick,
   onOpenSettings,
+  onAddWorkspace,
 }: {
   workspaces: Workspace[];
   current: string;
   onPick: (id: string) => void;
   onOpenSettings: () => void;
+  onAddWorkspace: () => void;
 }) => {
   const [open, setOpen] = useState(false);
-  const ws = workspaces.find(w => w.id === current) ?? workspaces[0]!;
+  const ref = useRef<HTMLDivElement>(null);
+  const ws = workspaces.find(w => w.id === current) ?? workspaces[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  if (!ws) return null;
 
   return (
-    <div className={styles.wsSwitcher} onMouseLeave={() => setOpen(false)}>
+    <div className={styles.wsSwitcher} ref={ref}>
       <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
-        <span className={styles.wsBadge}>{ws.short}</span>
+        <span className={styles.wsBadge}>{workspaceShort(ws.name)}</span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
       </button>
@@ -107,19 +129,19 @@ const WorkspaceSwitcher = ({
               }}
             >
               <span className={styles.wsBadge} style={{ marginRight: 8 }}>
-                {w.short}
+                {workspaceShort(w.name)}
               </span>
               <span style={{ flex: 1 }}>
                 <div>{w.name}</div>
-                <div className={styles.menuSub}>
-                  {w.entities} entities &middot; {w.projects} projects
-                </div>
+                {w.description && (
+                  <div className={styles.menuSub}>{w.description}</div>
+                )}
               </span>
               {w.id === current && <TbCheck size={14} />}
             </button>
           ))}
           <div className={styles.menuSep} />
-          <button type="button" className={styles.menuItem}>
+          <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
             <TbPlus size={12} /> New workspace...
           </button>
           <button

@@ -3,7 +3,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE workspace (
   id          TEXT        PRIMARY KEY,
-  name        TEXT        NOT NULL,
+  name        TEXT        NOT NULL UNIQUE,
+  description TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -14,6 +15,8 @@ CREATE TABLE entity_schema (
   workspace   TEXT        NOT NULL,
   name        TEXT        NOT NULL,
   fields      JSONB       NOT NULL DEFAULT '[]',
+  color       TEXT,
+  icon        TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (workspace, name),
@@ -28,8 +31,11 @@ CREATE TABLE entity (
   slug        TEXT        NOT NULL,
   namespace   TEXT        NOT NULL DEFAULT 'default',
   name        TEXT        NOT NULL,
+  description TEXT        NOT NULL DEFAULT '',
   owner       TEXT,
-  lifecycle   TEXT        CHECK (lifecycle IN ('experimental', 'production', 'deprecated')),
+  lifecycle   TEXT        CHECK (lifecycle IN ('proposed', 'experimental', 'production', 'deprecated')),
+  tags        TEXT[]      NOT NULL DEFAULT '{}',
+  links       JSONB       NOT NULL DEFAULT '[]',
   schema_id   UUID        NOT NULL,
   data        JSONB       NOT NULL DEFAULT '{}',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -42,6 +48,9 @@ CREATE TABLE entity (
 
 -- Index for filtering entities by schema type
 CREATE INDEX entity_workspace_schema_id_idx ON entity(workspace, schema_id);
+CREATE INDEX entity_workspace_owner_idx ON entity(workspace, owner);
+CREATE INDEX entity_workspace_lifecycle_idx ON entity(workspace, lifecycle);
+CREATE INDEX entity_workspace_name_idx ON entity(workspace, name);
 
 -- Auto-update updated_at on row changes
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -62,4 +71,43 @@ CREATE TRIGGER workspace_updated_at
 
 CREATE TRIGGER entity_updated_at
   BEFORE UPDATE ON entity
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Project table: groups diagram files within a workspace
+CREATE TABLE project (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace   TEXT        NOT NULL,
+  name        TEXT        NOT NULL,
+  description TEXT        NOT NULL DEFAULT '',
+  status      TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('pinned', 'active', 'archived')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (workspace, name),
+  UNIQUE (workspace, id),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT
+);
+
+-- Project file table: diagram files within a project, organized by path
+CREATE TABLE project_file (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace   TEXT        NOT NULL,
+  project_id  UUID        NOT NULL,
+  path        TEXT        NOT NULL,
+  name        TEXT        NOT NULL,
+  size_bytes  INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (workspace, project_id, path),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
+  FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE
+);
+
+CREATE INDEX project_file_project_idx ON project_file(workspace, project_id);
+
+CREATE TRIGGER project_updated_at
+  BEFORE UPDATE ON project
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER project_file_updated_at
+  BEFORE UPDATE ON project_file
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();

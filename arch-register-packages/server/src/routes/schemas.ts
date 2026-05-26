@@ -43,8 +43,14 @@ export function createSchemaRoutes() {
     defineHandler(async event => {
       const workspace = getWorkspace(event);
       try {
-        return await sql<EntitySchema[]>`
-          SELECT * FROM entity_schema WHERE workspace = ${workspace} ORDER BY name
+        return await sql<(EntitySchema & { entity_count: number })[]>`
+          SELECT s.*, COALESCE(c.cnt, 0)::int AS entity_count
+          FROM entity_schema s
+          LEFT JOIN (
+            SELECT schema_id, COUNT(*) AS cnt FROM entity WHERE workspace = ${workspace} GROUP BY schema_id
+          ) c ON c.schema_id = s.id
+          WHERE s.workspace = ${workspace}
+          ORDER BY s.name
         `;
       } catch (e) {
         handleError(e, 'Failed to retrieve schemas');
@@ -79,13 +85,15 @@ export function createSchemaRoutes() {
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
-      const { name, fields = [] } = body as Record<string, unknown>;
+      const { name, fields = [], color, icon } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
+      const colorVal = typeof color === 'string' ? color : null;
+      const iconVal = typeof icon === 'string' ? icon : null;
       try {
         const [row] = await sql<EntitySchema[]>`
-          INSERT INTO entity_schema (workspace, name, fields)
-          VALUES (${workspace}, ${name}, ${json(fields)})
+          INSERT INTO entity_schema (workspace, name, fields, color, icon)
+          VALUES (${workspace}, ${name}, ${json(fields)}, ${colorVal}, ${iconVal})
           RETURNING *
         `;
         return row!;
@@ -105,14 +113,16 @@ export function createSchemaRoutes() {
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
-      const { name, fields } = body as Record<string, unknown>;
+      const { name, fields, color, icon } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required and must be a string' });
       try {
         const [row] = await sql<EntitySchema[]>`
           UPDATE entity_schema SET
             name   = ${name},
-            fields = ${fields !== undefined ? json(fields) : sql`fields`}
+            fields = ${fields !== undefined ? json(fields) : sql`fields`},
+            color  = ${color !== undefined ? (typeof color === 'string' ? color : null) : sql`color`},
+            icon   = ${icon !== undefined ? (typeof icon === 'string' ? icon : null) : sql`icon`}
           WHERE workspace = ${workspace} AND id = ${id}
           RETURNING *
         `;

@@ -183,9 +183,14 @@
   flex-direction: column;
 }
 
+.emptyInline {
+  padding: 8px;
+  font-size: 12px;
+}
+
 .projectRow {
   display: grid;
-  grid-template-columns: 1.4fr 0.9fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 8px;
@@ -220,9 +225,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
   font-size: 11px;
   color: var(--fg-3);
+  text-align: right;
 }
 
 .progress {

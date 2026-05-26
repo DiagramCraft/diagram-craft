@@ -14,5 +14,10 @@ export default defineConfig({
     modules: {
       localsConvention: 'camelCase'
     }
+  },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:3010'
+    }
   }
 });

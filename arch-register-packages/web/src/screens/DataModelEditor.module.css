@@ -1,0 +1,449 @@
+/* Data Model Editor */
+.screen {
+  padding: 20px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 22px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.sub {
+  color: var(--fg-2);
+  margin-top: 4px;
+  max-width: 640px;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Editor panel */
+.editor {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 16px;
+}
+
+.editorHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.editorTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editorTitle {
+  font-size: 16px;
+  color: var(--fg-0);
+  font-weight: 500;
+}
+
+.modeToggle {
+  display: inline-flex;
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.modeToggle button {
+  padding: 0 12px;
+  height: 26px;
+  color: var(--fg-2);
+  font-size: 11.5px;
+}
+
+.modeToggle button:hover {
+  color: var(--fg-0);
+}
+
+.modeActive {
+  color: var(--fg-0) !important;
+  background: var(--bg-3);
+}
+
+/* Form rows */
+.formRow {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.formRow > div {
+  flex: 1;
+  min-width: 120px;
+}
+
+.appearanceRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+
+.appearanceRow > div:first-child {
+  flex-shrink: 0;
+}
+
+.appearanceRow > div:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.formLabel {
+  font-size: 11px;
+  color: var(--fg-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.input {
+  height: 28px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--fg-0);
+  padding: 0 8px;
+  border-radius: var(--r);
+  font-size: 12px;
+  width: 100%;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+/* Fields section */
+.fieldsHead {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+/* Fields table */
+.fieldsTable {
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.fieldsTh,
+.fieldRow {
+  display: grid;
+  grid-template-columns: 24px 160px 1fr 130px 1.2fr 80px 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.fieldsTh {
+  background: var(--bg-2);
+  color: var(--fg-3);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fieldRow {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.fieldRow:last-child {
+  border-bottom: 0;
+}
+
+.fieldRow:hover {
+  background: var(--bg-2);
+}
+
+.fieldHandle {
+  color: var(--fg-3);
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+}
+
+.fieldName {
+  color: var(--fg-0);
+  font-family: var(--font-mono);
+}
+
+.fieldOptions {
+  font-size: 11px;
+}
+
+.inlineInput {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--fg-0);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+}
+
+.inlineInput:focus {
+  border-color: var(--accent);
+}
+
+.inlineSelect {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--fg-0);
+  border-radius: var(--r);
+  outline: none;
+  width: 100%;
+  appearance: none;
+  padding-right: 22px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--fg-2) 50%),
+    linear-gradient(135deg, var(--fg-2) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 10px, calc(100% - 9px) 10px;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.inlineSelect:focus {
+  border-color: var(--accent);
+}
+
+/* JSON view */
+.json {
+  background: var(--bg-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 14px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--fg-1);
+  overflow: auto;
+  max-height: 540px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: var(--r);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--bg-4);
+  color: var(--fg-0);
+  border-color: var(--border-strong);
+}
+
+.btnPrimary {
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+}
+
+.btnPrimary:hover {
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+.btnGhost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--fg-2);
+}
+
+.btnGhost:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+.btnDanger {
+  background: transparent;
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--border));
+  color: oklch(0.72 0.16 25);
+}
+
+.btnDanger:hover {
+  background: color-mix(in oklch, var(--danger) 12%, transparent);
+}
+
+/* Icon button */
+.iconBtn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--fg-3);
+}
+
+.iconBtn:hover {
+  color: var(--fg-1);
+  background: var(--bg-3);
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 8px;
+  color: var(--fg-2);
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fg-1);
+}
+
+/* Form actions row */
+.formActions {
+  display: flex;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 16px;
+}
+
+/* Color swatches */
+.colorSwatches {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  height: 28px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.swatchActive {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Icon picker */
+.iconPicker {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.iconOption {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r);
+  color: var(--fg-3);
+}
+
+.iconOption:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+.iconOptionActive {
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 35%, transparent);
+}
+
+/* Checkbox */
+.checkbox {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+.checkbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
