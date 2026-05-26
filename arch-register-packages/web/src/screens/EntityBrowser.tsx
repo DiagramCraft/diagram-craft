@@ -58,7 +58,7 @@ export const EntityBrowser = ({ workspaceId, schemas, typeFilter, statusFilter, 
   }, [facets]);
 
   const filtered = useMemo(() => {
-    let xs = entities.slice();
+    const xs = entities.slice();
     if (sort === 'name') xs.sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug));
     if (sort === 'type') xs.sort((a, b) => a._schemaId.localeCompare(b._schemaId));
     if (sort === 'owner') xs.sort((a, b) => (a._owner ?? '').localeCompare(b._owner ?? ''));

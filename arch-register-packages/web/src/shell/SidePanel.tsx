@@ -193,7 +193,7 @@ const ProjectsSidebar = ({
     fetchProjectFiles(workspaceId, projectId)
       .then(setFileTree)
       .catch(() => setFileTree(null));
-  }, [workspaceId, projectId, projects]);
+  }, [workspaceId, projectId]);
 
   const toggle = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));

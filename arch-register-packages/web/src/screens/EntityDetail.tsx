@@ -423,18 +423,16 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, navigate }: Entit
                 </button>
               </div>
             ) : entity._links.length > 0 && (
-              <>
-                {entity._links.map((l, i) => (
-                  <div key={i} className={styles.metaPropRow}>
-                    <span className={styles.metaPropLabel}>{l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}</span>
-                    <span className={styles.metaPropValue}>
-                      <a className={styles.propLink} href={l.url.startsWith('http') ? l.url : `https://${l.url}`} target="_blank" rel="noopener noreferrer">
-                        <TbExternalLink size={11} /> {l.title || l.url}
-                      </a>
-                    </span>
-                  </div>
-                ))}
-              </>
+              entity._links.map((l, i) => (
+                <div key={i} className={styles.metaPropRow}>
+                  <span className={styles.metaPropLabel}>{l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}</span>
+                  <span className={styles.metaPropValue}>
+                    <a className={styles.propLink} href={l.url.startsWith('http') ? l.url : `https://${l.url}`} target="_blank" rel="noopener noreferrer">
+                      <TbExternalLink size={11} /> {l.title || l.url}
+                    </a>
+                  </span>
+                </div>
+              ))
             )}
           </div>
         </div>

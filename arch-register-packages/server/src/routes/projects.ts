@@ -401,7 +401,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
         const result = await sql`
           UPDATE project_file
           SET path = ${newPath} || substring(path from ${oldPath.length + 1})
-          WHERE workspace = ${workspace} AND project_id = ${id} AND path LIKE ${oldPath + '/%'}
+          WHERE workspace = ${workspace} AND project_id = ${id} AND path LIKE ${`${oldPath}/%`}
           RETURNING id
         `;
 
@@ -429,7 +429,7 @@ export const createProjectRoutes = (storage: StorageAdapter) => {
       try {
         const result = await sql`
           DELETE FROM project_file
-          WHERE workspace = ${workspace} AND project_id = ${id} AND path LIKE ${folderPath + '/%'}
+          WHERE workspace = ${workspace} AND project_id = ${id} AND path LIKE ${`${folderPath}/%`}
           RETURNING id
         `;
 
