@@ -221,6 +221,103 @@ export function createDataRoutes() {
     })
   );
 
+  // GET /api/:workspace/data/tree
+  // Returns filtered entities + ancestor entities (walking containment upward),
+  // plus containment edges, so the client can render a proper hierarchy.
+  router.get(
+    `${BASE}/tree`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event);
+      const query = getQuery(event);
+      const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
+      const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
+      const lifecycle = typeof query['lifecycle'] === 'string' ? query['lifecycle'] : null;
+      const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
+      const pattern = q ? `%${q}%` : null;
+
+      try {
+        // 1. Fetch all schemas so we know which fields are containment
+        const schemas = await sql<EntitySchema[]>`
+          SELECT * FROM entity_schema WHERE workspace = ${workspace}
+        `;
+        // Build a map: schemaId -> containment field ids
+        const containmentFieldsBySchema = new Map<string, string[]>();
+        for (const schema of schemas) {
+          const cFields = schema.fields
+            .filter((f): f is Extract<SchemaField, { type: 'containment' }> => f.type === 'containment')
+            .map(f => f.id);
+          if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
+        }
+
+        // 2. Fetch matching entities (full, so we have data fields for containment)
+        const matchRows = await sql<Entity[]>`
+          SELECT *
+          FROM entity
+          WHERE workspace = ${workspace}
+            ${schemaId ? sql`AND schema_id = ${schemaId}` : sql``}
+            ${owner ? sql`AND owner = ${owner}` : sql``}
+            ${lifecycle ? sql`AND lifecycle = ${lifecycle}` : sql``}
+            ${pattern ? sql`
+              AND (
+                name ILIKE ${pattern}
+                OR slug ILIKE ${pattern}
+                OR description ILIKE ${pattern}
+                OR COALESCE(owner, '') ILIKE ${pattern}
+                OR EXISTS (
+                  SELECT 1
+                  FROM unnest(tags) AS tag
+                  WHERE tag ILIKE ${pattern}
+                )
+              )
+            ` : sql``}
+          ORDER BY name
+        `;
+
+        const matchIds = new Set(matchRows.map(r => r.id));
+        const allEntities = new Map<string, Entity>();
+        for (const row of matchRows) allEntities.set(row.id, row);
+
+        const edges: Array<{ childId: string; parentId: string }> = [];
+
+        // 3. Walk containment upward level by level (batch fetches)
+        let currentLevel = [...matchRows];
+        while (currentLevel.length > 0) {
+          const missingParentIds = new Set<string>();
+
+          for (const entity of currentLevel) {
+            const cFields = containmentFieldsBySchema.get(entity.schema_id);
+            if (!cFields) continue;
+            for (const fieldId of cFields) {
+              for (const parentId of decodeRefs(entity.data[fieldId])) {
+                edges.push({ childId: entity.id, parentId });
+                if (!allEntities.has(parentId)) missingParentIds.add(parentId);
+              }
+            }
+          }
+
+          if (missingParentIds.size === 0) break;
+
+          const parents = await sql<Entity[]>`
+            SELECT * FROM entity
+            WHERE workspace = ${workspace} AND id IN ${sql([...missingParentIds])}
+          `;
+          for (const p of parents) allEntities.set(p.id, p);
+          currentLevel = parents;
+        }
+
+        // 4. Build response
+        const nodes = [...allEntities.values()].map(row => ({
+          ...toSummaryFormat(row),
+          _isMatch: matchIds.has(row.id),
+        }));
+
+        return { nodes, edges };
+      } catch (e) {
+        handleError(e, 'Failed to build tree data');
+      }
+    })
+  );
+
   // GET /api/:workspace/data/export - Export entities to CSV
   router.get(
     `${BASE}/export`,
@@ -653,6 +750,46 @@ export function createDataRoutes() {
         return toApiFormat(row!);
       } catch (e) {
         handleError(e, 'Failed to update data record');
+      }
+    })
+  );
+
+  // POST /api/:workspace/data/:id/clone
+  router.post(
+    `${BASE}/:id/clone`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event);
+      const id = event.context.params?.['id'];
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      try {
+        const [source] = await sql<Entity[]>`SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
+        if (!source) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+
+        const baseName = source.name ? `${source.name} (copy)` : source.slug;
+        const baseSlug = slugify(baseName);
+
+        const [row] = await sql<Entity[]>`
+          INSERT INTO entity (workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data)
+          VALUES (${workspace}, ${baseSlug}, ${source.namespace}, ${baseName}, ${source.description}, ${source.owner}, ${source.lifecycle}, ${source.tags}, ${json(source.links)}, ${source.schema_id}, ${json(source.data)})
+          RETURNING *
+        `;
+
+        await logAudit({
+          workspace,
+          operation: 'create',
+          entityType: 'entity',
+          entityId: row!.id,
+          entityName: row!.name,
+          entitySlug: row!.slug,
+          schemaId: row!.schema_id,
+          changes: {
+            new: extractEntityFields(row!),
+          },
+        });
+
+        return toApiFormat(row!);
+      } catch (e) {
+        handleError(e, 'Failed to clone data record');
       }
     })
   );

@@ -301,6 +301,12 @@
   justify-content: space-between;
 }
 
+.cardHeadRight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .cardName {
   color: var(--fg-0);
   font-weight: 500;
@@ -324,48 +330,29 @@
 }
 
 /* Tree view */
-.treeList {
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+.treeRowAncestor td {
+  opacity: 0.45;
 }
 
-.treeGroupLabel {
-  padding: 8px 8px 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--fg-2);
-  display: flex;
+.treeToggle {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  color: var(--fg-3);
+  border-radius: 3px;
 }
 
-.treeRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px 0 24px;
-  cursor: pointer;
-  font-size: 12px;
+.treeToggle:hover {
   color: var(--fg-1);
+  background: var(--bg-4);
 }
 
-.treeRow:hover {
-  background: var(--bg-3);
-}
-
-.treeLabel {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.treeTrailing {
-  font-size: 11px;
-  color: var(--fg-2);
-  white-space: nowrap;
+.treeToggleSpacer {
+  width: 18px;
+  flex-shrink: 0;
 }
 
 /* Dots button */

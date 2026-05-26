@@ -5,11 +5,12 @@ import { StatusChip } from '../components/StatusChip';
 import { Chip } from '../components/Chip';
 import {
   TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink,
-  TbTrash, TbPlus, TbX,
+  TbTrash, TbPlus, TbX, TbCopy,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
-import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog } from '../api';
+import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog, deleteEntity, cloneEntity } from '../api';
 import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import { DropdownMenu } from '../components/DropdownMenu';
 
 type EntityDetailProps = {
   workspaceId: string;
@@ -236,9 +237,19 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   };
 
   const handleDelete = async () => {
+    if (!confirm(`Delete "${entity?._name || entity?._slug}"?`)) return;
     try {
-      await apiFetch(`/api/${workspaceId}/data/${entityId}`, { method: 'DELETE' });
+      await deleteEntity(workspaceId, entityId);
       navigate({ view: 'entity-browser' });
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleClone = async () => {
+    try {
+      const cloned = await cloneEntity(workspaceId, entityId);
+      navigate({ view: 'entity-detail', entityId: cloned._uid });
     } catch {
       // ignore
     }
@@ -294,7 +305,13 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
               </button>
             </>
           )}
-          <button type="button" className={styles.iconBtn}><TbDots size={14} /></button>
+          <DropdownMenu
+            trigger={<button type="button" className={styles.iconBtn}><TbDots size={14} /></button>}
+            items={[
+              { label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone },
+              { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete },
+            ]}
+          />
         </div>
       </div>
 

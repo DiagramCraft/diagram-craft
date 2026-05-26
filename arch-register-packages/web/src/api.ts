@@ -251,6 +251,25 @@ export const fetchEntities = (workspace: string, options: FetchEntitiesOptions =
     })}`
   );
 
+export type TreeNode = EntitySummary & { _isMatch: boolean };
+
+export type TreeEdge = { childId: string; parentId: string };
+
+export type TreeResponse = {
+  nodes: TreeNode[];
+  edges: TreeEdge[];
+};
+
+export const fetchEntityTree = (workspace: string, options: FetchEntitiesOptions = {}) =>
+  apiFetch<TreeResponse>(
+    `/api/${workspace}/data/tree${buildQuery({
+      _schemaId: options.schemaId ?? null,
+      owner: options.owner ?? null,
+      lifecycle: options.lifecycle ?? null,
+      q: options.q ?? null,
+    })}`
+  );
+
 export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOptions = {}): Promise<Blob> => {
   const url = `${BASE}/api/${workspace}/data/export${buildQuery({
     _schemaId: options.schemaId ?? null,
@@ -268,6 +287,12 @@ export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOpt
 
 export const fetchEntity = (workspace: string, id: string) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data/${id}`);
+
+export const deleteEntity = (workspace: string, id: string) =>
+  apiFetch<{ success: boolean }>(`/api/${workspace}/data/${id}`, { method: 'DELETE' });
+
+export const cloneEntity = (workspace: string, id: string) =>
+  apiFetch<EntityRecord>(`/api/${workspace}/data/${id}/clone`, { method: 'POST' });
 
 export const fetchEntityFacets = (workspace: string) =>
   apiFetch<EntityFacets>(`/api/${workspace}/data/facets`);
