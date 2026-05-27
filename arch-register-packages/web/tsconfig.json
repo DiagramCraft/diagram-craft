@@ -33,6 +33,7 @@
       "@diagram-craft/stencil-c4/*": ["../../packages/stencil-c4/src/*"],
       "@diagram-craft/stencil-data-modelling/*": ["../../packages/stencil-data-modelling/src/*"],
       "@diagram-craft/stencil-uml/*": ["../../packages/stencil-uml/src/*"],
+      "@diagram-craft/main/*": ["../../packages/main/src/*"],
       "@diagram-craft/utils/*": ["../../packages/utils/src/*"]
     }
   },

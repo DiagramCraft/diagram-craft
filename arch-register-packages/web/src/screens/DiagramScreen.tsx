@@ -1,42 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NavigateFn } from '../routing';
 import styles from './DiagramScreen.module.css';
-import '../diagram/diagramCraft.css';
 import { TbArrowLeft, TbDeviceFloppy } from 'react-icons/tb';
-import { initDiagramCraft, INCLUDED_PACKAGES } from '../diagram/diagramCraftSetup';
-import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
-import { Application } from '@diagram-craft/canvas-app/application';
-import { canvasAppActions, defaultMacKeymap } from '@diagram-craft/canvas-app/canvasAppActions';
-import { makeActionMap } from '@diagram-craft/canvas/keyMap';
+import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
+import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { CRDT } from '@diagram-craft/collaboration/crdt';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { Diagram } from '@diagram-craft/model/diagram';
-import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
-import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
-import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
-import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
-import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
-import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
-import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
-import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
-import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
-import { Point } from '@diagram-craft/geometry/point';
-import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
-import type { ToolConstructor, ToolType } from '@diagram-craft/canvas/tool';
-
-const tools: Record<ToolType, ToolConstructor> = {
-  move: MoveTool,
-  text: TextTool,
-  edge: EdgeTool,
-  node: NodeTool,
-  pen: PenTool,
-  freehand: FreehandTool,
-  pan: PanTool,
-  rect: RectTool,
-  zoom: ZoomTool
-};
 
 interface DiagramScreenProps {
   workspaceId: string;
@@ -49,20 +20,19 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<{ path: string; name: string } | null>(null);
-  const [diagram, setDiagram] = useState<Diagram | null>(null);
+  const [doc, setDoc] = useState<DiagramDocument | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   const docRef = useRef<DiagramDocument | null>(null);
-  const appRef = useRef<Application | null>(null);
 
-  // Fetch file info and load diagram
   useEffect(() => {
     const loadDiagram = async () => {
       try {
         setLoading(true);
 
-        // Initialize diagram-craft (idempotent)
-        const { documentFactory, diagramFactory } = initDiagramCraft();
+        const { documentFactory, diagramFactory } = embeddableInit();
+        const includedPackages = getIncludedPackages();
 
         // Fetch project to get file info
         const projectResponse = await fetch(`/api/${workspaceId}/projects/${projectId}`);
@@ -70,6 +40,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         const project = await projectResponse.json();
 
         // Find the file in the project
+        // biome-ignore lint/suspicious/noExplicitAny: API response
         const findFile = (folders: any[], rootFiles: any[]) => {
           for (const file of rootFiles) {
             if (file.id === diagramId) return file;
@@ -95,36 +66,18 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
 
         // Create document and deserialize
         const root = CRDT.makeRoot();
-        const doc = await documentFactory.createDocument(root, undefined, () => {});
-        await deserializeDiagramDocument(diagramData, doc, diagramFactory, {
-          includedPackages: INCLUDED_PACKAGES
+        const document = await documentFactory.createDocument(root, undefined, () => {});
+        await deserializeDiagramDocument(diagramData, document, diagramFactory, {
+          includedPackages
         });
-        await doc.load();
+        await document.load();
 
-        if (doc.diagrams.length === 0) {
+        if (document.diagrams.length === 0) {
           throw new Error('Diagram file contains no diagrams');
         }
 
-        docRef.current = doc;
-
-        // Set up Application
-        const app = new Application();
-        app.model.setActiveDocument(doc, { name: 'User', color: '#3b82f6' }, () => {});
-        app.model.activeDiagram = doc.diagrams[0]!;
-        app.actions = makeActionMap(canvasAppActions)(app);
-        app.ui = {
-          showContextMenu: () => {},
-          showNodeLinkPopup: () => {},
-          showDialog: () => {}
-        };
-        app.help = {
-          set: () => {},
-          push: () => {},
-          pop: () => {}
-        };
-        appRef.current = app;
-
-        setDiagram(doc.diagrams[0]!);
+        docRef.current = document;
+        setDoc(document);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load diagram');
@@ -135,13 +88,11 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     loadDiagram();
 
     return () => {
-      // Cleanup on unmount
       if (docRef.current) {
         docRef.current.deactivate(() => {});
         docRef.current.release();
         docRef.current = null;
       }
-      appRef.current = null;
     };
   }, [workspaceId, projectId, diagramId]);
 
@@ -164,6 +115,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         }
       );
       if (!response.ok) throw new Error('Failed to save diagram');
+      setDirty(false);
     } catch (err) {
       console.error('Save failed:', err);
     } finally {
@@ -171,7 +123,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     }
   }, [workspaceId, projectId, fileInfo]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — only Cmd+S for save; Esc handled at header level
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -187,6 +139,8 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleClose, handleSave]);
 
+  const { documentFactory, diagramFactory } = embeddableInit();
+
   if (loading) {
     return (
       <div className={styles.diagramScreen}>
@@ -198,7 +152,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     );
   }
 
-  if (error || !fileInfo || !diagram || !appRef.current) {
+  if (error || !fileInfo || !doc) {
     return (
       <div className={styles.diagramScreen}>
         <div className={styles.error}>
@@ -212,7 +166,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   }
 
   return (
-    <div className={`${styles.diagramScreen} dc-editor`}>
+    <div className={styles.diagramScreen}>
       <div className={styles.header}>
         <button onClick={handleClose} className={styles.backButton} title="Back to project (Esc)">
           <TbArrowLeft size={18} />
@@ -227,20 +181,16 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
             title="Save (Cmd+S)"
           >
             <TbDeviceFloppy size={16} />
-            <span>{saving ? 'Saving...' : 'Save'}</span>
+            <span>{saving ? 'Saving...' : dirty ? 'Save *' : 'Save'}</span>
           </button>
         </div>
       </div>
       <div className={styles.canvasContainer}>
-        <EditableCanvas
-          id={CanvasDomHelper.diagramId(diagram)}
-          key={diagram.uid}
-          diagram={diagram}
-          actionMap={appRef.current.actions}
-          tools={tools}
-          keyMap={defaultMacKeymap}
-          offset={Point.ORIGIN}
-          context={appRef.current}
+        <EmbeddableEditor
+          doc={doc}
+          documentFactory={documentFactory}
+          diagramFactory={diagramFactory}
+          onDirtyChange={setDirty}
         />
       </div>
     </div>

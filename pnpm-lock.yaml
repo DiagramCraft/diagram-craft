@@ -126,6 +126,9 @@ importers:
       '@diagram-craft/graph':
         specifier: workspace:^
         version: link:../../packages/graph
+      '@diagram-craft/main':
+        specifier: workspace:^
+        version: link:../../packages/main
       '@diagram-craft/markdown':
         specifier: workspace:^
         version: link:../../packages/markdown

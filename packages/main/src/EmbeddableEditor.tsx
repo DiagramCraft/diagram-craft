@@ -1,0 +1,706 @@
+import './EmbeddableEditor.css';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
+import { ContextMenuDispatcher } from './react-app/context-menu-dispatcher/ContextMenuDispatcher';
+import { GuideContextMenu } from './react-app/context-menu-dispatcher/GuideContextMenu';
+import { SelectionContextMenu } from './react-app/context-menu-dispatcher/SelectionContextMenu';
+import { ContextSpecificToolbar } from './react-app/toolbar/ContextSpecificToolbar';
+import { useEventListener } from './react-app/hooks/useEventListener';
+import { useRedraw } from './react-app/hooks/useRedraw';
+import { defaultAppActions, defaultMacAppKeymap } from './react-app/appActionMap';
+import { DocumentTabs } from './react-app/DocumentTabs';
+import { Ruler } from './react-app/Ruler';
+import { ConfigurationContext } from './react-app/context/ConfigurationContext';
+import { defaultPalette } from './react-app/toolwindow/ObjectToolWindow/components/palette';
+import { LayerIndicator } from './react-app/LayerIndicator';
+import {
+  markStartOfNodeLinkPopup,
+  NodeLinkPopup,
+  NodeLinkPopupState
+} from './react-app/NodeLinkPopup';
+import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
+import { type UndoableAction } from '@diagram-craft/model/undoManager';
+import { MessageDialog } from './react-app/components/MessageDialog';
+import {
+  canvasDragOverHandler,
+  canvasDropHandler
+} from './react-app/toolwindow/PickerToolWindow/PickerToolWindow.handlers';
+import { Point } from '@diagram-craft/geometry/point';
+import { ToolConstructor, ToolType } from '@diagram-craft/canvas/tool';
+import { MoveTool } from '@diagram-craft/canvas/tools/moveTool';
+import { TextTool } from '@diagram-craft/canvas-app/tools/textTool';
+import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
+import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
+import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
+import { makeActionMap } from '@diagram-craft/canvas/keyMap';
+import { EditableCanvas } from '@diagram-craft/canvas-react/EditableCanvas';
+import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { HelpMessage } from './react-app/components/HelpMessage';
+import { ErrorBoundary } from './react-app/ErrorBoundary';
+import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
+import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
+import { newid } from '@diagram-craft/utils/id';
+import {
+  type ContextMenus,
+  ContextMenuTarget,
+  DialogCommand,
+  Help
+} from '@diagram-craft/canvas/context';
+import { ImageInsertDialog } from './react-app/ImageInsertDialog';
+import { TableInsertDialog } from './react-app/TableInsertDialog';
+import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
+import { ReferenceLayerDialog } from './react-app/components/NewReferenceLayerDialog';
+import { StringInputDialog } from './react-app/components/StringInputDialog';
+import { RuleEditorDialog } from './react-app/components/RuleEditorDialog/RuleEditorDialog';
+import { ModelCenterDialog } from './react-app/components/ModelCenterDialog/ModelCenterDialog';
+import { useOnChange } from './react-app/hooks/useOnChange';
+import { MainToolbar } from './react-app/MainToolbar';
+import { AuxToolbar } from './react-app/AuxToolbar';
+import { RightSidebar } from './react-app/RightSidebar';
+import { LeftSidebar } from './react-app/LeftSidebar';
+import { Application, ApplicationContext, ApplicationUIActions } from './application';
+import { getDocumentTabKey, UserState } from './UserState';
+import { HelpState } from './react-app/HelpState';
+import { JSONDialog } from './react-app/components/JSONDialog';
+import { CanvasOutline } from './react-app/CanvasOutline';
+import { CanvasTooltip } from './react-app/CanvasTooltip';
+import { bindDocumentDragAndDrop } from '@diagram-craft/canvas/dragDropManager';
+import { ExternalDataLinkDialog } from './react-app/components/ExternalDataLinkDialog';
+import { Preview } from './react-app/Preview';
+import { ShapeSelectDialog } from './react-app/ShapeSelectDialog';
+import { SelectTemplateDialog } from './react-app/SelectTemplateDialog';
+import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
+import { CommentDialog } from './react-app/components/CommentDialog';
+import { CommandPalette } from './react-app/components/CommandPalette';
+import type { DiagramFactory, DocumentFactory } from '@diagram-craft/model/diagramDocumentFactory';
+import { PortalContextProvider } from '@diagram-craft/app-components/PortalContext';
+import { assert, VERIFY_NOT_REACHED } from '@diagram-craft/utils/assert';
+import { CanvasDomHelper } from '@diagram-craft/canvas/utils/canvasDomHelper';
+import type { ProgressCallback } from '@diagram-craft/utils/progress';
+import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
+import { LayoutTreeActionDialog } from './react-app/actions/layoutTreeAction.dialog';
+import { AutoAlignActionDialog } from './react-app/actions/autoAlignAction.dialog';
+import { LayoutForceDirectedActionDialog } from './react-app/actions/layoutForceDirectedAction.dialog';
+import { LayoutLayeredActionDialog } from './react-app/actions/layoutLayeredAction.dialog';
+import { LayoutOrthogonalActionDialog } from './react-app/actions/layoutOrthogonalAction.dialog';
+import { LayoutSeriesParallelActionDialog } from './react-app/actions/layoutSeriesParallelAction.dialog';
+import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
+import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
+import { NodeActionChooserDialog } from './react-app/components/NodeActionChooserDialog';
+import { applyThemeMode, themeModeClassName } from './react-app/themeMode';
+
+const oncePerEvent = (e: MouseEvent, fn: () => void) => {
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  if ((e as any)._triggered) return;
+  fn();
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  (e as any)._triggered = true;
+};
+
+type DialogStackItem = {
+  // biome-ignore lint/suspicious/noExplicitAny: false positive
+  dialog: DialogCommand<any, any>;
+  zIndex: number;
+  id: string;
+};
+
+const tools: Record<ToolType, ToolConstructor> = {
+  move: MoveTool,
+  text: TextTool,
+  edge: EdgeTool,
+  node: NodeTool,
+  pen: PenTool,
+  freehand: FreehandTool,
+  pan: PanTool,
+  rect: RectTool,
+  zoom: ZoomTool
+};
+
+const updateApplicationModel = (
+  doc: DiagramDocument,
+  app: Application,
+  callback: ProgressCallback
+) => {
+  app.model.setActiveDocument(doc, app.userState.awarenessState, callback);
+  const savedDiagramId = app.userState.getDocumentTab(
+    getDocumentTabKey(doc.url, doc.diagrams[0]?.id)
+  );
+  const initialDiagram =
+    [...doc.diagramIterator({ nest: true })].find(d => d.id === doc.activeDiagramId) ??
+    (savedDiagramId ? doc.byId(savedDiagramId) : undefined) ??
+    doc.diagrams[0]!;
+
+  app.model.activeDiagram = initialDiagram;
+
+  if (!app.ready) {
+    const keyMap = defaultMacAppKeymap;
+    app.keyMap = keyMap;
+    app.actions = makeActionMap(defaultAppActions)(app);
+  }
+  app.ready = true;
+};
+
+export type EmbeddableEditorProps = {
+  doc: DiagramDocument;
+  documentFactory: DocumentFactory;
+  diagramFactory: DiagramFactory;
+  onDirtyChange?: (dirty: boolean) => void;
+};
+
+export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
+  const redraw = useRedraw();
+  const helpState = useRef(new HelpState());
+  const [preview, setPreview] = useState<boolean>(false);
+
+  const userState = useRef(UserState.get());
+  const application = useRef(new Application(userState.current));
+
+  const progressCallback = useCallback<ProgressCallback>(
+    (_status, _opts) => {},
+    []
+  );
+
+  useEventListener(application.current.model, 'activeDiagramChange', redraw);
+  useEventListener(application.current.model, 'activeDocumentChange', redraw);
+  useEventListener(userState.current, 'change', redraw);
+
+  const help: Help = {
+    push: (id: string, message: string) => {
+      const help = helpState.current.help;
+      if (help && help.id === id && help.message === message) return;
+      queueMicrotask(() => {
+        helpState.current.pushHelp({ id, message });
+      });
+    },
+    pop: (id: string) => {
+      helpState.current.popHelp(id);
+    },
+    set: (message: string) => {
+      helpState.current.setHelp({ id: 'default', message });
+    }
+  };
+
+  const uiActions: ApplicationUIActions = {
+    showContextMenu: <T extends keyof ContextMenus>(
+      type: T,
+      point: Point,
+      mouseEvent: MouseEvent,
+      args: ContextMenus[T]
+    ) => {
+      oncePerEvent(mouseEvent, () => {
+        contextMenuTarget.current = { type, ...args, pos: point };
+      });
+    },
+    showNodeLinkPopup: (
+      point: Point,
+      nodeId: string | undefined,
+      edgeId: string,
+      pendingUndoableActions: UndoableAction[],
+      options?: NodeLinkOptions
+    ) => {
+      markStartOfNodeLinkPopup(application.current.model.activeDiagram, pendingUndoableActions);
+
+      const screenPoint = $d.viewBox.toScreenPoint(point);
+      setPopoverState({
+        isOpen: true,
+        position: screenPoint,
+        nodeId,
+        edgeId,
+        options
+      });
+    },
+    showDialog: (dialog: DialogCommand<unknown, unknown>) => {
+      const dialogId = newid();
+      const baseZIndex = 1000;
+      const newZIndex = baseZIndex + dialogStack.length;
+
+      setDialogStack(prev => [
+        ...prev,
+        {
+          dialog: {
+            ...dialog,
+            onOk: (data: unknown) => {
+              dialog.onOk(data);
+              setDialogStack(current => current.filter(item => item.id !== dialogId));
+            },
+            onCancel: () => {
+              dialog.onCancel?.();
+              setDialogStack(current => current.filter(item => item.id !== dialogId));
+            }
+          },
+          zIndex: newZIndex,
+          id: dialogId
+        }
+      ]);
+    },
+    showPreview: () => setPreview(true)
+  };
+  application.current.ui = uiActions;
+  application.current.help = help;
+
+  // Provide a no-op file handler (embedded mode has no file open/save)
+  application.current.file = {
+    loadDocument: async () => {},
+    newDocument: async () => {},
+    clearDirty: () => {}
+  };
+
+  useOnChange(props.doc, () => {
+    assert.arrayNotEmpty(props.doc.diagrams);
+    updateApplicationModel(props.doc, application.current, progressCallback);
+  });
+
+  const [dirty, setDirty] = useState(false);
+  const [popoverState, setPopoverState] = useState<NodeLinkPopupState>(NodeLinkPopup.INITIAL_STATE);
+  const [dialogStack, setDialogStack] = useState<DialogStackItem[]>([]);
+  const contextMenuTarget = useRef<ContextMenuTarget | null>(null);
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const openDialogCount = useRef(0);
+
+  const handleDialogShow = useCallback(() => {
+    openDialogCount.current++;
+    application.current.actionState.set('disabled');
+  }, []);
+
+  const handleDialogHide = useCallback(() => {
+    openDialogCount.current--;
+    if (openDialogCount.current === 0) {
+      application.current.actionState.set('enabled');
+    }
+  }, []);
+
+  // Dirty tracking — notify parent on changes
+  const dirtyTracking = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: false positive
+    (event: any) => {
+      if (event.silent) return;
+      if (!dirty) {
+        setDirty(true);
+        props.onDirtyChange?.(true);
+      }
+    },
+    [dirty, props.onDirtyChange]
+  );
+
+  const $d = application.current.model.activeDiagram;
+  const actionMap = application.current.actions;
+  const doc = application.current.model.activeDocument;
+
+  useEventListener($d, 'diagramChange', dirtyTracking);
+  useEventListener($d, 'elementAdd', dirtyTracking);
+  useEventListener($d, 'elementChange', dirtyTracking);
+  useEventListener($d, 'elementRemove', dirtyTracking);
+  useEventListener(doc, 'diagramRemoved', dirtyTracking);
+  useEventListener(doc, 'diagramAdded', dirtyTracking);
+  useEventListener(doc, 'diagramChanged', dirtyTracking);
+  useEventListener(doc.data, 'change', dirtyTracking);
+  useEventListener($d.commentManager, 'commentAdded', dirtyTracking);
+  useEventListener($d.commentManager, 'commentUpdated', dirtyTracking);
+  useEventListener($d.commentManager, 'commentRemoved', dirtyTracking);
+  useEventListener(doc.data.db, 'updateData', dirtyTracking);
+  useEventListener(doc.data.db, 'deleteData', dirtyTracking);
+  useEventListener(doc.data.db, 'addData', dirtyTracking);
+  useEventListener(doc.data.db, 'addSchema', dirtyTracking);
+  useEventListener(doc.data.db, 'deleteSchema', dirtyTracking);
+  useEventListener(doc.data.db, 'updateSchema', dirtyTracking);
+  useEventListener(doc.props.query, 'change', dirtyTracking);
+  useEventListener(doc.props.activeStencilPackages, 'change', dirtyTracking);
+
+  useEffect(() => bindDocumentDragAndDrop());
+
+  useLayoutEffect(() => {
+    applyThemeMode(userState.current.themeMode);
+  });
+
+  usePanOnDrag($d, userState.current!);
+
+  return (
+    <div className="dc-embeddable-editor">
+      <PortalContextProvider>
+        <DialogContextProvider onDialogShow={handleDialogShow} onDialogHide={handleDialogHide}>
+          <ApplicationContext.Provider value={{ application: application.current }}>
+            <ConfigurationContext.Provider
+              value={{
+                palette: {
+                  primary: defaultPalette
+                },
+                fonts: {
+                  'Times': 'Times',
+                  'Arial': 'Arial',
+                  'Sans Serif': 'sans-serif',
+                  'Helvetica': 'Helvetica',
+                  'Verdana': 'Verdana',
+                  'Courier': 'Courier',
+                  'Comic Sans': 'Comic Sans MS',
+                  'Impact': 'Impact',
+                  'Tahoma': 'Tahoma',
+                  'Trebuchet': 'Trebuchet MS',
+                  'Georgia': 'Georgia'
+                }
+              }}
+            >
+              {/* Dialogs */}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'imageInsert') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <ImageInsertDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'tableInsert') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <TableInsertDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'newReferenceLayer') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <ReferenceLayerDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'stringInput') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <StringInputDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'ruleEditor') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <RuleEditorDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'message') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <MessageDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'json') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <JSONDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'externalDataLink') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <ExternalDataLinkDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'modelCenter') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <ModelCenterDialog
+                      open={true}
+                      onClose={() => item.dialog.onCancel?.()}
+                      defaultTab={item.dialog.props?.defaultTab}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'shapeSelect') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <ShapeSelectDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'selectTemplate') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <SelectTemplateDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'comment') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <CommentDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'nodeActionChooser') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <NodeActionChooserDialog
+                      open={true}
+                      {...item.dialog.props}
+                      onOk={item.dialog.onOk}
+                      onCancel={item.dialog.onCancel}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'commandPalette') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <CommandPalette open={true} onClose={() => item.dialog.onCancel?.()} />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolLayoutTree') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <LayoutTreeActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolAutoAlign') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <AutoAlignActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolLayoutForceDirected') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <LayoutForceDirectedActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolLayoutLayered') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <LayoutLayeredActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolLayoutOrthogonal') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <LayoutOrthogonalActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+              {dialogStack.map(item => {
+                if (item.dialog.id !== 'toolLayoutSeriesParallel') return null;
+                return (
+                  <div key={item.id} style={{ zIndex: item.zIndex }}>
+                    <LayoutSeriesParallelActionDialog
+                      onChange={d => item.dialog.props.onChange(d)}
+                      onApply={d => item.dialog.onOk?.(d)}
+                      onCancel={() => item.dialog.onCancel?.()}
+                    />
+                  </div>
+                );
+              })}
+
+              <div id="app" className={themeModeClassName(userState.current.themeMode)}>
+                <div id="menu">
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <MainToolbar />
+                  </div>
+                  <div />
+                  <div style={{ display: 'flex', marginLeft: 'auto' }}>
+                    <AuxToolbar />
+                  </div>
+                </div>
+
+                <div id="window-area">
+                  <div id="toolbar">
+                    <ContextSpecificToolbar />
+                  </div>
+
+                  <LeftSidebar />
+                  <RightSidebar />
+
+                  <div id="canvas-area">
+                    <ErrorBoundary>
+                      <ContextMenu.Root>
+                        <ContextMenu.Trigger
+                          element={
+                            <EditableCanvas
+                              id={CanvasDomHelper.diagramId($d)}
+                              ref={svgRef}
+                              diagram={$d}
+                              key={$d.uid}
+                              actionMap={actionMap}
+                              tools={tools}
+                              keyMap={application.current.keyMap}
+                              offset={
+                                (userState.current.panelLeft ?? -1) >= 0
+                                  ? {
+                                      x: 250,
+                                      y: 0
+                                    }
+                                  : Point.ORIGIN
+                              }
+                              onDrop={canvasDropHandler($d)}
+                              onDragOver={canvasDragOverHandler($d)}
+                              context={application.current}
+                            />
+                          }
+                        />
+                        <ContextMenu.Menu>
+                          <ContextMenuDispatcher
+                            state={contextMenuTarget}
+                            createContextMenu={state => {
+                              if (state.type === 'canvas') {
+                                return (
+                                  <CanvasContextMenu
+                                    target={state as ContextMenuTarget<'canvas'>}
+                                  />
+                                );
+                              } else if (state.type === 'selection') {
+                                return (
+                                  <SelectionContextMenu
+                                    target={state as ContextMenuTarget<'selection'>}
+                                  />
+                                );
+                              } else if (state.type === 'guide') {
+                                return (
+                                  <GuideContextMenu
+                                    target={state as ContextMenuTarget<'guide'>}
+                                  />
+                                );
+                              } else {
+                                VERIFY_NOT_REACHED();
+                              }
+                            }}
+                          />
+                        </ContextMenu.Menu>
+                      </ContextMenu.Root>
+                    </ErrorBoundary>
+
+                    <Ruler id="ruler-h" orientation={'horizontal'} />
+                    <Ruler id="ruler-v" orientation={'vertical'} />
+                    <CanvasOutline />
+                    <CanvasTooltip />
+
+                    <NodeLinkPopup
+                      {...popoverState}
+                      onClose={() => setPopoverState(s => ({ ...s, isOpen: false }))}
+                    />
+                  </div>
+
+                  <div id="tabs">
+                    <DocumentTabs document={doc} />
+                    <LayerIndicator />
+                  </div>
+                </div>
+
+                <HelpMessage helpState={helpState.current} />
+              </div>
+
+              {preview && <Preview onClose={() => setPreview(false)} />}
+            </ConfigurationContext.Provider>
+          </ApplicationContext.Provider>
+        </DialogContextProvider>
+      </PortalContextProvider>
+    </div>
+  );
+};
+
+export const useEmbeddableEditorDirtyReset = () => {
+  // Helper for consumers to reset dirty state after saving
+  return {
+    markClean: (_editor: { onDirtyChange?: (dirty: boolean) => void }) => {
+      _editor.onDirtyChange?.(false);
+    }
+  };
+};
