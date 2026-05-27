@@ -1,16 +1,21 @@
-@import "./App.css";
-
 .dc-embeddable-editor {
   position: relative;
   width: 100%;
   height: 100%;
   isolation: isolate;
   --container-outline: #d5d5d4;
-  --right-indent: 0;
-  --left-indent: 0;
 }
 
 .dc-embeddable-editor #app {
   position: absolute;
   inset: 0;
+}
+
+/* Reset host-app styles that may conflict */
+.dc-embeddable-editor button {
+  padding: revert;
+}
+
+.dc-embeddable-editor *, .dc-embeddable-editor *::before, .dc-embeddable-editor *::after {
+  box-sizing: revert;
 }

@@ -1,3 +1,4 @@
+import './App.css';
 import './EmbeddableEditor.css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CanvasContextMenu } from './react-app/context-menu-dispatcher/CanvasContextMenu';
