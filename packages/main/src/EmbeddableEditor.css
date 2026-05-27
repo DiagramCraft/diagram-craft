@@ -11,15 +11,6 @@
   inset: 0;
 }
 
-/* Reset host-app styles that may conflict */
-.dc-embeddable-editor button {
-  padding: revert;
-}
-
-.dc-embeddable-editor *, .dc-embeddable-editor *::before, .dc-embeddable-editor *::after {
-  box-sizing: revert;
-}
-
 .dc-embeddable-editor .embeddable-back-button {
   display: inline-flex;
   align-items: center;

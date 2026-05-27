@@ -141,6 +141,7 @@ const App = () => {
   };
 
   let screen: React.ReactNode;
+  let diagramOverlay: React.ReactNode = null;
   switch (route.view) {
     case 'home':
       screen = ws ? (
@@ -233,7 +234,7 @@ const App = () => {
       ) : null;
       break;
     case 'diagram':
-      screen = wsId && route.projectId && route.diagramId ? (
+      diagramOverlay = wsId && route.projectId && route.diagramId ? (
         <DiagramScreen
           workspaceId={wsId}
           projectId={route.projectId}
@@ -251,7 +252,8 @@ const App = () => {
   }
 
   return (
-    <div className={styles.shell}>
+    <>
+    <div className={`ar-app ${styles.shell}`}>
       <TopBar
         workspaces={workspaces}
         currentWs={route.workspaceId ?? ''}
@@ -330,6 +332,8 @@ const App = () => {
         />
       )}
     </div>
+    {diagramOverlay}
+    </>
   );
 };
 

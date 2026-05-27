@@ -235,7 +235,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   }
 
   return (
-    <div className={styles.diagramScreen}>
+    <div className={`dc ${styles.diagramScreen}`}>
       <EmbeddableEditor
         doc={doc}
         documentFactory={documentFactory}
