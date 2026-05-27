@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NavigateFn } from '../routing';
 import styles from './DiagramScreen.module.css';
-import { TbDeviceFloppy } from 'react-icons/tb';
+import { TbArrowLeft, TbDeviceFloppy } from 'react-icons/tb';
 import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
@@ -245,20 +245,31 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         documentFactory={documentFactory}
         diagramFactory={diagramFactory}
         onDirtyChange={setDirty}
-        onBack={handleClose}
         documentName={fileInfo.name}
         dirty={dirty}
-        headerActions={
-          <button
-            type="button"
-            onClick={handleSave}
-            className={styles.saveButton}
-            disabled={saving}
-            title="Save (Cmd+S)"
-          >
-            <TbDeviceFloppy size={16} />
-            <span>{saving ? 'Saving...' : 'Save'}</span>
-          </button>
+        headerLeft={
+          <>
+            <button
+              type={'button'}
+              className={'embeddable-back-button'}
+              onClick={handleClose}
+              title={'Back'}
+            >
+              <TbArrowLeft size={'13px'} />
+              <span>Back</span>
+            </button>
+            <div className={'embeddable-back-sep'} />
+            <button
+              type="button"
+              onClick={handleSave}
+              className={styles.saveButton}
+              disabled={saving}
+              title="Save (Cmd+S)"
+            >
+              <TbDeviceFloppy size={16} />
+              <span>{saving ? 'Saving...' : 'Save'}</span>
+            </button>
+          </>
         }
       />
     </div>
