@@ -1,14 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import yaml from '@rollup/plugin-yaml';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), yaml()],
   resolve: {
-    alias: {
-      '@diagram-craft/app-components': path.resolve(__dirname, '../../packages/app-components/src'),
-      '@diagram-craft/utils': path.resolve(__dirname, '../../packages/utils/src')
-    }
+    tsconfigPaths: true
   },
   css: {
     modules: {

@@ -99,6 +99,54 @@ importers:
       '@diagram-craft/app-components':
         specifier: workspace:^
         version: link:../../packages/app-components
+      '@diagram-craft/canvas':
+        specifier: workspace:^
+        version: link:../../packages/canvas
+      '@diagram-craft/canvas-app':
+        specifier: workspace:^
+        version: link:../../packages/canvas-app
+      '@diagram-craft/canvas-drawio':
+        specifier: workspace:^
+        version: link:../../packages/canvas-drawio
+      '@diagram-craft/canvas-edges':
+        specifier: workspace:^
+        version: link:../../packages/canvas-edges
+      '@diagram-craft/canvas-nodes':
+        specifier: workspace:^
+        version: link:../../packages/canvas-nodes
+      '@diagram-craft/canvas-react':
+        specifier: workspace:^
+        version: link:../../packages/canvas-react
+      '@diagram-craft/collaboration':
+        specifier: workspace:^
+        version: link:../../packages/collaboration
+      '@diagram-craft/geometry':
+        specifier: workspace:^
+        version: link:../../packages/geometry
+      '@diagram-craft/graph':
+        specifier: workspace:^
+        version: link:../../packages/graph
+      '@diagram-craft/markdown':
+        specifier: workspace:^
+        version: link:../../packages/markdown
+      '@diagram-craft/model':
+        specifier: workspace:^
+        version: link:../../packages/model
+      '@diagram-craft/stencil-archimate':
+        specifier: workspace:^
+        version: link:../../packages/stencil-archimate
+      '@diagram-craft/stencil-bpmn':
+        specifier: workspace:^
+        version: link:../../packages/stencil-bpmn
+      '@diagram-craft/stencil-c4':
+        specifier: workspace:^
+        version: link:../../packages/stencil-c4
+      '@diagram-craft/stencil-data-modelling':
+        specifier: workspace:^
+        version: link:../../packages/stencil-data-modelling
+      '@diagram-craft/stencil-uml':
+        specifier: workspace:^
+        version: link:../../packages/stencil-uml
       '@diagram-craft/utils':
         specifier: workspace:^
         version: link:../../packages/utils
@@ -115,6 +163,9 @@ importers:
         specifier: ^5.3.0
         version: 5.5.0(react@19.2.5)
     devDependencies:
+      '@rollup/plugin-yaml':
+        specifier: ^4.1.2
+        version: 4.1.2(rollup@4.59.0)
       '@types/react':
         specifier: ^19.2.2
         version: 19.2.14
