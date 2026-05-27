@@ -89,6 +89,8 @@ import { ContextMenu } from '@diagram-craft/app-components/ContextMenu';
 import { usePanOnDrag } from './react-app/hooks/usePanOnDrag';
 import { NodeActionChooserDialog } from './react-app/components/NodeActionChooserDialog';
 import { applyThemeMode, themeModeClassName } from './react-app/themeMode';
+import { TbArrowLeft } from 'react-icons/tb';
+import { DirtyIndicator } from './react-app/DirtyIndicator';
 
 const oncePerEvent = (e: MouseEvent, fn: () => void) => {
   // biome-ignore lint/suspicious/noExplicitAny: false positive
@@ -146,12 +148,17 @@ export type EmbeddableEditorProps = {
   documentFactory: DocumentFactory;
   diagramFactory: DiagramFactory;
   onDirtyChange?: (dirty: boolean) => void;
+  onBack?: () => void;
+  documentName?: string;
+  dirty?: boolean;
+  headerActions?: React.ReactNode;
 };
 
 export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
   const redraw = useRedraw();
   const helpState = useRef(new HelpState());
   const [preview, setPreview] = useState<boolean>(false);
+  const { onDirtyChange, onBack, documentName, dirty: externalDirty, headerActions } = props;
 
   const userState = useRef(UserState.get());
   const application = useRef(new Application(userState.current));
@@ -278,10 +285,10 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
       if (event.silent) return;
       if (!dirty) {
         setDirty(true);
-        props.onDirtyChange?.(true);
+        onDirtyChange?.(true);
       }
     },
-    [dirty, props.onDirtyChange]
+    [dirty, onDirtyChange]
   );
 
   const $d = application.current.model.activeDiagram;
@@ -594,10 +601,32 @@ export const EmbeddableEditor = (props: EmbeddableEditorProps) => {
               <div id="app" className={themeModeClassName(userState.current.themeMode)}>
                 <div id="menu">
                   <div style={{ display: 'flex', alignItems: 'center' }}>
+                    {onBack && (
+                      <>
+                        <button
+                          type={'button'}
+                          className={'embeddable-back-button'}
+                          onClick={onBack}
+                          title={'Back'}
+                        >
+                          <TbArrowLeft size={'13px'} />
+                          <span>Back</span>
+                        </button>
+                        <div className={'embeddable-back-sep'} />
+                      </>
+                    )}
                     <MainToolbar />
                   </div>
-                  <div />
+                  {documentName !== undefined ? (
+                    <div id={'document'}>
+                      {documentName}
+                      <DirtyIndicator dirty={externalDirty ?? false} />
+                    </div>
+                  ) : (
+                    <div />
+                  )}
                   <div style={{ display: 'flex', marginLeft: 'auto' }}>
+                    {headerActions}
                     <AuxToolbar />
                   </div>
                 </div>

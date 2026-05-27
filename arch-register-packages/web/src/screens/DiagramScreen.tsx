@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NavigateFn } from '../routing';
 import styles from './DiagramScreen.module.css';
-import { TbArrowLeft, TbDeviceFloppy } from 'react-icons/tb';
+import { TbDeviceFloppy } from 'react-icons/tb';
 import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
@@ -230,7 +230,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
       <div className={styles.diagramScreen}>
         <div className={styles.error}>
           <p>Error: {error ?? 'Failed to load diagram'}</p>
-          <button onClick={handleClose} className={styles.button}>
+          <button type="button" onClick={handleClose} className={styles.button}>
             Back to Project
           </button>
         </div>
@@ -240,32 +240,27 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
 
   return (
     <div className={styles.diagramScreen}>
-      <div className={styles.header}>
-        <button onClick={handleClose} className={styles.backButton} title="Back to project (Esc)">
-          <TbArrowLeft size={18} />
-          <span>Back</span>
-        </button>
-        <h1 className={styles.title}>{fileInfo.name}</h1>
-        <div className={styles.headerActions}>
+      <EmbeddableEditor
+        doc={doc}
+        documentFactory={documentFactory}
+        diagramFactory={diagramFactory}
+        onDirtyChange={setDirty}
+        onBack={handleClose}
+        documentName={fileInfo.name}
+        dirty={dirty}
+        headerActions={
           <button
+            type="button"
             onClick={handleSave}
             className={styles.saveButton}
             disabled={saving}
             title="Save (Cmd+S)"
           >
             <TbDeviceFloppy size={16} />
-            <span>{saving ? 'Saving...' : dirty ? 'Save *' : 'Save'}</span>
+            <span>{saving ? 'Saving...' : 'Save'}</span>
           </button>
-        </div>
-      </div>
-      <div className={styles.canvasContainer}>
-        <EmbeddableEditor
-          doc={doc}
-          documentFactory={documentFactory}
-          diagramFactory={diagramFactory}
-          onDirtyChange={setDirty}
-        />
-      </div>
+        }
+      />
     </div>
   );
 };

@@ -71,7 +71,7 @@ export const EditSchemaDialog = (props: Props) => {
     const fieldNumber = fields.length + 1;
     const newField: DataSchemaField = {
       id: `field${fieldNumber}`,
-      name: $t('dialog.schema.field', 'Field') + ` ${fieldNumber}`,
+      name: `${$t('dialog.schema.field', 'Field')} ${fieldNumber}`,
       type: 'text'
     };
     setFields(currentFields => currentFields.toSpliced(index + 1, 0, newField));
@@ -348,11 +348,11 @@ export const EditSchemaDialog = (props: Props) => {
                             options: [
                               {
                                 value: 'option1',
-                                label: $t('dialog.schema.option', 'Option') + ' 1'
+                                label: `${$t('dialog.schema.option', 'Option')} 1`
                               },
                               {
                                 value: 'option2',
-                                label: $t('dialog.schema.option', 'Option') + ' 2'
+                                label: `${$t('dialog.schema.option', 'Option')} 2`
                               }
                             ]
                           });
