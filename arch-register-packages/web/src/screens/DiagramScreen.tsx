@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NavigateFn } from '../routing';
 import styles from './DiagramScreen.module.css';
 import { TbArrowLeft } from 'react-icons/tb';
-import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
+import { initializeDiagramCraft, getIncludedPackages } from '../diagramcraft-initial-config';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
 import { UrlDataProviderId } from '@diagram-craft/model/data-providers/dataProviderUrl';
@@ -134,7 +134,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
       try {
         setLoading(true);
 
-        const { documentFactory, diagramFactory } = embeddableInit();
+        const { documentFactory, diagramFactory } = initializeDiagramCraft();
         const includedPackages = getIncludedPackages();
 
         // Fetch project to get file info
@@ -208,7 +208,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     };
   }, [workspaceId, projectId, diagramId, injectPublicProvider, suppressDefaultProvider]);
 
-  const { documentFactory, diagramFactory } = embeddableInit();
+  const { documentFactory, diagramFactory } = initializeDiagramCraft();
 
   if (loading) {
     return (

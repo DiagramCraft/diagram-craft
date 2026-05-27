@@ -9,9 +9,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/canvas-app": "workspace:^",
+    "@diagram-craft/canvas-drawio": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/main": "workspace:^",
+    "@diagram-craft/markdown": "workspace:^",
     "@diagram-craft/model": "workspace:^",
+    "@diagram-craft/stencil-archimate": "workspace:^",
+    "@diagram-craft/stencil-bpmn": "workspace:^",
+    "@diagram-craft/stencil-c4": "workspace:^",
+    "@diagram-craft/stencil-data-modelling": "workspace:^",
+    "@diagram-craft/stencil-uml": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
     "react": "^19.2.5",
