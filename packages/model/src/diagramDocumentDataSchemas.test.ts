@@ -2,7 +2,8 @@ import { describe, expect, test, vi } from 'vitest';
 import {
   DataSchema,
   DiagramDocumentDataSchemas,
-  SchemaMetadata
+  SchemaMetadata,
+  isRelationshipField
 } from './diagramDocumentDataSchemas';
 import { CRDT } from '@diagram-craft/collaboration/crdt';
 import { TestModel } from './test-support/testModel';
@@ -345,5 +346,20 @@ describe.each(Backends.all())('DiagramDocumentDataSchemas [%s]', (_name, backend
         });
       }
     });
+  });
+});
+
+describe('isRelationshipField', () => {
+  test('treats containment fields as reference-like', () => {
+    expect(
+      isRelationshipField({
+        id: 'parent',
+        name: 'Parent',
+        type: 'containment',
+        schemaId: 'schema-1',
+        minCount: 0,
+        maxCount: 1
+      })
+    ).toBe(true);
   });
 });

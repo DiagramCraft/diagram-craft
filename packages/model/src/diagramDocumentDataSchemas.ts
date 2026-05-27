@@ -30,7 +30,26 @@ export type DataSchemaField =
       schemaId: string;
       minCount: number;
       maxCount: number;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'containment';
+      schemaId: string;
+      minCount: number;
+      maxCount: number;
     };
+
+export type RelationshipDataSchemaField = Extract<
+  DataSchemaField,
+  { type: 'reference' | 'containment' }
+>;
+
+export const isRelationshipField = (
+  field: DataSchemaField
+): field is RelationshipDataSchemaField => {
+  return field.type === 'reference' || field.type === 'containment';
+};
 
 export const encodeDataReferences = (refs: string[]) => refs.join(',');
 export const decodeDataReferences = (refs: string | undefined) =>

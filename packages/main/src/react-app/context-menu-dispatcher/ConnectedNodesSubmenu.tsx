@@ -5,7 +5,10 @@ import { AnchorEndpoint, NodeConnectedEndpoint } from '@diagram-craft/model/endp
 import type { Diagram } from '@diagram-craft/model/diagram';
 import type { Data } from '@diagram-craft/model/dataProvider';
 import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
-import { decodeDataReferences } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  decodeDataReferences,
+  isRelationshipField
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { assert } from '@diagram-craft/utils/assert';
 import { ElementFactory } from '@diagram-craft/model/elementFactory';
 import { Menu } from '@diagram-craft/app-components/Menu';
@@ -60,9 +63,9 @@ const getConnectedItems = (diagram: Diagram): ConnectionItem[] => {
       // Get the schema for this data entry
       const schema = diagram.document.data.db.getSchema(dataEntry.schema);
 
-      // Check each field in the schema for reference fields
+      // Check each field in the schema for reference-like fields
       for (const field of schema.fields) {
-        if (field.type === 'reference') {
+        if (isRelationshipField(field)) {
           // Get the referenced UIDs from the data
           let referencedUIDs: string[] = [];
           if (dataEntry.data[field.id]) {

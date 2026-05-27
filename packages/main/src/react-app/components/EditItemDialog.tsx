@@ -4,7 +4,8 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Data } from '@diagram-craft/model/dataProvider';
 import {
   decodeDataReferences,
-  encodeDataReferences
+  encodeDataReferences,
+  isRelationshipField
 } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { newid } from '@diagram-craft/utils/id';
 import { assert } from '@diagram-craft/utils/assert';
@@ -41,7 +42,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
   const handleOpen = () => {
     const initialData: Record<string, string | string[]> = {};
     schema.fields.forEach(field => {
-      if (field.type === 'reference') {
+      if (isRelationshipField(field)) {
         initialData[field.id] = decodeDataReferences(props.editItem?.[field.id]);
       } else {
         initialData[field.id] = props.editItem ? (props.editItem[field.id] ?? '') : '';
@@ -63,7 +64,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
     // Validate required fields
     const missingFields = schema.fields.filter(field => {
       const value = formData[field.id];
-      if (field.type === 'reference') {
+      if (isRelationshipField(field)) {
         const refs = value as string[];
         return refs.length < field.minCount;
       } else {
@@ -78,7 +79,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
 
     // Validate reference field constraints
     const invalidReferenceFields = schema.fields.filter(field => {
-      if (field.type === 'reference') {
+      if (isRelationshipField(field)) {
         const refs = formData[field.id] as string[];
         return refs.length > field.maxCount;
       }
@@ -96,7 +97,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
       const processedData: Record<string, string> = {};
       schema.fields.forEach(field => {
         const value = formData[field.id];
-        if (field.type === 'reference') {
+        if (isRelationshipField(field)) {
           processedData[field.id] = encodeDataReferences(value as string[]);
         } else {
           processedData[field.id] = value as string;
@@ -179,7 +180,7 @@ export const EditItemDialog = (props: EditItemDialogProps) => {
                 onChange={v => setFormData(prev => ({ ...prev, [field.id]: v ?? '' }))}
               />
             )}
-            {field.type === 'reference' && (
+            {isRelationshipField(field) && (
               <ReferenceFieldEditor
                 field={field}
                 selectedValues={formData[field.id] as string[]}

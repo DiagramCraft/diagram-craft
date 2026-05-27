@@ -4,10 +4,21 @@ import styles from './DiagramScreen.module.css';
 import { TbArrowLeft, TbDeviceFloppy } from 'react-icons/tb';
 import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
+import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
+import { UrlDataProviderId } from '@diagram-craft/model/data-providers/dataProviderUrl';
+import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
+import type {
+  SerializedDiagramDocument,
+  SerializedOverride
+} from '@diagram-craft/model/serialization/serializedTypes';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { CRDT } from '@diagram-craft/collaboration/crdt';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+
+const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
+type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
+type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
 
 interface DiagramScreenProps {
   workspaceId: string;
@@ -25,6 +36,60 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   const [dirty, setDirty] = useState(false);
 
   const docRef = useRef<DiagramDocument | null>(null);
+
+  const injectPublicProvider = useCallback(
+    (
+      diagramData: SerializedDiagramDocument,
+      publicSchemas: PublicSchema[]
+    ): SerializedDiagramDocument => {
+      const currentData =
+        typeof diagramData.data === 'object' && diagramData.data !== null
+          ? (diagramData.data as Record<string, unknown>)
+          : {};
+      const normalizedSchemas = publicSchemas.map(schema => ({
+        ...schema,
+        providerId: ARCH_REGISTER_PUBLIC_PROVIDER_ID
+      }));
+
+      return {
+        ...diagramData,
+        schemas: normalizedSchemas,
+        data: {
+          ...currentData,
+          providers: [
+            {
+              id: ARCH_REGISTER_PUBLIC_PROVIDER_ID,
+              providerId: UrlDataProviderId,
+              data: JSON.stringify({
+                schemas: normalizedSchemas,
+                data: [],
+                schemaUrl: `/api/public/${workspaceId}/schemas`,
+                dataUrl: `/api/public/${workspaceId}/data`
+              })
+            }
+          ],
+          templates: Array.isArray(currentData.templates) ? currentData.templates : [],
+          overrides:
+            typeof currentData.overrides === 'object' && currentData.overrides !== null
+              ? (currentData.overrides as SerializedOverrides)
+              : {}
+        }
+      };
+    },
+    [workspaceId]
+  );
+
+  const suppressDefaultProvider = useCallback(async (document: DiagramDocument) => {
+    const defaultProvider = document.data.providers.find(
+      provider => provider instanceof DefaultDataProvider
+    );
+
+    if (!defaultProvider) return;
+
+    for (const schema of [...defaultProvider.schemas]) {
+      await defaultProvider.deleteSchema(schema);
+    }
+  }, []);
 
   useEffect(() => {
     const loadDiagram = async () => {
@@ -57,12 +122,19 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         if (!file) throw new Error('Diagram file not found');
         setFileInfo({ path: file.path, name: file.name });
 
-        // Fetch diagram content
-        const diagramResponse = await fetch(
-          `/api/${workspaceId}/projects/${projectId}/files/${file.path}`
-        );
+        // Fetch diagram content and Arch Register public schemas
+        const [diagramResponse, publicSchemasResponse] = await Promise.all([
+          fetch(`/api/${workspaceId}/projects/${projectId}/files/${file.path}`),
+          fetch(`/api/public/${workspaceId}/schemas`)
+        ]);
         if (!diagramResponse.ok) throw new Error('Failed to load diagram content');
-        const diagramData = await diagramResponse.json();
+        if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
+        const [rawDiagramData, publicSchemas] = await Promise.all([
+          diagramResponse.json(),
+          publicSchemasResponse.json()
+        ]);
+        const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
+        const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas as PublicSchema[]);
 
         // Create document and deserialize
         const root = CRDT.makeRoot();
@@ -71,6 +143,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
           includedPackages
         });
         await document.load();
+        await suppressDefaultProvider(document);
 
         if (document.diagrams.length === 0) {
           throw new Error('Diagram file contains no diagrams');
@@ -94,7 +167,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         docRef.current = null;
       }
     };
-  }, [workspaceId, projectId, diagramId]);
+  }, [workspaceId, projectId, diagramId, injectPublicProvider, suppressDefaultProvider]);
 
   const handleClose = useCallback(() => {
     navigate({ view: 'project-detail', projectId });

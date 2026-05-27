@@ -10,7 +10,8 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { newid } from '@diagram-craft/utils/id';
 import {
   decodeDataReferences,
-  encodeDataReferences
+  encodeDataReferences,
+  isRelationshipField
 } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { ReferenceFieldEditor } from './ReferenceFieldEditor';
 
@@ -46,7 +47,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
       const initialData: Record<string, string | string[]> = {};
 
       props.schema.fields.forEach(field => {
-        if (field.type === 'reference') {
+        if (isRelationshipField(field)) {
           // For reference fields, decode from elementData or use empty array
           const fieldValue = props.elementData?.[field.id];
           initialData[field.id] =
@@ -54,7 +55,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
               ? decodeDataReferences(fieldValue as string)
               : [];
         } else {
-          // For text/longtext fields
+          // For non-reference-like fields
           if (props.elementData?.[field.id]) {
             // Use elementData if available
             initialData[field.id] = props.elementData[field.id] as string;
@@ -77,7 +78,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
       const processedData: FlatObject = {};
       props.schema.fields.forEach(field => {
         const value = formData[field.id];
-        if (field.type === 'reference') {
+        if (isRelationshipField(field)) {
           processedData[field.id] = encodeDataReferences(value as string[]);
         } else {
           processedData[field.id] = value as string;
@@ -177,7 +178,7 @@ export const ExternalDataLinkDialog = (props: Props) => {
               {props.schema.fields.map(field => (
                 <div key={field.id} className={'util-vstack'} style={{ gap: '0.2rem' }}>
                   <label>{field.name}:</label>
-                  {field.type === 'reference' ? (
+                  {isRelationshipField(field) ? (
                     <ReferenceFieldEditor
                       field={field}
                       selectedValues={formData[field.id] as string[]}

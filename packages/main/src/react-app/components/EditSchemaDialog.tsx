@@ -4,7 +4,11 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
-import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  isRelationshipField,
+  type DataSchema,
+  type DataSchemaField
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { Scrollable } from '@diagram-craft/app-components/Scrollable';
@@ -131,7 +135,7 @@ export const EditSchemaDialog = (props: Props) => {
       }
       fieldIds.add(field.id);
 
-      if (field.type === 'reference') {
+      if (isRelationshipField(field)) {
         if (!field.schemaId) {
           newErrors[`field-${index}-schemaId`] = $t(
             'dialog.schema.error.schema_required',
@@ -497,7 +501,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </div>
                 )}
 
-                {field.type === 'reference' && (
+                {isRelationshipField(field) && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
                     <div style={{ flex: 2 }}>
                       <label style={{ display: 'block' }}>
