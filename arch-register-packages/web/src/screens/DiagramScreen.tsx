@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { NavigateFn } from '../routing';
 import styles from './DiagramScreen.module.css';
-import { TbArrowLeft, TbDeviceFloppy } from 'react-icons/tb';
+import { TbArrowLeft } from 'react-icons/tb';
 import { embeddableInit, getIncludedPackages } from '@diagram-craft/main/embeddableInit';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
@@ -15,10 +15,13 @@ import type {
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
 import { CRDT } from '@diagram-craft/collaboration/crdt';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
+import { debounce } from '@diagram-craft/utils/debounce';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
 type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
+
+const AUTOSAVE_DELAY_MS = 1000;
 
 interface DiagramScreenProps {
   workspaceId: string;
@@ -32,10 +35,10 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<{ path: string; name: string } | null>(null);
   const [doc, setDoc] = useState<DiagramDocument | null>(null);
-  const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   const docRef = useRef<DiagramDocument | null>(null);
+  const fileInfoRef = useRef<{ path: string; name: string } | null>(null);
 
   const injectPublicProvider = useCallback(
     (
@@ -91,6 +94,41 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     }
   }, []);
 
+  const save = useCallback(async () => {
+    if (!docRef.current || !fileInfoRef.current) return;
+
+    try {
+      const serialized = await serializeDiagramDocument(docRef.current);
+      const response = await fetch(
+        `/api/${workspaceId}/projects/${projectId}/files/${fileInfoRef.current.path}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(serialized)
+        }
+      );
+      if (!response.ok) throw new Error('Failed to save diagram');
+      setDirty(false);
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
+  }, [workspaceId, projectId]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debounce must be stable
+  const debouncedSave = useCallback(debounce(() => { save(); }, AUTOSAVE_DELAY_MS), [save]);
+
+  // biome-ignore lint/suspicious/noExplicitAny: event type varies
+  const onDiagramChange = useCallback((event: any) => {
+    if (event.silent) return;
+    setDirty(true);
+    debouncedSave();
+  }, [debouncedSave]);
+
+  const handleClose = useCallback(async () => {
+    await save();
+    navigate({ view: 'project-detail', projectId });
+  }, [save, navigate, projectId]);
+
   useEffect(() => {
     const loadDiagram = async () => {
       try {
@@ -121,6 +159,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         const file = findFile(project.files.folders, project.files.rootFiles);
         if (!file) throw new Error('Diagram file not found');
         setFileInfo({ path: file.path, name: file.name });
+        fileInfoRef.current = { path: file.path, name: file.name };
 
         // Fetch diagram content and Arch Register public schemas
         const [diagramResponse, publicSchemasResponse] = await Promise.all([
@@ -169,49 +208,6 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     };
   }, [workspaceId, projectId, diagramId, injectPublicProvider, suppressDefaultProvider]);
 
-  const handleClose = useCallback(() => {
-    navigate({ view: 'project-detail', projectId });
-  }, [navigate, projectId]);
-
-  const handleSave = useCallback(async () => {
-    if (!docRef.current || !fileInfo) return;
-
-    setSaving(true);
-    try {
-      const serialized = await serializeDiagramDocument(docRef.current);
-      const response = await fetch(
-        `/api/${workspaceId}/projects/${projectId}/files/${fileInfo.path}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(serialized)
-        }
-      );
-      if (!response.ok) throw new Error('Failed to save diagram');
-      setDirty(false);
-    } catch (err) {
-      console.error('Save failed:', err);
-    } finally {
-      setSaving(false);
-    }
-  }, [workspaceId, projectId, fileInfo]);
-
-  // Keyboard shortcuts — only Cmd+S for save; Esc handled at header level
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleClose, handleSave]);
-
   const { documentFactory, diagramFactory } = embeddableInit();
 
   if (loading) {
@@ -244,32 +240,19 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         doc={doc}
         documentFactory={documentFactory}
         diagramFactory={diagramFactory}
-        onDirtyChange={setDirty}
         documentName={fileInfo.name}
         dirty={dirty}
+        onDiagramChange={onDiagramChange}
         headerLeft={
-          <>
-            <button
-              type={'button'}
-              className={'embeddable-back-button'}
-              onClick={handleClose}
-              title={'Back'}
-            >
-              <TbArrowLeft size={'13px'} />
-              <span>Back</span>
-            </button>
-            <div className={'embeddable-back-sep'} />
-            <button
-              type="button"
-              onClick={handleSave}
-              className={styles.saveButton}
-              disabled={saving}
-              title="Save (Cmd+S)"
-            >
-              <TbDeviceFloppy size={16} />
-              <span>{saving ? 'Saving...' : 'Save'}</span>
-            </button>
-          </>
+          <button
+            type={'button'}
+            className={'embeddable-back-button'}
+            onClick={handleClose}
+            title={'Back'}
+          >
+            <TbArrowLeft size={'13px'} />
+            <span>Back</span>
+          </button>
         }
       />
     </div>
