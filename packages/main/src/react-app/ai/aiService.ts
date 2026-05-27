@@ -1,5 +1,6 @@
 import { AppConfig } from '../../appConfig';
 import { fetchWithTimeout } from '@diagram-craft/utils/fetch';
+import { lazySingleton } from '@diagram-craft/utils/lazy';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -140,4 +141,4 @@ export class AIService {
   }
 }
 
-export const aiService = new AIService(AppConfig.get().ai.endpoint);
+export const aiService = lazySingleton(() => new AIService(AppConfig.get().ai.endpoint));

@@ -108,3 +108,23 @@ export class Lazy<T> {
     this._value = undefined;
   }
 }
+
+/**
+ * Creates a lazy singleton that behaves as if it were the instance itself.
+ * The factory is called on first property access, and the result is cached.
+ *
+ * @example
+ * ```ts
+ * export const myService = lazySingleton(() => new MyService(getConfig()));
+ * // myService.doSomething() — factory runs on first use, not at import time
+ * ```
+ */
+export const lazySingleton = <T extends object>(factory: () => T): T => {
+  let instance: T | undefined;
+  return new Proxy({} as T, {
+    get(_target, prop, receiver) {
+      instance ??= factory();
+      return Reflect.get(instance, prop, receiver);
+    }
+  });
+};

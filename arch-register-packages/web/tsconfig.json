@@ -17,6 +17,23 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@diagram-craft/app-components/*": ["../../packages/app-components/src/*"],
+      "@diagram-craft/canvas/*": ["../../packages/canvas/src/*"],
+      "@diagram-craft/canvas-app/*": ["../../packages/canvas-app/src/*"],
+      "@diagram-craft/canvas-drawio/*": ["../../packages/canvas-drawio/src/*"],
+      "@diagram-craft/canvas-edges/*": ["../../packages/canvas-edges/src/*"],
+      "@diagram-craft/canvas-nodes/*": ["../../packages/canvas-nodes/src/*"],
+      "@diagram-craft/canvas-react/*": ["../../packages/canvas-react/src/*"],
+      "@diagram-craft/collaboration/*": ["../../packages/collaboration/src/*"],
+      "@diagram-craft/geometry/*": ["../../packages/geometry/src/*"],
+      "@diagram-craft/graph/*": ["../../packages/graph/src/*"],
+      "@diagram-craft/markdown/*": ["../../packages/markdown/src/*"],
+      "@diagram-craft/model/*": ["../../packages/model/src/*"],
+      "@diagram-craft/stencil-archimate/*": ["../../packages/stencil-archimate/src/*"],
+      "@diagram-craft/stencil-bpmn/*": ["../../packages/stencil-bpmn/src/*"],
+      "@diagram-craft/stencil-c4/*": ["../../packages/stencil-c4/src/*"],
+      "@diagram-craft/stencil-data-modelling/*": ["../../packages/stencil-data-modelling/src/*"],
+      "@diagram-craft/stencil-uml/*": ["../../packages/stencil-uml/src/*"],
+      "@diagram-craft/main/*": ["../../packages/main/src/*"],
       "@diagram-craft/utils/*": ["../../packages/utils/src/*"]
     }
   },

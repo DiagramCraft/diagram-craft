@@ -8,6 +8,7 @@ import { createSchemaRoutes } from './routes/schemas.js';
 import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
+import { createPublicRoutes } from './routes/public.js';
 import { createStorage } from './storage/storage.js';
 
 const storage = createStorage();
@@ -43,6 +44,7 @@ app.use(
 app.use(createWorkspaceRoutes(storage));
 app.use(createSchemaRoutes());
 app.use(createDataRoutes());
+app.use(createPublicRoutes());
 app.use(createSearchRoutes());
 app.use(createProjectRoutes(storage));
 app.use(createAuditRoutes());

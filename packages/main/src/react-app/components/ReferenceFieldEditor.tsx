@@ -1,10 +1,10 @@
 import { useDocument } from '../../application';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
-import { DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import { RelationshipDataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
 
 type ReferenceFieldEditorProps = {
-  field: DataSchemaField & { type: 'reference' };
-  selectedValues: string[];
+  field: RelationshipDataSchemaField;
+  selectedValues?: string[];
   onSelectionChange: (values: string[]) => void;
 };
 
@@ -15,6 +15,7 @@ export const ReferenceFieldEditor = ({
 }: ReferenceFieldEditorProps) => {
   const document = useDocument();
   const db = document.data.db;
+  const normalizedSelectedValues = selectedValues ?? [];
 
   const referencedSchema = db.schemas.find(s => s.id === field.schemaId);
   if (!referencedSchema) {
@@ -22,10 +23,10 @@ export const ReferenceFieldEditor = ({
   }
 
   const referencedData = db.getData(referencedSchema);
-  const displayField = referencedSchema.fields[0]!.id;
+  const displayField = referencedSchema.fields[0]?.id;
 
   const availableItems: MultiSelectItem[] = referencedData.map(item => {
-    const fieldValue = item[displayField];
+    const fieldValue = displayField ? item[displayField] : undefined;
     let label: string = item._uid;
 
     if (fieldValue) {
@@ -41,7 +42,7 @@ export const ReferenceFieldEditor = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <MultiSelect
-        selectedValues={selectedValues}
+        selectedValues={normalizedSelectedValues}
         availableItems={availableItems}
         onSelectionChange={onSelectionChange}
         placeholder={`Search ${referencedSchema.name}...`}
@@ -50,7 +51,8 @@ export const ReferenceFieldEditor = ({
       <div style={{ fontSize: '0.8em', color: 'var(--cmp-fg-dim)' }}>
         {field.minCount > 0 && `Minimum ${field.minCount} required. `}
         {field.maxCount < Number.MAX_SAFE_INTEGER && `Maximum ${field.maxCount} allowed.`}
-        {selectedValues.length > 0 && ` (${selectedValues.length} selected)`}
+        {normalizedSelectedValues.length > 0 &&
+          ` (${normalizedSelectedValues.length} selected)`}
       </div>
     </div>
   );

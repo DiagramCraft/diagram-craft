@@ -1,0 +1,440 @@
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/gray-alpha.css';
+@import '@radix-ui/colors/gray-dark-alpha.css';
+@import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/red-dark.css';
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/crimson.css';
+@import '@radix-ui/colors/crimson-dark.css';
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/orange-dark.css';
+@import '@radix-ui/colors/black-alpha.css';
+
+/* DragLabelComponent styles (inlined from @diagram-craft/canvas) */
+.icDragLabel {
+  position: fixed;
+  background-color: var(--panel-bg);
+  color: var(--panel-fg);
+  box-shadow: var(--popover-shadow);
+  padding: 0.5rem 0.5rem;
+  font-size: 11px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+
+  > div::selection {
+    background-color: transparent;
+  }
+
+  .eProps {
+    margin-top: 0.25rem;
+    color: var(--base-fg-dim);
+
+    .eProp {
+      font-size: 10px;
+    }
+  }
+
+  .eModifier {
+    margin: 0.25rem -0.5rem 0 -0.5rem;
+    padding: 0.25rem 0.5rem 0 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--cmp-border);
+
+    & div[data-state="active"] {
+      color: var(--accent-fg);
+    }
+  }
+}
+
+/* Theme variables needed by diagram-craft canvas */
+.dc-editor {
+  --cmp-radius: 4px;
+
+  --base-bg: var(--gray-1);
+  --base-fg: var(--gray-12);
+  --base-fg-dim: var(--gray-11);
+  --base-fg-more-dim: var(--gray-8);
+
+  --panel-bg: var(--gray-2);
+  --panel-fg: var(--gray-12);
+  --panel-border: var(--gray-6);
+
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
+  --accent-bg: var(--blue-4);
+  --accent-fg: var(--blue-11);
+  --accent-fg-dimmed: var(--blue-6);
+  --accent-border: var(--blue-6);
+  --accent-fg-hover: var(--blue-12);
+  --accent-bg-selected: var(--blue-5);
+  --accent-chroma: var(--blue-9);
+
+  --cmp-fg: var(--gray-12);
+  --cmp-fg-disabled: var(--gray-8);
+  --cmp-fg-dimmed: var(--gray-6);
+  --cmp-bg: var(--gray-3);
+  --cmp-bg-hover: var(--gray-4);
+  --cmp-border: var(--gray-6);
+  --cmp-border-focus: var(--blue-5);
+  --cmp-border-shadow-focus: 0 0 0 2px var(--blue-5);
+
+  --popover-shadow: 0 0 0 0.5px var(--cmp-border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
+
+  --highlight-reverse-bg: var(--blue-9);
+  --highlight-reverse-fg: white;
+
+  --canvas-fg: var(--gray-12);
+  --canvas-bg: white;
+  --canvas-bg-bright: white;
+  --canvas-bg2: white;
+
+  --green: var(--green-9);
+
+  --error-fg: var(--red-9);
+  --warning-fg: var(--orange-9);
+}
+
+/* Canvas element styles */
+.canvas {
+  --zoom: 1;
+  --stroke-dash-zoom: 1;
+  background: var(--canvas-bg);
+
+  &.tool-edge, &.tool-edge * {
+    cursor: crosshair !important;
+  }
+
+  &.tool-text, &.tool-text * {
+    cursor: text !important;
+  }
+
+  &.tool-freehand, &.tool-freehand * {
+    cursor: crosshair !important;
+  }
+
+  &.tool-pen, &.tool-pen * {
+    cursor: default !important;
+  }
+
+  &.tool-node, &.tool-node * {
+    cursor: default !important;
+  }
+
+  &.tool-pan, &.tool-pan * {
+    cursor: move !important;
+  }
+
+  [contenteditable] {
+    outline: 0 solid transparent;
+    border-radius: 3px;
+
+    &::selection, *::selection {
+      background: rgba(175, 210, 255, 0.5);
+    }
+  }
+
+  [contenteditable]:not(:focus) {
+    border: none;
+  }
+
+  [contenteditable]:focus {
+    outline: 3px solid #51a7e8;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075), 0 0 5px rgba(81, 167, 232, 0.5);
+  }
+
+  .svg-doc-bounds {
+    fill: white;
+    stroke: #1c1917;
+    stroke-width: 1;
+    filter: drop-shadow(2px 2px 4px rgba(27, 25, 23, 0.05));
+  }
+
+  .svg-grid {
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-handle {
+    &:hover,
+    &:active {
+      fill: white;
+      stroke-width: calc(4 * var(--zoom));
+      transition: stroke-width 250ms;
+    }
+  }
+
+  .svg-selection {
+    --_selection-color: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--_selection-color);
+
+    .svg-selection__bb {
+      fill: none;
+    }
+
+    .svg-selection__individual-node {
+      fill: none;
+    }
+
+    .svg-selection__handle {
+      fill: white;
+    }
+
+    .svg-selection__handle-edge {
+      fill: white;
+      cursor: move;
+
+      &.svg-selection__handle-edge--connected {
+        fill: var(--_selection-color);
+      }
+    }
+
+    .svg-rotation-handle {
+      stroke-width: calc(1 * var(--zoom));
+      fill: none;
+
+      .svg-rotation-handle__backing {
+        stroke: transparent;
+        stroke-width: calc(8 * var(--zoom));
+        stroke-linecap: round;
+
+        &:hover,
+        &:active {
+          stroke: var(--accent-4);
+        }
+      }
+    }
+
+    .svg-selection__label-node {
+      fill: var(--canvas-bg);
+      stroke: purple;
+      cursor: move;
+    }
+
+    .svg-selection__label-node__line {
+      stroke: purple;
+      stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
+    }
+
+    .svg-selection__group-bounds {
+      fill: none;
+      stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
+      stroke: var(--accent-6);
+    }
+  }
+
+  .svg-highlight {
+    pointer-events: none;
+  }
+
+  .svg-highlight__line {
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-highlight__extension {
+    stroke-width: calc(1 * var(--zoom));
+    stroke-dasharray: calc(5 * var(--zoom)) calc(5 * var(--zoom));
+  }
+
+  .svg-highlight__color--node,
+  .svg-highlight__color--distance,
+  .svg-highlight__color--size,
+  .svg-highlight__color--canvas,
+  .svg-highlight__color--source,
+  .svg-highlight__color--grid {
+    stroke: var(--accent-7);
+  }
+
+  .svg-highlight__distance-line {
+    stroke: var(--accent-7);
+    fill: var(--accent-7);
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-highlight__distance-label-bg {
+    fill: white;
+  }
+
+  .svg-highlight__distance-label {
+    fill: var(--accent-8);
+    font-size: calc(10px * var(--zoom));
+    dominant-baseline: middle;
+    text-anchor: middle;
+  }
+
+  .svg-marquee {
+    fill: color(from var(--accent-3) srgb r g b / 0.5);
+    stroke: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-marquee__element {
+    fill: transparent;
+    stroke: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-bezier-handle {
+    fill: white;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
+    cursor: move;
+  }
+
+  .svg-bezier-handle-line {
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
+    stroke-dasharray: 2 2;
+    cursor: move;
+  }
+
+  .svg-waypoint-handle {
+    fill: white;
+    cursor: move;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
+  }
+
+  .svg-midpoint-handle {
+    fill: white;
+    cursor: move;
+    stroke-width: calc(1 * var(--zoom));
+    stroke: var(--accent-9);
+  }
+
+  .svg-node__fo--with-text {
+    &:has(*[contenteditable="true"]) {
+      & > div {
+        visibility: visible;
+      }
+    }
+  }
+
+  .svg-node__fo--with-text:has(*[contenteditable="true"]) + text {
+    fill: transparent !important;
+    stroke: transparent !important;
+
+    tspan {
+      fill: transparent !important;
+      stroke: transparent !important;
+    }
+  }
+
+  .svg-edge {
+    cursor: move;
+    fill: none;
+  }
+
+  .svg-readonly {
+    .svg-edge {
+      cursor: unset;
+      pointer-events: none;
+    }
+
+    .svg-node {
+      cursor: unset;
+      pointer-events: none;
+    }
+  }
+
+  .svg-edge--highlight-node__highlight {
+    .svg-edge {
+      stroke: var(--accent-fg) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
+      stroke-dasharray: none !important;
+    }
+  }
+
+  .svg-edge--highlight-node__drop-target {
+    .svg-edge {
+      stroke: var(--green) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
+      stroke-dasharray: none !important;
+    }
+  }
+
+  .svg-edge--highlight-node__edge-connect---edge {
+    .svg-edge {
+      stroke: var(--accent-fg) !important;
+      stroke-width: calc(3 * var(--zoom)) !important;
+      stroke-dasharray: none !important;
+    }
+  }
+
+  .svg-node--highlight-node__drop-target {
+    > .svg-node__boundary, > .svg-node--container-outline {
+      stroke-width: 3px !important;
+      stroke: #30A46C !important;
+    }
+  }
+
+  .svg-shape-control-point {
+    cursor: crosshair;
+    fill: white;
+    stroke: var(--crimson-9);
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-anchor-handle {
+    fill: var(--accent-3);
+    stroke: var(--accent-9);
+    stroke-width: calc(1 * var(--zoom));
+    cursor: move;
+  }
+
+  .svg-node__anchor {
+    stroke: var(--accent-9);
+    fill: white;
+    stroke-width: calc(1 * var(--zoom));
+  }
+
+  .svg-edge--highlight-search-match, .svg-node--highlight-search-match {
+    .svg-edge, .svg-node {
+      animation: search-match 0.25s ease-in-out infinite;
+      stroke-dasharray: none !important;
+    }
+  }
+
+  .svg-node--container-outline {
+    stroke: var(--container-outline);
+    stroke-width: calc(1 * var(--zoom));
+  }
+}
+
+.svg-collapsible__toggle {
+  stroke: var(--accent-9);
+  fill: var(--accent-3);
+  cursor: pointer;
+}
+
+@keyframes search-match {
+  from {
+    stroke: var(--blue-8) !important;
+    stroke-width: calc(1.5 * var(--zoom)) !important;
+  }
+  to {
+    stroke-width: calc(3 * var(--zoom)) !important;
+    stroke: var(--blue-8) !important;
+  }
+}

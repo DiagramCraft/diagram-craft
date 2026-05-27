@@ -7,6 +7,10 @@
 @import '@radix-ui/colors/orange-dark.css';
 
 :root {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   /* Surfaces */
   --bg-0: var(--gray-1);
   --bg-1: var(--gray-1);
@@ -60,10 +64,6 @@
   --r-md: 6px;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 html,
 body {
   margin: 0;
@@ -73,6 +73,15 @@ body {
 
 body {
   background: var(--bg-0);
+}
+
+#root {
+  height: 100%;
+}
+
+/* ── Scoped resets ─────────────────────────────────────────────────── */
+
+.ar-app {
   color: var(--fg-1);
   font-family: var(--font-sans);
   font-size: 12.5px;
@@ -85,11 +94,13 @@ body {
   font-feature-settings: "cv11" 1, "ss01" 1;
 }
 
-#root {
-  height: 100%;
+:where(.ar-app) *,
+:where(.ar-app) *::before,
+:where(.ar-app) *::after {
+  box-sizing: border-box;
 }
 
-button {
+:where(.ar-app) button {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
@@ -99,53 +110,53 @@ button {
   cursor: pointer;
 }
 
-input,
-select,
-textarea {
+:where(.ar-app) input,
+:where(.ar-app) select,
+:where(.ar-app) textarea {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
 }
 
 /* Custom scrollbars */
-::-webkit-scrollbar {
+:where(.ar-app) ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-::-webkit-scrollbar-track {
+:where(.ar-app) ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-::-webkit-scrollbar-thumb {
+:where(.ar-app) ::-webkit-scrollbar-thumb {
   background: var(--gray-5);
   border: 2px solid var(--bg-1);
   border-radius: 6px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+:where(.ar-app) ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-7);
 }
 
-::-webkit-scrollbar-corner {
+:where(.ar-app) ::-webkit-scrollbar-corner {
   background: transparent;
 }
 
 /* Focus ring */
-:focus-visible {
+:where(.ar-app) :focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 1px;
 }
 
 /* Utility */
-.mono {
+:where(.ar-app) .mono {
   font-family: var(--font-mono);
 }
 
-.tabular {
+:where(.ar-app) .tabular {
   font-variant-numeric: tabular-nums;
 }
 
-.dim {
+:where(.ar-app) .dim {
   color: var(--fg-3);
 }

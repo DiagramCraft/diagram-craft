@@ -11,6 +11,7 @@ import { DataModelEditor } from './screens/DataModelEditor';
 import { ProjectDetail } from './screens/ProjectDetail';
 import { SearchScreen } from './screens/SearchScreen';
 import { WorkspaceSettings } from './screens/WorkspaceSettings';
+import { DiagramScreen } from './screens/DiagramScreen';
 import { AddWorkspaceDialog } from './components/AddWorkspaceDialog';
 import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
@@ -125,7 +126,7 @@ const App = () => {
     [],
   );
 
-  const showSidebar = route.view !== 'search';
+  const showSidebar = route.view !== 'search' && route.view !== 'diagram';
 
   const trail = buildTrail(route, navigate, schemas, projects);
 
@@ -140,6 +141,7 @@ const App = () => {
   };
 
   let screen: React.ReactNode;
+  let diagramOverlay: React.ReactNode = null;
   switch (route.view) {
     case 'home':
       screen = ws ? (
@@ -231,6 +233,16 @@ const App = () => {
         />
       ) : null;
       break;
+    case 'diagram':
+      diagramOverlay = wsId && route.projectId && route.diagramId ? (
+        <DiagramScreen
+          workspaceId={wsId}
+          projectId={route.projectId}
+          diagramId={route.diagramId}
+          navigate={navigate}
+        />
+      ) : null;
+      break;
     default:
       screen = (
         <div className={styles.placeholder}>
@@ -240,7 +252,8 @@ const App = () => {
   }
 
   return (
-    <div className={styles.shell}>
+    <>
+    <div className={`ar-app ${styles.shell}`}>
       <TopBar
         workspaces={workspaces}
         currentWs={route.workspaceId ?? ''}
@@ -319,6 +332,8 @@ const App = () => {
         />
       )}
     </div>
+    {diagramOverlay}
+    </>
   );
 };
 
@@ -384,6 +399,22 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
         onClick: () => navigate({ view: 'search' }),
       });
       break;
+    case 'diagram': {
+      const p = projects.find(x => x.id === route.projectId);
+      items.push({
+        label: 'Projects',
+        icon: <TbStack2 size={12} />,
+        onClick: () => navigate({ view: 'project-detail', ...getDefaultProjectRoute(projects) }),
+      });
+      if (p) {
+        items.push({
+          label: p.name,
+          onClick: () => navigate({ view: 'project-detail', projectId: p.id }),
+        });
+      }
+      items.push({ label: 'Diagram', onClick: () => {} });
+      break;
+    }
   }
 
   return items;

@@ -4,7 +4,11 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus, TbTrash } from 'react-icons/tb';
-import type { DataSchema, DataSchemaField } from '@diagram-craft/model/diagramDocumentDataSchemas';
+import {
+  isRelationshipField,
+  type DataSchema,
+  type DataSchemaField
+} from '@diagram-craft/model/diagramDocumentDataSchemas';
 import type { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { newid } from '@diagram-craft/utils/id';
 import { Scrollable } from '@diagram-craft/app-components/Scrollable';
@@ -67,7 +71,7 @@ export const EditSchemaDialog = (props: Props) => {
     const fieldNumber = fields.length + 1;
     const newField: DataSchemaField = {
       id: `field${fieldNumber}`,
-      name: $t('dialog.schema.field', 'Field') + ` ${fieldNumber}`,
+      name: `${$t('dialog.schema.field', 'Field')} ${fieldNumber}`,
       type: 'text'
     };
     setFields(currentFields => currentFields.toSpliced(index + 1, 0, newField));
@@ -131,7 +135,7 @@ export const EditSchemaDialog = (props: Props) => {
       }
       fieldIds.add(field.id);
 
-      if (field.type === 'reference') {
+      if (isRelationshipField(field)) {
         if (!field.schemaId) {
           newErrors[`field-${index}-schemaId`] = $t(
             'dialog.schema.error.schema_required',
@@ -344,11 +348,11 @@ export const EditSchemaDialog = (props: Props) => {
                             options: [
                               {
                                 value: 'option1',
-                                label: $t('dialog.schema.option', 'Option') + ' 1'
+                                label: `${$t('dialog.schema.option', 'Option')} 1`
                               },
                               {
                                 value: 'option2',
-                                label: $t('dialog.schema.option', 'Option') + ' 2'
+                                label: `${$t('dialog.schema.option', 'Option')} 2`
                               }
                             ]
                           });
@@ -497,7 +501,7 @@ export const EditSchemaDialog = (props: Props) => {
                   </div>
                 )}
 
-                {field.type === 'reference' && (
+                {isRelationshipField(field) && (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'start' }}>
                     <div style={{ flex: 2 }}>
                       <label style={{ display: 'block' }}>
