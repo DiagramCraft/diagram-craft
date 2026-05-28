@@ -150,10 +150,17 @@ export class ApiError extends Error {
 }
 
 export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...init?.headers,
+  };
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers,
+    credentials: 'include',
   });
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.message ?? res.statusText);

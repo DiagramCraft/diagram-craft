@@ -1,5 +1,10 @@
 import './tokens.css';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { AuthProvider } from './auth/AuthContext';
+import { AuthenticatedApp } from './AuthenticatedApp';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <AuthProvider>
+    <AuthenticatedApp />
+  </AuthProvider>
+);

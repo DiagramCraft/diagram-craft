@@ -117,3 +117,22 @@ CREATE TABLE audit_log (
 
 CREATE INDEX audit_log_workspace_timestamp_idx ON audit_log(workspace, timestamp DESC);
 
+CREATE TABLE users (
+  id              TEXT PRIMARY KEY,
+  email           TEXT UNIQUE,
+  display_name    TEXT NOT NULL,
+  auth_provider   TEXT NOT NULL CHECK (auth_provider IN ('local', 'oidc')),
+  password_hash   TEXT,
+  oidc_issuer     TEXT,
+  oidc_subject    TEXT,
+  is_active       INTEGER NOT NULL DEFAULT 1,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL,
+  last_login_at   TEXT,
+  UNIQUE (oidc_issuer, oidc_subject)
+);
+
+CREATE INDEX users_email_idx ON users(email);
+CREATE INDEX users_auth_provider_idx ON users(auth_provider);
+CREATE INDEX users_oidc_idx ON users(oidc_issuer, oidc_subject) WHERE auth_provider = 'oidc';
+

@@ -10,18 +10,25 @@ import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
 import { createPublicRoutes } from './routes/public.js';
+import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
+import { requireAuth } from './middleware/auth.js';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
 export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const app = new H3();
 
+  const corsOriginEnv = process.env['CORS_ORIGIN'] ?? '*';
+  const corsOrigin: '*' | string[] =
+    corsOriginEnv === '*' ? '*' : corsOriginEnv.split(',').map(s => s.trim());
+
   app.use(
     defineHandler(event => {
       const didHandleCors = handleCors(event, {
-        origin: '*',
+        origin: corsOrigin,
         preflight: { statusCode: 204 },
-        methods: '*'
+        methods: '*',
+        credentials: corsOriginEnv !== '*'
       });
       if (didHandleCors) return;
     })
@@ -39,6 +46,15 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
     })
   );
 
+  // Auth routes (public, no middleware)
+  app.use(createAuthRoutes(db));
+
+  // Apply authentication middleware to all routes below
+  const authMiddleware = requireAuth(db);
+  app.use(authMiddleware);
+
+  // Protected routes (require authentication)
+  app.use(createAuthProtectedRoutes());
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createDataRoutes(db));

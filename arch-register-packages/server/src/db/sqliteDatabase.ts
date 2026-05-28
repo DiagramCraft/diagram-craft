@@ -6,11 +6,13 @@ import type {
   CreateEntityInput,
   CreateProjectInput,
   CreateSchemaInput,
+  CreateUserInput,
   CreateWorkspaceInput,
   DatabaseAdapter,
   UpdateEntityInput,
   UpdateProjectInput,
   UpdateSchemaInput,
+  UpdateUserInput,
   UpdateWorkspaceInput,
   UpsertProjectFileInput,
 } from './database.js';
@@ -22,6 +24,7 @@ import type {
   EntitySchema,
   Project,
   ProjectFile,
+  User,
   Workspace,
   WorkspaceLifecycleState,
   WorkspaceOwner,
@@ -138,6 +141,20 @@ const toAuditLog = (row: Record<string, unknown>): AuditLogEntry => ({
   schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
   changes: parseJson(row['changes'], {}),
   metadata: parseJson(row['metadata'], {}),
+});
+
+const toUser = (row: Record<string, unknown>): User => ({
+  id: String(row['id']),
+  email: row['email'] == null ? null : String(row['email']),
+  display_name: String(row['display_name']),
+  auth_provider: String(row['auth_provider']) as User['auth_provider'],
+  password_hash: row['password_hash'] == null ? null : String(row['password_hash']),
+  oidc_issuer: row['oidc_issuer'] == null ? null : String(row['oidc_issuer']),
+  oidc_subject: row['oidc_subject'] == null ? null : String(row['oidc_subject']),
+  is_active: Boolean(row['is_active']),
+  created_at: toDate(row['created_at']),
+  updated_at: toDate(row['updated_at']),
+  last_login_at: row['last_login_at'] == null ? null : toDate(row['last_login_at']),
 });
 
 export class SqliteDatabase implements DatabaseAdapter {
@@ -555,5 +572,78 @@ export class SqliteDatabase implements DatabaseAdapter {
       ],
     );
     return (await this.get<AuditLogEntry>('SELECT * FROM audit_log WHERE id = ?', [id], toAuditLog))!;
+  }
+
+  async getUser(id: string) {
+    return this.get('SELECT * FROM users WHERE id = ?', [id], toUser);
+  }
+
+  async getUserByEmail(email: string) {
+    return this.get('SELECT * FROM users WHERE email = ?', [email], toUser);
+  }
+
+  async getUserByOidc(issuer: string, subject: string) {
+    return this.get(
+      'SELECT * FROM users WHERE oidc_issuer = ? AND oidc_subject = ?',
+      [issuer, subject],
+      toUser
+    );
+  }
+
+  async createUser(input: CreateUserInput) {
+    this.run(
+      'INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.email,
+        input.display_name,
+        input.auth_provider,
+        input.password_hash,
+        input.oidc_issuer,
+        input.oidc_subject,
+        input.is_active ? 1 : 0,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString(),
+        input.last_login_at?.toISOString() ?? null,
+      ]
+    );
+    return (await this.getUser(input.id))!;
+  }
+
+  async updateUser(id: string, input: UpdateUserInput) {
+    const sets: string[] = [];
+    const values: unknown[] = [];
+
+    if (input.email !== undefined) {
+      sets.push('email = ?');
+      values.push(input.email);
+    }
+    if (input.display_name !== undefined) {
+      sets.push('display_name = ?');
+      values.push(input.display_name);
+    }
+    if (input.password_hash !== undefined) {
+      sets.push('password_hash = ?');
+      values.push(input.password_hash);
+    }
+    if (input.is_active !== undefined) {
+      sets.push('is_active = ?');
+      values.push(input.is_active ? 1 : 0);
+    }
+    sets.push('updated_at = ?');
+    values.push(input.updated_at.toISOString());
+
+    values.push(id);
+
+    this.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, values);
+    return await this.getUser(id);
+  }
+
+  async updateUserLastLogin(id: string, timestamp: Date) {
+    this.run('UPDATE users SET last_login_at = ? WHERE id = ?', [timestamp.toISOString(), id]);
+  }
+
+  async listUsers() {
+    return this.all('SELECT * FROM users ORDER BY display_name', [], toUser);
   }
 }

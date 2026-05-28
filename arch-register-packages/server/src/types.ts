@@ -188,3 +188,34 @@ export type AuditLogApiResponse = {
   };
   metadata: Record<string, unknown>;
 };
+
+export type AuthProvider = 'local' | 'oidc';
+
+export type User = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: AuthProvider;
+  password_hash: string | null;
+  oidc_issuer: string | null;
+  oidc_subject: string | null;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+  last_login_at: Date | null;
+};
+
+export type JWTPayload = {
+  sub: string;
+  email?: string;
+  name: string;
+  provider: AuthProvider;
+  type: 'access' | 'refresh';
+  iat: number;
+  exp: number;
+};
+
+export type AuthContext = {
+  user: User;
+  token: string;
+};
