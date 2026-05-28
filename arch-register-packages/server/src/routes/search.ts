@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
+import { SEARCH_DEFAULTS } from '../constants.js';
 
 const BASE = '/api/:workspace/search';
 
@@ -115,7 +116,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-      const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? 10;
+    const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
       const types = parseTypes(query['types']);
 
       const empty: SearchResponse = {
