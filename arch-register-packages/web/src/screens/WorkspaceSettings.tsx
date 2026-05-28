@@ -21,6 +21,7 @@ type WorkspaceSettingsProps = {
   lifecycleStates: WorkspaceLifecycleState[];
   ownerOptions: WorkspaceOwnerOption[];
   onConfigUpdated: () => void;
+  availableSections: string[];
 };
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
@@ -38,8 +39,28 @@ const COLOR_PRESETS = [
   { value: 'var(--fg-3)', label: 'Grey' },
 ];
 
-export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpdated, onWorkspaceDeleted, lifecycleStates, ownerOptions, onConfigUpdated }: WorkspaceSettingsProps) => {
+export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpdated, onWorkspaceDeleted, lifecycleStates, ownerOptions, onConfigUpdated, availableSections }: WorkspaceSettingsProps) => {
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
+
+  if (!availableSections.includes(section)) {
+    return (
+      <div className={styles.screen}>
+        <div className={styles.head}>
+          <div className={styles.headLeft}>
+            <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'home' })}>
+              <TbChevronLeft size={12} /> {workspace.name}
+            </button>
+            <span className={styles.breadcrumbSep}>/</span>
+            <span className={styles.breadcrumbCurrent}>Workspace settings</span>
+            <div className={styles.titleRow}>
+              <div className={styles.title}>Workspace settings</div>
+            </div>
+            <div className={styles.sub}>No settings are available for your current permissions.</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.screen}>

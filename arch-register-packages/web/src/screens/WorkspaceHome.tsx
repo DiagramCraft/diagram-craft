@@ -22,8 +22,11 @@ type WorkspaceHomeProps = {
   schemas: EntitySchema[];
   projects: Project[];
   navigate: NavigateFn;
-  onAddProject: () => void;
-  onAddEntity: () => void;
+  onAddProject?: () => void;
+  onAddEntity?: () => void;
+  canViewAudit: boolean;
+  canViewSchemas: boolean;
+  canEditSchemas: boolean;
 };
 
 const MAX_RECENT_ACTIVITY_ENTRIES = 15;
@@ -35,6 +38,9 @@ export const WorkspaceHome = ({
   navigate,
   onAddProject,
   onAddEntity,
+  canViewAudit,
+  canViewSchemas,
+  canEditSchemas,
 }: WorkspaceHomeProps) => {
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
@@ -51,6 +57,11 @@ export const WorkspaceHome = ({
 
   // Fetch recent activity from audit log
   useEffect(() => {
+    if (!canViewAudit) {
+      setRecentActivity([]);
+      setActivityLoading(false);
+      return;
+    }
     setActivityLoading(true);
     fetchAuditLog(workspace.url_slug, { limit: MAX_RECENT_ACTIVITY_ENTRIES })
       .then(setRecentActivity)
@@ -59,7 +70,7 @@ export const WorkspaceHome = ({
         setRecentActivity([]);
       })
       .finally(() => setActivityLoading(false));
-  }, [workspace.url_slug]);
+  }, [canViewAudit, workspace.url_slug]);
 
   const formatRelativeTime = (timestamp: string): string => {
     const now = new Date();
@@ -120,16 +131,20 @@ export const WorkspaceHome = ({
           <div className={styles.sub}>{workspace.description}</div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.btn} onClick={onAddProject}>
-            <TbPlus size={12} /> New project
-          </button>
-          <button
-            type="button"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-            onClick={onAddEntity}
-          >
-            <TbPlus size={12} /> New entity
-          </button>
+          {onAddProject && (
+            <button type="button" className={styles.btn} onClick={onAddProject}>
+              <TbPlus size={12} /> New project
+            </button>
+          )}
+          {onAddEntity && (
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              onClick={onAddEntity}
+            >
+              <TbPlus size={12} /> New entity
+            </button>
+          )}
         </div>
       </div>
 
@@ -194,6 +209,7 @@ export const WorkspaceHome = ({
 
         {!showAllProjects && (
           <>
+            {canViewSchemas && (
             <Panel title="Data model">
               <div className={styles.typecardList}>
                 {schemas.map((s, i) => (
@@ -216,22 +232,26 @@ export const WorkspaceHome = ({
                     <TbChevronRight size={12} />
                   </button>
                 ))}
-                <button
-                  type="button"
-                  className={`${styles.typecard} ${styles.typecardAdd}`}
-                  onClick={() => navigate({ view: 'data-model' })}
-                >
-                  <span className={styles.typecardIcon}>
-                    <TbPlus size={14} />
-                  </span>
-                  <span className={styles.typecardBody}>
-                    <div className={styles.typecardName}>Add entity type</div>
-                    <div className={styles.typecardMeta}>Define a new schema</div>
-                  </span>
-                </button>
+                {canEditSchemas && (
+                  <button
+                    type="button"
+                    className={`${styles.typecard} ${styles.typecardAdd}`}
+                    onClick={() => navigate({ view: 'data-model' })}
+                  >
+                    <span className={styles.typecardIcon}>
+                      <TbPlus size={14} />
+                    </span>
+                    <span className={styles.typecardBody}>
+                      <div className={styles.typecardName}>Add entity type</div>
+                      <div className={styles.typecardMeta}>Define a new schema</div>
+                    </span>
+                  </button>
+                )}
               </div>
             </Panel>
+            )}
 
+            {canViewAudit && (
             <Panel
               title="Recent activity"
               actions={(
@@ -272,6 +292,7 @@ export const WorkspaceHome = ({
                 )}
               </div>
             </Panel>
+            )}
           </>
         )}
       </div>

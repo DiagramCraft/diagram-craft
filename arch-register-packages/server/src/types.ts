@@ -129,6 +129,7 @@ export type Project = {
   workspace: string;
   name: string;
   description: string;
+  owner: string | null;
   status: 'pinned' | 'active' | 'archived';
   created_at: Date;
   updated_at: Date;
@@ -212,6 +213,15 @@ export type User = {
 
 export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
 
+export type GlobalPermission =
+  | 'view_schema'
+  | 'edit_schema'
+  | 'manage_users'
+  | 'manage_teams'
+  | 'manage_global_roles'
+  | 'view_audit'
+  | 'admin_platform';
+
 export type TeamMembership = {
   workspace: string;
   team_id: string;
@@ -227,6 +237,20 @@ export type GlobalRoleAssignment = {
 
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 export type EntityGrantScope = 'self' | 'subtree';
+
+export type EntityCapabilities = {
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdmin: boolean;
+  canCreateChild: boolean;
+};
+
+export type ProjectCapabilities = {
+  canEdit: boolean;
+  canDelete: boolean;
+  canManageFiles: boolean;
+};
 
 export type EntityGrant = {
   id: string;

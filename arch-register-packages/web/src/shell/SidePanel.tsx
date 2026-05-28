@@ -37,6 +37,7 @@ type SidePanelProps = {
   statusFilter: string | null;
   ownerFilter: string | null;
   settingsSection: string;
+  availableSettingsSections: string[];
   setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
   setTypeFilter: (id: string | null) => void;
   setStatusFilter: (id: string | null) => void;
@@ -59,6 +60,7 @@ export const SidePanel = ({
   statusFilter,
   ownerFilter,
   settingsSection,
+  availableSettingsSections,
   setProjectSidebarTab,
   setTypeFilter,
   setStatusFilter,
@@ -101,14 +103,15 @@ export const SidePanel = ({
     body = <SearchSidebar />;
   } else if (view === 'workspace-settings') {
     body = (
-      <SettingsSidebar
-        workspace={workspace}
-        section={settingsSection}
-        navigate={navigate}
-        schemas={schemas}
-        projects={projects}
-      />
-    );
+        <SettingsSidebar
+          workspace={workspace}
+          section={settingsSection}
+          navigate={navigate}
+          schemas={schemas}
+          projects={projects}
+          availableSections={availableSettingsSections}
+        />
+      );
   }
 
   return <div className={styles.panel}>{body}</div>;
@@ -532,20 +535,22 @@ const SettingsSidebar = ({
   navigate,
   schemas,
   projects,
+  availableSections,
 }: {
   workspace: Workspace | null;
   section: string;
   navigate: NavigateFn;
   schemas: EntitySchema[];
   projects: Project[];
+  availableSections: string[];
 }) => {
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};
-    SETTINGS_SECTIONS.forEach(s => {
+    SETTINGS_SECTIONS.filter(s => availableSections.includes(s.id)).forEach(s => {
       (g[s.group] ??= []).push(s);
     });
     return Object.entries(g);
-  }, []);
+  }, [availableSections]);
 
   const entityCount = schemas.reduce((sum, s) => sum + s.entity_count, 0);
 

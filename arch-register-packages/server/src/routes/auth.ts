@@ -6,7 +6,11 @@ import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
 import { setAuthCookies, clearAuthCookies } from '../utils/cookies.js';
 import type { JWTPayload, User } from '../types.js';
-import { buildAuthorizationContext, requireGlobalPermission } from '../auth/authorization.js';
+import {
+  buildAuthorizationContext,
+  getGlobalPermissionsForRoles,
+  requireGlobalPermission,
+} from '../auth/authorization.js';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -330,6 +334,20 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       }
 
       const user = event.context.user as User;
+      const [roleAssignments, workspaces] = await Promise.all([
+        db.listGlobalRoleAssignments(user.id),
+        db.listWorkspaces(),
+      ]);
+      const globalRoles = roleAssignments.map(assignment => assignment.role);
+      const globalPermissions = [...getGlobalPermissionsForRoles(globalRoles)];
+      const workspaceMemberships = await Promise.all(
+        workspaces.map(async workspace => ({
+          workspace_id: workspace.id,
+          memberships: (await db.listTeamMemberships(workspace.id))
+            .filter(membership => membership.user_id === user.id)
+            .map(membership => membership.team_id),
+        }))
+      );
 
       return {
         id: user.id,
@@ -337,7 +355,15 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         created_at: user.created_at.toISOString(),
-        last_login_at: user.last_login_at?.toISOString() ?? null
+        last_login_at: user.last_login_at?.toISOString() ?? null,
+        global_roles: globalRoles,
+        global_permissions: globalPermissions,
+        team_memberships: workspaceMemberships
+          .filter(workspace => workspace.memberships.length > 0)
+          .map(workspace => ({
+            workspace_id: workspace.workspace_id,
+            team_ids: workspace.memberships,
+          })),
       };
     })
   );

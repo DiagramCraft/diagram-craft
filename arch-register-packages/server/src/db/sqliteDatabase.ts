@@ -118,6 +118,7 @@ const toProject = (row: Record<string, unknown>): Project => ({
   workspace: String(row['workspace']),
   name: String(row['name']),
   description: String(row['description']),
+  owner: row['owner'] == null ? null : String(row['owner']),
   status: String(row['status']) as Project['status'],
   created_at: toDate(row['created_at']),
   updated_at: toDate(row['updated_at']),
@@ -512,16 +513,16 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async createProject(input: CreateProjectInput) {
     this.run(
-      'INSERT INTO project (id, workspace, name, description, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [input.id, input.workspace, input.name, input.description, input.status, input.created_at.toISOString(), input.updated_at.toISOString()],
+      'INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [input.id, input.workspace, input.name, input.description, input.owner, input.status, input.created_at.toISOString(), input.updated_at.toISOString()],
     );
     return (await this.getProject(input.workspace, input.id))!;
   }
 
   async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
     this.run(
-      'UPDATE project SET name = ?, description = ?, status = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [input.name, input.description, input.status, input.updated_at.toISOString(), workspace, id],
+      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [input.name, input.description, input.owner, input.status, input.updated_at.toISOString(), workspace, id],
     );
     return await this.getProject(workspace, id);
   }

@@ -9,7 +9,7 @@ import {
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
 import { fetchProject, updateProject, deleteProject, ApiError } from '../api';
-import type { ProjectDetail as ProjectDetailData, FileEntry } from '../api';
+import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceOwnerOption } from '../api';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },
@@ -23,6 +23,7 @@ type ProjectDetailProps = {
   folderFilter: string | null;
   navigate: NavigateFn;
   onProjectUpdated: () => void;
+  ownerOptions: WorkspaceOwnerOption[];
 };
 
 export const ProjectDetail = ({
@@ -31,6 +32,7 @@ export const ProjectDetail = ({
   folderFilter,
   navigate,
   onProjectUpdated,
+  ownerOptions,
 }: ProjectDetailProps) => {
   const [project, setProject] = useState<ProjectDetailData | null>(null);
   const [editing, setEditing] = useState(false);
@@ -83,6 +85,7 @@ export const ProjectDetail = ({
       await updateProject(workspaceId, project.id, {
         name: project.name,
         description: project.description,
+        owner: project.owner,
         status: nextStatus,
       });
       refresh();
@@ -107,7 +110,7 @@ export const ProjectDetail = ({
           </div>
           <div className={styles.titleRow}>
             <div className={styles.title}>{folderFilter ?? project.name}</div>
-            {!folderFilter && project.status !== 'archived' && (
+            {!folderFilter && project.status !== 'archived' && project.canEdit && (
               <button
                 type="button"
                 className={`${styles.pinBtn} ${project.status === 'pinned' ? styles.pinBtnActive : ''}`}
@@ -128,17 +131,21 @@ export const ProjectDetail = ({
           )}
         </div>
         <div className={styles.actions}>
-          {!folderFilter && (
+          {!folderFilter && project.canEdit && (
             <button type="button" className={styles.btn} onClick={() => setEditing(true)}>
               <TbPencil size={12} /> Edit
             </button>
           )}
-          <button type="button" className={styles.btn} onClick={() => setAddFolderOpen(true)}>
-            <TbFolderOpen size={12} /> New folder
-          </button>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setAddDiagramOpen(true)}>
-            <TbPlus size={12} /> New diagram
-          </button>
+          {project.canManageFiles && (
+            <button type="button" className={styles.btn} onClick={() => setAddFolderOpen(true)}>
+              <TbFolderOpen size={12} /> New folder
+            </button>
+          )}
+          {project.canManageFiles && (
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => setAddDiagramOpen(true)}>
+              <TbPlus size={12} /> New diagram
+            </button>
+          )}
         </div>
       </div>
 
@@ -148,6 +155,10 @@ export const ProjectDetail = ({
         <MetaItem
           label="Folders"
           value={<span className="mono tabular">{project.files.folders.length}</span>}
+        />
+        <MetaItem
+          label="Owner"
+          value={project.owner ?? '—'}
         />
         <MetaItem
           label="Last edit"
@@ -197,34 +208,39 @@ export const ProjectDetail = ({
         filter={filter}
         viewMode={viewMode}
         navigate={navigate}
-        onNewDiagram={() => setAddDiagramOpen(true)}
+        onNewDiagram={project.canManageFiles ? () => setAddDiagramOpen(true) : undefined}
       />
 
-      {editing && (
+      {editing && project.canEdit && (
         <ProjectSettings
           project={project}
           workspaceId={workspaceId}
+          ownerOptions={ownerOptions}
           onSaved={() => { setEditing(false); refresh(); onProjectUpdated(); }}
           onClose={() => setEditing(false)}
           navigate={navigate}
         />
       )}
 
-      <AddFolderDialog
-        open={addFolderOpen}
-        onClose={() => setAddFolderOpen(false)}
-        onCreated={() => { refresh(); onProjectUpdated(); }}
-        workspaceId={workspaceId}
-        projectId={projectId}
-      />
-      <AddDiagramDialog
-        open={addDiagramOpen}
-        onClose={() => setAddDiagramOpen(false)}
-        onCreated={() => { refresh(); onProjectUpdated(); }}
-        workspaceId={workspaceId}
-        projectId={projectId}
-        folder={folderFilter}
-      />
+      {project.canManageFiles && (
+        <AddFolderDialog
+          open={addFolderOpen}
+          onClose={() => setAddFolderOpen(false)}
+          onCreated={() => { refresh(); onProjectUpdated(); }}
+          workspaceId={workspaceId}
+          projectId={projectId}
+        />
+      )}
+      {project.canManageFiles && (
+        <AddDiagramDialog
+          open={addDiagramOpen}
+          onClose={() => setAddDiagramOpen(false)}
+          onCreated={() => { refresh(); onProjectUpdated(); }}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          folder={folderFilter}
+        />
+      )}
     </div>
   );
 };
@@ -329,7 +345,7 @@ const DiagramsView = ({
   filter: string;
   viewMode: 'grid' | 'list';
   navigate: NavigateFn;
-  onNewDiagram: () => void;
+  onNewDiagram?: () => void;
 }) => {
   const lc = filter.toLowerCase();
   const filtered = lc
@@ -341,7 +357,7 @@ const DiagramsView = ({
       <EmptyState
         title={folderFilter ? 'No diagrams in this folder' : 'No diagrams yet'}
         sub="Create your first diagram to get started."
-        actionLabel="New diagram"
+        actionLabel={onNewDiagram ? 'New diagram' : undefined}
         onAction={onNewDiagram}
       />
     );
@@ -359,7 +375,7 @@ const DiagramsView = ({
   const FileItem = viewMode === 'list' ? DiagramRow : DiagramCard;
   const containerClass = viewMode === 'list' ? styles.diagramList : styles.diagramGrid;
 
-  const addButton = viewMode === 'list' ? (
+  const addButton = onNewDiagram == null ? null : viewMode === 'list' ? (
     <button type="button" className={styles.diagramRowAdd} onClick={onNewDiagram}>
       <TbPlus size={12} /> New diagram
     </button>
@@ -438,18 +454,21 @@ const DiagramsView = ({
 const ProjectSettings = ({
   project,
   workspaceId,
+  ownerOptions,
   onSaved,
   onClose,
   navigate,
 }: {
   project: ProjectDetailData;
   workspaceId: string;
+  ownerOptions: WorkspaceOwnerOption[];
   onSaved: () => void;
   onClose: () => void;
   navigate: NavigateFn;
 }) => {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
+  const [owner, setOwner] = useState(project.owner ?? '');
   const [status, setStatus] = useState(project.status);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -466,6 +485,7 @@ const ProjectSettings = ({
       await updateProject(workspaceId, project.id, {
         name: trimmed,
         description: description.trim(),
+        owner: owner || null,
         status,
       });
       onSaved();
@@ -515,6 +535,21 @@ const ProjectSettings = ({
           {PROJECT_STATUSES.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className={styles.formRow}>
+        <label className={styles.formLabel}>Owner</label>
+        <select
+          className={styles.formInput}
+          value={owner}
+          onChange={e => setOwner(e.target.value)}
+        >
+          <option value="">No owner</option>
+          {ownerOptions.map(option => (
+            <option key={option.id} value={option.id}>
+              {option.id}
             </option>
           ))}
         </select>

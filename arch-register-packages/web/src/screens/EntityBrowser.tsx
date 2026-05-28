@@ -10,7 +10,7 @@ import {
 import type { NavigateFn } from '../routing';
 import { fetchEntities, fetchEntityFacets, fetchEntityTree, resolveSchemaColor, exportEntitiesToCSV, deleteEntity, cloneEntity } from '../api';
 import type { EntityRecord, EntityFacets, EntitySchema, WorkspaceLifecycleState, TreeNode, TreeEdge } from '../api';
-import { DropdownMenu } from '../components/DropdownMenu';
+import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 
 type BrowserView = 'table' | 'cards' | 'tree';
 
@@ -164,7 +164,9 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
         </div>
         <div className={styles.actions}>
           <button type="button" className={styles.btn} onClick={handleExport}><TbDownload size={12} /> Export CSV</button>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAddEntity}><TbPlus size={12} /> New entity</button>
+          {onAddEntity && (
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAddEntity}><TbPlus size={12} /> New entity</button>
+          )}
         </div>
       </div>
 
@@ -306,6 +308,21 @@ type ViewProps = {
 
 const entityName = (e: EntityRecord) => e._name || e._slug;
 
+const entityMenuItems = (
+  entity: EntityRecord,
+  onClone: (entity: EntityRecord) => void,
+  onDelete: (entity: EntityRecord) => void,
+): MenuItem[] => {
+  const items: MenuItem[] = [];
+  if (entity.canCreateChild) {
+    items.push({ label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(entity) });
+  }
+  if (entity.canDelete) {
+    items.push({ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: () => onDelete(entity) });
+  }
+  return items;
+};
+
 const TableView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) => (
   <div className={styles.tableWrap}>
     <table className={styles.table}>
@@ -341,13 +358,12 @@ const TableView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) 
               <td>{e._lifecycle && <StatusChip value={e._lifecycle} />}</td>
               <td><span className="dim">{e._namespace}</span></td>
               <td onClick={ev => ev.stopPropagation()}>
-                <DropdownMenu
-                  trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
-                  items={[
-                    { label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(e) },
-                    { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: () => onDelete(e) },
-                  ]}
-                />
+                {entityMenuItems(e, onClone, onDelete).length > 0 && (
+                  <DropdownMenu
+                    trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+                    items={entityMenuItems(e, onClone, onDelete)}
+                  />
+                )}
               </td>
             </tr>
           );
@@ -373,15 +389,14 @@ const CardsView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) 
             {s && <TypeBadge color={color} name={s.schema.name} size={22} />}
             <div className={styles.cardHeadRight}>
               {e._lifecycle && <StatusChip value={e._lifecycle} />}
-              <span onClick={ev => ev.stopPropagation()}>
-                <DropdownMenu
-                  trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
-                  items={[
-                    { label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(e) },
-                    { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: () => onDelete(e) },
-                  ]}
-                />
-              </span>
+              {entityMenuItems(e, onClone, onDelete).length > 0 && (
+                <span onClick={ev => ev.stopPropagation()}>
+                  <DropdownMenu
+                    trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+                    items={entityMenuItems(e, onClone, onDelete)}
+                  />
+                </span>
+              )}
             </div>
           </div>
           <div className={styles.cardName}>{entityName(e)}</div>
@@ -509,13 +524,12 @@ const TreeNodeRow = ({
         <td>{item._lifecycle && <StatusChip value={item._lifecycle} />}</td>
         <td><span className="dim">{item._namespace}</span></td>
         <td onClick={ev => ev.stopPropagation()}>
-          <DropdownMenu
-            trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
-            items={[
-              { label: 'Clone', icon: <TbCopy size={14} />, onClick: () => onClone(item as unknown as EntityRecord) },
-              { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: () => onDelete(item as unknown as EntityRecord) },
-            ]}
-          />
+          {entityMenuItems(item as unknown as EntityRecord, onClone, onDelete).length > 0 && (
+            <DropdownMenu
+              trigger={<button type="button" className={styles.dotsBtn}><TbDots size={14} /></button>}
+              items={entityMenuItems(item as unknown as EntityRecord, onClone, onDelete)}
+            />
+          )}
         </td>
       </tr>
       {expanded && item.children.map(child => (

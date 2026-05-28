@@ -414,8 +414,8 @@ export class PostgresDatabase implements DatabaseAdapter {
   async createProject(input: CreateProjectInput) {
     try {
       const [row] = await this.sql<Project[]>`
-        INSERT INTO project (id, workspace, name, description, status, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.status}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       if (!row) throw new DatabaseError('unknown', 'Failed to create project');
@@ -431,6 +431,7 @@ export class PostgresDatabase implements DatabaseAdapter {
         UPDATE project
         SET name = ${input.name},
             description = ${input.description},
+            owner = ${input.owner},
             status = ${input.status},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}

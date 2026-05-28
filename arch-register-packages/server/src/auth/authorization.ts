@@ -1,17 +1,20 @@
 import { HTTPError } from 'h3';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import type { DatabaseAdapter } from '../db/database.js';
-import { decodeRefs, type Entity, type EntityGrant, type EntityRole, type EntitySchema, type GlobalRole, type VisibilityMode } from '../types.js';
+import {
+  decodeRefs,
+  type Entity,
+  type EntityCapabilities,
+  type EntityGrant,
+  type EntityRole,
+  type EntitySchema,
+  type GlobalPermission,
+  type GlobalRole,
+  type ProjectCapabilities,
+  type VisibilityMode,
+} from '../types.js';
 
 type EntityAction = 'view_entity' | 'edit_entity' | 'create_child' | 'admin_entity';
-type GlobalPermission =
-  | 'view_schema'
-  | 'edit_schema'
-  | 'manage_users'
-  | 'manage_teams'
-  | 'manage_global_roles'
-  | 'view_audit'
-  | 'admin_platform';
 
 export type AuthorizationContext = {
   userId: string;
@@ -59,15 +62,7 @@ export const buildAuthorizationContext = async (db: DatabaseAdapter, workspace: 
   ]);
 
   const globalRoles = new Set(roleAssignments.map(assignment => assignment.role));
-  const globalPermissions = new Set<GlobalPermission>();
-  for (const role of globalRoles) {
-    for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
-      if (permission === 'view_entity' || permission === 'edit_entity' || permission === 'create_child' || permission === 'admin_entity') {
-        continue;
-      }
-      globalPermissions.add(permission);
-    }
-  }
+  const globalPermissions = getGlobalPermissionsForRoles(globalRoles);
 
   return {
     userId,
@@ -78,6 +73,24 @@ export const buildAuthorizationContext = async (db: DatabaseAdapter, workspace: 
     entities: new Map(entities.map(entity => [entity.id, entity])),
     grants,
   };
+};
+
+export const getGlobalPermissionsForRoles = (roles: Iterable<GlobalRole>): Set<GlobalPermission> => {
+  const permissions = new Set<GlobalPermission>();
+  for (const role of roles) {
+    for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
+      if (
+        permission === 'view_entity' ||
+        permission === 'edit_entity' ||
+        permission === 'create_child' ||
+        permission === 'admin_entity'
+      ) {
+        continue;
+      }
+      permissions.add(permission);
+    }
+  }
+  return permissions;
 };
 
 const collectAncestorIds = (context: AuthorizationContext, entity: Entity): Set<string> => {
@@ -141,6 +154,27 @@ export const getEntityActions = (context: AuthorizationContext, entity: Entity):
   return actions;
 };
 
+export const getEntityCapabilities = (context: AuthorizationContext | null, entity: Entity): EntityCapabilities => {
+  if (!context) {
+    return {
+      canView: true,
+      canEdit: true,
+      canDelete: true,
+      canAdmin: true,
+      canCreateChild: true,
+    };
+  }
+
+  const actions = getEntityActions(context, entity);
+  return {
+    canView: actions.has('view_entity'),
+    canEdit: actions.has('edit_entity'),
+    canDelete: actions.has('admin_entity'),
+    canAdmin: actions.has('admin_entity'),
+    canCreateChild: actions.has('create_child'),
+  };
+};
+
 export const canReadEntity = (context: AuthorizationContext, entity: Entity) => getEntityActions(context, entity).has('view_entity');
 
 export const requireEntityAction = (context: AuthorizationContext, entity: Entity, action: EntityAction, message?: string) => {
@@ -153,6 +187,35 @@ export const requireGlobalPermission = (context: AuthorizationContext, permissio
   if (isAuthDisabled()) return;
   if (!context.globalPermissions.has(permission) && !context.globalPermissions.has('admin_platform')) {
     throw new HTTPError({ status: 403, statusText: 'Forbidden', message: message ?? 'Insufficient permissions' });
+  }
+};
+
+export const canEditProject = (context: AuthorizationContext, ownerTeamId: string | null) =>
+  context.globalRoles.has('platform_admin') || (ownerTeamId != null && context.teamIds.has(ownerTeamId));
+
+export const getProjectCapabilities = (
+  context: AuthorizationContext | null,
+  ownerTeamId: string | null,
+): ProjectCapabilities => {
+  if (!context) {
+    return {
+      canEdit: true,
+      canDelete: true,
+      canManageFiles: true,
+    };
+  }
+
+  const canEdit = canEditProject(context, ownerTeamId);
+  return {
+    canEdit,
+    canDelete: canEdit,
+    canManageFiles: canEdit,
+  };
+};
+
+export const requireProjectEdit = (context: AuthorizationContext, ownerTeamId: string | null, message?: string) => {
+  if (!canEditProject(context, ownerTeamId)) {
+    throw new HTTPError({ status: 403, statusText: 'Forbidden', message: message ?? 'Insufficient project permissions' });
   }
 };
 

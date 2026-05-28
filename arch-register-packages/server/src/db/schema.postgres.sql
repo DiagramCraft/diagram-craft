@@ -93,6 +93,7 @@ CREATE TABLE project (
   workspace   TEXT        NOT NULL,
   name        TEXT        NOT NULL,
   description TEXT        NOT NULL DEFAULT '',
+  owner       TEXT,
   status      TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('pinned', 'active', 'archived')),
   created_at  TIMESTAMPTZ NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL,

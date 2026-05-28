@@ -65,8 +65,6 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/owners`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
-      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
-      if (authz) requireGlobalPermission(authz, 'manage_teams');
       return await db.listOwners(workspace);
     })
   );

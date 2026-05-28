@@ -9,10 +9,38 @@ export type User = {
   last_login_at: string | null;
 };
 
+export type GlobalPermission =
+  | 'view_schema'
+  | 'edit_schema'
+  | 'manage_users'
+  | 'manage_teams'
+  | 'manage_global_roles'
+  | 'view_audit'
+  | 'admin_platform';
+
+export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
+
+export type WorkspaceTeamMembership = {
+  workspace_id: string;
+  team_ids: string[];
+};
+
+export type AuthSnapshot = {
+  global_roles: GlobalRole[];
+  global_permissions: GlobalPermission[];
+  team_memberships: WorkspaceTeamMembership[];
+};
+
+type AuthMeResponse = User & AuthSnapshot;
+
 type AuthContextType = {
   user: User | null;
+  authz: AuthSnapshot | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasGlobalPermission: (permission: GlobalPermission) => boolean;
+  isMemberOfTeam: (workspaceId: string | null | undefined, teamId: string | null | undefined) => boolean;
+  getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
   login: (username: string, password: string) => Promise<void>;
   loginWithOidc: () => Promise<void>;
   logout: () => Promise<void>;
@@ -28,6 +56,7 @@ const authFetch = (path: string, init?: RequestInit) =>
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [authz, setAuthz] = useState<AuthSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tokenExpiresAt = useRef<number | null>(null);
 
@@ -37,15 +66,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
+        setAuthz(null);
         return false;
       }
 
-      const userData = await res.json();
-      setUser(userData);
+      const userData = (await res.json()) as AuthMeResponse;
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        display_name: userData.display_name,
+        auth_provider: userData.auth_provider,
+        created_at: userData.created_at,
+        last_login_at: userData.last_login_at,
+      });
+      setAuthz({
+        global_roles: userData.global_roles,
+        global_permissions: userData.global_permissions,
+        team_memberships: userData.team_memberships,
+      });
       return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
       setUser(null);
+      setAuthz(null);
       return false;
     }
   }, []);
@@ -56,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
+        setAuthz(null);
         throw new Error('Failed to refresh token');
       }
 
@@ -64,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchCurrentUser();
     } catch (error) {
       setUser(null);
+      setAuthz(null);
       throw error;
     }
   }, [fetchCurrentUser]);
@@ -102,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     tokenExpiresAt.current = null;
     setUser(null);
+    setAuthz(null);
   }, []);
 
   // Proactive token refresh before expiry
@@ -135,10 +181,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, [fetchCurrentUser, refreshToken]);
 
+  const hasGlobalPermission = useCallback(
+    (permission: GlobalPermission) => authz?.global_permissions.includes(permission) ?? false,
+    [authz]
+  );
+
+  const getWorkspaceTeamIds = useCallback(
+    (workspaceId: string | null | undefined) =>
+      authz?.team_memberships.find(membership => membership.workspace_id === workspaceId)?.team_ids ?? [],
+    [authz]
+  );
+
+  const isMemberOfTeam = useCallback(
+    (workspaceId: string | null | undefined, teamId: string | null | undefined) =>
+      teamId != null && getWorkspaceTeamIds(workspaceId).includes(teamId),
+    [getWorkspaceTeamIds]
+  );
+
   const value: AuthContextType = {
     user,
+    authz,
     isLoading,
     isAuthenticated: !!user,
+    hasGlobalPermission,
+    isMemberOfTeam,
+    getWorkspaceTeamIds,
     login,
     loginWithOidc,
     logout,

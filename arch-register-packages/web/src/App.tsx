@@ -18,6 +18,7 @@ import { AddProjectDialog } from './components/AddProjectDialog';
 import type { Route, RoutePatch, ViewId } from './routing';
 import { apiFetch, fetchProjects, fetchLifecycleStates, fetchOwnerOptions } from './api';
 import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from './api';
+import { useAuth } from './auth/AuthContext';
 import { TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings } from 'react-icons/tb';
 
 const getProjectSidebarTab = (project: Project | undefined): Route['projectSidebarTab'] =>
@@ -40,6 +41,7 @@ const RAIL_TO_VIEW: Record<string, ViewId> = {
 };
 
 const App = () => {
+  const { hasGlobalPermission, getWorkspaceTeamIds } = useAuth();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [route, setRoute] = useState<Route>({
     view: 'home',
@@ -87,6 +89,21 @@ const App = () => {
 
   const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
   const wsId = ws?.url_slug ?? '';
+  const workspaceTeamIds = getWorkspaceTeamIds(ws?.id);
+  const canManageWorkspaces = hasGlobalPermission('admin_platform');
+  const canViewSchemas = hasGlobalPermission('view_schema');
+  const canEditSchemas = hasGlobalPermission('edit_schema');
+  const canManageTeams = hasGlobalPermission('manage_teams');
+  const canViewAudit = hasGlobalPermission('view_audit');
+  const canCreateOwnedRecords = canManageWorkspaces || ownerOptions.some(option => workspaceTeamIds.includes(option.id));
+  const canCreateProjects = canCreateOwnedRecords;
+  const canCreateEntities = canCreateOwnedRecords && canViewSchemas;
+  const availableSettingsSections = [
+    ...(canManageWorkspaces ? ['general', 'danger'] : []),
+    ...(canManageTeams ? ['lifecycle-owners'] : []),
+    ...(canViewAudit ? ['audit'] : []),
+  ];
+  const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
   const refreshSchemas = useCallback(() => {
     if (!wsId) return;
@@ -133,6 +150,7 @@ const App = () => {
   const handleRailPick = (id: string) => {
     const view = RAIL_TO_VIEW[id];
     if (!view) return;
+    if (view === 'data-model' && !canViewSchemas) return;
     if (view === 'project-detail' && !route.projectId) {
       navigate({ view, ...getDefaultProjectRoute(projects) });
     } else {
@@ -150,8 +168,11 @@ const App = () => {
           schemas={schemas}
           projects={projects}
           navigate={navigate}
-          onAddProject={() => setAddProjectOpen(true)}
-          onAddEntity={() => setAddEntityOpen(true)}
+          onAddProject={canCreateProjects ? () => setAddProjectOpen(true) : undefined}
+          onAddEntity={canCreateEntities ? () => setAddEntityOpen(true) : undefined}
+          canViewAudit={canViewAudit}
+          canViewSchemas={canViewSchemas}
+          canEditSchemas={canEditSchemas}
         />
       ) : null;
       break;
@@ -163,6 +184,7 @@ const App = () => {
           folderFilter={route.folderFilter}
           navigate={navigate}
           onProjectUpdated={refreshProjects}
+          ownerOptions={ownerOptions}
         />
       ) : null;
       break;
@@ -176,7 +198,7 @@ const App = () => {
           statusFilter={route.statusFilter}
           ownerFilter={route.ownerFilter}
           navigate={navigate}
-          onAddEntity={() => setAddEntityOpen(true)}
+          onAddEntity={canCreateEntities ? () => setAddEntityOpen(true) : undefined}
         />
       ) : null;
       break;
@@ -189,6 +211,7 @@ const App = () => {
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
           navigate={navigate}
+          canViewAudit={canViewAudit}
         />
       ) : null;
       break;
@@ -200,6 +223,7 @@ const App = () => {
           selectedSchemaId={route.schemaId}
           onSelectSchema={id => navigate({ schemaId: id })}
           onSchemaUpdated={refreshSchemas}
+          canEdit={canEditSchemas}
         />
       ) : null;
       break;
@@ -223,13 +247,14 @@ const App = () => {
       screen = ws ? (
         <WorkspaceSettings
           workspace={ws}
-          section={route.settingsSection}
+          section={availableSettingsSections.includes(route.settingsSection) ? route.settingsSection : (defaultSettingsSection ?? route.settingsSection)}
           navigate={navigate}
           onWorkspaceUpdated={fetchWorkspaces}
           onWorkspaceDeleted={fetchWorkspaces}
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
           onConfigUpdated={refreshWorkspaceConfig}
+          availableSections={availableSettingsSections}
         />
       ) : null;
       break;
@@ -268,11 +293,21 @@ const App = () => {
             navigate({ view: 'search' });
           }
         }}
-        onOpenSettings={() => navigate({ view: 'workspace-settings' })}
+        onOpenSettings={() => {
+          if (defaultSettingsSection) {
+            navigate({ view: 'workspace-settings', settingsSection: defaultSettingsSection });
+          }
+        }}
         onAddWorkspace={() => setAddWsOpen(true)}
+        canOpenSettings={availableSettingsSections.length > 0}
+        canAddWorkspace={canManageWorkspaces}
       />
       <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
-        <NavRail view={route.view} onPick={handleRailPick} />
+        <NavRail
+          view={route.view}
+          onPick={handleRailPick}
+          visibleItemIds={canViewSchemas ? undefined : ['home', 'projects', 'entities', 'search']}
+        />
         {showSidebar && (
           <SidePanel
             view={route.view}
@@ -290,6 +325,7 @@ const App = () => {
             statusFilter={route.statusFilter}
             ownerFilter={route.ownerFilter}
             settingsSection={route.settingsSection}
+            availableSettingsSections={availableSettingsSections}
             setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
             setTypeFilter={id => navigate({ typeFilter: id })}
             setStatusFilter={id => navigate({ statusFilter: id })}
@@ -298,15 +334,17 @@ const App = () => {
         )}
         <main className={styles.main}>{screen}</main>
       </div>
-      <AddWorkspaceDialog
-        open={addWsOpen}
-        onClose={() => setAddWsOpen(false)}
-        onCreated={newWs => {
-          fetchWorkspaces();
-          navigate({ workspaceId: newWs.id });
-        }}
-      />
-      {wsId && (
+      {canManageWorkspaces && (
+        <AddWorkspaceDialog
+          open={addWsOpen}
+          onClose={() => setAddWsOpen(false)}
+          onCreated={newWs => {
+            fetchWorkspaces();
+            navigate({ workspaceId: newWs.id });
+          }}
+        />
+      )}
+      {wsId && canCreateProjects && (
         <AddProjectDialog
           open={addProjectOpen}
           onClose={() => setAddProjectOpen(false)}
@@ -315,9 +353,10 @@ const App = () => {
             navigate({ view: 'project-detail', projectId: project.id, projectSidebarTab: getProjectSidebarTab(project) });
           }}
           workspaceId={wsId}
+          ownerOptions={ownerOptions}
         />
       )}
-      {wsId && (
+      {wsId && canCreateEntities && (
         <AddEntityDialog
           open={addEntityOpen}
           onClose={() => setAddEntityOpen(false)}

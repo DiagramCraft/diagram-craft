@@ -248,12 +248,13 @@ INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, li
 --   "Identity Hardening"            : 10000000-0000-0000-0000-000000000002
 --   "Architecture Reviews"          : 10000000-0000-0000-0000-000000000003
 
-INSERT INTO project (id, workspace, name, description, status) VALUES
+INSERT INTO project (id, workspace, name, description, owner, status) VALUES
 (
   '10000000-0000-0000-0000-000000000001',
   'default',
   'Customer Portal Modernisation',
   'Current-state and target-state diagrams for the customer portal platform.',
+  'ux-team',
   'pinned'
 ),
 (
@@ -261,6 +262,7 @@ INSERT INTO project (id, workspace, name, description, status) VALUES
   'default',
   'Identity Hardening',
   'Security-focused diagrams for authentication, token flows, and boundary reviews.',
+  'security-team',
   'active'
 ),
 (

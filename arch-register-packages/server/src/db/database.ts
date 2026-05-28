@@ -72,6 +72,7 @@ export type CreateProjectInput = Omit<Project, 'created_at' | 'updated_at'> & {
 export type UpdateProjectInput = {
   name: string;
   description: string;
+  owner: string | null;
   status: Project['status'];
   updated_at: Date;
 };

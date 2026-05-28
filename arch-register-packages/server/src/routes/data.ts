@@ -8,6 +8,7 @@ import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
 import {
   buildAuthorizationContextForEvent,
   canReadEntity,
+  getEntityCapabilities,
   getEntityParentsFromPayload,
   requireEntityAction,
   resolveCreateOwner,
@@ -60,7 +61,7 @@ const filterEntities = (
   });
 };
 
-const toApiFormat = (row: Entity): EntityApiResponse => ({
+const toApiFormat = (row: Entity, authz: Awaited<ReturnType<typeof buildAuthorizationContextForEvent>>): EntityApiResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,
@@ -73,6 +74,7 @@ const toApiFormat = (row: Entity): EntityApiResponse => ({
   _tags: row.tags,
   _links: row.links,
   _visibilityMode: row.visibility_mode,
+  ...getEntityCapabilities(authz, row),
   ...row.data
 });
 
@@ -89,9 +91,14 @@ type EntitySummaryResponse = {
   _tags: string[];
   _links: EntityLink[];
   _visibilityMode: Entity['visibility_mode'];
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdmin: boolean;
+  canCreateChild: boolean;
 };
 
-const toSummaryFormat = (row: Entity): EntitySummaryResponse => ({
+const toSummaryFormat = (row: Entity, authz: Awaited<ReturnType<typeof buildAuthorizationContextForEvent>>): EntitySummaryResponse => ({
   _uid: row.id,
   _workspace: row.workspace,
   _schemaId: row.schema_id,
@@ -103,7 +110,8 @@ const toSummaryFormat = (row: Entity): EntitySummaryResponse => ({
   _lifecycle: row.lifecycle,
   _tags: row.tags,
   _links: row.links,
-  _visibilityMode: row.visibility_mode
+  _visibilityMode: row.visibility_mode,
+  ...getEntityCapabilities(authz, row),
 });
 
 type RelationRecord = {
@@ -146,7 +154,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q })
           .sort((a, b) => a.name.localeCompare(b.name))
           .slice(offset, limit != null ? offset + limit : undefined);
-        return view === 'summary' ? rows.map(toSummaryFormat) : rows.map(toApiFormat);
+        return view === 'summary' ? rows.map(row => toSummaryFormat(row, authz)) : rows.map(row => toApiFormat(row, authz));
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
       }
@@ -225,7 +233,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
         return {
           nodes: [...allIncluded.values()].map(row => ({
-            ...toSummaryFormat(row),
+            ...toSummaryFormat(row, authz),
             _isMatch: matchIds.has(row.id),
           })),
           edges,
@@ -337,7 +345,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const row = await db.getEntity(workspace, id);
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         if (authz) requireEntityAction(authz, row, 'view_entity', 'You do not have access to view this entity');
-        return toApiFormat(row);
+        return toApiFormat(row, authz);
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
       }
@@ -565,7 +573,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           },
         });
 
-        return toApiFormat(row);
+        return toApiFormat(row, authz);
       } catch (e) {
         handleError(e, 'Failed to create data record');
       }
@@ -641,7 +649,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           changes,
         });
 
-        return toApiFormat(row!);
+        return toApiFormat(row!, authz);
       } catch (e) {
         handleError(e, 'Failed to update data record');
       }
@@ -694,7 +702,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           },
         });
 
-        return toApiFormat(row);
+        return toApiFormat(row, authz);
       } catch (e) {
         handleError(e, 'Failed to clone data record');
       }
