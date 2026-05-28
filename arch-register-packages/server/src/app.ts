@@ -10,6 +10,8 @@ import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
 import { createPublicRoutes } from './routes/public.js';
+import { createAuthRoutes } from './routes/auth.js';
+import { requireAuth } from './middleware/auth.js';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
@@ -39,6 +41,14 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
     })
   );
 
+  // Auth routes (public, no middleware)
+  app.use(createAuthRoutes(db));
+
+  // Apply authentication middleware to all routes below
+  const authMiddleware = requireAuth(db);
+  app.use(authMiddleware);
+
+  // Protected routes (require authentication)
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createDataRoutes(db));

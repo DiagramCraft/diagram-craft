@@ -1,0 +1,399 @@
+/* ============================================================
+   Login screen — dark IDE surface with centered card.
+   Layout: full-viewport dark canvas, dense centered card,
+   status bar pinned to the bottom for visual continuity.
+   ============================================================ */
+
+.app {
+  display: grid;
+  grid-template-rows: 1fr 24px;
+  height: 100vh;
+  background: var(--bg-1);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Subtle dot grid in the background */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 1px 1px, var(--gray-4) 1px, transparent 1px) 0 0 / 24px 24px;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent 80%);
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  width: 360px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.02) inset,
+    0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+/* Thin accent rule at the top */
+.card::before {
+  content: "";
+  display: block;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    var(--accent) 30%,
+    var(--accent) 70%,
+    transparent 100%
+  );
+  opacity: 0.85;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px 0;
+}
+
+.badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, oklch(0.60 0.14 258), oklch(0.50 0.10 290));
+  color: var(--fg-0);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.06) inset;
+  flex-shrink: 0;
+}
+
+.brandName {
+  color: var(--fg-0);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+.brandSub {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+/* ── Title row ───────────────────────────────────────────────── */
+
+.titleRow {
+  padding: 18px 20px 4px;
+}
+
+.title {
+  font-size: 17px;
+  color: var(--fg-0);
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--fg-2);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+/* ── Form ────────────────────────────────────────────────────── */
+
+.form {
+  padding: 14px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--fg-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 8px 0 28px;
+  transition: border-color 80ms;
+}
+
+.inputWrap:focus-within {
+  border-color: var(--accent);
+}
+
+.inputIcon {
+  position: absolute;
+  left: 8px;
+  color: var(--fg-3);
+  display: inline-flex;
+}
+
+.inputWrap:focus-within .inputIcon {
+  color: var(--fg-1);
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--fg-0);
+  font-size: 12.5px;
+  height: 100%;
+  padding: 0;
+  letter-spacing: 0.1px;
+}
+
+.input::placeholder {
+  color: var(--fg-3);
+}
+
+.inputMono {
+  composes: input;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+/* ── Eye toggle ──────────────────────────────────────────────── */
+
+.eye {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+  margin-right: -4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.eye:hover {
+  color: var(--fg-0);
+  background: var(--bg-3);
+}
+
+/* ── Row / checkbox ──────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.check input {
+  accent-color: var(--accent);
+  width: 13px;
+  height: 13px;
+  margin: 0;
+}
+
+.check:hover {
+  color: var(--fg-0);
+}
+
+/* ── Submit button ───────────────────────────────────────────── */
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  margin-top: 6px;
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border: 1px solid color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+  border-radius: var(--r);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  transition: background 80ms, border-color 80ms;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 32%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+.submit:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Error ───────────────────────────────────────────────────── */
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: oklch(0.78 0.14 25);
+  background: color-mix(in oklch, var(--danger) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--danger) 30%, var(--border));
+  border-radius: var(--r);
+  padding: 6px 8px;
+  margin-bottom: 2px;
+}
+
+.errorDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.72 0.18 25);
+  flex-shrink: 0;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+
+.foot {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-1);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+/* ── Status bar ──────────────────────────────────────────────── */
+
+.statusbar {
+  height: 24px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.statusbarL,
+.statusbarR {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusbarItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.statusbarDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  background: var(--gray-6);
+}
+
+.statusbarDotOk {
+  composes: statusbarDot;
+  background: var(--ok);
+}
+
+.statusbarHighlight {
+  color: var(--fg-2);
+}
+
+/* ── OIDC container ──────────────────────────────────────────── */
+
+.oidcContainer {
+  padding: 14px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Loading ─────────────────────────────────────────────────── */
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  margin: 24px auto;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  text-align: center;
+  color: var(--fg-3);
+  font-size: 12px;
+  margin: 0 0 20px;
+}

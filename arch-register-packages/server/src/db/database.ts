@@ -4,6 +4,7 @@ import type {
   EntitySchema,
   Project,
   ProjectFile,
+  User,
   Workspace,
   WorkspaceLifecycleState,
   WorkspaceOwner,
@@ -82,6 +83,20 @@ export type UpsertProjectFileInput = {
 
 export type CreateAuditLogInput = Omit<AuditLogEntry, 'id'>;
 
+export type CreateUserInput = Omit<User, 'created_at' | 'updated_at' | 'last_login_at'> & {
+  created_at: Date;
+  updated_at: Date;
+  last_login_at: Date | null;
+};
+
+export type UpdateUserInput = {
+  email?: string | null;
+  display_name?: string;
+  password_hash?: string | null;
+  is_active?: boolean;
+  updated_at: Date;
+};
+
 export type DatabaseAdapter = {
   driver: DbDriver;
   close(): Promise<void>;
@@ -128,4 +143,12 @@ export type DatabaseAdapter = {
 
   listAuditLogs(workspace: string): Promise<AuditLogEntry[]>;
   createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry>;
+
+  getUser(id: string): Promise<User | null>;
+  getUserByEmail(email: string): Promise<User | null>;
+  getUserByOidc(issuer: string, subject: string): Promise<User | null>;
+  createUser(input: CreateUserInput): Promise<User>;
+  updateUser(id: string, input: UpdateUserInput): Promise<User | null>;
+  updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
+  listUsers(): Promise<User[]>;
 };

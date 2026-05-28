@@ -3,6 +3,7 @@ import { createDatabase } from '../db/factory.js';
 import { seedEntities, seedLifecycleStates, seedOwners, seedProjects, seedProjectFiles, seedSchemas, seedWorkspaces } from '../db/seedData.js';
 import type { ContainmentField, ReferenceField } from '../types.js';
 import { decodeRefs } from '../types.js';
+import { hashPassword } from '../utils/password.js';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.listWorkspaces();
@@ -70,6 +71,60 @@ async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   console.log(`  ${workspaces.length} workspaces, ${entities.length} entities validated against ${schemas.length} schemas — OK`);
 }
 
+const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
+  const testPassword = 'test';
+  const passwordHash = await hashPassword(testPassword);
+  const now = new Date().toISOString();
+
+  const testUsers = [
+    {
+      id: 'admin',
+      email: 'admin@example.com',
+      display_name: 'Administrator',
+      auth_provider: 'local' as const,
+      password_hash: passwordHash,
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+      last_login_at: null,
+    },
+    {
+      id: 'alice',
+      email: 'alice@example.com',
+      display_name: 'Alice Johnson',
+      auth_provider: 'local' as const,
+      password_hash: passwordHash,
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+      last_login_at: null,
+    },
+    {
+      id: 'bob',
+      email: 'bob@example.com',
+      display_name: 'Bob Smith',
+      auth_provider: 'local' as const,
+      password_hash: passwordHash,
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: now,
+      updated_at: now,
+      last_login_at: null,
+    },
+  ];
+
+  for (const user of testUsers) {
+    await db.createUser(user);
+  }
+
+  console.log(`  Created ${testUsers.length} test users (username/password: admin/test, alice/test, bob/test)`);
+};
+
 const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   for (const workspace of seedWorkspaces) {
     await db.createWorkspace(workspace);
@@ -98,6 +153,9 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
       updated_at: file.updated_at,
     });
   }
+  
+  // Seed test users for local authentication
+  await seedTestUsers(db);
 };
 
 async function main() {

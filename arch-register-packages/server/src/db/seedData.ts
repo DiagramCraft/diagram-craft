@@ -325,6 +325,26 @@ export const seedEntities: Entity[] = [
   },
 ];
 
-export const seedProjects: Project[] = [];
+export const seedProjects: Project[] = [
+  {
+    id: '00000000-0000-0000-0010-000000000001',
+    workspace: 'default',
+    name: 'Portal Redesign',
+    description: 'Redesign of the customer portal frontend and API layer.',
+    status: 'active',
+    created_at: now,
+    updated_at: now,
+  },
+  {
+    id: '00000000-0000-0000-0010-000000000002',
+    workspace: 'default',
+    name: 'Auth Migration',
+    description: 'Migration from legacy auth to the new identity platform.',
+    status: 'pinned',
+    created_at: now,
+    updated_at: now,
+  },
+];
+
 export const seedProjectFiles: ProjectFile[] = [];
 
