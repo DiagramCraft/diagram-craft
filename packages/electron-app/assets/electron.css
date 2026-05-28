@@ -1,7 +1,6 @@
 :root {
-  font-family:
-    -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol" !important;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+  "Segoe UI Emoji", "Segoe UI Symbol" !important;
 }
 
 #menu {
@@ -21,6 +20,10 @@
   background-color: transparent !important;
   border: none !important;
   min-width: 60px;
+}
+
+#document {
+  font-size: 15px !important;
 }
 
 #menu {
@@ -51,6 +54,11 @@
 
   .cToolbar > [role="separator"] {
     background-color: #3f3f3f !important;
+  }
+
+  .cToolbar > div > button,
+  .cToolbar > button {
+    color: var(--base-fg-dim) !important;
   }
 }
 

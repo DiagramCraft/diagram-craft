@@ -1,5 +1,5 @@
 .icSidebar {
-  --_width: 39px;
+  --_width: 43px;
 
   anchor-name: --sidebar;
   anchor-scope: --sidebar;
@@ -80,6 +80,33 @@
     .eBottomContainer {
       left: 0;
     }
+
+    > div:nth-child(-n + 2) {
+      button {
+        padding: 0;
+        color: var(--base-fg-more-dim);
+      }
+
+      button[data-state="on"],
+      button[data-pressed] {
+        color: var(--accent-fg);
+        background-color: transparent;
+      }
+    }
+
+    > div:nth-child(1) {
+      button[data-state="on"],
+      button[data-pressed] {
+        &:after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 11px;
+          bottom: 2px;
+          border-left: 1px solid var(--accent-fg);
+        }
+      }
+    }
   }
 
   &[data-side="right"] {
@@ -98,6 +125,33 @@
 
     .eBottomContainer {
       right: 0;
+    }
+
+    > div:nth-child(-n + 2) {
+      button {
+        padding: 0;
+        color: var(--base-fg-more-dim);
+      }
+
+      button[data-state="on"],
+      button[data-pressed] {
+        color: var(--accent-fg);
+        background-color: transparent;
+      }
+    }
+
+    > div:nth-child(1) {
+      button[data-state="on"],
+      button[data-pressed] {
+        &:after {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 11px;
+          bottom: 2px;
+          border-right: 1px solid var(--accent-fg);
+        }
+      }
     }
   }
 }

@@ -71,7 +71,7 @@
 
   --panel-bg: var(--gray-2);
   --panel-fg: var(--gray-12);
-  --panel-border: var(--gray-6);
+  --panel-border: var(--gray-4);
 
   --accent-bg: var(--blue-4);
   --accent-fg: var(--blue-11);
@@ -349,13 +349,13 @@
             "left-buttons canvas-area right-buttons"
             "left-buttons tabs right-buttons";
   grid-template-rows: 35.5px 1fr 24px;
-  grid-template-columns: 40px 5fr 40px;
+  grid-template-columns: 44px 5fr 44px;
 }
 
 #menu {
   align-items: center;
   grid-area: menu;
-  background: var(--panel-bg);
+  background: var(--base-bg);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   border-bottom: 1px solid var(--panel-border);
@@ -363,16 +363,25 @@
   .menu-button {
     position: relative;
     display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 1rem;
-    margin-left: 0.25rem;
+    margin-left: 6px;
     margin-right: 1rem;
-    width: 2rem;
-    background-color: var(--panel-bg);
+    background-color: var(--base-bg);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: var(--cmp-bg-hover);
+
+      & svg {
+        color: var(--cmp-fg);
+      }
+    }
 
     &[data-popup-open] {
       background-color: var(--accent-bg-selected);
       border: 1px solid var(--panel-border);
-      border-radius: 6px;
 
       & svg {
         color: var(--accent-fg);
@@ -380,8 +389,18 @@
     }
 
     & svg {
+      width: 14px;
       display: block;
-      color: var(--panel-fg);
+      color: var(--base-fg-more-dim);
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      right: -10px;
+      border-right: 1px solid var(--panel-border);
     }
   }
 
@@ -389,7 +408,7 @@
     margin-left: 0.25rem;
     display: flex;
     align-items: center;
-    font-size: 15px;
+    font-size: 13px;
     gap: 0.25rem;
     justify-self: center;
     color: var(--panel-fg);
@@ -399,9 +418,17 @@
     display: flex;
     gap: 0.25rem;
 
-    .cToolbar > div > button[data-pressed] {
-      background-color: var(--accent-bg);
-      color: var(--accent-fg);
+    .cToolbar button {
+      color: var(--base-fg-more-dim);
+
+      &[data-pressed] {
+        background-color: var(--accent-bg);
+        color: var(--accent-fg);
+      }
+
+      &:hover {
+        color: var(--accent-fg);
+      }
     }
 
     > [role="toolbar"] {
@@ -414,6 +441,19 @@
     gap: 0.25rem;
     justify-self: end;
     padding-right: 1rem;
+
+    .cToolbar button {
+      color: var(--base-fg-more-dim);
+
+      &[data-pressed] {
+        background-color: var(--accent-bg);
+        color: var(--accent-fg);
+      }
+
+      &:hover {
+        color: var(--accent-fg);
+      }
+    }
   }
 
   .cToolbar {
