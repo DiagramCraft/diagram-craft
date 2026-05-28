@@ -3,9 +3,11 @@ import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
   TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
-  TbSettings, TbCheck, TbPlus,
+  TbSettings, TbCheck, TbPlus, TbLogout,
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
+import { useAuth } from '../auth/AuthContext';
+import { DropdownMenu } from '../components/DropdownMenu';
 
 type BreadcrumbItem = {
   label: string;
@@ -36,6 +38,7 @@ export const TopBar = ({
   onOpenSettings,
   onAddWorkspace,
 }: TopBarProps) => {
+  const { user, logout } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -88,13 +91,30 @@ export const TopBar = ({
         <IconButton title="Workspace settings" onClick={onOpenSettings}>
           <TbSettings size={14} />
         </IconButton>
-        <div className={styles.avatar} title="Anika P.">
-          AP
-        </div>
+        <DropdownMenu
+          trigger={
+            <div className={styles.avatar} title={user?.display_name ?? ''}>
+              {getInitials(user?.display_name ?? '')}
+            </div>
+          }
+          header={<>Signed in as <strong>{user?.display_name}</strong></>}
+          items={[
+            { label: 'Log out', icon: <TbLogout size={14} />, onClick: logout },
+          ]}
+        />
       </div>
     </div>
   );
 };
+
+const getInitials = (name: string) =>
+  name
+    .split(/\s+/)
+    .map(p => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
 const WorkspaceSwitcher = ({
   workspaces,
