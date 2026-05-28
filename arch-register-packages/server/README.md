@@ -1,12 +1,28 @@
 # @arch-register/server
 
-REST API server for the Architecture Register. Stores entities (components, systems, servers, etc.) and their schemas in PostgreSQL.
+REST API server for the Architecture Register. Stores entities (components, systems, servers, etc.) and their schemas in PostgreSQL or SQLite.
 
 ## Prerequisites
 
 - Node.js 20+
 - pnpm
-- PostgreSQL 15+ running locally
+- PostgreSQL 15+ running locally for PostgreSQL mode
+
+## Database configuration
+
+The server supports two runtime-selectable database drivers:
+
+```bash
+DB_DRIVER=postgres
+DATABASE_URL=postgresql://arch_register:yourpassword@localhost:5432/arch_register
+```
+
+```bash
+DB_DRIVER=sqlite
+SQLITE_PATH=./data/arch-register.sqlite
+```
+
+If `DB_DRIVER` is omitted, the server defaults to `postgres`.
 
 ## Local PostgreSQL setup
 
@@ -58,7 +74,17 @@ cp .env.example .env
 Edit `.env`:
 
 ```
+DB_DRIVER=postgres
 DATABASE_URL=postgresql://arch_register:yourpassword@localhost:5432/arch_register
+```
+
+## Local SQLite setup
+
+Create `.env` with:
+
+```
+DB_DRIVER=sqlite
+SQLITE_PATH=./data/arch-register.sqlite
 ```
 
 ## Installation
@@ -71,7 +97,7 @@ pnpm install
 
 ## Bootstrap the database
 
-This drops any existing tables, recreates the schema, and loads seed data:
+This resets the selected database driver, recreates the schema, and loads seed data:
 
 ```bash
 pnpm bootstrap
@@ -213,7 +239,7 @@ entity_schema
   id         UUID  (primary key)
   workspace  TEXT  (foreign key → workspace.id)
   name       TEXT  (unique within workspace)
-  fields     JSONB (array of field descriptors)
+  fields     JSON / JSONB (array of field descriptors)
   created_at TIMESTAMPTZ
   updated_at TIMESTAMPTZ
 
@@ -222,13 +248,17 @@ entity
   workspace  TEXT  (foreign key → workspace.id)
   name       TEXT
   schema_id  UUID  (workspace-scoped foreign key → entity_schema)
-  data       JSONB (dynamic fields, flattened in API responses)
+  data       JSON / JSONB (dynamic fields, flattened in API responses)
   created_at TIMESTAMPTZ
   updated_at TIMESTAMPTZ
 ```
 
-`updated_at` is maintained automatically by a database trigger.
+`updated_at` is maintained in application code so both drivers behave consistently.
+
+## Search compatibility
+
+Search keeps the same endpoints and response shapes across PostgreSQL and SQLite. Free-text matching is intentionally portable, so match quality should be equivalent, but ordering and ranking are not guaranteed to be byte-for-byte identical between engines.
 
 ## Supabase
 
-To connect to Supabase instead of a local database, set `DATABASE_URL` to your Supabase connection string. If using the **Transaction Mode** pooler (port 6543), also add `prepare: false` to the postgres options in `src/db/client.ts`.
+To connect to Supabase instead of a local database, set `DB_DRIVER=postgres` and `DATABASE_URL` to your Supabase connection string.

@@ -6,8 +6,8 @@
   "main": "src/main.ts",
   "scripts": {
     "dev": "pnpm exec tsx watch ./src/main.ts",
-    "start": "pnpm exec tsx ./src/main.ts",
-    "bootstrap": "pnpm exec tsx ./src/scripts/bootstrap.ts"
+    "start": "node --import tsx ./src/main.ts",
+    "bootstrap": "node --import tsx ./src/scripts/bootstrap.ts"
   },
   "keywords": [],
   "author": "Magnus Johansson",
@@ -16,6 +16,7 @@
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
+    "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
     "h3": "^2.0.1-rc.5",
     "lib0": "^0.2.117",

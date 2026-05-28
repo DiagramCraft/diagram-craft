@@ -1,35 +1,15 @@
 import 'dotenv/config';
-import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import postgres from 'postgres';
-import type { ContainmentField, Entity, EntitySchema, ReferenceField, Workspace } from '../types.js';
+import { createDatabase } from '../db/factory.js';
+import { seedEntities, seedLifecycleStates, seedOwners, seedProjects, seedProjectFiles, seedSchemas, seedWorkspaces } from '../db/seedData.js';
+import type { ContainmentField, ReferenceField } from '../types.js';
 import { decodeRefs } from '../types.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_DIR = join(__dirname, '..', 'db');
-
-const connectionString = process.env['DATABASE_URL'];
-if (!connectionString) {
-  console.error('ERROR: DATABASE_URL is not set');
-  process.exit(1);
-}
-
-const sql = postgres(connectionString, { max: 1 });
-
-type PostgresError = {
-  code?: string;
-  message?: string;
-};
-
-async function validate() {
-  const workspaces = await sql<Workspace[]>`SELECT id, name FROM workspace`;
+async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
+  const workspaces = await db.listWorkspaces();
   const workspaceIds = new Set(workspaces.map(w => w.id));
-
-  const schemas = await sql<EntitySchema[]>`SELECT id, workspace, name, fields FROM entity_schema`;
+  const schemas = (await Promise.all(workspaces.map(workspace => db.listSchemas(workspace.id)))).flat();
   const schemaMap = new Map(schemas.map(s => [`${s.workspace}:${s.id}`, s]));
-
-  const entities = await sql<Entity[]>`SELECT id, workspace, slug, namespace, schema_id, data FROM entity`;
+  const entities = (await Promise.all(workspaces.map(workspace => db.listEntities(workspace.id)))).flat();
   const entityMap = new Map(entities.map(e => [`${e.workspace}:${e.id}`, e]));
 
   let errors = 0;
@@ -50,9 +30,7 @@ async function validate() {
 
     const schema = schemaMap.get(`${entity.workspace}:${entity.schema_id}`);
     if (!schema) {
-      console.error(
-        `  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown schema '${entity.schema_id}'`
-      );
+      console.error(`  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown schema '${entity.schema_id}'`);
       errors++;
       continue;
     }
@@ -60,36 +38,27 @@ async function validate() {
     for (const field of schema.fields) {
       if (field.type !== 'reference' && field.type !== 'containment') continue;
       const f = field as ReferenceField | ContainmentField;
-
       const refs = decodeRefs(entity.data[f.id]);
 
       if (f.minCount > 0 && refs.length < f.minCount) {
-        console.error(
-          `  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' requires ≥${f.minCount} ref(s), got ${refs.length}`
-        );
+        console.error(`  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' requires >=${f.minCount} ref(s), got ${refs.length}`);
         errors++;
       }
-
       if (f.maxCount !== -1 && refs.length > f.maxCount) {
-        console.error(
-          `  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' allows ≤${f.maxCount} ref(s), got ${refs.length}`
-        );
+        console.error(`  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' allows <=${f.maxCount} ref(s), got ${refs.length}`);
         errors++;
       }
-
       for (const ref of refs) {
         const target = entityMap.get(`${entity.workspace}:${ref}`);
         if (!target) {
-          console.error(
-            `  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' references unknown entity '${ref}'`
-          );
+          console.error(`  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' references unknown entity '${ref}'`);
           errors++;
         } else if (target.schema_id !== f.schemaId) {
           const targetSchema = schemaMap.get(`${target.workspace}:${target.schema_id}`);
           console.error(
             `  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' should reference ${
               schemaMap.get(`${entity.workspace}:${f.schemaId}`)?.name ?? f.schemaId
-            } but got ${targetSchema?.name ?? target.schema_id}`
+            } but got ${targetSchema?.name ?? target.schema_id}`,
           );
           errors++;
         }
@@ -101,49 +70,56 @@ async function validate() {
   console.log(`  ${workspaces.length} workspaces, ${entities.length} entities validated against ${schemas.length} schemas — OK`);
 }
 
+const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
+  for (const workspace of seedWorkspaces) {
+    await db.createWorkspace(workspace);
+  }
+  for (const workspace of seedWorkspaces) {
+    await db.replaceLifecycleStates(workspace.id, seedLifecycleStates.filter(state => state.workspace === workspace.id));
+    await db.replaceOwners(workspace.id, seedOwners.filter(owner => owner.workspace === workspace.id));
+  }
+  for (const schema of seedSchemas) {
+    await db.createSchema(schema);
+  }
+  for (const entity of seedEntities) {
+    await db.createEntity(entity);
+  }
+  for (const project of seedProjects) {
+    await db.createProject(project);
+  }
+  for (const file of seedProjectFiles) {
+    await db.upsertProjectFile({
+      workspace: file.workspace,
+      project_id: file.project_id,
+      path: file.path,
+      name: file.name,
+      size_bytes: file.size_bytes,
+      created_atIfNew: file.created_at,
+      updated_at: file.updated_at,
+    });
+  }
+};
+
 async function main() {
   console.log('Bootstrapping database...');
+  const db = await createDatabase();
 
-  console.log('Dropping existing tables...');
-  await sql`DROP TABLE IF EXISTS audit_log CASCADE`;
-  await sql`DROP TABLE IF EXISTS project_file CASCADE`;
-  await sql`DROP TABLE IF EXISTS project CASCADE`;
-  await sql`DROP TABLE IF EXISTS entity CASCADE`;
-  await sql`DROP TABLE IF EXISTS entity_schema CASCADE`;
-  await sql`DROP TABLE IF EXISTS workspace_lifecycle_state CASCADE`;
-  await sql`DROP TABLE IF EXISTS workspace_owner CASCADE`;
-  await sql`DROP TABLE IF EXISTS workspace CASCADE`;
-  await sql`DROP FUNCTION IF EXISTS set_updated_at CASCADE`;
-  console.log('Tables dropped.');
-
-  console.log('Creating schema...');
-  const schemaSql = await readFile(join(DB_DIR, 'schema.sql'), 'utf8');
-  await sql.unsafe(schemaSql);
+  console.log('Resetting schema...');
+  await db.reset();
   console.log('Schema created.');
 
   console.log('Seeding data...');
-  const seedSql = await readFile(join(DB_DIR, 'seed.sql'), 'utf8');
-  await sql.unsafe(seedSql);
+  await seed(db);
   console.log('Seed data loaded.');
 
   console.log('Validating seed...');
-  await validate();
+  await validate(db);
 
   console.log('Bootstrap complete.');
-  await sql.end();
+  await db.close();
 }
 
 main().catch(err => {
-  const error = err as PostgresError;
-  if (error.code === '42501') {
-    console.error('Bootstrap failed: database user lacks permission to create objects in the target schema.');
-    console.error('Grant CREATE and USAGE on schema public to the application user, for example:');
-    console.error('  GRANT USAGE, CREATE ON SCHEMA public TO arch_register;');
-    console.error('  ALTER SCHEMA public OWNER TO arch_register;');
-    console.error('Original error:', err);
-    process.exit(1);
-  }
-
   console.error('Bootstrap failed:', err);
   process.exit(1);
 });

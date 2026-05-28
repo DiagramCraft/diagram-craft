@@ -1,31 +1,55 @@
 import { H3, HTTPError, defineHandler, getQuery } from 'h3';
-import sql from '../db/client.js';
-import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type EntitySchema, type SchemaField } from '../types.js';
-import { logAudit, extractEntityFields } from '../db/audit.js';
+import type { DatabaseAdapter } from '../db/database.js';
+import { decodeRefs, type Entity, type EntityApiResponse, type EntityLink, type SchemaField } from '../types.js';
+import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
-import { handlePgError, parsePositiveInt, slugify, json } from '../utils/http.js';
+import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
 
 const BASE = '/api/:workspace/data';
 
 const handleError = (error: unknown, fallback: string): never =>
-  handlePgError(error, fallback, {
-    '23503': '_schemaId references a schema that does not exist',
-    '23505': 'An entity with that slug already exists in this namespace for the given schema in this workspace'
+  handleDbError(error, fallback, {
+    foreign: '_schemaId references a schema that does not exist',
+    unique: 'An entity with that slug already exists in this namespace for the given schema in this workspace',
   });
 
-const getLifecycleValues = async (workspace: string): Promise<Set<string>> => {
-  const rows = await sql<{ id: string }[]>`
-    SELECT id FROM workspace_lifecycle_state WHERE workspace = ${workspace}
-  `;
-  return new Set(rows.map(r => r.id));
+const getLifecycleValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
+  new Set((await db.listLifecycleStates(workspace)).map(r => r.id));
+
+const getOwnerValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
+  new Set((await db.listOwners(workspace)).map(r => r.id));
+
+const includesQuery = (value: unknown, query: string) => String(value ?? '').toLowerCase().includes(query);
+
+const entityMatchesPattern = (entity: Entity, pattern: string) => {
+  const query = pattern.toLowerCase();
+  return (
+    includesQuery(entity.name, query) ||
+    includesQuery(entity.slug, query) ||
+    includesQuery(entity.description, query) ||
+    includesQuery(entity.owner, query) ||
+    entity.tags.some(tag => includesQuery(tag, query))
+  );
 };
 
-const getOwnerValues = async (workspace: string): Promise<Set<string>> => {
-  const rows = await sql<{ id: string }[]>`
-    SELECT id FROM workspace_owner WHERE workspace = ${workspace}
-  `;
-  return new Set(rows.map(r => r.id));
+const filterEntities = (
+  entities: Entity[],
+  options: {
+    schemaId: string | null;
+    owner: string | null;
+    lifecycle: string | null;
+    q: string;
+  },
+) => {
+  const trimmed = options.q.trim();
+  return entities.filter(entity => {
+    if (options.schemaId && entity.schema_id !== options.schemaId) return false;
+    if (options.owner && entity.owner !== options.owner) return false;
+    if (options.lifecycle && entity.lifecycle !== options.lifecycle) return false;
+    if (trimmed && !entityMatchesPattern(entity, trimmed)) return false;
+    return true;
+  });
 };
 
 const toApiFormat = (row: Entity): EntityApiResponse => ({
@@ -90,14 +114,13 @@ const relationFields = (fields: SchemaField[]) =>
     field.type === 'reference' || field.type === 'containment'
   );
 
-export function createDataRoutes() {
+export function createDataRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
-  // GET /api/:workspace/data[?_schemaId=...]
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
@@ -105,33 +128,11 @@ export function createDataRoutes() {
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
       const view = query['view'] === 'summary' ? 'summary' : 'full';
       const limit = parsePositiveInt(query['limit'], 'limit');
-      const offset = parsePositiveInt(query['offset'], 'offset');
-      const pattern = q ? `%${q}%` : null;
+      const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
       try {
-        const rows = await sql<Entity[]>`
-          SELECT *
-          FROM entity
-          WHERE workspace = ${workspace}
-            ${schemaId ? sql`AND schema_id = ${schemaId}` : sql``}
-            ${owner ? sql`AND owner = ${owner}` : sql``}
-            ${lifecycle ? sql`AND lifecycle = ${lifecycle}` : sql``}
-            ${pattern ? sql`
-              AND (
-                name ILIKE ${pattern}
-                OR slug ILIKE ${pattern}
-                OR description ILIKE ${pattern}
-                OR COALESCE(owner, '') ILIKE ${pattern}
-                OR EXISTS (
-                  SELECT 1
-                  FROM unnest(tags) AS tag
-                  WHERE tag ILIKE ${pattern}
-                )
-              )
-            ` : sql``}
-          ORDER BY name
-          ${limit != null ? sql`LIMIT ${limit}` : sql``}
-          ${offset != null ? sql`OFFSET ${offset}` : sql``}
-        `;
+        const rows = filterEntities(await db.listEntities(workspace), { schemaId, owner, lifecycle, q })
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .slice(offset, limit != null ? offset + limit : undefined);
         return view === 'summary' ? rows.map(toSummaryFormat) : rows.map(toApiFormat);
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
@@ -139,44 +140,21 @@ export function createDataRoutes() {
     })
   );
 
-  // GET /api/:workspace/data/facets
   router.get(
     `${BASE}/facets`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       try {
-        const [totalRow] = await sql<{ count: number }[]>`
-          SELECT COUNT(*)::int AS count
-          FROM entity
-          WHERE workspace = ${workspace}
-        `;
-        const lifecycle = await sql<{ value: string | null; count: number }[]>`
-          SELECT lifecycle AS value, COUNT(*)::int AS count
-          FROM entity
-          WHERE workspace = ${workspace}
-          GROUP BY lifecycle
-          ORDER BY count DESC, value
-        `;
-        const owner = await sql<{ value: string | null; count: number }[]>`
-          SELECT owner AS value, COUNT(*)::int AS count
-          FROM entity
-          WHERE workspace = ${workspace}
-          GROUP BY owner
-          ORDER BY count DESC, value
-        `;
-        const schema = await sql<{ schemaId: string; count: number }[]>`
-          SELECT schema_id AS "schemaId", COUNT(*)::int AS count
-          FROM entity
-          WHERE workspace = ${workspace}
-          GROUP BY schema_id
-          ORDER BY count DESC, "schemaId"
-        `;
-
+        const entities = await db.listEntities(workspace);
+        const countBy = <T extends string | null>(values: T[]) =>
+          [...values.reduce((acc, value) => acc.set(value, (acc.get(value) ?? 0) + 1), new Map<T, number>()).entries()]
+            .map(([value, count]) => ({ value, count }))
+            .sort((a, b) => b.count - a.count || String(a.value).localeCompare(String(b.value)));
         return {
-          total: totalRow?.count ?? 0,
-          lifecycle,
-          owner,
-          schema
+          total: entities.length,
+          lifecycle: countBy(entities.map(entity => entity.lifecycle)),
+          owner: countBy(entities.map(entity => entity.owner)),
+          schema: countBy(entities.map(entity => entity.schema_id)).map(({ value, count }) => ({ schemaId: value!, count })),
         };
       } catch (e) {
         handleError(e, 'Failed to retrieve data facets');
@@ -184,26 +162,18 @@ export function createDataRoutes() {
     })
   );
 
-  // GET /api/:workspace/data/tree
-  // Returns filtered entities + ancestor entities (walking containment upward),
-  // plus containment edges, so the client can render a proper hierarchy.
   router.get(
     `${BASE}/tree`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
       const lifecycle = typeof query['lifecycle'] === 'string' ? query['lifecycle'] : null;
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-      const pattern = q ? `%${q}%` : null;
 
       try {
-        // 1. Fetch all schemas so we know which fields are containment
-        const schemas = await sql<EntitySchema[]>`
-          SELECT * FROM entity_schema WHERE workspace = ${workspace}
-        `;
-        // Build a map: schemaId -> containment field ids
+        const [schemas, allEntities] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
         const containmentFieldsBySchema = new Map<string, string[]>();
         for (const schema of schemas) {
           const cFields = schema.fields
@@ -212,185 +182,91 @@ export function createDataRoutes() {
           if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
         }
 
-        // 2. Fetch matching entities (full, so we have data fields for containment)
-        const matchRows = await sql<Entity[]>`
-          SELECT *
-          FROM entity
-          WHERE workspace = ${workspace}
-            ${schemaId ? sql`AND schema_id = ${schemaId}` : sql``}
-            ${owner ? sql`AND owner = ${owner}` : sql``}
-            ${lifecycle ? sql`AND lifecycle = ${lifecycle}` : sql``}
-            ${pattern ? sql`
-              AND (
-                name ILIKE ${pattern}
-                OR slug ILIKE ${pattern}
-                OR description ILIKE ${pattern}
-                OR COALESCE(owner, '') ILIKE ${pattern}
-                OR EXISTS (
-                  SELECT 1
-                  FROM unnest(tags) AS tag
-                  WHERE tag ILIKE ${pattern}
-                )
-              )
-            ` : sql``}
-          ORDER BY name
-        `;
-
+        const matchRows = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort((a, b) => a.name.localeCompare(b.name));
         const matchIds = new Set(matchRows.map(r => r.id));
-        const allEntities = new Map<string, Entity>();
-        for (const row of matchRows) allEntities.set(row.id, row);
-
+        const entityById = new Map(allEntities.map(entity => [entity.id, entity]));
+        const allIncluded = new Map<string, Entity>(matchRows.map(entity => [entity.id, entity]));
         const edges: Array<{ childId: string; parentId: string }> = [];
 
-        // 3. Walk containment upward level by level (batch fetches)
         let currentLevel = [...matchRows];
         while (currentLevel.length > 0) {
-          const missingParentIds = new Set<string>();
-
+          const nextLevel: Entity[] = [];
           for (const entity of currentLevel) {
-            const cFields = containmentFieldsBySchema.get(entity.schema_id);
-            if (!cFields) continue;
+            const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
             for (const fieldId of cFields) {
               for (const parentId of decodeRefs(entity.data[fieldId])) {
                 edges.push({ childId: entity.id, parentId });
-                if (!allEntities.has(parentId)) missingParentIds.add(parentId);
+                const parent = entityById.get(parentId);
+                if (parent && !allIncluded.has(parent.id)) {
+                  allIncluded.set(parent.id, parent);
+                  nextLevel.push(parent);
+                }
               }
             }
           }
-
-          if (missingParentIds.size === 0) break;
-
-          const parents = await sql<Entity[]>`
-            SELECT * FROM entity
-            WHERE workspace = ${workspace} AND id IN ${sql([...missingParentIds])}
-          `;
-          for (const p of parents) allEntities.set(p.id, p);
-          currentLevel = parents;
+          currentLevel = nextLevel;
         }
 
-        // 4. Build response
-        const nodes = [...allEntities.values()].map(row => ({
-          ...toSummaryFormat(row),
-          _isMatch: matchIds.has(row.id),
-        }));
-
-        return { nodes, edges };
+        return {
+          nodes: [...allIncluded.values()].map(row => ({
+            ...toSummaryFormat(row),
+            _isMatch: matchIds.has(row.id),
+          })),
+          edges,
+        };
       } catch (e) {
         handleError(e, 'Failed to build tree data');
       }
     })
   );
 
-  // GET /api/:workspace/data/export - Export entities to CSV
   router.get(
     `${BASE}/export`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
       const lifecycle = typeof query['lifecycle'] === 'string' ? query['lifecycle'] : null;
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-      const pattern = q ? `%${q}%` : null;
 
       try {
-        // Fetch all schemas to resolve schema names
-        const schemas = await sql<EntitySchema[]>`
-          SELECT * FROM entity_schema WHERE workspace = ${workspace}
-        `;
+        const [schemas, allEntities] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
-
-        // Fetch entities with same filters as list endpoint
-        const entities = await sql<Entity[]>`
-          SELECT *
-          FROM entity
-          WHERE workspace = ${workspace}
-            ${schemaId ? sql`AND schema_id = ${schemaId}` : sql``}
-            ${owner ? sql`AND owner = ${owner}` : sql``}
-            ${lifecycle ? sql`AND lifecycle = ${lifecycle}` : sql``}
-            ${pattern ? sql`
-              AND (
-                name ILIKE ${pattern}
-                OR slug ILIKE ${pattern}
-                OR description ILIKE ${pattern}
-                OR COALESCE(owner, '') ILIKE ${pattern}
-                OR EXISTS (
-                  SELECT 1
-                  FROM unnest(tags) AS tag
-                  WHERE tag ILIKE ${pattern}
-                )
-              )
-            ` : sql``}
-          ORDER BY name
-        `;
+        const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort((a, b) => a.name.localeCompare(b.name));
 
         let csvContent: string;
-
         if (schemaId) {
-          // Mode 2: Type-filtered export with schema fields
           const schema = schemaMap.get(schemaId);
           if (!schema) {
             throw new HTTPError({ status: 404, statusText: 'Not Found', message: 'Schema not found' });
           }
 
-          // Collect all reference/containment field IDs that need resolution
           const refFields = relationFields(schema.fields);
           const allRefIds = new Set<string>();
-          
           for (const entity of entities) {
             for (const field of refFields) {
-              const refs = decodeRefs(entity.data[field.id]);
-              refs.forEach(id => allRefIds.add(id));
+              decodeRefs(entity.data[field.id]).forEach(id => allRefIds.add(id));
             }
           }
-
-          // Batch resolve all referenced entities
-          const refEntities = allRefIds.size > 0
-            ? await sql<Pick<Entity, 'id' | 'name' | 'slug'>[]>`
-                SELECT id, name, slug
-                FROM entity
-                WHERE workspace = ${workspace} AND id IN ${sql([...allRefIds])}
-              `
-            : [];
-          const refLookup = new Map(refEntities.map(e => [e.id, e.name || e.slug]));
-
-          // Build columns: metadata + schema type + schema fields
-          const columns = [
-            'Name',
-            'Slug',
-            'Namespace',
-            'Description',
-            'Owner',
-            'Lifecycle',
-            'Tags',
-            'Links',
-            'Schema Type',
-            ...schema.fields.map(f => f.name)
-          ];
-
-          // Build rows with resolved references
+          const refLookup = new Map(allEntities.filter(entity => allRefIds.has(entity.id)).map(entity => [entity.id, entity.name || entity.slug]));
+          const columns = ['Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle', 'Tags', 'Links', 'Schema Type', ...schema.fields.map(f => f.name)];
           const rows = entities.map(entity => {
             const row: Record<string, unknown> = {
-              'Name': entity.name,
-              'Slug': entity.slug,
-              'Namespace': entity.namespace,
-              'Description': entity.description,
-              'Owner': entity.owner ?? '',
-              'Lifecycle': entity.lifecycle ?? '',
-              'Tags': formatArrayForCsv(entity.tags),
-              'Links': entity.links.length.toString(),
-              'Schema Type': schema.name
+              Name: entity.name,
+              Slug: entity.slug,
+              Namespace: entity.namespace,
+              Description: entity.description,
+              Owner: entity.owner ?? '',
+              Lifecycle: entity.lifecycle ?? '',
+              Tags: formatArrayForCsv(entity.tags),
+              Links: entity.links.length.toString(),
+              'Schema Type': schema.name,
             };
-
-            // Add schema-specific fields
             for (const field of schema.fields) {
               const value = entity.data[field.id];
-              
               if (field.type === 'reference' || field.type === 'containment') {
-                // Resolve references to entity names
-                const refs = decodeRefs(value);
-                const names = refs.map(id => refLookup.get(id) ?? id);
-                row[field.name] = formatArrayForCsv(names);
+                row[field.name] = formatArrayForCsv(decodeRefs(value).map(id => refLookup.get(id) ?? id));
               } else if (field.type === 'boolean') {
                 row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
               } else if (Array.isArray(value)) {
@@ -399,51 +275,32 @@ export function createDataRoutes() {
                 row[field.name] = value ?? '';
               }
             }
-
             return row;
           });
-
           csvContent = generateCsv(rows, columns);
         } else {
-          // Mode 1: All types export with metadata only
-          const columns = [
-            'Name',
-            'Slug',
-            'Namespace',
-            'Description',
-            'Owner',
-            'Lifecycle',
-            'Tags',
-            'Links',
-            'Schema Type'
-          ];
-
+          const columns = ['Name', 'Slug', 'Namespace', 'Description', 'Owner', 'Lifecycle', 'Tags', 'Links', 'Schema Type'];
           const rows = entities.map(entity => ({
-            'Name': entity.name,
-            'Slug': entity.slug,
-            'Namespace': entity.namespace,
-            'Description': entity.description,
-            'Owner': entity.owner ?? '',
-            'Lifecycle': entity.lifecycle ?? '',
-            'Tags': formatArrayForCsv(entity.tags),
-            'Links': entity.links.length.toString(),
-            'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
+            Name: entity.name,
+            Slug: entity.slug,
+            Namespace: entity.namespace,
+            Description: entity.description,
+            Owner: entity.owner ?? '',
+            Lifecycle: entity.lifecycle ?? '',
+            Tags: formatArrayForCsv(entity.tags),
+            Links: entity.links.length.toString(),
+            'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id,
           }));
-
           csvContent = generateCsv(rows, columns);
         }
 
-        // Generate filename with timestamp
         const timestamp = new Date().toISOString().split('T')[0];
         const schemaName = schemaId ? schemaMap.get(schemaId)?.name.toLowerCase().replace(/\s+/g, '-') : 'entities';
         const filename = `${schemaName}-${timestamp}.csv`;
-
-        // Set response headers for CSV download
         if (event.node?.res) {
           event.node.res.setHeader('Content-Type', 'text/csv; charset=utf-8');
           event.node.res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         }
-        
         return csvContent;
       } catch (e) {
         handleError(e, 'Failed to export data');
@@ -451,15 +308,14 @@ export function createDataRoutes() {
     })
   );
 
-  // GET /api/:workspace/data/:id
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [row] = await sql<Entity[]>`SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
+        const row = await db.getEntity(workspace, id);
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         return toApiFormat(row);
       } catch (e) {
@@ -468,79 +324,41 @@ export function createDataRoutes() {
     })
   );
 
-  // GET /api/:workspace/data/:id/relations
   router.get(
     `${BASE}/:id/relations`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
       try {
-        const [entity] = await sql<Entity[]>`
-          SELECT *
-          FROM entity
-          WHERE workspace = ${workspace} AND id = ${id}
-        `;
+        const [entity, schemas, entities] = await Promise.all([db.getEntity(workspace, id), db.listSchemas(workspace), db.listEntities(workspace)]);
         if (!entity) {
           throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         }
 
-        const schemas = await sql<EntitySchema[]>`
-          SELECT *
-          FROM entity_schema
-          WHERE workspace = ${workspace}
-        `;
         const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
         const entitySchema = schemaMap.get(entity.schema_id);
         const outgoingFields = relationFields(entitySchema?.fields ?? []);
-
-        const outgoingIds = new Set<string>();
-        for (const field of outgoingFields) {
-          for (const refId of decodeRefs(entity.data[field.id])) {
-            outgoingIds.add(refId);
-          }
-        }
-
-        const outgoingTargets = outgoingIds.size > 0
-          ? await sql<Pick<Entity, 'id' | 'slug' | 'name' | 'schema_id'>[]>`
-              SELECT id, slug, name, schema_id
-              FROM entity
-              WHERE workspace = ${workspace} AND id IN ${sql([...outgoingIds])}
-            `
-          : [];
-        const outgoingLookup = new Map(outgoingTargets.map(target => [target.id, target]));
-
+        const entityLookup = new Map(entities.map(row => [row.id, row]));
         const outgoing: RelationRecord[] = [];
         for (const field of outgoingFields) {
           for (const refId of decodeRefs(entity.data[field.id])) {
-            const target = outgoingLookup.get(refId);
+            const target = entityLookup.get(refId);
             outgoing.push({
               entityId: refId,
               entitySlug: target?.slug ?? refId,
               entityName: target?.name ?? target?.slug ?? refId,
               entitySchemaId: target?.schema_id ?? field.schemaId,
               fieldName: field.name,
-              kind: field.type
+              kind: field.type,
             });
           }
         }
 
-        const referencingSchemaIds = schemas
-          .filter(schema => relationFields(schema.fields).length > 0)
-          .map(schema => schema.id);
-        const incomingRows = referencingSchemaIds.length > 0
-          ? await sql<Pick<Entity, 'id' | 'slug' | 'name' | 'schema_id' | 'data'>[]>`
-              SELECT id, slug, name, schema_id, data
-              FROM entity
-              WHERE workspace = ${workspace}
-                AND schema_id IN ${sql(referencingSchemaIds)}
-                AND id <> ${id}
-            `
-          : [];
-
         const incoming: RelationRecord[] = [];
-        for (const row of incomingRows) {
+        for (const row of entities) {
+          if (row.id === id) continue;
           const rowSchema = schemaMap.get(row.schema_id);
           if (!rowSchema) continue;
           for (const field of relationFields(rowSchema.fields)) {
@@ -551,7 +369,7 @@ export function createDataRoutes() {
               entityName: row.name || row.slug,
               entitySchemaId: row.schema_id,
               fieldName: field.name,
-              kind: field.type
+              kind: field.type,
             });
           }
         }
@@ -564,12 +382,10 @@ export function createDataRoutes() {
     })
   );
 
-  // POST /api/:workspace/data
-  // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.post(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -580,7 +396,6 @@ export function createDataRoutes() {
       if (!_schemaId || typeof _schemaId !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId is required and must be a string (UUID)' });
 
-      // Support _name as the canonical name field; fall back to legacy `name` in data fields
       const name = typeof _name === 'string' ? _name : (typeof fields['name'] === 'string' ? fields['name'] : '');
       delete fields['name'];
 
@@ -590,52 +405,56 @@ export function createDataRoutes() {
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
-
-      const lifecycleValues = await getLifecycleValues(workspace);
-      const lifecycle =
-        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
-
-      const ownerValues = await getOwnerValues(workspace);
-      const owner =
-        typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
-
+      const lifecycleValues = await getLifecycleValues(db, workspace);
+      const lifecycle = typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+      const ownerValues = await getOwnerValues(db, workspace);
+      const owner = typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
 
       try {
-        const [row] = await sql<Entity[]>`
-          INSERT INTO entity (workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data)
-          VALUES (${workspace}, ${slug}, ${namespace}, ${name}, ${description}, ${owner}, ${lifecycle}, ${tags}, ${json(links)}, ${_schemaId}, ${json(fields)})
-          RETURNING *
-        `;
-        
-        // Log audit entry
-        await logAudit({
+        const timestamp = new Date();
+        const row = await db.createEntity({
+          id: crypto.randomUUID(),
+          workspace,
+          slug,
+          namespace,
+          name,
+          description,
+          owner,
+          lifecycle,
+          tags,
+          links,
+          schema_id: _schemaId,
+          data: fields,
+          created_at: timestamp,
+          updated_at: timestamp,
+        });
+
+        await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'entity',
-          entityId: row!.id,
-          entityName: row!.name,
-          entitySlug: row!.slug,
-          schemaId: row!.schema_id,
+          entityId: row.id,
+          entityName: row.name,
+          entitySlug: row.slug,
+          schemaId: row.schema_id,
           changes: {
-            new: extractEntityFields(row!),
+            new: extractEntityFields(row),
           },
         });
-        
-        return toApiFormat(row!);
+
+        return toApiFormat(row);
       } catch (e) {
         handleError(e, 'Failed to create data record');
       }
     })
   );
 
-  // PUT /api/:workspace/data/:id  (full replacement)
-  // Body: { _schemaId, _slug?, _namespace?, _owner?, _lifecycle?, ...fields }
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
@@ -657,49 +476,33 @@ export function createDataRoutes() {
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
-
-      const lifecycleValues = await getLifecycleValues(workspace);
-      const lifecycle =
-        typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
-
-      const ownerValues = await getOwnerValues(workspace);
-      const owner =
-        typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
-
+      const lifecycleValues = await getLifecycleValues(db, workspace);
+      const lifecycle = typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
+      const ownerValues = await getOwnerValues(db, workspace);
+      const owner = typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
 
       try {
-        // Fetch old state for audit log
-        const [oldRow] = await sql<Entity[]>`
-          SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}
-        `;
+        const oldRow = await db.getEntity(workspace, id);
         if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
-        
-        const [row] = await sql<Entity[]>`
-          UPDATE entity SET
-            name        = ${name},
-            description = ${description},
-            schema_id   = ${_schemaId},
-            slug        = ${slug},
-            namespace   = ${namespace},
-            owner       = ${owner},
-            lifecycle   = ${lifecycle},
-            tags        = ${tags},
-            links       = ${json(links)},
-            data        = ${json(fields)}
-          WHERE workspace = ${workspace} AND id = ${id}
-          RETURNING *
-        `;
-        
-        // Log audit entry with field-level changes
-        const { computeChanges } = await import('../db/audit.js');
-        const changes = computeChanges(
-          extractEntityFields(oldRow),
-          extractEntityFields(row!)
-        );
-        
-        await logAudit({
+
+        const row = await db.updateEntity(workspace, id, {
+          slug,
+          namespace,
+          name,
+          description,
+          owner,
+          lifecycle,
+          tags,
+          links,
+          schema_id: _schemaId,
+          data: fields,
+          updated_at: new Date(),
+        });
+
+        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+        await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'entity',
@@ -709,7 +512,7 @@ export function createDataRoutes() {
           schemaId: row!.schema_id,
           changes,
         });
-        
+
         return toApiFormat(row!);
       } catch (e) {
         handleError(e, 'Failed to update data record');
@@ -717,65 +520,68 @@ export function createDataRoutes() {
     })
   );
 
-  // POST /api/:workspace/data/:id/clone
   router.post(
     `${BASE}/:id/clone`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        const [source] = await sql<Entity[]>`SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
+        const source = await db.getEntity(workspace, id);
         if (!source) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
 
         const baseName = source.name ? `${source.name} (copy)` : source.slug;
         const baseSlug = slugify(baseName);
+        const timestamp = new Date();
+        const row = await db.createEntity({
+          id: crypto.randomUUID(),
+          workspace,
+          slug: baseSlug,
+          namespace: source.namespace,
+          name: baseName,
+          description: source.description,
+          owner: source.owner,
+          lifecycle: source.lifecycle,
+          tags: source.tags,
+          links: source.links,
+          schema_id: source.schema_id,
+          data: source.data,
+          created_at: timestamp,
+          updated_at: timestamp,
+        });
 
-        const [row] = await sql<Entity[]>`
-          INSERT INTO entity (workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data)
-          VALUES (${workspace}, ${baseSlug}, ${source.namespace}, ${baseName}, ${source.description}, ${source.owner}, ${source.lifecycle}, ${source.tags}, ${json(source.links)}, ${source.schema_id}, ${json(source.data)})
-          RETURNING *
-        `;
-
-        await logAudit({
+        await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'entity',
-          entityId: row!.id,
-          entityName: row!.name,
-          entitySlug: row!.slug,
-          schemaId: row!.schema_id,
+          entityId: row.id,
+          entityName: row.name,
+          entitySlug: row.slug,
+          schemaId: row.schema_id,
           changes: {
-            new: extractEntityFields(row!),
+            new: extractEntityFields(row),
           },
         });
 
-        return toApiFormat(row!);
+        return toApiFormat(row);
       } catch (e) {
         handleError(e, 'Failed to clone data record');
       }
     })
   );
 
-  // DELETE /api/:workspace/data/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
-        // Fetch entity before deletion for audit log
-        const [row] = await sql<Entity[]>`
-          SELECT * FROM entity WHERE workspace = ${workspace} AND id = ${id}
-        `;
+        const row = await db.getEntity(workspace, id);
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
-        
-        // Delete entity
-        await sql`DELETE FROM entity WHERE workspace = ${workspace} AND id = ${id}`;
-        
-        // Log audit entry
-        await logAudit({
+
+        await db.deleteEntity(workspace, id);
+        await logAudit(db, {
           workspace,
           operation: 'delete',
           entityType: 'entity',
@@ -787,7 +593,7 @@ export function createDataRoutes() {
             old: extractEntityFields(row),
           },
         });
-        
+
         return { success: true, message: `Data record '${id}' deleted` };
       } catch (e) {
         handleError(e, 'Failed to delete data record');

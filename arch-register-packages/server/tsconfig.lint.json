@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/app.integration.test.ts",
+    "src/routes/public.test.ts",
+    "src/types/**/*.d.ts"
+  ]
+}

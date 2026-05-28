@@ -1,5 +1,5 @@
-import sql from './client.js';
 import type { AuditOperation, AuditEntityType } from '../types.js';
+import type { DatabaseAdapter } from './database.js';
 
 const STATIC_USER = 'system'; // Until authentication is implemented
 
@@ -21,7 +21,7 @@ type AuditLogParams = {
 /**
  * Records an audit log entry for a mutation operation.
  */
-export const logAudit = async (params: AuditLogParams): Promise<void> => {
+export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Promise<void> => {
   const {
     workspace,
     operation,
@@ -35,31 +35,19 @@ export const logAudit = async (params: AuditLogParams): Promise<void> => {
   } = params;
 
   try {
-    await sql`
-      INSERT INTO audit_log (
-        workspace,
-        user_id,
-        operation,
-        entity_type,
-        entity_id,
-        entity_name,
-        entity_slug,
-        schema_id,
-        changes,
-        metadata
-      ) VALUES (
-        ${workspace},
-        ${STATIC_USER},
-        ${operation},
-        ${entityType},
-        ${entityId},
-        ${entityName},
-        ${entitySlug},
-        ${schemaId},
-        ${sql.json(changes as Parameters<typeof sql.json>[0])},
-        ${sql.json(metadata as Parameters<typeof sql.json>[0])}
-      )
-    `;
+    await db.createAuditLog({
+      workspace,
+      timestamp: new Date(),
+      user_id: STATIC_USER,
+      operation,
+      entity_type: entityType,
+      entity_id: entityId,
+      entity_name: entityName,
+      entity_slug: entitySlug,
+      schema_id: schemaId,
+      changes,
+      metadata,
+    });
   } catch (error) {
     // Log error but don't fail the main operation
     console.error('Failed to write audit log:', error);

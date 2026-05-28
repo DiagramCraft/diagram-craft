@@ -1,5 +1,5 @@
 import { H3, HTTPError, defineHandler, getQuery } from 'h3';
-import sql from '../db/client.js';
+import type { DatabaseAdapter } from '../db/database.js';
 import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
@@ -21,7 +21,7 @@ const toApiFormat = (row: AuditLogEntry): AuditLogApiResponse => ({
   metadata: row.metadata,
 });
 
-export const createAuditRoutes = () => {
+export const createAuditRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
   // GET /api/:workspace/audit
@@ -29,7 +29,7 @@ export const createAuditRoutes = () => {
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       
       const entityType = typeof query['entityType'] === 'string' ? query['entityType'] : null;
@@ -41,21 +41,14 @@ export const createAuditRoutes = () => {
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
 
       try {
-        const rows = await sql<AuditLogEntry[]>`
-          SELECT *
-          FROM audit_log
-          WHERE workspace = ${workspace}
-            ${entityType ? sql`AND entity_type = ${entityType}` : sql``}
-            ${entityId ? sql`AND entity_id = ${entityId}` : sql``}
-            ${operation ? sql`AND operation = ${operation}` : sql``}
-            ${startDate ? sql`AND timestamp >= ${startDate}::timestamptz` : sql``}
-            ${endDate ? sql`AND timestamp <= ${endDate}::timestamptz` : sql``}
-          ORDER BY timestamp DESC
-          LIMIT ${limit}
-          OFFSET ${offset}
-        `;
+        let rows = await db.listAuditLogs(workspace);
+        if (entityType) rows = rows.filter(row => row.entity_type === entityType);
+        if (entityId) rows = rows.filter(row => row.entity_id === entityId);
+        if (operation) rows = rows.filter(row => row.operation === operation);
+        if (startDate) rows = rows.filter(row => row.timestamp >= new Date(startDate));
+        if (endDate) rows = rows.filter(row => row.timestamp <= new Date(endDate));
 
-        return rows.map(toApiFormat);
+        return rows.slice(offset, offset + limit).map(toApiFormat);
       } catch (_e) {
         throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit log' });
       }
@@ -67,45 +60,29 @@ export const createAuditRoutes = () => {
   router.get(
     `${BASE}/stats`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
 
       try {
-        const [totalRow] = await sql<{ count: number }[]>`
-          SELECT COUNT(*)::int AS count
-          FROM audit_log
-          WHERE workspace = ${workspace}
-        `;
+        const rows = await db.listAuditLogs(workspace);
+        const byOperationMap = new Map<string, number>();
+        const byEntityTypeMap = new Map<string, number>();
+        const recentActivityMap = new Map<string, number>();
+        const threshold = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-        const byOperation = await sql<{ operation: string; count: number }[]>`
-          SELECT operation, COUNT(*)::int AS count
-          FROM audit_log
-          WHERE workspace = ${workspace}
-          GROUP BY operation
-          ORDER BY count DESC
-        `;
-
-        const byEntityType = await sql<{ entity_type: string; count: number }[]>`
-          SELECT entity_type, COUNT(*)::int AS count
-          FROM audit_log
-          WHERE workspace = ${workspace}
-          GROUP BY entity_type
-          ORDER BY count DESC
-        `;
-
-        const recentActivity = await sql<{ date: string; count: number }[]>`
-          SELECT DATE(timestamp) AS date, COUNT(*)::int AS count
-          FROM audit_log
-          WHERE workspace = ${workspace}
-            AND timestamp >= NOW() - INTERVAL '30 days'
-          GROUP BY DATE(timestamp)
-          ORDER BY date DESC
-        `;
+        for (const row of rows) {
+          byOperationMap.set(row.operation, (byOperationMap.get(row.operation) ?? 0) + 1);
+          byEntityTypeMap.set(row.entity_type, (byEntityTypeMap.get(row.entity_type) ?? 0) + 1);
+          if (row.timestamp.getTime() >= threshold) {
+            const key = row.timestamp.toISOString().slice(0, 10);
+            recentActivityMap.set(key, (recentActivityMap.get(key) ?? 0) + 1);
+          }
+        }
 
         return {
-          total: totalRow?.count ?? 0,
-          byOperation,
-          byEntityType,
-          recentActivity,
+          total: rows.length,
+          byOperation: [...byOperationMap.entries()].map(([operation, count]) => ({ operation, count })).sort((a, b) => b.count - a.count),
+          byEntityType: [...byEntityTypeMap.entries()].map(([entity_type, count]) => ({ entity_type, count })).sort((a, b) => b.count - a.count),
+          recentActivity: [...recentActivityMap.entries()].map(([date, count]) => ({ date, count })).sort((a, b) => b.date.localeCompare(a.date)),
         };
       } catch (_e) {
         throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit stats' });

@@ -1,25 +1,18 @@
 import { H3, HTTPError, defineHandler } from 'h3';
-import sql from '../db/client.js';
-import type { WorkspaceLifecycleState, WorkspaceOwner } from '../types.js';
+import type { DatabaseAdapter } from '../db/database.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 
 const BASE = '/api/:workspace/config';
 
-export function createWorkspaceConfigRoutes() {
+export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
   // GET /api/:workspace/config/lifecycle-states
   router.get(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
-      const rows = await sql<WorkspaceLifecycleState[]>`
-        SELECT id, label, color, sort_order
-        FROM workspace_lifecycle_state
-        WHERE workspace = ${workspace}
-        ORDER BY sort_order, id
-      `;
-      return rows;
+      const workspace = await resolveWorkspace(event, db);
+      return await db.listLifecycleStates(workspace);
     })
   );
 
@@ -27,7 +20,7 @@ export function createWorkspaceConfigRoutes() {
   router.put(
     `${BASE}/lifecycle-states`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const body = await event.req.json().catch(() => undefined);
       if (!Array.isArray(body))
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON array' });
@@ -46,24 +39,18 @@ export function createWorkspaceConfigRoutes() {
       if (new Set(ids).size !== ids.length)
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Duplicate lifecycle state ids' });
 
-      await sql.begin(async tx => {
-        await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${workspace}`;
-        for (let i = 0; i < states.length; i++) {
-          const s = states[i]!;
-          await tx`
-            INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order)
-            VALUES (${s.id as string}, ${workspace}, ${s.label as string}, ${s.color as string}, ${i})
-          `;
-        }
-      });
-
-      const rows = await sql<WorkspaceLifecycleState[]>`
-        SELECT id, label, color, sort_order
-        FROM workspace_lifecycle_state
-        WHERE workspace = ${workspace}
-        ORDER BY sort_order, id
-      `;
-      return rows;
+      const now = new Date();
+      return await db.replaceLifecycleStates(
+        workspace,
+        states.map((s, i) => ({
+          id: s.id as string,
+          workspace,
+          label: s.label as string,
+          color: s.color as string,
+          sort_order: i,
+          created_at: now,
+        })),
+      );
     })
   );
 
@@ -71,14 +58,8 @@ export function createWorkspaceConfigRoutes() {
   router.get(
     `${BASE}/owners`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
-      const rows = await sql<WorkspaceOwner[]>`
-        SELECT id, sort_order
-        FROM workspace_owner
-        WHERE workspace = ${workspace}
-        ORDER BY sort_order, id
-      `;
-      return rows;
+      const workspace = await resolveWorkspace(event, db);
+      return await db.listOwners(workspace);
     })
   );
 
@@ -86,7 +67,7 @@ export function createWorkspaceConfigRoutes() {
   router.put(
     `${BASE}/owners`,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const body = await event.req.json().catch(() => undefined);
       if (!Array.isArray(body))
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON array' });
@@ -101,24 +82,16 @@ export function createWorkspaceConfigRoutes() {
       if (new Set(ids).size !== ids.length)
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Duplicate owner ids' });
 
-      await sql.begin(async tx => {
-        await tx`DELETE FROM workspace_owner WHERE workspace = ${workspace}`;
-        for (let i = 0; i < owners.length; i++) {
-          const o = owners[i]!;
-          await tx`
-            INSERT INTO workspace_owner (id, workspace, sort_order)
-            VALUES (${o.id as string}, ${workspace}, ${i})
-          `;
-        }
-      });
-
-      const rows = await sql<WorkspaceOwner[]>`
-        SELECT id, sort_order
-        FROM workspace_owner
-        WHERE workspace = ${workspace}
-        ORDER BY sort_order, id
-      `;
-      return rows;
+      const now = new Date();
+      return await db.replaceOwners(
+        workspace,
+        owners.map((o, i) => ({
+          id: o.id as string,
+          workspace,
+          sort_order: i,
+          created_at: now,
+        })),
+      );
     })
   );
 
