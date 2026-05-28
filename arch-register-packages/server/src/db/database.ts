@@ -1,9 +1,13 @@
 import type {
   AuditLogEntry,
   Entity,
+  EntityGrant,
   EntitySchema,
+  GlobalRole,
+  GlobalRoleAssignment,
   Project,
   ProjectFile,
+  TeamMembership,
   User,
   Workspace,
   WorkspaceLifecycleState,
@@ -47,6 +51,7 @@ export type UpdateSchemaInput = {
   fields: EntitySchema['fields'];
   color: string | null;
   icon: string | null;
+  default_owner: string | null;
   updated_at: Date;
 };
 
@@ -97,6 +102,12 @@ export type UpdateUserInput = {
   updated_at: Date;
 };
 
+export type CreateTeamMembershipInput = TeamMembership;
+
+export type CreateEntityGrantInput = Omit<EntityGrant, 'id'> & {
+  id: string;
+};
+
 export type DatabaseAdapter = {
   driver: DbDriver;
   close(): Promise<void>;
@@ -113,6 +124,8 @@ export type DatabaseAdapter = {
   replaceLifecycleStates(workspace: string, states: WorkspaceLifecycleState[]): Promise<WorkspaceLifecycleState[]>;
   listOwners(workspace: string): Promise<WorkspaceOwner[]>;
   replaceOwners(workspace: string, owners: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
+  listTeamMemberships(workspace: string): Promise<TeamMembership[]>;
+  replaceTeamMemberships(workspace: string, memberships: TeamMembership[]): Promise<TeamMembership[]>;
 
   listSchemas(workspace: string): Promise<EntitySchema[]>;
   getSchema(workspace: string, id: string): Promise<EntitySchema | null>;
@@ -125,6 +138,9 @@ export type DatabaseAdapter = {
   createEntity(input: CreateEntityInput): Promise<Entity>;
   updateEntity(workspace: string, id: string, input: UpdateEntityInput): Promise<Entity | null>;
   deleteEntity(workspace: string, id: string): Promise<Entity | null>;
+  listEntityGrants(workspace: string): Promise<EntityGrant[]>;
+  getEntityGrants(workspace: string, entityId: string): Promise<EntityGrant[]>;
+  replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]): Promise<EntityGrant[]>;
 
   listProjects(workspace: string): Promise<Project[]>;
   getProject(workspace: string, id: string): Promise<Project | null>;
@@ -151,4 +167,6 @@ export type DatabaseAdapter = {
   updateUser(id: string, input: UpdateUserInput): Promise<User | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
   listUsers(): Promise<User[]>;
+  listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignment[]>;
+  replaceGlobalRoleAssignments(userId: string, roles: GlobalRole[], createdAt: Date): Promise<GlobalRoleAssignment[]>;
 };

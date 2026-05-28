@@ -1,8 +1,10 @@
 import type {
   Entity,
   EntitySchema,
+  GlobalRoleAssignment,
   Project,
   ProjectFile,
+  TeamMembership,
   Workspace,
   WorkspaceLifecycleState,
   WorkspaceOwner,
@@ -35,6 +37,42 @@ export const seedOwners: WorkspaceOwner[] = [
   { id: 'security-team', workspace: 'default', sort_order: 2, created_at: now },
 ];
 
+export const seedLocalUsers = [
+  {
+    id: 'admin',
+    email: 'admin@example.com',
+    display_name: 'Administrator',
+  },
+  {
+    id: 'alice',
+    email: 'alice@example.com',
+    display_name: 'Alice Johnson',
+  },
+  {
+    id: 'bob',
+    email: 'bob@example.com',
+    display_name: 'Bob Smith',
+  },
+  {
+    id: 'auditor',
+    email: 'auditor@example.com',
+    display_name: 'Audit User',
+  },
+] as const;
+
+export const seedTeamMemberships: TeamMembership[] = [
+  { workspace: 'default', team_id: 'platform-team', user_id: 'admin', created_at: now },
+  { workspace: 'default', team_id: 'ux-team', user_id: 'alice', created_at: now },
+  { workspace: 'default', team_id: 'security-team', user_id: 'bob', created_at: now },
+  { workspace: 'default', team_id: 'security-team', user_id: 'admin', created_at: now },
+];
+
+export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
+  { user_id: 'admin', role: 'platform_admin', created_at: now },
+  { user_id: 'alice', role: 'schema_admin', created_at: now },
+  { user_id: 'auditor', role: 'auditor', created_at: now },
+];
+
 export const seedSchemas: EntitySchema[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
@@ -43,6 +81,7 @@ export const seedSchemas: EntitySchema[] = [
     fields: [],
     color: 'var(--tag-system)',
     icon: 'globe',
+    default_owner: null,
     created_at: now,
     updated_at: now,
   },
@@ -62,6 +101,7 @@ export const seedSchemas: EntitySchema[] = [
     ],
     color: 'var(--tag-database)',
     icon: 'layers',
+    default_owner: null,
     created_at: now,
     updated_at: now,
   },
@@ -106,6 +146,7 @@ export const seedSchemas: EntitySchema[] = [
     ],
     color: 'var(--tag-component)',
     icon: 'box',
+    default_owner: null,
     created_at: now,
     updated_at: now,
   },
@@ -136,6 +177,7 @@ export const seedSchemas: EntitySchema[] = [
     ],
     color: 'var(--tag-api)',
     icon: 'api',
+    default_owner: null,
     created_at: now,
     updated_at: now,
   },
@@ -156,6 +198,7 @@ export const seedSchemas: EntitySchema[] = [
     ],
     color: 'var(--tag-service)',
     icon: 'database',
+    default_owner: null,
     created_at: now,
     updated_at: now,
   },
@@ -175,6 +218,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000001',
     data: {},
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -191,6 +235,7 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://wiki.example.com/customer-portal', title: 'Wiki', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: '00000000-0000-0000-0001-000000000001' },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -207,6 +252,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: '00000000-0000-0000-0001-000000000001' },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -223,6 +269,7 @@ export const seedEntities: Entity[] = [
     links: [{ url: 'https://api.example.com/docs/customer', title: 'API Docs', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'openapi', system: '00000000-0000-0000-0002-000000000001' },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -239,6 +286,7 @@ export const seedEntities: Entity[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
     data: { api_type: 'grpc', system: '00000000-0000-0000-0002-000000000002' },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -260,6 +308,7 @@ export const seedEntities: Entity[] = [
       provides_apis: '00000000-0000-0000-0004-000000000001',
       consumes_apis: '00000000-0000-0000-0004-000000000002',
     },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -281,6 +330,7 @@ export const seedEntities: Entity[] = [
       consumes_apis: '00000000-0000-0000-0004-000000000001',
       depends_on: '00000000-0000-0000-0003-000000000001',
     },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -301,6 +351,7 @@ export const seedEntities: Entity[] = [
       system: '00000000-0000-0000-0002-000000000002',
       provides_apis: '00000000-0000-0000-0004-000000000002',
     },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -320,6 +371,7 @@ export const seedEntities: Entity[] = [
       resource_type: 'database',
       system: '00000000-0000-0000-0002-000000000001',
     },
+    visibility_mode: null,
     created_at: now,
     updated_at: now,
   },
@@ -347,4 +399,3 @@ export const seedProjects: Project[] = [
 ];
 
 export const seedProjectFiles: ProjectFile[] = [];
-

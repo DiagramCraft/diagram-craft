@@ -4,6 +4,8 @@ import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
+import { buildAuthorizationContextForEvent, canReadEntity } from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/:workspace/search';
 
@@ -114,6 +116,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
     const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
@@ -136,6 +139,8 @@ export function createSearchRoutes(db: DatabaseAdapter) {
         types.includes('schemas') || types.includes('entities') ? db.listSchemas(workspace) : Promise.resolve([]),
         types.includes('entities') ? db.listEntities(workspace) : Promise.resolve([]),
       ]);
+
+      const visibleEntities = authz ? entities.filter(entity => canReadEntity(authz, entity)) : entities;
 
       const projectsResults = types.includes('projects')
         ? projects
@@ -175,7 +180,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
 
       const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
       const entityResults = types.includes('entities')
-        ? entities
+        ? visibleEntities
             .map(entity => {
               const matchedFields = collectMatchedFields(entity.data, normalizedQuery);
               const matchedMetadata = collectMatchedMetadata(entity, normalizedQuery);

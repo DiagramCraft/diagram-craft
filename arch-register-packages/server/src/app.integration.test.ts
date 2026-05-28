@@ -6,6 +6,7 @@ import { createApp } from './app.js';
 import { FilesystemStorage } from './storage/fs.js';
 import type { DatabaseAdapter } from './db/database.js';
 import { SqliteDatabase } from './db/sqliteDatabase.js';
+import { generateAccessToken } from './utils/jwt.js';
 
 import {
   seedEntities,
@@ -111,6 +112,11 @@ describe('arch-register sqlite integration', () => {
     const response = await app.request(path, { ...init, signal: AbortSignal.timeout(5000) });
     return { response, body: await response.text() };
   };
+
+  const authHeaders = (token: string) => ({
+    authorization: `Bearer ${token}`,
+    'content-type': 'application/json',
+  });
 
   it('supports workspace config CRUD', async () => {
     const { body: workspaces } = await json<WorkspaceSummary[]>('/api/workspaces');
@@ -284,5 +290,78 @@ describe('arch-register sqlite integration', () => {
 
     const audit = await json<AuditStatsResponse>('/api/default/audit/stats');
     expect(audit.body.total).toBeGreaterThan(0);
+  }, 20000);
+
+  it('enforces restricted subtree visibility and schema admin permissions', async () => {
+    process.env.AUTH_DISABLED = 'false';
+    process.env.JWT_SECRET = '12345678901234567890123456789012';
+
+    const viewer = await db.createUser({
+      id: 'viewer',
+      email: 'viewer@example.com',
+      display_name: 'Viewer',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+
+    const schemaAdmin = await db.createUser({
+      id: 'schema-admin',
+      email: 'schema-admin@example.com',
+      display_name: 'Schema Admin',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+
+    await db.replaceGlobalRoleAssignments(schemaAdmin.id, ['schema_admin'], new Date());
+
+    const restricted = await json<EntityResponse>('/api/default/data', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        _schemaId: '00000000-0000-0000-0000-000000000001',
+        _name: 'Security Domain',
+        _owner: 'security-team',
+        _visibilityMode: 'restricted',
+      }),
+    });
+
+    const viewerToken = generateAccessToken(viewer);
+    const deniedRead = await app.request(`/api/default/data/${restricted.body._uid}`, {
+      headers: { authorization: `Bearer ${viewerToken}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(deniedRead.status).toBe(403);
+
+    const deniedSchemaWrite = await app.request('/api/default/schemas', {
+      method: 'POST',
+      headers: authHeaders(viewerToken),
+      body: JSON.stringify({ name: 'Forbidden Schema', fields: [] }),
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(deniedSchemaWrite.status).toBe(403);
+
+    const schemaAdminToken = generateAccessToken(schemaAdmin);
+    const allowedSchemaWrite = await app.request('/api/default/schemas', {
+      method: 'POST',
+      headers: authHeaders(schemaAdminToken),
+      body: JSON.stringify({ name: 'Allowed Schema', fields: [] }),
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(allowedSchemaWrite.status).toBe(200);
+
+    process.env.AUTH_DISABLED = 'true';
+    delete process.env.JWT_SECRET;
   }, 20000);
 });

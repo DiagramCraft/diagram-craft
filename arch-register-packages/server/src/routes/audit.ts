@@ -3,6 +3,8 @@ import type { DatabaseAdapter } from '../db/database.js';
 import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
+import { buildAuthorizationContextForEvent, requireGlobalPermission } from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/:workspace/audit';
 
@@ -30,6 +32,8 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
+      if (authz) requireGlobalPermission(authz, 'view_audit');
       const query = getQuery(event);
       
       const entityType = typeof query['entityType'] === 'string' ? query['entityType'] : null;
@@ -61,6 +65,8 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     `${BASE}/stats`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
+      if (authz) requireGlobalPermission(authz, 'view_audit');
 
       try {
         const rows = await db.listAuditLogs(workspace);

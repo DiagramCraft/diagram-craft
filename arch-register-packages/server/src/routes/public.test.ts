@@ -14,6 +14,7 @@ describe('public route mappers', () => {
       name: 'Component',
       color: null,
       icon: null,
+      default_owner: null,
       created_at: new Date(),
       updated_at: new Date(),
       fields: [
@@ -47,6 +48,7 @@ describe('public route mappers', () => {
       name: 'Component',
       color: null,
       icon: null,
+      default_owner: null,
       created_at: new Date(),
       updated_at: new Date(),
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }]
@@ -80,6 +82,7 @@ describe('public route mappers', () => {
         technology: 'Java',
         system: 'entity-2'
       },
+      visibility_mode: null,
       created_at: new Date(),
       updated_at: new Date()
     };
@@ -96,6 +99,7 @@ describe('public route mappers', () => {
       _lifecycle: 'prod',
       _tags: ['public'],
       _links: [{ url: 'https://example.com', title: 'Docs' }],
+      _visibilityMode: null,
       name: 'Payment Service',
       description: 'Processes payments',
       technology: 'Java',

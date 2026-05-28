@@ -5,6 +5,7 @@ import postgres from 'postgres';
 import type {
   CreateAuditLogInput,
   CreateEntityInput,
+  CreateEntityGrantInput,
   CreateProjectInput,
   CreateSchemaInput,
   CreateUserInput,
@@ -21,9 +22,12 @@ import { DatabaseError } from './database.js';
 import type {
   AuditLogEntry,
   Entity,
+  EntityGrant,
   EntitySchema,
+  GlobalRoleAssignment,
   Project,
   ProjectFile,
+  TeamMembership,
   User,
   Workspace,
   WorkspaceLifecycleState,
@@ -67,10 +71,13 @@ export class PostgresDatabase implements DatabaseAdapter {
 
   async reset() {
     try {
+      await this.sql`DROP TABLE IF EXISTS global_role_assignment CASCADE`;
+      await this.sql`DROP TABLE IF EXISTS team_membership CASCADE`;
       await this.sql`DROP TABLE IF EXISTS users CASCADE`;
       await this.sql`DROP TABLE IF EXISTS audit_log CASCADE`;
       await this.sql`DROP TABLE IF EXISTS project_file CASCADE`;
       await this.sql`DROP TABLE IF EXISTS project CASCADE`;
+      await this.sql`DROP TABLE IF EXISTS entity_grant CASCADE`;
       await this.sql`DROP TABLE IF EXISTS entity CASCADE`;
       await this.sql`DROP TABLE IF EXISTS entity_schema CASCADE`;
       await this.sql`DROP TABLE IF EXISTS workspace_lifecycle_state CASCADE`;
@@ -136,8 +143,10 @@ export class PostgresDatabase implements DatabaseAdapter {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM project_file WHERE workspace = ${id}`;
         await tx`DELETE FROM project WHERE workspace = ${id}`;
+        await tx`DELETE FROM entity_grant WHERE workspace = ${id}`;
         await tx`DELETE FROM entity WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
+        await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_owner WHERE workspace = ${id}`;
         await tx`DELETE FROM audit_log WHERE workspace = ${id}`;
@@ -187,6 +196,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   async replaceOwners(workspace: string, owners: WorkspaceOwner[]) {
     try {
       await this.sql.begin(async tx => {
+        await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
         await tx`DELETE FROM workspace_owner WHERE workspace = ${workspace}`;
         for (const owner of owners) {
           await tx`
@@ -196,6 +206,32 @@ export class PostgresDatabase implements DatabaseAdapter {
         }
       });
       return await this.listOwners(workspace);
+    } catch (error) {
+      return normalizeError(error);
+    }
+  }
+
+  async listTeamMemberships(workspace: string) {
+    return await this.sql<TeamMembership[]>`
+      SELECT workspace, team_id, user_id, created_at
+      FROM team_membership
+      WHERE workspace = ${workspace}
+      ORDER BY team_id, user_id
+    `;
+  }
+
+  async replaceTeamMemberships(workspace: string, memberships: TeamMembership[]) {
+    try {
+      await this.sql.begin(async tx => {
+        await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
+        for (const membership of memberships) {
+          await tx`
+            INSERT INTO team_membership (workspace, team_id, user_id, created_at)
+            VALUES (${workspace}, ${membership.team_id}, ${membership.user_id}, ${membership.created_at})
+          `;
+        }
+      });
+      return await this.listTeamMemberships(workspace);
     } catch (error) {
       return normalizeError(error);
     }
@@ -213,8 +249,8 @@ export class PostgresDatabase implements DatabaseAdapter {
   async createSchema(input: CreateSchemaInput) {
     try {
       const [row] = await this.sql<EntitySchema[]>`
-        INSERT INTO entity_schema (id, workspace, name, fields, color, icon, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, fields, color, icon, default_owner, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       if (!row) throw new DatabaseError('unknown', 'Failed to create schema');
@@ -232,6 +268,7 @@ export class PostgresDatabase implements DatabaseAdapter {
             fields = ${this.json(input.fields)},
             color = ${input.color},
             icon = ${input.icon},
+            default_owner = ${input.default_owner},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -267,7 +304,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   async createEntity(input: CreateEntityInput) {
     try {
       const [row] = await this.sql<Entity[]>`
-        INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, created_at, updated_at)
+        INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, visibility_mode, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
@@ -281,6 +318,7 @@ export class PostgresDatabase implements DatabaseAdapter {
           ${this.json(input.links)},
           ${input.schema_id},
           ${this.json(input.data)},
+          ${input.visibility_mode},
           ${input.created_at},
           ${input.updated_at}
         )
@@ -307,6 +345,7 @@ export class PostgresDatabase implements DatabaseAdapter {
             links = ${this.json(input.links)},
             schema_id = ${input.schema_id},
             data = ${this.json(input.data)},
+            visibility_mode = ${input.visibility_mode},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
@@ -325,6 +364,39 @@ export class PostgresDatabase implements DatabaseAdapter {
         RETURNING *
       `;
       return row ?? null;
+    } catch (error) {
+      return normalizeError(error);
+    }
+  }
+
+  async listEntityGrants(workspace: string) {
+    return await this.sql<EntityGrant[]>`
+      SELECT * FROM entity_grant
+      WHERE workspace = ${workspace}
+      ORDER BY entity_id, principal_type, principal_id
+    `;
+  }
+
+  async getEntityGrants(workspace: string, entityId: string) {
+    return await this.sql<EntityGrant[]>`
+      SELECT * FROM entity_grant
+      WHERE workspace = ${workspace} AND entity_id = ${entityId}
+      ORDER BY principal_type, principal_id
+    `;
+  }
+
+  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
+    try {
+      await this.sql.begin(async tx => {
+        await tx`DELETE FROM entity_grant WHERE workspace = ${workspace} AND entity_id = ${entityId}`;
+        for (const grant of grants) {
+          await tx`
+            INSERT INTO entity_grant (id, workspace, entity_id, principal_type, principal_id, role, applies_to, created_at)
+            VALUES (${grant.id}, ${workspace}, ${entityId}, ${grant.principal_type}, ${grant.principal_id}, ${grant.role}, ${grant.applies_to}, ${grant.created_at})
+          `;
+        }
+      });
+      return await this.getEntityGrants(workspace, entityId);
     } catch (error) {
       return normalizeError(error);
     }
@@ -600,5 +672,38 @@ export class PostgresDatabase implements DatabaseAdapter {
 
   async listUsers() {
     return await this.sql<User[]>`SELECT * FROM users ORDER BY display_name`;
+  }
+
+  async listGlobalRoleAssignments(userId?: string) {
+    if (userId) {
+      return await this.sql<GlobalRoleAssignment[]>`
+        SELECT user_id, role, created_at
+        FROM global_role_assignment
+        WHERE user_id = ${userId}
+        ORDER BY role
+      `;
+    }
+    return await this.sql<GlobalRoleAssignment[]>`
+      SELECT user_id, role, created_at
+      FROM global_role_assignment
+      ORDER BY user_id, role
+    `;
+  }
+
+  async replaceGlobalRoleAssignments(userId: string, roles: GlobalRoleAssignment['role'][], createdAt: Date) {
+    try {
+      await this.sql.begin(async tx => {
+        await tx`DELETE FROM global_role_assignment WHERE user_id = ${userId}`;
+        for (const role of roles) {
+          await tx`
+            INSERT INTO global_role_assignment (user_id, role, created_at)
+            VALUES (${userId}, ${role}, ${createdAt})
+          `;
+        }
+      });
+      return await this.listGlobalRoleAssignments(userId);
+    } catch (error) {
+      return normalizeError(error);
+    }
   }
 }

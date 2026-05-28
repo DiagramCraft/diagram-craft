@@ -5,6 +5,14 @@ import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
+import {
+  buildAuthorizationContextForEvent,
+  canReadEntity,
+  getEntityParentsFromPayload,
+  requireEntityAction,
+  resolveCreateOwner,
+} from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/:workspace/data';
 
@@ -64,6 +72,7 @@ const toApiFormat = (row: Entity): EntityApiResponse => ({
   _lifecycle: row.lifecycle,
   _tags: row.tags,
   _links: row.links,
+  _visibilityMode: row.visibility_mode,
   ...row.data
 });
 
@@ -79,6 +88,7 @@ type EntitySummaryResponse = {
   _lifecycle: string | null;
   _tags: string[];
   _links: EntityLink[];
+  _visibilityMode: Entity['visibility_mode'];
 };
 
 const toSummaryFormat = (row: Entity): EntitySummaryResponse => ({
@@ -92,7 +102,8 @@ const toSummaryFormat = (row: Entity): EntitySummaryResponse => ({
   _owner: row.owner,
   _lifecycle: row.lifecycle,
   _tags: row.tags,
-  _links: row.links
+  _links: row.links,
+  _visibilityMode: row.visibility_mode
 });
 
 type RelationRecord = {
@@ -121,6 +132,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
@@ -130,7 +142,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const limit = parsePositiveInt(query['limit'], 'limit');
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
       try {
-        const rows = filterEntities(await db.listEntities(workspace), { schemaId, owner, lifecycle, q })
+        const visibleEntities = (await db.listEntities(workspace)).filter(entity => (authz ? canReadEntity(authz, entity) : true));
+        const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q })
           .sort((a, b) => a.name.localeCompare(b.name))
           .slice(offset, limit != null ? offset + limit : undefined);
         return view === 'summary' ? rows.map(toSummaryFormat) : rows.map(toApiFormat);
@@ -144,8 +157,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/facets`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       try {
-        const entities = await db.listEntities(workspace);
+        const entities = (await db.listEntities(workspace)).filter(entity => (authz ? canReadEntity(authz, entity) : true));
         const countBy = <T extends string | null>(values: T[]) =>
           [...values.reduce((acc, value) => acc.set(value, (acc.get(value) ?? 0) + 1), new Map<T, number>()).entries()]
             .map(([value, count]) => ({ value, count }))
@@ -166,6 +180,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/tree`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
@@ -173,7 +188,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
 
       try {
-        const [schemas, allEntities] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
+        const [schemas, allEntitiesRaw] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
+        const allEntities = authz ? allEntitiesRaw.filter(entity => canReadEntity(authz, entity)) : allEntitiesRaw;
         const containmentFieldsBySchema = new Map<string, string[]>();
         for (const schema of schemas) {
           const cFields = schema.fields
@@ -224,6 +240,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/export`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const schemaId = typeof query['_schemaId'] === 'string' ? query['_schemaId'] : null;
       const owner = typeof query['owner'] === 'string' ? query['owner'] : null;
@@ -231,7 +248,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
 
       try {
-        const [schemas, allEntities] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
+        const [schemas, allEntitiesRaw] = await Promise.all([db.listSchemas(workspace), db.listEntities(workspace)]);
+        const allEntities = authz ? allEntitiesRaw.filter(entity => canReadEntity(authz, entity)) : allEntitiesRaw;
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
         const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -312,11 +330,13 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/:id`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const row = await db.getEntity(workspace, id);
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        if (authz) requireEntityAction(authz, row, 'view_entity', 'You do not have access to view this entity');
         return toApiFormat(row);
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
@@ -328,14 +348,17 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/:id/relations`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
       try {
-        const [entity, schemas, entities] = await Promise.all([db.getEntity(workspace, id), db.listSchemas(workspace), db.listEntities(workspace)]);
+        const [entity, schemas, entitiesRaw] = await Promise.all([db.getEntity(workspace, id), db.listSchemas(workspace), db.listEntities(workspace)]);
         if (!entity) {
           throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
         }
+        if (authz) requireEntityAction(authz, entity, 'view_entity', 'You do not have access to view this entity');
+        const entities = authz ? entitiesRaw.filter(row => canReadEntity(authz, row)) : entitiesRaw;
 
         const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
         const entitySchema = schemaMap.get(entity.schema_id);
@@ -345,6 +368,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         for (const field of outgoingFields) {
           for (const refId of decodeRefs(entity.data[field.id])) {
             const target = entityLookup.get(refId);
+            if (authz && !target) continue;
             outgoing.push({
               entityId: refId,
               entitySlug: target?.slug ?? refId,
@@ -382,15 +406,98 @@ export function createDataRoutes(db: DatabaseAdapter) {
     })
   );
 
+  router.get(
+    `${BASE}/:id/access`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
+      const id = event.context.params?.['id'];
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+
+      const entity = await db.getEntity(workspace, id);
+      if (!entity) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+      if (authz) requireEntityAction(authz, entity, 'view_entity', 'You do not have access to view this entity');
+
+      return {
+        owner: entity.owner,
+        visibility_mode: entity.visibility_mode,
+        grants: await db.getEntityGrants(workspace, id),
+      };
+    })
+  );
+
+  router.put(
+    `${BASE}/:id/access`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
+      const id = event.context.params?.['id'];
+      if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+
+      const entity = await db.getEntity(workspace, id);
+      if (!entity) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+      if (authz) requireEntityAction(authz, entity, 'admin_entity', 'You do not have permission to manage entity access');
+
+      const body = await event.req.json().catch(() => undefined);
+      if (body == null || typeof body !== 'object') {
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
+      }
+
+      const { grants = [] } = body as Record<string, unknown>;
+      if (!Array.isArray(grants)) {
+        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'grants must be an array' });
+      }
+
+      const rows = grants.map(grant => {
+        if (grant == null || typeof grant !== 'object') {
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Each grant must be an object' });
+        }
+        const typed = grant as Record<string, unknown>;
+        if (typed['principal_type'] !== 'user' && typed['principal_type'] !== 'team') {
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'principal_type must be user or team' });
+        }
+        if (typeof typed['principal_id'] !== 'string' || typed['principal_id'] === '') {
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'principal_id must be a non-empty string' });
+        }
+        if (!['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role']))) {
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'role must be viewer, editor, contributor, or entity_admin' });
+        }
+        if (!['self', 'subtree'].includes(String(typed['applies_to']))) {
+          throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'applies_to must be self or subtree' });
+        }
+        const principalType = typed['principal_type'] as 'user' | 'team';
+        const role = typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin';
+        const appliesTo = typed['applies_to'] as 'self' | 'subtree';
+        return {
+          id: crypto.randomUUID(),
+          workspace,
+          entity_id: id,
+          principal_type: principalType,
+          principal_id: typed['principal_id'],
+          role,
+          applies_to: appliesTo,
+          created_at: new Date(),
+        };
+      });
+
+      return {
+        owner: entity.owner,
+        visibility_mode: entity.visibility_mode,
+        grants: await db.replaceEntityGrants(workspace, id, rows),
+      };
+    })
+  );
+
   router.post(
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
 
-      const { _schemaId, _name, _slug, _namespace = 'default', _description = '', _owner = null, _lifecycle = null, _tags = [], _links = [], ...fields } =
+      const { _schemaId, _name, _slug, _namespace = 'default', _description = '', _owner = null, _lifecycle = null, _tags = [], _links = [], _visibilityMode, ...fields } =
         body as Record<string, unknown>;
 
       if (!_schemaId || typeof _schemaId !== 'string')
@@ -408,11 +515,24 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const lifecycleValues = await getLifecycleValues(db, workspace);
       const lifecycle = typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
       const ownerValues = await getOwnerValues(db, workspace);
-      const owner = typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
+      const visibilityMode = _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null;
 
       try {
+        const [schema, entities] = await Promise.all([db.getSchema(workspace, _schemaId), db.listEntities(workspace)]);
+        if (!schema) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Schema '${_schemaId}' not found` });
+        const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
+        const parents = getEntityParentsFromPayload(schema, fields, entityLookup);
+        const fallbackOwner = (await db.listOwners(workspace))[0]?.id ?? null;
+        const owner = resolveCreateOwner(typeof _owner === 'string' ? _owner : null, parents, schema, ownerValues, fallbackOwner);
+        if (authz) {
+          if (parents.length > 0) {
+            parents.forEach(parent => requireEntityAction(authz, parent, 'create_child', 'You do not have permission to add children under one or more parent entities'));
+          } else if (!owner || (!authz.teamIds.has(owner) && !authz.globalRoles.has('platform_admin'))) {
+            throw new HTTPError({ status: 403, statusText: 'Forbidden', message: 'Top-level entity creation requires membership in the resolved owner team or a platform admin role' });
+          }
+        }
         const timestamp = new Date();
         const row = await db.createEntity({
           id: crypto.randomUUID(),
@@ -427,6 +547,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           links,
           schema_id: _schemaId,
           data: fields,
+          visibility_mode: visibilityMode,
           created_at: timestamp,
           updated_at: timestamp,
         });
@@ -455,6 +576,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/:id`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
@@ -462,7 +584,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
 
-      const { _schemaId, _name, _slug, _namespace, _description = '', _owner, _lifecycle, _tags = [], _links = [], ...fields } = body as Record<string, unknown>;
+      const { _schemaId, _name, _slug, _namespace, _description = '', _owner, _lifecycle, _tags = [], _links = [], _visibilityMode, ...fields } = body as Record<string, unknown>;
 
       if (!_schemaId || typeof _schemaId !== 'string')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: '_schemaId is required and must be a string (UUID)' });
@@ -482,10 +604,15 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const owner = typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
       const tags = Array.isArray(_tags) ? _tags.filter((t): t is string => typeof t === 'string') : [];
       const links = Array.isArray(_links) ? (_links as EntityLink[]) : [];
+      const visibilityMode = _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null;
 
       try {
         const oldRow = await db.getEntity(workspace, id);
         if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        if (authz) requireEntityAction(authz, oldRow, 'edit_entity', 'You do not have permission to edit this entity');
+        if (authz && (owner !== oldRow.owner || visibilityMode !== oldRow.visibility_mode)) {
+          requireEntityAction(authz, oldRow, 'admin_entity', 'You do not have permission to change ownership or visibility');
+        }
 
         const row = await db.updateEntity(workspace, id, {
           slug,
@@ -498,6 +625,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           links,
           schema_id: _schemaId,
           data: fields,
+          visibility_mode: visibilityMode,
           updated_at: new Date(),
         });
 
@@ -524,11 +652,13 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/:id/clone`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const source = await db.getEntity(workspace, id);
         if (!source) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        if (authz) requireEntityAction(authz, source, 'create_child', 'You do not have permission to clone this entity');
 
         const baseName = source.name ? `${source.name} (copy)` : source.slug;
         const baseSlug = slugify(baseName);
@@ -546,6 +676,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           links: source.links,
           schema_id: source.schema_id,
           data: source.data,
+          visibility_mode: source.visibility_mode,
           created_at: timestamp,
           updated_at: timestamp,
         });
@@ -574,11 +705,13 @@ export function createDataRoutes(db: DatabaseAdapter) {
     `${BASE}/:id`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authz = await buildAuthorizationContextForEvent(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       try {
         const row = await db.getEntity(workspace, id);
         if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Data record '${id}' not found` });
+        if (authz) requireEntityAction(authz, row, 'admin_entity', 'You do not have permission to delete this entity');
 
         await db.deleteEntity(workspace, id);
         await logAudit(db, {

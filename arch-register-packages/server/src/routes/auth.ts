@@ -6,6 +6,7 @@ import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
 import { setAuthCookies, clearAuthCookies } from '../utils/cookies.js';
 import type { JWTPayload, User } from '../types.js';
+import { buildAuthorizationContext, requireGlobalPermission } from '../auth/authorization.js';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -317,7 +318,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 };
 
 // Protected auth routes — mounted after auth middleware
-export const createAuthProtectedRoutes = () => {
+export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   const app = new H3();
 
   // GET /api/auth/me - Get current user info
@@ -338,6 +339,63 @@ export const createAuthProtectedRoutes = () => {
         created_at: user.created_at.toISOString(),
         last_login_at: user.last_login_at?.toISOString() ?? null
       };
+    })
+  );
+
+  app.use(
+    '/api/auth/users',
+    defineHandler(async event => {
+      if (event.method !== 'GET') {
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
+      }
+
+      if (process.env['AUTH_DISABLED'] !== 'true') {
+        const authz = await buildAuthorizationContext(db, '__global__', (event.context.user as User).id);
+        requireGlobalPermission(authz, 'manage_users');
+      }
+
+      return (await db.listUsers()).map(user => ({
+        id: user.id,
+        email: user.email,
+        display_name: user.display_name,
+        auth_provider: user.auth_provider,
+        is_active: user.is_active,
+      }));
+    })
+  );
+
+  app.use(
+    '/api/auth/users/:id/global-roles',
+    defineHandler(async event => {
+      const userId = event.context.params?.['id'];
+      if (!userId) {
+        throw new HTTPError({ status: 400, message: 'id is required' });
+      }
+
+      if (process.env['AUTH_DISABLED'] !== 'true') {
+        const authz = await buildAuthorizationContext(db, '__global__', (event.context.user as User).id);
+        requireGlobalPermission(authz, 'manage_global_roles');
+      }
+
+      if (event.method === 'GET') {
+        return await db.listGlobalRoleAssignments(userId);
+      }
+
+      if (event.method === 'PUT') {
+        const body = (await readBody(event).catch(() => undefined)) as { roles?: unknown } | undefined;
+        if (!body || !Array.isArray(body.roles)) {
+          throw new HTTPError({ status: 400, message: 'roles must be an array' });
+        }
+        const roles = body.roles.filter((role): role is 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor' =>
+          typeof role === 'string' && ['platform_admin', 'schema_admin', 'user_admin', 'auditor'].includes(role)
+        );
+        if (roles.length !== body.roles.length) {
+          throw new HTTPError({ status: 400, message: 'roles contains invalid values' });
+        }
+        return await db.replaceGlobalRoleAssignments(userId, roles, new Date());
+      }
+
+      throw new HTTPError({ status: 405, message: 'Method not allowed' });
     })
   );
 

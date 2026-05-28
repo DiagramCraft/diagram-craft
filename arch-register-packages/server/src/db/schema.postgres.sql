@@ -37,6 +37,7 @@ CREATE TABLE entity_schema (
   fields      JSONB       NOT NULL DEFAULT '[]',
   color       TEXT,
   icon        TEXT,
+  default_owner TEXT,
   created_at  TIMESTAMPTZ NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, name),
@@ -57,6 +58,7 @@ CREATE TABLE entity (
   links       JSONB       NOT NULL DEFAULT '[]',
   schema_id   UUID        NOT NULL,
   data        JSONB       NOT NULL DEFAULT '{}',
+  visibility_mode TEXT CHECK (visibility_mode IN ('public', 'restricted')),
   created_at  TIMESTAMPTZ NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, schema_id, namespace, slug),
@@ -69,6 +71,22 @@ CREATE INDEX entity_workspace_schema_id_idx ON entity(workspace, schema_id);
 CREATE INDEX entity_workspace_owner_idx ON entity(workspace, owner);
 CREATE INDEX entity_workspace_lifecycle_idx ON entity(workspace, lifecycle);
 CREATE INDEX entity_workspace_name_idx ON entity(workspace, name);
+CREATE INDEX entity_workspace_visibility_mode_idx ON entity(workspace, visibility_mode);
+
+CREATE TABLE entity_grant (
+  id              UUID        PRIMARY KEY,
+  workspace       TEXT        NOT NULL,
+  entity_id       UUID        NOT NULL,
+  principal_type  TEXT        NOT NULL CHECK (principal_type IN ('user', 'team')),
+  principal_id    TEXT        NOT NULL,
+  role            TEXT        NOT NULL CHECK (role IN ('viewer', 'editor', 'contributor', 'entity_admin')),
+  applies_to      TEXT        NOT NULL CHECK (applies_to IN ('self', 'subtree')),
+  created_at      TIMESTAMPTZ NOT NULL,
+  FOREIGN KEY (workspace, entity_id) REFERENCES entity(workspace, id) ON DELETE CASCADE
+);
+
+CREATE INDEX entity_grant_workspace_entity_idx ON entity_grant(workspace, entity_id);
+CREATE INDEX entity_grant_workspace_principal_idx ON entity_grant(workspace, principal_type, principal_id);
 
 CREATE TABLE project (
   id          UUID        PRIMARY KEY,
@@ -136,3 +154,20 @@ CREATE INDEX users_email_idx ON users(email);
 CREATE INDEX users_auth_provider_idx ON users(auth_provider);
 CREATE INDEX users_oidc_idx ON users(oidc_issuer, oidc_subject) WHERE auth_provider = 'oidc';
 
+CREATE TABLE team_membership (
+  workspace   TEXT        NOT NULL,
+  team_id     TEXT        NOT NULL,
+  user_id     TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (workspace, team_id, user_id),
+  FOREIGN KEY (workspace, team_id) REFERENCES workspace_owner(workspace, id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE global_role_assignment (
+  user_id      TEXT        NOT NULL,
+  role         TEXT        NOT NULL CHECK (role IN ('platform_admin', 'schema_admin', 'user_admin', 'auditor')),
+  created_at   TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (user_id, role),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

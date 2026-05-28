@@ -4,6 +4,8 @@ import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { handleDbError, slugify } from '../utils/http.js';
 import type { StorageAdapter } from '../storage/storage.js';
+import { buildAuthorizationContextForEvent, requireGlobalPermission } from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/workspaces';
 
@@ -32,6 +34,8 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
   router.post(
     BASE,
     defineHandler(async event => {
+      const authz = await buildAuthorizationContextForEvent(db, '__global__', event as AuthenticatedEvent);
+      if (authz) requireGlobalPermission(authz, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
         throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
@@ -93,6 +97,8 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const authz = await buildAuthorizationContextForEvent(db, '__global__', event as AuthenticatedEvent);
+      if (authz) requireGlobalPermission(authz, 'admin_platform');
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -145,6 +151,8 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
+      const authz = await buildAuthorizationContextForEvent(db, '__global__', event as AuthenticatedEvent);
+      if (authz) requireGlobalPermission(authz, 'admin_platform');
       const id = event.context.params?.['id'];
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
