@@ -65,6 +65,49 @@ export const requireProjectAction = (
 };
 
 /**
+ * Check if user can create a project with a specific owner
+ */
+export const canCreateProject = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null
+): boolean => {
+  if (context.globalRoles.has('platform_admin')) return true;
+  return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+};
+
+/**
+ * Check if user can create a top-level entity with a specific owner
+ */
+export const canCreateTopLevelEntity = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null
+): boolean => {
+  if (context.globalRoles.has('platform_admin')) return true;
+  
+  const evaluator = new ServerPermissionEvaluator();
+  if (!evaluator.hasGlobalPermission(context, 'view_schema')) return false;
+  
+  return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+};
+
+/**
+ * Require project creation permission for specific owner, throw 403 if not allowed
+ */
+export const requireCanCreateProject = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null,
+  message?: string
+) => {
+  if (!canCreateProject(context, ownerTeamId)) {
+    throw new HTTPError({
+      status: 403,
+      statusText: 'Forbidden',
+      message: message ?? 'You do not have permission to create a project for this owner team'
+    });
+  }
+};
+
+/**
  * Build authorization context for an authenticated event
  */
 export const buildApiAuthCtx = async (

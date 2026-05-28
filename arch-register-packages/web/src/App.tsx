@@ -8,6 +8,7 @@ import { WorkspaceHome } from './screens/WorkspaceHome';
 import { EntityBrowser } from './screens/EntityBrowser';
 import { EntityDetail } from './screens/EntityDetail';
 import { DataModelEditor } from './screens/DataModelEditor';
+import { usePermissions } from './auth/AuthContext';
 import { ProjectDetail } from './screens/ProjectDetail';
 import { SearchScreen } from './screens/SearchScreen';
 import { WorkspaceSettings } from './screens/WorkspaceSettings';
@@ -17,18 +18,25 @@ import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import type { Route, RoutePatch, ViewId } from './routing';
 import { apiFetch, fetchProjects, fetchLifecycleStates, fetchOwnerOptions } from './api';
-import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from './api';
-import { useAuth } from './auth/AuthContext';
+import type {
+  Workspace,
+  EntitySchema,
+  Project,
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from './api';
 import { TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings } from 'react-icons/tb';
 
 const getProjectSidebarTab = (project: Project | undefined): Route['projectSidebarTab'] =>
   project?.status === 'archived' ? 'archive' : 'projects';
 
-const getDefaultProjectRoute = (projects: Project[]): Pick<Route, 'projectId' | 'projectSidebarTab'> => {
+const getDefaultProjectRoute = (
+  projects: Project[]
+): Pick<Route, 'projectId' | 'projectSidebarTab'> => {
   const project = projects.find(candidate => candidate.status !== 'archived') ?? projects[0];
   return {
     projectId: project?.id ?? null,
-    projectSidebarTab: getProjectSidebarTab(project),
+    projectSidebarTab: getProjectSidebarTab(project)
   };
 };
 
@@ -37,11 +45,11 @@ const RAIL_TO_VIEW: Record<string, ViewId> = {
   projects: 'project-detail',
   entities: 'entity-browser',
   model: 'data-model',
-  search: 'search',
+  search: 'search'
 };
 
 const App = () => {
-  const { hasGlobalPermission, getWorkspaceTeamIds } = useAuth();
+  const { hasGlobalPermission } = usePermissions();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [route, setRoute] = useState<Route>({
     view: 'home',
@@ -56,7 +64,7 @@ const App = () => {
     ownerFilter: null,
     folderFilter: null,
     settingsSection: 'general',
-    prev: null,
+    prev: null
   });
   const [schemas, setSchemas] = useState<EntitySchema[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -89,58 +97,58 @@ const App = () => {
 
   const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
   const wsId = ws?.url_slug ?? '';
-  const workspaceTeamIds = getWorkspaceTeamIds(ws?.id);
   const canManageWorkspaces = hasGlobalPermission('admin_platform');
   const canViewSchemas = hasGlobalPermission('view_schema');
   const canEditSchemas = hasGlobalPermission('edit_schema');
   const canManageTeams = hasGlobalPermission('manage_teams');
   const canViewAudit = hasGlobalPermission('view_audit');
-  const canCreateOwnedRecords = canManageWorkspaces || ownerOptions.some(option => workspaceTeamIds.includes(option.id));
-  const canCreateProjects = canCreateOwnedRecords;
-  const canCreateEntities = canCreateOwnedRecords && canViewSchemas;
+  const canCreateProjects = hasGlobalPermission('create_project', ws?.id);
+  const canCreateEntities = hasGlobalPermission('create_top_level_entity', ws?.id);
   const availableSettingsSections = [
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
     ...(canManageTeams ? ['lifecycle-owners'] : []),
-    ...(canViewAudit ? ['audit'] : []),
+    ...(canViewAudit ? ['audit'] : [])
   ];
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
   const refreshSchemas = useCallback(() => {
     if (!wsId) return;
-    apiFetch<EntitySchema[]>(`/api/${wsId}/schemas`).then(setSchemas).catch(() => setSchemas([]));
+    apiFetch<EntitySchema[]>(`/api/${wsId}/schemas`)
+      .then(setSchemas)
+      .catch(() => setSchemas([]));
   }, [wsId]);
 
   const refreshProjects = useCallback(() => {
     if (!wsId) return;
-    fetchProjects(wsId).then(setProjects).catch(() => setProjects([]));
+    fetchProjects(wsId)
+      .then(setProjects)
+      .catch(() => setProjects([]));
   }, [wsId]);
 
   const refreshWorkspaceConfig = useCallback(() => {
     if (!wsId) return;
-    fetchLifecycleStates(wsId).then(setLifecycleStates).catch(() => setLifecycleStates([]));
-    fetchOwnerOptions(wsId).then(setOwnerOptions).catch(() => setOwnerOptions([]));
+    fetchLifecycleStates(wsId)
+      .then(setLifecycleStates)
+      .catch(() => setLifecycleStates([]));
+    fetchOwnerOptions(wsId)
+      .then(setOwnerOptions)
+      .catch(() => setOwnerOptions([]));
   }, [wsId]);
 
-  useEffect(() => {
-    refreshSchemas();
-  }, [refreshSchemas]);
+  useEffect(() => refreshSchemas(), [refreshSchemas]);
 
-  useEffect(() => {
-    refreshProjects();
-  }, [refreshProjects]);
+  useEffect(() => refreshProjects(), [refreshProjects]);
 
-  useEffect(() => {
-    refreshWorkspaceConfig();
-  }, [refreshWorkspaceConfig]);
+  useEffect(() => refreshWorkspaceConfig(), [refreshWorkspaceConfig]);
 
   const navigate = useCallback(
     (patch: RoutePatch) =>
       setRoute(prev => ({
         ...prev,
         ...patch,
-        prev: patch.view && patch.view !== prev.view ? prev : prev.prev,
+        prev: patch.view && patch.view !== prev.view ? prev : prev.prev
       })),
-    [],
+    []
   );
 
   const showSidebar = route.view !== 'search' && route.view !== 'diagram';
@@ -177,16 +185,17 @@ const App = () => {
       ) : null;
       break;
     case 'project-detail':
-      screen = wsId && route.projectId ? (
-        <ProjectDetail
-          workspaceId={wsId}
-          projectId={route.projectId}
-          folderFilter={route.folderFilter}
-          navigate={navigate}
-          onProjectUpdated={refreshProjects}
-          ownerOptions={ownerOptions}
-        />
-      ) : null;
+      screen =
+        wsId && route.projectId ? (
+          <ProjectDetail
+            workspaceId={wsId}
+            projectId={route.projectId}
+            folderFilter={route.folderFilter}
+            navigate={navigate}
+            onProjectUpdated={refreshProjects}
+            ownerOptions={ownerOptions}
+          />
+        ) : null;
       break;
     case 'entity-browser':
       screen = wsId ? (
@@ -203,17 +212,18 @@ const App = () => {
       ) : null;
       break;
     case 'entity-detail':
-      screen = wsId && route.entityId ? (
-        <EntityDetail
-          workspaceId={wsId}
-          entityId={route.entityId}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          ownerOptions={ownerOptions}
-          navigate={navigate}
-          canViewAudit={canViewAudit}
-        />
-      ) : null;
+      screen =
+        wsId && route.entityId ? (
+          <EntityDetail
+            workspaceId={wsId}
+            entityId={route.entityId}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            ownerOptions={ownerOptions}
+            navigate={navigate}
+            canViewAudit={canViewAudit}
+          />
+        ) : null;
       break;
     case 'data-model':
       screen = wsId ? (
@@ -247,7 +257,11 @@ const App = () => {
       screen = ws ? (
         <WorkspaceSettings
           workspace={ws}
-          section={availableSettingsSections.includes(route.settingsSection) ? route.settingsSection : (defaultSettingsSection ?? route.settingsSection)}
+          section={
+            availableSettingsSections.includes(route.settingsSection)
+              ? route.settingsSection
+              : (defaultSettingsSection ?? route.settingsSection)
+          }
           navigate={navigate}
           onWorkspaceUpdated={fetchWorkspaces}
           onWorkspaceDeleted={fetchWorkspaces}
@@ -259,130 +273,136 @@ const App = () => {
       ) : null;
       break;
     case 'diagram':
-      diagramOverlay = wsId && route.projectId && route.diagramId ? (
-        <DiagramScreen
-          workspaceId={wsId}
-          projectId={route.projectId}
-          diagramId={route.diagramId}
-          navigate={navigate}
-        />
-      ) : null;
+      diagramOverlay =
+        wsId && route.projectId && route.diagramId ? (
+          <DiagramScreen
+            workspaceId={wsId}
+            projectId={route.projectId}
+            diagramId={route.diagramId}
+            navigate={navigate}
+          />
+        ) : null;
       break;
     default:
-      screen = (
-        <div className={styles.placeholder}>
-          {route.view} — coming soon
-        </div>
-      );
+      screen = <div className={styles.placeholder}>{route.view} — coming soon</div>;
   }
 
   return (
     <>
-    <div className={`ar-app ${styles.shell}`}>
-      <TopBar
-        workspaces={workspaces}
-        currentWs={route.workspaceId ?? ''}
-        onPickWs={id => navigate({ workspaceId: id })}
-        trail={trail}
-        query={query}
-        onQueryChange={setQuery}
-        onQuerySubmit={nextQuery => {
-          const trimmed = nextQuery.trim();
-          setSubmittedQuery(trimmed);
-          if (trimmed !== '') {
-            navigate({ view: 'search' });
-          }
-        }}
-        onOpenSettings={() => {
-          if (defaultSettingsSection) {
-            navigate({ view: 'workspace-settings', settingsSection: defaultSettingsSection });
-          }
-        }}
-        onAddWorkspace={() => setAddWsOpen(true)}
-        canOpenSettings={availableSettingsSections.length > 0}
-        canAddWorkspace={canManageWorkspaces}
-      />
-      <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
-        <NavRail
-          view={route.view}
-          onPick={handleRailPick}
-          visibleItemIds={canViewSchemas ? undefined : ['home', 'projects', 'entities', 'search']}
+      <div className={`ar-app ${styles.shell}`}>
+        <TopBar
+          workspaces={workspaces}
+          currentWs={route.workspaceId ?? ''}
+          onPickWs={id => navigate({ workspaceId: id })}
+          trail={trail}
+          query={query}
+          onQueryChange={setQuery}
+          onQuerySubmit={nextQuery => {
+            const trimmed = nextQuery.trim();
+            setSubmittedQuery(trimmed);
+            if (trimmed !== '') {
+              navigate({ view: 'search' });
+            }
+          }}
+          onOpenSettings={() => {
+            if (defaultSettingsSection) {
+              navigate({ view: 'workspace-settings', settingsSection: defaultSettingsSection });
+            }
+          }}
+          onAddWorkspace={() => setAddWsOpen(true)}
+          canOpenSettings={availableSettingsSections.length > 0}
+          canAddWorkspace={canManageWorkspaces}
         />
-        {showSidebar && (
-          <SidePanel
+        <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
+          <NavRail
             view={route.view}
-            navigate={navigate}
-            schemas={schemas}
-            projects={projects}
-            lifecycleStates={lifecycleStates}
-            workspace={ws ?? null}
-            workspaceId={wsId ?? null}
-            projectId={route.projectId}
-            projectSidebarTab={route.projectSidebarTab}
-            schemaId={route.schemaId}
-            folderFilter={route.folderFilter}
-            typeFilter={route.typeFilter}
-            statusFilter={route.statusFilter}
-            ownerFilter={route.ownerFilter}
-            settingsSection={route.settingsSection}
-            availableSettingsSections={availableSettingsSections}
-            setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
-            setTypeFilter={id => navigate({ typeFilter: id })}
-            setStatusFilter={id => navigate({ statusFilter: id })}
-            setOwnerFilter={id => navigate({ ownerFilter: id })}
+            onPick={handleRailPick}
+            visibleItemIds={canViewSchemas ? undefined : ['home', 'projects', 'entities', 'search']}
+          />
+          {showSidebar && (
+            <SidePanel
+              view={route.view}
+              navigate={navigate}
+              schemas={schemas}
+              projects={projects}
+              lifecycleStates={lifecycleStates}
+              workspace={ws ?? null}
+              workspaceId={wsId ?? null}
+              projectId={route.projectId}
+              projectSidebarTab={route.projectSidebarTab}
+              schemaId={route.schemaId}
+              folderFilter={route.folderFilter}
+              typeFilter={route.typeFilter}
+              statusFilter={route.statusFilter}
+              ownerFilter={route.ownerFilter}
+              settingsSection={route.settingsSection}
+              availableSettingsSections={availableSettingsSections}
+              setProjectSidebarTab={tab => navigate({ projectSidebarTab: tab })}
+              setTypeFilter={id => navigate({ typeFilter: id })}
+              setStatusFilter={id => navigate({ statusFilter: id })}
+              setOwnerFilter={id => navigate({ ownerFilter: id })}
+            />
+          )}
+          <main className={styles.main}>{screen}</main>
+        </div>
+        {canManageWorkspaces && (
+          <AddWorkspaceDialog
+            open={addWsOpen}
+            onClose={() => setAddWsOpen(false)}
+            onCreated={newWs => {
+              fetchWorkspaces();
+              navigate({ workspaceId: newWs.id });
+            }}
           />
         )}
-        <main className={styles.main}>{screen}</main>
+        {wsId && canCreateProjects && (
+          <AddProjectDialog
+            open={addProjectOpen}
+            onClose={() => setAddProjectOpen(false)}
+            onCreated={project => {
+              refreshProjects();
+              navigate({
+                view: 'project-detail',
+                projectId: project.id,
+                projectSidebarTab: getProjectSidebarTab(project)
+              });
+            }}
+            workspaceId={wsId}
+            ownerOptions={ownerOptions}
+          />
+        )}
+        {wsId && canCreateEntities && (
+          <AddEntityDialog
+            open={addEntityOpen}
+            onClose={() => setAddEntityOpen(false)}
+            onCreated={entity => {
+              navigate({ view: 'entity-detail', entityId: entity._uid });
+            }}
+            workspaceId={wsId}
+            schemas={schemas}
+            lifecycleStates={lifecycleStates}
+            ownerOptions={ownerOptions}
+            preselectedSchemaId={route.typeFilter}
+          />
+        )}
       </div>
-      {canManageWorkspaces && (
-        <AddWorkspaceDialog
-          open={addWsOpen}
-          onClose={() => setAddWsOpen(false)}
-          onCreated={newWs => {
-            fetchWorkspaces();
-            navigate({ workspaceId: newWs.id });
-          }}
-        />
-      )}
-      {wsId && canCreateProjects && (
-        <AddProjectDialog
-          open={addProjectOpen}
-          onClose={() => setAddProjectOpen(false)}
-          onCreated={project => {
-            refreshProjects();
-            navigate({ view: 'project-detail', projectId: project.id, projectSidebarTab: getProjectSidebarTab(project) });
-          }}
-          workspaceId={wsId}
-          ownerOptions={ownerOptions}
-        />
-      )}
-      {wsId && canCreateEntities && (
-        <AddEntityDialog
-          open={addEntityOpen}
-          onClose={() => setAddEntityOpen(false)}
-          onCreated={entity => {
-            navigate({ view: 'entity-detail', entityId: entity._uid });
-          }}
-          workspaceId={wsId}
-          schemas={schemas}
-          lifecycleStates={lifecycleStates}
-          ownerOptions={ownerOptions}
-          preselectedSchemaId={route.typeFilter}
-        />
-      )}
-    </div>
-    {diagramOverlay}
+      {diagramOverlay}
     </>
   );
 };
 
-const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: EntitySchema[], projects: Project[]): BreadcrumbItem[] => {
+const buildTrail = (
+  route: Route,
+  navigate: (p: RoutePatch) => void,
+  schemas: EntitySchema[],
+  projects: Project[]
+): BreadcrumbItem[] => {
   const items: BreadcrumbItem[] = [
     {
       label: 'Home',
       icon: <TbHome size={12} />,
-      onClick: () => navigate({ view: 'home' }),
-    },
+      onClick: () => navigate({ view: 'home' })
+    }
   ];
 
   switch (route.view) {
@@ -391,7 +411,7 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
       items.push({
         label: 'Projects',
         icon: <TbStack2 size={12} />,
-        onClick: () => navigate({ view: 'project-detail', ...getDefaultProjectRoute(projects) }),
+        onClick: () => navigate({ view: 'project-detail', ...getDefaultProjectRoute(projects) })
       });
       if (p) items.push({ label: p.name, onClick: () => {} });
       break;
@@ -400,14 +420,14 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
       items.push({
         label: 'Entities',
         icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ view: 'entity-browser' }),
+        onClick: () => navigate({ view: 'entity-browser' })
       });
       break;
     case 'entity-detail': {
       items.push({
         label: 'Entities',
         icon: <TbDatabase size={12} />,
-        onClick: () => navigate({ view: 'entity-browser' }),
+        onClick: () => navigate({ view: 'entity-browser' })
       });
       items.push({ label: 'Detail', onClick: () => {} });
       break;
@@ -416,7 +436,7 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
       items.push({
         label: 'Data model',
         icon: <TbCode size={12} />,
-        onClick: () => navigate({ view: 'data-model', schemaId: null }),
+        onClick: () => navigate({ view: 'data-model', schemaId: null })
       });
       if (route.schemaId) {
         const s = schemas.find(x => x.id === route.schemaId);
@@ -428,14 +448,14 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
       items.push({
         label: 'Settings',
         icon: <TbSettings size={12} />,
-        onClick: () => navigate({ view: 'workspace-settings' }),
+        onClick: () => navigate({ view: 'workspace-settings' })
       });
       break;
     case 'search':
       items.push({
         label: 'Search',
         icon: <TbSearch size={12} />,
-        onClick: () => navigate({ view: 'search' }),
+        onClick: () => navigate({ view: 'search' })
       });
       break;
     case 'diagram': {
@@ -443,12 +463,12 @@ const buildTrail = (route: Route, navigate: (p: RoutePatch) => void, schemas: En
       items.push({
         label: 'Projects',
         icon: <TbStack2 size={12} />,
-        onClick: () => navigate({ view: 'project-detail', ...getDefaultProjectRoute(projects) }),
+        onClick: () => navigate({ view: 'project-detail', ...getDefaultProjectRoute(projects) })
       });
       if (p) {
         items.push({
           label: p.name,
-          onClick: () => navigate({ view: 'project-detail', projectId: p.id }),
+          onClick: () => navigate({ view: 'project-detail', projectId: p.id })
         });
       }
       items.push({ label: 'Diagram', onClick: () => {} });

@@ -36,6 +36,11 @@ export class ServerDataProvider implements PermissionDataProvider {
     const assignments = await this.db.listGlobalRoleAssignments(userId);
     return assignments.map(a => a.role);
   }
+
+  async getOwnerOptions(workspaceId: string): Promise<import('@arch-register/permissions').WorkspaceOwnerOption[]> {
+    const owners = await this.db.listOwners(workspaceId);
+    return owners.map(o => ({ id: o.id, name: o.id, type: 'team' as const }));
+  }
 }
 
 /**
@@ -51,9 +56,10 @@ export class ServerPermissionEvaluator extends PermissionEvaluator {
     userId: string,
     dataProvider: PermissionDataProvider
   ): Promise<AuthorizationContext> {
-    const [globalRoles, teamMemberships, schemas, entities, grants] = await Promise.all([
+    const [globalRoles, teamMemberships, ownerOptions, schemas, entities, grants] = await Promise.all([
       dataProvider.getGlobalRoles(userId),
       dataProvider.getTeamMemberships(workspaceId, userId),
+      dataProvider.getOwnerOptions(workspaceId),
       dataProvider.getSchemas(workspaceId),
       dataProvider.getEntities(workspaceId),
       dataProvider.getEntityGrants(workspaceId)
@@ -63,6 +69,7 @@ export class ServerPermissionEvaluator extends PermissionEvaluator {
       userId,
       globalRoles,
       teamMemberships,
+      ownerOptions,
       schemas,
       entities,
       grants

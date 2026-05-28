@@ -342,6 +342,16 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         }))
       );
 
+      const ownerOptionsByWorkspace: Record<string, Array<{ id: string; name: string; type: 'team' }>> = {};
+      for (const workspace of workspaces) {
+        const owners = await db.listOwners(workspace.id);
+        ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
+          id: o.id,
+          name: o.id,
+          type: 'team' as const
+        }));
+      }
+
       return {
         id: user.id,
         email: user.email,
@@ -356,7 +366,8 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
           .map(workspace => ({
             workspace_id: workspace.workspace_id,
             team_ids: workspace.memberships
-          }))
+          })),
+        owner_options_by_workspace: ownerOptionsByWorkspace
       };
     })
   );

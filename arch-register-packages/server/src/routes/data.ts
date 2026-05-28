@@ -11,7 +11,7 @@ import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
-import { buildApiAuthCtx, requireEntityAction } from '../auth/authorization.js';
+import { buildApiAuthCtx, requireEntityAction, canCreateTopLevelEntity } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { ServerPermissionEvaluator } from '../auth/ServerPermissionEvaluator';
 import { AuthorizationContext } from '@arch-register/permissions';
@@ -808,10 +808,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
                 'You do not have permission to add children under one or more parent entities'
               )
             );
-          } else if (
-            !owner ||
-            (!authCtx.teamIds.has(owner) && !authCtx.globalRoles.has('platform_admin'))
-          ) {
+          } else if (!canCreateTopLevelEntity(authCtx, owner)) {
             throw new HTTPError({
               status: 403,
               statusText: 'Forbidden',

@@ -7,8 +7,6 @@ import {
   useRef,
   type ReactNode
 } from 'react';
-import { WebDataProvider, WebPermissionEvaluator } from './WebPermissionEvaluator.js';
-import type { Entity, EntityAction, AuthorizationContext } from '@arch-register/permissions';
 
 export type User = {
   id: string;
@@ -26,7 +24,9 @@ export type GlobalPermission =
   | 'manage_teams'
   | 'manage_global_roles'
   | 'view_audit'
-  | 'admin_platform';
+  | 'admin_platform'
+  | 'create_project'
+  | 'create_top_level_entity';
 
 export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
 
@@ -35,40 +35,38 @@ export type WorkspaceTeamMembership = {
   team_ids: string[];
 };
 
-export type AuthSnapshot = {
+export type WorkspaceOwnerOption = {
+  id: string;
+  name: string;
+  type: 'team';
+};
+
+export type AuthBaseData = {
   global_roles: GlobalRole[];
   global_permissions: GlobalPermission[];
   team_memberships: WorkspaceTeamMembership[];
+  owner_options_by_workspace: Record<string, WorkspaceOwnerOption[]>;
 };
 
-type AuthMeResponse = User & AuthSnapshot;
+type AuthMeResponse = User & AuthBaseData;
 
 type AuthContextType = {
   user: User | null;
-  authCtx: AuthSnapshot | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isMemberOfTeam: (
-    workspaceId: string | null | undefined,
-    teamId: string | null | undefined
-  ) => boolean;
-  getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
   login: (username: string, password: string) => Promise<void>;
   loginWithOidc: () => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
-  // Permission evaluator methods
-  hasGlobalPermission: (permission: GlobalPermission) => boolean;
-  checkEntityPermission: (
-    workspaceId: string,
-    entity: Entity,
-    action: EntityAction
-  ) => Promise<boolean>;
-  buildPermissionContext: (workspaceId: string) => Promise<AuthorizationContext | null>;
-  clearPermissionCache: (workspaceId?: string) => void;
+};
+
+type PermissionsContextType = {
+  hasGlobalPermission: (permission: GlobalPermission, workspaceId?: string | null) => boolean;
+  getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
+const PermissionsContext = createContext<PermissionsContextType | null>(null);
 
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -77,10 +75,9 @@ const authFetch = (path: string, init?: RequestInit) =>
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [authCtx, setAuthCtx] = useState<AuthSnapshot | null>(null);
+  const [authBaseData, setAuthBaseData] = useState<AuthBaseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tokenExpiresAt = useRef<number | null>(null);
-  const [evaluator] = useState(() => new WebPermissionEvaluator());
 
   const fetchCurrentUser = useCallback(async (): Promise<boolean> => {
     try {
@@ -88,7 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
-        setAuthCtx(null);
+        setAuthBaseData(null);
         return false;
       }
 
@@ -101,16 +98,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         created_at: userData.created_at,
         last_login_at: userData.last_login_at
       });
-      setAuthCtx({
+      setAuthBaseData({
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
-        team_memberships: userData.team_memberships
+        team_memberships: userData.team_memberships,
+        owner_options_by_workspace: userData.owner_options_by_workspace || {}
       });
       return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
       setUser(null);
-      setAuthCtx(null);
+      setAuthBaseData(null);
       return false;
     }
   }, []);
@@ -121,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
-        setAuthCtx(null);
+        setAuthBaseData(null);
         throw new Error('Failed to refresh token');
       }
 
@@ -130,7 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchCurrentUser();
     } catch (error) {
       setUser(null);
-      setAuthCtx(null);
+      setAuthBaseData(null);
       throw error;
     }
   }, [fetchCurrentUser]);
@@ -166,10 +164,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {
+    });
     tokenExpiresAt.current = null;
     setUser(null);
-    setAuthCtx(null);
+    setAuthBaseData(null);
   }, []);
 
   // Proactive token refresh before expiry
@@ -204,89 +203,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchCurrentUser, refreshToken]);
 
   const hasGlobalPermission = useCallback(
-    (permission: GlobalPermission) => authCtx?.global_permissions.includes(permission) ?? false,
-    [authCtx]
+    (permission: GlobalPermission, workspaceId?: string | null) => {
+      if (!authBaseData) return false;
+      
+      // Handle virtual permissions
+      if (permission === 'create_project' || permission === 'create_top_level_entity') {
+        // Platform admins can always create
+        if (authBaseData.global_roles.includes('platform_admin')) {
+          return true;
+        }
+        
+        // For create_top_level_entity, also need view_schema permission
+        if (permission === 'create_top_level_entity' && 
+            !authBaseData.global_permissions.includes('view_schema')) {
+          return false;
+        }
+        
+        // Check if user belongs to any valid owner team in the workspace
+        if (workspaceId) {
+          const ownerOptions = authBaseData.owner_options_by_workspace[workspaceId] ?? [];
+          const teamIds = getWorkspaceTeamIds(workspaceId);
+          return ownerOptions.some(option => teamIds.includes(option.id));
+        }
+        
+        return false;
+      }
+      
+      // Standard permission check
+      return authBaseData.global_permissions.includes(permission);
+    },
+    [authBaseData]
   );
 
   const getWorkspaceTeamIds = useCallback(
     (workspaceId: string | null | undefined) =>
-      authCtx?.team_memberships.find(membership => membership.workspace_id === workspaceId)
+      authBaseData?.team_memberships.find(membership => membership.workspace_id === workspaceId)
         ?.team_ids ?? [],
-    [authCtx]
+    [authBaseData]
   );
 
-  const isMemberOfTeam = useCallback(
-    (workspaceId: string | null | undefined, teamId: string | null | undefined) =>
-      teamId != null && getWorkspaceTeamIds(workspaceId).includes(teamId),
-    [getWorkspaceTeamIds]
-  );
-
-  const checkEntityPermission = useCallback(
-    async (workspaceId: string, entity: Entity, action: EntityAction): Promise<boolean> => {
-      if (!user) return false;
-      try {
-        const context = await evaluator.buildContext(
-          workspaceId,
-          user.id,
-          new WebDataProvider(BASE)
-        );
-        return evaluator.hasEntityPermission(context, entity, action);
-      } catch (error) {
-        console.error('Failed to check entity permission:', error);
-        return false;
-      }
-    },
-    [user, evaluator]
-  );
-
-  const buildPermissionContext = useCallback(
-    async (workspaceId: string): Promise<AuthorizationContext | null> => {
-      if (!user) return null;
-      try {
-        return await evaluator.buildContext(workspaceId, user.id, new WebDataProvider(BASE));
-      } catch (error) {
-        console.error('Failed to build permission context:', error);
-        return null;
-      }
-    },
-    [user, evaluator]
-  );
-
-  const clearPermissionCache = useCallback(
-    (workspaceId?: string) => {
-      if (workspaceId && user) {
-        evaluator.clearCache(workspaceId, user.id);
-      } else {
-        evaluator.clearCache();
-      }
-    },
-    [user, evaluator]
-  );
-
-  const value: AuthContextType = {
+  const authValue: AuthContextType = {
     user,
-    authCtx,
     isLoading,
     isAuthenticated: !!user,
-    hasGlobalPermission,
-    isMemberOfTeam,
-    getWorkspaceTeamIds,
     login,
     loginWithOidc,
     logout,
-    refreshToken,
-    checkEntityPermission,
-    buildPermissionContext,
-    clearPermissionCache
+    refreshToken
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const permissionsValue: PermissionsContextType = {
+    hasGlobalPermission,
+    getWorkspaceTeamIds
+  };
+
+  return (
+    <AuthContext.Provider value={authValue}>
+      <PermissionsContext.Provider value={permissionsValue}>
+        {children}
+      </PermissionsContext.Provider>
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
+
+export const usePermissions = () => {
+  const context = useContext(PermissionsContext);
+  if (!context) {
+    throw new Error('usePermissions must be used within AuthProvider');
   }
   return context;
 };

@@ -19,6 +19,7 @@ export type {
   EntitySchema,
   Entity,
   EntityGrant,
+  WorkspaceOwnerOption,
   AuthorizationContext,
 } from './types.js';
 

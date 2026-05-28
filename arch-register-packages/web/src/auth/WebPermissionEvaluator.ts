@@ -40,6 +40,13 @@ export class WebDataProvider implements PermissionDataProvider {
     );
     return assignments.map(a => a.role);
   }
+
+  async getOwnerOptions(
+    _workspaceId: string
+  ): Promise<import('@arch-register/permissions').WorkspaceOwnerOption[]> {
+    // Web client gets owner options from AuthContext, not from API
+    return [];
+  }
 }
 
 /**
@@ -67,18 +74,21 @@ export class WebPermissionEvaluator extends PermissionEvaluator {
     }
 
     // Fetch fresh data
-    const [globalRoles, teamMemberships, schemas, entities, grants] = await Promise.all([
-      dataProvider.getGlobalRoles(userId),
-      dataProvider.getTeamMemberships(workspaceId, userId),
-      dataProvider.getSchemas(workspaceId),
-      dataProvider.getEntities(workspaceId),
-      dataProvider.getEntityGrants(workspaceId)
-    ]);
+    const [globalRoles, teamMemberships, ownerOptions, schemas, entities, grants] =
+      await Promise.all([
+        dataProvider.getGlobalRoles(userId),
+        dataProvider.getTeamMemberships(workspaceId, userId),
+        dataProvider.getOwnerOptions(workspaceId),
+        dataProvider.getSchemas(workspaceId),
+        dataProvider.getEntities(workspaceId),
+        dataProvider.getEntityGrants(workspaceId)
+      ]);
 
     const context = this.buildAuthorizationContextFromData(
       userId,
       globalRoles,
       teamMemberships,
+      ownerOptions,
       schemas,
       entities,
       grants
@@ -98,15 +108,5 @@ export class WebPermissionEvaluator extends PermissionEvaluator {
     } else {
       this.contextCache.clear();
     }
-  }
-
-  /**
-   * Get cache statistics for debugging
-   */
-  getCacheStats(): { size: number; keys: string[] } {
-    return {
-      size: this.contextCache.size,
-      keys: Array.from(this.contextCache.keys())
-    };
   }
 }

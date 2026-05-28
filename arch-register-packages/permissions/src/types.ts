@@ -9,7 +9,9 @@ export type GlobalPermission =
   | 'manage_teams'
   | 'manage_global_roles'
   | 'view_audit'
-  | 'admin_platform';
+  | 'admin_platform'
+  | 'create_project'
+  | 'create_top_level_entity';
 
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
@@ -119,6 +121,14 @@ export type Entity = {
   updated_at: Date;
 };
 
+// ── Owner Types ───────────────────────────────────────────────
+
+export type WorkspaceOwnerOption = {
+  id: string;
+  name: string;
+  type: 'team';
+};
+
 // ── Grant Types ───────────────────────────────────────────────
 
 export type EntityGrant = {
@@ -139,6 +149,7 @@ export type AuthorizationContext = {
   globalRoles: Set<GlobalRole>;
   globalPermissions: Set<GlobalPermission>;
   teamIds: Set<string>;
+  ownerOptions: WorkspaceOwnerOption[];
   schemas: Map<string, EntitySchema>;
   entities: Map<string, Entity>;
   grants: EntityGrant[];

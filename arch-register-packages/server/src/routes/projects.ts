@@ -5,7 +5,7 @@ import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
-import { buildApiAuthCtx, requireProjectAction } from '../auth/authorization.js';
+import { buildApiAuthCtx, requireProjectAction, requireCanCreateProject } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { AuthorizationContext } from '@arch-register/permissions';
 import { ServerPermissionEvaluator } from '../auth/ServerPermissionEvaluator';
@@ -208,10 +208,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
         const resolvedOwner = resolveProjectOwner(owner, ownerValues);
         if (authCtx)
-          requireProjectAction(
+          requireCanCreateProject(
             authCtx,
             resolvedOwner,
-            'edit_project',
             'You do not have permission to create a project for this owner team'
           );
         const timestamp = new Date();

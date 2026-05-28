@@ -7,7 +7,8 @@ import type {
   GlobalPermission,
   GlobalRole,
   ProjectAction,
-  VisibilityMode
+  VisibilityMode,
+  WorkspaceOwnerOption
 } from './types.js';
 import { decodeRefs } from './types.js';
 import {
@@ -45,6 +46,11 @@ export interface PermissionDataProvider {
    * Fetch user's global role assignments
    */
   getGlobalRoles(userId: string): Promise<GlobalRole[]>;
+
+  /**
+   * Fetch workspace owner options (teams that can own records)
+   */
+  getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]>;
 }
 
 /**
@@ -107,6 +113,30 @@ export abstract class PermissionEvaluator {
    * Check if user has a global permission
    */
   hasGlobalPermission(context: AuthorizationContext, permission: GlobalPermission): boolean {
+    // Handle virtual permissions with custom logic
+    if (permission === 'create_project') {
+      // Platform admins can always create projects
+      if (context.globalRoles.has('platform_admin')) {
+        return true;
+      }
+      // Check if user belongs to any valid owner team
+      return context.ownerOptions.some(option => context.teamIds.has(option.id));
+    }
+
+    if (permission === 'create_top_level_entity') {
+      // Platform admins can always create entities
+      if (context.globalRoles.has('platform_admin')) {
+        return true;
+      }
+      // Must have view_schema permission
+      if (!context.globalPermissions.has('view_schema')) {
+        return false;
+      }
+      // Check if user belongs to any valid owner team
+      return context.ownerOptions.some(option => context.teamIds.has(option.id));
+    }
+
+    // Standard permission check
     return (
       context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
     );
@@ -241,6 +271,7 @@ export abstract class PermissionEvaluator {
     userId: string,
     globalRoles: string[],
     teamMemberships: string[],
+    ownerOptions: WorkspaceOwnerOption[],
     schemas: EntitySchema[],
     entities: Entity[],
     grants: EntityGrant[]
@@ -253,6 +284,7 @@ export abstract class PermissionEvaluator {
       globalRoles: globalRolesSet,
       globalPermissions,
       teamIds: new Set(teamMemberships),
+      ownerOptions,
       schemas: new Map(schemas.map(schema => [schema.id, schema])),
       entities: new Map(entities.map(entity => [entity.id, entity])),
       grants
