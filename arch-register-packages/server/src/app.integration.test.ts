@@ -80,6 +80,9 @@ describe('arch-register sqlite integration', () => {
   let app: ReturnType<typeof createApp>;
 
   beforeAll(async () => {
+    // Disable authentication for integration tests
+    process.env.AUTH_DISABLED = 'true';
+    
     sqliteDir = await mkdtemp(join(tmpdir(), 'arch-register-sqlite-'));
     db = new SqliteDatabase(join(sqliteDir, 'db.sqlite'));
     storageDir = await mkdtemp(join(tmpdir(), 'arch-register-storage-'));
@@ -95,6 +98,7 @@ describe('arch-register sqlite integration', () => {
     await db.close();
     await rm(storageDir, { recursive: true, force: true });
     await rm(sqliteDir, { recursive: true, force: true });
+    delete process.env.AUTH_DISABLED;
   });
 
   const json = async <T>(path: string, init?: RequestInit): Promise<{ response: Response; body: T }> => {
