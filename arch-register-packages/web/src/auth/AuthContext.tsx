@@ -1,4 +1,14 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode
+} from 'react';
+import { WebDataProvider, WebPermissionEvaluator } from './WebPermissionEvaluator.js';
+import type { Entity, EntityAction, AuthorizationContext } from '@arch-register/permissions';
 
 export type User = {
   id: string;
@@ -35,16 +45,27 @@ type AuthMeResponse = User & AuthSnapshot;
 
 type AuthContextType = {
   user: User | null;
-  authz: AuthSnapshot | null;
+  authCtx: AuthSnapshot | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  hasGlobalPermission: (permission: GlobalPermission) => boolean;
-  isMemberOfTeam: (workspaceId: string | null | undefined, teamId: string | null | undefined) => boolean;
+  isMemberOfTeam: (
+    workspaceId: string | null | undefined,
+    teamId: string | null | undefined
+  ) => boolean;
   getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
   login: (username: string, password: string) => Promise<void>;
   loginWithOidc: () => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  // Permission evaluator methods
+  hasGlobalPermission: (permission: GlobalPermission) => boolean;
+  checkEntityPermission: (
+    workspaceId: string,
+    entity: Entity,
+    action: EntityAction
+  ) => Promise<boolean>;
+  buildPermissionContext: (workspaceId: string) => Promise<AuthorizationContext | null>;
+  clearPermissionCache: (workspaceId?: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -56,9 +77,10 @@ const authFetch = (path: string, init?: RequestInit) =>
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [authz, setAuthz] = useState<AuthSnapshot | null>(null);
+  const [authCtx, setAuthCtx] = useState<AuthSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tokenExpiresAt = useRef<number | null>(null);
+  const [evaluator] = useState(() => new WebPermissionEvaluator());
 
   const fetchCurrentUser = useCallback(async (): Promise<boolean> => {
     try {
@@ -66,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
-        setAuthz(null);
+        setAuthCtx(null);
         return false;
       }
 
@@ -77,18 +99,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         display_name: userData.display_name,
         auth_provider: userData.auth_provider,
         created_at: userData.created_at,
-        last_login_at: userData.last_login_at,
+        last_login_at: userData.last_login_at
       });
-      setAuthz({
+      setAuthCtx({
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
-        team_memberships: userData.team_memberships,
+        team_memberships: userData.team_memberships
       });
       return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
       setUser(null);
-      setAuthz(null);
+      setAuthCtx(null);
       return false;
     }
   }, []);
@@ -99,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
-        setAuthz(null);
+        setAuthCtx(null);
         throw new Error('Failed to refresh token');
       }
 
@@ -108,7 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchCurrentUser();
     } catch (error) {
       setUser(null);
-      setAuthz(null);
+      setAuthCtx(null);
       throw error;
     }
   }, [fetchCurrentUser]);
@@ -118,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const res = await authFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password })
       });
 
       if (!res.ok) {
@@ -147,7 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     tokenExpiresAt.current = null;
     setUser(null);
-    setAuthz(null);
+    setAuthCtx(null);
   }, []);
 
   // Proactive token refresh before expiry
@@ -182,14 +204,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchCurrentUser, refreshToken]);
 
   const hasGlobalPermission = useCallback(
-    (permission: GlobalPermission) => authz?.global_permissions.includes(permission) ?? false,
-    [authz]
+    (permission: GlobalPermission) => authCtx?.global_permissions.includes(permission) ?? false,
+    [authCtx]
   );
 
   const getWorkspaceTeamIds = useCallback(
     (workspaceId: string | null | undefined) =>
-      authz?.team_memberships.find(membership => membership.workspace_id === workspaceId)?.team_ids ?? [],
-    [authz]
+      authCtx?.team_memberships.find(membership => membership.workspace_id === workspaceId)
+        ?.team_ids ?? [],
+    [authCtx]
   );
 
   const isMemberOfTeam = useCallback(
@@ -198,9 +221,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [getWorkspaceTeamIds]
   );
 
+  const checkEntityPermission = useCallback(
+    async (workspaceId: string, entity: Entity, action: EntityAction): Promise<boolean> => {
+      if (!user) return false;
+      try {
+        const context = await evaluator.buildContext(
+          workspaceId,
+          user.id,
+          new WebDataProvider(BASE)
+        );
+        return evaluator.hasEntityPermission(context, entity, action);
+      } catch (error) {
+        console.error('Failed to check entity permission:', error);
+        return false;
+      }
+    },
+    [user, evaluator]
+  );
+
+  const buildPermissionContext = useCallback(
+    async (workspaceId: string): Promise<AuthorizationContext | null> => {
+      if (!user) return null;
+      try {
+        return await evaluator.buildContext(workspaceId, user.id, new WebDataProvider(BASE));
+      } catch (error) {
+        console.error('Failed to build permission context:', error);
+        return null;
+      }
+    },
+    [user, evaluator]
+  );
+
+  const clearPermissionCache = useCallback(
+    (workspaceId?: string) => {
+      if (workspaceId && user) {
+        evaluator.clearCache(workspaceId, user.id);
+      } else {
+        evaluator.clearCache();
+      }
+    },
+    [user, evaluator]
+  );
+
   const value: AuthContextType = {
     user,
-    authz,
+    authCtx,
     isLoading,
     isAuthenticated: !!user,
     hasGlobalPermission,
@@ -210,6 +275,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loginWithOidc,
     logout,
     refreshToken,
+    checkEntityPermission,
+    buildPermissionContext,
+    clearPermissionCache
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -11,7 +11,7 @@ import type {
   User,
   Workspace,
   WorkspaceLifecycleState,
-  WorkspaceOwner,
+  WorkspaceOwner
 } from '../types.js';
 
 export type DbDriver = 'postgres' | 'sqlite';
@@ -22,7 +22,7 @@ export class DatabaseError extends Error {
   constructor(
     readonly code: NormalizedDbErrorCode,
     message: string,
-    readonly cause?: unknown,
+    readonly cause?: unknown
   ) {
     super(message);
   }
@@ -103,8 +103,6 @@ export type UpdateUserInput = {
   updated_at: Date;
 };
 
-export type CreateTeamMembershipInput = TeamMembership;
-
 export type CreateEntityGrantInput = Omit<EntityGrant, 'id'> & {
   id: string;
 };
@@ -121,44 +119,69 @@ export type DatabaseAdapter = {
   updateWorkspace(id: string, input: UpdateWorkspaceInput): Promise<Workspace | null>;
   deleteWorkspace(id: string): Promise<{ workspace: Workspace | null; projectIds: string[] }>;
 
-  listLifecycleStates(workspace: string): Promise<WorkspaceLifecycleState[]>;
-  replaceLifecycleStates(workspace: string, states: WorkspaceLifecycleState[]): Promise<WorkspaceLifecycleState[]>;
-  listOwners(workspace: string): Promise<WorkspaceOwner[]>;
-  replaceOwners(workspace: string, owners: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
-  listTeamMemberships(workspace: string): Promise<TeamMembership[]>;
-  replaceTeamMemberships(workspace: string, memberships: TeamMembership[]): Promise<TeamMembership[]>;
+  listLifecycleStates(ws: string): Promise<WorkspaceLifecycleState[]>;
+  replaceLifecycleStates(
+    ws: string,
+    states: WorkspaceLifecycleState[]
+  ): Promise<WorkspaceLifecycleState[]>;
+  listOwners(ws: string): Promise<WorkspaceOwner[]>;
+  replaceOwners(ws: string, owners: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
+  listTeamMemberships(ws: string): Promise<TeamMembership[]>;
+  replaceTeamMemberships(ws: string, memberships: TeamMembership[]): Promise<TeamMembership[]>;
 
-  listSchemas(workspace: string): Promise<EntitySchema[]>;
-  getSchema(workspace: string, id: string): Promise<EntitySchema | null>;
+  listSchemas(ws: string): Promise<EntitySchema[]>;
+  getSchema(ws: string, id: string): Promise<EntitySchema | null>;
   createSchema(input: CreateSchemaInput): Promise<EntitySchema>;
-  updateSchema(workspace: string, id: string, input: UpdateSchemaInput): Promise<EntitySchema | null>;
-  deleteSchema(workspace: string, id: string): Promise<EntitySchema | null>;
+  updateSchema(ws: string, id: string, input: UpdateSchemaInput): Promise<EntitySchema | null>;
+  deleteSchema(ws: string, id: string): Promise<EntitySchema | null>;
 
-  listEntities(workspace: string): Promise<Entity[]>;
-  getEntity(workspace: string, id: string): Promise<Entity | null>;
+  listEntities(ws: string): Promise<Entity[]>;
+  getEntity(ws: string, id: string): Promise<Entity | null>;
   createEntity(input: CreateEntityInput): Promise<Entity>;
-  updateEntity(workspace: string, id: string, input: UpdateEntityInput): Promise<Entity | null>;
-  deleteEntity(workspace: string, id: string): Promise<Entity | null>;
-  listEntityGrants(workspace: string): Promise<EntityGrant[]>;
-  getEntityGrants(workspace: string, entityId: string): Promise<EntityGrant[]>;
-  replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]): Promise<EntityGrant[]>;
+  updateEntity(ws: string, id: string, input: UpdateEntityInput): Promise<Entity | null>;
+  deleteEntity(ws: string, id: string): Promise<Entity | null>;
+  listEntityGrants(ws: string): Promise<EntityGrant[]>;
+  getEntityGrants(ws: string, entityId: string): Promise<EntityGrant[]>;
+  replaceEntityGrants(
+    ws: string,
+    entityId: string,
+    grants: CreateEntityGrantInput[]
+  ): Promise<EntityGrant[]>;
 
-  listProjects(workspace: string): Promise<Project[]>;
-  getProject(workspace: string, id: string): Promise<Project | null>;
+  listProjects(ws: string): Promise<Project[]>;
+  getProject(ws: string, id: string): Promise<Project | null>;
   createProject(input: CreateProjectInput): Promise<Project>;
-  updateProject(workspace: string, id: string, input: UpdateProjectInput): Promise<Project | null>;
-  deleteProject(workspace: string, id: string): Promise<Project | null>;
+  updateProject(ws: string, id: string, input: UpdateProjectInput): Promise<Project | null>;
+  deleteProject(ws: string, id: string): Promise<Project | null>;
 
-  listProjectFiles(workspace: string, projectId: string): Promise<ProjectFile[]>;
-  getProjectFileByPath(workspace: string, projectId: string, path: string): Promise<ProjectFile | null>;
-  updateProjectFileSizeById(workspace: string, projectId: string, fileId: string, sizeBytes: number, updated_at: Date): Promise<void>;
+  listProjectFiles(ws: string, projectId: string): Promise<ProjectFile[]>;
+  getProjectFileByPath(ws: string, projectId: string, path: string): Promise<ProjectFile | null>;
+  updateProjectFileSizeById(
+    ws: string,
+    projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    updated_at: Date
+  ): Promise<void>;
   upsertProjectFile(input: UpsertProjectFileInput): Promise<ProjectFile>;
-  createProjectFileIfAbsent(input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }): Promise<ProjectFile | null>;
-  deleteProjectFileByPath(workspace: string, projectId: string, path: string): Promise<ProjectFile | null>;
-  renameProjectFileFolder(workspace: string, projectId: string, oldPath: string, newPath: string, updated_at: Date): Promise<string[]>;
-  deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string): Promise<ProjectFile[]>;
+  createProjectFileIfAbsent(
+    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+  ): Promise<ProjectFile | null>;
+  deleteProjectFileByPath(ws: string, projectId: string, path: string): Promise<ProjectFile | null>;
+  renameProjectFileFolder(
+    ws: string,
+    projectId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ): Promise<string[]>;
+  deleteProjectFileFolder(
+    ws: string,
+    projectId: string,
+    folderPath: string
+  ): Promise<ProjectFile[]>;
 
-  listAuditLogs(workspace: string): Promise<AuditLogEntry[]>;
+  listAuditLogs(ws: string): Promise<AuditLogEntry[]>;
   createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry>;
 
   getUser(id: string): Promise<User | null>;
@@ -169,5 +192,9 @@ export type DatabaseAdapter = {
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
   listUsers(): Promise<User[]>;
   listGlobalRoleAssignments(userId?: string): Promise<GlobalRoleAssignment[]>;
-  replaceGlobalRoleAssignments(userId: string, roles: GlobalRole[], createdAt: Date): Promise<GlobalRoleAssignment[]>;
+  replaceGlobalRoleAssignments(
+    userId: string,
+    roles: GlobalRole[],
+    createdAt: Date
+  ): Promise<GlobalRoleAssignment[]>;
 };
