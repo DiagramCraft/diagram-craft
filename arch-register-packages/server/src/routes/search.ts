@@ -145,17 +145,29 @@ export function createSearchRoutes(db: DatabaseAdapter) {
 
       const filesResults: FileSearchResult[] = [];
       if (types.includes('files')) {
-        const projectMap = new Map((await db.listProjects(workspace)).map(project => [project.id, project.name]));
-        const allFiles = (await Promise.all([...projectMap.keys()].map(projectId => db.listProjectFiles(workspace, projectId)))).flat();
-        for (const file of allFiles) {
-          if (!includesQuery(file.name, normalizedQuery) && !includesQuery(file.path, normalizedQuery)) continue;
-          filesResults.push({
-            projectId: file.project_id,
-            projectName: projectMap.get(file.project_id) ?? file.project_id,
-            fileId: file.id,
-            path: file.path,
-            name: file.name,
-          });
+        const projectsForFiles = await db.listProjects(workspace);
+        const projectMap = new Map(projectsForFiles.map(project => [project.id, project.name]));
+        const projectIds = [...projectMap.keys()];
+        
+        const filesByProject = await Promise.all(
+          projectIds.map(async projectId => ({
+            projectId,
+            files: await db.listProjectFiles(workspace, projectId)
+          }))
+        );
+        
+        for (const { projectId, files } of filesByProject) {
+          const projectName = projectMap.get(projectId) ?? projectId;
+          for (const file of files) {
+            if (!includesQuery(file.name, normalizedQuery) && !includesQuery(file.path, normalizedQuery)) continue;
+            filesResults.push({
+              projectId: file.project_id,
+              projectName,
+              fileId: file.id,
+              path: file.path,
+              name: file.name,
+            });
+          }
         }
         filesResults.sort((a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path));
       }

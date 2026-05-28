@@ -26,6 +26,7 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceOwner,
 } from '../types.js';
+import { DB_ERROR_CODES, SERVER_DEFAULTS } from '../constants.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemaPath = join(__dirname, 'schema.postgres.sql');
@@ -33,10 +34,10 @@ const schemaPath = join(__dirname, 'schema.postgres.sql');
 const normalizeError = (error: unknown): never => {
   if (error != null && typeof error === 'object' && 'code' in error) {
     const code = String((error as { code: unknown }).code);
-    if (code === '23505') throw new DatabaseError('unique', 'Unique constraint violation', error);
-    if (code === '23503') throw new DatabaseError('foreign', 'Foreign key constraint violation', error);
-    if (code === '23514') throw new DatabaseError('check', 'Check constraint violation', error);
-    if (code === '23502') throw new DatabaseError('notnull', 'Not null constraint violation', error);
+    if (code === DB_ERROR_CODES.UNIQUE) throw new DatabaseError('unique', 'Unique constraint violation', error);
+    if (code === DB_ERROR_CODES.FOREIGN_KEY) throw new DatabaseError('foreign', 'Foreign key constraint violation', error);
+    if (code === DB_ERROR_CODES.CHECK) throw new DatabaseError('check', 'Check constraint violation', error);
+    if (code === DB_ERROR_CODES.NOT_NULL) throw new DatabaseError('notnull', 'Not null constraint violation', error);
   }
   throw new DatabaseError('unknown', 'Database operation failed', error);
 };
@@ -47,9 +48,9 @@ export class PostgresDatabase implements DatabaseAdapter {
 
   constructor(connectionString: string) {
     this.sql = postgres(connectionString, {
-      max: 10,
-      idle_timeout: 30,
-      connect_timeout: 10,
+      max: SERVER_DEFAULTS.MAX_DB_CONNECTIONS,
+      idle_timeout: SERVER_DEFAULTS.DB_IDLE_TIMEOUT,
+      connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
     });
   }
 

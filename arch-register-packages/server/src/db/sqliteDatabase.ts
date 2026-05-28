@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import Database from 'better-sqlite3';
+import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import type {
   CreateAuditLogInput,
   CreateEntityInput,
@@ -26,6 +26,7 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceOwner,
 } from '../types.js';
+import { SQLITE_ERROR_PATTERNS } from '../constants.js';
 
 const parseJson = <T>(value: unknown, fallback: T): T => {
   if (typeof value !== 'string' || value === '') return fallback;
@@ -41,10 +42,10 @@ const toDate = (value: unknown) => new Date(String(value));
 const normalizeError = (error: unknown): never => {
   if (error != null && typeof error === 'object' && 'code' in error) {
     const code = String((error as { code: unknown }).code);
-    if (code.includes('UNIQUE')) throw new DatabaseError('unique', 'Unique constraint violation', error);
-    if (code.includes('FOREIGNKEY')) throw new DatabaseError('foreign', 'Foreign key constraint violation', error);
-    if (code.includes('CHECK')) throw new DatabaseError('check', 'Check constraint violation', error);
-    if (code.includes('NOTNULL')) throw new DatabaseError('notnull', 'Not null constraint violation', error);
+    if (code.includes(SQLITE_ERROR_PATTERNS.UNIQUE)) throw new DatabaseError('unique', 'Unique constraint violation', error);
+    if (code.includes(SQLITE_ERROR_PATTERNS.FOREIGN_KEY)) throw new DatabaseError('foreign', 'Foreign key constraint violation', error);
+    if (code.includes(SQLITE_ERROR_PATTERNS.CHECK)) throw new DatabaseError('check', 'Check constraint violation', error);
+    if (code.includes(SQLITE_ERROR_PATTERNS.NOT_NULL)) throw new DatabaseError('notnull', 'Not null constraint violation', error);
   }
   throw new DatabaseError('unknown', 'Database operation failed', error);
 };
@@ -141,7 +142,7 @@ const toAuditLog = (row: Record<string, unknown>): AuditLogEntry => ({
 
 export class SqliteDatabase implements DatabaseAdapter {
   readonly driver = 'sqlite' as const;
-  private db: any;
+  private db: DatabaseType;
   private readonly filePath: string;
 
   constructor(filePath: string) {
@@ -442,28 +443,35 @@ export class SqliteDatabase implements DatabaseAdapter {
   }
 
   async upsertProjectFile(input: UpsertProjectFileInput) {
-    const existing = await this.getProjectFileByPath(input.workspace, input.project_id, input.path);
-    if (existing) {
-      this.run(
-        'UPDATE project_file SET name = ?, size_bytes = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND path = ?',
-        [input.name, input.size_bytes, input.updated_at.toISOString(), input.workspace, input.project_id, input.path],
-      );
-      return (await this.getProjectFileByPath(input.workspace, input.project_id, input.path))!;
-    }
     const id = crypto.randomUUID();
-    this.run(
-      'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [
-        id,
-        input.workspace,
-        input.project_id,
-        input.path,
-        input.name,
-        input.size_bytes,
-        input.created_atIfNew.toISOString(),
-        input.updated_at.toISOString(),
-      ],
-    );
+    const tx = this.db.transaction(() => {
+      const existing = this.get<{ id: string; created_at: string }>(
+        'SELECT id, created_at FROM project_file WHERE workspace = ? AND project_id = ? AND path = ?',
+        [input.workspace, input.project_id, input.path]
+      );
+      
+      if (existing) {
+        this.run(
+          'UPDATE project_file SET name = ?, size_bytes = ?, updated_at = ? WHERE id = ?',
+          [input.name, input.size_bytes, input.updated_at.toISOString(), existing.id],
+        );
+      } else {
+        this.run(
+          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            id,
+            input.workspace,
+            input.project_id,
+            input.path,
+            input.name,
+            input.size_bytes,
+            input.created_atIfNew.toISOString(),
+            input.updated_at.toISOString(),
+          ],
+        );
+      }
+    });
+    tx();
     return (await this.getProjectFileByPath(input.workspace, input.project_id, input.path))!;
   }
 
@@ -481,29 +489,43 @@ export class SqliteDatabase implements DatabaseAdapter {
   }
 
   async renameProjectFileFolder(workspace: string, projectId: string, oldPath: string, newPath: string, updated_at: Date) {
-    const files = await this.listProjectFiles(workspace, projectId);
-    const matching = files.filter(file => file.path.startsWith(`${oldPath}/`));
+    const oldPathPrefix = `${oldPath}/`;
+    const newPathPrefix = `${newPath}/`;
+    const oldPathLength = oldPath.length;
+    
+    const matchingIds = this.all<{ id: string }>(
+      'SELECT id FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
+      [workspace, projectId, `${oldPathPrefix}%`]
+    );
+    
     const tx = this.db.transaction(() => {
-      for (const file of matching) {
-        const renamedPath = `${newPath}${file.path.slice(oldPath.length)}`;
-        this.run(
-          'UPDATE project_file SET path = ?, updated_at = ? WHERE id = ?',
-          [renamedPath, updated_at.toISOString(), file.id],
-        );
-      }
+      this.run(
+        `UPDATE project_file 
+         SET path = ? || substr(path, ?), 
+             updated_at = ? 
+         WHERE workspace = ? AND project_id = ? AND path LIKE ?`,
+        [newPathPrefix, oldPathLength + 2, updated_at.toISOString(), workspace, projectId, `${oldPathPrefix}%`]
+      );
     });
     tx();
-    return matching.map(file => file.id);
+    return matchingIds.map(row => row.id);
   }
 
   async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
-    const files = await this.listProjectFiles(workspace, projectId);
-    const matching = files.filter(file => file.path.startsWith(`${folderPath}/`));
+    const folderPathPrefix = `${folderPath}/`;
+    const matching = this.all(
+      'SELECT * FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
+      [workspace, projectId, `${folderPathPrefix}%`],
+      toProjectFile
+    );
+    
     if (matching.length === 0) return [];
+    
     const tx = this.db.transaction(() => {
-      for (const file of matching) {
-        this.run('DELETE FROM project_file WHERE id = ?', [file.id]);
-      }
+      this.run(
+        'DELETE FROM project_file WHERE workspace = ? AND project_id = ? AND path LIKE ?',
+        [workspace, projectId, `${folderPathPrefix}%`]
+      );
     });
     tx();
     return matching;

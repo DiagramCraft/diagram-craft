@@ -7,7 +7,9 @@ import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.j
 import { OpenRouterAIServer } from './ai/openRouterAiServer.js';
 import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
-const PORT = Number(process.env['PORT'] ?? 3010);
+import { SERVER_DEFAULTS } from './constants.js';
+
+const PORT = Number(process.env['PORT'] ?? SERVER_DEFAULTS.PORT);
 
 const main = async () => {
   const db = await createDatabase();
