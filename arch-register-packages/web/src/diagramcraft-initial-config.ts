@@ -14,6 +14,9 @@ import { defaultAppConfig } from '@diagram-craft/main/appConfig.default';
 import { Autosave } from '@diagram-craft/main/react-app/autosave/Autosave';
 import { ShapeNodeDefinition } from '@diagram-craft/canvas/shape/shapeNodeDefinition';
 import { markdownToHTML, htmlStringToMarkdown } from '@diagram-craft/markdown';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
+import { YJSRoot, YJSMap } from '@diagram-craft/collaboration/yjs/yjsCrdt';
+import { YJSWebSocketCollaborationBackend } from '@diagram-craft/collaboration/yjs/yjsWebsocketCollaborationBackend';
 
 const noopAutosave = {
   load: async () => undefined,
@@ -39,22 +42,32 @@ const initializeDiagramCraft = () => {
     };
   }
 
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+
   // Use defaultAppConfig and override only what's different for arch-register
   AppConfig.set({
     ...defaultAppConfig,
-    // Override collaboration settings for embedded use
+    // Enable YJS collaboration
     collaboration: {
-      backend: 'noop',
+      backend: 'yjs',
+      config: { url: wsUrl },
       forceLoadFromServer: () => false,
       forceClearServerState: () => false
     },
-    // Override autosave for embedded use
+    // Override autosave for embedded use (server-side auto-save handles persistence)
     autosave: noopAutosave,
     // Override filesystem for embedded use
     filesystem: { provider: 'none', endpoint: '' },
-    // Override AI for embedded use
-    ai: { provider: 'none' }
+    // Enable AI (same-origin proxy)
+    ai: { provider: 'remote', endpoint: '' }
   });
+
+  // Initialize YJS collaboration backend
+  CollaborationConfig.isNoOp = false;
+  CollaborationConfig.CRDTRoot = YJSRoot;
+  CollaborationConfig.CRDTMap = YJSMap;
+  CollaborationConfig.Backend = new YJSWebSocketCollaborationBackend(wsUrl);
 
   // Register stencil loaders from default config
   for (const [k, v] of Object.entries(defaultAppConfig.stencils.loaders)) {

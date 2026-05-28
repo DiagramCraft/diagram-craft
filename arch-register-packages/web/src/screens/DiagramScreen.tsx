@@ -13,15 +13,13 @@ import type {
   SerializedOverride
 } from '@diagram-craft/model/serialization/serializedTypes';
 import { serializeDiagramDocument } from '@diagram-craft/model/serialization/serialize';
-import { CRDT } from '@diagram-craft/collaboration/crdt';
+import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
-import { debounce } from '@diagram-craft/utils/debounce';
+import { AppConfig } from '@diagram-craft/main/appConfig';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
 type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
-
-const AUTOSAVE_DELAY_MS = 1000;
 
 interface DiagramScreenProps {
   workspaceId: string;
@@ -35,8 +33,6 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<{ path: string; name: string } | null>(null);
   const [doc, setDoc] = useState<DiagramDocument | null>(null);
-  const [dirty, setDirty] = useState(false);
-
   const docRef = useRef<DiagramDocument | null>(null);
   const fileInfoRef = useRef<{ path: string; name: string } | null>(null);
 
@@ -94,6 +90,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     }
   }, []);
 
+  // Save on close as a safety net (server auto-save handles ongoing persistence)
   const save = useCallback(async () => {
     if (!docRef.current || !fileInfoRef.current) return;
 
@@ -108,21 +105,10 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         }
       );
       if (!response.ok) throw new Error('Failed to save diagram');
-      setDirty(false);
     } catch (err) {
       console.error('Save failed:', err);
     }
   }, [workspaceId, projectId]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: debounce must be stable
-  const debouncedSave = useCallback(debounce(() => { save(); }, AUTOSAVE_DELAY_MS), [save]);
-
-  // biome-ignore lint/suspicious/noExplicitAny: event type varies
-  const onDiagramChange = useCallback((event: any) => {
-    if (event.silent) return;
-    setDirty(true);
-    debouncedSave();
-  }, [debouncedSave]);
 
   const handleClose = useCallback(async () => {
     await save();
@@ -161,26 +147,41 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         setFileInfo({ path: file.path, name: file.name });
         fileInfoRef.current = { path: file.path, name: file.name };
 
-        // Fetch diagram content and Arch Register public schemas
-        const [diagramResponse, publicSchemasResponse] = await Promise.all([
-          fetch(`/api/${workspaceId}/projects/${projectId}/files/${file.path}`),
-          fetch(`/api/public/${workspaceId}/schemas`)
-        ]);
-        if (!diagramResponse.ok) throw new Error('Failed to load diagram content');
-        if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
-        const [rawDiagramData, publicSchemas] = await Promise.all([
-          diagramResponse.json(),
-          publicSchemasResponse.json()
-        ]);
-        const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
-        const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas as PublicSchema[]);
+        // Construct the collaboration room name
+        const roomName = `${workspaceId}/${projectId}/${file.id}.json`;
 
-        // Create document and deserialize
-        const root = CRDT.makeRoot();
-        const document = await documentFactory.createDocument(root, undefined, () => {});
-        await deserializeDiagramDocument(diagramData, document, diagramFactory, {
-          includedPackages
-        });
+        // Connect to collaboration backend and sync CRDT state
+        const config = AppConfig.get();
+        const userState = {
+          name: config.awareness.name(),
+          color: config.awareness.color(),
+          avatar: config.awareness.avatar()
+        };
+
+        const root = await documentFactory.loadCRDT(roomName, userState, () => {});
+        const document = await documentFactory.createDocument(root, roomName, () => {});
+
+        // If the CRDT already has state (another client is connected), use it directly.
+        // Otherwise, this is the first client — load from REST and deserialize.
+        if (document.diagrams.length === 0) {
+          const [diagramResponse, publicSchemasResponse] = await Promise.all([
+            fetch(`/api/${workspaceId}/projects/${projectId}/files/${file.path}`),
+            fetch(`/api/public/${workspaceId}/schemas`)
+          ]);
+          if (!diagramResponse.ok) throw new Error('Failed to load diagram content');
+          if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
+          const [rawDiagramData, publicSchemas] = await Promise.all([
+            diagramResponse.json(),
+            publicSchemasResponse.json()
+          ]);
+          const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
+          const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas as PublicSchema[]);
+
+          await deserializeDiagramDocument(diagramData, document, diagramFactory, {
+            includedPackages
+          });
+        }
+
         await document.load();
         await suppressDefaultProvider(document);
 
@@ -200,6 +201,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
     loadDiagram();
 
     return () => {
+      CollaborationConfig.Backend.disconnect(() => {});
       if (docRef.current) {
         docRef.current.deactivate(() => {});
         docRef.current.release();
@@ -241,8 +243,7 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
         documentFactory={documentFactory}
         diagramFactory={diagramFactory}
         documentName={fileInfo.name}
-        dirty={dirty}
-        onDiagramChange={onDiagramChange}
+        dirty={false}
         headerLeft={
           <button
             type={'button'}

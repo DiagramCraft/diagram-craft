@@ -12,11 +12,20 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
+    "@diagram-craft/canvas": "workspace:^",
+    "@diagram-craft/collaboration": "workspace:^",
+    "@diagram-craft/model": "workspace:^",
+    "@diagram-craft/utils": "workspace:^",
     "dotenv": "^17.2.3",
     "h3": "^2.0.1-rc.5",
-    "postgres": "^3.4.5"
+    "lib0": "^0.2.117",
+    "postgres": "^3.4.5",
+    "ws": "^8.20.0",
+    "y-protocols": "^1.0.7",
+    "yjs": "^13.6.30"
   },
   "devDependencies": {
-    "@types/node": "^20.14.2"
+    "@types/node": "^20.14.2",
+    "@types/ws": "^8.18.1"
   }
 }

@@ -26,6 +26,8 @@ type WorkspaceHomeProps = {
   onAddEntity: () => void;
 };
 
+const MAX_RECENT_ACTIVITY_ENTRIES = 15;
+
 export const WorkspaceHome = ({
   workspace,
   schemas,
@@ -50,7 +52,7 @@ export const WorkspaceHome = ({
   // Fetch recent activity from audit log
   useEffect(() => {
     setActivityLoading(true);
-    fetchAuditLog(workspace.url_slug, { limit: 20 })
+    fetchAuditLog(workspace.url_slug, { limit: MAX_RECENT_ACTIVITY_ENTRIES })
       .then(setRecentActivity)
       .catch(err => {
         console.error('Failed to load audit log:', err);
@@ -249,7 +251,7 @@ export const WorkspaceHome = ({
                     Loading activity...
                   </div>
                 ) : recentActivity.length > 0 ? (
-                  recentActivity.map((entry) => (
+                  recentActivity.slice(0, MAX_RECENT_ACTIVITY_ENTRIES).map((entry) => (
                     <button
                       key={entry.id}
                       type="button"
