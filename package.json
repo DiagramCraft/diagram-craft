@@ -17,8 +17,8 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
-    "lint:tsc": "tsc --noEmit",
-    "lint": "biome lint --max-diagnostics=100 && tsc --noEmit",
+    "lint:tsc": "tsc --noEmit && tsc -p arch-register-packages/server/tsconfig.lint.json --noEmit",
+    "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
     "doc": "typedoc"
   },
   "keywords": [],

@@ -1,22 +1,20 @@
 import { HTTPError } from 'h3';
-import sql from '../db/client.js';
+import { DatabaseError } from '../db/database.js';
 
-export type PostgresError = { code: string };
-
-type PgErrorMapping = Record<string, string>;
+type DbErrorMapping = Partial<Record<DatabaseError['code'], string>>;
 
 /**
- * Handles route errors by mapping Postgres error codes to HTTP responses.
- * Re-throws existing HTTPErrors, maps known Postgres codes to specific messages,
+ * Handles route errors by mapping normalized database errors to HTTP responses.
+ * Re-throws existing HTTPErrors, maps known database codes to specific messages,
  * and falls back to 500 for everything else.
  */
-export const handlePgError = (error: unknown, fallback: string, pgCodes?: PgErrorMapping): never => {
+export const handleDbError = (error: unknown, fallback: string, dbCodes?: DbErrorMapping): never => {
   if (HTTPError.isError(error)) throw error;
-  if (pgCodes && error != null && typeof error === 'object' && 'code' in error) {
-    const { code } = error as PostgresError;
-    const message = pgCodes[code];
+  if (error instanceof DatabaseError) {
+    const message = dbCodes?.[error.code];
     if (message) {
-      const status = code === '23505' ? 409 : code === '23503' ? 409 : 400;
+      const status =
+        error.code === 'unique' || error.code === 'foreign' ? 409 : 400;
       const statusText = status === 409 ? 'Conflict' : 'Bad Request';
       throw new HTTPError({ status, statusText, message });
     }
@@ -39,6 +37,3 @@ export const parsePositiveInt = (value: unknown, field: string) => {
 
 export const slugify = (name: string): string =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-/** Cast unknown body values to the postgres json type. */
-export const json = (v: unknown) => sql.json(v as Parameters<typeof sql.json>[0]);

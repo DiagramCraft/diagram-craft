@@ -1,19 +1,19 @@
 import { H3, HTTPError, defineHandler } from 'h3';
-import sql from '../db/client.js';
+import type { DatabaseAdapter } from '../db/database.js';
 import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
-import { handlePgError, slugify } from '../utils/http.js';
+import { handleDbError, slugify } from '../utils/http.js';
 import type { StorageAdapter } from '../storage/storage.js';
 
 const BASE = '/api/workspaces';
 
 const handleError = (error: unknown, fallback: string): never =>
-  handlePgError(error, fallback, { '23505': 'A workspace with that name already exists' });
+  handleDbError(error, fallback, { unique: 'A workspace with that name already exists' });
 
 const shortCode = (name: string): string =>
   name.split(/\s+/).map(w => (w[0] ?? '').toUpperCase()).join('').slice(0, 2);
 
-export function createWorkspaceRoutes(storage?: StorageAdapter) {
+export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdapter) {
   const router = new H3();
 
   // GET /api/workspaces
@@ -21,7 +21,7 @@ export function createWorkspaceRoutes(storage?: StorageAdapter) {
     BASE,
     defineHandler(async () => {
       try {
-        return await sql<Workspace[]>`SELECT * FROM workspace ORDER BY name`;
+        return (await db.listWorkspaces()) as Workspace[];
       } catch (e) {
         handleError(e, 'Failed to retrieve workspaces');
       }
@@ -44,31 +44,34 @@ export function createWorkspaceRoutes(storage?: StorageAdapter) {
       const urlSlug = id;
       const sc = shortCode(name as string);
       try {
-        const [row] = await sql<Workspace[]>`
-          INSERT INTO workspace (id, name, url_slug, short_code, description)
-          VALUES (${id}, ${name}, ${urlSlug}, ${sc}, ${typeof description === 'string' ? description : ''})
-          RETURNING *
-        `;
+        const timestamp = new Date();
+        const row = await db.createWorkspace({
+          id,
+          name: name as string,
+          url_slug: urlSlug,
+          short_code: sc,
+          description: typeof description === 'string' ? description : '',
+          created_at: timestamp,
+          updated_at: timestamp,
+        });
         
         // Seed default lifecycle states
-        await sql`
-          INSERT INTO workspace_lifecycle_state (id, workspace, label, color, sort_order) VALUES
-            ('proposed',     ${id}, 'Proposed',     'var(--accent)', 0),
-            ('experimental', ${id}, 'Experimental', 'var(--accent)', 1),
-            ('production',   ${id}, 'Production',   'var(--ok)',     2),
-            ('deprecated',   ${id}, 'Deprecated',   'var(--warn)',   3)
-        `;
+        await db.replaceLifecycleStates(id, [
+          { id: 'proposed', workspace: id, label: 'Proposed', color: 'var(--accent)', sort_order: 0, created_at: timestamp },
+          { id: 'experimental', workspace: id, label: 'Experimental', color: 'var(--accent)', sort_order: 1, created_at: timestamp },
+          { id: 'production', workspace: id, label: 'Production', color: 'var(--ok)', sort_order: 2, created_at: timestamp },
+          { id: 'deprecated', workspace: id, label: 'Deprecated', color: 'var(--warn)', sort_order: 3, created_at: timestamp },
+        ]);
 
         // Seed default owners
-        await sql`
-          INSERT INTO workspace_owner (id, workspace, sort_order) VALUES
-            ('platform-team', ${id}, 0),
-            ('ux-team',       ${id}, 1),
-            ('security-team', ${id}, 2)
-        `;
+        await db.replaceOwners(id, [
+          { id: 'platform-team', workspace: id, sort_order: 0, created_at: timestamp },
+          { id: 'ux-team', workspace: id, sort_order: 1, created_at: timestamp },
+          { id: 'security-team', workspace: id, sort_order: 2, created_at: timestamp },
+        ]);
 
         // Log audit entry
-        await logAudit({
+        await logAudit(db, {
           workspace: row!.id,
           operation: 'create',
           entityType: 'workspace',
@@ -105,20 +108,16 @@ export function createWorkspaceRoutes(storage?: StorageAdapter) {
       }
       try {
         // Fetch old state for audit log
-        const [oldRow] = await sql<Workspace[]>`
-          SELECT * FROM workspace WHERE id = ${id}
-        `;
+        const oldRow = await db.getWorkspace(id);
         if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
 
-        const [row] = await sql<Workspace[]>`
-          UPDATE workspace SET
-            name = ${name},
-            url_slug = ${typeof url_slug === 'string' ? slugify(url_slug) : sql`url_slug`},
-            short_code = ${typeof sc === 'string' ? sc : sql`short_code`},
-            description = ${typeof description === 'string' ? description : sql`description`}
-          WHERE id = ${id}
-          RETURNING *
-        `;
+        const row = await db.updateWorkspace(id, {
+          name: name as string,
+          url_slug: typeof url_slug === 'string' ? slugify(url_slug) : oldRow.url_slug,
+          short_code: typeof sc === 'string' ? sc : oldRow.short_code,
+          description: typeof description === 'string' ? description : oldRow.description,
+          updated_at: new Date(),
+        });
         
         // Log audit entry with field-level changes
         const changes = computeChanges(
@@ -126,7 +125,7 @@ export function createWorkspaceRoutes(storage?: StorageAdapter) {
           extractEntityFields(row!)
         );
         
-        await logAudit({
+        await logAudit(db, {
           workspace: id,
           operation: 'update',
           entityType: 'workspace',
@@ -150,28 +149,11 @@ export function createWorkspaceRoutes(storage?: StorageAdapter) {
       if (!id) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
 
       try {
-        const [workspace] = await sql<Workspace[]>`
-          SELECT * FROM workspace WHERE id = ${id}
-        `;
+        const { workspace, projectIds } = await db.deleteWorkspace(id);
         if (!workspace) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${id}' not found` });
 
-        const projects = await sql<{ id: string }[]>`
-          SELECT id FROM project WHERE workspace = ${id}
-        `;
-
-        await sql.begin(async tx => {
-          await tx`DELETE FROM project_file WHERE workspace = ${id}`;
-          await tx`DELETE FROM project WHERE workspace = ${id}`;
-          await tx`DELETE FROM entity WHERE workspace = ${id}`;
-          await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
-          await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
-          await tx`DELETE FROM workspace_owner WHERE workspace = ${id}`;
-          await tx`DELETE FROM audit_log WHERE workspace = ${id}`;
-          await tx`DELETE FROM workspace WHERE id = ${id}`;
-        });
-
         if (storage) {
-          await Promise.all(projects.map(project => storage.deleteAll(id, project.id).catch(() => {})));
+          await Promise.all(projectIds.map(projectId => storage.deleteAll(id, projectId).catch(() => {})));
         }
 
         return { success: true, message: `Workspace '${workspace.name}' deleted` };

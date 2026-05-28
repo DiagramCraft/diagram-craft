@@ -1,8 +1,9 @@
 import { H3, HTTPError, defineHandler, getQuery } from 'h3';
-import sql from '../db/client.js';
-import type { Entity, EntitySchema, SchemaField } from '../types.js';
+import type { DatabaseAdapter } from '../db/database.js';
+import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
+import { SEARCH_DEFAULTS } from '../constants.js';
 
 const BASE = '/api/:workspace/search';
 
@@ -106,16 +107,16 @@ const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldM
       fieldName: field.name
     }));
 
-export function createSearchRoutes() {
+export function createSearchRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
   router.get(
     BASE,
     defineHandler(async event => {
-      const workspace = await resolveWorkspace(event);
+      const workspace = await resolveWorkspace(event, db);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-      const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? 10;
+    const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
       const types = parseTypes(query['types']);
 
       const empty: SearchResponse = {
@@ -128,132 +129,97 @@ export function createSearchRoutes() {
 
       if (q === '') return empty;
 
-      const pattern = `%${q}%`;
       const normalizedQuery = q.toLowerCase();
 
-      const projectsPromise = types.includes('projects')
-        ? sql<ProjectSearchResult[]>`
-            SELECT id, name, description, status
-            FROM project
-            WHERE workspace = ${workspace}
-              AND (
-                name ILIKE ${pattern}
-                OR description ILIKE ${pattern}
-              )
-            ORDER BY name
-            LIMIT ${limitPerType}
-          `
-        : Promise.resolve([]);
-
-      const filesPromise = types.includes('files')
-        ? sql<FileSearchResult[]>`
-            SELECT
-              pf.project_id AS "projectId",
-              p.name AS "projectName",
-              pf.id AS "fileId",
-              pf.path,
-              pf.name
-            FROM project_file pf
-            INNER JOIN project p
-              ON p.workspace = pf.workspace
-             AND p.id = pf.project_id
-            WHERE pf.workspace = ${workspace}
-              AND (
-                pf.name ILIKE ${pattern}
-                OR pf.path ILIKE ${pattern}
-              )
-            ORDER BY p.name, pf.path
-            LIMIT ${limitPerType}
-          `
-        : Promise.resolve([]);
-
-      const entitiesPromise = types.includes('entities')
-        ? sql<(Entity & { schemaName: string })[]>`
-            SELECT
-              e.*,
-              s.name AS "schemaName"
-            FROM entity e
-            INNER JOIN entity_schema s
-              ON s.workspace = e.workspace
-             AND s.id = e.schema_id
-            WHERE e.workspace = ${workspace}
-              AND (
-                e.name ILIKE ${pattern}
-                OR e.slug ILIKE ${pattern}
-                OR e.description ILIKE ${pattern}
-                OR e.namespace ILIKE ${pattern}
-                OR COALESCE(e.owner, '') ILIKE ${pattern}
-                OR COALESCE(e.lifecycle, '') ILIKE ${pattern}
-                OR EXISTS (
-                  SELECT 1
-                  FROM unnest(e.tags) AS tag
-                  WHERE tag ILIKE ${pattern}
-                )
-                OR EXISTS (
-                  SELECT 1
-                  FROM jsonb_array_elements(e.links) AS link
-                  WHERE link->>'title' ILIKE ${pattern}
-                     OR link->>'url' ILIKE ${pattern}
-                     OR COALESCE(link->>'type', '') ILIKE ${pattern}
-                )
-                OR EXISTS (
-                  SELECT 1
-                  FROM jsonb_each_text(e.data) AS field(key, value)
-                  WHERE value ILIKE ${pattern}
-                )
-              )
-            ORDER BY e.name
-            LIMIT ${limitPerType}
-          `
-        : Promise.resolve([]);
-
-      const schemasPromise = types.includes('schemas')
-        ? sql<EntitySchema[]>`
-            SELECT *
-            FROM entity_schema
-            WHERE workspace = ${workspace}
-              AND (
-                name ILIKE ${pattern}
-                OR EXISTS (
-                  SELECT 1
-                  FROM jsonb_array_elements(fields) AS field
-                  WHERE field->>'id' ILIKE ${pattern}
-                     OR field->>'name' ILIKE ${pattern}
-                )
-              )
-            ORDER BY name
-            LIMIT ${limitPerType}
-          `
-        : Promise.resolve([]);
-
-      const [projects, files, entities, schemas] = await Promise.all([
-        projectsPromise,
-        filesPromise,
-        entitiesPromise,
-        schemasPromise
+      const [projects, schemas, entities] = await Promise.all([
+        types.includes('projects') ? db.listProjects(workspace) : Promise.resolve([]),
+        types.includes('schemas') || types.includes('entities') ? db.listSchemas(workspace) : Promise.resolve([]),
+        types.includes('entities') ? db.listEntities(workspace) : Promise.resolve([]),
       ]);
+
+      const projectsResults = types.includes('projects')
+        ? projects
+            .filter(project => includesQuery(project.name, normalizedQuery) || includesQuery(project.description, normalizedQuery))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, limitPerType)
+        : [];
+
+      const filesResults: FileSearchResult[] = [];
+      if (types.includes('files')) {
+        const projectsForFiles = await db.listProjects(workspace);
+        const projectMap = new Map(projectsForFiles.map(project => [project.id, project.name]));
+        const projectIds = [...projectMap.keys()];
+        
+        const filesByProject = await Promise.all(
+          projectIds.map(async projectId => ({
+            projectId,
+            files: await db.listProjectFiles(workspace, projectId)
+          }))
+        );
+        
+        for (const { projectId, files } of filesByProject) {
+          const projectName = projectMap.get(projectId) ?? projectId;
+          for (const file of files) {
+            if (!includesQuery(file.name, normalizedQuery) && !includesQuery(file.path, normalizedQuery)) continue;
+            filesResults.push({
+              projectId: file.project_id,
+              projectName,
+              fileId: file.id,
+              path: file.path,
+              name: file.name,
+            });
+          }
+        }
+        filesResults.sort((a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path));
+      }
+
+      const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
+      const entityResults = types.includes('entities')
+        ? entities
+            .map(entity => {
+              const matchedFields = collectMatchedFields(entity.data, normalizedQuery);
+              const matchedMetadata = collectMatchedMetadata(entity, normalizedQuery);
+              if (matchedFields.length === 0 && matchedMetadata.length === 0) return null;
+              return {
+                entityId: entity.id,
+                schemaId: entity.schema_id,
+                schemaName: schemaMap.get(entity.schema_id)?.name ?? entity.schema_id,
+                _name: entity.name,
+                _slug: entity.slug,
+                _description: entity.description,
+                _owner: entity.owner,
+                _lifecycle: entity.lifecycle,
+                matchedFields,
+                matchedMetadata,
+              } satisfies EntitySearchResult;
+            })
+            .filter((entity): entity is EntitySearchResult => entity !== null)
+            .sort((a, b) => a._name.localeCompare(b._name))
+            .slice(0, limitPerType)
+        : [];
+
+      const schemaResults = types.includes('schemas')
+        ? schemas
+            .map(schema => {
+              const fieldMatches = collectFieldMatches(schema.fields, normalizedQuery);
+              if (!includesQuery(schema.name, normalizedQuery) && fieldMatches.length === 0) return null;
+              return {
+                schemaId: schema.id,
+                name: schema.name,
+                fieldMatches,
+              } satisfies SchemaSearchResult;
+            })
+            .filter((schema): schema is SchemaSearchResult => schema !== null)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, limitPerType)
+        : [];
 
       return {
         query: q,
-        projects,
-        files,
-        entities: entities.map(entity => ({
-          entityId: entity.id,
-          schemaId: entity.schema_id,
-          schemaName: entity.schemaName,
-          _name: entity.name,
-          _slug: entity.slug,
-          _description: entity.description,
-          _owner: entity.owner,
-          _lifecycle: entity.lifecycle,
-          matchedFields: collectMatchedFields(entity.data, normalizedQuery),
-          matchedMetadata: collectMatchedMetadata(entity, normalizedQuery)
-        })),
-        schemas: schemas.map(schema => ({
-          schemaId: schema.id,
-          name: schema.name,
-          fieldMatches: collectFieldMatches(schema.fields, normalizedQuery)
-        }))
+        projects: projectsResults,
+        files: filesResults.slice(0, limitPerType),
+        entities: entityResults,
+        schemas: schemaResults,
       } satisfies SearchResponse;
     })
   );
