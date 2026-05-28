@@ -1,16 +1,29 @@
 import 'dotenv/config';
 import { createDatabase } from '../db/factory.js';
-import { seedEntities, seedLifecycleStates, seedOwners, seedProjects, seedProjectFiles, seedSchemas, seedWorkspaces } from '../db/seedData.js';
+import {
+  seedEntities,
+  seedLifecycleStates,
+  seedOwners,
+  seedProjects,
+  seedProjectFiles,
+  seedSchemas,
+  seedWorkspaces
+} from '../db/seedData.js';
 import type { ContainmentField, ReferenceField } from '../types.js';
 import { decodeRefs } from '../types.js';
 import { hashPassword } from '../utils/password.js';
+import { CreateUserInput } from '../db/database';
 
 async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   const workspaces = await db.listWorkspaces();
   const workspaceIds = new Set(workspaces.map(w => w.id));
-  const schemas = (await Promise.all(workspaces.map(workspace => db.listSchemas(workspace.id)))).flat();
+  const schemas = (
+    await Promise.all(workspaces.map(workspace => db.listSchemas(workspace.id)))
+  ).flat();
   const schemaMap = new Map(schemas.map(s => [`${s.workspace}:${s.id}`, s]));
-  const entities = (await Promise.all(workspaces.map(workspace => db.listEntities(workspace.id)))).flat();
+  const entities = (
+    await Promise.all(workspaces.map(workspace => db.listEntities(workspace.id)))
+  ).flat();
   const entityMap = new Map(entities.map(e => [`${e.workspace}:${e.id}`, e]));
 
   let errors = 0;
@@ -24,14 +37,18 @@ async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
 
   for (const entity of entities) {
     if (!workspaceIds.has(entity.workspace)) {
-      console.error(`  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown workspace '${entity.workspace}'`);
+      console.error(
+        `  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown workspace '${entity.workspace}'`
+      );
       errors++;
       continue;
     }
 
     const schema = schemaMap.get(`${entity.workspace}:${entity.schema_id}`);
     if (!schema) {
-      console.error(`  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown schema '${entity.schema_id}'`);
+      console.error(
+        `  [${entity.workspace}:${entity.namespace}/${entity.slug}] references unknown schema '${entity.schema_id}'`
+      );
       errors++;
       continue;
     }
@@ -42,24 +59,30 @@ async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
       const refs = decodeRefs(entity.data[f.id]);
 
       if (f.minCount > 0 && refs.length < f.minCount) {
-        console.error(`  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' requires >=${f.minCount} ref(s), got ${refs.length}`);
+        console.error(
+          `  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' requires >=${f.minCount} ref(s), got ${refs.length}`
+        );
         errors++;
       }
       if (f.maxCount !== -1 && refs.length > f.maxCount) {
-        console.error(`  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' allows <=${f.maxCount} ref(s), got ${refs.length}`);
+        console.error(
+          `  [${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' allows <=${f.maxCount} ref(s), got ${refs.length}`
+        );
         errors++;
       }
       for (const ref of refs) {
         const target = entityMap.get(`${entity.workspace}:${ref}`);
         if (!target) {
-          console.error(`  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' references unknown entity '${ref}'`);
+          console.error(
+            `  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' references unknown entity '${ref}'`
+          );
           errors++;
         } else if (target.schema_id !== f.schemaId) {
           const targetSchema = schemaMap.get(`${target.workspace}:${target.schema_id}`);
           console.error(
             `  [${entity.workspace}:${entity.namespace}/${entity.slug}] (${schema.name}): '${f.id}' should reference ${
               schemaMap.get(`${entity.workspace}:${f.schemaId}`)?.name ?? f.schemaId
-            } but got ${targetSchema?.name ?? target.schema_id}`,
+            } but got ${targetSchema?.name ?? target.schema_id}`
           );
           errors++;
         }
@@ -68,7 +91,9 @@ async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
   }
 
   if (errors > 0) throw new Error(`Validation failed with ${errors} error(s)`);
-  console.log(`  ${workspaces.length} workspaces, ${entities.length} entities validated against ${schemas.length} schemas — OK`);
+  console.log(
+    `  ${workspaces.length} workspaces, ${entities.length} entities validated against ${schemas.length} schemas — OK`
+  );
 }
 
 const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
@@ -88,7 +113,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       is_active: true,
       created_at: now,
       updated_at: now,
-      last_login_at: null,
+      last_login_at: null
     },
     {
       id: 'alice',
@@ -101,7 +126,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       is_active: true,
       created_at: now,
       updated_at: now,
-      last_login_at: null,
+      last_login_at: null
     },
     {
       id: 'bob',
@@ -114,15 +139,17 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       is_active: true,
       created_at: now,
       updated_at: now,
-      last_login_at: null,
-    },
+      last_login_at: null
+    }
   ];
 
   for (const user of testUsers) {
-    await db.createUser(user);
+    await db.createUser(user as unknown as CreateUserInput);
   }
 
-  console.log(`  Created ${testUsers.length} test users (username/password: admin/test, alice/test, bob/test)`);
+  console.log(
+    `  Created ${testUsers.length} test users (username/password: admin/test, alice/test, bob/test)`
+  );
 };
 
 const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
@@ -130,8 +157,14 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
     await db.createWorkspace(workspace);
   }
   for (const workspace of seedWorkspaces) {
-    await db.replaceLifecycleStates(workspace.id, seedLifecycleStates.filter(state => state.workspace === workspace.id));
-    await db.replaceOwners(workspace.id, seedOwners.filter(owner => owner.workspace === workspace.id));
+    await db.replaceLifecycleStates(
+      workspace.id,
+      seedLifecycleStates.filter(state => state.workspace === workspace.id)
+    );
+    await db.replaceOwners(
+      workspace.id,
+      seedOwners.filter(owner => owner.workspace === workspace.id)
+    );
   }
   for (const schema of seedSchemas) {
     await db.createSchema(schema);
@@ -150,10 +183,10 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
       name: file.name,
       size_bytes: file.size_bytes,
       created_atIfNew: file.created_at,
-      updated_at: file.updated_at,
+      updated_at: file.updated_at
     });
   }
-  
+
   // Seed test users for local authentication
   await seedTestUsers(db);
 };

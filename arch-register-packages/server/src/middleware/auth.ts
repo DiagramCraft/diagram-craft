@@ -1,4 +1,4 @@
-import { defineHandler, getHeader, createError } from 'h3';
+import { defineHandler, getHeader, getCookie, createError } from 'h3';
 import type { H3Event } from 'h3';
 import { verifyToken } from '../utils/jwt.js';
 import type { DatabaseAdapter } from '../db/database.js';
@@ -11,6 +11,16 @@ export type AuthenticatedEvent = H3Event & {
   };
 };
 
+const extractToken = (event: H3Event): string | null => {
+  // Check Authorization header first, then fall back to cookie
+  const authHeader = getHeader(event, 'authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  return getCookie(event, 'ar_access_token') ?? null;
+};
+
 export const createAuthMiddleware = (db: DatabaseAdapter) => {
   return defineHandler(async event => {
     // Skip auth if disabled
@@ -18,9 +28,9 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
       return;
     }
 
-    const authHeader = getHeader(event, 'authorization');
+    const token = extractToken(event);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       throw createError({
         statusCode: 401,
         statusMessage: 'Unauthorized',
@@ -28,12 +38,10 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
       });
     }
 
-    const token = authHeader.substring(7);
-
     let payload: JWTPayload;
     try {
       payload = verifyToken(token);
-    } catch (error) {
+    } catch (_error) {
       throw createError({
         statusCode: 401,
         statusMessage: 'Unauthorized',

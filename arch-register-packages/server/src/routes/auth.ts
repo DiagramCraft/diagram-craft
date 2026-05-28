@@ -1,8 +1,11 @@
-import { defineHandler, readBody, getQuery, createError, H3 } from 'h3';
+import { defineHandler, readBody, getQuery, getCookie, createError, sendRedirect, H3 } from 'h3';
+import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { verifyPassword } from '../utils/password.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
+import { setAuthCookies, clearAuthCookies } from '../utils/cookies.js';
+import type { JWTPayload, User } from '../types.js';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -16,14 +19,22 @@ const oidcStateStore = new Map<
 >();
 
 // Clean up expired states every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of oidcStateStore.entries()) {
-    if (value.expiresAt < now) {
-      oidcStateStore.delete(key);
+const cleanupTimer = setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, value] of oidcStateStore.entries()) {
+      if (value.expiresAt < now) {
+        oidcStateStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
+cleanupTimer.unref();
+
+const setTokenCookies = (event: H3Event, tokens: ReturnType<typeof generateTokenPair>) => {
+  setAuthCookies(event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
+};
 
 export const createAuthRoutes = (db: DatabaseAdapter) => {
   const app = new H3();
@@ -62,8 +73,9 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         });
       }
 
-      const body = await readBody(event);
-      const { username, password } = body;
+      const body = (await readBody(event)) as { username?: string; password?: string } | undefined;
+      const username = body?.username;
+      const password = body?.password;
 
       if (!username || !password) {
         throw createError({
@@ -104,7 +116,9 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       // Update last login
       await db.updateUserLastLogin(user.id, new Date());
 
-      return generateTokenPair(user);
+      const tokens = generateTokenPair(user);
+      setTokenCookies(event, tokens);
+      return tokens;
     })
   );
 
@@ -155,7 +169,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       }
 
       const query = getQuery(event);
-      const state = query.state as string;
+      const state = String(query.state ?? '');
 
       if (!state) {
         throw createError({
@@ -175,20 +189,25 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       oidcStateStore.delete(state);
 
+      const callbackParams: Record<string, string> = {};
+      for (const [key, value] of Object.entries(query)) {
+        callbackParams[key] = String(value);
+      }
+
       const claims = await handleCallback(
-        query as Record<string, string>,
+        callbackParams,
         storedState.state,
         storedState.nonce,
         storedState.codeVerifier
       );
 
-      // Find or create user
+      // Find or create user — use issuer:sub as ID to avoid collisions across providers
       let user = await db.getUserByOidc(claims.issuer, claims.sub);
 
       if (!user) {
-        // Auto-create user on first OIDC login
+        const userId = `${claims.issuer}:${claims.sub}`;
         user = await db.createUser({
-          id: claims.sub,
+          id: userId,
           email: claims.email ?? null,
           display_name: claims.name,
           auth_provider: 'oidc',
@@ -201,7 +220,6 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
           last_login_at: new Date()
         });
       } else {
-        // Update last login
         await db.updateUserLastLogin(user.id, new Date());
       }
 
@@ -212,7 +230,12 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         });
       }
 
-      return generateTokenPair(user);
+      const tokens = generateTokenPair(user);
+      setTokenCookies(event, tokens);
+
+      // Redirect to frontend — the cookies carry the auth state
+      const frontendUrl = process.env['OIDC_FRONTEND_REDIRECT_URI'] ?? '/';
+      return sendRedirect(event, frontendUrl, 302);
     })
   );
 
@@ -224,19 +247,23 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         throw createError({ statusCode: 405, message: 'Method not allowed' });
       }
 
-      const body = await readBody(event);
-      const { refresh_token } = body;
+      // Accept refresh token from cookie or request body
+      const cookieToken = getCookie(event, 'ar_refresh_token');
+      const body = (await readBody(event).catch(() => undefined)) as
+        | { refresh_token?: string }
+        | undefined;
+      const refreshToken = cookieToken ?? body?.refresh_token;
 
-      if (!refresh_token) {
+      if (!refreshToken) {
         throw createError({
           statusCode: 400,
           message: 'Refresh token is required'
         });
       }
 
-      let payload;
+      let payload: JWTPayload;
       try {
-        payload = verifyToken(refresh_token);
+        payload = verifyToken(refreshToken);
       } catch {
         throw createError({
           statusCode: 401,
@@ -267,9 +294,31 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         });
       }
 
-      return generateTokenPair(user);
+      const tokens = generateTokenPair(user);
+      setTokenCookies(event, tokens);
+      return tokens;
     })
   );
+
+  // POST /api/auth/logout - Clear auth cookies
+  app.use(
+    '/api/auth/logout',
+    defineHandler(async event => {
+      if (event.method !== 'POST') {
+        throw createError({ statusCode: 405, message: 'Method not allowed' });
+      }
+
+      clearAuthCookies(event);
+      return { ok: true };
+    })
+  );
+
+  return app;
+};
+
+// Protected auth routes — mounted after auth middleware
+export const createAuthProtectedRoutes = () => {
+  const app = new H3();
 
   // GET /api/auth/me - Get current user info
   app.use(
@@ -279,52 +328,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         throw createError({ statusCode: 405, message: 'Method not allowed' });
       }
 
-      // This endpoint requires authentication
-      const authHeader = event.node.req.headers.authorization;
+      const user = event.context.user as User;
 
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        throw createError({
-          statusCode: 401,
-          message: 'Missing or invalid authorization header'
-        });
-      }
-
-      const token = authHeader.substring(7);
-
-      let payload;
-      try {
-        payload = verifyToken(token);
-      } catch {
-        throw createError({
-          statusCode: 401,
-          message: 'Invalid or expired token'
-        });
-      }
-
-      if (payload.type !== 'access') {
-        throw createError({
-          statusCode: 401,
-          message: 'Invalid token type'
-        });
-      }
-
-      const user = await db.getUser(payload.sub);
-
-      if (!user) {
-        throw createError({
-          statusCode: 401,
-          message: 'User not found'
-        });
-      }
-
-      if (!user.is_active) {
-        throw createError({
-          statusCode: 403,
-          message: 'User account is inactive'
-        });
-      }
-
-      // Return user info without sensitive data
       return {
         id: user.id,
         email: user.email,

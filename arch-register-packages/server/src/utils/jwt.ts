@@ -16,6 +16,25 @@ const getExpiry = (type: 'access' | 'refresh'): string => {
   return process.env['JWT_REFRESH_TOKEN_EXPIRY'] ?? '7d';
 };
 
+const parseExpiryToSeconds = (expiry: string): number => {
+  const match = expiry.match(/^(\d+)(s|m|h|d)$/);
+  if (!match?.[1] || !match[2]) return 3600;
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 's':
+      return value;
+    case 'm':
+      return value * 60;
+    case 'h':
+      return value * 3600;
+    case 'd':
+      return value * 86400;
+    default:
+      return 3600;
+  }
+};
+
 export const generateAccessToken = (user: User): string => {
   const payload: Omit<JWTPayload, 'iat' | 'exp'> = {
     sub: user.id,
@@ -26,7 +45,7 @@ export const generateAccessToken = (user: User): string => {
   };
 
   return jwt.sign(payload, getSecret(), {
-    expiresIn: getExpiry('access')
+    expiresIn: parseExpiryToSeconds(getExpiry('access'))
   });
 };
 
@@ -40,14 +59,14 @@ export const generateRefreshToken = (user: User): string => {
   };
 
   return jwt.sign(payload, getSecret(), {
-    expiresIn: getExpiry('refresh')
+    expiresIn: parseExpiryToSeconds(getExpiry('refresh'))
   });
 };
 
 export const verifyToken = (token: string): JWTPayload => {
   try {
     return jwt.verify(token, getSecret()) as JWTPayload;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('Invalid or expired token');
   }
 };
@@ -57,6 +76,6 @@ export const generateTokenPair = (user: User) => {
     access_token: generateAccessToken(user),
     refresh_token: generateRefreshToken(user),
     token_type: 'Bearer',
-    expires_in: 3600 // 1 hour in seconds
+    expires_in: parseExpiryToSeconds(getExpiry('access'))
   };
 };

@@ -149,24 +149,16 @@ export class ApiError extends Error {
   }
 }
 
-const getAccessToken = (): string | null => {
-  return localStorage.getItem('ar_access_token');
-};
-
 export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> => {
-  const token = getAccessToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...init?.headers,
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers,
+    credentials: 'include',
   });
 
   if (!res.ok) {

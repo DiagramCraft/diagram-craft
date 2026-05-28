@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 
 export type User = {
   id: string;
@@ -9,120 +9,70 @@ export type User = {
   last_login_at: string | null;
 };
 
-export type TokenResponse = {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-};
-
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
   loginWithOidc: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const TOKEN_KEY = 'ar_access_token';
-const REFRESH_TOKEN_KEY = 'ar_refresh_token';
-const TOKEN_EXPIRY_KEY = 'ar_token_expiry';
-
 const BASE = import.meta.env.VITE_API_URL ?? '';
+
+const authFetch = (path: string, init?: RequestInit) =>
+  fetch(`${BASE}${path}`, { ...init, credentials: 'include' });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const tokenExpiresAt = useRef<number | null>(null);
 
-  const clearTokens = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    localStorage.removeItem(TOKEN_EXPIRY_KEY);
-  }, []);
-
-  const saveTokens = useCallback((tokens: TokenResponse) => {
-    localStorage.setItem(TOKEN_KEY, tokens.access_token);
-    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
-    const expiryTime = Date.now() + tokens.expires_in * 1000;
-    localStorage.setItem(TOKEN_EXPIRY_KEY, String(expiryTime));
-  }, []);
-
-  const fetchCurrentUser = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
+  const fetchCurrentUser = useCallback(async (): Promise<boolean> => {
     try {
-      const res = await fetch(`${BASE}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await authFetch('/api/auth/me');
 
       if (!res.ok) {
-        clearTokens();
         setUser(null);
-        setIsLoading(false);
-        return;
+        return false;
       }
 
       const userData = await res.json();
       setUser(userData);
+      return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
-      clearTokens();
       setUser(null);
-    } finally {
-      setIsLoading(false);
+      return false;
     }
-  }, [clearTokens]);
+  }, []);
 
   const refreshToken = useCallback(async () => {
-    const refreshTokenValue = localStorage.getItem(REFRESH_TOKEN_KEY);
-    if (!refreshTokenValue) {
-      clearTokens();
-      setUser(null);
-      throw new Error('No refresh token available');
-    }
-
     try {
-      const res = await fetch(`${BASE}/api/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshTokenValue }),
-      });
+      const res = await authFetch('/api/auth/refresh', { method: 'POST' });
 
       if (!res.ok) {
-        clearTokens();
         setUser(null);
         throw new Error('Failed to refresh token');
       }
 
-      const tokens: TokenResponse = await res.json();
-      saveTokens(tokens);
+      const data = await res.json();
+      tokenExpiresAt.current = Date.now() + data.expires_in * 1000;
       await fetchCurrentUser();
     } catch (error) {
-      clearTokens();
       setUser(null);
       throw error;
     }
-  }, [clearTokens, saveTokens, fetchCurrentUser]);
+  }, [fetchCurrentUser]);
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const res = await fetch(`${BASE}/api/auth/login`, {
+      const res = await authFetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
@@ -131,15 +81,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(error.message || 'Login failed');
       }
 
-      const tokens: TokenResponse = await res.json();
-      saveTokens(tokens);
+      const data = await res.json();
+      tokenExpiresAt.current = Date.now() + data.expires_in * 1000;
       await fetchCurrentUser();
     },
-    [saveTokens, fetchCurrentUser]
+    [fetchCurrentUser]
   );
 
   const loginWithOidc = useCallback(async () => {
-    const res = await fetch(`${BASE}/api/auth/oidc/authorize`);
+    const res = await authFetch('/api/auth/oidc/authorize');
     if (!res.ok) {
       throw new Error('Failed to initiate OIDC login');
     }
@@ -148,32 +98,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = authorization_url;
   }, []);
 
-  const logout = useCallback(() => {
-    clearTokens();
+  const logout = useCallback(async () => {
+    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    tokenExpiresAt.current = null;
     setUser(null);
-  }, [clearTokens]);
+  }, []);
 
-  // Check for token expiry and refresh if needed
+  // Proactive token refresh before expiry
   useEffect(() => {
     const checkTokenExpiry = () => {
-      const expiryTime = localStorage.getItem(TOKEN_EXPIRY_KEY);
-      if (!expiryTime) return;
+      if (!tokenExpiresAt.current || !user) return;
 
-      const timeUntilExpiry = Number(expiryTime) - Date.now();
-      // Refresh token 5 minutes before expiry
+      const timeUntilExpiry = tokenExpiresAt.current - Date.now();
       if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
         refreshToken().catch(console.error);
       }
     };
 
-    const interval = setInterval(checkTokenExpiry, 60 * 1000); // Check every minute
+    const interval = setInterval(checkTokenExpiry, 60 * 1000);
     return () => clearInterval(interval);
-  }, [refreshToken]);
+  }, [refreshToken, user]);
 
-  // Initial user fetch
+  // On mount: try /me, if 401 try refresh, otherwise not authenticated
   useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
+    const init = async () => {
+      const ok = await fetchCurrentUser();
+      if (!ok) {
+        try {
+          await refreshToken();
+        } catch {
+          // Not authenticated
+        }
+      }
+      setIsLoading(false);
+    };
+    init();
+  }, [fetchCurrentUser, refreshToken]);
 
   const value: AuthContextType = {
     user,
@@ -194,8 +154,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
-};
-
-export const getAccessToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY);
 };
