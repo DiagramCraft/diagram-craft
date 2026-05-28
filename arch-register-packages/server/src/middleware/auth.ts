@@ -1,4 +1,4 @@
-import { defineHandler, getHeader, getCookie, createError } from 'h3';
+import { defineHandler, getCookie, HTTPError } from 'h3';
 import type { H3Event } from 'h3';
 import { verifyToken } from '../utils/jwt.js';
 import type { DatabaseAdapter } from '../db/database.js';
@@ -13,7 +13,7 @@ export type AuthenticatedEvent = H3Event & {
 
 const extractToken = (event: H3Event): string | null => {
   // Check Authorization header first, then fall back to cookie
-  const authHeader = getHeader(event, 'authorization');
+  const authHeader = event.req.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
@@ -31,9 +31,8 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
     const token = extractToken(event);
 
     if (!token) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+      throw new HTTPError({
+        status: 401,
         message: 'Missing or invalid authorization header'
       });
     }
@@ -42,17 +41,15 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
     try {
       payload = verifyToken(token);
     } catch (_error) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+      throw new HTTPError({
+        status: 401,
         message: 'Invalid or expired token'
       });
     }
 
     if (payload.type !== 'access') {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+      throw new HTTPError({
+        status: 401,
         message: 'Invalid token type'
       });
     }
@@ -60,17 +57,15 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
     const user = await db.getUser(payload.sub);
 
     if (!user) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+      throw new HTTPError({
+        status: 401,
         message: 'User not found'
       });
     }
 
     if (!user.is_active) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden',
+      throw new HTTPError({
+        status: 403,
         message: 'User account is inactive'
       });
     }

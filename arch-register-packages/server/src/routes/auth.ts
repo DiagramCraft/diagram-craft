@@ -1,4 +1,4 @@
-import { defineHandler, readBody, getQuery, getCookie, createError, sendRedirect, H3 } from 'h3';
+import { defineHandler, readBody, getQuery, getCookie, HTTPError, redirect, H3 } from 'h3';
 import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { verifyPassword } from '../utils/password.js';
@@ -44,7 +44,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/config',
     defineHandler(async event => {
       if (event.method !== 'GET') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
@@ -62,13 +62,13 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/login',
     defineHandler(async event => {
       if (event.method !== 'POST') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
       if (authMode !== 'local') {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'Username/password authentication is not enabled'
         });
       }
@@ -78,8 +78,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const password = body?.password;
 
       if (!username || !password) {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'Username and password are required'
         });
       }
@@ -91,15 +91,15 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       }
 
       if (!user || user.auth_provider !== 'local' || !user.password_hash) {
-        throw createError({
-          statusCode: 401,
+        throw new HTTPError({
+          status: 401,
           message: 'Invalid username or password'
         });
       }
 
       if (!user.is_active) {
-        throw createError({
-          statusCode: 403,
+        throw new HTTPError({
+          status: 403,
           message: 'User account is inactive'
         });
       }
@@ -107,8 +107,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const isValid = await verifyPassword(user.password_hash, password);
 
       if (!isValid) {
-        throw createError({
-          statusCode: 401,
+        throw new HTTPError({
+          status: 401,
           message: 'Invalid username or password'
         });
       }
@@ -127,13 +127,13 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/oidc/authorize',
     defineHandler(async event => {
       if (event.method !== 'GET') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
       if (authMode !== 'oidc') {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'OIDC authentication is not enabled'
         });
       }
@@ -157,13 +157,13 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/oidc/callback',
     defineHandler(async event => {
       if (event.method !== 'GET') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
       if (authMode !== 'oidc') {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'OIDC authentication is not enabled'
         });
       }
@@ -172,8 +172,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const state = String(query.state ?? '');
 
       if (!state) {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'Missing state parameter'
         });
       }
@@ -181,8 +181,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const storedState = oidcStateStore.get(state);
 
       if (!storedState) {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'Invalid or expired state'
         });
       }
@@ -224,8 +224,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       }
 
       if (!user.is_active) {
-        throw createError({
-          statusCode: 403,
+        throw new HTTPError({
+          status: 403,
           message: 'User account is inactive'
         });
       }
@@ -235,7 +235,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       // Redirect to frontend — the cookies carry the auth state
       const frontendUrl = process.env['OIDC_FRONTEND_REDIRECT_URI'] ?? '/';
-      return sendRedirect(event, frontendUrl, 302);
+      return redirect(frontendUrl, 302);
     })
   );
 
@@ -244,7 +244,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/refresh',
     defineHandler(async event => {
       if (event.method !== 'POST') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       // Accept refresh token from cookie or request body
@@ -255,8 +255,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const refreshToken = cookieToken ?? body?.refresh_token;
 
       if (!refreshToken) {
-        throw createError({
-          statusCode: 400,
+        throw new HTTPError({
+          status: 400,
           message: 'Refresh token is required'
         });
       }
@@ -265,15 +265,15 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       try {
         payload = verifyToken(refreshToken);
       } catch {
-        throw createError({
-          statusCode: 401,
+        throw new HTTPError({
+          status: 401,
           message: 'Invalid or expired refresh token'
         });
       }
 
       if (payload.type !== 'refresh') {
-        throw createError({
-          statusCode: 401,
+        throw new HTTPError({
+          status: 401,
           message: 'Invalid token type'
         });
       }
@@ -281,15 +281,15 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const user = await db.getUser(payload.sub);
 
       if (!user) {
-        throw createError({
-          statusCode: 401,
+        throw new HTTPError({
+          status: 401,
           message: 'User not found'
         });
       }
 
       if (!user.is_active) {
-        throw createError({
-          statusCode: 403,
+        throw new HTTPError({
+          status: 403,
           message: 'User account is inactive'
         });
       }
@@ -305,7 +305,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
     '/api/auth/logout',
     defineHandler(async event => {
       if (event.method !== 'POST') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       clearAuthCookies(event);
@@ -325,7 +325,7 @@ export const createAuthProtectedRoutes = () => {
     '/api/auth/me',
     defineHandler(async event => {
       if (event.method !== 'GET') {
-        throw createError({ statusCode: 405, message: 'Method not allowed' });
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const user = event.context.user as User;
