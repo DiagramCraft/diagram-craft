@@ -94,7 +94,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         ]);
 
-        await db.workspaceAdmin.replaceOwners(id, [
+        await db.workspaceAdmin.replaceTeams(id, [
           { id: 'platform-team', workspace: id, sort_order: 0, created_at: timestamp },
           { id: 'ux-team', workspace: id, sort_order: 1, created_at: timestamp },
           { id: 'security-team', workspace: id, sort_order: 2, created_at: timestamp }

@@ -10,7 +10,7 @@ import {
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { ApiError } from '../api';
-import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceOwnerOption } from '../api';
+import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceTeam } from '../api';
 import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
 
 const PROJECT_STATUSES = [
@@ -23,7 +23,7 @@ export const ProjectDetail = () => {
   const navigate = useNavigate();
   const { projectId } = useParams({ strict: false }) as { projectId: string };
   const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
-  const { workspaceSlug, ownerOptions } = useWorkspaceContext();
+  const { workspaceSlug, teams } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const folderFilter = search.folder ?? null;
 
@@ -223,7 +223,7 @@ export const ProjectDetail = () => {
         <ProjectSettings
           project={project}
           workspaceId={workspaceId}
-          ownerOptions={ownerOptions}
+          teams={teams}
           onSaved={() => { setEditing(false); }}
           onClose={() => setEditing(false)}
           onDelete={handleNavigateHome}
@@ -462,14 +462,14 @@ const DiagramsView = ({
 const ProjectSettings = ({
   project,
   workspaceId,
-  ownerOptions,
+  teams,
   onSaved,
   onClose,
   onDelete,
 }: {
   project: ProjectDetailData;
   workspaceId: string;
-  ownerOptions: WorkspaceOwnerOption[];
+  teams: WorkspaceTeam[];
   onSaved: () => void;
   onClose: () => void;
   onDelete: () => void;
@@ -562,9 +562,9 @@ const ProjectSettings = ({
           onChange={e => setOwner(e.target.value)}
         >
           <option value="">No owner</option>
-          {ownerOptions.map(option => (
-            <option key={option.id} value={option.id}>
-              {option.id}
+          {teams.map(team => (
+            <option key={team.id} value={team.id}>
+              {team.id}
             </option>
           ))}
         </select>

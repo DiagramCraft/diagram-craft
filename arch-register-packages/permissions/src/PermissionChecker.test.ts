@@ -3,16 +3,34 @@ import { PermissionChecker } from './PermissionChecker.js';
 import { buildAuthorizationContext } from './AuthorizationContextBuilder.js';
 import type { Entity, EntityGrant } from './types.js';
 
+const teamAssignments = (...teamIds: string[]) =>
+  teamIds.map(teamId => ({ teamId, role: 'team_admin' as const }));
+
 describe('PermissionChecker - Global Permissions', () => {
   const checker = new PermissionChecker();
+
+  it('supports teamAssignments and teams as the primary context shape', () => {
+    const context = buildAuthorizationContext({
+      userId: 'team-admin',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+      teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(true);
+  });
 
   it('global_admin has all global permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -28,8 +46,8 @@ describe('PermissionChecker - Global Permissions', () => {
       userId: 'workspace-admin',
       globalRoles: ['workspace_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -45,8 +63,8 @@ describe('PermissionChecker - Global Permissions', () => {
       userId: 'regular-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -66,8 +84,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -83,8 +101,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'team-member',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -100,8 +118,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'other-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-2'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -117,8 +135,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'multi-team-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1', 'team-2', 'team-3'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -135,8 +153,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'regular-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -150,8 +168,8 @@ describe('PermissionChecker - Project Permissions', () => {
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -188,8 +206,8 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
       userId: 'any-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -204,8 +222,8 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
       userId: 'any-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -222,8 +240,8 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -241,8 +259,8 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
       userId: 'team-member',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -282,8 +300,8 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
       userId: 'any-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -298,8 +316,8 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
       userId: 'team-member',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -317,8 +335,8 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -376,8 +394,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -397,8 +415,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -418,8 +436,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -439,8 +457,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -461,8 +479,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [viewerGrant, editorGrant]
@@ -482,8 +500,8 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity1, entity2],
       grants: [grant]
@@ -539,8 +557,8 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -558,8 +576,8 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       userId: 'user-2',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-2'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -577,8 +595,8 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1', 'team-2'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [team1Grant, team2Grant]
@@ -607,8 +625,8 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [userGrant, teamGrant]

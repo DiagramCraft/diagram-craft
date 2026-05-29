@@ -66,12 +66,54 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     })
   );
 
+  // GET /api/:workspace/config/teams
+  router.get(
+    `${BASE}/teams`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      return await db.workspaceAdmin.listTeams(workspace);
+    })
+  );
+
   // GET /api/:workspace/config/owners
   router.get(
     `${BASE}/owners`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
-      return await db.workspaceAdmin.listOwners(workspace);
+      return await db.workspaceAdmin.listTeams(workspace);
+    })
+  );
+
+  // PUT /api/:workspace/config/teams
+  router.put(
+    `${BASE}/teams`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      const body = await event.req.json().catch(() => undefined);
+      httpAssert.array(body, { message: 'Request body must be a JSON array' });
+
+      const owners = body as Array<{ id?: unknown; sort_order?: unknown }>;
+      for (const o of owners) {
+        httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+      }
+
+      const ids = owners.map(o => o.id as string);
+      httpAssert.true(new Set(ids).size === ids.length, {
+        message: 'Duplicate owner ids'
+      });
+
+      const now = new Date();
+      return await db.workspaceAdmin.replaceTeams(
+        workspace,
+        owners.map((o, i) => ({
+          id: o.id as string,
+          workspace,
+          sort_order: i,
+          created_at: now
+        }))
+      );
     })
   );
 
@@ -96,7 +138,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       });
 
       const now = new Date();
-      return await db.workspaceAdmin.replaceOwners(
+      return await db.workspaceAdmin.replaceTeams(
         workspace,
         owners.map((o, i) => ({
           id: o.id as string,
@@ -109,17 +151,27 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   );
 
   router.get(
+    `${BASE}/team-assignments`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      return await db.workspaceAdmin.listTeamAssignments(workspace);
+    })
+  );
+
+  router.get(
     `${BASE}/team-memberships`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'people.teams');
-      return await db.workspaceAdmin.listTeamMemberships(workspace);
+      return await db.workspaceAdmin.listTeamAssignments(workspace);
     })
   );
 
   router.put(
-    `${BASE}/team-memberships`,
+    `${BASE}/team-assignments`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
@@ -128,13 +180,14 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       httpAssert.array(body, { message: 'Request body must be a JSON array' });
       const rows = body as unknown[];
 
-      const owners = new Set((await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id));
+      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
       const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
       const now = new Date();
       const memberships: Array<{
         workspace: string;
         team_id: string;
         user_id: string;
+        role: import('../types.js').TeamRole;
         created_at: Date;
       }> = rows.map(row => {
         httpAssert.true(row != null && typeof row === 'object', {
@@ -149,15 +202,71 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         httpAssert.true(typeof userId === 'string' && users.has(userId), {
           message: 'user_id must reference an existing user'
         });
+        const roleValue = membership['role'];
+        const role =
+          roleValue === 'team_editor' || roleValue === 'team_reviewer' || roleValue === 'team_admin'
+            ? roleValue
+            : 'team_admin';
         return {
           workspace,
           team_id: teamId as string,
           user_id: userId as string,
+          role,
           created_at: now
         };
       });
 
-      return await db.workspaceAdmin.replaceTeamMemberships(workspace, memberships);
+      return await db.workspaceAdmin.replaceTeamAssignments(workspace, memberships);
+    })
+  );
+
+  router.put(
+    `${BASE}/team-memberships`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.teams');
+      const body = await event.req.json().catch(() => undefined);
+      httpAssert.array(body, { message: 'Request body must be a JSON array' });
+      const rows = body as unknown[];
+
+      const owners = new Set((await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id));
+      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
+      const now = new Date();
+      const memberships: Array<{
+        workspace: string;
+        team_id: string;
+        user_id: string;
+        role: import('../types.js').TeamRole;
+        created_at: Date;
+      }> = rows.map(row => {
+        httpAssert.true(row != null && typeof row === 'object', {
+          message: 'Each membership must be an object'
+        });
+        const membership = row as Record<string, unknown>;
+        const teamId = membership['team_id'];
+        httpAssert.true(typeof teamId === 'string' && owners.has(teamId), {
+          message: 'team_id must reference an existing team'
+        });
+        const userId = membership['user_id'];
+        httpAssert.true(typeof userId === 'string' && users.has(userId), {
+          message: 'user_id must reference an existing user'
+        });
+        const roleValue = membership['role'];
+        const role =
+          roleValue === 'team_editor' || roleValue === 'team_reviewer' || roleValue === 'team_admin'
+            ? roleValue
+            : 'team_admin';
+        return {
+          workspace,
+          team_id: teamId as string,
+          user_id: userId as string,
+          role,
+          created_at: now
+        };
+      });
+
+      return await db.workspaceAdmin.replaceTeamAssignments(workspace, memberships);
     })
   );
 

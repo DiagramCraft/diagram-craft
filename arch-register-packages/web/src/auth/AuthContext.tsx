@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
-import type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData } from './types';
+import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
 
-export type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData };
+export type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData };
 
 type AuthMeResponse = User & AuthBaseData;
 
@@ -52,9 +52,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAuthBaseData({
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
-        team_memberships: userData.team_memberships,
+        team_assignments_by_workspace: userData.team_assignments_by_workspace ?? {},
         workspace_roles: userData.workspace_roles ?? {},
-        owner_options_by_workspace: userData.owner_options_by_workspace ?? {}
+        teams_by_workspace: userData.teams_by_workspace ?? {}
       });
       return true;
     } catch (error) {

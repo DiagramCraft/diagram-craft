@@ -595,7 +595,7 @@ export type WorkspaceLifecycleState = {
   sort_order: number;
 };
 
-export type WorkspaceOwnerOption = {
+export type WorkspaceTeam = {
   id: string;
   sort_order: number;
 };
@@ -609,13 +609,13 @@ export const updateLifecycleStates = (workspace: string, states: WorkspaceLifecy
     body: JSON.stringify(states),
   });
 
-export const fetchOwnerOptions = (workspace: string) =>
-  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`);
+export const fetchTeams = (workspace: string) =>
+  apiFetch<WorkspaceTeam[]>(`/api/${workspace}/config/teams`);
 
-export const updateOwnerOptions = (workspace: string, owners: WorkspaceOwnerOption[]) =>
-  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`, {
+export const updateTeams = (workspace: string, teams: WorkspaceTeam[]) =>
+  apiFetch<WorkspaceTeam[]>(`/api/${workspace}/config/teams`, {
     method: 'PUT',
-    body: JSON.stringify(owners),
+    body: JSON.stringify(teams),
   });
 
 // ── Workspace Members ──────────────────────────────────────────
@@ -642,6 +642,26 @@ export type WorkspaceUserInfo = {
 
 export const fetchWorkspaceUsers = (workspace: string) =>
   apiFetch<WorkspaceUserInfo[]>(`/api/${workspace}/config/users`);
+
+export type TeamAssignmentInfo = {
+  workspace: string;
+  team_id: string;
+  user_id: string;
+  role: import('@arch-register/permissions').TeamRole;
+  created_at: string;
+};
+
+export const fetchTeamAssignments = (workspace: string) =>
+  apiFetch<TeamAssignmentInfo[]>(`/api/${workspace}/config/team-assignments`);
+
+export const updateTeamAssignments = (
+  workspace: string,
+  assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>
+) =>
+  apiFetch<TeamAssignmentInfo[]>(`/api/${workspace}/config/team-assignments`, {
+    method: 'PUT',
+    body: JSON.stringify(assignments),
+  });
 
 export const updateWorkspaceMemberRole = (
   workspace: string,

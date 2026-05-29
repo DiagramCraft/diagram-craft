@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import type { Workspace, EntitySchema, Project, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
 
 export type WorkspaceContextType = {
   workspace: Workspace | null;
@@ -7,7 +7,7 @@ export type WorkspaceContextType = {
   schemas: EntitySchema[];
   projects: Project[];
   lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
+  teams: WorkspaceTeam[];
   permissions: {
     canManageWorkspaces: boolean;
     canManageGlobalRoles: boolean;

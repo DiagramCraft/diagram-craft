@@ -70,11 +70,11 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.string(name, { message: 'name is required and must be a string' });
       const colorVal = typeof color === 'string' ? color : null;
       const iconVal = typeof icon === 'string' ? icon : null;
-      const ownerValues = new Set(
-        (await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id)
+      const teamIds = new Set(
+        (await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id)
       );
       const defaultOwner =
-        typeof default_owner === 'string' && ownerValues.has(default_owner) ? default_owner : null;
+        typeof default_owner === 'string' && teamIds.has(default_owner) ? default_owner : null;
       try {
         const timestamp = new Date();
         const row = await db.catalog.createSchema({
@@ -119,8 +119,8 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, fields, color, icon, default_owner } = body as Record<string, unknown>;
       httpAssert.string(name, { message: 'name is required and must be a string' });
-      const ownerValues = new Set(
-        (await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id)
+      const teamIds = new Set(
+        (await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id)
       );
       try {
         const oldRow = await db.catalog.getSchema(workspace, id);
@@ -136,7 +136,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : oldRow.icon,
           default_owner:
             default_owner !== undefined
-              ? typeof default_owner === 'string' && ownerValues.has(default_owner)
+              ? typeof default_owner === 'string' && teamIds.has(default_owner)
                 ? default_owner
                 : null
               : oldRow.default_owner,

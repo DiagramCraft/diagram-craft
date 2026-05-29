@@ -285,19 +285,19 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       const workspaceData = await Promise.all(
         workspaces.map(async workspace => {
-          const [teamMemberships, owners, workspaceRole] = await Promise.all([
-            db.workspaceAdmin.listTeamMemberships(workspace.id),
-            db.workspaceAdmin.listOwners(workspace.id),
+          const [teamAssignments, teams, workspaceRole] = await Promise.all([
+            db.workspaceAdmin.listTeamAssignments(workspace.id),
+            db.workspaceAdmin.listTeams(workspace.id),
             db.workspaceAdmin.getWorkspaceRole(workspace.id, user.id),
           ]);
           return {
             workspace_id: workspace.id,
-            team_ids: teamMemberships
+            team_assignments: teamAssignments
               .filter(m => m.user_id === user.id)
-              .map(m => m.team_id),
-            owner_options: owners.map(o => ({
-              id: o.id,
-              name: o.id,
+              .map(m => ({ team_id: m.team_id, role: m.role })),
+            teams: teams.map(team => ({
+              id: team.id,
+              name: team.id,
               type: 'team' as const,
             })),
             workspace_role: workspaceRole,
@@ -305,6 +305,19 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         })
       );
 
+      const teamAssignmentsByWorkspace = Object.fromEntries(
+        workspaceData
+          .filter(ws => ws.team_assignments.length > 0)
+          .map(ws => [ws.workspace_id, ws.team_assignments])
+      );
+      const workspaceRoles = Object.fromEntries(
+        workspaceData
+          .filter(ws => ws.workspace_role != null)
+          .map(ws => [ws.workspace_id, ws.workspace_role])
+      );
+      const teamsByWorkspace = Object.fromEntries(
+        workspaceData.map(ws => [ws.workspace_id, ws.teams])
+      );
       return {
         id: user.id,
         email: user.email,
@@ -314,20 +327,9 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         last_login_at: user.last_login_at?.toISOString() ?? null,
         global_roles: globalRoles,
         global_permissions: globalPermissions,
-        team_memberships: workspaceData
-          .filter(ws => ws.team_ids.length > 0)
-          .map(ws => ({
-            workspace_id: ws.workspace_id,
-            team_ids: ws.team_ids,
-          })),
-        workspace_roles: Object.fromEntries(
-          workspaceData
-            .filter(ws => ws.workspace_role != null)
-            .map(ws => [ws.workspace_id, ws.workspace_role])
-        ),
-        owner_options_by_workspace: Object.fromEntries(
-          workspaceData.map(ws => [ws.workspace_id, ws.owner_options])
-        ),
+        team_assignments_by_workspace: teamAssignmentsByWorkspace,
+        workspace_roles: workspaceRoles,
+        teams_by_workspace: teamsByWorkspace,
       };
     })
   );

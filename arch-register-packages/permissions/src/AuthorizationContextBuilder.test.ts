@@ -12,8 +12,14 @@ import type {
   EntitySchema,
   EntityGrant,
   GlobalRole,
-  WorkspaceOwnerOption
+  WorkspaceTeam
 } from './types.js';
+
+const makeTeamAssignments = (teamIds: string[]) =>
+  teamIds.map(teamId => ({ teamId, role: 'team_admin' as const }));
+
+const makeTeams = (teamIds: string[]): WorkspaceTeam[] =>
+  teamIds.map(teamId => ({ id: teamId, name: teamId, type: 'team' as const }));
 
 describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
   it('builds context with all required fields', () => {
@@ -21,8 +27,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: ['workspace_admin'],
       workspaceRole: null,
-      teamMemberships: ['team-1', 'team-2'],
-      ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      teamAssignments: makeTeamAssignments(['team-1', 'team-2']),
+      teams: makeTeams(['team-1']),
       schemas: [],
       entities: [],
       grants: []
@@ -33,7 +39,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     expect(context.userId).toBe('user-1');
     expect(context.globalRoles).toEqual(new Set(['workspace_admin']));
     expect(context.teamIds).toEqual(new Set(['team-1', 'team-2']));
-    expect(context.ownerOptions).toEqual([{ id: 'team-1', name: 'Engineering', type: 'team' }]);
+    expect(context.teams).toEqual(makeTeams(['team-1']));
     expect(context.schemas).toBeInstanceOf(Map);
     expect(context.entities).toBeInstanceOf(Map);
     expect(context.grants).toEqual([]);
@@ -44,8 +50,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: ['workspace_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -63,8 +69,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: ['workspace_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -81,8 +87,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -124,8 +130,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [schema1, schema2],
       entities: [],
       grants: []
@@ -179,8 +185,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [],
       entities: [entity1, entity2],
       grants: []
@@ -198,8 +204,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [],
+      teamAssignments: [],
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -210,7 +216,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     expect(context.globalRoles.size).toBe(0);
     expect(context.globalPermissions.size).toBe(0);
     expect(context.teamIds.size).toBe(0);
-    expect(context.ownerOptions).toEqual([]);
+    expect(context.teams).toEqual([]);
     expect(context.schemas.size).toBe(0);
     expect(context.entities.size).toBe(0);
     expect(context.grants).toEqual([]);
@@ -222,9 +228,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     private entities: Entity[] = [];
     private schemas: EntitySchema[] = [];
     private grants: EntityGrant[] = [];
-    private teamMemberships: Map<string, string[]> = new Map();
+    private teamAssignments: Map<string, Array<{ teamId: string; role: 'team_admin' }>> = new Map();
     private globalRoles: Map<string, GlobalRole[]> = new Map();
-    private ownerOptions: Map<string, WorkspaceOwnerOption[]> = new Map();
+    private teams: Map<string, WorkspaceTeam[]> = new Map();
 
     setEntities(entities: Entity[]) {
       this.entities = entities;
@@ -238,16 +244,16 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       this.grants = grants;
     }
 
-    setTeamMemberships(workspaceId: string, userId: string, teams: string[]) {
-      this.teamMemberships.set(`${workspaceId}:${userId}`, teams);
+    setTeamAssignments(workspaceId: string, userId: string, teamIds: string[]) {
+      this.teamAssignments.set(`${workspaceId}:${userId}`, makeTeamAssignments(teamIds));
     }
 
     setGlobalRoles(userId: string, roles: GlobalRole[]) {
       this.globalRoles.set(userId, roles);
     }
 
-    setOwnerOptions(workspaceId: string, options: WorkspaceOwnerOption[]) {
-      this.ownerOptions.set(workspaceId, options);
+    setTeams(workspaceId: string, teams: WorkspaceTeam[]) {
+      this.teams.set(workspaceId, teams);
     }
 
     async getEntities(_workspaceId: string): Promise<Entity[]> {
@@ -262,16 +268,16 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       return this.grants;
     }
 
-    async getTeamMemberships(workspaceId: string, userId: string): Promise<string[]> {
-      return this.teamMemberships.get(`${workspaceId}:${userId}`) ?? [];
+    async getTeamAssignments(workspaceId: string, userId: string) {
+      return this.teamAssignments.get(`${workspaceId}:${userId}`) ?? [];
     }
 
     async getGlobalRoles(userId: string): Promise<GlobalRole[]> {
       return this.globalRoles.get(userId) ?? [];
     }
 
-    async getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]> {
-      return this.ownerOptions.get(workspaceId) ?? [];
+    async getTeams(workspaceId: string): Promise<WorkspaceTeam[]> {
+      return this.teams.get(workspaceId) ?? [];
     }
 
     async getWorkspaceRole(_workspaceId: string, _userId: string) {
@@ -326,19 +332,30 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     provider.setSchemas([schema]);
     provider.setEntities([entity]);
     provider.setGrants([grant]);
-    provider.setTeamMemberships('workspace-1', 'user-1', ['team-1']);
+    provider.setTeamAssignments('workspace-1', 'user-1', ['team-1']);
     provider.setGlobalRoles('user-1', ['workspace_admin']);
-    provider.setOwnerOptions('workspace-1', [{ id: 'team-1', name: 'Engineering', type: 'team' }]);
+    provider.setTeams('workspace-1', makeTeams(['team-1']));
 
     const data = await fetchAuthorizationContextData(provider, 'workspace-1', 'user-1');
 
     expect(data.userId).toBe('user-1');
     expect(data.globalRoles).toEqual(['workspace_admin']);
-    expect(data.teamMemberships).toEqual(['team-1']);
-    expect(data.ownerOptions).toEqual([{ id: 'team-1', name: 'Engineering', type: 'team' }]);
+    expect(data.teamAssignments).toEqual(makeTeamAssignments(['team-1']));
+    expect(data.teams).toEqual(makeTeams(['team-1']));
     expect(data.schemas).toEqual([schema]);
     expect(data.entities).toEqual([entity]);
     expect(data.grants).toEqual([grant]);
+  });
+
+  it('returns only the canonical fetched data shape', async () => {
+    const provider = new TestDataProvider();
+    provider.setTeamAssignments('workspace-1', 'user-1', ['team-1']);
+    provider.setTeams('workspace-1', makeTeams(['team-1']));
+
+    const data = await fetchAuthorizationContextData(provider, 'workspace-1', 'user-1');
+
+    expect(data.teamAssignments).toEqual(makeTeamAssignments(['team-1']));
+    expect(data.teams).toEqual(makeTeams(['team-1']));
   });
 
   it('handles empty data from provider', async () => {
@@ -348,8 +365,8 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
 
     expect(data.userId).toBe('user-1');
     expect(data.globalRoles).toEqual([]);
-    expect(data.teamMemberships).toEqual([]);
-    expect(data.ownerOptions).toEqual([]);
+    expect(data.teamAssignments).toEqual([]);
+    expect(data.teams).toEqual([]);
     expect(data.schemas).toEqual([]);
     expect(data.entities).toEqual([]);
     expect(data.grants).toEqual([]);
@@ -363,9 +380,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     const originalGetEntities = provider.getEntities.bind(provider);
     const originalGetSchemas = provider.getSchemas.bind(provider);
     const originalGetGrants = provider.getEntityGrants.bind(provider);
-    const originalGetTeamMemberships = provider.getTeamMemberships.bind(provider);
+    const originalGetTeamAssignments = provider.getTeamAssignments.bind(provider);
     const originalGetGlobalRoles = provider.getGlobalRoles.bind(provider);
-    const originalGetOwnerOptions = provider.getOwnerOptions.bind(provider);
+    const originalGetTeams = provider.getTeams.bind(provider);
     const originalGetWorkspaceRole = provider.getWorkspaceRole.bind(provider);
 
     provider.getEntities = async (workspaceId: string) => {
@@ -383,9 +400,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       return originalGetGrants(workspaceId);
     };
 
-    provider.getTeamMemberships = async (workspaceId: string, userId: string) => {
-      callOrder.push('teamMemberships');
-      return originalGetTeamMemberships(workspaceId, userId);
+    provider.getTeamAssignments = async (workspaceId: string, userId: string) => {
+      callOrder.push('teamAssignments');
+      return originalGetTeamAssignments(workspaceId, userId);
     };
 
     provider.getGlobalRoles = async (userId: string) => {
@@ -393,9 +410,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       return originalGetGlobalRoles(userId);
     };
 
-    provider.getOwnerOptions = async (workspaceId: string) => {
-      callOrder.push('ownerOptions');
-      return originalGetOwnerOptions(workspaceId);
+    provider.getTeams = async (workspaceId: string) => {
+      callOrder.push('teams');
+      return originalGetTeams(workspaceId);
     };
 
     provider.getWorkspaceRole = async (workspaceId: string, userId: string) => {
@@ -409,9 +426,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     expect(callOrder).toContain('entities');
     expect(callOrder).toContain('schemas');
     expect(callOrder).toContain('grants');
-    expect(callOrder).toContain('teamMemberships');
+    expect(callOrder).toContain('teamAssignments');
     expect(callOrder).toContain('globalRoles');
-    expect(callOrder).toContain('ownerOptions');
+    expect(callOrder).toContain('teams');
     expect(callOrder).toContain('workspaceRole');
     expect(callOrder.length).toBe(7);
   });
@@ -419,8 +436,8 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
   it('can be used to build authorization context', async () => {
     const provider = new TestDataProvider();
     provider.setGlobalRoles('user-1', ['workspace_admin']);
-    provider.setTeamMemberships('workspace-1', 'user-1', ['team-1']);
-    provider.setOwnerOptions('workspace-1', [{ id: 'team-1', name: 'Engineering', type: 'team' }]);
+    provider.setTeamAssignments('workspace-1', 'user-1', ['team-1']);
+    provider.setTeams('workspace-1', makeTeams(['team-1']));
 
     const data = await fetchAuthorizationContextData(provider, 'workspace-1', 'user-1');
     const context = buildAuthorizationContext(data);
@@ -491,10 +508,10 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
       ];
     }
 
-    async getTeamMemberships(_workspaceId: string, userId: string): Promise<string[]> {
+    async getTeamAssignments(_workspaceId: string, userId: string) {
       // Simulate user being in multiple teams
       if (userId === 'engineer-1') {
-        return ['team-engineering', 'team-operations'];
+        return makeTeamAssignments(['team-engineering', 'team-operations']);
       }
       return [];
     }
@@ -506,11 +523,8 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
       return [];
     }
 
-    async getOwnerOptions(_workspaceId: string): Promise<WorkspaceOwnerOption[]> {
-      return [
-        { id: 'team-engineering', name: 'Engineering', type: 'team' },
-        { id: 'team-operations', name: 'Operations', type: 'team' }
-      ];
+    async getTeams(_workspaceId: string): Promise<WorkspaceTeam[]> {
+      return makeTeams(['team-engineering', 'team-operations']);
     }
 
     async getWorkspaceRole(_workspaceId: string, _userId: string) {
@@ -518,7 +532,7 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
     }
   }
 
-  it('builds complete context for engineer with team memberships', async () => {
+  it('builds complete context for engineer with team assignments', async () => {
     const provider = new MockDatabaseProvider();
     const data = await fetchAuthorizationContextData(provider, 'workspace-prod', 'engineer-1');
     const context = buildAuthorizationContext(data);

@@ -2,8 +2,27 @@ import { describe, it, expect } from 'vitest';
 import { CapabilityEvaluator } from './CapabilityEvaluator.js';
 import { buildAuthorizationContext } from './AuthorizationContextBuilder.js';
 
+const teamAssignments = (...teamIds: string[]) =>
+  teamIds.map(teamId => ({ teamId, role: 'team_admin' as const }));
+
 describe('CapabilityEvaluator - Project Creation', () => {
   const capabilities = new CapabilityEvaluator();
+
+  it('supports teamAssignments and teams as the primary context shape', () => {
+    const context = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+      teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(capabilities.canCreateProject(context, 'team-1')).toBe(true);
+    expect(capabilities.canCreateTopLevelEntity(context, 'team-1')).toBe(true);
+  });
 
   describe('Business Rule: Users can create projects for teams they belong to', () => {
     it('team member can create project for their team', () => {
@@ -11,8 +30,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('team-1'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -26,8 +45,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1'],
-        ownerOptions: [
+        teamAssignments: teamAssignments(),
+        teams: [
           { id: 'team-1', name: 'Engineering', type: 'team' },
           { id: 'team-2', name: 'Marketing', type: 'team' }
         ],
@@ -44,8 +63,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1', 'team-2', 'team-3'],
-        ownerOptions: [
+        teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+        teams: [
           { id: 'team-1', name: 'Engineering', type: 'team' },
           { id: 'team-2', name: 'Marketing', type: 'team' },
           { id: 'team-3', name: 'Sales', type: 'team' }
@@ -65,8 +84,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -80,8 +99,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -97,8 +116,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'admin-user',
         globalRoles: ['global_admin'],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [
           { id: 'team-1', name: 'Engineering', type: 'team' },
           { id: 'team-2', name: 'Marketing', type: 'team' }
         ],
@@ -116,8 +135,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'admin-user',
         globalRoles: ['global_admin'],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [],
         schemas: [],
         entities: [],
         grants: []
@@ -131,8 +150,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'ws-admin',
         globalRoles: ['workspace_admin'],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -148,8 +167,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'editor-user',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -163,8 +182,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'viewer-user',
         globalRoles: [],
         workspaceRole: 'viewer',
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -180,8 +199,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'new-employee',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['engineering-team'],
-        ownerOptions: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('engineering-team'),
+        teams: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -195,8 +214,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'former-employee',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: [], // Removed from team
-        ownerOptions: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(), // Removed from team
+        teams: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -210,8 +229,8 @@ describe('CapabilityEvaluator - Project Creation', () => {
         userId: 'contractor',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['client-a-team', 'client-b-team'],
-        ownerOptions: [
+        teamAssignments: teamAssignments('client-a-team', 'client-b-team'),
+        teams: [
           { id: 'client-a-team', name: 'Client A', type: 'team' },
           { id: 'client-b-team', name: 'Client B', type: 'team' },
           { id: 'client-c-team', name: 'Client C', type: 'team' }
@@ -237,8 +256,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('team-1'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -252,8 +271,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments('team-1'),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -267,8 +286,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: ['team-2'],
-        ownerOptions: [
+        teamAssignments: teamAssignments(),
+        teams: [
           { id: 'team-1', name: 'Engineering', type: 'team' },
           { id: 'team-2', name: 'Marketing', type: 'team' }
         ],
@@ -286,8 +305,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -301,8 +320,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: null,
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -316,8 +335,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: [],
-        ownerOptions: [],
+        teamAssignments: teamAssignments(),
+        teams: [],
         schemas: [],
         entities: [],
         grants: []
@@ -333,8 +352,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'admin-user',
         globalRoles: ['global_admin'],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [
+        teamAssignments: teamAssignments(),
+        teams: [
           { id: 'team-1', name: 'Engineering', type: 'team' },
           { id: 'team-2', name: 'Marketing', type: 'team' }
         ],
@@ -352,8 +371,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'admin-user',
         globalRoles: ['global_admin'],
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [],
+        teamAssignments: teamAssignments(),
+        teams: [],
         schemas: [],
         entities: [],
         grants: []
@@ -369,8 +388,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'architect',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: ['architecture-team'],
-        ownerOptions: [{ id: 'architecture-team', name: 'Architecture', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'architecture-team', name: 'Architecture', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -384,8 +403,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'team-member',
         globalRoles: [],
         workspaceRole: 'viewer',
-        teamMemberships: [],
-        ownerOptions: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'engineering-team', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -399,8 +418,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'editor-user',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: ['team-a', 'team-b'],
-        ownerOptions: [
+        teamAssignments: teamAssignments(),
+        teams: [
           { id: 'team-a', name: 'Team A', type: 'team' },
           { id: 'team-b', name: 'Team B', type: 'team' },
           { id: 'team-c', name: 'Team C', type: 'team' }
@@ -422,8 +441,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: 'viewer',
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -436,8 +455,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'user-1',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: [],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -451,8 +470,8 @@ describe('CapabilityEvaluator - Top-Level Entity Creation', () => {
         userId: 'multi-role-user',
         globalRoles: [],
         workspaceRole: 'editor',
-        teamMemberships: ['team-1'],
-        ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+        teamAssignments: teamAssignments(),
+        teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
         schemas: [],
         entities: [],
         grants: []
@@ -471,8 +490,8 @@ describe('CapabilityEvaluator - Combined Scenarios', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: ['team-1'],
-      ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      teamAssignments: teamAssignments('team-1'),
+      teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
       schemas: [],
       entities: [],
       grants: []
@@ -488,8 +507,8 @@ describe('CapabilityEvaluator - Combined Scenarios', () => {
       userId: 'user-1',
       globalRoles: [],
       workspaceRole: 'editor',
-      teamMemberships: ['team-2'],
-      ownerOptions: [
+      teamAssignments: teamAssignments(),
+      teams: [
         { id: 'team-1', name: 'Engineering', type: 'team' },
         { id: 'team-2', name: 'Architecture', type: 'team' }
       ],
@@ -510,8 +529,8 @@ describe('CapabilityEvaluator - Combined Scenarios', () => {
       userId: 'admin-user',
       globalRoles: ['global_admin'],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [
+      teamAssignments: teamAssignments(),
+      teams: [
         { id: 'team-1', name: 'Engineering', type: 'team' },
         { id: 'team-2', name: 'Marketing', type: 'team' }
       ],
@@ -536,8 +555,8 @@ describe('CapabilityEvaluator - Combined Scenarios', () => {
       userId: 'regular-user',
       globalRoles: [],
       workspaceRole: null,
-      teamMemberships: [],
-      ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      teamAssignments: teamAssignments(),
+      teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
       schemas: [],
       entities: [],
       grants: []

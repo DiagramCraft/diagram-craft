@@ -7,7 +7,8 @@ import {
   type Entity,
   type EntityAction,
   type ProjectAction,
-  type GlobalPermission
+  type GlobalPermission,
+  type TeamAssignment
 } from '@arch-register/permissions';
 import { useAuth } from './AuthContext';
 import { useAuthorizationData } from './AuthorizationDataContext';
@@ -91,10 +92,15 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
     (workspaceId: string): AuthorizationContext | null => {
       if (!user || !authData) return null;
 
-      const teamMembership = authData.team_memberships.find(
-        tm => tm.workspace_id === workspaceId
-      );
-      const ownerOptions = authData.owner_options_by_workspace[workspaceId] ?? [];
+      const teamAssignments =
+        (authData.team_assignments_by_workspace?.[workspaceId] ?? []).map(
+          assignment =>
+            ({
+              teamId: assignment.team_id,
+              role: assignment.role,
+            }) satisfies TeamAssignment
+        ) ?? [];
+      const teams = authData.teams_by_workspace?.[workspaceId] ?? [];
 
       const workspaceRole = (authData.workspace_roles?.[workspaceId] ?? null) as import('@arch-register/permissions').WorkspaceRole | null;
 
@@ -102,8 +108,8 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         userId: user.id,
         globalRoles: authData.global_roles,
         workspaceRole,
-        teamMemberships: teamMembership?.team_ids ?? [],
-        ownerOptions,
+        teamAssignments,
+        teams,
         schemas: [],
         entities: [],
         grants: []
@@ -143,8 +149,8 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         userId: user.id,
         globalRoles: authData.global_roles,
         workspaceRole: null,
-        teamMemberships: [],
-        ownerOptions: [],
+        teamAssignments: [],
+        teams: [],
         schemas: [],
         entities: [],
         grants: []

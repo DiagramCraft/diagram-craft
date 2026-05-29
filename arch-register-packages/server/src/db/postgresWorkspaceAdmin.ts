@@ -109,7 +109,7 @@ export class PostgresWorkspaceAdminDatabase
     }
   }
 
-  async listOwners(workspace: string) {
+  async listTeams(workspace: string) {
     return await this.sql<WorkspaceOwner[]>`
       SELECT id, workspace, sort_order, created_at
       FROM workspace_owner
@@ -118,7 +118,7 @@ export class PostgresWorkspaceAdminDatabase
     `;
   }
 
-  async replaceOwners(workspace: string, owners: WorkspaceOwner[]) {
+  async replaceTeams(workspace: string, owners: WorkspaceOwner[]) {
     try {
       await this.sql.begin(async tx => {
         const ownerIds = owners.map(owner => owner.id);
@@ -148,33 +148,33 @@ export class PostgresWorkspaceAdminDatabase
           `;
         }
       });
-      return await this.listOwners(workspace);
+      return await this.listTeams(workspace);
     } catch (error) {
       return normalizePostgresError(error);
     }
   }
 
-  async listTeamMemberships(workspace: string) {
+  async listTeamAssignments(workspace: string) {
     return await this.sql<TeamMembership[]>`
-      SELECT workspace, team_id, user_id, created_at
+      SELECT workspace, team_id, user_id, role, created_at
       FROM team_membership
       WHERE workspace = ${workspace}
       ORDER BY team_id, user_id
     `;
   }
 
-  async replaceTeamMemberships(workspace: string, memberships: TeamMembership[]) {
+  async replaceTeamAssignments(workspace: string, memberships: TeamMembership[]) {
     try {
       await this.sql.begin(async tx => {
         await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
         for (const membership of memberships) {
           await tx`
-            INSERT INTO team_membership (workspace, team_id, user_id, created_at)
-            VALUES (${workspace}, ${membership.team_id}, ${membership.user_id}, ${membership.created_at})
+            INSERT INTO team_membership (workspace, team_id, user_id, role, created_at)
+            VALUES (${workspace}, ${membership.team_id}, ${membership.user_id}, ${membership.role}, ${membership.created_at})
           `;
         }
       });
-      return await this.listTeamMemberships(workspace);
+      return await this.listTeamAssignments(workspace);
     } catch (error) {
       return normalizePostgresError(error);
     }

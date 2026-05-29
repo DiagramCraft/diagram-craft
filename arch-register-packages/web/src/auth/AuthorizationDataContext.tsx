@@ -3,15 +3,13 @@ import type {
   AuthBaseData,
   GlobalPermission,
   GlobalRole,
-  WorkspaceOwnerOption,
+  WorkspaceTeam,
   WorkspaceRole,
-  WorkspaceTeamMembership
 } from './types';
 
 export type {
   AuthBaseData,
-  WorkspaceOwnerOption,
-  WorkspaceTeamMembership,
+  WorkspaceTeam,
   GlobalPermission,
   GlobalRole,
   WorkspaceRole

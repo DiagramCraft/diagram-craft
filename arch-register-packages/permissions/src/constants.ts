@@ -1,4 +1,13 @@
-import type { EntityAction, EntityRole, GlobalPermission, GlobalRole, WorkspaceCapability, WorkspaceRole } from './types.js';
+import type {
+  EntityAction,
+  EntityRole,
+  GlobalPermission,
+  GlobalRole,
+  ProjectAction,
+  TeamRole,
+  WorkspaceCapability,
+  WorkspaceRole
+} from './types.js';
 
 /**
  * Maps entity roles to the actions they can perform
@@ -8,6 +17,36 @@ export const ROLE_ACTIONS: Record<EntityRole, EntityAction[]> = {
   editor: ['view_entity', 'edit_entity'],
   contributor: ['view_entity', 'edit_entity', 'create_child'],
   entity_admin: ['view_entity', 'edit_entity', 'create_child', 'admin_entity'],
+};
+
+export const TEAM_ROLE_PERMISSIONS: Record<TeamRole, {
+  directEntityActions: EntityAction[];
+  descendantEntityActions: EntityAction[];
+  projectActions: ProjectAction[];
+  canCreateProjects: boolean;
+  canCreateEntities: boolean;
+}> = {
+  team_admin: {
+    directEntityActions: ROLE_ACTIONS['entity_admin'],
+    descendantEntityActions: ROLE_ACTIONS['contributor'],
+    projectActions: ['edit_project', 'delete_project', 'manage_files'],
+    canCreateProjects: true,
+    canCreateEntities: true,
+  },
+  team_editor: {
+    directEntityActions: ROLE_ACTIONS['contributor'],
+    descendantEntityActions: ROLE_ACTIONS['editor'],
+    projectActions: ['edit_project', 'manage_files'],
+    canCreateProjects: true,
+    canCreateEntities: true,
+  },
+  team_reviewer: {
+    directEntityActions: ROLE_ACTIONS['viewer'],
+    descendantEntityActions: ROLE_ACTIONS['viewer'],
+    projectActions: [],
+    canCreateProjects: false,
+    canCreateEntities: false,
+  },
 };
 
 /**

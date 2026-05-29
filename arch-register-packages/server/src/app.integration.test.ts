@@ -28,7 +28,7 @@ const seedDb = async (db: DatabaseAdapter) => {
       workspace.id,
       seedLifecycleStates.filter(state => state.workspace === workspace.id)
     );
-    await db.workspaceAdmin.replaceOwners(
+    await db.workspaceAdmin.replaceTeams(
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );

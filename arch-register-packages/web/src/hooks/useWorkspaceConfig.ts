@@ -1,18 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchLifecycleStates,
-  fetchOwnerOptions,
+  fetchTeams,
+  fetchTeamAssignments,
   updateLifecycleStates,
-  updateOwnerOptions,
+  updateTeams,
+  updateTeamAssignments,
+  type TeamAssignmentInfo,
+  type WorkspaceTeam,
   type WorkspaceLifecycleState,
-  type WorkspaceOwnerOption,
 } from '../api';
 
 // Query keys factory
 export const workspaceConfigKeys = {
   all: ['workspace-config'] as const,
   lifecycleStates: (workspaceId: string) => [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
-  ownerOptions: (workspaceId: string) => [...workspaceConfigKeys.all, 'owner-options', workspaceId] as const,
+  teams: (workspaceId: string) => [...workspaceConfigKeys.all, 'teams', workspaceId] as const,
+  teamAssignments: (workspaceId: string) => [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
 };
 
 // Hook for fetching lifecycle states
@@ -25,13 +29,21 @@ export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
   });
 };
 
-// Hook for fetching owner options
-export const useOwnerOptions = (workspaceSlug: string, enabled = true) => {
+export const useTeams = (workspaceSlug: string, enabled = true) => {
   return useQuery({
-    queryKey: workspaceConfigKeys.ownerOptions(workspaceSlug),
-    queryFn: () => fetchOwnerOptions(workspaceSlug),
+    queryKey: workspaceConfigKeys.teams(workspaceSlug),
+    queryFn: () => fetchTeams(workspaceSlug),
     enabled: enabled && !!workspaceSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useTeamAssignments = (workspaceSlug: string, enabled = true) => {
+  return useQuery({
+    queryKey: workspaceConfigKeys.teamAssignments(workspaceSlug),
+    queryFn: () => fetchTeamAssignments(workspaceSlug),
+    enabled: enabled && !!workspaceSlug,
+    staleTime: 2 * 60 * 1000,
   });
 };
 
@@ -52,18 +64,32 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
   });
 };
 
-// Hook for updating owner options
-export const useUpdateOwnerOptions = (workspaceId: string) => {
+export const useUpdateTeams = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (owners: WorkspaceOwnerOption[]) =>
-      updateOwnerOptions(workspaceId, owners),
-    onSuccess: (updatedOwners) => {
-      // Update the cache with the new owners
+    mutationFn: (teams: WorkspaceTeam[]) =>
+      updateTeams(workspaceId, teams),
+    onSuccess: updatedTeams => {
       queryClient.setQueryData(
-        workspaceConfigKeys.ownerOptions(workspaceId),
-        updatedOwners
+        workspaceConfigKeys.teams(workspaceId),
+        updatedTeams
+      );
+    },
+  });
+};
+
+export const useUpdateTeamAssignments = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>
+    ) => updateTeamAssignments(workspaceId, assignments),
+    onSuccess: updatedAssignments => {
+      queryClient.setQueryData(
+        workspaceConfigKeys.teamAssignments(workspaceId),
+        updatedAssignments
       );
     },
   });
@@ -72,12 +98,14 @@ export const useUpdateOwnerOptions = (workspaceId: string) => {
 // Combined hook for workspace config
 export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
   const lifecycleStates = useLifecycleStates(workspaceSlug, enabled);
-  const ownerOptions = useOwnerOptions(workspaceSlug, enabled);
+  const teams = useTeams(workspaceSlug, enabled);
+  const teamAssignments = useTeamAssignments(workspaceSlug, enabled);
 
   return {
     lifecycleStates: lifecycleStates.data ?? [],
-    ownerOptions: ownerOptions.data ?? [],
-    isLoading: lifecycleStates.isLoading || ownerOptions.isLoading,
-    isError: lifecycleStates.isError || ownerOptions.isError,
+    teams: teams.data ?? [],
+    teamAssignments: teamAssignments.data ?? [],
+    isLoading: lifecycleStates.isLoading || teams.isLoading || teamAssignments.isLoading,
+    isError: lifecycleStates.isError || teams.isError || teamAssignments.isError,
   };
 };

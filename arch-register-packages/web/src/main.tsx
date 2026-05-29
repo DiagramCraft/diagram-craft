@@ -1,5 +1,5 @@
 import './tokens.css';
-import { useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -17,29 +17,33 @@ const InnerApp = () => {
     router.update({
       context: {
         ...router.options.context,
-        auth: { isAuthenticated, isLoading },
-      },
+        auth: { isAuthenticated, isLoading }
+      }
     });
     router.invalidate();
   }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        background: 'var(--bg-1)',
-      }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid var(--border-1)',
-          borderTopColor: 'var(--accent)',
-          borderRadius: '50%',
-          animation: 'spin 0.8s linear infinite',
-        }} />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          background: 'var(--bg-1)'
+        }}
+      >
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid var(--border-1)',
+            borderTopColor: 'var(--accent)',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite'
+          }}
+        />
       </div>
     );
   }

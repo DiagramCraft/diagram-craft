@@ -9,6 +9,8 @@ export type GlobalPermission =
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
+export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
+
 export type WorkspaceCapability =
   | 'ws.view'
   | 'ws.settings'
@@ -137,10 +139,15 @@ export type Entity = {
 
 // ── Owner Types ───────────────────────────────────────────────
 
-export type WorkspaceOwnerOption = {
+export type WorkspaceTeam = {
   id: string;
   name: string;
   type: 'team';
+};
+
+export type TeamAssignment = {
+  teamId: string;
+  role: TeamRole;
 };
 
 // ── Grant Types ───────────────────────────────────────────────
@@ -173,10 +180,10 @@ export type AuthorizationContext = {
   globalPermissions: Set<GlobalPermission>;
   workspaceRole: WorkspaceRole | null;
   teamIds: Set<string>;
-  ownerOptions: WorkspaceOwnerOption[];
+  teamAssignments: TeamAssignment[];
+  teamRolesByTeam: Map<string, Set<TeamRole>>;
+  teams: WorkspaceTeam[];
   schemas: Map<string, EntitySchema>;
   entities: Map<string, Entity>;
   grants: EntityGrant[];
 };
-
-

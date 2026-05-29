@@ -6,11 +6,12 @@ import type {
   EntitySchema,
   GlobalPermission,
   ProjectAction,
+  TeamRole,
   VisibilityMode,
   WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
-import { ROLE_ACTIONS, WORKSPACE_ROLE_CAPABILITIES } from './constants.js';
+import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS, WORKSPACE_ROLE_CAPABILITIES } from './constants.js';
 
 /**
  * Pure permission checker.
@@ -72,8 +73,12 @@ export class PermissionChecker {
       return true;
     }
 
-    if (ownerTeamId != null && context.teamIds.has(ownerTeamId)) {
-      return true;
+    if (ownerTeamId != null) {
+      for (const role of this.getTeamRoles(context, ownerTeamId)) {
+        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(_action)) {
+          return true;
+        }
+      }
     }
 
     return false;
@@ -146,17 +151,29 @@ export class PermissionChecker {
       actions.add('view_entity');
     }
 
-    // Owner team members get entity_admin role
-    if (entity.owner && context.teamIds.has(entity.owner)) {
-      ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
+    const ancestorIds = this.collectAncestorIds(context, entity);
+
+    // Direct owner team permissions apply to the entity itself
+    if (entity.owner) {
+      for (const role of this.getTeamRoles(context, entity.owner)) {
+        TEAM_ROLE_PERMISSIONS[role].directEntityActions.forEach(teamAction => actions.add(teamAction));
+      }
+    }
+
+    // Ancestor owner teams contribute descendant permissions downward.
+    for (const ancestorId of ancestorIds) {
+      const ancestor = context.entities.get(ancestorId);
+      if (!ancestor?.owner) continue;
+      for (const role of this.getTeamRoles(context, ancestor.owner)) {
+        TEAM_ROLE_PERMISSIONS[role].descendantEntityActions.forEach(teamAction => actions.add(teamAction));
+      }
     }
 
     // Check explicit entity grants
-    const ancestorIds = this.collectAncestorIds(context, entity);
     for (const grant of context.grants) {
       const principalMatches =
         (grant.principal_type === 'user' && grant.principal_id === context.userId) ||
-        (grant.principal_type === 'team' && context.teamIds.has(grant.principal_id));
+        (grant.principal_type === 'team' && context.teamRolesByTeam.has(grant.principal_id));
 
       if (!principalMatches) continue;
       if (!this.hasApplicableGrant(grant, entity.id, ancestorIds)) continue;
@@ -263,5 +280,9 @@ export class PermissionChecker {
       grant.entity_id === targetEntityId ||
       (grant.applies_to === 'subtree' && ancestorIds.has(grant.entity_id))
     );
+  }
+
+  protected getTeamRoles(context: AuthorizationContext, teamId: string): Set<TeamRole> {
+    return context.teamRolesByTeam.get(teamId) ?? new Set<TeamRole>();
   }
 }

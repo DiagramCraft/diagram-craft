@@ -68,8 +68,8 @@ const getProjectCapabilities = (
   };
 };
 
-const resolveProjectOwner = (owner: unknown, ownerValues: Set<string>) =>
-  typeof owner === 'string' && ownerValues.has(owner) ? owner : null;
+const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
+  typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
 type FileEntry = {
   id: string;
@@ -197,8 +197,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const ownerValues = new Set((await db.workspaceAdmin.listOwners(workspace)).map(row => row.id));
-        const resolvedOwner = resolveProjectOwner(owner, ownerValues);
+        const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
+        const resolvedOwner = resolveProjectOwner(owner, teamIds);
         if (authCtx)
           requireCanCreateProject(
             authCtx,
@@ -251,9 +251,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const oldRow = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
-        const ownerValues = new Set((await db.workspaceAdmin.listOwners(workspace)).map(row => row.id));
+        const teamIds = new Set((await db.workspaceAdmin.listTeams(workspace)).map(row => row.id));
         const resolvedOwner =
-          owner !== undefined ? resolveProjectOwner(owner, ownerValues) : oldRow.owner;
+          owner !== undefined ? resolveProjectOwner(owner, teamIds) : oldRow.owner;
         if (authCtx) {
           requireProjectAction(
             authCtx,

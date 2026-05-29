@@ -5,10 +5,11 @@ import {
   buildAuthorizationContext,
   type AuthorizationContext,
   type GlobalRole,
-  type WorkspaceOwnerOption,
+  type TeamAssignment,
+  type WorkspaceTeam,
   type WorkspaceRole
 } from '@arch-register/permissions';
-import { useAuthorizationData, type WorkspaceTeamMembership } from './AuthorizationDataContext';
+import { useAuthorizationData } from './AuthorizationDataContext';
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;
@@ -33,19 +34,23 @@ const buildWorkspaceAuthorizationContext = (
     return null;
   }
 
-  const teamMemberships =
-    authorizationData.team_memberships.find(
-      (membership: WorkspaceTeamMembership) => membership.workspace_id === workspaceId
-    )?.team_ids ?? [];
-  const ownerOptions = authorizationData.owner_options_by_workspace[workspaceId] ?? [];
+  const teamAssignments =
+    (authorizationData.team_assignments_by_workspace?.[workspaceId] ?? []).map(
+      assignment =>
+        ({
+          teamId: assignment.team_id,
+          role: assignment.role,
+        }) satisfies TeamAssignment
+    ) ?? [];
+  const teams = authorizationData.teams_by_workspace?.[workspaceId] ?? [];
   const workspaceRole = (authorizationData.workspace_roles?.[workspaceId] ?? null) as WorkspaceRole | null;
 
   return buildAuthorizationContext({
     userId: '',
     globalRoles: authorizationData.global_roles as GlobalRole[],
     workspaceRole,
-    teamMemberships,
-    ownerOptions: ownerOptions as WorkspaceOwnerOption[],
+    teamAssignments,
+    teams: teams as WorkspaceTeam[],
     schemas: [],
     entities: [],
     grants: []
@@ -75,14 +80,14 @@ export const useWorkspacePermissions = (
     const canCreateProjects =
       context != null &&
       (capabilities.canCreateProject(context, null) ||
-        context.ownerOptions.some(ownerOption =>
-          capabilities.canCreateProject(context, ownerOption.id)
+        context.teams.some(team =>
+          capabilities.canCreateProject(context, team.id)
         ));
     const canCreateEntities =
       context != null &&
       (capabilities.canCreateTopLevelEntity(context, null) ||
-        context.ownerOptions.some(ownerOption =>
-          capabilities.canCreateTopLevelEntity(context, ownerOption.id)
+        context.teams.some(team =>
+          capabilities.canCreateTopLevelEntity(context, team.id)
         ));
 
     return {

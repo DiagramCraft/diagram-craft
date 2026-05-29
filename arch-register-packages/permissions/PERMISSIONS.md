@@ -69,8 +69,8 @@ Virtual permissions are **computed dynamically** and don't exist in the database
 
 | Permission | Description | Evaluation Logic |
 |------------|-------------|------------------|
-| `create_project` | Can create a new project | Platform admin OR has team membership in at least one owner option |
-| `create_top_level_entity` | Can create a top-level entity | Platform admin OR has team membership in at least one owner option |
+| `create_project` | Can create a new project | Platform admin OR has a team role that grants project creation for an owner option |
+| `create_top_level_entity` | Can create a top-level entity | Platform admin OR has a team role that grants entity creation for an owner option |
 
 **Why Virtual Permissions?**
 - Consolidate complex permission logic into reusable checks
@@ -100,15 +100,51 @@ Entity permissions control access to individual entities and are granted through
 
 ### Project Permissions
 
-Project permissions control access to projects and are **team-based** (not role-based).
+Project permissions control access to projects and are granted through **owner-team roles**.
 
 | Action | Description | Required |
 |--------|-------------|----------|
-| `edit_project` | Modify project properties | Team membership in project's owner team |
-| `delete_project` | Delete the project | Team membership in project's owner team |
-| `manage_files` | Upload, modify, delete project files | Team membership in project's owner team |
+| `edit_project` | Modify project properties | Team role with project edit permission in project's owner team |
+| `delete_project` | Delete the project | Team role with project delete permission in project's owner team |
+| `manage_files` | Upload, modify, delete project files | Team role with file-management permission in project's owner team |
 
-**Note:** Projects don't use roles. Access is binary: if you're a member of the project's owner team, you have all project permissions.
+**Note:** Projects are still team-owned, but access is now role-based rather than binary membership.
+
+## Team Roles
+
+Owner teams now grant permissions through **team roles** rather than plain membership.
+
+Each team role contributes:
+
+- **Direct permissions**: apply to entities directly owned by the team
+- **Descendant permissions**: propagate to descendant entities in the hierarchy
+- **Project permissions**: apply to projects owned by the team
+
+Built-in team roles:
+
+| Role | Direct entity permissions | Descendant entity permissions | Project permissions |
+|------|---------------------------|-------------------------------|--------------------|
+| `team_admin` | `entity_admin` | `contributor` | `edit_project`, `delete_project`, `manage_files` |
+| `team_editor` | `contributor` | `editor` | `edit_project`, `manage_files` |
+| `team_reviewer` | `viewer` | `viewer` | none |
+
+## Administration Surfaces
+
+The workspace admin UI separates permission concerns into four settings sections:
+
+| Section | Purpose |
+|---------|---------|
+| `Lifecycle` | Configure lifecycle states only |
+| `Teams` | Manage owner teams and team-role assignments |
+| `Members` | Manage workspace-wide membership roles |
+| `Global permissions` | Manage platform-wide global roles |
+
+Those sections map to different runtime concepts and should not be conflated:
+
+- lifecycle settings do not grant access
+- team roles grant access to owned entities and projects
+- workspace member roles grant workspace-wide capabilities
+- global roles grant platform-wide capabilities
 
 ## Global Roles
 
@@ -130,7 +166,7 @@ hasGlobalPermission(permission)
 ├─ Is permission virtual?
 │  ├─ create_project or create_top_level_entity?
 │  │  ├─ Is user platform_admin? → YES → ALLOW
-│  │  └─ Does user have team membership in any owner option?
+│  │  └─ Does user have a team role in any owner team that grants creation?
 │  │     └─ YES → ALLOW
 │  │     └─ NO → DENY
 │  └─ NO → Check user's global permissions set
@@ -148,7 +184,7 @@ hasGlobalPermission(permission)
 hasProjectPermission(ownerTeamId, action)
 ├─ Is user platform_admin?
 │  └─ YES → ALLOW
-└─ Is user member of ownerTeamId?
+└─ Does user have a team role on ownerTeamId that grants the requested project action?
    └─ YES → ALLOW
    └─ NO → DENY
 ```
@@ -159,9 +195,9 @@ hasProjectPermission(ownerTeamId, action)
 - Helper: `requireCanCreateProject(evaluator, context, ownerTeamId)` - throws if denied
 
 **Key Operations:**
-- **Create Project**: Requires team membership in the specified owner team
-- **Edit/Delete Project**: Requires team membership in project's owner team
-- **Manage Files**: Requires team membership in project's owner team
+- **Create Project**: Requires a team role in the specified owner team that grants project creation
+- **Edit/Delete Project**: Requires a team role in project's owner team that grants the requested action
+- **Manage Files**: Requires a team role in project's owner team that grants file management
 
 ### Entity Permission Check
 
@@ -174,6 +210,8 @@ hasEntityPermission(entity, action)
 │  │  └─ YES → ALLOW
 │  │  └─ NO → Continue to grant check
 │  └─ NO (restricted) → Continue to grant check
+├─ Apply direct owner-team permissions for entity.owner
+├─ Apply descendant owner-team permissions from ancestor-owned entities
 ├─ Find applicable grants for user
 │  ├─ Direct grants on entity (scope: self)
 │  └─ Grants on ancestor entities (scope: subtree)
@@ -192,7 +230,7 @@ hasEntityPermission(entity, action)
 - Helper: `requireEntityAction(evaluator, context, entity, action)` - throws if denied
 
 **Key Operations:**
-- **Create Top-Level Entity**: Requires team membership in the specified owner team
+- **Create Top-Level Entity**: Requires a team role in the specified owner team that grants entity creation
 - **Create Child Entity**: Requires `create_child` permission on parent
 - **View Entity**: Allowed if entity is public OR user has `view_entity` permission
 - **Edit Entity**: Requires `edit_entity` permission
@@ -216,8 +254,10 @@ type AuthorizationContext = {
   userId: string;                           // Current user ID
   globalRoles: Set<GlobalRole>;             // User's global roles
   globalPermissions: Set<GlobalPermission>; // Computed from roles
-  teamIds: Set<string>;                     // User's team memberships
-  ownerOptions: WorkspaceOwnerOption[];     // Available owner options
+  teamIds: Set<string>;                     // Convenience set of teams with any assignment
+  teamAssignments: TeamAssignment[];        // User's team-role assignments
+  teamRolesByTeam: Map<string, Set<TeamRole>>; // Roles grouped by owner team
+  teams: WorkspaceTeam[];                   // Available owner teams
   schemas: Map<string, EntitySchema>;       // Entity schemas (for traversal)
   entities: Map<string, Entity>;            // All entities (for traversal)
   grants: EntityGrant[];                    // All entity grants
@@ -227,8 +267,8 @@ type AuthorizationContext = {
 **Building Context:**
 1. Fetch user's global roles
 2. Compute global permissions from roles
-3. Fetch user's team memberships in workspace
-4. Fetch workspace owner options (teams that can own records)
+3. Fetch user's team-role assignments in workspace
+4. Fetch workspace owner teams (teams that can own records)
 5. Fetch all schemas (for containment relationships)
 6. Fetch all entities (for hierarchy traversal)
 7. Fetch all entity grants (for permission checks)
@@ -330,7 +370,7 @@ evaluator.clearCache();
 1. **Server is Authoritative**: Client-side checks are for UX only. Always validate on server.
 2. **Platform Admin Bypass**: Platform admins bypass all permission checks.
 3. **Public Entities**: Public entities are viewable by anyone, but editing still requires grants.
-4. **Team Membership**: Team membership is workspace-scoped. Users can be in different teams per workspace.
+4. **Team Assignments**: Team-role assignments are workspace-scoped. Users can hold different team roles in different workspaces.
 5. **Grant Inheritance**: Subtree grants are powerful. Be careful when granting `entity_admin` with subtree scope.
 6. **Virtual Permissions**: Virtual permissions combine multiple checks. Ensure both client and server implement the same logic.
 
@@ -346,7 +386,9 @@ const context: AuthorizationContext = {
   globalRoles: new Set(['schema_admin']),
   globalPermissions: new Set(['view_schema', 'edit_schema']),
   teamIds: new Set(['team-1']),
-  ownerOptions: [{ id: 'team-1', name: 'Team 1', type: 'team' }],
+  teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+  teamRolesByTeam: new Map([['team-1', new Set(['team_admin'])]]),
+  teams: [{ id: 'team-1', name: 'team-1', type: 'team' }],
   schemas: new Map(),
   entities: new Map(),
   grants: []

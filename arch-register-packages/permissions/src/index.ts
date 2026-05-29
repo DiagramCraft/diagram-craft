@@ -3,7 +3,9 @@ export type {
   GlobalRole,
   GlobalPermission,
   WorkspaceRole,
+  TeamRole,
   WorkspaceCapability,
+  TeamAssignment,
   WorkspaceMember,
   EntityRole,
   EntityAction,
@@ -22,7 +24,7 @@ export type {
   EntitySchema,
   Entity,
   EntityGrant,
-  WorkspaceOwnerOption,
+  WorkspaceTeam,
   AuthorizationContext,
 } from './types.js';
 
@@ -35,6 +37,7 @@ export {
   ROLE_ACTIONS,
   GLOBAL_ROLES,
   GLOBAL_ROLE_PERMISSIONS,
+  TEAM_ROLE_PERMISSIONS,
   WORKSPACE_ROLE_CAPABILITIES,
   WORKSPACE_ROLES,
   WORKSPACE_CAPABILITY_GROUPS,

@@ -220,6 +220,8 @@ export type GlobalPermission =
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
+export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
+
 export type WorkspaceMember = {
   workspace: string;
   user_id: string;
@@ -231,6 +233,7 @@ export type TeamMembership = {
   workspace: string;
   team_id: string;
   user_id: string;
+  role: TeamRole;
   created_at: Date;
 };
 

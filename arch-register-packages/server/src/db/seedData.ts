@@ -61,11 +61,11 @@ export const seedLocalUsers = [
   },
 ] as const;
 
-export const seedTeamMemberships: TeamMembership[] = [
-  { workspace: 'default', team_id: 'platform-team', user_id: 'admin', created_at: now },
-  { workspace: 'default', team_id: 'ux-team', user_id: 'alice', created_at: now },
-  { workspace: 'default', team_id: 'security-team', user_id: 'bob', created_at: now },
-  { workspace: 'default', team_id: 'security-team', user_id: 'admin', created_at: now },
+export const seedTeamAssignments: TeamMembership[] = [
+  { workspace: 'default', team_id: 'platform-team', user_id: 'admin', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'ux-team', user_id: 'alice', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'security-team', user_id: 'bob', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'security-team', user_id: 'admin', role: 'team_admin', created_at: now },
 ];
 
 export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [

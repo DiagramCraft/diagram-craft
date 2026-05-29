@@ -1,5 +1,6 @@
 import type { AuthorizationContext } from './types.js';
 import { PermissionChecker } from './PermissionChecker.js';
+import { TEAM_ROLE_PERMISSIONS } from './constants.js';
 
 /**
  * Capability evaluator for computed permissions.
@@ -34,8 +35,16 @@ export class CapabilityEvaluator {
       return true;
     }
 
-    // Users can create projects for teams they are members of
-    return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+    if (ownerTeamId == null) {
+      return false;
+    }
+
+    const teamRoles = context.teamRolesByTeam.get(ownerTeamId);
+    if (!teamRoles) {
+      return false;
+    }
+
+    return [...teamRoles].some(role => TEAM_ROLE_PERMISSIONS[role].canCreateProjects);
   }
 
   /**
@@ -51,7 +60,15 @@ export class CapabilityEvaluator {
       return true;
     }
 
-    // Users can create entities for teams they are members of
-    return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+    if (ownerTeamId == null) {
+      return false;
+    }
+
+    const teamRoles = context.teamRolesByTeam.get(ownerTeamId);
+    if (!teamRoles) {
+      return false;
+    }
+
+    return [...teamRoles].some(role => TEAM_ROLE_PERMISSIONS[role].canCreateEntities);
   }
 }

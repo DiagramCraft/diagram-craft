@@ -159,6 +159,7 @@ CREATE TABLE team_membership (
   workspace   TEXT        NOT NULL,
   team_id     TEXT        NOT NULL,
   user_id     TEXT        NOT NULL,
+  role        TEXT        NOT NULL CHECK (role IN ('team_admin', 'team_editor', 'team_reviewer')),
   created_at  TIMESTAMPTZ NOT NULL,
   PRIMARY KEY (workspace, team_id, user_id),
   FOREIGN KEY (workspace, team_id) REFERENCES workspace_owner(workspace, id) ON DELETE CASCADE,
