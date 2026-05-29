@@ -3,9 +3,11 @@ import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
   TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
-  TbSettings, TbCheck, TbPlus,
+  TbSettings, TbCheck, TbPlus, TbLogout,
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
+import { useAuth } from '../auth/AuthContext';
+import { DropdownMenu } from '../components/DropdownMenu';
 
 type BreadcrumbItem = {
   label: string;
@@ -23,6 +25,8 @@ type TopBarProps = {
   onQuerySubmit: (q: string) => void;
   onOpenSettings: () => void;
   onAddWorkspace: () => void;
+  canOpenSettings: boolean;
+  canAddWorkspace: boolean;
 };
 
 export const TopBar = ({
@@ -35,7 +39,10 @@ export const TopBar = ({
   onQuerySubmit,
   onOpenSettings,
   onAddWorkspace,
+  canOpenSettings,
+  canAddWorkspace,
 }: TopBarProps) => {
+  const { user, logout } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -67,6 +74,7 @@ export const TopBar = ({
           current={currentWs}
           onPick={onPickWs}
           onAddWorkspace={onAddWorkspace}
+          canAddWorkspace={canAddWorkspace}
         />
         <div className={styles.sep} />
         <Breadcrumbs trail={trail} />
@@ -85,27 +93,48 @@ export const TopBar = ({
         </div>
       </div>
       <div className={styles.right}>
-        <IconButton title="Workspace settings" onClick={onOpenSettings}>
-          <TbSettings size={14} />
-        </IconButton>
-        <div className={styles.avatar} title="Anika P.">
-          AP
-        </div>
+        {canOpenSettings && (
+          <IconButton title="Workspace settings" onClick={onOpenSettings}>
+            <TbSettings size={14} />
+          </IconButton>
+        )}
+        <DropdownMenu
+          trigger={
+            <div className={styles.avatar} title={user?.display_name ?? ''}>
+              {getInitials(user?.display_name ?? '')}
+            </div>
+          }
+          header={<>Signed in as <strong>{user?.display_name}</strong></>}
+          items={[
+            { label: 'Log out', icon: <TbLogout size={14} />, onClick: logout },
+          ]}
+        />
       </div>
     </div>
   );
 };
+
+const getInitials = (name: string) =>
+  name
+    .split(/\s+/)
+    .map(p => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
 const WorkspaceSwitcher = ({
   workspaces,
   current,
   onPick,
   onAddWorkspace,
+  canAddWorkspace,
 }: {
   workspaces: Workspace[];
   current: string;
   onPick: (id: string) => void;
   onAddWorkspace: () => void;
+  canAddWorkspace: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -161,10 +190,14 @@ const WorkspaceSwitcher = ({
               {w.id === current && <TbCheck size={14} />}
             </button>
           ))}
-          <div className={styles.menuSep} />
-          <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
-            <TbPlus size={12} /> New workspace...
-          </button>
+          {canAddWorkspace && (
+            <>
+              <div className={styles.menuSep} />
+              <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
+                <TbPlus size={12} /> New workspace...
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

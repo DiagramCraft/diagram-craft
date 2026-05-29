@@ -24,14 +24,16 @@ const VIEW_TO_RAIL: Record<string, string> = {
 type NavRailProps = {
   view: ViewId;
   onPick: (id: string) => void;
+  visibleItemIds?: string[];
 };
 
-export const NavRail = ({ view, onPick }: NavRailProps) => {
+export const NavRail = ({ view, onPick, visibleItemIds }: NavRailProps) => {
   const active = VIEW_TO_RAIL[view] ?? 'home';
+  const visible = visibleItemIds != null ? ITEMS.filter(item => visibleItemIds.includes(item.id)) : ITEMS;
   return (
     <div className={styles.rail}>
       <div className={styles.top}>
-        {ITEMS.map(item => {
+        {visible.map(item => {
           const Ic = item.icon;
           return (
             <button

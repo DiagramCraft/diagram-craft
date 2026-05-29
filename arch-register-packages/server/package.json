@@ -12,6 +12,7 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
+    "@arch-register/permissions": "workspace:*",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
     "@diagram-craft/model": "workspace:^",

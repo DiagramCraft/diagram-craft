@@ -3,6 +3,8 @@ import type { DatabaseAdapter } from '../db/database.js';
 import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
+import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/:workspace/audit';
 
@@ -18,7 +20,7 @@ const toApiFormat = (row: AuditLogEntry): AuditLogApiResponse => ({
   entity_slug: row.entity_slug,
   schema_id: row.schema_id,
   changes: row.changes,
-  metadata: row.metadata,
+  metadata: row.metadata
 });
 
 export const createAuditRoutes = (db: DatabaseAdapter) => {
@@ -30,8 +32,12 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireGlobalPermission(authCtx, 'view_audit');
+
       const query = getQuery(event);
-      
+
       const entityType = typeof query['entityType'] === 'string' ? query['entityType'] : null;
       const entityId = typeof query['entityId'] === 'string' ? query['entityId'] : null;
       const operation = typeof query['operation'] === 'string' ? query['operation'] : null;
@@ -50,7 +56,11 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
 
         return rows.slice(offset, offset + limit).map(toApiFormat);
       } catch (_e) {
-        throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit log' });
+        throw new HTTPError({
+          status: 500,
+          statusText: 'Internal Server Error',
+          message: 'Failed to retrieve audit log'
+        });
       }
     })
   );
@@ -61,6 +71,8 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     `${BASE}/stats`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireGlobalPermission(authCtx, 'view_audit');
 
       try {
         const rows = await db.listAuditLogs(workspace);
@@ -80,12 +92,22 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
 
         return {
           total: rows.length,
-          byOperation: [...byOperationMap.entries()].map(([operation, count]) => ({ operation, count })).sort((a, b) => b.count - a.count),
-          byEntityType: [...byEntityTypeMap.entries()].map(([entity_type, count]) => ({ entity_type, count })).sort((a, b) => b.count - a.count),
-          recentActivity: [...recentActivityMap.entries()].map(([date, count]) => ({ date, count })).sort((a, b) => b.date.localeCompare(a.date)),
+          byOperation: [...byOperationMap.entries()]
+            .map(([operation, count]) => ({ operation, count }))
+            .sort((a, b) => b.count - a.count),
+          byEntityType: [...byEntityTypeMap.entries()]
+            .map(([entity_type, count]) => ({ entity_type, count }))
+            .sort((a, b) => b.count - a.count),
+          recentActivity: [...recentActivityMap.entries()]
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => b.date.localeCompare(a.date))
         };
       } catch (_e) {
-        throw new HTTPError({ status: 500, statusText: 'Internal Server Error', message: 'Failed to retrieve audit stats' });
+        throw new HTTPError({
+          status: 500,
+          statusText: 'Internal Server Error',
+          message: 'Failed to retrieve audit stats'
+        });
       }
     })
   );

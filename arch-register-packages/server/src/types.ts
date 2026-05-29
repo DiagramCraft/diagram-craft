@@ -58,6 +58,7 @@ export type EntitySchema = {
   fields: SchemaField[];
   color: string | null;
   icon: string | null;
+  default_owner: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -86,6 +87,8 @@ export type EntityLink = {
   type?: string;
 };
 
+export type VisibilityMode = 'public' | 'restricted';
+
 export type Entity = {
   id: string;
   workspace: string;
@@ -99,6 +102,7 @@ export type Entity = {
   links: EntityLink[];
   schema_id: string;
   data: Record<string, unknown>;
+  visibility_mode: VisibilityMode | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -116,6 +120,7 @@ export type EntityApiResponse = {
   _lifecycle: LifecycleStatus | null;
   _tags: string[];
   _links: EntityLink[];
+  _visibilityMode: VisibilityMode | null;
   [field: string]: unknown;
 };
 
@@ -124,6 +129,7 @@ export type Project = {
   workspace: string;
   name: string;
   description: string;
+  owner: string | null;
   status: 'pinned' | 'active' | 'archived';
   created_at: Date;
   updated_at: Date;
@@ -203,6 +209,58 @@ export type User = {
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;
+};
+
+export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
+
+export type GlobalPermission =
+  | 'view_schema'
+  | 'edit_schema'
+  | 'manage_users'
+  | 'manage_teams'
+  | 'manage_global_roles'
+  | 'view_audit'
+  | 'admin_platform';
+
+export type TeamMembership = {
+  workspace: string;
+  team_id: string;
+  user_id: string;
+  created_at: Date;
+};
+
+export type GlobalRoleAssignment = {
+  user_id: string;
+  role: GlobalRole;
+  created_at: Date;
+};
+
+export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
+export type EntityGrantScope = 'self' | 'subtree';
+
+export type EntityCapabilities = {
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdmin: boolean;
+  canCreateChild: boolean;
+};
+
+export type ProjectCapabilities = {
+  canEdit: boolean;
+  canDelete: boolean;
+  canManageFiles: boolean;
+};
+
+export type EntityGrant = {
+  id: string;
+  workspace: string;
+  entity_id: string;
+  principal_type: 'user' | 'team';
+  principal_id: string;
+  role: EntityRole;
+  applies_to: EntityGrantScope;
+  created_at: Date;
 };
 
 export type JWTPayload = {

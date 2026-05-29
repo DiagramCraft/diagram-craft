@@ -78,8 +78,17 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5(@types/node@24.12.2)(@vitest/coverage-v8@4.1.5)(jsdom@29.0.2)(vite@8.0.10(@types/node@24.12.2)(@vitejs/devtools@0.1.15)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  arch-register-packages/permissions:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   arch-register-packages/server:
     dependencies:
+      '@arch-register/permissions':
+        specifier: workspace:*
+        version: link:../permissions
       '@diagram-craft/canvas':
         specifier: workspace:^
         version: link:../../packages/canvas
@@ -138,6 +147,9 @@ importers:
 
   arch-register-packages/web:
     dependencies:
+      '@arch-register/permissions':
+        specifier: workspace:*
+        version: link:../permissions
       '@diagram-craft/canvas':
         specifier: workspace:^
         version: link:../../packages/canvas
@@ -245,6 +257,9 @@ importers:
 
   packages/canvas:
     dependencies:
+      '@diagram-craft/canvas-app':
+        specifier: workspace:^
+        version: link:../canvas-app
       '@diagram-craft/collaboration':
         specifier: workspace:^
         version: link:../collaboration

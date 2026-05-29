@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@arch-register/permissions": "workspace:*",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/canvas-app": "workspace:^",
     "@diagram-craft/canvas-drawio": "workspace:^",

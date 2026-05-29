@@ -1,13 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { AuthorizationDataProvider } from './AuthorizationDataContext';
+import type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData } from './types';
 
-export type User = {
-  id: string;
-  email: string | null;
-  display_name: string;
-  auth_provider: 'local' | 'oidc';
-  created_at: string;
-  last_login_at: string | null;
-};
+export type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData };
+
+type AuthMeResponse = User & AuthBaseData;
 
 type AuthContextType = {
   user: User | null;
@@ -28,6 +25,7 @@ const authFetch = (path: string, init?: RequestInit) =>
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [authBaseData, setAuthBaseData] = useState<AuthBaseData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const tokenExpiresAt = useRef<number | null>(null);
 
@@ -37,15 +35,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
+        setAuthBaseData(null);
         return false;
       }
 
-      const userData = await res.json();
-      setUser(userData);
+      const userData = (await res.json()) as AuthMeResponse;
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        display_name: userData.display_name,
+        auth_provider: userData.auth_provider,
+        created_at: userData.created_at,
+        last_login_at: userData.last_login_at
+      });
+      setAuthBaseData({
+        global_roles: userData.global_roles,
+        global_permissions: userData.global_permissions,
+        team_memberships: userData.team_memberships,
+        owner_options_by_workspace: userData.owner_options_by_workspace ?? {}
+      });
       return true;
     } catch (error) {
       console.error('Failed to fetch user:', error);
       setUser(null);
+      setAuthBaseData(null);
       return false;
     }
   }, []);
@@ -56,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         setUser(null);
+        setAuthBaseData(null);
         throw new Error('Failed to refresh token');
       }
 
@@ -64,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await fetchCurrentUser();
     } catch (error) {
       setUser(null);
+      setAuthBaseData(null);
       throw error;
     }
   }, [fetchCurrentUser]);
@@ -73,12 +88,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const res = await authFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password })
       });
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: 'Login failed' }));
-        throw new Error(error.message || 'Login failed');
+        throw new Error(error.message ?? 'Login failed');
       }
 
       const data = await res.json();
@@ -102,9 +117,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     tokenExpiresAt.current = null;
     setUser(null);
+    setAuthBaseData(null);
   }, []);
 
-  // Proactive token refresh before expiry
   useEffect(() => {
     const checkTokenExpiry = () => {
       if (!tokenExpiresAt.current || !user) return;
@@ -119,7 +134,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [refreshToken, user]);
 
-  // On mount: try /me, if 401 try refresh, otherwise not authenticated
   useEffect(() => {
     const init = async () => {
       const ok = await fetchCurrentUser();
@@ -135,17 +149,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, [fetchCurrentUser, refreshToken]);
 
-  const value: AuthContextType = {
+  const authValue: AuthContextType = {
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
     loginWithOidc,
     logout,
-    refreshToken,
+    refreshToken
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={authValue}>
+      <AuthorizationDataProvider value={authBaseData}>
+        {children}
+      </AuthorizationDataProvider>
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

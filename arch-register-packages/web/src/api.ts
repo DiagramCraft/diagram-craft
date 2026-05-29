@@ -176,7 +176,15 @@ export type EntityLink = {
   type?: string;
 };
 
-export type EntitySummary = {
+export type EntityCapabilities = {
+  canView: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canAdmin: boolean;
+  canCreateChild: boolean;
+};
+
+export type EntitySummary = EntityCapabilities & {
   _uid: string;
   _workspace: string;
   _schemaId: string;
@@ -309,11 +317,18 @@ export const fetchEntityRelations = (workspace: string, id: string) =>
 
 // ── Project types ─────────────────────────────────────────────
 
-export type Project = {
+export type ProjectCapabilities = {
+  canEdit: boolean;
+  canDelete: boolean;
+  canManageFiles: boolean;
+};
+
+export type Project = ProjectCapabilities & {
   id: string;
   workspace: string;
   name: string;
   description: string;
+  owner: string | null;
   status: 'pinned' | 'active' | 'archived';
   file_count: number;
   created_at: string;
@@ -407,7 +422,7 @@ export const searchArchRegister = (
 
 export const createProject = (
   workspace: string,
-  body: { name: string; description?: string; status?: 'pinned' | 'active' | 'archived' }
+  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived' }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects`, {
     method: 'POST',
@@ -417,7 +432,7 @@ export const createProject = (
 export const updateProject = (
   workspace: string,
   id: string,
-  body: { name: string; description?: string; status?: 'pinned' | 'active' | 'archived' }
+  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived' }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects/${id}`, {
     method: 'PUT',

@@ -6,6 +6,7 @@ import { createApp } from './app.js';
 import { FilesystemStorage } from './storage/fs.js';
 import type { DatabaseAdapter } from './db/database.js';
 import { SqliteDatabase } from './db/sqliteDatabase.js';
+import { generateAccessToken } from './utils/jwt.js';
 
 import {
   seedEntities,
@@ -78,10 +79,11 @@ describe('arch-register sqlite integration', () => {
   let sqliteDir = '';
   let storageDir = '';
   let app: ReturnType<typeof createApp>;
+  let testUserToken: string;
 
   beforeAll(async () => {
-    // Disable authentication for integration tests
-    process.env.AUTH_DISABLED = 'true';
+    // Set JWT_SECRET for all tests
+    process.env.JWT_SECRET = '12345678901234567890123456789012';
     
     sqliteDir = await mkdtemp(join(tmpdir(), 'arch-register-sqlite-'));
     db = new SqliteDatabase(join(sqliteDir, 'db.sqlite'));
@@ -92,25 +94,70 @@ describe('arch-register sqlite integration', () => {
   beforeEach(async () => {
     await seedDb(db);
     await rm(storageDir, { recursive: true, force: true });
+    
+    // Create a test user with platform_admin role for each test
+    const testUser = await db.createUser({
+      id: 'test-admin',
+      email: 'test@example.com',
+      display_name: 'Test Admin',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+    await db.replaceGlobalRoleAssignments(testUser.id, ['platform_admin'], new Date());
+    testUserToken = generateAccessToken(testUser);
   }, 30000);
 
   afterAll(async () => {
     await db.close();
     await rm(storageDir, { recursive: true, force: true });
     await rm(sqliteDir, { recursive: true, force: true });
-    delete process.env.AUTH_DISABLED;
+    delete process.env.JWT_SECRET;
   });
 
   const json = async <T>(path: string, init?: RequestInit): Promise<{ response: Response; body: T }> => {
-    const response = await app.request(path, { ...init, signal: AbortSignal.timeout(5000) });
+    // Add auth header by default if not already present
+    const headers = new Headers(init?.headers);
+    if (!headers.has('authorization')) {
+      headers.set('authorization', `Bearer ${testUserToken}`);
+    }
+    if (!headers.has('content-type')) {
+      headers.set('content-type', 'application/json');
+    }
+    
+    const response = await app.request(path, { 
+      ...init, 
+      headers,
+      signal: AbortSignal.timeout(5000) 
+    });
     const body = (await response.json()) as T;
     return { response, body };
   };
 
   const text = async (path: string, init?: RequestInit) => {
-    const response = await app.request(path, { ...init, signal: AbortSignal.timeout(5000) });
+    // Add auth header by default if not already present
+    const headers = new Headers(init?.headers);
+    if (!headers.has('authorization')) {
+      headers.set('authorization', `Bearer ${testUserToken}`);
+    }
+    
+    const response = await app.request(path, { 
+      ...init, 
+      headers,
+      signal: AbortSignal.timeout(5000) 
+    });
     return { response, body: await response.text() };
   };
+
+  const authHeaders = (token: string) => ({
+    authorization: `Bearer ${token}`,
+    'content-type': 'application/json',
+  });
 
   it('supports workspace config CRUD', async () => {
     const { body: workspaces } = await json<WorkspaceSummary[]>('/api/workspaces');
@@ -284,5 +331,72 @@ describe('arch-register sqlite integration', () => {
 
     const audit = await json<AuditStatsResponse>('/api/default/audit/stats');
     expect(audit.body.total).toBeGreaterThan(0);
+  }, 20000);
+
+  it('enforces restricted subtree visibility and schema admin permissions', async () => {
+    const viewer = await db.createUser({
+      id: 'viewer',
+      email: 'viewer@example.com',
+      display_name: 'Viewer',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+
+    const schemaAdmin = await db.createUser({
+      id: 'schema-admin',
+      email: 'schema-admin@example.com',
+      display_name: 'Schema Admin',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+
+    await db.replaceGlobalRoleAssignments(schemaAdmin.id, ['schema_admin'], new Date());
+
+    const restricted = await json<EntityResponse>('/api/default/data', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        _schemaId: '00000000-0000-0000-0000-000000000001',
+        _name: 'Security Domain',
+        _owner: 'security-team',
+        _visibilityMode: 'restricted',
+      }),
+    });
+
+    const viewerToken = generateAccessToken(viewer);
+    const deniedRead = await app.request(`/api/default/data/${restricted.body._uid}`, {
+      headers: { authorization: `Bearer ${viewerToken}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(deniedRead.status).toBe(403);
+
+    const deniedSchemaWrite = await app.request('/api/default/schemas', {
+      method: 'POST',
+      headers: authHeaders(viewerToken),
+      body: JSON.stringify({ name: 'Forbidden Schema', fields: [] }),
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(deniedSchemaWrite.status).toBe(403);
+
+    const schemaAdminToken = generateAccessToken(schemaAdmin);
+    const allowedSchemaWrite = await app.request('/api/default/schemas', {
+      method: 'POST',
+      headers: authHeaders(schemaAdminToken),
+      body: JSON.stringify({ name: 'Allowed Schema', fields: [] }),
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(allowedSchemaWrite.status).toBe(200);
   }, 20000);
 });

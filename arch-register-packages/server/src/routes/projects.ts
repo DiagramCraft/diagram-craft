@@ -5,6 +5,19 @@ import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
+import {
+  buildApiAuthCtx,
+  canAccessProject,
+  requireCanCreateProject,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
+import {
+  AuthorizationContext,
+  PermissionChecker,
+  ProjectCapabilities
+} from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -16,10 +29,10 @@ const handleError = (error: unknown, fallback: string): never =>
     foreign: 'Foreign key constraint violation'
   });
 
-
 const getParam = (event: H3Event, name: string) => {
   const value = event.context.params?.[name];
-  if (!value) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: `${name} is required` });
+  if (!value)
+    throw new HTTPError({ status: 400, statusText: 'Bad Request', message: `${name} is required` });
   return decodeURIComponent(value);
 };
 
@@ -34,6 +47,29 @@ const parseProjectStatus = (value: unknown): ProjectStatus => {
   }
   return value as ProjectStatus;
 };
+
+const getProjectCapabilities = (
+  context: AuthorizationContext | null,
+  ownerTeamId: string | null
+): ProjectCapabilities => {
+  if (!context) {
+    return {
+      canEdit: true,
+      canDelete: true,
+      canManageFiles: true
+    };
+  }
+
+  const checker = new PermissionChecker();
+  return {
+    canEdit: checker.hasProjectPermission(context, ownerTeamId, 'edit_project'),
+    canDelete: checker.hasProjectPermission(context, ownerTeamId, 'delete_project'),
+    canManageFiles: checker.hasProjectPermission(context, ownerTeamId, 'manage_files')
+  };
+};
+
+const resolveProjectOwner = (owner: unknown, ownerValues: Set<string>) =>
+  typeof owner === 'string' && ownerValues.has(owner) ? owner : null;
 
 type FileEntry = {
   id: string;
@@ -84,6 +120,14 @@ const buildFileTree = (files: ProjectFile[]): FileTreeResponse => {
   return { folders, rootFiles };
 };
 
+const toProjectResponse = <T extends { owner: string | null }>(
+  project: T,
+  authCtx: AuthorizationContext
+) => ({
+  ...project,
+  ...getProjectCapabilities(authCtx, project.owner)
+});
+
 export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const router = new H3();
 
@@ -94,17 +138,23 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const projects = await db.listProjects(workspace);
+        const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
         const fileCounts = new Map<string, number>();
-        const projectFiles = await Promise.all(projects.map(project => db.listProjectFiles(workspace, project.id)));
+        const projectFiles = await Promise.all(
+          visibleProjects.map(project => db.listProjectFiles(workspace, project.id))
+        );
         for (const files of projectFiles) {
           for (const file of files) {
             fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
           }
         }
-        return projects
-          .map(project => ({ ...project, file_count: fileCounts.get(project.id) ?? 0 }))
+        return visibleProjects
+          .map(project =>
+            toProjectResponse({ ...project, file_count: fileCounts.get(project.id) ?? 0 }, authCtx)
+          )
           .sort((a, b) => {
             const rank = { pinned: 0, active: 1, archived: 2 } as const;
             return rank[a.status] - rank[b.status] || a.name.localeCompare(b.name);
@@ -120,15 +170,21 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     `${BASE}/:id`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = getParam(event, 'id');
       try {
         const project = await db.getProject(workspace, id);
         if (!project)
-          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        requireProjectAccess(authCtx, project.owner);
 
         const files = await db.listProjectFiles(workspace, id);
 
-        return { ...project, files: buildFileTree(files) };
+        return toProjectResponse({ ...project, files: buildFileTree(files) }, authCtx);
       } catch (e) {
         handleError(e, 'Failed to retrieve project');
       }
@@ -142,25 +198,43 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'Request body must be a JSON object'
+        });
 
-      const { name, description = '', status } = body as Record<string, unknown>;
+      const { name, description = '', owner, status } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'name is required'
+        });
       const projectStatus = parseProjectStatus(status);
 
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
+        const resolvedOwner = resolveProjectOwner(owner, ownerValues);
+        if (authCtx)
+          requireCanCreateProject(
+            authCtx,
+            resolvedOwner,
+            'You do not have permission to create a project for this owner team'
+          );
         const timestamp = new Date();
         const row = await db.createProject({
           id: crypto.randomUUID(),
           workspace,
           name: name as string,
           description: typeof description === 'string' ? description : '',
+          owner: resolvedOwner,
           status: projectStatus,
           created_at: timestamp,
-          updated_at: timestamp,
+          updated_at: timestamp
         });
-        
+
         // Log audit entry
         await logAudit(db, {
           workspace,
@@ -169,11 +243,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           entityId: row!.id,
           entityName: row!.name,
           changes: {
-            new: extractEntityFields(row!),
-          },
+            new: extractEntityFields(row!)
+          }
         });
-        
-        return row!;
+
+        return toProjectResponse(row!, authCtx);
       } catch (e) {
         handleError(e, 'Failed to create project');
       }
@@ -188,41 +262,77 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'Request body must be a JSON object'
+        });
 
-      const { name, description, status } = body as Record<string, unknown>;
+      const { name, description, owner, status } = body as Record<string, unknown>;
       if (!name || typeof name !== 'string')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'name is required' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'name is required'
+        });
       const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
 
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         // Fetch old state for audit log
         const oldRow = await db.getProject(workspace, id);
-        if (!oldRow) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
-        
+        if (!oldRow)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
+        const resolvedOwner =
+          owner !== undefined ? resolveProjectOwner(owner, ownerValues) : oldRow.owner;
+        if (authCtx) {
+          requireProjectAction(
+            authCtx,
+            oldRow.owner,
+            'edit_project',
+            'You do not have permission to edit this project'
+          );
+          if (resolvedOwner !== oldRow.owner) {
+            requireProjectAction(
+              authCtx,
+              resolvedOwner,
+              'edit_project',
+              'You do not have permission to transfer this project to the target owner team'
+            );
+          }
+        }
+
         const row = await db.updateProject(workspace, id, {
           name: name as string,
-          description: description !== undefined ? (typeof description === 'string' ? description : '') : oldRow.description,
+          description:
+            description !== undefined
+              ? typeof description === 'string'
+                ? description
+                : ''
+              : oldRow.description,
+          owner: resolvedOwner,
           status: projectStatus ?? oldRow.status,
-          updated_at: new Date(),
+          updated_at: new Date()
         });
-        
+
         // Log audit entry with field-level changes
-        const changes = computeChanges(
-          extractEntityFields(oldRow),
-          extractEntityFields(row!)
-        );
-        
+        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+
         await logAudit(db, {
           workspace,
           operation: 'update',
           entityType: 'project',
           entityId: id,
           entityName: row!.name,
-          changes,
+          changes
         });
-        
-        return row!;
+
+        return toProjectResponse(row!, authCtx);
       } catch (e) {
         handleError(e, 'Failed to update project');
       }
@@ -236,10 +346,23 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         // Fetch project before deletion for audit log
         const project = await db.getProject(workspace, id);
-        if (!project) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Project '${id}' not found` });
-        
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'delete_project',
+            'You do not have permission to delete this project'
+          );
+
         // Delete project
         await db.deleteProject(workspace, id);
 
@@ -251,8 +374,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           entityId: id,
           entityName: project.name,
           changes: {
-            old: extractEntityFields(project),
-          },
+            old: extractEntityFields(project)
+          }
         });
 
         // Clean up storage (orphaned files on disk are harmless if this fails)
@@ -274,6 +397,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        requireProjectAccess(authCtx, project.owner);
+
         const files = await db.listProjectFiles(workspace, id);
         return buildFileTree(files);
       } catch (e) {
@@ -290,15 +423,38 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        requireProjectAccess(authCtx, project.owner);
+
         const file = await db.getProjectFileByPath(workspace, id, filePath);
         if (!file)
-          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `File '${filePath}' not found`
+          });
 
         const content = await storage.read(workspace, id, file.id);
         return JSON.parse(content.toString('utf8'));
       } catch (e) {
-        if (e != null && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'ENOENT') {
-          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+        if (
+          e != null &&
+          typeof e === 'object' &&
+          'code' in e &&
+          (e as { code: string }).code === 'ENOENT'
+        ) {
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `File '${filePath}' not found`
+          });
         }
         handleError(e, 'Failed to read file');
       }
@@ -315,10 +471,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       const body = await event.req.json().catch(() => undefined);
       if (body == null)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be valid JSON' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'Request body must be valid JSON'
+        });
 
       const content = Buffer.from(JSON.stringify(body), 'utf8');
-      const fileName = filePath.includes('/') ? filePath.substring(filePath.lastIndexOf('/') + 1) : filePath;
+      const fileName = filePath.includes('/')
+        ? filePath.substring(filePath.lastIndexOf('/') + 1)
+        : filePath;
 
       // Strip .json extension for display name
       const displayName =
@@ -326,10 +488,25 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
 
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
         // Check if file exists for audit log
         const existingFile = await db.getProjectFileByPath(workspace, id, filePath);
         const isUpdate = !!existingFile;
-        
+
         // Upsert file metadata
         const timestamp = new Date();
         const row = await db.upsertProjectFile({
@@ -339,7 +516,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           name: String(displayName),
           size_bytes: content.length,
           created_atIfNew: existingFile?.created_at ?? timestamp,
-          updated_at: timestamp,
+          updated_at: timestamp
         });
 
         // Write to storage
@@ -358,7 +535,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             entityId: row.id,
             entityName: row.name,
             changes,
-            metadata: { project_id: id, path: filePath },
+            metadata: { project_id: id, path: filePath }
           });
         } else {
           await logAudit(db, {
@@ -368,9 +545,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             entityId: row.id,
             entityName: row.name,
             changes: {
-              new: extractEntityFields(row),
+              new: extractEntityFields(row)
             },
-            metadata: { project_id: id, path: filePath },
+            metadata: { project_id: id, path: filePath }
           });
         }
 
@@ -389,10 +566,29 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
         // Fetch file before deletion for audit log
         const file = await db.getProjectFileByPath(workspace, id, filePath);
         if (!file)
-          throw new HTTPError({ status: 404, statusText: 'Not Found', message: `File '${filePath}' not found` });
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `File '${filePath}' not found`
+          });
 
         // Delete file
         await db.deleteProjectFileByPath(workspace, id, filePath);
@@ -405,9 +601,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           entityId: file.id,
           entityName: file.name,
           changes: {
-            old: extractEntityFields(file),
+            old: extractEntityFields(file)
           },
-          metadata: { project_id: id, path: filePath },
+          metadata: { project_id: id, path: filePath }
         });
 
         await storage.delete(workspace, id, file.id).catch(() => {});
@@ -429,14 +625,37 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'Request body must be a JSON object'
+        });
 
       const { path: folderPath } = body as Record<string, unknown>;
       if (!folderPath || typeof folderPath !== 'string')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'path is required' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'path is required'
+        });
 
       const markerPath = `${folderPath}/.keep`;
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
         const timestamp = new Date();
         const row = await db.createProjectFileIfAbsent({
           workspace,
@@ -445,7 +664,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           name: '.keep',
           size_bytes: 0,
           created_atIfNew: timestamp,
-          updated_at: timestamp,
+          updated_at: timestamp
         });
 
         // Write empty marker to storage
@@ -462,9 +681,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             entityId: row.id,
             entityName: folderPath,
             changes: {
-              new: { path: folderPath, type: 'folder' },
+              new: { path: folderPath, type: 'folder' }
             },
-            metadata: { project_id: id, path: folderPath, is_folder: true },
+            metadata: { project_id: id, path: folderPath, is_folder: true }
           });
         }
 
@@ -483,7 +702,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
       if (body == null || typeof body !== 'object')
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'Request body must be a JSON object' });
+        throw new HTTPError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'Request body must be a JSON object'
+        });
 
       const { oldPath, newPath } = body as Record<string, unknown>;
       if (!oldPath || typeof oldPath !== 'string' || !newPath || typeof newPath !== 'string')
@@ -494,7 +717,28 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         });
 
       try {
-        const result = await db.renameProjectFileFolder(workspace, id, oldPath, newPath, new Date());
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
+        const result = await db.renameProjectFileFolder(
+          workspace,
+          id,
+          oldPath,
+          newPath,
+          new Date()
+        );
 
         if (result.length === 0)
           throw new HTTPError({
@@ -518,6 +762,21 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const folderPath = getParam(event, 'path');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
         const result = await db.deleteProjectFileFolder(workspace, id, folderPath);
 
         if (result.length === 0)
@@ -527,7 +786,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             message: `No files found under folder '${folderPath}'`
           });
 
-        await Promise.all(result.map(file => storage.delete(workspace, id, file.id).catch(() => {})));
+        await Promise.all(
+          result.map(file => storage.delete(workspace, id, file.id).catch(() => {}))
+        );
         return { success: true, message: `Deleted ${result.length} file(s)`, count: result.length };
       } catch (e) {
         handleError(e, 'Failed to delete folder');

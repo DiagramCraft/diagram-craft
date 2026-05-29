@@ -2,11 +2,14 @@ import 'dotenv/config';
 import { createDatabase } from '../db/factory.js';
 import {
   seedEntities,
+  seedGlobalRoleAssignments,
   seedLifecycleStates,
+  seedLocalUsers,
   seedOwners,
-  seedProjects,
   seedProjectFiles,
+  seedProjects,
   seedSchemas,
+  seedTeamMemberships,
   seedWorkspaces
 } from '../db/seedData.js';
 import type { ContainmentField, ReferenceField } from '../types.js';
@@ -99,14 +102,14 @@ async function validate(db: Awaited<ReturnType<typeof createDatabase>>) {
 const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
   const testPassword = 'test';
   const passwordHash = await hashPassword(testPassword);
-  const now = new Date().toISOString();
+  const now = new Date();
 
-  const testUsers = [
-    {
-      id: 'admin',
-      email: 'admin@example.com',
-      display_name: 'Administrator',
-      auth_provider: 'local' as const,
+  for (const user of seedLocalUsers) {
+    await db.createUser({
+      id: user.id,
+      email: user.email,
+      display_name: user.display_name,
+      auth_provider: 'local',
       password_hash: passwordHash,
       oidc_issuer: null,
       oidc_subject: null,
@@ -114,41 +117,29 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       created_at: now,
       updated_at: now,
       last_login_at: null
-    },
-    {
-      id: 'alice',
-      email: 'alice@example.com',
-      display_name: 'Alice Johnson',
-      auth_provider: 'local' as const,
-      password_hash: passwordHash,
-      oidc_issuer: null,
-      oidc_subject: null,
-      is_active: true,
-      created_at: now,
-      updated_at: now,
-      last_login_at: null
-    },
-    {
-      id: 'bob',
-      email: 'bob@example.com',
-      display_name: 'Bob Smith',
-      auth_provider: 'local' as const,
-      password_hash: passwordHash,
-      oidc_issuer: null,
-      oidc_subject: null,
-      is_active: true,
-      created_at: now,
-      updated_at: now,
-      last_login_at: null
-    }
-  ];
+    } as CreateUserInput);
+  }
 
-  for (const user of testUsers) {
-    await db.createUser(user as unknown as CreateUserInput);
+  for (const workspace of seedWorkspaces) {
+    await db.replaceTeamMemberships(
+      workspace.id,
+      seedTeamMemberships.filter(membership => membership.workspace === workspace.id)
+    );
+  }
+
+  const rolesByUser = new Map<string, Array<(typeof seedGlobalRoleAssignments)[number]['role']>>();
+  for (const assignment of seedGlobalRoleAssignments) {
+    const current = rolesByUser.get(assignment.user_id) ?? [];
+    current.push(assignment.role);
+    rolesByUser.set(assignment.user_id, current);
+  }
+
+  for (const user of seedLocalUsers) {
+    await db.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
   }
 
   console.log(
-    `  Created ${testUsers.length} test users (username/password: admin/test, alice/test, bob/test)`
+    `  Created ${seedLocalUsers.length} test users with seeded team memberships and global roles (password: test)`
   );
 };
 

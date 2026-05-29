@@ -4,6 +4,7 @@ import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import type {
   CreateAuditLogInput,
   CreateEntityInput,
+  CreateEntityGrantInput,
   CreateProjectInput,
   CreateSchemaInput,
   CreateUserInput,
@@ -20,10 +21,13 @@ import { DatabaseError } from './database.js';
 import type {
   AuditLogEntry,
   Entity,
+  EntityGrant,
   EntityLink,
   EntitySchema,
+  GlobalRoleAssignment,
   Project,
   ProjectFile,
+  TeamMembership,
   User,
   Workspace,
   WorkspaceLifecycleState,
@@ -86,6 +90,7 @@ const toSchema = (row: Record<string, unknown>): EntitySchema => ({
   fields: parseJson(row['fields'], []),
   color: row['color'] == null ? null : String(row['color']),
   icon: row['icon'] == null ? null : String(row['icon']),
+  default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
   created_at: toDate(row['created_at']),
   updated_at: toDate(row['updated_at']),
 });
@@ -103,6 +108,7 @@ const toEntity = (row: Record<string, unknown>): Entity => ({
   links: parseJson<EntityLink[]>(row['links'], []),
   schema_id: String(row['schema_id']),
   data: parseJson<Record<string, unknown>>(row['data'], {}),
+  visibility_mode: row['visibility_mode'] == null ? null : String(row['visibility_mode']) as Entity['visibility_mode'],
   created_at: toDate(row['created_at']),
   updated_at: toDate(row['updated_at']),
 });
@@ -112,6 +118,7 @@ const toProject = (row: Record<string, unknown>): Project => ({
   workspace: String(row['workspace']),
   name: String(row['name']),
   description: String(row['description']),
+  owner: row['owner'] == null ? null : String(row['owner']),
   status: String(row['status']) as Project['status'],
   created_at: toDate(row['created_at']),
   updated_at: toDate(row['updated_at']),
@@ -155,6 +162,30 @@ const toUser = (row: Record<string, unknown>): User => ({
   created_at: toDate(row['created_at']),
   updated_at: toDate(row['updated_at']),
   last_login_at: row['last_login_at'] == null ? null : toDate(row['last_login_at']),
+});
+
+const toTeamMembership = (row: Record<string, unknown>): TeamMembership => ({
+  workspace: String(row['workspace']),
+  team_id: String(row['team_id']),
+  user_id: String(row['user_id']),
+  created_at: toDate(row['created_at']),
+});
+
+const toGlobalRoleAssignment = (row: Record<string, unknown>): GlobalRoleAssignment => ({
+  user_id: String(row['user_id']),
+  role: String(row['role']) as GlobalRoleAssignment['role'],
+  created_at: toDate(row['created_at']),
+});
+
+const toEntityGrant = (row: Record<string, unknown>): EntityGrant => ({
+  id: String(row['id']),
+  workspace: String(row['workspace']),
+  entity_id: String(row['entity_id']),
+  principal_type: String(row['principal_type']) as EntityGrant['principal_type'],
+  principal_id: String(row['principal_id']),
+  role: String(row['role']) as EntityGrant['role'],
+  applies_to: String(row['applies_to']) as EntityGrant['applies_to'],
+  created_at: toDate(row['created_at']),
 });
 
 export class SqliteDatabase implements DatabaseAdapter {
@@ -250,8 +281,10 @@ export class SqliteDatabase implements DatabaseAdapter {
     const tx = this.db.transaction((workspaceId: string) => {
       this.run('DELETE FROM project_file WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM audit_log WHERE workspace = ?', [workspaceId]);
@@ -293,16 +326,59 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async replaceOwners(workspace: string, owners: WorkspaceOwner[]) {
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspace]);
+      const ownerIds = owners.map(owner => owner.id);
+
+      if (ownerIds.length === 0) {
+        this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
+        this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspace]);
+        return;
+      }
+
+      const placeholders = ownerIds.map(() => '?').join(', ');
+      this.run(
+        `DELETE FROM team_membership WHERE workspace = ? AND team_id NOT IN (${placeholders})`,
+        [workspace, ...ownerIds],
+      );
+      this.run(
+        `DELETE FROM workspace_owner WHERE workspace = ? AND id NOT IN (${placeholders})`,
+        [workspace, ...ownerIds],
+      );
+
       for (const owner of owners) {
         this.run(
-          'INSERT INTO workspace_owner (id, workspace, sort_order, created_at) VALUES (?, ?, ?, ?)',
+          `INSERT INTO workspace_owner (id, workspace, sort_order, created_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(workspace, id) DO UPDATE SET
+             sort_order = excluded.sort_order,
+             created_at = excluded.created_at`,
           [owner.id, workspace, owner.sort_order, owner.created_at.toISOString()],
         );
       }
     });
     tx();
     return await this.listOwners(workspace);
+  }
+
+  async listTeamMemberships(workspace: string) {
+    return this.all(
+      'SELECT workspace, team_id, user_id, created_at FROM team_membership WHERE workspace = ? ORDER BY team_id, user_id',
+      [workspace],
+      toTeamMembership,
+    );
+  }
+
+  async replaceTeamMemberships(workspace: string, memberships: TeamMembership[]) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
+      for (const membership of memberships) {
+        this.run(
+          'INSERT INTO team_membership (workspace, team_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+          [workspace, membership.team_id, membership.user_id, membership.created_at.toISOString()],
+        );
+      }
+    });
+    tx();
+    return await this.listTeamMemberships(workspace);
   }
 
   async listSchemas(workspace: string) {
@@ -315,7 +391,7 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async createSchema(input: CreateSchemaInput) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, fields, color, icon, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -323,6 +399,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         JSON.stringify(input.fields),
         input.color,
         input.icon,
+        input.default_owner,
         input.created_at.toISOString(),
         input.updated_at.toISOString(),
       ],
@@ -332,8 +409,8 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async updateSchema(workspace: string, id: string, input: UpdateSchemaInput) {
     this.run(
-      'UPDATE entity_schema SET name = ?, fields = ?, color = ?, icon = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [input.name, JSON.stringify(input.fields), input.color, input.icon, input.updated_at.toISOString(), workspace, id],
+      'UPDATE entity_schema SET name = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [input.name, JSON.stringify(input.fields), input.color, input.icon, input.default_owner, input.updated_at.toISOString(), workspace, id],
     );
     return await this.getSchema(workspace, id);
   }
@@ -355,7 +432,7 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async createEntity(input: CreateEntityInput) {
     this.run(
-      'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity (id, workspace, slug, namespace, name, description, owner, lifecycle, tags, links, schema_id, data, visibility_mode, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -369,6 +446,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         JSON.stringify(input.links),
         input.schema_id,
         JSON.stringify(input.data),
+        input.visibility_mode,
         input.created_at.toISOString(),
         input.updated_at.toISOString(),
       ],
@@ -378,7 +456,7 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async updateEntity(workspace: string, id: string, input: UpdateEntityInput) {
     this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, tags = ?, links = ?, schema_id = ?, data = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, tags = ?, links = ?, schema_id = ?, data = ?, visibility_mode = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.slug,
         input.namespace,
@@ -390,6 +468,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         JSON.stringify(input.links),
         input.schema_id,
         JSON.stringify(input.data),
+        input.visibility_mode,
         input.updated_at.toISOString(),
         workspace,
         id,
@@ -405,6 +484,45 @@ export class SqliteDatabase implements DatabaseAdapter {
     return row;
   }
 
+  async listEntityGrants(workspace: string) {
+    return this.all(
+      'SELECT * FROM entity_grant WHERE workspace = ? ORDER BY entity_id, principal_type, principal_id',
+      [workspace],
+      toEntityGrant,
+    );
+  }
+
+  async getEntityGrants(workspace: string, entityId: string) {
+    return this.all(
+      'SELECT * FROM entity_grant WHERE workspace = ? AND entity_id = ? ORDER BY principal_type, principal_id',
+      [workspace, entityId],
+      toEntityGrant,
+    );
+  }
+
+  async replaceEntityGrants(workspace: string, entityId: string, grants: CreateEntityGrantInput[]) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM entity_grant WHERE workspace = ? AND entity_id = ?', [workspace, entityId]);
+      for (const grant of grants) {
+        this.run(
+          'INSERT INTO entity_grant (id, workspace, entity_id, principal_type, principal_id, role, applies_to, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            grant.id,
+            workspace,
+            entityId,
+            grant.principal_type,
+            grant.principal_id,
+            grant.role,
+            grant.applies_to,
+            grant.created_at.toISOString(),
+          ],
+        );
+      }
+    });
+    tx();
+    return await this.getEntityGrants(workspace, entityId);
+  }
+
   async listProjects(workspace: string) {
     return this.all('SELECT * FROM project WHERE workspace = ? ORDER BY name', [workspace], toProject);
   }
@@ -415,16 +533,16 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async createProject(input: CreateProjectInput) {
     this.run(
-      'INSERT INTO project (id, workspace, name, description, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [input.id, input.workspace, input.name, input.description, input.status, input.created_at.toISOString(), input.updated_at.toISOString()],
+      'INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [input.id, input.workspace, input.name, input.description, input.owner, input.status, input.created_at.toISOString(), input.updated_at.toISOString()],
     );
     return (await this.getProject(input.workspace, input.id))!;
   }
 
   async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
     this.run(
-      'UPDATE project SET name = ?, description = ?, status = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [input.name, input.description, input.status, input.updated_at.toISOString(), workspace, id],
+      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [input.name, input.description, input.owner, input.status, input.updated_at.toISOString(), workspace, id],
     );
     return await this.getProject(workspace, id);
   }
@@ -645,5 +763,30 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async listUsers() {
     return this.all('SELECT * FROM users ORDER BY display_name', [], toUser);
+  }
+
+  async listGlobalRoleAssignments(userId?: string) {
+    if (userId) {
+      return this.all(
+        'SELECT user_id, role, created_at FROM global_role_assignment WHERE user_id = ? ORDER BY role',
+        [userId],
+        toGlobalRoleAssignment,
+      );
+    }
+    return this.all('SELECT user_id, role, created_at FROM global_role_assignment ORDER BY user_id, role', [], toGlobalRoleAssignment);
+  }
+
+  async replaceGlobalRoleAssignments(userId: string, roles: GlobalRoleAssignment['role'][], createdAt: Date) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM global_role_assignment WHERE user_id = ?', [userId]);
+      for (const role of roles) {
+        this.run(
+          'INSERT INTO global_role_assignment (user_id, role, created_at) VALUES (?, ?, ?)',
+          [userId, role, createdAt.toISOString()],
+        );
+      }
+    });
+    tx();
+    return await this.listGlobalRoleAssignments(userId);
   }
 }

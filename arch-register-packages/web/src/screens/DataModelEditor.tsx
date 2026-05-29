@@ -13,6 +13,7 @@ type DataModelEditorProps = {
   selectedSchemaId: string | null;
   onSelectSchema: (id: string) => void;
   onSchemaUpdated: () => void;
+  canEdit: boolean;
 };
 
 export const DataModelEditor = ({
@@ -21,6 +22,7 @@ export const DataModelEditor = ({
   selectedSchemaId,
   onSelectSchema,
   onSchemaUpdated,
+  canEdit,
 }: DataModelEditorProps) => {
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [name, setName] = useState('');
@@ -141,9 +143,11 @@ export const DataModelEditor = ({
           </div>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateType}>
-            <TbPlus size={12} /> New entity type
-          </button>
+          {canEdit && (
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleCreateType}>
+              <TbPlus size={12} /> New entity type
+            </button>
+          )}
         </div>
       </div>
 
@@ -185,6 +189,7 @@ export const DataModelEditor = ({
                     <input
                       className={styles.input}
                       value={name}
+                      readOnly={!canEdit}
                       onChange={e => {
                         setName(e.target.value);
                         setDirty(true);
@@ -204,6 +209,7 @@ export const DataModelEditor = ({
                           key={c}
                           className={`${styles.swatch} ${color === c ? styles.swatchActive : ''}`}
                           style={{ background: c }}
+                          disabled={!canEdit}
                           onClick={() => { setColor(c); setDirty(true); }}
                         />
                       ))}
@@ -220,6 +226,7 @@ export const DataModelEditor = ({
                             key={id}
                             className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
                             title={id}
+                            disabled={!canEdit}
                             onClick={() => { setIcon(id); setDirty(true); }}
                           >
                             <Ic size={14} />
@@ -233,9 +240,11 @@ export const DataModelEditor = ({
                 {/* Fields */}
                 <div className={styles.fieldsHead}>
                   <div className={styles.sectionLabel}>Fields</div>
-                  <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={addField}>
-                    <TbPlus size={11} /> Add field
-                  </button>
+                  {canEdit && (
+                    <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={addField}>
+                      <TbPlus size={11} /> Add field
+                    </button>
+                  )}
                 </div>
 
                 {fields.length > 0 ? (
@@ -258,8 +267,9 @@ export const DataModelEditor = ({
                           schemas={schemas}
                           onUpdate={(patch) => updateField(f.id, patch)}
                           onChangeType={(t) => changeFieldType(f.id, t)}
-                          onRemove={() => removeField(f.id)}
+                          onRemove={canEdit ? () => removeField(f.id) : undefined}
                           containmentDisabled={hasOtherContainment}
+                          canEdit={canEdit}
                         />
                       );
                     })}
@@ -274,15 +284,17 @@ export const DataModelEditor = ({
 
                 {/* Save / Delete actions */}
                 <div className={styles.formActions}>
-                  <button
-                    type="button"
-                    className={`${styles.btn} ${styles.btnDanger}`}
-                    onClick={handleDeleteType}
-                  >
-                    <TbTrash size={12} /> Delete type
-                  </button>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={handleDeleteType}
+                    >
+                      <TbTrash size={12} /> Delete type
+                    </button>
+                  )}
                   <div style={{ flex: 1 }} />
-                  {dirty && (
+                  {canEdit && dirty && (
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
@@ -319,13 +331,15 @@ const FieldRow = ({
   onChangeType,
   onRemove,
   containmentDisabled,
+  canEdit,
 }: {
   field: SchemaField;
   schemas: EntitySchema[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
-  onRemove: () => void;
+  onRemove?: () => void;
   containmentDisabled: boolean;
+  canEdit: boolean;
 }) => {
   const optionsDisplay = () => {
     if (field.type === 'select') {
@@ -343,6 +357,7 @@ const FieldRow = ({
         <select
           className={styles.inlineSelect}
           value={field.schemaId}
+          disabled={!canEdit}
           onChange={e => onUpdate({ schemaId: e.target.value } as Partial<SchemaField>)}
         >
           <option value="">Select type...</option>
@@ -364,11 +379,13 @@ const FieldRow = ({
       <input
         className={styles.inlineInput}
         value={field.name}
+        readOnly={!canEdit}
         onChange={e => onUpdate({ name: e.target.value })}
       />
       <select
         className={styles.inlineSelect}
         value={field.type}
+        disabled={!canEdit}
         onChange={e => onChangeType(e.target.value as FieldType)}
       >
         {FIELD_TYPES.map(t => (
@@ -377,11 +394,13 @@ const FieldRow = ({
       </select>
       <span className={styles.fieldOptions}>{optionsDisplay()}</span>
       <span style={{ textAlign: 'center' }}>
-        <input type="checkbox" className={styles.checkbox} />
+        <input type="checkbox" className={styles.checkbox} disabled={!canEdit} />
       </span>
-      <button type="button" className={styles.iconBtn} onClick={onRemove}>
-        <TbTrash size={13} />
-      </button>
+      {onRemove && (
+        <button type="button" className={styles.iconBtn} onClick={onRemove}>
+          <TbTrash size={13} />
+        </button>
+      )}
     </div>
   );
 };

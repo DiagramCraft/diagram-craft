@@ -1,11 +1,14 @@
-import { defineHandler, readBody, getQuery, getCookie, HTTPError, redirect, H3 } from 'h3';
 import type { H3Event } from 'h3';
+import { defineHandler, getCookie, getQuery, H3, HTTPError, readBody, redirect } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { verifyPassword } from '../utils/password.js';
 import { generateTokenPair, verifyToken } from '../utils/jwt.js';
 import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
-import { setAuthCookies, clearAuthCookies } from '../utils/cookies.js';
+import { clearAuthCookies, setAuthCookies } from '../utils/cookies.js';
 import type { JWTPayload, User } from '../types.js';
+import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
+import { getGlobalPermissionsForRoles } from '@arch-register/permissions';
+import { AuthenticatedEvent } from '../middleware/auth';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -43,17 +46,12 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/config',
     defineHandler(async event => {
-      if (event.method !== 'GET') {
+      if (event.req.method !== 'GET') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
-      const authDisabled = process.env['AUTH_DISABLED'] === 'true';
-
-      return {
-        mode: authMode,
-        disabled: authDisabled
-      };
+      return { mode: authMode };
     })
   );
 
@@ -61,7 +59,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/login',
     defineHandler(async event => {
-      if (event.method !== 'POST') {
+      if (event.req.method !== 'POST') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
@@ -126,7 +124,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/oidc/authorize',
     defineHandler(async event => {
-      if (event.method !== 'GET') {
+      if (event.req.method !== 'GET') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
@@ -156,7 +154,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/oidc/callback',
     defineHandler(async event => {
-      if (event.method !== 'GET') {
+      if (event.req.method !== 'GET') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
@@ -243,7 +241,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/refresh',
     defineHandler(async event => {
-      if (event.method !== 'POST') {
+      if (event.req.method !== 'POST') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
@@ -304,7 +302,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/logout',
     defineHandler(async event => {
-      if (event.method !== 'POST') {
+      if (event.req.method !== 'POST') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
@@ -317,18 +315,42 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 };
 
 // Protected auth routes — mounted after auth middleware
-export const createAuthProtectedRoutes = () => {
+export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   const app = new H3();
 
   // GET /api/auth/me - Get current user info
   app.use(
     '/api/auth/me',
     defineHandler(async event => {
-      if (event.method !== 'GET') {
+      if (event.req.method !== 'GET') {
         throw new HTTPError({ status: 405, message: 'Method not allowed' });
       }
 
       const user = event.context.user as User;
+      const [roleAssignments, workspaces] = await Promise.all([
+        db.listGlobalRoleAssignments(user.id),
+        db.listWorkspaces()
+      ]);
+      const globalRoles = roleAssignments.map(assignment => assignment.role);
+      const globalPermissions = [...getGlobalPermissionsForRoles(globalRoles)];
+      const workspaceMemberships = await Promise.all(
+        workspaces.map(async workspace => ({
+          workspace_id: workspace.id,
+          memberships: (await db.listTeamMemberships(workspace.id))
+            .filter(membership => membership.user_id === user.id)
+            .map(membership => membership.team_id)
+        }))
+      );
+
+      const ownerOptionsByWorkspace: Record<string, Array<{ id: string; name: string; type: 'team' }>> = {};
+      for (const workspace of workspaces) {
+        const owners = await db.listOwners(workspace.id);
+        ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
+          id: o.id,
+          name: o.id,
+          type: 'team' as const
+        }));
+      }
 
       return {
         id: user.id,
@@ -336,8 +358,74 @@ export const createAuthProtectedRoutes = () => {
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         created_at: user.created_at.toISOString(),
-        last_login_at: user.last_login_at?.toISOString() ?? null
+        last_login_at: user.last_login_at?.toISOString() ?? null,
+        global_roles: globalRoles,
+        global_permissions: globalPermissions,
+        team_memberships: workspaceMemberships
+          .filter(workspace => workspace.memberships.length > 0)
+          .map(workspace => ({
+            workspace_id: workspace.workspace_id,
+            team_ids: workspace.memberships
+          })),
+        owner_options_by_workspace: ownerOptionsByWorkspace
       };
+    })
+  );
+
+  app.use(
+    '/api/auth/users',
+    defineHandler(async event => {
+      if (event.req.method !== 'GET') {
+        throw new HTTPError({ status: 405, message: 'Method not allowed' });
+      }
+
+      const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
+      requireGlobalPermission(authCtx, 'manage_users');
+
+      return (await db.listUsers()).map(user => ({
+        id: user.id,
+        email: user.email,
+        display_name: user.display_name,
+        auth_provider: user.auth_provider,
+        is_active: user.is_active
+      }));
+    })
+  );
+
+  app.use(
+    '/api/auth/users/:id/global-roles',
+    defineHandler(async event => {
+      const userId = event.context.params?.['id'];
+      if (!userId) {
+        throw new HTTPError({ status: 400, message: 'id is required' });
+      }
+
+      const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
+      requireGlobalPermission(authCtx, 'manage_global_roles');
+
+      if (event.req.method === 'GET') {
+        return await db.listGlobalRoleAssignments(userId);
+      }
+
+      if (event.req.method === 'PUT') {
+        const body = (await readBody(event).catch(() => undefined)) as
+          | { roles?: unknown }
+          | undefined;
+        if (!body || !Array.isArray(body.roles)) {
+          throw new HTTPError({ status: 400, message: 'roles must be an array' });
+        }
+        const roles = body.roles.filter(
+          (role): role is 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor' =>
+            typeof role === 'string' &&
+            ['platform_admin', 'schema_admin', 'user_admin', 'auditor'].includes(role)
+        );
+        if (roles.length !== body.roles.length) {
+          throw new HTTPError({ status: 400, message: 'roles contains invalid values' });
+        }
+        return await db.replaceGlobalRoleAssignments(userId, roles, new Date());
+      }
+
+      throw new HTTPError({ status: 405, message: 'Method not allowed' });
     })
   );
 

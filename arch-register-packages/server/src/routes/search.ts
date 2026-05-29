@@ -4,6 +4,9 @@ import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
+import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';
+import type { AuthenticatedEvent } from '../middleware/auth.js';
+import { PermissionChecker } from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/search';
 
@@ -77,7 +80,10 @@ const parseTypes = (value: unknown): SearchType[] => {
   return [...new Set(parsed as SearchType[])];
 };
 
-const includesQuery = (value: unknown, query: string) => String(value ?? '').toLowerCase().includes(query);
+const includesQuery = (value: unknown, query: string) =>
+  String(value ?? '')
+    .toLowerCase()
+    .includes(query);
 
 const collectMatchedMetadata = (entity: Entity, query: string) => {
   const matches: string[] = [];
@@ -88,7 +94,14 @@ const collectMatchedMetadata = (entity: Entity, query: string) => {
   if (includesQuery(entity.owner, query)) matches.push('owner');
   if (includesQuery(entity.lifecycle, query)) matches.push('lifecycle');
   if (entity.tags.some(tag => includesQuery(tag, query))) matches.push('tags');
-  if (entity.links.some(link => includesQuery(link.title, query) || includesQuery(link.url, query) || includesQuery(link.type, query))) {
+  if (
+    entity.links.some(
+      link =>
+        includesQuery(link.title, query) ||
+        includesQuery(link.url, query) ||
+        includesQuery(link.type, query)
+    )
+  ) {
     matches.push('links');
   }
   return matches;
@@ -109,14 +122,17 @@ const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldM
 
 export function createSearchRoutes(db: DatabaseAdapter) {
   const router = new H3();
+  const checker = new PermissionChecker();
 
   router.get(
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const query = getQuery(event);
       const q = typeof query['q'] === 'string' ? query['q'].trim() : '';
-    const limitPerType = parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
+      const limitPerType =
+        parsePositiveInt(query['limitPerType'], 'limitPerType') ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
       const types = parseTypes(query['types']);
 
       const empty: SearchResponse = {
@@ -132,50 +148,69 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       const normalizedQuery = q.toLowerCase();
 
       const [projects, schemas, entities] = await Promise.all([
-        types.includes('projects') ? db.listProjects(workspace) : Promise.resolve([]),
-        types.includes('schemas') || types.includes('entities') ? db.listSchemas(workspace) : Promise.resolve([]),
-        types.includes('entities') ? db.listEntities(workspace) : Promise.resolve([]),
+        types.includes('projects') || types.includes('files')
+          ? db.listProjects(workspace)
+          : Promise.resolve([]),
+        types.includes('schemas') || types.includes('entities')
+          ? db.listSchemas(workspace)
+          : Promise.resolve([]),
+        types.includes('entities') ? db.listEntities(workspace) : Promise.resolve([])
       ]);
 
+      const visibleEntities = authCtx
+        ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
+        : entities;
+      const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
+
       const projectsResults = types.includes('projects')
-        ? projects
-            .filter(project => includesQuery(project.name, normalizedQuery) || includesQuery(project.description, normalizedQuery))
+        ? visibleProjects
+            .filter(
+              project =>
+                includesQuery(project.name, normalizedQuery) ||
+                includesQuery(project.description, normalizedQuery)
+            )
             .sort((a, b) => a.name.localeCompare(b.name))
             .slice(0, limitPerType)
         : [];
 
       const filesResults: FileSearchResult[] = [];
       if (types.includes('files')) {
-        const projectsForFiles = await db.listProjects(workspace);
+        const projectsForFiles = visibleProjects;
         const projectMap = new Map(projectsForFiles.map(project => [project.id, project.name]));
         const projectIds = [...projectMap.keys()];
-        
+
         const filesByProject = await Promise.all(
           projectIds.map(async projectId => ({
             projectId,
             files: await db.listProjectFiles(workspace, projectId)
           }))
         );
-        
+
         for (const { projectId, files } of filesByProject) {
           const projectName = projectMap.get(projectId) ?? projectId;
           for (const file of files) {
-            if (!includesQuery(file.name, normalizedQuery) && !includesQuery(file.path, normalizedQuery)) continue;
+            if (
+              !includesQuery(file.name, normalizedQuery) &&
+              !includesQuery(file.path, normalizedQuery)
+            )
+              continue;
             filesResults.push({
               projectId: file.project_id,
               projectName,
               fileId: file.id,
               path: file.path,
-              name: file.name,
+              name: file.name
             });
           }
         }
-        filesResults.sort((a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path));
+        filesResults.sort(
+          (a, b) => a.projectName.localeCompare(b.projectName) || a.path.localeCompare(b.path)
+        );
       }
 
       const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
       const entityResults = types.includes('entities')
-        ? entities
+        ? visibleEntities
             .map(entity => {
               const matchedFields = collectMatchedFields(entity.data, normalizedQuery);
               const matchedMetadata = collectMatchedMetadata(entity, normalizedQuery);
@@ -190,7 +225,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
                 _owner: entity.owner,
                 _lifecycle: entity.lifecycle,
                 matchedFields,
-                matchedMetadata,
+                matchedMetadata
               } satisfies EntitySearchResult;
             })
             .filter((entity): entity is EntitySearchResult => entity !== null)
@@ -202,11 +237,12 @@ export function createSearchRoutes(db: DatabaseAdapter) {
         ? schemas
             .map(schema => {
               const fieldMatches = collectFieldMatches(schema.fields, normalizedQuery);
-              if (!includesQuery(schema.name, normalizedQuery) && fieldMatches.length === 0) return null;
+              if (!includesQuery(schema.name, normalizedQuery) && fieldMatches.length === 0)
+                return null;
               return {
                 schemaId: schema.id,
                 name: schema.name,
-                fieldMatches,
+                fieldMatches
               } satisfies SchemaSearchResult;
             })
             .filter((schema): schema is SchemaSearchResult => schema !== null)
@@ -219,7 +255,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
         projects: projectsResults,
         files: filesResults.slice(0, limitPerType),
         entities: entityResults,
-        schemas: schemaResults,
+        schemas: schemaResults
       } satisfies SearchResponse;
     })
   );

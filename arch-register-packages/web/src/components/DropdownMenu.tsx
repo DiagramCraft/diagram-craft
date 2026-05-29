@@ -10,10 +10,11 @@ export type MenuItem = {
 
 type DropdownMenuProps = {
   trigger: ReactNode;
+  header?: ReactNode;
   items: MenuItem[];
 };
 
-export const DropdownMenu = ({ trigger, items }: DropdownMenuProps) => {
+export const DropdownMenu = ({ trigger, header, items }: DropdownMenuProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,6 +39,12 @@ export const DropdownMenu = ({ trigger, items }: DropdownMenuProps) => {
       <div onClick={() => setOpen(o => !o)}>{trigger}</div>
       {open && (
         <div className={styles.menu}>
+          {header && (
+            <>
+              <div className={styles.header}>{header}</div>
+              <div className={styles.separator} />
+            </>
+          )}
           {items.map(item => (
             <button
               type="button"

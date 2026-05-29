@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from './Dialog';
 import { createProject, ApiError } from '../api';
-import type { Project } from '../api';
+import type { Project, WorkspaceOwnerOption } from '../api';
+import { usePermissions } from '../auth/PermissionContext';
 import styles from './AddWorkspaceDialog.module.css';
 
 const PROJECT_STATUSES = [
@@ -15,25 +16,34 @@ type AddProjectDialogProps = {
   onClose: () => void;
   onCreated: (project: Project) => void;
   workspaceId: string;
+  ownerOptions: WorkspaceOwnerOption[];
 };
 
-export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId }: AddProjectDialogProps) => {
+export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerOptions }: AddProjectDialogProps) => {
+  const { canCreateProject } = usePermissions();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [owner, setOwner] = useState('');
   const [status, setStatus] = useState<'pinned' | 'active' | 'archived'>('active');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const creatableOwnerOptions = useMemo(
+    () => ownerOptions.filter(option => canCreateProject(workspaceId, option.id)),
+    [canCreateProject, ownerOptions, workspaceId]
+  );
+  const canCreateWithoutOwner = canCreateProject(workspaceId, null);
 
   useEffect(() => {
     if (open) {
       setName('');
       setDescription('');
+      setOwner(canCreateWithoutOwner ? '' : (creatableOwnerOptions[0]?.id ?? ''));
       setStatus('active');
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
-  }, [open]);
+  }, [canCreateWithoutOwner, creatableOwnerOptions, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +58,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId }: AddP
       const project = await createProject(workspaceId, {
         name: trimmed,
         description: description.trim(),
+        owner: owner || null,
         status,
       });
       onCreated(project);
@@ -89,6 +100,17 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId }: AddP
             {PROJECT_STATUSES.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.field}>
+          <label>Owner</label>
+          <select value={owner} onChange={e => setOwner(e.target.value)}>
+            {canCreateWithoutOwner && <option value="">No owner</option>}
+            {creatableOwnerOptions.map(option => (
+              <option key={option.id} value={option.id}>
+                {option.id}
               </option>
             ))}
           </select>

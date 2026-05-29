@@ -54,7 +54,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(authMiddleware);
 
   // Protected routes (require authentication)
-  app.use(createAuthProtectedRoutes());
+  app.use(createAuthProtectedRoutes(db));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
   app.use(createDataRoutes(db));

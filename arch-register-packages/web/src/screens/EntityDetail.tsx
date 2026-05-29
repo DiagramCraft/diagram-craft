@@ -10,7 +10,7 @@ import {
 import type { NavigateFn } from '../routing';
 import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog, deleteEntity, cloneEntity } from '../api';
 import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
-import { DropdownMenu } from '../components/DropdownMenu';
+import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 
 type EntityDetailProps = {
   workspaceId: string;
@@ -19,6 +19,7 @@ type EntityDetailProps = {
   lifecycleStates: WorkspaceLifecycleState[];
   ownerOptions: WorkspaceOwnerOption[];
   navigate: NavigateFn;
+  canViewAudit: boolean;
 };
 
 type TabId = 'overview' | 'topology' | 'relations' | 'changes';
@@ -37,7 +38,7 @@ type RefLookup = Map<string, EntitySummary>;
 const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate }: EntityDetailProps) => {
+export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate, canViewAudit }: EntityDetailProps) => {
   const [entity, setEntity] = useState<EntityRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('overview');
@@ -69,6 +70,11 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
             _lifecycle: null,
             _tags: [],
             _links: [],
+            canView: true,
+            canEdit: false,
+            canDelete: false,
+            canAdmin: false,
+            canCreateChild: false,
           });
         });
         setRefLookup(lookup);
@@ -101,6 +107,11 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   }, [refreshRelations]);
 
   useEffect(() => {
+    if (!canViewAudit) {
+      setAuditLog([]);
+      setLoadingAudit(false);
+      return;
+    }
     if (tab === 'changes' && entityId) {
       setLoadingAudit(true);
       fetchAuditLog(workspaceId, { entityId, limit: 100 })
@@ -113,7 +124,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
           setLoadingAudit(false);
         });
     }
-  }, [tab, entityId, workspaceId]);
+  }, [canViewAudit, tab, entityId, workspaceId]);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -272,6 +283,10 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   }
 
   const entityName = entity._name || entity._slug;
+  const menuItems: MenuItem[] = [
+    ...(entity.canCreateChild ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }] : []),
+    ...(entity.canDelete ? [{ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete }] : []),
+  ];
 
   return (
     <div className={styles.screen}>
@@ -293,25 +308,26 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
         </div>
         <div className={styles.headActions}>
           {!editing ? (
-            <button type="button" className={styles.btn} onClick={startEdit}><TbEdit size={12} /> Edit</button>
+            entity.canEdit ? <button type="button" className={styles.btn} onClick={startEdit}><TbEdit size={12} /> Edit</button> : null
           ) : (
             <>
-              <button type="button" className={styles.btnDanger} onClick={handleDelete}>
-                <TbTrash size={12} /> Delete
-              </button>
+              {entity.canDelete && (
+                <button type="button" className={styles.btnDanger} onClick={handleDelete}>
+                  <TbTrash size={12} /> Delete
+                </button>
+              )}
               <button type="button" className={styles.btn} onClick={cancelEdit}>Cancel</button>
               <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={saving}>
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </>
           )}
-          <DropdownMenu
-            trigger={<button type="button" className={styles.iconBtn}><TbDots size={14} /></button>}
-            items={[
-              { label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone },
-              { label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete },
-            ]}
-          />
+          {menuItems.length > 0 && (
+            <DropdownMenu
+              trigger={<button type="button" className={styles.iconBtn}><TbDots size={14} /></button>}
+              items={menuItems}
+            />
+          )}
         </div>
       </div>
 
@@ -339,13 +355,15 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
           >
             Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
           </button>
-          <button
-            type="button"
-            className={`${styles.tab} ${tab === 'changes' ? styles.tabActive : ''}`}
-            onClick={() => setTab('changes')}
-          >
-            Change history
-          </button>
+          {canViewAudit && (
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === 'changes' ? styles.tabActive : ''}`}
+              onClick={() => setTab('changes')}
+            >
+              Change history
+            </button>
+          )}
         </div>
       </div>
 
