@@ -4,19 +4,11 @@ import { TbSearch } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
-import { MemberAvatar } from '../components/MemberAvatar';
+import { MemberAvatar, stableHue } from '../components/MemberAvatar';
+import { getUserLabel } from '../utils/userLabel';
 import { useWorkspaceMembers, useWorkspaceUsers, useUpdateWorkspaceMemberRole } from '../hooks/useWorkspaceMembers';
 import { useTeamAssignments, useTeams } from '../hooks/useWorkspaceConfig';
 import styles from './MembersSection.module.css';
-
-const getUserLabel = (user: { display_name: string; email: string | null; id?: string }) =>
-  user.display_name || user.email || user.id || '';
-
-const stableHue = (id: string) => {
-  let hash = 0;
-  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
-  return ((hash % 360) + 360) % 360;
-};
 
 const TeamChip = ({ teamId }: { teamId: string }) => {
   const h = stableHue(teamId);

@@ -1,6 +1,6 @@
 import styles from './MemberAvatar.module.css';
 
-const stableHue = (id: string) => {
+export const stableHue = (id: string) => {
   let hash = 0;
   for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
   return ((hash % 360) + 360) % 360;

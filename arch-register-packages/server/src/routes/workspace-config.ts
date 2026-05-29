@@ -3,12 +3,13 @@ import type { DatabaseAdapter } from '../db/database.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import type { WorkspaceRole } from '../types.js';
+import type { TeamRole, WorkspaceRole } from '../types.js';
 import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/config';
 
 const VALID_WORKSPACE_ROLES: WorkspaceRole[] = ['owner', 'admin', 'editor', 'reviewer', 'viewer'];
+const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
 
 export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   const router = new H3();
@@ -71,6 +72,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/teams`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listTeams(workspace);
     })
   );
@@ -80,6 +83,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/owners`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listTeams(workspace);
     })
   );
@@ -203,15 +208,15 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
           message: 'user_id must reference an existing user'
         });
         const roleValue = membership['role'];
-        const role =
-          roleValue === 'team_editor' || roleValue === 'team_reviewer' || roleValue === 'team_admin'
-            ? roleValue
-            : 'team_admin';
+        httpAssert.true(
+          typeof roleValue === 'string' && VALID_TEAM_ROLES.includes(roleValue as TeamRole),
+          { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
+        );
         return {
           workspace,
           team_id: teamId as string,
           user_id: userId as string,
-          role,
+          role: roleValue as TeamRole,
           created_at: now
         };
       });
@@ -253,15 +258,15 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
           message: 'user_id must reference an existing user'
         });
         const roleValue = membership['role'];
-        const role =
-          roleValue === 'team_editor' || roleValue === 'team_reviewer' || roleValue === 'team_admin'
-            ? roleValue
-            : 'team_admin';
+        httpAssert.true(
+          typeof roleValue === 'string' && VALID_TEAM_ROLES.includes(roleValue as TeamRole),
+          { message: `role must be one of: ${VALID_TEAM_ROLES.join(', ')}` }
+        );
         return {
           workspace,
           team_id: teamId as string,
           user_id: userId as string,
-          role,
+          role: roleValue as TeamRole,
           created_at: now
         };
       });

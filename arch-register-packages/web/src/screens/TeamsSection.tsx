@@ -4,7 +4,8 @@ import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
-import { MemberAvatar } from '../components/MemberAvatar';
+import { MemberAvatar, stableHue } from '../components/MemberAvatar';
+import { getUserLabel } from '../utils/userLabel';
 import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../api';
 import { useWorkspaceUsers } from '../hooks/useWorkspaceMembers';
 import {
@@ -78,15 +79,6 @@ const toMembershipPayload = (teams: TeamDraft[]) =>
         role: assignment.role,
       }))
   );
-
-const getUserLabel = (user: WorkspaceUserInfo) =>
-  user.display_name || user.email || user.id;
-
-const stableHue = (id: string) => {
-  let hash = 0;
-  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
-  return ((hash % 360) + 360) % 360;
-};
 
 const getRoleOption = (role: TeamRole) =>
   TEAM_ROLE_OPTIONS.find(r => r.value === role);

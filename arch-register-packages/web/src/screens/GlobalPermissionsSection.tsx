@@ -7,6 +7,7 @@ import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar } from '../components/MemberAvatar';
+import { getUserLabel } from '../utils/userLabel';
 import { useAuthUsers, useUpdateUserGlobalRoles, globalRolesKeys } from '../hooks/useGlobalRoles';
 import styles from './GlobalPermissionsSection.module.css';
 
@@ -16,8 +17,6 @@ const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
   const sortedRight = [...right].sort();
   return sortedLeft.every((role, index) => role === sortedRight[index]);
 };
-
-const getUserLabel = (user: AuthUserInfo) => user.display_name || user.email || user.id;
 
 const RolesMenu = ({
   currentRoles,
