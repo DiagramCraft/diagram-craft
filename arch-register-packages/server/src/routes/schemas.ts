@@ -19,7 +19,6 @@ const handleError = (error: unknown, fallback: string): never =>
 export function createSchemaRoutes(db: DatabaseAdapter) {
   const router = new H3();
 
-  // GET /api/:workspace/schemas
   router.get(
     BASE,
     defineHandler(async event => {
@@ -28,8 +27,8 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       if (authCtx) requireGlobalPermission(authCtx, 'view_schema');
       try {
         const [schemas, entities] = await Promise.all([
-          db.listSchemas(workspace),
-          db.listEntities(workspace)
+          db.catalog.listSchemas(workspace),
+          db.catalog.listEntities(workspace)
         ]);
         return schemas.map(schema => ({
           ...schema,
@@ -41,7 +40,6 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     })
   );
 
-  // GET /api/:workspace/schemas/:id
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -51,7 +49,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       try {
-        const row = await db.getSchema(workspace, id);
+        const row = await db.catalog.getSchema(workspace, id);
         httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
         return row;
       } catch (e) {
@@ -60,7 +58,6 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     })
   );
 
-  // POST /api/:workspace/schemas
   router.post(
     BASE,
     defineHandler(async event => {
@@ -73,12 +70,14 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.string(name, { message: 'name is required and must be a string' });
       const colorVal = typeof color === 'string' ? color : null;
       const iconVal = typeof icon === 'string' ? icon : null;
-      const ownerValues = new Set((await db.listOwners(workspace)).map(owner => owner.id));
+      const ownerValues = new Set(
+        (await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id)
+      );
       const defaultOwner =
         typeof default_owner === 'string' && ownerValues.has(default_owner) ? default_owner : null;
       try {
         const timestamp = new Date();
-        const row = await db.createSchema({
+        const row = await db.catalog.createSchema({
           id: crypto.randomUUID(),
           workspace,
           name: name as string,
@@ -90,26 +89,24 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           updated_at: timestamp
         });
 
-        // Log audit entry
         await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'entity_schema',
-          entityId: row!.id,
-          entityName: row!.name,
+          entityId: row.id,
+          entityName: row.name,
           changes: {
-            new: extractEntityFields(row!)
+            new: extractEntityFields(row)
           }
         });
 
-        return row!;
+        return row;
       } catch (e) {
         handleError(e, 'Failed to create schema');
       }
     })
   );
 
-  // PUT /api/:workspace/schemas/:id
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -122,13 +119,14 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, fields, color, icon, default_owner } = body as Record<string, unknown>;
       httpAssert.string(name, { message: 'name is required and must be a string' });
-      const ownerValues = new Set((await db.listOwners(workspace)).map(owner => owner.id));
+      const ownerValues = new Set(
+        (await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id)
+      );
       try {
-        // Fetch old state for audit log
-        const oldRow = await db.getSchema(workspace, id);
+        const oldRow = await db.catalog.getSchema(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });
 
-        const row = await db.updateSchema(workspace, id, {
+        const row = await db.catalog.updateSchema(workspace, id, {
           name: name as string,
           fields:
             fields !== undefined && Array.isArray(fields)
@@ -145,7 +143,6 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           updated_at: new Date()
         });
 
-        // Log audit entry with field-level changes
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
 
         await logAudit(db, {
@@ -164,7 +161,6 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     })
   );
 
-  // DELETE /api/:workspace/schemas/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -174,14 +170,11 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       try {
-        // Fetch schema before deletion for audit log
-        const schema = await db.getSchema(workspace, id);
+        const schema = await db.catalog.getSchema(workspace, id);
         httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
 
-        // Delete schema
-        await db.deleteSchema(workspace, id);
+        await db.catalog.deleteSchema(workspace, id);
 
-        // Log audit entry
         await logAudit(db, {
           workspace,
           operation: 'delete',

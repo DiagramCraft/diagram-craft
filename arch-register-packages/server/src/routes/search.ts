@@ -146,12 +146,12 @@ export function createSearchRoutes(db: DatabaseAdapter) {
 
       const [projects, schemas, entities] = await Promise.all([
         types.includes('projects') || types.includes('files')
-          ? db.listProjects(workspace)
+          ? db.projectsFiles.listProjects(workspace)
           : Promise.resolve([]),
         types.includes('schemas') || types.includes('entities')
-          ? db.listSchemas(workspace)
+          ? db.catalog.listSchemas(workspace)
           : Promise.resolve([]),
-        types.includes('entities') ? db.listEntities(workspace) : Promise.resolve([])
+        types.includes('entities') ? db.catalog.listEntities(workspace) : Promise.resolve([])
       ]);
 
       const visibleEntities = authCtx
@@ -179,7 +179,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
         const filesByProject = await Promise.all(
           projectIds.map(async projectId => ({
             projectId,
-            files: await db.listProjectFiles(workspace, projectId)
+            files: await db.projectsFiles.listProjectFiles(workspace, projectId)
           }))
         );
 

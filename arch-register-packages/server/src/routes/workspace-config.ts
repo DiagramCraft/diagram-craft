@@ -17,7 +17,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'view_schema');
-      return await db.listLifecycleStates(workspace);
+      return await db.workspaceAdmin.listLifecycleStates(workspace);
     })
   );
 
@@ -49,7 +49,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       });
 
       const now = new Date();
-      return await db.replaceLifecycleStates(
+      return await db.workspaceAdmin.replaceLifecycleStates(
         workspace,
         states.map((s, i) => ({
           id: s.id as string,
@@ -68,7 +68,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
     `${BASE}/owners`,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
-      return await db.listOwners(workspace);
+      return await db.workspaceAdmin.listOwners(workspace);
     })
   );
 
@@ -93,7 +93,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       });
 
       const now = new Date();
-      return await db.replaceOwners(
+      return await db.workspaceAdmin.replaceOwners(
         workspace,
         owners.map((o, i) => ({
           id: o.id as string,
@@ -111,7 +111,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'manage_teams');
-      return await db.listTeamMemberships(workspace);
+      return await db.workspaceAdmin.listTeamMemberships(workspace);
     })
   );
 
@@ -125,8 +125,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       httpAssert.array(body, { message: 'Request body must be a JSON array' });
       const rows = body as unknown[];
 
-      const owners = new Set((await db.listOwners(workspace)).map(owner => owner.id));
-      const users = new Set((await db.listUsers()).map(user => user.id));
+      const owners = new Set((await db.workspaceAdmin.listOwners(workspace)).map(owner => owner.id));
+      const users = new Set((await db.identityAuth.listUsers()).map(user => user.id));
       const now = new Date();
       const memberships: Array<{
         workspace: string;
@@ -154,7 +154,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         };
       });
 
-      return await db.replaceTeamMemberships(workspace, memberships);
+      return await db.workspaceAdmin.replaceTeamMemberships(workspace, memberships);
     })
   );
 

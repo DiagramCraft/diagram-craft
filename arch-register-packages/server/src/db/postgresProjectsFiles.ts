@@ -1,0 +1,184 @@
+import type {
+  CreateProjectInput,
+  ProjectsFilesDatabase,
+  UpdateProjectInput,
+  UpsertProjectFileInput
+} from './database.js';
+import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
+
+export class PostgresProjectsFilesDatabase
+  extends PostgresDatabaseBase
+  implements ProjectsFilesDatabase
+{
+  async listProjects(workspace: string) {
+    return await this.sql<PostgresRowTypes['project'][]>`
+      SELECT * FROM project WHERE workspace = ${workspace} ORDER BY name
+    `;
+  }
+
+  async getProject(workspace: string, id: string) {
+    const [row] = await this.sql<PostgresRowTypes['project'][]>`
+      SELECT * FROM project WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
+  async createProject(input: CreateProjectInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+        INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+        UPDATE project
+        SET name = ${input.name},
+            description = ${input.description},
+            owner = ${input.owner},
+            status = ${input.status},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteProject(workspace: string, id: string) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['project'][]>`
+        DELETE FROM project
+        WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listProjectFiles(workspace: string, projectId: string) {
+    return await this.sql<PostgresRowTypes['projectFile'][]>`
+      SELECT *
+      FROM project_file
+      WHERE workspace = ${workspace} AND project_id = ${projectId}
+      ORDER BY path
+    `;
+  }
+
+  async getProjectFileByPath(workspace: string, projectId: string, path: string) {
+    const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+      SELECT * FROM project_file
+      WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
+    `;
+    return row ?? null;
+  }
+
+  async updateProjectFileSizeById(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    sizeBytes: number,
+    updated_at: Date
+  ) {
+    try {
+      await this.sql`
+        UPDATE project_file
+        SET size_bytes = ${sizeBytes}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async upsertProjectFile(input: UpsertProjectFileInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at)
+        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.created_atIfNew}, ${input.updated_at})
+        ON CONFLICT (workspace, project_id, path)
+        DO UPDATE SET
+          name = EXCLUDED.name,
+          size_bytes = EXCLUDED.size_bytes,
+          updated_at = EXCLUDED.updated_at
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async createProjectFileIfAbsent(
+    input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }
+  ) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at)
+        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.created_atIfNew}, ${input.updated_at})
+        ON CONFLICT (workspace, project_id, path) DO NOTHING
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteProjectFileByPath(workspace: string, projectId: string, path: string) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
+        DELETE FROM project_file
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async renameProjectFileFolder(
+    workspace: string,
+    projectId: string,
+    oldPath: string,
+    newPath: string,
+    updated_at: Date
+  ) {
+    try {
+      const rows = await this.sql<{ id: string }[]>`
+        UPDATE project_file
+        SET path = ${newPath} || substring(path from ${oldPath.length + 1}),
+            updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${oldPath}/%`}
+        RETURNING id
+      `;
+      return rows.map(row => row.id);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteProjectFileFolder(workspace: string, projectId: string, folderPath: string) {
+    try {
+      return await this.sql<PostgresRowTypes['projectFile'][]>`
+        DELETE FROM project_file
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND path LIKE ${`${folderPath}/%`}
+        RETURNING *
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+}

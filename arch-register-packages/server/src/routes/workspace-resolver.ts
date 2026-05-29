@@ -6,7 +6,7 @@ export const resolveWorkspace = async (event: H3Event, db: DatabaseAdapter): Pro
   const slug = event.context.params?.['workspace'];
   httpAssert.string(slug, { message: 'workspace is required' });
 
-  const row = await db.resolveWorkspaceSlug(slug);
+  const row = await db.catalog.resolveWorkspaceSlug(slug);
   httpAssert.present(row, { status: 404, message: `Workspace '${slug}' not found` });
 
   return row;

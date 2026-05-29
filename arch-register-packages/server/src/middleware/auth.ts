@@ -45,7 +45,7 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
       });
     }
 
-    const user = await db.getUser(payload.sub);
+    const user = await db.identityAuth.getUser(payload.sub);
 
     httpAssert.present(user, { status: 401, message: 'User not found' });
     httpAssert.true(user.is_active, { status: 403, message: 'User account is inactive' });

@@ -26,8 +26,6 @@ const toApiFormat = (row: AuditLogEntry): AuditLogApiResponse => ({
 export const createAuditRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
-  // GET /api/:workspace/audit
-  // Query params: entityType, entityId, operation, startDate, endDate, limit, offset
   router.get(
     BASE,
     defineHandler(async event => {
@@ -46,7 +44,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
       const limit = parsePositiveInt(query['limit'], 'limit') ?? 50;
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
 
-      let rows = await db.listAuditLogs(workspace);
+      let rows = await db.audit.listAuditLogs(workspace);
       if (entityType) rows = rows.filter(row => row.entity_type === entityType);
       if (entityId) rows = rows.filter(row => row.entity_id === entityId);
       if (operation) rows = rows.filter(row => row.operation === operation);
@@ -57,8 +55,6 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     })
   );
 
-  // GET /api/:workspace/audit/stats
-  // Returns summary statistics about audit log entries
   router.get(
     `${BASE}/stats`,
     defineHandler(async event => {
@@ -66,7 +62,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'view_audit');
 
-      const rows = await db.listAuditLogs(workspace);
+      const rows = await db.audit.listAuditLogs(workspace);
       const byOperationMap = new Map<string, number>();
       const byEntityTypeMap = new Map<string, number>();
       const recentActivityMap = new Map<string, number>();

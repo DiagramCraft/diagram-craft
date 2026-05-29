@@ -23,19 +23,17 @@ const shortCode = (name: string): string =>
 export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdapter) {
   const router = new H3();
 
-  // GET /api/workspaces
   router.get(
     BASE,
     defineHandler(async () => {
       try {
-        return (await db.listWorkspaces()) as Workspace[];
+        return (await db.workspaceAdmin.listWorkspaces()) as Workspace[];
       } catch (e) {
         handleError(e, 'Failed to retrieve workspaces');
       }
     })
   );
 
-  // POST /api/workspaces
   router.post(
     BASE,
     defineHandler(async event => {
@@ -51,7 +49,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const sc = shortCode(name as string);
       try {
         const timestamp = new Date();
-        const row = await db.createWorkspace({
+        const row = await db.workspaceAdmin.createWorkspace({
           id,
           name: name as string,
           url_slug: urlSlug,
@@ -61,8 +59,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           updated_at: timestamp
         });
 
-        // Seed default lifecycle states
-        await db.replaceLifecycleStates(id, [
+        await db.workspaceAdmin.replaceLifecycleStates(id, [
           {
             id: 'proposed',
             workspace: id,
@@ -97,33 +94,30 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         ]);
 
-        // Seed default owners
-        await db.replaceOwners(id, [
+        await db.workspaceAdmin.replaceOwners(id, [
           { id: 'platform-team', workspace: id, sort_order: 0, created_at: timestamp },
           { id: 'ux-team', workspace: id, sort_order: 1, created_at: timestamp },
           { id: 'security-team', workspace: id, sort_order: 2, created_at: timestamp }
         ]);
 
-        // Log audit entry
         await logAudit(db, {
-          workspace: row!.id,
+          workspace: row.id,
           operation: 'create',
           entityType: 'workspace',
-          entityId: row!.id,
-          entityName: row!.name,
+          entityId: row.id,
+          entityName: row.name,
           changes: {
-            new: extractEntityFields(row!)
+            new: extractEntityFields(row)
           }
         });
 
-        return row!;
+        return row;
       } catch (e) {
         handleError(e, 'Failed to create workspace');
       }
     })
   );
 
-  // PUT /api/workspaces/:id
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -142,11 +136,10 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
         });
       }
       try {
-        // Fetch old state for audit log
-        const oldRow = await db.getWorkspace(id);
+        const oldRow = await db.workspaceAdmin.getWorkspace(id);
         httpAssert.present(oldRow, { status: 404, message: `Workspace '${id}' not found` });
 
-        const row = await db.updateWorkspace(id, {
+        const row = await db.workspaceAdmin.updateWorkspace(id, {
           name: name as string,
           url_slug: typeof url_slug === 'string' ? slugify(url_slug) : oldRow.url_slug,
           short_code: typeof sc === 'string' ? sc : oldRow.short_code,
@@ -154,7 +147,6 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           updated_at: new Date()
         });
 
-        // Log audit entry with field-level changes
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
 
         await logAudit(db, {
@@ -173,7 +165,6 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     })
   );
 
-  // DELETE /api/workspaces/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -183,7 +174,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       httpAssert.string(id, { message: 'id is required' });
 
       try {
-        const { workspace, projectIds } = await db.deleteWorkspace(id);
+        const { workspace, projectIds } = await db.workspaceAdmin.deleteWorkspace(id);
         httpAssert.present(workspace, { status: 404, message: `Workspace '${id}' not found` });
 
         if (storage) {

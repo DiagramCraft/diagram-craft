@@ -131,22 +131,19 @@ const toProjectResponse = <T extends { owner: string | null }>(
 export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const router = new H3();
 
-  // ── Project CRUD ────────────────────────────────────────────────
-
-  // GET /api/:workspace/projects
   router.get(
     BASE,
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
-        const projects = await db.listProjects(workspace);
+        const projects = await db.projectsFiles.listProjects(workspace);
         const visibleProjects = projects.filter(project =>
           canAccessProject(authCtx, project.owner)
         );
         const fileCounts = new Map<string, number>();
         const projectFiles = await Promise.all(
-          visibleProjects.map(project => db.listProjectFiles(workspace, project.id))
+          visibleProjects.map(project => db.projectsFiles.listProjectFiles(workspace, project.id))
         );
         for (const files of projectFiles) {
           for (const file of files) {
@@ -167,7 +164,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // GET /api/:workspace/projects/:id
   router.get(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -175,11 +171,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = getParam(event, 'id');
       try {
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const files = await db.listProjectFiles(workspace, id);
+        const files = await db.projectsFiles.listProjectFiles(workspace, id);
 
         return toProjectResponse({ ...project, files: buildFileTree(files) }, authCtx);
       } catch (e) {
@@ -188,7 +184,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // POST /api/:workspace/projects
   router.post(
     BASE,
     defineHandler(async event => {
@@ -202,7 +197,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
+        const ownerValues = new Set((await db.workspaceAdmin.listOwners(workspace)).map(row => row.id));
         const resolvedOwner = resolveProjectOwner(owner, ownerValues);
         if (authCtx)
           requireCanCreateProject(
@@ -211,7 +206,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to create a project for this owner team'
           );
         const timestamp = new Date();
-        const row = await db.createProject({
+        const row = await db.projectsFiles.createProject({
           id: crypto.randomUUID(),
           workspace,
           name: name as string,
@@ -222,26 +217,24 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           updated_at: timestamp
         });
 
-        // Log audit entry
         await logAudit(db, {
           workspace,
           operation: 'create',
           entityType: 'project',
-          entityId: row!.id,
-          entityName: row!.name,
+          entityId: row.id,
+          entityName: row.name,
           changes: {
-            new: extractEntityFields(row!)
+            new: extractEntityFields(row)
           }
         });
 
-        return toProjectResponse(row!, authCtx);
+        return toProjectResponse(row, authCtx);
       } catch (e) {
         handleError(e, 'Failed to create project');
       }
     })
   );
 
-  // PUT /api/:workspace/projects/:id
   router.put(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -256,10 +249,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        // Fetch old state for audit log
-        const oldRow = await db.getProject(workspace, id);
+        const oldRow = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
-        const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
+        const ownerValues = new Set((await db.workspaceAdmin.listOwners(workspace)).map(row => row.id));
         const resolvedOwner =
           owner !== undefined ? resolveProjectOwner(owner, ownerValues) : oldRow.owner;
         if (authCtx) {
@@ -279,7 +271,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           }
         }
 
-        const row = await db.updateProject(workspace, id, {
+        const row = await db.projectsFiles.updateProject(workspace, id, {
           name: name as string,
           description:
             description !== undefined
@@ -292,7 +284,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           updated_at: new Date()
         });
 
-        // Log audit entry with field-level changes
         const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
 
         await logAudit(db, {
@@ -311,7 +302,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // DELETE /api/:workspace/projects/:id
   router.delete(
     `${BASE}/:id`,
     defineHandler(async event => {
@@ -319,8 +309,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        // Fetch project before deletion for audit log
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -330,10 +319,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to delete this project'
           );
 
-        // Delete project
-        await db.deleteProject(workspace, id);
+        await db.projectsFiles.deleteProject(workspace, id);
 
-        // Log audit entry
         await logAudit(db, {
           workspace,
           operation: 'delete',
@@ -345,7 +332,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           }
         });
 
-        // Clean up storage (orphaned files on disk are harmless if this fails)
         await storage.deleteAll(workspace, id).catch(() => {});
 
         return { success: true, message: `Project '${id}' deleted` };
@@ -355,9 +341,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // ── File operations ─────────────────────────────────────────────
-
-  // GET /api/:workspace/projects/:id/files — list file tree
   router.get(
     `${BASE}/:id/files`,
     defineHandler(async event => {
@@ -365,11 +348,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const files = await db.listProjectFiles(workspace, id);
+        const files = await db.projectsFiles.listProjectFiles(workspace, id);
         return buildFileTree(files);
       } catch (e) {
         handleError(e, 'Failed to list files');
@@ -377,7 +360,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // GET /api/:workspace/projects/:id/files/** — download file content
   router.get(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
@@ -386,11 +368,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const filePath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
-        const file = await db.getProjectFileByPath(workspace, id, filePath);
+        const file = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
         const content = await storage.read(workspace, id, file.id);
@@ -413,7 +395,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // PUT /api/:workspace/projects/:id/files/** — upload/update file
   router.put(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
@@ -429,14 +410,13 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         ? filePath.substring(filePath.lastIndexOf('/') + 1)
         : filePath;
 
-      // Strip .json extension for display name
       const displayName =
         (body as Record<string, unknown>)['name'] ??
         (fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -445,13 +425,12 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        // Check if file exists for audit log
-        const existingFile = await db.getProjectFileByPath(workspace, id, filePath);
+
+        const existingFile = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
         const isUpdate = !!existingFile;
 
-        // Upsert file metadata
         const timestamp = new Date();
-        const row = await db.upsertProjectFile({
+        const row = await db.projectsFiles.upsertProjectFile({
           workspace,
           project_id: id,
           path: filePath,
@@ -461,10 +440,8 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           updated_at: timestamp
         });
 
-        // Write to storage
         await storage.write(workspace, id, row.id, content);
 
-        // Log audit entry
         if (isUpdate) {
           const changes = computeChanges(
             extractEntityFields(existingFile),
@@ -500,7 +477,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // DELETE /api/:workspace/projects/:id/files/** — delete file
   router.delete(
     `${BASE}/:id/files/**:path`,
     defineHandler(async event => {
@@ -509,7 +485,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const filePath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -518,14 +494,12 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        // Fetch file before deletion for audit log
-        const file = await db.getProjectFileByPath(workspace, id, filePath);
+
+        const file = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
         httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
-        // Delete file
-        await db.deleteProjectFileByPath(workspace, id, filePath);
+        await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
 
-        // Log audit entry
         await logAudit(db, {
           workspace,
           operation: 'delete',
@@ -547,9 +521,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // ── Folder operations ───────────────────────────────────────────
-
-  // POST /api/:workspace/projects/:id/folders — create folder (via .keep marker)
   router.post(
     `${BASE}/:id/folders`,
     defineHandler(async event => {
@@ -564,7 +535,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const markerPath = `${folderPath}/.keep`;
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -574,7 +545,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'You do not have permission to modify this project'
           );
         const timestamp = new Date();
-        const row = await db.createProjectFileIfAbsent({
+        const row = await db.projectsFiles.createProjectFileIfAbsent({
           workspace,
           project_id: id,
           path: markerPath,
@@ -584,12 +555,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           updated_at: timestamp
         });
 
-        // Write empty marker to storage
         if (row) {
           await storage.write(workspace, id, row.id, Buffer.alloc(0));
         }
 
-        // Log audit entry for folder creation (if marker was created)
         if (row) {
           await logAudit(db, {
             workspace,
@@ -611,7 +580,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // PUT /api/:workspace/projects/:id/folders/rename — rename folder
   router.put(
     `${BASE}/:id/folders/rename`,
     defineHandler(async event => {
@@ -626,7 +594,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -635,7 +603,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        const result = await db.renameProjectFileFolder(
+        const result = await db.projectsFiles.renameProjectFileFolder(
           workspace,
           id,
           oldPath,
@@ -655,7 +623,6 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
-  // DELETE /api/:workspace/projects/:id/folders/** — delete folder and all contained files
   router.delete(
     `${BASE}/:id/folders/**:path`,
     defineHandler(async event => {
@@ -664,7 +631,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const folderPath = getParam(event, 'path');
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-        const project = await db.getProject(workspace, id);
+        const project = await db.projectsFiles.getProject(workspace, id);
         httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
@@ -673,7 +640,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             'edit_project',
             'You do not have permission to modify this project'
           );
-        const result = await db.deleteProjectFileFolder(workspace, id, folderPath);
+        const result = await db.projectsFiles.deleteProjectFileFolder(workspace, id, folderPath);
 
         httpAssert.true(result.length > 0, {
           status: 404,
