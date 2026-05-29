@@ -1,44 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
-import { PermissionProvider } from './PermissionContext';
+import type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData } from './types';
 
-export type User = {
-  id: string;
-  email: string | null;
-  display_name: string;
-  auth_provider: 'local' | 'oidc';
-  created_at: string;
-  last_login_at: string | null;
-};
-
-export type GlobalPermission =
-  | 'view_schema'
-  | 'edit_schema'
-  | 'manage_users'
-  | 'manage_teams'
-  | 'manage_global_roles'
-  | 'view_audit'
-  | 'admin_platform';
-
-export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
-
-export type WorkspaceTeamMembership = {
-  workspace_id: string;
-  team_ids: string[];
-};
-
-export type WorkspaceOwnerOption = {
-  id: string;
-  name: string;
-  type: 'team';
-};
-
-export type AuthBaseData = {
-  global_roles: GlobalRole[];
-  global_permissions: GlobalPermission[];
-  team_memberships: WorkspaceTeamMembership[];
-  owner_options_by_workspace: Record<string, WorkspaceOwnerOption[]>;
-};
+export type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData };
 
 type AuthMeResponse = User & AuthBaseData;
 
@@ -198,7 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={authValue}>
       <AuthorizationDataProvider value={authBaseData}>
-        <PermissionProvider>{children}</PermissionProvider>
+        {children}
       </AuthorizationDataProvider>
     </AuthContext.Provider>
   );

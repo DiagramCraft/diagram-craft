@@ -8,7 +8,7 @@ import type {
   ProjectAction,
   VisibilityMode
 } from './types.js';
-import { decodeRefs } from './types.js';
+import { decodeRefs } from './utils.js';
 import { GLOBAL_ROLE_PERMISSIONS, ROLE_ACTIONS } from './constants.js';
 
 /**

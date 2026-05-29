@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import type { AuthBaseData } from './AuthContext';
+import type { AuthBaseData, WorkspaceOwnerOption, WorkspaceTeamMembership, GlobalPermission, GlobalRole } from './types';
 
 export type {
   AuthBaseData,
@@ -7,7 +7,7 @@ export type {
   WorkspaceTeamMembership,
   GlobalPermission,
   GlobalRole
-} from './AuthContext';
+};
 
 const AuthorizationDataContext = createContext<AuthBaseData | null>(null);
 

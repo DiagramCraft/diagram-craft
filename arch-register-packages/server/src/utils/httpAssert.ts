@@ -9,7 +9,7 @@ export const httpAssert = {
   },
 
   true: <T = unknown>(o: T, err?: ErrorDetails): o is NonNullable<T> => {
-    if (!!o) {
+    if (o) {
       return true;
     }
     throw new HTTPError(err ?? { status: 400, message: 'Required value is missing' });

@@ -24,7 +24,8 @@ export type {
 } from './types.js';
 
 // Export utility functions
-export { encodeRefs, decodeRefs } from './types.js';
+// biome-ignore lint/performance/noBarrelFile: This is a package entry point that needs to export its public API
+export { encodeRefs, decodeRefs } from './utils.js';
 
 // Export constants and helper functions
 export { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS, getGlobalPermissionsForRoles } from './constants.js';
