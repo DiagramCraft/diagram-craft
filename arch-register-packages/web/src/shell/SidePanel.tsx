@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
 import styles from './SidePanel.module.css';
 import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
@@ -7,11 +8,11 @@ import {
   TbUsers, TbChartDots3, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
 } from 'react-icons/tb';
-import type { Workspace } from '../api';
-import type { ViewId, NavigateFn, RoutePatch } from '../routing';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import { useProjectFiles } from '../hooks/useProjectFiles';
 import type { EntityFacets, EntitySchema, Project, WorkspaceLifecycleState } from '../api';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
+import { deriveActiveView } from '../layouts/deriveActiveView';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
@@ -22,97 +23,44 @@ const ARCHIVED_PROJECT_GROUP = { status: 'archived', title: 'Archived Projects' 
 
 type ProjectSidebarTab = 'projects' | 'archive';
 
-type SidePanelProps = {
-  view: ViewId;
-  navigate: NavigateFn;
-  schemas: EntitySchema[];
-  projects: Project[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  workspace: Workspace | null;
-  workspaceId: string | null;
-  projectId: string | null;
-  projectSidebarTab: ProjectSidebarTab;
-  schemaId: string | null;
-  folderFilter: string | null;
-  typeFilter: string | null;
-  statusFilter: string | null;
-  ownerFilter: string | null;
-  settingsSection: string;
-  availableSettingsSections: string[];
-  setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
-  setTypeFilter: (id: string | null) => void;
-  setStatusFilter: (id: string | null) => void;
-  setOwnerFilter: (id: string | null) => void;
-};
+export const SidePanel = () => {
+  const matches = useMatches();
+  const view = deriveActiveView(matches);
+  const ctx = useWorkspaceContext();
 
-export const SidePanel = ({
-  view,
-  navigate,
-  schemas,
-  projects,
-  lifecycleStates,
-  workspace,
-  workspaceId,
-  projectId,
-  projectSidebarTab,
-  schemaId,
-  folderFilter,
-  typeFilter,
-  statusFilter,
-  ownerFilter,
-  settingsSection,
-  availableSettingsSections,
-  setProjectSidebarTab,
-  setTypeFilter,
-  setStatusFilter,
-  setOwnerFilter,
-}: SidePanelProps) => {
   let body: React.ReactNode;
 
   if (view === 'home') {
-    body = <HomeSidebar navigate={navigate} schemas={schemas} projects={projects} />;
+    body = <HomeSidebar schemas={ctx.schemas} projects={ctx.projects} workspaceSlug={ctx.workspaceSlug} />;
   } else if (view === 'project-detail') {
     body = (
       <ProjectsSidebar
-        projects={projects}
-        projectId={projectId}
-        projectSidebarTab={projectSidebarTab}
-        folderFilter={folderFilter}
-        workspaceId={workspaceId}
-        navigate={navigate}
-        setProjectSidebarTab={setProjectSidebarTab}
+        projects={ctx.projects}
+        workspaceSlug={ctx.workspaceSlug}
       />
     );
   } else if (view === 'entity-browser' || view === 'entity-detail') {
     body = (
       <EntitiesSidebar
-        schemas={schemas}
-        lifecycleStates={lifecycleStates}
-        workspaceId={workspaceId}
-        typeFilter={typeFilter}
-        statusFilter={statusFilter}
-        ownerFilter={ownerFilter}
-        navigate={navigate}
-        setTypeFilter={setTypeFilter}
-        setStatusFilter={setStatusFilter}
-        setOwnerFilter={setOwnerFilter}
+        schemas={ctx.schemas}
+        lifecycleStates={ctx.lifecycleStates}
+        workspaceSlug={ctx.workspaceSlug}
       />
     );
   } else if (view === 'data-model') {
-    body = <DataModelSidebar schemas={schemas} navigate={navigate} schemaId={schemaId} />;
+    body = <DataModelSidebar schemas={ctx.schemas} workspaceSlug={ctx.workspaceSlug} />;
   } else if (view === 'search') {
     body = <SearchSidebar />;
   } else if (view === 'workspace-settings') {
     body = (
-        <SettingsSidebar
-          workspace={workspace}
-          section={settingsSection}
-          navigate={navigate}
-          schemas={schemas}
-          projects={projects}
-          availableSections={availableSettingsSections}
-        />
-      );
+      <SettingsSidebar
+        workspaceSlug={ctx.workspaceSlug}
+        workspace={ctx.workspace}
+        schemas={ctx.schemas}
+        projects={ctx.projects}
+        availableSections={ctx.availableSettingsSections}
+      />
+    );
   }
 
   return <div className={styles.panel}>{body}</div>;
@@ -148,67 +96,73 @@ const getArchivedProjectGroup = (projects: Project[]) => ({
   projects: projects.filter(project => project.status === ARCHIVED_PROJECT_GROUP.status),
 });
 
-const HomeSidebar = ({ navigate, schemas, projects }: { navigate: NavigateFn; schemas: EntitySchema[]; projects: Project[] }) => (
-  <>
-    <SectionHeader title="Overview" />
-    <div className={styles.scroll}>
-      {getSidebarProjectGroups(projects).map(group => (
-        <div key={group.status}>
-          <GroupLabel>{group.title}</GroupLabel>
-          {group.projects.map(p => (
-            <TreeRow
-              key={p.id}
-              icon={<TbStack2 size={12} />}
-              label={p.name}
-              onClick={() => navigate({
-                view: 'project-detail',
-                projectId: p.id,
-                projectSidebarTab: p.status === 'archived' ? 'archive' : 'projects',
-              })}
-              trailing={<span className="dim mono">{p.file_count}</span>}
-            />
-          ))}
-        </div>
-      ))}
-      <GroupLabel>Data model</GroupLabel>
-      {schemas.map((s, i) => (
-        <TreeRow
-          key={s.id}
-          icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
-          label={s.name}
-          onClick={() => navigate({ view: 'entity-browser', typeFilter: s.id })}
-          trailing={<span className="dim mono">{s.entity_count}</span>}
-          tagColor={resolveSchemaColor(s, i)}
-        />
-      ))}
-    </div>
-  </>
-);
+const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySchema[]; projects: Project[]; workspaceSlug: string }) => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <SectionHeader title="Overview" />
+      <div className={styles.scroll}>
+        {getSidebarProjectGroups(projects).map(group => (
+          <div key={group.status}>
+            <GroupLabel>{group.title}</GroupLabel>
+            {group.projects.map(p => (
+              <TreeRow
+                key={p.id}
+                icon={<TbStack2 size={12} />}
+                label={p.name}
+                onClick={() => navigate({
+                  to: '/$workspaceSlug/projects/$projectId',
+                  params: { workspaceSlug, projectId: p.id },
+                  search: { tab: p.status === 'archived' ? 'archive' as const : 'projects' as const },
+                })}
+                trailing={<span className="dim mono">{p.file_count}</span>}
+              />
+            ))}
+          </div>
+        ))}
+        <GroupLabel>Data model</GroupLabel>
+        {schemas.map((s, i) => (
+          <TreeRow
+            key={s.id}
+            icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
+            label={s.name}
+            onClick={() => navigate({
+              to: '/$workspaceSlug/entities',
+              params: { workspaceSlug },
+              search: { type: s.id },
+            })}
+            trailing={<span className="dim mono">{s.entity_count}</span>}
+            tagColor={resolveSchemaColor(s, i)}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
 
 const ProjectsSidebar = ({
   projects,
-  projectId,
-  projectSidebarTab,
-  folderFilter,
-  workspaceId,
-  navigate,
-  setProjectSidebarTab,
+  workspaceSlug,
 }: {
   projects: Project[];
-  projectId: string | null;
-  projectSidebarTab: ProjectSidebarTab;
-  folderFilter: string | null;
-  workspaceId: string | null;
-  navigate: NavigateFn;
-  setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
+  workspaceSlug: string;
 }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
+  const matches = useMatches();
+  const allParams = Object.assign({}, ...matches.map(m => m.params)) as Record<string, string>;
+  const projectId = allParams.projectId ?? null;
+  const projectSidebarTab: ProjectSidebarTab = search.tab === 'archive' ? 'archive' : 'projects';
+  const folderFilter = search.folder ?? null;
+
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const selectedProject = projects.find(project => project.id === projectId) ?? null;
 
-  const { data: fileTree = null } = useProjectFiles(workspaceId ?? '', projectId ?? '');
+  const { data: fileTree = null } = useProjectFiles(workspaceSlug, projectId ?? '');
 
   const toggle = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+
   const projectGroups = projectSidebarTab === 'archive'
     ? [getArchivedProjectGroup(projects)].filter(group => group.projects.length > 0)
     : getSidebarProjectGroups(projects);
@@ -217,32 +171,44 @@ const ProjectsSidebar = ({
     if (!selectedProject) return;
     const nextTab = selectedProject.status === 'archived' ? 'archive' : 'projects';
     if (nextTab !== projectSidebarTab) {
-      setProjectSidebarTab(nextTab);
+      navigate({
+        to: '/$workspaceSlug/projects/$projectId',
+        params: { workspaceSlug, projectId: selectedProject.id },
+        search: { tab: nextTab as 'projects' | 'archive', folder: folderFilter ?? undefined },
+      });
     }
-  }, [selectedProject, projectSidebarTab, setProjectSidebarTab]);
+  }, [selectedProject, projectSidebarTab, navigate, workspaceSlug, folderFilter]);
 
-  const navigateToProject = (project: Project, patch: RoutePatch = {}) => {
+  const navigateToProject = (project: Project, folder?: string | null) => {
     navigate({
-      view: 'project-detail',
-      projectId: project.id,
-      projectSidebarTab: project.status === 'archived' ? 'archive' : 'projects',
-      ...patch,
+      to: '/$workspaceSlug/projects/$projectId',
+      params: { workspaceSlug, projectId: project.id },
+      search: {
+        tab: (project.status === 'archived' ? 'archive' : 'projects') as 'projects' | 'archive',
+        folder: folder ?? undefined,
+      },
     });
   };
 
   const activateTab = (tab: ProjectSidebarTab) => {
-    setProjectSidebarTab(tab);
-
     const targetProjects = tab === 'archive'
       ? projects.filter(project => project.status === 'archived')
       : projects.filter(project => project.status !== 'archived');
 
     if (!selectedProject || !targetProjects.some(project => project.id === selectedProject.id)) {
+      const target = targetProjects[0];
+      if (target) {
+        navigate({
+          to: '/$workspaceSlug/projects/$projectId',
+          params: { workspaceSlug, projectId: target.id },
+          search: { tab },
+        });
+      }
+    } else {
       navigate({
-        view: 'project-detail',
-        projectId: targetProjects[0]?.id ?? null,
-        projectSidebarTab: tab,
-        folderFilter: null,
+        to: '/$workspaceSlug/projects/$projectId',
+        params: { workspaceSlug, projectId: selectedProject.id },
+        search: { tab },
       });
     }
   };
@@ -283,7 +249,7 @@ const ProjectsSidebar = ({
                     icon={<TbStack2 size={12} />}
                     label={p.name}
                     active={isSelected && !folderFilter}
-                    onClick={() => navigateToProject(p, { folderFilter: null })}
+                    onClick={() => navigateToProject(p)}
                     trailing={<span className="dim mono">{p.file_count}</span>}
                   />
                   {isOpen && tree && (
@@ -297,10 +263,8 @@ const ProjectsSidebar = ({
                             icon={<TbChartDots3 size={12} />}
                             label={f.name}
                             onClick={() => navigate({
-                              view: 'diagram',
-                              diagramId: f.id,
-                              projectId: p.id,
-                              projectSidebarTab: p.status === 'archived' ? 'archive' : 'projects',
+                              to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                              params: { workspaceSlug, projectId: p.id, diagramId: f.id },
                             })}
                           />
                         ))}
@@ -318,7 +282,7 @@ const ProjectsSidebar = ({
                               icon={<TbFolderOpen size={12} />}
                               label={folder.path}
                               active={isSelected && folderFilter === folder.path}
-                              onClick={() => navigateToProject(p, { folderFilter: folder.path })}
+                              onClick={() => navigateToProject(p, folder.path)}
                             />
                             {folderOpen && files.map(f => (
                               <TreeRow
@@ -327,10 +291,8 @@ const ProjectsSidebar = ({
                                 icon={<TbChartDots3 size={12} />}
                                 label={f.name}
                                 onClick={() => navigate({
-                                  view: 'diagram',
-                                  diagramId: f.id,
-                                  projectId: p.id,
-                                  projectSidebarTab: p.status === 'archived' ? 'archive' : 'projects',
+                                  to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
+                                  params: { workspaceSlug, projectId: p.id, diagramId: f.id },
                                 })}
                               />
                             ))}
@@ -356,37 +318,29 @@ const ProjectsSidebar = ({
 const EntitiesSidebar = ({
   schemas,
   lifecycleStates,
-  workspaceId,
-  typeFilter,
-  statusFilter,
-  ownerFilter,
-  navigate,
-  setTypeFilter,
-  setStatusFilter,
-  setOwnerFilter,
+  workspaceSlug,
 }: {
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  workspaceId: string | null;
-  typeFilter: string | null;
-  statusFilter: string | null;
-  ownerFilter: string | null;
-  navigate: NavigateFn;
-  setTypeFilter: (id: string | null) => void;
-  setStatusFilter: (id: string | null) => void;
-  setOwnerFilter: (id: string | null) => void;
+  workspaceSlug: string;
 }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { type?: string; status?: string; owner?: string };
+  const typeFilter = search.type ?? null;
+  const statusFilter = search.status ?? null;
+  const ownerFilter = search.owner ?? null;
+
   const [facets, setFacets] = useState<EntityFacets | null>(null);
 
   useEffect(() => {
-    if (!workspaceId) {
+    if (!workspaceSlug) {
       setFacets(null);
       return;
     }
-    fetchEntityFacets(workspaceId)
+    fetchEntityFacets(workspaceSlug)
       .then(setFacets)
       .catch(() => setFacets(null));
-  }, [workspaceId]);
+  }, [workspaceSlug]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -405,6 +359,14 @@ const EntitiesSidebar = ({
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
 
+  const navigateEntities = (params: { type?: string; status?: string; owner?: string }) => {
+    navigate({
+      to: '/$workspaceSlug/entities',
+      params: { workspaceSlug },
+      search: params,
+    });
+  };
+
   return (
     <>
       <SectionHeader title="Types" />
@@ -413,7 +375,7 @@ const EntitiesSidebar = ({
           icon={<TbDatabase size={12} />}
           label="All entities"
           active={!typeFilter && !statusFilter && !ownerFilter}
-          onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setStatusFilter(null); setOwnerFilter(null); }}
+          onClick={() => navigateEntities({})}
           trailing={<span className="dim mono">{totalEntities}</span>}
         />
         <GroupLabel>By type</GroupLabel>
@@ -423,7 +385,7 @@ const EntitiesSidebar = ({
             icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
             label={s.name}
             active={typeFilter === s.id}
-            onClick={() => { navigate({ view: 'entity-browser' }); setStatusFilter(null); setOwnerFilter(null); setTypeFilter(typeFilter === s.id ? null : s.id); }}
+            onClick={() => navigateEntities({ type: typeFilter === s.id ? undefined : s.id })}
             trailing={<span className="dim mono">{s.entity_count}</span>}
             tagColor={resolveSchemaColor(s, i)}
           />
@@ -448,7 +410,7 @@ const EntitiesSidebar = ({
               }
               label={s.label}
               active={statusFilter === s.id}
-              onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setOwnerFilter(null); setStatusFilter(statusFilter === s.id ? null : s.id); }}
+              onClick={() => navigateEntities({ status: statusFilter === s.id ? undefined : s.id })}
               trailing={<span className="dim mono">{count}</span>}
             />
           );
@@ -460,7 +422,7 @@ const EntitiesSidebar = ({
             icon={<TbUsers size={12} />}
             label={owner}
             active={ownerFilter === owner}
-            onClick={() => { navigate({ view: 'entity-browser' }); setTypeFilter(null); setStatusFilter(null); setOwnerFilter(ownerFilter === owner ? null : owner); }}
+            onClick={() => navigateEntities({ owner: ownerFilter === owner ? undefined : owner })}
             trailing={<span className="dim mono">{count}</span>}
           />
         ))}
@@ -471,31 +433,39 @@ const EntitiesSidebar = ({
 
 const DataModelSidebar = ({
   schemas,
-  navigate,
-  schemaId,
+  workspaceSlug,
 }: {
   schemas: EntitySchema[];
-  navigate: NavigateFn;
-  schemaId: string | null;
-}) => (
-  <>
-    <SectionHeader title="Types" />
-    <div className={styles.scroll}>
-      <GroupLabel>Entity types</GroupLabel>
-      {schemas.map((s, i) => (
-        <TreeRow
-          key={s.id}
-          icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
-          label={s.name}
-          active={schemaId === s.id}
-          onClick={() => navigate({ view: 'data-model', schemaId: s.id })}
-          tagColor={resolveSchemaColor(s, i)}
-          trailing={<span className="dim mono">{s.fields.length}</span>}
-        />
-      ))}
-    </div>
-  </>
-);
+  workspaceSlug: string;
+}) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { schema?: string };
+  const schemaId = search.schema ?? null;
+
+  return (
+    <>
+      <SectionHeader title="Types" />
+      <div className={styles.scroll}>
+        <GroupLabel>Entity types</GroupLabel>
+        {schemas.map((s, i) => (
+          <TreeRow
+            key={s.id}
+            icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
+            label={s.name}
+            active={schemaId === s.id}
+            onClick={() => navigate({
+              to: '/$workspaceSlug/model',
+              params: { workspaceSlug },
+              search: { schema: s.id },
+            })}
+            tagColor={resolveSchemaColor(s, i)}
+            trailing={<span className="dim mono">{s.fields.length}</span>}
+          />
+        ))}
+      </div>
+    </>
+  );
+};
 
 const SearchSidebar = () => (
   <>
@@ -523,19 +493,21 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
 
 const SettingsSidebar = ({
   workspace,
-  section,
-  navigate,
+  workspaceSlug,
   schemas,
   projects,
   availableSections,
 }: {
-  workspace: Workspace | null;
-  section: string;
-  navigate: NavigateFn;
+  workspace: import('../api').Workspace | null;
+  workspaceSlug: string;
   schemas: EntitySchema[];
   projects: Project[];
   availableSections: string[];
 }) => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { section?: string };
+  const section = search.section ?? 'general';
+
   const groups = useMemo(() => {
     const g: Record<string, SettingsNavItem[]> = {};
     SETTINGS_SECTIONS.filter(s => availableSections.includes(s.id)).forEach(s => {
@@ -572,7 +544,11 @@ const SettingsSidebar = ({
                 icon={s.icon}
                 label={s.label}
                 active={section === s.id}
-                onClick={() => navigate({ view: 'workspace-settings', settingsSection: s.id })}
+                onClick={() => navigate({
+                  to: '/$workspaceSlug/settings',
+                  params: { workspaceSlug },
+                  search: { section: s.id },
+                })}
                 className={s.tone === 'danger' ? styles.dangerRow : undefined}
               />
             ))}

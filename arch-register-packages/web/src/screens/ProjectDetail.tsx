@@ -7,7 +7,8 @@ import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
 } from 'react-icons/tb';
-import type { NavigateFn } from '../routing';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { ApiError } from '../api';
 import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceOwnerOption } from '../api';
 import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
@@ -18,23 +19,14 @@ const PROJECT_STATUSES = [
   { value: 'archived', label: 'Archived' },
 ] as const;
 
-type ProjectDetailProps = {
-  workspaceId: string;
-  projectId: string;
-  folderFilter: string | null;
-  navigate: NavigateFn;
-  onProjectUpdated: () => void;
-  ownerOptions: WorkspaceOwnerOption[];
-};
+export const ProjectDetail = () => {
+  const navigate = useNavigate();
+  const { projectId } = useParams({ strict: false }) as { projectId: string };
+  const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
+  const { workspaceSlug, ownerOptions } = useWorkspaceContext();
+  const workspaceId = workspaceSlug;
+  const folderFilter = search.folder ?? null;
 
-export const ProjectDetail = ({
-  workspaceId,
-  projectId,
-  folderFilter,
-  navigate,
-  onProjectUpdated,
-  ownerOptions,
-}: ProjectDetailProps) => {
   const [editing, setEditing] = useState(false);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -94,12 +86,23 @@ export const ProjectDetail = ({
         },
       },
       {
-        onSuccess: () => onProjectUpdated(),
         onError: (err) => {
           setPinError(err instanceof ApiError ? err.message : 'Could not update project status');
         },
       }
     );
+  };
+
+  const handleNavigateHome = () => {
+    navigate({ to: '/$workspaceSlug', params: { workspaceSlug } });
+  };
+
+  const handleNavigateProject = () => {
+    navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: search.tab as 'projects' | 'archive' | undefined } });
+  };
+
+  const handleNavigateDiagram = (diagramId: string) => {
+    navigate({ to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId', params: { workspaceSlug, projectId, diagramId } });
   };
 
   return (
@@ -108,9 +111,9 @@ export const ProjectDetail = ({
       <div className={styles.header}>
         <div>
           <div className={styles.eyebrow}>
-            <button type="button" onClick={() => navigate({ view: 'home' })}>Projects</button>
+            <button type="button" onClick={handleNavigateHome}>Projects</button>
             {' / '}
-            <button type="button" onClick={() => navigate({ folderFilter: null })}>{project.name}</button>
+            <button type="button" onClick={handleNavigateProject}>{project.name}</button>
             {folderFilter && <>{' / '}{folderFilter}</>}
           </div>
           <div className={styles.titleRow}>
@@ -212,7 +215,7 @@ export const ProjectDetail = ({
         folderFilter={folderFilter}
         filter={filter}
         viewMode={viewMode}
-        navigate={navigate}
+        onOpenDiagram={handleNavigateDiagram}
         onNewDiagram={project.canManageFiles ? () => setAddDiagramOpen(true) : undefined}
       />
 
@@ -221,9 +224,9 @@ export const ProjectDetail = ({
           project={project}
           workspaceId={workspaceId}
           ownerOptions={ownerOptions}
-          onSaved={() => { setEditing(false); onProjectUpdated(); }}
+          onSaved={() => { setEditing(false); }}
           onClose={() => setEditing(false)}
-          navigate={navigate}
+          onDelete={handleNavigateHome}
         />
       )}
 
@@ -231,7 +234,7 @@ export const ProjectDetail = ({
         <AddFolderDialog
           open={addFolderOpen}
           onClose={() => setAddFolderOpen(false)}
-          onCreated={() => onProjectUpdated()}
+          onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
         />
@@ -240,7 +243,7 @@ export const ProjectDetail = ({
         <AddDiagramDialog
           open={addDiagramOpen}
           onClose={() => setAddDiagramOpen(false)}
-          onCreated={() => onProjectUpdated()}
+          onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
           folder={folderFilter}
@@ -341,7 +344,7 @@ const DiagramsView = ({
   folderFilter,
   filter,
   viewMode,
-  navigate,
+  onOpenDiagram,
   onNewDiagram,
 }: {
   project: ProjectDetailData;
@@ -349,7 +352,7 @@ const DiagramsView = ({
   folderFilter: string | null;
   filter: string;
   viewMode: 'grid' | 'list';
-  navigate: NavigateFn;
+  onOpenDiagram: (diagramId: string) => void;
   onNewDiagram?: () => void;
 }) => {
   const lc = filter.toLowerCase();
@@ -398,7 +401,7 @@ const DiagramsView = ({
           <FileItem
             key={f.id}
             file={f}
-            onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+            onOpen={() => onOpenDiagram(f.id)}
           />
         ))}
         {addButton}
@@ -427,7 +430,7 @@ const DiagramsView = ({
             <FileItem
               key={f.id}
               file={f}
-              onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+              onOpen={() => onOpenDiagram(f.id)}
             />
           ))}
         </div>
@@ -443,7 +446,7 @@ const DiagramsView = ({
                 key={f.id}
                 file={f}
                 folder={g.path}
-                onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+                onOpen={() => onOpenDiagram(f.id)}
               />
             ))}
           </div>
@@ -462,14 +465,14 @@ const ProjectSettings = ({
   ownerOptions,
   onSaved,
   onClose,
-  navigate,
+  onDelete,
 }: {
   project: ProjectDetailData;
   workspaceId: string;
   ownerOptions: WorkspaceOwnerOption[];
   onSaved: () => void;
   onClose: () => void;
-  navigate: NavigateFn;
+  onDelete: () => void;
 }) => {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
@@ -510,7 +513,7 @@ const ProjectSettings = ({
     if (!confirm('Are you sure you want to delete this project and all its files?')) return;
     deleteProject.mutate(project.id, {
       onSuccess: () => {
-        navigate({ view: 'home', projectId: null });
+        onDelete();
         onSaved();
       },
       onError: (err) => {

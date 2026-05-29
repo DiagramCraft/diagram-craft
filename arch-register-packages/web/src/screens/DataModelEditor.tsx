@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { Chip } from '../components/Chip';
@@ -7,24 +8,13 @@ import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '..
 import type { EntitySchema, SchemaField, FieldType } from '../api';
 import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
-type DataModelEditorProps = {
-  workspaceId: string;
-  schemas: EntitySchema[];
-  selectedSchemaId: string | null;
-  onSelectSchema: (id: string) => void;
-  onSchemaUpdated: () => void;
-  canEdit: boolean;
-};
-
-export const DataModelEditor = ({
-  workspaceId,
-  schemas,
-  selectedSchemaId,
-  onSelectSchema,
-  onSchemaUpdated,
-  canEdit,
-}: DataModelEditorProps) => {
+export const DataModelEditor = () => {
+  const navigate = useNavigate();
+  const { schema: selectedSchemaId } = useSearch({ strict: false }) as { schema?: string };
+  const { workspaceSlug, schemas, permissions } = useWorkspaceContext();
+  const canEdit = permissions.canEditSchemas;
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [name, setName] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
@@ -32,9 +22,17 @@ export const DataModelEditor = ({
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
-  const createSchemaMutation = useCreateSchema(workspaceId);
-  const updateSchemaMutation = useUpdateSchema(workspaceId);
-  const deleteSchemaMutation = useDeleteSchema(workspaceId);
+  const createSchemaMutation = useCreateSchema(workspaceSlug);
+  const updateSchemaMutation = useUpdateSchema(workspaceSlug);
+  const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
+
+  const onSelectSchema = useCallback((id: string) => {
+    navigate({
+      to: '/$workspaceSlug/model',
+      params: { workspaceSlug },
+      search: { schema: id || undefined },
+    });
+  }, [navigate, workspaceSlug]);
 
   const selectedIndex = schemas.findIndex(s => s.id === selectedSchemaId);
   const selected = selectedIndex >= 0 ? schemas[selectedIndex] : null;
@@ -57,21 +55,19 @@ export const DataModelEditor = ({
         data: { name, fields, color, icon },
       });
       setDirty(false);
-      onSchemaUpdated();
     } catch {
       // TODO: surface error
     }
-  }, [selected, name, fields, color, icon, dirty, updateSchemaMutation, onSchemaUpdated]);
+  }, [selected, name, fields, color, icon, dirty, updateSchemaMutation]);
 
   const handleCreateType = useCallback(async () => {
     try {
       const created = await createSchemaMutation.mutateAsync({ name: 'New type', fields: [] });
-      onSchemaUpdated();
       onSelectSchema(created.id);
     } catch {
       // TODO: surface error
     }
-  }, [createSchemaMutation, onSchemaUpdated, onSelectSchema]);
+  }, [createSchemaMutation, onSelectSchema]);
 
   const handleDeleteType = useCallback(async () => {
     if (!selected) return;
@@ -79,13 +75,12 @@ export const DataModelEditor = ({
     if (!ok) return;
     try {
       await deleteSchemaMutation.mutateAsync(selected.id);
-      onSchemaUpdated();
       onSelectSchema(schemas.find(s => s.id !== selected.id)?.id ?? '');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to delete';
       window.alert(msg);
     }
-  }, [selected, deleteSchemaMutation, onSchemaUpdated, onSelectSchema, schemas]);
+  }, [selected, deleteSchemaMutation, onSelectSchema, schemas]);
 
   const updateField = (fieldId: string, patch: Partial<SchemaField>) => {
     setFields(prev => prev.map(f => (f.id === fieldId ? { ...f, ...patch } as SchemaField : f)));

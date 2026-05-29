@@ -6,6 +6,7 @@ import styles from './AddWorkspaceDialog.module.css';
 type ApiWorkspace = {
   id: string;
   name: string;
+  url_slug: string;
   description: string;
   created_at: string;
   updated_at: string;

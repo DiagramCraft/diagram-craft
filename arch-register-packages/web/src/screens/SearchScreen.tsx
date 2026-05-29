@@ -10,6 +10,8 @@ import {
   TbStack2,
   TbX,
 } from 'react-icons/tb';
+import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../api';
 import type {
   EntitySchema,
@@ -19,21 +21,11 @@ import type {
   SchemaSearchResult,
   SearchResponse,
 } from '../api';
-import type { NavigateFn } from '../routing';
 import { TypeBadge } from '../components/TypeBadge';
 import { Chip } from '../components/Chip';
 import { StatusChip } from '../components/StatusChip';
 import { useSearch } from '../hooks/useSearch';
 import styles from './SearchScreen.module.css';
-
-type SearchScreenProps = {
-  workspaceId: string;
-  query: string;
-  schemas: EntitySchema[];
-  navigate: NavigateFn;
-  onQueryChange: (q: string) => void;
-  onQuerySubmit: (q: string) => void;
-};
 
 type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
 type SearchPreview =
@@ -93,14 +85,13 @@ const snippetAround = (text: string | null | undefined, q: string, max = 140) =>
 
 // ── Screen ───────────────────────────────────────────────────
 
-export const SearchScreen = ({
-  workspaceId,
-  query,
-  schemas,
-  navigate,
-  onQueryChange,
-  onQuerySubmit,
-}: SearchScreenProps) => {
+export const SearchScreen = () => {
+  const routerNavigate = useNavigate();
+  const routerSearch = useRouterSearch({ strict: false }) as { q?: string };
+  const { workspaceSlug, schemas } = useWorkspaceContext();
+  const workspaceId = workspaceSlug;
+  const query = routerSearch.q ?? '';
+
   const [localQ, setLocalQ] = useState(query);
   const [filter, setFilter] = useState<SearchFilter>('all');
   const [selected, setSelected] = useState<RowId | null>(null);
@@ -119,10 +110,11 @@ export const SearchScreen = ({
     { enabled: trimmed !== '' }
   );
 
-  // Sync parent query → local
+  // Sync URL query → local
   useEffect(() => {
-    if (query && query !== localQ) setLocalQ(query);
-  }, [query, localQ]);
+    if (query !== localQ) setLocalQ(query);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -216,30 +208,58 @@ export const SearchScreen = ({
     return null;
   }, [selected, results]);
 
+  const navigateToSearch = useCallback(
+    (q: string) => {
+      routerNavigate({ to: '/$workspaceSlug/search', params: { workspaceSlug }, search: { q } });
+    },
+    [routerNavigate, workspaceSlug],
+  );
+
+  const navigateToEntity = useCallback(
+    (entityId: string) => {
+      routerNavigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId } });
+    },
+    [routerNavigate, workspaceSlug],
+  );
+
+  const navigateToProject = useCallback(
+    (projectId: string) => {
+      routerNavigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const } });
+    },
+    [routerNavigate, workspaceSlug],
+  );
+
+  const navigateToProjectFolder = useCallback(
+    (projectId: string, folder: string | null) => {
+      routerNavigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const, folder: folder ?? undefined } });
+    },
+    [routerNavigate, workspaceSlug],
+  );
+
+  const navigateToSchema = useCallback(
+    (schemaId: string) => {
+      routerNavigate({ to: '/$workspaceSlug/model', params: { workspaceSlug }, search: { schema: schemaId } });
+    },
+    [routerNavigate, workspaceSlug],
+  );
+
   const openRow = useCallback(
     (row: { kind: string; id: string; data: unknown }) => {
       if (row.kind === 'entity') {
-        navigate({ view: 'entity-detail', entityId: row.id });
+        navigateToEntity(row.id);
       } else if (row.kind === 'project') {
-        navigate({
-          view: 'project-detail',
-          projectId: row.id,
-          projectSidebarTab: 'projects',
-          folderFilter: null,
-        });
+        navigateToProject(row.id);
       } else if (row.kind === 'file') {
         const f = row.data as ProjectFileSearchResult;
-        navigate({
-          view: 'project-detail',
-          projectId: f.projectId,
-          projectSidebarTab: 'projects',
-          folderFilter: f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null,
-        });
+        navigateToProjectFolder(
+          f.projectId,
+          f.path.includes('/') ? f.path.slice(0, f.path.lastIndexOf('/')) : null,
+        );
       } else if (row.kind === 'schema') {
-        navigate({ view: 'data-model', schemaId: row.id });
+        navigateToSchema(row.id);
       }
     },
-    [navigate],
+    [navigateToEntity, navigateToProject, navigateToProjectFolder, navigateToSchema],
   );
 
   // Keyboard navigation
@@ -247,8 +267,7 @@ export const SearchScreen = ({
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && localQ) {
         setLocalQ('');
-        onQueryChange('');
-        onQuerySubmit('');
+        navigateToSearch('');
         inputRef.current?.focus();
         return;
       }
@@ -276,15 +295,15 @@ export const SearchScreen = ({
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [flatRows, selected, localQ, onQueryChange, onQuerySubmit, openRow]);
+  }, [flatRows, selected, localQ, navigateToSearch, openRow]);
 
   const handleInputChange = (val: string) => {
     setLocalQ(val);
-    onQueryChange(val);
   };
 
   const handleInputSubmit = () => {
-    onQuerySubmit(localQ);
+    const trimmedQuery = localQ.trim();
+    navigateToSearch(trimmedQuery);
   };
 
   return (
@@ -311,7 +330,7 @@ export const SearchScreen = ({
               className={styles.clearBtn}
               onClick={() => {
                 handleInputChange('');
-                onQuerySubmit('');
+                navigateToSearch('');
                 inputRef.current?.focus();
               }}
               title="Clear (Esc)"
@@ -408,7 +427,15 @@ export const SearchScreen = ({
         </div>
 
         <aside className={styles.preview}>
-          <PreviewPane preview={preview} schemaMap={schemaMap} navigate={navigate} q={trimmed} />
+          <PreviewPane
+            preview={preview}
+            schemaMap={schemaMap}
+            onEntityClick={navigateToEntity}
+            onProjectClick={navigateToProject}
+            onProjectFolderClick={navigateToProjectFolder}
+            onSchemaClick={navigateToSchema}
+            q={trimmed}
+          />
         </aside>
       </div>
     </div>
@@ -630,12 +657,18 @@ const RowGo = ({ onOpen }: { onOpen: () => void }) => (
 const PreviewPane = ({
   preview,
   schemaMap,
-  navigate,
+  onEntityClick,
+  onProjectClick,
+  onProjectFolderClick,
+  onSchemaClick,
   q,
 }: {
   preview: SearchPreview | null;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
+  onProjectClick: (projectId: string) => void;
+  onProjectFolderClick: (projectId: string, folder: string | null) => void;
+  onSchemaClick: (schemaId: string) => void;
   q: string;
 }) => {
   if (!preview) {
@@ -687,7 +720,7 @@ const PreviewPane = ({
           <button
             type="button"
             className={styles.previewBtn}
-            onClick={() => navigate({ view: 'entity-detail', entityId: e.entityId })}
+            onClick={() => onEntityClick(e.entityId)}
           >
             Open entity <TbArrowRight size={11} />
           </button>
@@ -727,14 +760,7 @@ const PreviewPane = ({
           <button
             type="button"
             className={styles.previewBtn}
-            onClick={() =>
-              navigate({
-                view: 'project-detail',
-                projectId: p.id,
-                projectSidebarTab: 'projects',
-                folderFilter: null,
-              })
-            }
+            onClick={() => onProjectClick(p.id)}
           >
             Open project <TbArrowRight size={11} />
           </button>
@@ -770,12 +796,10 @@ const PreviewPane = ({
             type="button"
             className={styles.previewBtn}
             onClick={() =>
-              navigate({
-                view: 'project-detail',
-                projectId: f.projectId,
-                projectSidebarTab: 'projects',
-                folderFilter: f.path.includes('/') ? folder : null,
-              })
+              onProjectFolderClick(
+                f.projectId,
+                f.path.includes('/') ? folder : null,
+              )
             }
           >
             Open in project <TbArrowRight size={11} />
@@ -831,7 +855,7 @@ const PreviewPane = ({
         <button
           type="button"
           className={styles.previewBtn}
-          onClick={() => navigate({ view: 'data-model', schemaId: s.schemaId })}
+          onClick={() => onSchemaClick(s.schemaId)}
         >
           Open in data model <TbArrowRight size={11} />
         </button>

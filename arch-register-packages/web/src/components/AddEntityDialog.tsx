@@ -40,7 +40,6 @@ export const AddEntityDialog = ({
   const [meta, setMeta] = useState({ description: '', owner: '', lifecycle: '', namespace: 'default', tags: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [referenceOptions, setReferenceOptions] = useState<Record<string, EntitySummary[]>>({});
   const nameRef = useRef<HTMLInputElement>(null);
   const creatableOwnerOptions = useMemo(
     () => ownerOptions.filter(option => canCreateTopLevelEntity(workspaceId, option.id)),
@@ -84,19 +83,15 @@ export const AddEntityDialog = ({
 
   const entitiesQueries = useEntitiesBySchema(workspaceId, targetSchemaIds);
 
-  useEffect(() => {
-    if (!open || targetSchemaIds.length === 0) {
-      setReferenceOptions({});
-      return;
-    }
-
+  const derivedReferenceOptions = useMemo(() => {
+    if (!open || targetSchemaIds.length === 0) return {};
     const nextOptions: Record<string, EntitySummary[]> = {};
     entitiesQueries.forEach((query, index) => {
       if (query.data) {
         nextOptions[targetSchemaIds[index]!] = query.data;
       }
     });
-    setReferenceOptions(nextOptions);
+    return nextOptions;
   }, [open, targetSchemaIds, entitiesQueries]);
 
   const setField = (id: string, value: string) => setFields(f => ({ ...f, [id]: value }));
@@ -202,7 +197,7 @@ export const AddEntityDialog = ({
                       field={f}
                       value={fields[f.id] ?? ''}
                       onChange={v => setField(f.id, v)}
-                      referenceOptions={referenceOptions}
+                      referenceOptions={derivedReferenceOptions}
                     />
                   ))}
                 </div>

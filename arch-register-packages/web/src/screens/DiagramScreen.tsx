@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { NavigateFn } from '../routing';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import styles from './DiagramScreen.module.css';
 import { TbArrowLeft } from 'react-icons/tb';
 import { initializeDiagramCraft, getIncludedPackages } from '../diagramcraft-initial-config';
@@ -21,14 +21,14 @@ const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
 type SerializedOverrides = Record<string, Record<string, SerializedOverride>>;
 
-interface DiagramScreenProps {
-  workspaceId: string;
-  projectId: string;
-  diagramId: string;
-  navigate: NavigateFn;
-}
-
-export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: DiagramScreenProps) => {
+export const DiagramScreen = () => {
+  const { workspaceSlug, projectId, diagramId } = useParams({ strict: false }) as {
+    workspaceSlug: string;
+    projectId: string;
+    diagramId: string;
+  };
+  const navigate = useNavigate();
+  const workspaceId = workspaceSlug;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<{ path: string; name: string } | null>(null);
@@ -112,8 +112,12 @@ export const DiagramScreen = ({ workspaceId, projectId, diagramId, navigate }: D
 
   const handleClose = useCallback(async () => {
     await save();
-    navigate({ view: 'project-detail', projectId });
-  }, [save, navigate, projectId]);
+    navigate({
+      to: '/$workspaceSlug/projects/$projectId',
+      params: { workspaceSlug, projectId },
+      search: { tab: 'projects' as const },
+    });
+  }, [save, navigate, workspaceSlug, projectId]);
 
   useEffect(() => {
     const loadDiagram = async () => {

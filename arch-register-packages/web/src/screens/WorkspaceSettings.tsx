@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
-import type { NavigateFn } from '../routing';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
@@ -13,18 +14,6 @@ import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../hooks/useWorkspaces';
 import { useUpdateLifecycleStates, useUpdateOwnerOptions } from '../hooks/useWorkspaceConfig';
-
-type WorkspaceSettingsProps = {
-  workspace: Workspace;
-  section: string;
-  navigate: NavigateFn;
-  onWorkspaceUpdated: () => void;
-  onWorkspaceDeleted: () => void;
-  lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
-  onConfigUpdated: () => void;
-  availableSections: string[];
-};
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -41,7 +30,17 @@ const COLOR_PRESETS = [
   { value: 'var(--fg-3)', label: 'Grey' },
 ];
 
-export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpdated, onWorkspaceDeleted, lifecycleStates, ownerOptions, onConfigUpdated, availableSections }: WorkspaceSettingsProps) => {
+export const WorkspaceSettings = () => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { section?: string };
+  const ctx = useWorkspaceContext();
+  const workspace = ctx.workspace!;
+  const workspaceSlug = ctx.workspaceSlug;
+  const lifecycleStates = ctx.lifecycleStates;
+  const ownerOptions = ctx.ownerOptions;
+  const availableSections = ctx.availableSettingsSections;
+  const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
+
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
   if (!availableSections.includes(section)) {
@@ -49,7 +48,7 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
       <div className={styles.screen}>
         <div className={styles.head}>
           <div className={styles.headLeft}>
-            <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'home' })}>
+            <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
               <TbChevronLeft size={12} /> {workspace.name}
             </button>
             <span className={styles.breadcrumbSep}>/</span>
@@ -68,7 +67,7 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
     <div className={styles.screen}>
       <div className={styles.head}>
         <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'home' })}>
+          <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
             <TbChevronLeft size={12} /> {workspace.name}
           </button>
           <span className={styles.breadcrumbSep}>/</span>
@@ -81,32 +80,31 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
       </div>
 
       {section === 'general' && (
-        <GeneralSection workspace={workspace} onWorkspaceUpdated={onWorkspaceUpdated} />
+        <GeneralSection workspace={workspace} />
       )}
       {section === 'lifecycle-owners' && (
         <LifecycleOwnersSection
           workspace={workspace}
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
-          onConfigUpdated={onConfigUpdated}
         />
       )}
       {section === 'audit' && (
-        <AuditLogSection workspace={workspace} navigate={navigate} />
+        <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
       )}
       {section === 'danger' && (
-        <DangerSection workspace={workspace} navigate={navigate} onWorkspaceDeleted={onWorkspaceDeleted} />
+        <DangerSection workspace={workspace} />
       )}
     </div>
   );
 };
 
-const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspace; onWorkspaceUpdated: () => void }) => {
+const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   const [name, setName] = useState(workspace.name);
   const [slug, setSlug] = useState(workspace.url_slug);
   const [shortCode, setShortCode] = useState(workspace.short_code);
   const [description, setDescription] = useState(workspace.description);
-  
+
   const updateWorkspaceMutation = useUpdateWorkspace();
 
   const isDirty =
@@ -121,11 +119,10 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
         workspaceId: workspace.id,
         data: { name, url_slug: slug, short_code: shortCode, description },
       });
-      onWorkspaceUpdated();
     } catch {
       // Error handling could be improved
     }
-  }, [workspace.id, name, slug, shortCode, description, updateWorkspaceMutation, onWorkspaceUpdated]);
+  }, [workspace.id, name, slug, shortCode, description, updateWorkspaceMutation]);
 
   const handleCancel = () => {
     setName(workspace.name);
@@ -226,12 +223,10 @@ const LifecycleOwnersSection = ({
   workspace,
   lifecycleStates,
   ownerOptions,
-  onConfigUpdated,
 }: {
   workspace: Workspace;
   lifecycleStates: WorkspaceLifecycleState[];
   ownerOptions: WorkspaceOwnerOption[];
-  onConfigUpdated: () => void;
 }) => {
   const [states, setStates] = useState<EditLifecycleState[]>(() =>
     lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color }))
@@ -239,7 +234,7 @@ const LifecycleOwnersSection = ({
   const [owners, setOwners] = useState<EditOwner[]>(() =>
     ownerOptions.map(o => ({ id: o.id }))
   );
-  
+
   const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
   const updateOwnerOptionsMutation = useUpdateOwnerOptions(workspace.url_slug);
 
@@ -264,11 +259,10 @@ const LifecycleOwnersSection = ({
           owners.map((o, i) => ({ id: o.id, sort_order: i }))
         );
       }
-      onConfigUpdated();
     } catch {
       // Error handling could be improved
     }
-  }, [states, owners, statesDirty, ownersDirty, updateLifecycleStatesMutation, updateOwnerOptionsMutation, onConfigUpdated]);
+  }, [states, owners, statesDirty, ownersDirty, updateLifecycleStatesMutation, updateOwnerOptionsMutation]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => i === index ? { ...s, ...patch } : s));
@@ -445,7 +439,8 @@ const formatRelativeTime = (timestamp: string): string => {
 const toStartOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString();
 const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999`).toISOString();
 
-const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; navigate: NavigateFn }) => {
+const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; workspaceSlug: string }) => {
+  const navigate = useNavigate();
   const [entityType, setEntityType] = useState<'' | AuditEntityType>('');
   const [operation, setOperation] = useState<'' | AuditOperation>('');
   const [startDate, setStartDate] = useState('');
@@ -463,20 +458,20 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({ view: 'entity-detail', entityId: entry.entity_id });
+        navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: entry.entity_id } });
         return;
       case 'project':
-        navigate({ view: 'project-detail', projectId: entry.entity_id, projectSidebarTab: 'projects', folderFilter: null });
+        navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: entry.entity_id }, search: { tab: 'projects' as const } });
         return;
       case 'entity_schema':
-        navigate({ view: 'data-model' });
+        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         return;
       case 'project_file': {
         const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
-          navigate({ view: 'project-detail', projectId, projectSidebarTab: 'projects', folderFilter });
+          navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const, folder: folderFilter ?? undefined } });
         }
       }
     }
@@ -569,15 +564,12 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
 
 const DangerSection = ({
   workspace,
-  navigate,
-  onWorkspaceDeleted,
 }: {
   workspace: Workspace;
-  navigate: NavigateFn;
-  onWorkspaceDeleted: () => void;
 }) => {
+  const navigate = useNavigate();
   const [confirm, setConfirm] = useState('');
-  
+
   const deleteWorkspaceMutation = useDeleteWorkspace();
 
   const canDelete = confirm === workspace.name;
@@ -586,12 +578,11 @@ const DangerSection = ({
     if (!canDelete) return;
     try {
       await deleteWorkspaceMutation.mutateAsync(workspace.id);
-      onWorkspaceDeleted();
-      navigate({ view: 'home', workspaceId: null });
+      navigate({ to: '/' });
     } catch {
       // Error handling could be improved
     }
-  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate, onWorkspaceDeleted]);
+  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate]);
 
   return (
     <div className={styles.blockList}>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import styles from './EntityDetail.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -7,22 +8,12 @@ import {
   TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink,
   TbTrash, TbPlus, TbX, TbCopy,
 } from 'react-icons/tb';
-import type { NavigateFn } from '../routing';
 import { resolveSchemaColor } from '../api';
-import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
-
-type EntityDetailProps = {
-  workspaceId: string;
-  entityId: string;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
-  navigate: NavigateFn;
-  canViewAudit: boolean;
-};
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 type TabId = 'overview' | 'topology' | 'relations' | 'changes';
 
@@ -40,7 +31,20 @@ type RefLookup = Map<string, EntitySummary>;
 const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate, canViewAudit }: EntityDetailProps) => {
+export const EntityDetail = () => {
+  const navigate = useNavigate();
+  const { entityId } = useParams({ strict: false }) as { entityId: string };
+  const { workspaceSlug, schemas, lifecycleStates, ownerOptions, permissions } = useWorkspaceContext();
+  const workspaceId = workspaceSlug;
+  const canViewAudit = permissions.canViewAudit;
+
+  const navigateToEntity = useCallback((id: string) => {
+    navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: id } });
+  }, [navigate, workspaceSlug]);
+
+  const navigateToEntities = useCallback(() => {
+    navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
+  }, [navigate, workspaceSlug]);
   const [tab, setTab] = useState<TabId>('overview');
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<Record<string, unknown>>({});
@@ -195,13 +199,13 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   const handleDelete = async () => {
     if (!confirm(`Delete "${entity?._name || entity?._slug}"?`)) return;
     deleteEntity.mutate(entityId, {
-      onSuccess: () => navigate({ view: 'entity-browser' }),
+      onSuccess: () => navigateToEntities(),
     });
   };
 
   const handleClone = async () => {
     cloneEntity.mutate(entityId, {
-      onSuccess: (cloned) => navigate({ view: 'entity-detail', entityId: cloned._uid }),
+      onSuccess: (cloned) => navigateToEntity(cloned._uid),
     });
   };
 
@@ -214,7 +218,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>Entity not found</div>
         <div>The entity may have been deleted.</div>
-        <button type="button" className={styles.btn} onClick={() => navigate({ view: 'entity-browser' })}>
+        <button type="button" className={styles.btn} onClick={() => navigateToEntities()}>
           <TbChevronLeft size={12} /> Back to entities
         </button>
       </div>
@@ -232,7 +236,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       {/* Header */}
       <div className={styles.head}>
         <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'entity-browser' })}>
+          <button type="button" className={styles.backLink} onClick={() => navigateToEntities()}>
             <TbChevronLeft size={12} /> Back to entities
           </button>
           <div className={styles.headRow}>
@@ -324,7 +328,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
                       onChange={v => setEditState(s => ({ ...s, [f.id]: v }))}
                       refLookup={refLookup}
                       referenceOptions={referenceOptions}
-                      navigate={navigate}
+                      onEntityClick={navigateToEntity}
                     />
                   ))}
                 </div>
@@ -447,7 +451,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
           incoming={incoming}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
-          navigate={navigate}
+          onEntityClick={navigateToEntity}
         />
       )}
 
@@ -464,14 +468,14 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
               <div className={styles.sectionLabel}>Outgoing ({outgoing.length})</div>
               <div className={styles.relationsList}>
                 {outgoing.map((r, i) => (
-                  <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} navigate={navigate} />
+                  <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} onEntityClick={navigateToEntity} />
                 ))}
                 {outgoing.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
               </div>
               <div className={styles.sectionLabel}>Incoming ({incoming.length})</div>
               <div className={styles.relationsList}>
                 {incoming.map((r, i) => (
-                  <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} navigate={navigate} />
+                  <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} onEntityClick={navigateToEntity} />
                 ))}
                 {incoming.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
               </div>
@@ -539,7 +543,7 @@ const PropertyRow = ({
   onChange,
   refLookup,
   referenceOptions,
-  navigate,
+  onEntityClick,
 }: {
   field: SchemaField;
   value: unknown;
@@ -548,7 +552,7 @@ const PropertyRow = ({
   onChange: (v: unknown) => void;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 }) => {
   const renderEditor = () => {
     if (field.type === 'reference' || field.type === 'containment') {
@@ -627,7 +631,7 @@ const PropertyRow = ({
                 key={id}
                 type="button"
                 className={styles.propLink}
-                onClick={() => navigate({ view: 'entity-detail', entityId: id })}
+                onClick={() => onEntityClick(id)}
               >
                 {label}
               </button>
@@ -658,12 +662,12 @@ const RelationRow = ({
   relation,
   direction,
   schemas,
-  navigate,
+  onEntityClick,
 }: {
   relation: Relation;
   direction: 'outgoing' | 'incoming';
   schemas: EntitySchema[];
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 }) => {
   const targetSchemaId = direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
@@ -674,7 +678,7 @@ const RelationRow = ({
     <button
       type="button"
       className={styles.relation}
-      onClick={() => navigate({ view: 'entity-detail', entityId: relation.entityId })}
+      onClick={() => onEntityClick(relation.entityId)}
     >
       <Chip tone="ghost">{relation.fieldName}</Chip>
       <TbChevronRight size={10} className={styles.dim} />
@@ -818,7 +822,7 @@ type TopologyViewProps = {
   incoming: Relation[];
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 };
 
 const groupByField = (rels: Relation[]): [string, Relation[]][] => {
@@ -831,7 +835,7 @@ const groupByField = (rels: Relation[]): [string, Relation[]][] => {
   return [...groups.entries()];
 };
 
-const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, lifecycleStates, navigate }: TopologyViewProps) => {
+const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, lifecycleStates, onEntityClick }: TopologyViewProps) => {
   const parents = useMemo(() => outgoing.filter(r => r.kind === 'containment'), [outgoing]);
   const children = useMemo(() => incoming.filter(r => r.kind === 'containment'), [incoming]);
   const consumesRefs = useMemo(() => outgoing.filter(r => r.kind === 'reference'), [outgoing]);
@@ -938,7 +942,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             {parents.map((p, i) => {
               const { schema: ps, color: pc } = resolveRelColor(p);
               return (
-                <button key={i} type="button" className={styles.topoParentChip} onClick={() => navigate({ view: 'entity-detail', entityId: p.entityId })}>
+                <button key={i} type="button" className={styles.topoParentChip} onClick={() => onEntityClick(p.entityId)}>
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
                   <span className={styles.dim}>part of</span>
@@ -973,7 +977,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
               {children.map((c, i) => {
                 const { schema: cs, color: cc } = resolveRelColor(c);
                 return (
-                  <button key={i} type="button" className={styles.topoChildCard} onClick={() => navigate({ view: 'entity-detail', entityId: c.entityId })}>
+                  <button key={i} type="button" className={styles.topoChildCard} onClick={() => onEntityClick(c.entityId)}>
                     <span className={styles.topoCardBar} style={{ background: cc }} />
                     <div className={styles.topoChildHead}>
                       <TypeBadge color={cc} name={cs?.name} icon={cs?.icon} size={14} />
@@ -1007,7 +1011,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       type="button"
                       ref={setCardRef(`in-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => navigate({ view: 'entity-detail', entityId: r.entityId })}
+                      onClick={() => onEntityClick(r.entityId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
@@ -1034,7 +1038,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       type="button"
                       ref={setCardRef(`out-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => navigate({ view: 'entity-detail', entityId: r.entityId })}
+                      onClick={() => onEntityClick(r.entityId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
