@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from './Dialog';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceOwnerOption } from '../api';
+import { usePermissions } from '../auth/PermissionContext';
 import styles from './AddWorkspaceDialog.module.css';
 
 const PROJECT_STATUSES = [
@@ -19,6 +20,7 @@ type AddProjectDialogProps = {
 };
 
 export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerOptions }: AddProjectDialogProps) => {
+  const { canCreateProject } = usePermissions();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
@@ -26,17 +28,22 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerO
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const creatableOwnerOptions = useMemo(
+    () => ownerOptions.filter(option => canCreateProject(workspaceId, option.id)),
+    [canCreateProject, ownerOptions, workspaceId]
+  );
+  const canCreateWithoutOwner = canCreateProject(workspaceId, null);
 
   useEffect(() => {
     if (open) {
       setName('');
       setDescription('');
-      setOwner(ownerOptions[0]?.id ?? '');
+      setOwner(canCreateWithoutOwner ? '' : (creatableOwnerOptions[0]?.id ?? ''));
       setStatus('active');
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
-  }, [open, ownerOptions]);
+  }, [canCreateWithoutOwner, creatableOwnerOptions, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,8 +107,8 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerO
         <div className={styles.field}>
           <label>Owner</label>
           <select value={owner} onChange={e => setOwner(e.target.value)}>
-            <option value="">No owner</option>
-            {ownerOptions.map(option => (
+            {canCreateWithoutOwner && <option value="">No owner</option>}
+            {creatableOwnerOptions.map(option => (
               <option key={option.id} value={option.id}>
                 {option.id}
               </option>

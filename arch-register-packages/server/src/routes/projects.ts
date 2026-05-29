@@ -5,7 +5,13 @@ import type { StorageAdapter } from '../storage/storage.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
-import { buildApiAuthCtx, requireProjectAction, requireCanCreateProject } from '../auth/authorization.js';
+import {
+  buildApiAuthCtx,
+  canAccessProject,
+  requireCanCreateProject,
+  requireProjectAccess,
+  requireProjectAction
+} from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
   AuthorizationContext,
@@ -135,16 +141,17 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const projects = await db.listProjects(workspace);
+        const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
         const fileCounts = new Map<string, number>();
         const projectFiles = await Promise.all(
-          projects.map(project => db.listProjectFiles(workspace, project.id))
+          visibleProjects.map(project => db.listProjectFiles(workspace, project.id))
         );
         for (const files of projectFiles) {
           for (const file of files) {
             fileCounts.set(file.project_id, (fileCounts.get(file.project_id) ?? 0) + 1);
           }
         }
-        return projects
+        return visibleProjects
           .map(project =>
             toProjectResponse({ ...project, file_count: fileCounts.get(project.id) ?? 0 }, authCtx)
           )
@@ -173,6 +180,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
             statusText: 'Not Found',
             message: `Project '${id}' not found`
           });
+        requireProjectAccess(authCtx, project.owner);
 
         const files = await db.listProjectFiles(workspace, id);
 
@@ -389,6 +397,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        requireProjectAccess(authCtx, project.owner);
+
         const files = await db.listProjectFiles(workspace, id);
         return buildFileTree(files);
       } catch (e) {
@@ -405,6 +423,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       const filePath = getParam(event, 'path');
       try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.getProject(workspace, id);
+        if (!project)
+          throw new HTTPError({
+            status: 404,
+            statusText: 'Not Found',
+            message: `Project '${id}' not found`
+          });
+        requireProjectAccess(authCtx, project.owner);
+
         const file = await db.getProjectFileByPath(workspace, id, filePath);
         if (!file)
           throw new HTTPError({

@@ -196,12 +196,30 @@ export class PostgresDatabase implements DatabaseAdapter {
   async replaceOwners(workspace: string, owners: WorkspaceOwner[]) {
     try {
       await this.sql.begin(async tx => {
-        await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
-        await tx`DELETE FROM workspace_owner WHERE workspace = ${workspace}`;
+        const ownerIds = owners.map(owner => owner.id);
+
+        if (ownerIds.length === 0) {
+          await tx`DELETE FROM team_membership WHERE workspace = ${workspace}`;
+          await tx`DELETE FROM workspace_owner WHERE workspace = ${workspace}`;
+          return;
+        }
+
+        await tx`
+          DELETE FROM team_membership
+          WHERE workspace = ${workspace} AND team_id NOT IN ${tx(ownerIds)}
+        `;
+        await tx`
+          DELETE FROM workspace_owner
+          WHERE workspace = ${workspace} AND id NOT IN ${tx(ownerIds)}
+        `;
+
         for (const owner of owners) {
           await tx`
             INSERT INTO workspace_owner (id, workspace, sort_order, created_at)
             VALUES (${owner.id}, ${workspace}, ${owner.sort_order}, ${owner.created_at})
+            ON CONFLICT (workspace, id) DO UPDATE
+            SET sort_order = EXCLUDED.sort_order,
+                created_at = EXCLUDED.created_at
           `;
         }
       });

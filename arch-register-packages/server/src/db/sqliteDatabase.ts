@@ -326,11 +326,31 @@ export class SqliteDatabase implements DatabaseAdapter {
 
   async replaceOwners(workspace: string, owners: WorkspaceOwner[]) {
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
-      this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspace]);
+      const ownerIds = owners.map(owner => owner.id);
+
+      if (ownerIds.length === 0) {
+        this.run('DELETE FROM team_membership WHERE workspace = ?', [workspace]);
+        this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspace]);
+        return;
+      }
+
+      const placeholders = ownerIds.map(() => '?').join(', ');
+      this.run(
+        `DELETE FROM team_membership WHERE workspace = ? AND team_id NOT IN (${placeholders})`,
+        [workspace, ...ownerIds],
+      );
+      this.run(
+        `DELETE FROM workspace_owner WHERE workspace = ? AND id NOT IN (${placeholders})`,
+        [workspace, ...ownerIds],
+      );
+
       for (const owner of owners) {
         this.run(
-          'INSERT INTO workspace_owner (id, workspace, sort_order, created_at) VALUES (?, ?, ?, ?)',
+          `INSERT INTO workspace_owner (id, workspace, sort_order, created_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(workspace, id) DO UPDATE SET
+             sort_order = excluded.sort_order,
+             created_at = excluded.created_at`,
           [owner.id, workspace, owner.sort_order, owner.created_at.toISOString()],
         );
       }

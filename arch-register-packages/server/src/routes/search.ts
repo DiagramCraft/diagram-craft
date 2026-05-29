@@ -4,7 +4,7 @@ import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
-import { buildApiAuthCtx } from '../auth/authorization.js';
+import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { PermissionChecker } from '@arch-register/permissions';
 
@@ -148,7 +148,9 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       const normalizedQuery = q.toLowerCase();
 
       const [projects, schemas, entities] = await Promise.all([
-        types.includes('projects') ? db.listProjects(workspace) : Promise.resolve([]),
+        types.includes('projects') || types.includes('files')
+          ? db.listProjects(workspace)
+          : Promise.resolve([]),
         types.includes('schemas') || types.includes('entities')
           ? db.listSchemas(workspace)
           : Promise.resolve([]),
@@ -158,9 +160,10 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       const visibleEntities = authCtx
         ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
         : entities;
+      const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
 
       const projectsResults = types.includes('projects')
-        ? projects
+        ? visibleProjects
             .filter(
               project =>
                 includesQuery(project.name, normalizedQuery) ||
@@ -172,7 +175,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
 
       const filesResults: FileSearchResult[] = [];
       if (types.includes('files')) {
-        const projectsForFiles = await db.listProjects(workspace);
+        const projectsForFiles = visibleProjects;
         const projectMap = new Map(projectsForFiles.map(project => [project.id, project.name]));
         const projectIds = [...projectMap.keys()];
 

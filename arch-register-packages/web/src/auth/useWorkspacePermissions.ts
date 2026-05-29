@@ -64,11 +64,18 @@ export const useWorkspacePermissions = (
     const canEditSchemas = context != null && checker.hasGlobalPermission(context, 'edit_schema');
     const canManageTeams = context != null && checker.hasGlobalPermission(context, 'manage_teams');
     const canViewAudit = context != null && checker.hasGlobalPermission(context, 'view_audit');
-    const firstOwnerTeamId = context?.ownerOptions[0]?.id ?? null;
     const canCreateProjects =
-      context != null && capabilities.canCreateProject(context, firstOwnerTeamId);
+      context != null &&
+      (capabilities.canCreateProject(context, null) ||
+        context.ownerOptions.some(ownerOption =>
+          capabilities.canCreateProject(context, ownerOption.id)
+        ));
     const canCreateEntities =
-      context != null && capabilities.canCreateTopLevelEntity(context, firstOwnerTeamId);
+      context != null &&
+      (capabilities.canCreateTopLevelEntity(context, null) ||
+        context.ownerOptions.some(ownerOption =>
+          capabilities.canCreateTopLevelEntity(context, ownerOption.id)
+        ));
 
     return {
       canManageWorkspaces,

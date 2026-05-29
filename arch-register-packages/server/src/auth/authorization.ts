@@ -75,6 +75,23 @@ export const requireProjectAction = (
   });
 };
 
+export const canAccessProject = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null
+) => checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
+
+export const requireProjectAccess = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null,
+  message?: string
+) => {
+  httpAssert.true(canAccessProject(context, ownerTeamId), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'You do not have permission to view this project'
+  });
+};
+
 /**
  * Require project creation capability for specific owner, throw 403 if not allowed.
  * 
