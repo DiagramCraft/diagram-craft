@@ -16,7 +16,32 @@ pnpm add @arch-register/permissions
 
 ## Architecture
 
-The module is split into two main components with clear responsibilities:
+The module is split into two main components with clear responsibilities. This separation is **intentional** and provides important architectural benefits:
+
+### Design Rationale
+
+**PermissionChecker** handles **pure permission logic**:
+- Stateless evaluation of assigned permissions and roles
+- Foundation layer for all permission checks
+- No business logic or complex rules
+- Directly maps to what permissions exist in the system
+
+**CapabilityEvaluator** handles **business logic and computed capabilities**:
+- Combines multiple permission checks
+- Applies contextual business rules
+- Determines what actions are possible given the current state
+- May evolve independently as business requirements change
+
+This separation provides:
+1. **Clear boundaries**: Pure permission checks vs. business logic
+2. **Testability**: Can test permission logic independently from business rules
+3. **Flexibility**: Business logic can evolve without changing core permission checks
+4. **Reusability**: PermissionChecker can be used directly when you need low-level checks
+
+### When to Use Each
+
+- Use **PermissionChecker** when you need to verify a specific assigned permission exists
+- Use **CapabilityEvaluator** when you need to determine if an action is possible in the current context
 
 ### PermissionChecker
 

@@ -7,6 +7,46 @@ The permission system provides fine-grained access control across three levels:
 - **Project permissions**: Team-based access to projects
 - **Entity permissions**: Hierarchical access to entities with inheritance
 
+## Architecture
+
+The permission system is built on two complementary components:
+
+### PermissionChecker (Pure Permission Logic)
+
+Handles stateless evaluation of assigned permissions and roles:
+- `hasEntityPermission()` - Check if user has specific entity permission
+- `hasProjectPermission()` - Check if user has specific project permission
+- `hasGlobalPermission()` - Check if user has specific global permission
+
+**Characteristics:**
+- No business logic or complex rules
+- Directly maps to what permissions exist in the system
+- Foundation layer for all permission checks
+- Used when you need to verify a specific assigned permission exists
+
+### CapabilityEvaluator (Business Logic Layer)
+
+Handles computed capabilities based on context and business rules:
+- `canCreateProject()` - Can user create project with specific owner?
+- `canCreateTopLevelEntity()` - Can user create top-level entity with specific owner?
+- Future: `canEditProject()`, `canDeleteProject()`, `canManageProjectFiles()`
+
+**Characteristics:**
+- Combines multiple permission checks
+- Applies contextual business rules
+- Determines what actions are possible given current state
+- May evolve independently as business requirements change
+- Used when you need to determine if an action is possible in the current context
+
+### Design Benefits
+
+This intentional separation provides:
+
+1. **Clear Boundaries**: Pure permission checks vs. business logic
+2. **Testability**: Can test permission logic independently from business rules
+3. **Flexibility**: Business logic can evolve without changing core permission checks
+4. **Reusability**: PermissionChecker can be used directly for low-level checks
+
 ## Permission Types
 
 ### Global Permissions
