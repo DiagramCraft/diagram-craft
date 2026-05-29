@@ -113,8 +113,7 @@ export const SearchScreen = () => {
   // Sync URL query → local
   useEffect(() => {
     if (query !== localQ) setLocalQ(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, localQ]);
 
   // Auto-focus input on mount
   useEffect(() => {

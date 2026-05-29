@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '../components/Dialog';
 import { ApiError } from '../api';
 import type { FileEntry } from '../api';
 import { useCreateDiagramFile } from '../hooks/useProjectFiles';

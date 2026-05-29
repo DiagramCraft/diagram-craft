@@ -1,5 +1,11 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import type { AuthBaseData, WorkspaceOwnerOption, WorkspaceTeamMembership, GlobalPermission, GlobalRole } from './types';
+import { createContext, type ReactNode, useContext } from 'react';
+import type {
+  AuthBaseData,
+  GlobalPermission,
+  GlobalRole,
+  WorkspaceOwnerOption,
+  WorkspaceTeamMembership
+} from './types';
 
 export type {
   AuthBaseData,
@@ -22,6 +28,5 @@ export const AuthorizationDataProvider = ({
 );
 
 export const useAuthorizationData = () => {
-  const context = useContext(AuthorizationDataContext);
-  return context;
+  return useContext(AuthorizationDataContext);
 };

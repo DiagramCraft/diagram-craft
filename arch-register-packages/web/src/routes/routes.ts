@@ -27,12 +27,12 @@ import {
 } from './searchParams';
 
 // ─── Root Route ───────────────────────────────────────────────
-export const rootRoute = createRootRouteWithContext<RouterContext>()({
+const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: Outlet,
 });
 
 // ─── Login Route ──────────────────────────────────────────────
-export const loginRoute = createRoute({
+const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginScreen,
@@ -44,7 +44,7 @@ export const loginRoute = createRoute({
 });
 
 // ─── Index Route (redirect to first workspace) ───────────────
-export const indexRoute = createRoute({
+const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: async ({ context }) => {
@@ -65,7 +65,7 @@ export const indexRoute = createRoute({
 });
 
 // ─── Authenticated Layout Route ──────────────────────────────
-export const authenticatedRoute = createRoute({
+const authenticatedRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'authenticated',
   beforeLoad: ({ context }) => {
@@ -77,21 +77,21 @@ export const authenticatedRoute = createRoute({
 });
 
 // ─── Workspace Layout Route ──────────────────────────────────
-export const workspaceRoute = createRoute({
+const workspaceRoute = createRoute({
   getParentRoute: () => authenticatedRoute,
   path: '$workspaceSlug',
   component: WorkspaceLayout,
 });
 
 // ─── Workspace Home ──────────────────────────────────────────
-export const workspaceHomeRoute = createRoute({
+const workspaceHomeRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: '/',
   component: WorkspaceHome,
 });
 
 // ─── Project Detail ──────────────────────────────────────────
-export const projectDetailRoute = createRoute({
+const projectDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'projects/$projectId',
   validateSearch: validateProjectSearch,
@@ -99,14 +99,14 @@ export const projectDetailRoute = createRoute({
 });
 
 // ─── Diagram (overlay) ──────────────────────────────────────
-export const diagramRoute = createRoute({
+const diagramRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'projects/$projectId/diagrams/$diagramId',
   component: DiagramScreen,
 });
 
 // ─── Entity Browser ──────────────────────────────────────────
-export const entityBrowserRoute = createRoute({
+const entityBrowserRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities',
   validateSearch: validateEntitySearch,
@@ -114,14 +114,14 @@ export const entityBrowserRoute = createRoute({
 });
 
 // ─── Entity Detail ───────────────────────────────────────────
-export const entityDetailRoute = createRoute({
+const entityDetailRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'entities/$entityId',
   component: EntityDetail,
 });
 
 // ─── Data Model ──────────────────────────────────────────────
-export const dataModelRoute = createRoute({
+const dataModelRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'model',
   validateSearch: validateModelSearch,
@@ -129,7 +129,7 @@ export const dataModelRoute = createRoute({
 });
 
 // ─── Search ──────────────────────────────────────────────────
-export const searchRoute = createRoute({
+const searchRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'search',
   validateSearch: validateSearchSearch,
@@ -137,7 +137,7 @@ export const searchRoute = createRoute({
 });
 
 // ─── Settings ────────────────────────────────────────────────
-export const settingsRoute = createRoute({
+const settingsRoute = createRoute({
   getParentRoute: () => workspaceRoute,
   path: 'settings',
   validateSearch: validateSettingsSearch,

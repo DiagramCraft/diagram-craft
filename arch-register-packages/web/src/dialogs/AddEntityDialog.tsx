@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '../components/Dialog';
 import { apiFetch, ApiError } from '../api';
 import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
 import { usePermissions } from '../auth/PermissionContext';

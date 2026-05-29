@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './ProjectDetail.module.css';
-import { AddFolderDialog } from '../components/AddFolderDialog';
-import { AddDiagramDialog } from '../components/AddDiagramDialog';
+import { AddFolderDialog } from '../dialogs/AddFolderDialog';
+import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { Dialog } from '../components/Dialog';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '../components/Dialog';
 import { ApiError } from '../api';
 import { useCreateFolder } from '../hooks/useProjectFiles';
 import styles from './AddWorkspaceDialog.module.css';
