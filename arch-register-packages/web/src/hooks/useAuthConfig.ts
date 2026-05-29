@@ -9,10 +9,9 @@ export const useAuthConfig = () => {
   return useQuery({
     queryKey: ['auth', 'config'],
     queryFn: async () => {
-      const config = await apiFetch<AuthConfig>('/api/auth/config');
-      return config;
+      return await apiFetch<AuthConfig>('/api/auth/config');
     },
     staleTime: Infinity, // Auth config doesn't change during session
-    retry: false,
+    retry: false
   });
 };

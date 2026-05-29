@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchAuditLog, fetchAuditStats } from '../api';
+import { fetchAuditLog } from '../api';
 
 // Query keys factory
 export const auditKeys = {
@@ -7,7 +7,7 @@ export const auditKeys = {
   logs: () => [...auditKeys.all, 'log'] as const,
   log: (workspaceId: string, options: Record<string, unknown>) =>
     [...auditKeys.logs(), workspaceId, options] as const,
-  stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const,
+  stats: (workspaceId: string) => [...auditKeys.all, 'stats', workspaceId] as const
 };
 
 // Hook for fetching audit log
@@ -27,15 +27,6 @@ export const useAuditLog = (
   return useQuery({
     queryKey: auditKeys.log(workspaceId, options),
     queryFn: () => fetchAuditLog(workspaceId, options),
-    enabled: queryOptions?.enabled ?? !!workspaceId,
-  });
-};
-
-// Hook for fetching audit stats
-export const useAuditStats = (workspaceId: string) => {
-  return useQuery({
-    queryKey: auditKeys.stats(workspaceId),
-    queryFn: () => fetchAuditStats(workspaceId),
-    enabled: !!workspaceId,
+    enabled: queryOptions?.enabled ?? !!workspaceId
   });
 };
