@@ -1,8 +1,9 @@
-import { H3, HTTPError, defineHandler } from 'h3';
+import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/config';
 
@@ -28,12 +29,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
       const body = await event.req.json().catch(() => undefined);
-      if (!Array.isArray(body))
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON array'
-        });
+      httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
       const states = body as Array<{
         id?: unknown;
@@ -42,33 +38,15 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         sort_order?: unknown;
       }>;
       for (const s of states) {
-        if (!s.id || typeof s.id !== 'string')
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each lifecycle state must have a string id'
-          });
-        if (!s.label || typeof s.label !== 'string')
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each lifecycle state must have a string label'
-          });
-        if (!s.color || typeof s.color !== 'string')
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each lifecycle state must have a string color'
-          });
+        httpAssert.string(s.id, { message: 'Each lifecycle state must have a string id' });
+        httpAssert.string(s.label, { message: 'Each lifecycle state must have a string label' });
+        httpAssert.string(s.color, { message: 'Each lifecycle state must have a string color' });
       }
 
       const ids = states.map(s => s.id as string);
-      if (new Set(ids).size !== ids.length)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Duplicate lifecycle state ids'
-        });
+      httpAssert.true(new Set(ids).size === ids.length, {
+        message: 'Duplicate lifecycle state ids'
+      });
 
       const now = new Date();
       return await db.replaceLifecycleStates(
@@ -102,30 +80,17 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'manage_teams');
       const body = await event.req.json().catch(() => undefined);
-      if (!Array.isArray(body))
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON array'
-        });
+      httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
       const owners = body as Array<{ id?: unknown; sort_order?: unknown }>;
       for (const o of owners) {
-        if (!o.id || typeof o.id !== 'string')
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each owner must have a string id'
-          });
+        httpAssert.string(o.id, { message: 'Each owner must have a string id' });
       }
 
       const ids = owners.map(o => o.id as string);
-      if (new Set(ids).size !== ids.length)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Duplicate owner ids'
-        });
+      httpAssert.true(new Set(ids).size === ids.length, {
+        message: 'Duplicate owner ids'
+      });
 
       const now = new Date();
       return await db.replaceOwners(
@@ -157,44 +122,34 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'manage_teams');
       const body = await event.req.json().catch(() => undefined);
-      if (!Array.isArray(body)) {
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON array'
-        });
-      }
+      httpAssert.array(body, { message: 'Request body must be a JSON array' });
+      const rows = body as unknown[];
 
       const owners = new Set((await db.listOwners(workspace)).map(owner => owner.id));
       const users = new Set((await db.listUsers()).map(user => user.id));
       const now = new Date();
-      const memberships = body.map(row => {
-        if (row == null || typeof row !== 'object') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each membership must be an object'
-          });
-        }
+      const memberships: Array<{
+        workspace: string;
+        team_id: string;
+        user_id: string;
+        created_at: Date;
+      }> = rows.map(row => {
+        httpAssert.true(row != null && typeof row === 'object', {
+          message: 'Each membership must be an object'
+        });
         const membership = row as Record<string, unknown>;
-        if (typeof membership['team_id'] !== 'string' || !owners.has(membership['team_id'])) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'team_id must reference an existing team'
-          });
-        }
-        if (typeof membership['user_id'] !== 'string' || !users.has(membership['user_id'])) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'user_id must reference an existing user'
-          });
-        }
+        const teamId = membership['team_id'];
+        httpAssert.true(typeof teamId === 'string' && owners.has(teamId), {
+          message: 'team_id must reference an existing team'
+        });
+        const userId = membership['user_id'];
+        httpAssert.true(typeof userId === 'string' && users.has(userId), {
+          message: 'user_id must reference an existing user'
+        });
         return {
           workspace,
-          team_id: membership['team_id'],
-          user_id: membership['user_id'],
+          team_id: teamId as string,
+          user_id: userId as string,
           created_at: now
         };
       });

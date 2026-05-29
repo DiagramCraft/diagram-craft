@@ -1,11 +1,6 @@
-import {
-  defineHandler,
-  EventHandlerRequest,
-  H3,
-  H3Event,
-  HTTPError
-} from 'h3';
+import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
 import type { AIGenerateRequest, AIServer } from '../ai/aiServer.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests
@@ -75,41 +70,24 @@ export const createAIRoutes = (aiServer: AIServer) => {
       validateRequest(event);
 
       try {
-        const body = (await event.req.json().catch(() => undefined)) as AIGenerateRequest | undefined;
+        const body = (await event.req.json().catch(() => undefined)) as
+          | AIGenerateRequest
+          | undefined;
 
         // Validate request body
-        if (!body || typeof body !== 'object') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Request body must be a valid JSON object'
-          });
-        }
+        httpAssert.json(body, { message: 'Request body must be a valid JSON object' });
 
-        if (!Array.isArray(body.messages) || body.messages.length === 0) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'messages array is required and must not be empty'
-          });
-        }
+        httpAssert.true(Array.isArray(body.messages) && body.messages.length > 0, {
+          message: 'messages array is required and must not be empty'
+        });
 
         // Validate message structure
         for (const message of body.messages) {
-          if (!message.role || !message.content) {
-            throw new HTTPError({
-              status: 400,
-              statusText: 'Bad Request',
-              message: 'Each message must have role and content properties'
-            });
-          }
-          if (!['system', 'user', 'assistant'].includes(message.role)) {
-            throw new HTTPError({
-              status: 400,
-              statusText: 'Bad Request',
-              message: 'Message role must be system, user, or assistant'
-            });
-          }
+          httpAssert.present(message.role, { message: 'Each message must have role' });
+          httpAssert.present(message.content, { message: 'Each message must have content' });
+          httpAssert.true(['system', 'user', 'assistant'].includes(message.role), {
+            message: 'Message role must be system, user, or assistant'
+          });
         }
 
         // Prepare OpenRouter request

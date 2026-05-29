@@ -1,4 +1,4 @@
-import { H3, HTTPError, defineHandler, getQuery } from 'h3';
+import { defineHandler, getQuery, H3 } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import {
   decodeRefs,
@@ -7,11 +7,15 @@ import {
   type EntityLink,
   type SchemaField
 } from '../types.js';
-import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
+import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
-import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
+import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
-import { buildApiAuthCtx, requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization.js';
+import {
+  buildApiAuthCtx,
+  requireCanCreateTopLevelEntity,
+  requireEntityAction
+} from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
   AuthorizationContext,
@@ -19,6 +23,7 @@ import {
   EntitySchema,
   PermissionChecker
 } from '@arch-register/permissions';
+import { httpAssert } from '../utils/httpAssert';
 
 const BASE = '/api/:workspace/data';
 
@@ -370,13 +375,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         let csvContent: string;
         if (schemaId) {
           const schema = schemaMap.get(schemaId);
-          if (!schema) {
-            throw new HTTPError({
-              status: 404,
-              statusText: 'Not Found',
-              message: 'Schema not found'
-            });
-          }
+          httpAssert.present(schema, { status: 404, message: 'Schema not found' });
 
           const refFields = relationFields(schema.fields);
           const allRefIds = new Set<string>();
@@ -479,17 +478,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
       try {
         const row = await db.getEntity(workspace, id);
-        if (!row) {
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Data record '${id}' not found`
-          });
-        }
+        httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
           authCtx,
           row,
@@ -509,8 +501,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
 
       try {
         const [entity, schemas, entitiesRaw] = await Promise.all([
@@ -518,13 +509,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.listSchemas(workspace),
           db.listEntities(workspace)
         ]);
-        if (!entity) {
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Data record '${id}' not found`
-          });
-        }
+        httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
           authCtx,
           entity,
@@ -587,17 +572,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
 
       const entity = await db.getEntity(workspace, id);
-      if (!entity) {
-        throw new HTTPError({
-          status: 404,
-          statusText: 'Not Found',
-          message: `Data record '${id}' not found`
-        });
-      }
+      httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
 
       requireEntityAction(
         authCtx,
@@ -620,79 +598,43 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
 
       const entity = await db.getEntity(workspace, id);
-      if (!entity)
-        throw new HTTPError({
-          status: 404,
-          statusText: 'Not Found',
-          message: `Data record '${id}' not found`
-        });
-      if (authCtx)
-        requireEntityAction(
-          authCtx,
-          entity,
-          'admin_entity',
-          'You do not have permission to manage entity access'
-        );
+      httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
+
+      requireEntityAction(
+        authCtx,
+        entity,
+        'admin_entity',
+        'You do not have permission to manage entity access'
+      );
 
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object') {
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
-      }
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const { grants = [] } = body as Record<string, unknown>;
-      if (!Array.isArray(grants)) {
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'grants must be an array'
-        });
-      }
+      httpAssert.array(grants, { message: 'grants must be an array' });
+      const grantRows = grants as unknown[];
 
-      const rows = grants.map(grant => {
-        if (grant == null || typeof grant !== 'object') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Each grant must be an object'
-          });
-        }
+      const rows = grantRows.map(grant => {
+        httpAssert.json(grant, { message: 'Each grant must be an object' });
         const typed = grant as Record<string, unknown>;
-        if (typed['principal_type'] !== 'user' && typed['principal_type'] !== 'team') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'principal_type must be user or team'
-          });
-        }
-        if (typeof typed['principal_id'] !== 'string' || typed['principal_id'] === '') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'principal_id must be a non-empty string'
-          });
-        }
-        if (!['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role']))) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
+        httpAssert.true(typed['principal_type'] === 'user' || typed['principal_type'] === 'team', {
+          message: 'principal_type must be user or team'
+        });
+        httpAssert.string(typed['principal_id'], {
+          message: 'principal_id must be a non-empty string'
+        });
+        httpAssert.true(
+          ['viewer', 'editor', 'contributor', 'entity_admin'].includes(String(typed['role'])),
+          {
             message: 'role must be viewer, editor, contributor, or entity_admin'
-          });
-        }
-        if (!['self', 'subtree'].includes(String(typed['applies_to']))) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'applies_to must be self or subtree'
-          });
-        }
+          }
+        );
+        httpAssert.true(['self', 'subtree'].includes(String(typed['applies_to'])), {
+          message: 'applies_to must be self or subtree'
+        });
         const principalType = typed['principal_type'] as 'user' | 'team';
         const role = typed['role'] as 'viewer' | 'editor' | 'contributor' | 'entity_admin';
         const appliesTo = typed['applies_to'] as 'self' | 'subtree';
@@ -722,12 +664,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const {
         _schemaId,
@@ -743,12 +680,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
         ...fields
       } = body as Record<string, unknown>;
 
-      if (!_schemaId || typeof _schemaId !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: '_schemaId is required and must be a string (UUID)'
-        });
+      httpAssert.string(_schemaId, {
+        message: '_schemaId is required and must be a string (UUID)'
+      });
 
       const name =
         typeof _name === 'string'
@@ -759,12 +693,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
       delete fields['name'];
 
       const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
-      if (!slug)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: '_slug (or a _name to derive it from) is required'
-        });
+      httpAssert.present(slug, {
+        message: '_slug (or a _name to derive it from) is required'
+      });
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
@@ -784,12 +715,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.getSchema(workspace, _schemaId),
           db.listEntities(workspace)
         ]);
-        if (!schema)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Schema '${_schemaId}' not found`
-          });
+        httpAssert.present(schema, { status: 404, message: `Schema '${_schemaId}' not found` });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
         const parents = getEntityParentsFromPayload(schema, fields, entityLookup);
         const fallbackOwner = (await db.listOwners(workspace))[0]?.id ?? null;
@@ -863,16 +789,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
 
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const {
         _schemaId,
@@ -888,12 +808,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
         ...fields
       } = body as Record<string, unknown>;
 
-      if (!_schemaId || typeof _schemaId !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: '_schemaId is required and must be a string (UUID)'
-        });
+      httpAssert.string(_schemaId, {
+        message: '_schemaId is required and must be a string (UUID)'
+      });
 
       const name =
         typeof _name === 'string'
@@ -904,12 +821,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
       delete fields['name'];
 
       const slug = typeof _slug === 'string' && _slug ? _slug : slugify(name);
-      if (!slug)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: '_slug (or a _name to derive it from) is required'
-        });
+      httpAssert.string(slug, {
+        message: '_slug (or a _name to derive it from) is required'
+      });
 
       const namespace = typeof _namespace === 'string' ? _namespace : 'default';
       const description = typeof _description === 'string' ? _description : '';
@@ -927,12 +841,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
       try {
         const oldRow = await db.getEntity(workspace, id);
-        if (!oldRow)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Data record '${id}' not found`
-          });
+        httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
             authCtx,
@@ -989,16 +898,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
       try {
         const source = await db.getEntity(workspace, id);
-        if (!source)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Data record '${id}' not found`
-          });
+        httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
             authCtx,
@@ -1054,16 +957,10 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.present(id, { message: 'id is required' });
       try {
         const row = await db.getEntity(workspace, id);
-        if (!row)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Data record '${id}' not found`
-          });
+        httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
             authCtx,

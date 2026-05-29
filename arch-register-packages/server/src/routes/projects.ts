@@ -18,6 +18,7 @@ import {
   PermissionChecker,
   ProjectCapabilities
 } from '@arch-register/permissions';
+import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -31,8 +32,7 @@ const handleError = (error: unknown, fallback: string): never =>
 
 const getParam = (event: H3Event, name: string) => {
   const value = event.context.params?.[name];
-  if (!value)
-    throw new HTTPError({ status: 400, statusText: 'Bad Request', message: `${name} is required` });
+  httpAssert.present(value, { message: `${name} is required` });
   return decodeURIComponent(value);
 };
 
@@ -141,7 +141,9 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const projects = await db.listProjects(workspace);
-        const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
+        const visibleProjects = projects.filter(project =>
+          canAccessProject(authCtx, project.owner)
+        );
         const fileCounts = new Map<string, number>();
         const projectFiles = await Promise.all(
           visibleProjects.map(project => db.listProjectFiles(workspace, project.id))
@@ -174,12 +176,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const id = getParam(event, 'id');
       try {
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
         const files = await db.listProjectFiles(workspace, id);
@@ -197,20 +194,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const { name, description = '', owner, status } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required'
-        });
+      httpAssert.present(name, { message: 'name is required' });
       const projectStatus = parseProjectStatus(status);
 
       try {
@@ -261,32 +248,17 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const { name, description, owner, status } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required'
-        });
+      httpAssert.present(name, { message: 'name is required' });
       const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         // Fetch old state for audit log
         const oldRow = await db.getProject(workspace, id);
-        if (!oldRow)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
         const ownerValues = new Set((await db.listOwners(workspace)).map(row => row.id));
         const resolvedOwner =
           owner !== undefined ? resolveProjectOwner(owner, ownerValues) : oldRow.owner;
@@ -349,12 +321,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         // Fetch project before deletion for audit log
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -399,12 +366,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
         const files = await db.listProjectFiles(workspace, id);
@@ -425,21 +387,11 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         requireProjectAccess(authCtx, project.owner);
 
         const file = await db.getProjectFileByPath(workspace, id, filePath);
-        if (!file)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `File '${filePath}' not found`
-          });
+        httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
         const content = await storage.read(workspace, id, file.id);
         return JSON.parse(content.toString('utf8'));
@@ -470,12 +422,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const filePath = getParam(event, 'path');
 
       const body = await event.req.json().catch(() => undefined);
-      if (body == null)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be valid JSON'
-        });
+      httpAssert.json(body, { message: 'Request body must be valid JSON' });
 
       const content = Buffer.from(JSON.stringify(body), 'utf8');
       const fileName = filePath.includes('/')
@@ -490,12 +437,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -568,12 +510,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -583,12 +520,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         // Fetch file before deletion for audit log
         const file = await db.getProjectFileByPath(workspace, id, filePath);
-        if (!file)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `File '${filePath}' not found`
-          });
+        httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
 
         // Delete file
         await db.deleteProjectFileByPath(workspace, id, filePath);
@@ -624,31 +556,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const { path: folderPath } = body as Record<string, unknown>;
-      if (!folderPath || typeof folderPath !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'path is required'
-        });
+      httpAssert.string(folderPath, { message: 'path is required' });
 
       const markerPath = `${folderPath}/.keep`;
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -701,30 +618,16 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const workspace = await resolveWorkspace(event, db);
       const id = getParam(event, 'id');
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       const { oldPath, newPath } = body as Record<string, unknown>;
-      if (!oldPath || typeof oldPath !== 'string' || !newPath || typeof newPath !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'oldPath and newPath are required strings'
-        });
+      httpAssert.string(oldPath, { message: 'oldPath and newPath are required strings' });
+      httpAssert.string(newPath, { message: 'oldPath and newPath are required strings' });
 
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -740,12 +643,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           new Date()
         );
 
-        if (result.length === 0)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `No files found under folder '${oldPath}'`
-          });
+        httpAssert.true(result.length > 0, {
+          status: 404,
+          message: `No files found under folder '${oldPath}'`
+        });
 
         return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
       } catch (e) {
@@ -764,12 +665,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       try {
         const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
         const project = await db.getProject(workspace, id);
-        if (!project)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Project '${id}' not found`
-          });
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
         if (authCtx)
           requireProjectAction(
             authCtx,
@@ -779,12 +675,10 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           );
         const result = await db.deleteProjectFileFolder(workspace, id, folderPath);
 
-        if (result.length === 0)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `No files found under folder '${folderPath}'`
-          });
+        httpAssert.true(result.length > 0, {
+          status: 404,
+          message: `No files found under folder '${folderPath}'`
+        });
 
         await Promise.all(
           result.map(file => storage.delete(workspace, id, file.id).catch(() => {}))

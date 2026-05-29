@@ -9,6 +9,7 @@ import type { JWTPayload, User } from '../types.js';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
 import { getGlobalPermissionsForRoles } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert.js';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -75,12 +76,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const username = body?.username;
       const password = body?.password;
 
-      if (!username || !password) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Username and password are required'
-        });
-      }
+      httpAssert.present(username, { message: 'Username and password are required' });
+      httpAssert.present(password, { message: 'Username and password are required' });
 
       // Try to find user by ID first, then by email
       let user = await db.getUser(username);
@@ -169,21 +166,11 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const query = getQuery(event);
       const state = String(query.state ?? '');
 
-      if (!state) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Missing state parameter'
-        });
-      }
+      httpAssert.present(state, { message: 'Missing state parameter' });
 
       const storedState = oidcStateStore.get(state);
 
-      if (!storedState) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Invalid or expired state'
-        });
-      }
+      httpAssert.present(storedState, { message: 'Invalid or expired state' });
 
       oidcStateStore.delete(state);
 
@@ -252,12 +239,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         | undefined;
       const refreshToken = cookieToken ?? body?.refresh_token;
 
-      if (!refreshToken) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Refresh token is required'
-        });
-      }
+      httpAssert.present(refreshToken, { message: 'Refresh token is required' });
 
       let payload: JWTPayload;
       try {
@@ -278,12 +260,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       const user = await db.getUser(payload.sub);
 
-      if (!user) {
-        throw new HTTPError({
-          status: 401,
-          message: 'User not found'
-        });
-      }
+      httpAssert.present(user, {
+        status: 401,
+        message: 'User not found'
+      });
 
       if (!user.is_active) {
         throw new HTTPError({
@@ -342,7 +322,10 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         }))
       );
 
-      const ownerOptionsByWorkspace: Record<string, Array<{ id: string; name: string; type: 'team' }>> = {};
+      const ownerOptionsByWorkspace: Record<
+        string,
+        Array<{ id: string; name: string; type: 'team' }>
+      > = {};
       for (const workspace of workspaces) {
         const owners = await db.listOwners(workspace.id);
         ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
@@ -396,9 +379,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
     '/api/auth/users/:id/global-roles',
     defineHandler(async event => {
       const userId = event.context.params?.['id'];
-      if (!userId) {
-        throw new HTTPError({ status: 400, message: 'id is required' });
-      }
+      httpAssert.present(userId, { message: 'id is required' });
 
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'manage_global_roles');
@@ -411,17 +392,16 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         const body = (await readBody(event).catch(() => undefined)) as
           | { roles?: unknown }
           | undefined;
-        if (!body || !Array.isArray(body.roles)) {
-          throw new HTTPError({ status: 400, message: 'roles must be an array' });
-        }
+        httpAssert.present(body);
+        httpAssert.array(body?.roles, { message: 'roles must be an array' });
         const roles = body.roles.filter(
           (role): role is 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor' =>
             typeof role === 'string' &&
             ['platform_admin', 'schema_admin', 'user_admin', 'auditor'].includes(role)
         );
-        if (roles.length !== body.roles.length) {
-          throw new HTTPError({ status: 400, message: 'roles contains invalid values' });
-        }
+        httpAssert.true(roles.length === body.roles.length, {
+          message: 'roles contains invalid values'
+        });
         return await db.replaceGlobalRoleAssignments(userId, roles, new Date());
       }
 
