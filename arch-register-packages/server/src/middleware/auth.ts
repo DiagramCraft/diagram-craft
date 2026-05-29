@@ -23,11 +23,6 @@ const extractToken = (event: H3Event): string | null => {
 
 export const createAuthMiddleware = (db: DatabaseAdapter) => {
   return defineHandler(async event => {
-    // Skip auth if disabled
-    if (process.env['AUTH_DISABLED'] === 'true') {
-      return;
-    }
-
     const token = extractToken(event);
 
     if (!token) {

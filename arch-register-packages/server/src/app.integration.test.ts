@@ -81,9 +81,6 @@ describe('arch-register sqlite integration', () => {
   let app: ReturnType<typeof createApp>;
 
   beforeAll(async () => {
-    // Disable authentication for integration tests
-    process.env.AUTH_DISABLED = 'true';
-    
     sqliteDir = await mkdtemp(join(tmpdir(), 'arch-register-sqlite-'));
     db = new SqliteDatabase(join(sqliteDir, 'db.sqlite'));
     storageDir = await mkdtemp(join(tmpdir(), 'arch-register-storage-'));
@@ -99,7 +96,6 @@ describe('arch-register sqlite integration', () => {
     await db.close();
     await rm(storageDir, { recursive: true, force: true });
     await rm(sqliteDir, { recursive: true, force: true });
-    delete process.env.AUTH_DISABLED;
   });
 
   const json = async <T>(path: string, init?: RequestInit): Promise<{ response: Response; body: T }> => {
@@ -293,7 +289,6 @@ describe('arch-register sqlite integration', () => {
   }, 20000);
 
   it('enforces restricted subtree visibility and schema admin permissions', async () => {
-    process.env.AUTH_DISABLED = 'false';
     process.env.JWT_SECRET = '12345678901234567890123456789012';
 
     const viewer = await db.createUser({
@@ -361,7 +356,6 @@ describe('arch-register sqlite integration', () => {
     });
     expect(allowedSchemaWrite.status).toBe(200);
 
-    process.env.AUTH_DISABLED = 'true';
     delete process.env.JWT_SECRET;
   }, 20000);
 });

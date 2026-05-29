@@ -257,6 +257,9 @@ importers:
 
   packages/canvas:
     dependencies:
+      '@diagram-craft/canvas-app':
+        specifier: workspace:^
+        version: link:../canvas-app
       '@diagram-craft/collaboration':
         specifier: workspace:^
         version: link:../collaboration
