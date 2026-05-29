@@ -1,4 +1,4 @@
-import { H3, HTTPError, defineHandler, getQuery } from 'h3';
+import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { Entity, SchemaField } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
@@ -7,6 +7,7 @@ import { SEARCH_DEFAULTS } from '../constants.js';
 import { buildApiAuthCtx, canAccessProject } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { PermissionChecker } from '@arch-register/permissions';
+import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/search';
 
@@ -69,13 +70,9 @@ const parseTypes = (value: unknown): SearchType[] => {
     .filter((type): type is SearchType => type.length > 0);
 
   const invalid = parsed.filter(type => !SEARCH_TYPES.includes(type as SearchType));
-  if (invalid.length > 0) {
-    throw new HTTPError({
-      status: 400,
-      statusText: 'Bad Request',
-      message: `types must be a comma-separated list of: ${SEARCH_TYPES.join(', ')}`
-    });
-  }
+  httpAssert.true(invalid.length === 0, {
+    message: `types must be a comma-separated list of: ${SEARCH_TYPES.join(', ')}`
+  });
 
   return [...new Set(parsed as SearchType[])];
 };

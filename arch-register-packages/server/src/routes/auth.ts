@@ -9,6 +9,7 @@ import type { JWTPayload, User } from '../types.js';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
 import { getGlobalPermissionsForRoles } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../middleware/auth';
+import { httpAssert } from '../utils/httpAssert.js';
 
 // In-memory store for OIDC state (in production, use Redis or similar)
 const oidcStateStore = new Map<
@@ -46,9 +47,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/config',
     defineHandler(async event => {
-      if (event.req.method !== 'GET') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
       return { mode: authMode };
@@ -59,57 +58,50 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/login',
     defineHandler(async event => {
-      if (event.req.method !== 'POST') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'POST', { status: 405, message: 'Method not allowed' });
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
-      if (authMode !== 'local') {
-        throw new HTTPError({
-          status: 400,
-          message: 'Username/password authentication is not enabled'
-        });
-      }
+      httpAssert.true(authMode === 'local', {
+        message: 'Username/password authentication is not enabled'
+      });
 
       const body = (await readBody(event)) as { username?: string; password?: string } | undefined;
       const username = body?.username;
       const password = body?.password;
 
-      if (!username || !password) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Username and password are required'
-        });
-      }
+      httpAssert.string(username, { message: 'Username and password are required' });
+      httpAssert.string(password, { message: 'Username and password are required' });
 
       // Try to find user by ID first, then by email
       let user = await db.getUser(username);
+
       if (!user && username.includes('@')) {
         user = await db.getUserByEmail(username);
       }
 
-      if (!user || user.auth_provider !== 'local' || !user.password_hash) {
-        throw new HTTPError({
-          status: 401,
-          message: 'Invalid username or password'
-        });
-      }
+      httpAssert.present(user, { status: 401, message: 'Invalid username or password' });
 
-      if (!user.is_active) {
-        throw new HTTPError({
-          status: 403,
-          message: 'User account is inactive'
-        });
-      }
+      httpAssert.present(user.password_hash, {
+        status: 401,
+        message: 'Invalid username or password'
+      });
+
+      httpAssert.true(user.auth_provider === 'local', {
+        status: 401,
+        message: 'Invalid username or password'
+      });
+
+      httpAssert.true(user.is_active, {
+        status: 403,
+        message: 'User account is inactive'
+      });
 
       const isValid = await verifyPassword(user.password_hash, password);
 
-      if (!isValid) {
-        throw new HTTPError({
-          status: 401,
-          message: 'Invalid username or password'
-        });
-      }
+      httpAssert.true(isValid, {
+        status: 401,
+        message: 'Invalid username or password'
+      });
 
       // Update last login
       await db.updateUserLastLogin(user.id, new Date());
@@ -124,17 +116,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/oidc/authorize',
     defineHandler(async event => {
-      if (event.req.method !== 'GET') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
-      if (authMode !== 'oidc') {
-        throw new HTTPError({
-          status: 400,
-          message: 'OIDC authentication is not enabled'
-        });
-      }
+      httpAssert.true(authMode === 'oidc', { message: 'OIDC authentication is not enabled' });
 
       const { url, state, nonce, codeVerifier } = await generateAuthUrl();
 
@@ -154,36 +139,19 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/oidc/callback',
     defineHandler(async event => {
-      if (event.req.method !== 'GET') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
       const authMode = process.env['AUTH_MODE'] ?? 'local';
-      if (authMode !== 'oidc') {
-        throw new HTTPError({
-          status: 400,
-          message: 'OIDC authentication is not enabled'
-        });
-      }
+      httpAssert.true(authMode === 'oidc', { message: 'OIDC authentication is not enabled' });
 
       const query = getQuery(event);
       const state = String(query.state ?? '');
 
-      if (!state) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Missing state parameter'
-        });
-      }
+      httpAssert.string(state, { message: 'Missing state parameter' });
 
       const storedState = oidcStateStore.get(state);
 
-      if (!storedState) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Invalid or expired state'
-        });
-      }
+      httpAssert.present(storedState, { message: 'Invalid or expired state' });
 
       oidcStateStore.delete(state);
 
@@ -221,12 +189,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         await db.updateUserLastLogin(user.id, new Date());
       }
 
-      if (!user.is_active) {
-        throw new HTTPError({
-          status: 403,
-          message: 'User account is inactive'
-        });
-      }
+      httpAssert.true(user.is_active, {
+        status: 403,
+        message: 'User account is inactive'
+      });
 
       const tokens = generateTokenPair(user);
       setTokenCookies(event, tokens);
@@ -241,9 +207,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/refresh',
     defineHandler(async event => {
-      if (event.req.method !== 'POST') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'POST', { status: 405, message: 'Method not allowed' });
 
       // Accept refresh token from cookie or request body
       const cookieToken = getCookie(event, 'ar_refresh_token');
@@ -252,12 +216,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         | undefined;
       const refreshToken = cookieToken ?? body?.refresh_token;
 
-      if (!refreshToken) {
-        throw new HTTPError({
-          status: 400,
-          message: 'Refresh token is required'
-        });
-      }
+      httpAssert.string(refreshToken, { message: 'Refresh token is required' });
 
       let payload: JWTPayload;
       try {
@@ -269,28 +228,22 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         });
       }
 
-      if (payload.type !== 'refresh') {
-        throw new HTTPError({
-          status: 401,
-          message: 'Invalid token type'
-        });
-      }
+      httpAssert.true(payload.type === 'refresh', {
+        status: 401,
+        message: 'Invalid token type'
+      });
 
       const user = await db.getUser(payload.sub);
 
-      if (!user) {
-        throw new HTTPError({
-          status: 401,
-          message: 'User not found'
-        });
-      }
+      httpAssert.present(user, {
+        status: 401,
+        message: 'User not found'
+      });
 
-      if (!user.is_active) {
-        throw new HTTPError({
-          status: 403,
-          message: 'User account is inactive'
-        });
-      }
+      httpAssert.true(user.is_active, {
+        status: 403,
+        message: 'User account is inactive'
+      });
 
       const tokens = generateTokenPair(user);
       setTokenCookies(event, tokens);
@@ -302,9 +255,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/logout',
     defineHandler(async event => {
-      if (event.req.method !== 'POST') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'POST', { status: 405, message: 'Method not allowed' });
 
       clearAuthCookies(event);
       return { ok: true };
@@ -322,9 +273,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/me',
     defineHandler(async event => {
-      if (event.req.method !== 'GET') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
       const user = event.context.user as User;
       const [roleAssignments, workspaces] = await Promise.all([
@@ -342,7 +291,10 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         }))
       );
 
-      const ownerOptionsByWorkspace: Record<string, Array<{ id: string; name: string; type: 'team' }>> = {};
+      const ownerOptionsByWorkspace: Record<
+        string,
+        Array<{ id: string; name: string; type: 'team' }>
+      > = {};
       for (const workspace of workspaces) {
         const owners = await db.listOwners(workspace.id);
         ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
@@ -375,9 +327,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
   app.use(
     '/api/auth/users',
     defineHandler(async event => {
-      if (event.req.method !== 'GET') {
-        throw new HTTPError({ status: 405, message: 'Method not allowed' });
-      }
+      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
 
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'manage_users');
@@ -396,9 +346,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
     '/api/auth/users/:id/global-roles',
     defineHandler(async event => {
       const userId = event.context.params?.['id'];
-      if (!userId) {
-        throw new HTTPError({ status: 400, message: 'id is required' });
-      }
+      httpAssert.string(userId, { message: 'id is required' });
 
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'manage_global_roles');
@@ -411,17 +359,16 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         const body = (await readBody(event).catch(() => undefined)) as
           | { roles?: unknown }
           | undefined;
-        if (!body || !Array.isArray(body.roles)) {
-          throw new HTTPError({ status: 400, message: 'roles must be an array' });
-        }
-        const roles = body.roles.filter(
+        httpAssert.array(body?.roles, { message: 'roles must be an array' });
+        const requestedRoles = body.roles as unknown[];
+        const roles = requestedRoles.filter(
           (role): role is 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor' =>
             typeof role === 'string' &&
             ['platform_admin', 'schema_admin', 'user_admin', 'auditor'].includes(role)
         );
-        if (roles.length !== body.roles.length) {
-          throw new HTTPError({ status: 400, message: 'roles contains invalid values' });
-        }
+        httpAssert.true(roles.length === requestedRoles.length, {
+          message: 'roles contains invalid values'
+        });
         return await db.replaceGlobalRoleAssignments(userId, roles, new Date());
       }
 

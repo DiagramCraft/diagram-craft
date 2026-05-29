@@ -1,4 +1,4 @@
-import { H3, HTTPError, defineHandler } from 'h3';
+import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
@@ -6,6 +6,7 @@ import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/schemas';
 
@@ -48,16 +49,10 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'view_schema');
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.string(id, { message: 'id is required' });
       try {
         const row = await db.getSchema(workspace, id);
-        if (!row)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Schema '${id}' not found`
-          });
+        httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
         return row;
       } catch (e) {
         handleError(e, 'Failed to retrieve schema');
@@ -73,19 +68,9 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, fields = [], color, icon, default_owner } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required and must be a string'
-        });
+      httpAssert.string(name, { message: 'name is required and must be a string' });
       const colorVal = typeof color === 'string' ? color : null;
       const iconVal = typeof icon === 'string' ? icon : null;
       const ownerValues = new Set((await db.listOwners(workspace)).map(owner => owner.id));
@@ -132,32 +117,16 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, fields, color, icon, default_owner } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required and must be a string'
-        });
+      httpAssert.string(name, { message: 'name is required and must be a string' });
       const ownerValues = new Set((await db.listOwners(workspace)).map(owner => owner.id));
       try {
         // Fetch old state for audit log
         const oldRow = await db.getSchema(workspace, id);
-        if (!oldRow)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Schema '${id}' not found`
-          });
+        httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });
 
         const row = await db.updateSchema(workspace, id, {
           name: name as string,
@@ -203,17 +172,11 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.string(id, { message: 'id is required' });
       try {
         // Fetch schema before deletion for audit log
         const schema = await db.getSchema(workspace, id);
-        if (!schema)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Schema '${id}' not found`
-          });
+        httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
 
         // Delete schema
         await db.deleteSchema(workspace, id);

@@ -1,8 +1,9 @@
-import { defineHandler, getCookie, HTTPError } from 'h3';
 import type { H3Event } from 'h3';
+import { defineHandler, getCookie, HTTPError } from 'h3';
 import { verifyToken } from '../utils/jwt.js';
 import type { DatabaseAdapter } from '../db/database.js';
-import type { User, JWTPayload } from '../types.js';
+import type { JWTPayload, User } from '../types.js';
+import { httpAssert } from '../utils/httpAssert';
 
 export type AuthenticatedEvent = H3Event & {
   context: {
@@ -25,12 +26,7 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
   return defineHandler(async event => {
     const token = extractToken(event);
 
-    if (!token) {
-      throw new HTTPError({
-        status: 401,
-        message: 'Missing or invalid authorization header'
-      });
-    }
+    httpAssert.present(token, { status: 401, message: 'Missing or invalid authorization header' });
 
     let payload: JWTPayload;
     try {
@@ -51,19 +47,8 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
 
     const user = await db.getUser(payload.sub);
 
-    if (!user) {
-      throw new HTTPError({
-        status: 401,
-        message: 'User not found'
-      });
-    }
-
-    if (!user.is_active) {
-      throw new HTTPError({
-        status: 403,
-        message: 'User account is inactive'
-      });
-    }
+    httpAssert.present(user, { status: 401, message: 'User not found' });
+    httpAssert.true(user.is_active, { status: 403, message: 'User account is inactive' });
 
     // Attach user and token to event context
     event.context.user = user;
@@ -71,7 +56,4 @@ export const createAuthMiddleware = (db: DatabaseAdapter) => {
   });
 };
 
-export const requireAuth = (db: DatabaseAdapter) => {
-  const middleware = createAuthMiddleware(db);
-  return middleware;
-};
+export const requireAuth = (db: DatabaseAdapter) => createAuthMiddleware(db);

@@ -1,12 +1,13 @@
-import { H3Event, HTTPError } from 'h3';
+import { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 export const resolveWorkspace = async (event: H3Event, db: DatabaseAdapter): Promise<string> => {
   const slug = event.context.params?.['workspace'];
-  if (!slug) throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'workspace is required' });
+  httpAssert.string(slug, { message: 'workspace is required' });
 
   const row = await db.resolveWorkspaceSlug(slug);
-  if (!row) throw new HTTPError({ status: 404, statusText: 'Not Found', message: `Workspace '${slug}' not found` });
+  httpAssert.present(row, { status: 404, message: `Workspace '${slug}' not found` });
 
   return row;
 };

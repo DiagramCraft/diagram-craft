@@ -1,4 +1,4 @@
-import { H3, HTTPError, defineHandler } from 'h3';
+import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
 import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
@@ -6,6 +6,7 @@ import { handleDbError, slugify } from '../utils/http.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/workspaces';
 
@@ -41,26 +42,11 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, description = '' } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required and must be a string'
-        });
+      httpAssert.string(name, { message: 'name is required and must be a string' });
       const id = slugify(name);
-      if (!id)
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name must contain at least one alphanumeric character'
-        });
+      httpAssert.string(id, { message: 'name must contain at least one alphanumeric character' });
       const urlSlug = id;
       const sc = shortCode(name as string);
       try {
@@ -144,40 +130,21 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
-      if (body == null || typeof body !== 'object')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'Request body must be a JSON object'
-        });
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, description, url_slug, short_code: sc } = body as Record<string, unknown>;
-      if (!name || typeof name !== 'string')
-        throw new HTTPError({
-          status: 400,
-          statusText: 'Bad Request',
-          message: 'name is required and must be a string'
-        });
+      httpAssert.string(name, { status: 400, message: 'name is required and must be a string' });
       if (url_slug != null && typeof url_slug === 'string') {
         const cleaned = slugify(url_slug);
-        if (!cleaned)
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'url_slug must contain at least one alphanumeric character'
-          });
+        httpAssert.string(cleaned, {
+          message: 'url_slug must contain at least one alphanumeric character'
+        });
       }
       try {
         // Fetch old state for audit log
         const oldRow = await db.getWorkspace(id);
-        if (!oldRow)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Workspace '${id}' not found`
-          });
+        httpAssert.present(oldRow, { status: 404, message: `Workspace '${id}' not found` });
 
         const row = await db.updateWorkspace(id, {
           name: name as string,
@@ -213,17 +180,11 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
       if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
-      if (!id)
-        throw new HTTPError({ status: 400, statusText: 'Bad Request', message: 'id is required' });
+      httpAssert.string(id, { message: 'id is required' });
 
       try {
         const { workspace, projectIds } = await db.deleteWorkspace(id);
-        if (!workspace)
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `Workspace '${id}' not found`
-          });
+        httpAssert.present(workspace, { status: 404, message: `Workspace '${id}' not found` });
 
         if (storage) {
           await Promise.all(

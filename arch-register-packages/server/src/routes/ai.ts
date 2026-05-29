@@ -1,11 +1,6 @@
-import {
-  defineHandler,
-  EventHandlerRequest,
-  H3,
-  H3Event,
-  HTTPError
-} from 'h3';
+import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
 import type { AIGenerateRequest, AIServer } from '../ai/aiServer.js';
+import { httpAssert } from '../utils/httpAssert.js';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests
@@ -18,23 +13,19 @@ export const createAIRoutes = (aiServer: AIServer) => {
   // Helper function to validate content type and size
   const validateRequest = (event: H3Event<EventHandlerRequest>) => {
     const contentTypeStr = event.req.headers.get('content-type');
-    if (contentTypeStr && !contentTypeStr.startsWith(CONTENT_TYPE_JSON)) {
-      throw new HTTPError({
-        status: 415,
-        statusText: 'Unsupported Media Type',
-        message: `Content-Type must be ${CONTENT_TYPE_JSON}`
-      });
-    }
+    httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
+      status: 415,
+      statusText: 'Unsupported Media Type',
+      message: `Content-Type must be ${CONTENT_TYPE_JSON}`
+    });
 
     const contentLengthStr = event.req.headers.get('content-length');
     const contentLength = parseInt(contentLengthStr ?? '0', 10);
-    if (contentLength > MAX_REQUEST_SIZE) {
-      throw new HTTPError({
-        status: 413,
-        statusText: 'Payload Too Large',
-        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
-      });
-    }
+    httpAssert.true(contentLength <= MAX_REQUEST_SIZE, {
+      status: 413,
+      statusText: 'Payload Too Large',
+      message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
+    });
   };
 
   // Helper function to handle errors consistently
@@ -75,41 +66,24 @@ export const createAIRoutes = (aiServer: AIServer) => {
       validateRequest(event);
 
       try {
-        const body = (await event.req.json().catch(() => undefined)) as AIGenerateRequest | undefined;
+        const body = (await event.req.json().catch(() => undefined)) as
+          | AIGenerateRequest
+          | undefined;
 
         // Validate request body
-        if (!body || typeof body !== 'object') {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'Request body must be a valid JSON object'
-          });
-        }
+        httpAssert.json(body, { message: 'Request body must be a valid JSON object' });
 
-        if (!Array.isArray(body.messages) || body.messages.length === 0) {
-          throw new HTTPError({
-            status: 400,
-            statusText: 'Bad Request',
-            message: 'messages array is required and must not be empty'
-          });
-        }
+        httpAssert.true(Array.isArray(body.messages) && body.messages.length > 0, {
+          message: 'messages array is required and must not be empty'
+        });
 
         // Validate message structure
         for (const message of body.messages) {
-          if (!message.role || !message.content) {
-            throw new HTTPError({
-              status: 400,
-              statusText: 'Bad Request',
-              message: 'Each message must have role and content properties'
-            });
-          }
-          if (!['system', 'user', 'assistant'].includes(message.role)) {
-            throw new HTTPError({
-              status: 400,
-              statusText: 'Bad Request',
-              message: 'Message role must be system, user, or assistant'
-            });
-          }
+          httpAssert.present(message.role, { message: 'Each message must have role' });
+          httpAssert.present(message.content, { message: 'Each message must have content' });
+          httpAssert.true(['system', 'user', 'assistant'].includes(message.role), {
+            message: 'Message role must be system, user, or assistant'
+          });
         }
 
         // Prepare OpenRouter request
