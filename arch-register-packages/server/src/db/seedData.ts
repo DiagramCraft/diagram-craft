@@ -33,50 +33,65 @@ export const seedLifecycleStates: WorkspaceLifecycleState[] = [
 ];
 
 export const seedOwners: WorkspaceOwner[] = [
-  { id: 'platform-team', workspace: 'default', sort_order: 0, created_at: now },
-  { id: 'ux-team', workspace: 'default', sort_order: 1, created_at: now },
-  { id: 'security-team', workspace: 'default', sort_order: 2, created_at: now },
+  { id: 'Platform Engineering', workspace: 'default', sort_order: 0, created_at: now },
+  { id: 'Design Systems', workspace: 'default', sort_order: 1, created_at: now },
+  { id: 'Security & Compliance', workspace: 'default', sort_order: 2, created_at: now },
+  { id: 'Data Platform', workspace: 'default', sort_order: 3, created_at: now },
 ];
 
 export const seedLocalUsers = [
-  {
-    id: 'admin',
-    email: 'admin@example.com',
-    display_name: 'Administrator',
-  },
-  {
-    id: 'alice',
-    email: 'alice@example.com',
-    display_name: 'Alice Johnson',
-  },
-  {
-    id: 'bob',
-    email: 'bob@example.com',
-    display_name: 'Bob Smith',
-  },
-  {
-    id: 'auditor',
-    email: 'auditor@example.com',
-    display_name: 'Audit User',
-  },
+  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist' },
+  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen' },
+  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez' },
+  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo' },
+  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski' },
+  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg' },
+  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann' },
+  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel' },
+  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois' },
+  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson' },
 ] as const;
 
 export const seedTeamAssignments: TeamMembership[] = [
-  { workspace: 'default', team_id: 'platform-team', user_id: 'admin', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'ux-team', user_id: 'alice', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'security-team', user_id: 'bob', role: 'team_admin', created_at: now },
-  { workspace: 'default', team_id: 'security-team', user_id: 'admin', role: 'team_admin', created_at: now },
+  // Platform Engineering
+  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'platformteamadmin', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'platformteameditor', role: 'team_editor', created_at: now },
+  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'workspaceeditor', role: 'team_reviewer', created_at: now },
+  { workspace: 'default', team_id: 'Platform Engineering', user_id: 'globaladmin', role: 'team_admin', created_at: now },
+
+  // Design Systems
+  { workspace: 'default', team_id: 'Design Systems', user_id: 'designteamadmin', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'Design Systems', user_id: 'workspacereviewer', role: 'team_editor', created_at: now },
+  { workspace: 'default', team_id: 'Design Systems', user_id: 'workspaceviewer', role: 'team_reviewer', created_at: now },
+
+  // Security & Compliance
+  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'securityteamadmin', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'workspaceadmin', role: 'team_editor', created_at: now },
+  { workspace: 'default', team_id: 'Security & Compliance', user_id: 'globaladmin', role: 'team_reviewer', created_at: now },
+
+  // Data Platform
+  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceowner', role: 'team_admin', created_at: now },
+  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceeditor', role: 'team_editor', created_at: now },
+  { workspace: 'default', team_id: 'Data Platform', user_id: 'workspaceviewer', role: 'team_reviewer', created_at: now },
 ];
 
 export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
-  { user_id: 'admin', role: 'global_admin', created_at: now },
+  { user_id: 'globaladmin', role: 'global_admin', created_at: now },
+  { user_id: 'globaladmin', role: 'workspace_admin', created_at: now },
+  { user_id: 'workspaceadmin', role: 'workspace_admin', created_at: now },
 ];
 
 export const seedWorkspaceMembers: WorkspaceMember[] = [
-  { workspace: 'default', user_id: 'admin', role: 'owner', created_at: now },
-  { workspace: 'default', user_id: 'alice', role: 'admin', created_at: now },
-  { workspace: 'default', user_id: 'bob', role: 'editor', created_at: now },
-  { workspace: 'default', user_id: 'auditor', role: 'viewer', created_at: now },
+  { workspace: 'default', user_id: 'workspaceowner', role: 'owner', created_at: now },
+  { workspace: 'default', user_id: 'globaladmin', role: 'admin', created_at: now },
+  { workspace: 'default', user_id: 'workspaceadmin', role: 'admin', created_at: now },
+  { workspace: 'default', user_id: 'platformteamadmin', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'platformteameditor', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'designteamadmin', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'securityteamadmin', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'workspaceeditor', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'workspacereviewer', role: 'reviewer', created_at: now },
+  { workspace: 'default', user_id: 'workspaceviewer', role: 'viewer', created_at: now },
 ];
 
 export const seedSchemas: EntitySchema[] = [
@@ -218,7 +233,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Engineering',
     description: 'The core engineering domain covering all customer-facing products and infrastructure.',
-    owner: 'platform-team',
+    owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['core', 'customer-facing'],
     links: [],
@@ -235,7 +250,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Customer Portal',
     description: 'Public-facing portal for customer self-service.',
-    owner: 'ux-team',
+    owner: 'Design Systems',
     lifecycle: 'production',
     tags: ['tier-0', 'customer-facing'],
     links: [{ url: 'https://wiki.example.com/customer-portal', title: 'Wiki', type: 'docs' }],
@@ -252,7 +267,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Identity Platform',
     description: 'Centralised authentication and authorisation service.',
-    owner: 'security-team',
+    owner: 'Security & Compliance',
     lifecycle: 'production',
     tags: ['tier-0', 'security'],
     links: [],
@@ -269,7 +284,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Customer API',
     description: 'REST API exposing customer data to the portal frontend.',
-    owner: 'platform-team',
+    owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['rest', 'public'],
     links: [{ url: 'https://api.example.com/docs/customer', title: 'API Docs', type: 'docs' }],
@@ -286,7 +301,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Auth API',
     description: 'gRPC API for token issuance and validation.',
-    owner: 'security-team',
+    owner: 'Security & Compliance',
     lifecycle: 'production',
     tags: ['grpc', 'internal'],
     links: [],
@@ -303,7 +318,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'API Gateway',
     description: 'Edge gateway that routes requests and enforces rate limits.',
-    owner: 'platform-team',
+    owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['nodejs', 'tier-0'],
     links: [{ url: 'https://github.com/example/api-gateway', title: 'Source', type: 'source' }],
@@ -325,7 +340,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Frontend App',
     description: 'React single-page application served to end users.',
-    owner: 'ux-team',
+    owner: 'Design Systems',
     lifecycle: 'production',
     tags: ['react', 'frontend'],
     links: [],
@@ -347,7 +362,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Auth Service',
     description: 'Issues and validates JWTs; integrates with the identity platform.',
-    owner: 'security-team',
+    owner: 'Security & Compliance',
     lifecycle: 'production',
     tags: ['go', 'security'],
     links: [],
@@ -368,7 +383,7 @@ export const seedEntities: Entity[] = [
     namespace: 'default',
     name: 'Postgres Main',
     description: 'Primary PostgreSQL cluster used by the Customer Portal system.',
-    owner: 'platform-team',
+    owner: 'Platform Engineering',
     lifecycle: 'production',
     tags: ['postgres', 'managed'],
     links: [{ url: 'https://grafana.example.com/d/postgres-main', title: 'Dashboard', type: 'dashboard' }],
@@ -389,7 +404,7 @@ export const seedProjects: Project[] = [
     workspace: 'default',
     name: 'Portal Redesign',
     description: 'Redesign of the customer portal frontend and API layer.',
-    owner: 'ux-team',
+    owner: 'Design Systems',
     status: 'active',
     created_at: now,
     updated_at: now,
@@ -399,7 +414,7 @@ export const seedProjects: Project[] = [
     workspace: 'default',
     name: 'Auth Migration',
     description: 'Migration from legacy auth to the new identity platform.',
-    owner: 'security-team',
+    owner: 'Security & Compliance',
     status: 'pinned',
     created_at: now,
     updated_at: now,

@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
+import { DropdownMenu } from '../components/DropdownMenu';
 import { useAuthUsers, useUpdateUserGlobalRoles, globalRolesKeys } from '../hooks/useGlobalRoles';
 import styles from './GlobalPermissionsSection.module.css';
 
@@ -16,6 +17,77 @@ const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
 };
 
 const getUserLabel = (user: AuthUserInfo) => user.display_name || user.email || user.id;
+
+const getUserInitials = (user: AuthUserInfo) => {
+  const name = user.display_name || user.email || user.id;
+  return name
+    .split(/[\s@.]+/)
+    .slice(0, 2)
+    .map(w => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+};
+
+const userHue = (id: string) => {
+  let hash = 0;
+  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+  return ((hash % 360) + 360) % 360;
+};
+
+const MemberAvatar = ({ name, email, userId, size = 28 }: { name: string; email: string | null; userId: string; size?: number }) => {
+  const h = userHue(userId);
+  const initials = getUserInitials({ id: userId, display_name: name, email, auth_provider: 'local', is_active: true });
+  return (
+    <span
+      className={styles.avatar}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(9, Math.round(size * 0.38)),
+        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
+      }}
+      title={name || email || userId}
+    >
+      {initials}
+    </span>
+  );
+};
+
+const RolesMenu = ({
+  currentRoles,
+  onToggle,
+}: {
+  currentRoles: GlobalRole[];
+  onToggle: (role: GlobalRole) => void;
+}) => {
+  return (
+    <DropdownMenu
+      trigger={
+        <button type="button" className={styles.roleBtn}>
+          <div className={styles.assignedRoles}>
+            {currentRoles.length === 0 && <span className={styles.noRoles}>No roles</span>}
+            {currentRoles.map(roleId => {
+              const role = GLOBAL_ROLES.find(r => r.id === roleId);
+              return role ? (
+                <Chip key={role.id} tone="ghost" dot={role.tone}>{role.name}</Chip>
+              ) : null;
+            })}
+          </div>
+        </button>
+      }
+      items={GLOBAL_ROLES.map(role => ({
+        label: role.name,
+        icon: (
+          <span className={styles.roleMenuCheck}>
+            {currentRoles.includes(role.id) ? '\u2713' : '\u00A0'}
+          </span>
+        ),
+        keepOpen: true,
+        onClick: () => onToggle(role.id),
+      }))}
+    />
+  );
+};
 
 export const GlobalPermissionsSection = ({
   addDialogOpen,
@@ -89,7 +161,7 @@ export const GlobalPermissionsSection = ({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>User</th>
+                <th style={{ minWidth: 240 }}>User</th>
                 <th>Global roles</th>
                 <th>Status</th>
               </tr>
@@ -98,30 +170,36 @@ export const GlobalPermissionsSection = ({
               {assignedUsers.map(assignedUser => {
                 const assignedRoles = roleMap[assignedUser.id] ?? [];
                 return (
-                  <tr
-                    key={assignedUser.id}
-                    className={styles.clickableRow}
-                    onClick={() => setSelectedUserId(assignedUser.id)}
-                  >
-                    <td className={styles.userCell}>
-                      <div className={styles.userName}>{assignedUser.display_name}</div>
-                      <div className={styles.userMeta}>
-                        {assignedUser.email ?? assignedUser.id}
+                  <tr key={assignedUser.id}>
+                    <td>
+                      <div className={styles.memberName}>
+                        <MemberAvatar
+                          name={assignedUser.display_name}
+                          email={assignedUser.email}
+                          userId={assignedUser.id}
+                        />
+                        <div>
+                          <div className={styles.memberNameMain}>{assignedUser.display_name}</div>
+                          <div className={styles.memberNameSub}>
+                            {assignedUser.email ?? assignedUser.id}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td>
-                      <div className={styles.assignedRoles}>
-                        {assignedRoles.map(roleId => {
-                          const role = GLOBAL_ROLES.find(candidate => candidate.id === roleId);
-                          return role ? (
-                            <Chip key={role.id} tone="ghost" dot={role.tone}>
-                              {role.name}
-                            </Chip>
-                          ) : null;
-                        })}
-                      </div>
+                      <RolesMenu
+                        currentRoles={assignedRoles}
+                        onToggle={role => {
+                          const next = assignedRoles.includes(role)
+                            ? assignedRoles.filter(r => r !== role)
+                            : [...assignedRoles, role];
+                          void updateMutation.mutateAsync({ userId: assignedUser.id, roles: next }).then(() => {
+                            if (assignedUser.id === user?.id) void reloadUser();
+                          });
+                        }}
+                      />
                     </td>
-                    <td className={styles.statusCell}>
+                    <td>
                       <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--ok)' : 'var(--fg-3)'}>
                         {assignedUser.is_active ? 'Active' : 'Inactive'}
                       </Chip>

@@ -1,9 +1,86 @@
 import { WORKSPACE_ROLES, type WorkspaceRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { TbSearch } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
+import { DropdownMenu } from '../components/DropdownMenu';
 import { useWorkspaceMembers, useWorkspaceUsers, useUpdateWorkspaceMemberRole } from '../hooks/useWorkspaceMembers';
+import { useTeamAssignments, useTeams } from '../hooks/useWorkspaceConfig';
 import styles from './MembersSection.module.css';
+
+const getUserLabel = (user: { display_name: string; email: string | null; id?: string }) =>
+  user.display_name || user.email || user.id || '';
+
+const getUserInitials = (user: { display_name: string; email: string | null }) => {
+  const name = user.display_name || user.email || '';
+  return name
+    .split(/[\s@.]+/)
+    .slice(0, 2)
+    .map(w => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+};
+
+const stableHue = (id: string) => {
+  let hash = 0;
+  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+  return ((hash % 360) + 360) % 360;
+};
+
+const TeamChip = ({ teamId }: { teamId: string }) => {
+  const h = stableHue(teamId);
+  return (
+    <span className={styles.teamChip}>
+      <span className={styles.teamChipBar} style={{ background: `oklch(0.65 0.15 ${h})` }} />
+      {teamId}
+    </span>
+  );
+};
+
+const MemberAvatar = ({ name, email, userId, size = 28 }: { name: string; email: string | null; userId: string; size?: number }) => {
+  const h = stableHue(userId);
+  const initials = getUserInitials({ display_name: name, email });
+  return (
+    <span
+      className={styles.avatar}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(9, Math.round(size * 0.38)),
+        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
+      }}
+      title={name || email || userId}
+    >
+      {initials}
+    </span>
+  );
+};
+
+const RoleMenu = ({
+  current,
+  onSelect,
+}: {
+  current: WorkspaceRole;
+  onSelect: (role: WorkspaceRole) => void;
+}) => {
+  const roleMeta = WORKSPACE_ROLES.find(r => r.id === current);
+  if (!roleMeta) return null;
+
+  return (
+    <DropdownMenu
+      trigger={
+        <button type="button" className={styles.roleBtn}>
+          <Chip tone="ghost" dot={roleMeta.tone}>{roleMeta.name}</Chip>
+        </button>
+      }
+      items={WORKSPACE_ROLES.map(role => ({
+        label: role.name,
+        icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
+        onClick: () => onSelect(role.id),
+      }))}
+    />
+  );
+};
 
 export const MembersSection = ({
   workspaceSlug,
@@ -15,8 +92,39 @@ export const MembersSection = ({
   onCloseAddDialog: () => void;
 }) => {
   const { data: members = [], isLoading, error } = useWorkspaceMembers(workspaceSlug);
-  const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, addDialogOpen);
+  const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
+  const { data: teams = [] } = useTeams(workspaceSlug);
+  const { data: teamAssignments = [] } = useTeamAssignments(workspaceSlug);
   const updateMemberRole = useUpdateWorkspaceMemberRole(workspaceSlug);
+
+  const [query, setQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [teamFilter, setTeamFilter] = useState('');
+
+  const usersById = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
+  const teamsByUser = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const a of teamAssignments) {
+      const list = map.get(a.user_id) ?? [];
+      if (!list.includes(a.team_id)) list.push(a.team_id);
+      map.set(a.user_id, list);
+    }
+    return map;
+  }, [teamAssignments]);
+
+  const filteredMembers = useMemo(() => {
+    let result = members;
+    if (roleFilter) result = result.filter(m => m.role === roleFilter);
+    if (teamFilter) result = result.filter(m => (teamsByUser.get(m.user_id) ?? []).includes(teamFilter));
+    if (query) {
+      const q = query.toLowerCase();
+      result = result.filter(m =>
+        m.display_name.toLowerCase().includes(q) ||
+        (m.email?.toLowerCase().includes(q) ?? false)
+      );
+    }
+    return result;
+  }, [members, roleFilter, teamFilter, query, teamsByUser]);
 
   const memberIds = useMemo(() => new Set(members.map(member => member.user_id)), [members]);
   const availableUsers = useMemo(
@@ -34,6 +142,45 @@ export const MembersSection = ({
 
   return (
     <div className={styles.container}>
+      {!isLoading && members.length > 0 && (
+        <div className={styles.toolbar}>
+          <div className={styles.search}>
+            <TbSearch size={12} />
+            <input
+              className={styles.searchInput}
+              placeholder="Search by name or email…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <label className={styles.filter}>
+            <span className={styles.filterLabel}>Role</span>
+            <select
+              className={styles.filterSelect}
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value)}
+            >
+              <option value="">Any role</option>
+              {WORKSPACE_ROLES.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.filter}>
+            <span className={styles.filterLabel}>Team</span>
+            <select
+              className={styles.filterSelect}
+              value={teamFilter}
+              onChange={e => setTeamFilter(e.target.value)}
+            >
+              <option value="">Any team</option>
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>{t.id}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
       <div className={styles.tableWrap}>
         {isLoading ? (
           <div className={styles.empty}>Loading members…</div>
@@ -43,30 +190,64 @@ export const MembersSection = ({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>User</th>
+                <th style={{ minWidth: 240 }}>Member</th>
                 <th>Role</th>
+                <th>Teams</th>
+                <th>Status</th>
                 <th>Added</th>
               </tr>
             </thead>
             <tbody>
-              {members.map(member => {
-                const roleMeta = WORKSPACE_ROLES.find(role => role.id === member.role);
+              {filteredMembers.length === 0 && (
+                <tr>
+                  <td colSpan={5} className={styles.empty}>No members match these filters.</td>
+                </tr>
+              )}
+              {filteredMembers.map(member => {
+                const userInfo = usersById.get(member.user_id);
+                const memberTeams = teamsByUser.get(member.user_id) ?? [];
                 return (
                   <tr key={member.user_id}>
-                    <td className={styles.userCell}>
-                      <div className={styles.userName}>{member.display_name}</div>
-                      <div className={styles.userMeta}>{member.email ?? member.user_id}</div>
+                    <td>
+                      <div className={styles.memberName}>
+                        <MemberAvatar
+                          name={member.display_name}
+                          email={member.email}
+                          userId={member.user_id}
+                        />
+                        <div>
+                          <div className={styles.memberNameMain}>{member.display_name}</div>
+                          <div className={styles.memberNameSub}>{member.email ?? member.user_id}</div>
+                        </div>
+                      </div>
                     </td>
                     <td>
-                      {roleMeta ? (
-                        <Chip tone="ghost" dot={roleMeta.tone}>
-                          {roleMeta.name}
+                      <RoleMenu
+                        current={member.role as WorkspaceRole}
+                        onSelect={role => updateMemberRole.mutate({ userId: member.user_id, role })}
+                      />
+                    </td>
+                    <td>
+                      <div className={styles.tags}>
+                        {memberTeams.length === 0 && <span className={styles.dim}>—</span>}
+                        {memberTeams.slice(0, 2).map(t => (
+                          <TeamChip key={t} teamId={t} />
+                        ))}
+                        {memberTeams.length > 2 && (
+                          <span className={styles.teamChipOverflow}>+{memberTeams.length - 2}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      {userInfo ? (
+                        <Chip tone="ghost" dot={userInfo.is_active ? 'var(--ok)' : 'var(--fg-3)'}>
+                          {userInfo.is_active ? 'Active' : 'Inactive'}
                         </Chip>
                       ) : (
-                        member.role
+                        <span className={styles.dim}>—</span>
                       )}
                     </td>
-                    <td>{new Date(member.created_at).toLocaleDateString()}</td>
+                    <td className={styles.dim}>{new Date(member.created_at).toLocaleDateString()}</td>
                   </tr>
                 );
               })}
@@ -145,7 +326,8 @@ const AddMemberDialog = ({
                 >
                   {users.map(user => (
                     <option key={user.id} value={user.id}>
-                      {user.display_name || user.id}{user.email ? ` (${user.email})` : ''}{!user.is_active ? ' - inactive' : ''}
+                      {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
+                      {!user.is_active ? ' - inactive' : ''}
                     </option>
                   ))}
                 </select>

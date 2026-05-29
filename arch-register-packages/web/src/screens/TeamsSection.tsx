@@ -1,8 +1,9 @@
 import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TbPlus, TbTrash } from 'react-icons/tb';
+import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
+import { DropdownMenu } from '../components/DropdownMenu';
 import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../api';
 import { useWorkspaceUsers } from '../hooks/useWorkspaceMembers';
 import {
@@ -44,13 +45,6 @@ const TEAM_ROLE_OPTIONS: Array<{ value: TeamRole; label: string; tone: string; d
   },
 ];
 
-const sameAssignments = (left: EditAssignment[], right: EditAssignment[]) => {
-  if (left.length !== right.length) return false;
-  return left.every((assignment, index) =>
-    assignment.user_id === right[index]?.user_id && assignment.role === right[index]?.role
-  );
-};
-
 const sortAssignments = (assignments: EditAssignment[]) =>
   [...assignments].sort((left, right) => {
     const userCompare = left.user_id.localeCompare(right.user_id);
@@ -87,6 +81,77 @@ const toMembershipPayload = (teams: TeamDraft[]) =>
 const getUserLabel = (user: WorkspaceUserInfo) =>
   user.display_name || user.email || user.id;
 
+const getUserInitials = (user: WorkspaceUserInfo) => {
+  const name = user.display_name || user.email || user.id;
+  return name
+    .split(/[\s@.]+/)
+    .slice(0, 2)
+    .map(w => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+};
+
+const stableHue = (id: string) => {
+  let hash = 0;
+  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+  return ((hash % 360) + 360) % 360;
+};
+
+const MemberAvatar = ({ user, size = 24 }: { user: WorkspaceUserInfo | undefined; size?: number }) => {
+  if (!user) return null;
+  const h = stableHue(user.id);
+  return (
+    <span
+      className={styles.avatar}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(9, Math.round(size * 0.38)),
+        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
+      }}
+      title={getUserLabel(user)}
+    >
+      {getUserInitials(user)}
+    </span>
+  );
+};
+
+const getRoleOption = (role: TeamRole) =>
+  TEAM_ROLE_OPTIONS.find(r => r.value === role);
+
+const RoleMenu = ({
+  current,
+  disabled,
+  onSelect,
+}: {
+  current: TeamRole;
+  disabled: boolean;
+  onSelect: (role: TeamRole) => void;
+}) => {
+  const roleOpt = getRoleOption(current);
+
+  if (disabled || !roleOpt) {
+    return roleOpt ? (
+      <Chip tone="ghost" dot={roleOpt.tone}>{roleOpt.label}</Chip>
+    ) : null;
+  }
+
+  return (
+    <DropdownMenu
+      trigger={
+        <button type="button" className={styles.roleBtn}>
+          <Chip tone="ghost" dot={roleOpt.tone}>{roleOpt.label}</Chip>
+        </button>
+      }
+      items={TEAM_ROLE_OPTIONS.map(role => ({
+        label: role.label,
+        icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
+        onClick: () => onSelect(role.value),
+      }))}
+    />
+  );
+};
+
 export const TeamsSection = ({
   workspaceSlug,
   addDialogOpen,
@@ -101,14 +166,45 @@ export const TeamsSection = ({
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
   const updateTeams = useUpdateTeams(workspaceSlug);
   const updateTeamAssignments = useUpdateTeamAssignments(workspaceSlug);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [editTeamId, setEditTeamId] = useState<string | null>(null);
+  const [addMembersTeamId, setAddMembersTeamId] = useState<string | null>(null);
 
   const teamDrafts = useMemo(() => buildTeamDrafts(teams, assignments), [assignments, teams]);
-  const selectedTeam = useMemo(
-    () => teamDrafts.find(team => team.id === selectedTeamId) ?? null,
-    [selectedTeamId, teamDrafts]
+  const editTeam = useMemo(
+    () => teamDrafts.find(team => team.id === editTeamId) ?? null,
+    [editTeamId, teamDrafts]
+  );
+  const addMembersTeam = useMemo(
+    () => teamDrafts.find(team => team.id === addMembersTeamId) ?? null,
+    [addMembersTeamId, teamDrafts]
   );
   const usersById = useMemo(() => new Map(users.map(user => [user.id, user])), [users]);
+
+  const isSaving = updateTeams.isPending || updateTeamAssignments.isPending;
+
+  const changeRole = async (teamId: string, userId: string, newRole: TeamRole) => {
+    const nextTeams = teamDrafts.map(team =>
+      team.id === teamId
+        ? {
+            ...team,
+            assignments: team.assignments.map(a =>
+              a.user_id === userId ? { ...a, role: newRole } : a
+            ),
+          }
+        : team
+    );
+    await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+  };
+
+  const removeMember = async (teamId: string, userId: string) => {
+    const nextTeams = teamDrafts.map(team =>
+      team.id === teamId
+        ? { ...team, assignments: team.assignments.filter(a => a.user_id !== userId) }
+        : team
+    );
+    await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+  };
 
   if (teamsError || assignmentsError) {
     return (
@@ -120,113 +216,167 @@ export const TeamsSection = ({
 
   return (
     <div className={styles.container}>
-      <div className={styles.tableWrap}>
-        {isLoadingTeams || isLoadingAssignments ? (
-          <div className={styles.empty}>Loading teams…</div>
-        ) : teamDrafts.length === 0 ? (
-          <div className={styles.empty}>No owner teams have been created for this workspace.</div>
-        ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Team</th>
-                <th>Members</th>
-                <th>Assigned roles</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teamDrafts.map(team => {
-                const teamAssignments = sortAssignments(team.assignments);
-                const roleCounts = TEAM_ROLE_OPTIONS
-                  .map(role => ({
-                    role,
-                    count: teamAssignments.filter(assignment => assignment.role === role.value).length,
-                  }))
-                  .filter(entry => entry.count > 0);
-
-                return (
-                  <tr
-                    key={team.id}
-                    className={styles.clickableRow}
-                    onClick={() => setSelectedTeamId(team.id)}
-                  >
-                    <td className={styles.teamCell}>
-                      <div className={styles.teamName}>{team.id}</div>
-                      <div className={styles.teamMeta}>
-                        {teamAssignments.length === 1 ? '1 assigned user' : `${teamAssignments.length} assigned users`}
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.assignedUsers}>
-                        {teamAssignments.length === 0 ? (
-                          <span className={styles.noAssignments}>No users assigned</span>
-                        ) : (
-                          teamAssignments.map(assignment => {
-                            const user = usersById.get(assignment.user_id);
-                            return (
-                              <Chip key={`${team.id}:${assignment.user_id}`} tone="ghost">
-                                {user ? getUserLabel(user) : assignment.user_id}
-                              </Chip>
-                            );
-                          })
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <div className={styles.assignedRoles}>
-                        {roleCounts.length === 0 ? (
-                          <span className={styles.noAssignments}>No team roles assigned</span>
-                        ) : (
-                          roleCounts.map(({ role, count }) => (
-                            <Chip key={`${team.id}:${role.value}`} tone="ghost" dot={role.tone}>
-                              {count} {role.label}
-                            </Chip>
-                          ))
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {isLoadingTeams || isLoadingAssignments ? (
+        <div className={styles.empty}>Loading teams…</div>
+      ) : teamDrafts.length === 0 ? (
+        <div className={styles.empty}>No owner teams have been created for this workspace.</div>
+      ) : (
+        <div className={styles.teamList}>
+          {teamDrafts.map(team => {
+            const teamAssignments = sortAssignments(team.assignments);
+            const isOpen = openId === team.id;
+            const adminAssignment = teamAssignments.find(a => a.role === 'team_admin');
+            const leadUser = adminAssignment ? usersById.get(adminAssignment.user_id) : undefined;
+            return (
+              <div key={team.id} className={`${styles.teamCard} ${isOpen ? styles.teamCardOpen : ''}`}>
+                <button
+                  type="button"
+                  className={styles.teamCardHead}
+                  onClick={() => setOpenId(isOpen ? null : team.id)}
+                >
+                  <span
+                    className={styles.teamColorBar}
+                    style={{ background: `oklch(0.65 0.15 ${stableHue(team.id)})` }}
+                  />
+                  <span className={styles.teamName}>{team.id}</span>
+                  <span className={styles.teamLeadRow}>
+                    {leadUser && (
+                      <>
+                        <span className={styles.dim}>Lead</span>
+                        <MemberAvatar user={leadUser} size={18} />
+                        <span>{getUserLabel(leadUser)}</span>
+                      </>
+                    )}
+                  </span>
+                  <span className={styles.teamCount}>{teamAssignments.length}</span>
+                  <span className={styles.teamAvatars}>
+                    {teamAssignments.slice(0, 4).map(a => (
+                      <MemberAvatar key={a.user_id} user={usersById.get(a.user_id)} size={20} />
+                    ))}
+                    {teamAssignments.length > 4 && (
+                      <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
+                    )}
+                  </span>
+                  <TbChevronRight
+                    size={11}
+                    className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className={styles.teamCardBody}>
+                    <div className={styles.teamActions}>
+                      <button
+                        type="button"
+                        className={styles.btnGhost}
+                        onClick={() => setEditTeamId(team.id)}
+                      >
+                        <TbEdit size={11} /> Edit team
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.btnGhost}
+                        onClick={() => setAddMembersTeamId(team.id)}
+                      >
+                        <TbPlus size={11} /> Add members
+                      </button>
+                      <div style={{ flex: 1 }} />
+                      <span className={styles.dim}>
+                        {teamAssignments.length} {teamAssignments.length === 1 ? 'member' : 'members'}
+                      </span>
+                    </div>
+                    <div className={styles.teamMembers}>
+                      {teamAssignments.length === 0 ? (
+                        <div className={styles.emptyInline}>No users assigned to this team.</div>
+                      ) : (
+                        teamAssignments.map(a => {
+                          const user = usersById.get(a.user_id);
+                          return (
+                            <div key={a.user_id} className={styles.teamMember}>
+                              <MemberAvatar user={user} size={24} />
+                              <div className={styles.teamMemberName}>
+                                <div>{user ? getUserLabel(user) : a.user_id}</div>
+                                <div className={`${styles.dim} ${styles.mono}`}>
+                                  {user?.email ?? ''}
+                                </div>
+                              </div>
+                              <RoleMenu
+                                current={a.role}
+                                disabled={isSaving}
+                                onSelect={newRole => void changeRole(team.id, a.user_id, newRole)}
+                              />
+                              <button
+                                type="button"
+                                className={styles.removeMemberBtn}
+                                title="Remove from team"
+                                disabled={isSaving}
+                                onClick={() => void removeMember(team.id, a.user_id)}
+                              >
+                                <TbTrash size={11} />
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <TeamDialog
-        key={selectedTeam?.id ?? 'empty'}
-        open={selectedTeam != null}
+        key={editTeam?.id ?? 'edit-empty'}
+        open={editTeam != null}
         mode="edit"
-        initialTeam={selectedTeam}
-        users={users}
-        loadingUsers={isLoadingUsers}
-        onClose={() => setSelectedTeamId(null)}
-        onSave={async draft => {
-          if (!selectedTeam) return;
-          const nextTeams = teamDrafts.map(team => (team.id === selectedTeam.id ? draft : team));
+        initialTeamId={editTeam?.id ?? ''}
+        onClose={() => setEditTeamId(null)}
+        onSave={async newId => {
+          if (!editTeam) return;
+          const renamedTeam = { ...editTeam, id: newId };
+          const nextTeams = teamDrafts.map(team => (team.id === editTeam.id ? renamedTeam : team));
           await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
-          setSelectedTeamId(draft.id);
+          setEditTeamId(newId);
+          if (openId === editTeam.id) setOpenId(newId);
         }}
-        onDelete={async draft => {
-          const nextTeams = teamDrafts.filter(team => team.id !== draft.id);
-          await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
-          setSelectedTeamId(null);
-        }}
-        isSaving={updateTeams.isPending || updateTeamAssignments.isPending}
+        isSaving={isSaving}
       />
 
       <TeamDialog
         open={addDialogOpen}
         mode="create"
-        initialTeam={null}
-        users={users}
-        loadingUsers={isLoadingUsers}
+        initialTeamId=""
         onClose={onCloseAddDialog}
-        onSave={async draft => {
-          await persistTeams([...teamDrafts, draft], updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+        onSave={async newId => {
+          await persistTeams(
+            [...teamDrafts, { id: newId, assignments: [] }],
+            updateTeams.mutateAsync,
+            updateTeamAssignments.mutateAsync
+          );
           onCloseAddDialog();
         }}
-        isSaving={updateTeams.isPending || updateTeamAssignments.isPending}
+        isSaving={isSaving}
+      />
+
+      <AddMembersDialog
+        open={addMembersTeam != null}
+        teamId={addMembersTeam?.id ?? ''}
+        existingUserIds={addMembersTeam?.assignments.map(a => a.user_id) ?? []}
+        users={users}
+        loadingUsers={isLoadingUsers}
+        onClose={() => setAddMembersTeamId(null)}
+        onSave={async newAssignments => {
+          if (!addMembersTeam) return;
+          const nextTeams = teamDrafts.map(team =>
+            team.id === addMembersTeam.id
+              ? { ...team, assignments: [...team.assignments, ...newAssignments] }
+              : team
+          );
+          await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
+          setAddMembersTeamId(null);
+        }}
+        isSaving={isSaving}
       />
     </div>
   );
@@ -249,76 +399,41 @@ const persistTeams = async (
 const TeamDialog = ({
   open,
   mode,
-  initialTeam,
-  users,
-  loadingUsers,
+  initialTeamId,
   onClose,
   onSave,
-  onDelete,
   isSaving,
 }: {
   open: boolean;
   mode: 'create' | 'edit';
-  initialTeam: TeamDraft | null;
-  users: WorkspaceUserInfo[];
-  loadingUsers: boolean;
+  initialTeamId: string;
   onClose: () => void;
-  onSave: (draft: TeamDraft) => Promise<void>;
-  onDelete?: (draft: TeamDraft) => Promise<void>;
+  onSave: (teamId: string) => Promise<void>;
   isSaving: boolean;
 }) => {
-  const [teamId, setTeamId] = useState(initialTeam?.id ?? '');
-  const [assignments, setAssignments] = useState<EditAssignment[]>(initialTeam?.assignments ?? []);
+  const [teamId, setTeamId] = useState(initialTeamId);
   const teamInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    setTeamId(initialTeam?.id ?? '');
-    setAssignments(initialTeam?.assignments ?? []);
+    setTeamId(initialTeamId);
     setTimeout(() => teamInputRef.current?.focus(), 0);
-  }, [initialTeam, open]);
+  }, [initialTeamId, open]);
 
   if (!open) return null;
 
-  const normalizedInitialId = initialTeam?.id ?? '';
-  const normalizedInitialAssignments = initialTeam?.assignments ?? [];
-  const normalizedDraftAssignments = sortAssignments(assignments);
-  const isDirty =
-    teamId.trim() !== normalizedInitialId ||
-    !sameAssignments(normalizedDraftAssignments, sortAssignments(normalizedInitialAssignments));
-
-  const addAssignment = () => {
-    setAssignments(current => [
-      ...current,
-      {
-        user_id: users[0]?.id ?? '',
-        role: 'team_admin',
-      },
-    ]);
-  };
-
-  const updateAssignment = (index: number, patch: Partial<EditAssignment>) => {
-    setAssignments(current =>
-      current.map((assignment, assignmentIndex) =>
-        assignmentIndex === index ? { ...assignment, ...patch } : assignment
-      )
-    );
-  };
-
-  const removeAssignment = (index: number) => {
-    setAssignments(current => current.filter((_, assignmentIndex) => assignmentIndex !== index));
-  };
+  const isDirty = teamId.trim() !== initialTeamId;
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={mode === 'create' ? 'Add team' : `Team: ${initialTeam?.id ?? ''}`}
+      title={mode === 'create' ? 'Add team' : 'Edit team'}
     >
       <div className={styles.dialogBody}>
         <div className={styles.field}>
           <div className={styles.fieldLeft}>
-            <div className={styles.fieldLabel}>Team id</div>
+            <div className={styles.fieldLabel}>Name</div>
             <div className={styles.fieldHint}>Used as the owner value for entities and projects.</div>
           </div>
           <div className={styles.fieldRight}>
@@ -332,98 +447,137 @@ const TeamDialog = ({
           </div>
         </div>
 
-        <div className={styles.field}>
-          <div className={styles.fieldLeft}>
-            <div className={styles.fieldLabel}>Team members</div>
-            <div className={styles.fieldHint}>Assign existing workspace users a role in this team.</div>
-          </div>
-          <div className={styles.fieldRight}>
-            <div className={styles.assignmentList}>
-              {loadingUsers ? (
-                <div className={styles.emptyInline}>Loading users…</div>
-              ) : users.length === 0 ? (
-                <div className={styles.emptyInline}>No workspace users are available yet.</div>
-              ) : assignments.length === 0 ? (
-                <div className={styles.emptyInline}>No users assigned to this team yet.</div>
-              ) : (
-                assignments.map((assignment, index) => (
-                  <div key={`${assignment.user_id}:${index}`} className={styles.assignmentRow}>
-                    <select
-                      className={styles.select}
-                      value={assignment.user_id}
-                      onChange={event => updateAssignment(index, { user_id: event.target.value })}
-                    >
-                      {users.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
-                          {!user.is_active ? ' - inactive' : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      className={styles.select}
-                      value={assignment.role}
-                      onChange={event => updateAssignment(index, { role: event.target.value as TeamRole })}
-                    >
-                      {TEAM_ROLE_OPTIONS.map(role => (
-                        <option key={role.value} value={role.value}>
-                          {role.label}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className={styles.btn}
-                      onClick={() => removeAssignment(index)}
-                      disabled={isSaving}
-                    >
-                      <TbTrash size={12} />
-                    </button>
-                  </div>
-                ))
-              )}
-
-              {!loadingUsers && users.length > 0 && (
-                <button type="button" className={styles.btn} onClick={addAssignment} disabled={isSaving}>
-                  <TbPlus size={12} /> Add user
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.roleLegend}>
-          {TEAM_ROLE_OPTIONS.map(role => (
-            <div key={role.value} className={styles.roleLegendItem}>
-              <Chip tone="ghost" dot={role.tone}>
-                {role.label}
-              </Chip>
-              <span className={styles.roleLegendText}>{role.description}</span>
-            </div>
-          ))}
-        </div>
-
         <div className={styles.dialogActions}>
-          {mode === 'edit' && onDelete && (
-            <button
-              type="button"
-              className={styles.btn}
-              onClick={() => void onDelete({ id: teamId.trim(), assignments: normalizedDraftAssignments })}
-              disabled={isSaving}
-            >
-              Delete team
-            </button>
-          )}
           <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
             Cancel
           </button>
           <button
             type="button"
             className={styles.btnPrimary}
-            onClick={() => void onSave({ id: teamId.trim(), assignments: normalizedDraftAssignments })}
+            onClick={() => void onSave(teamId.trim())}
             disabled={!teamId.trim() || !isDirty || isSaving}
           >
             {isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team'}
+          </button>
+        </div>
+      </div>
+    </Dialog>
+  );
+};
+
+const AddMembersDialog = ({
+  open,
+  teamId,
+  existingUserIds,
+  users,
+  loadingUsers,
+  onClose,
+  onSave,
+  isSaving,
+}: {
+  open: boolean;
+  teamId: string;
+  existingUserIds: string[];
+  users: WorkspaceUserInfo[];
+  loadingUsers: boolean;
+  onClose: () => void;
+  onSave: (assignments: EditAssignment[]) => Promise<void>;
+  isSaving: boolean;
+}) => {
+  const [assignments, setAssignments] = useState<EditAssignment[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    setAssignments([]);
+  }, [open]);
+
+  if (!open) return null;
+
+  const pickedUserIds = new Set(assignments.map(a => a.user_id));
+  const availableUsers = users.filter(
+    u => !existingUserIds.includes(u.id) && !pickedUserIds.has(u.id)
+  );
+
+  const pickUser = (userId: string) => {
+    setAssignments(current => [...current, { user_id: userId, role: 'team_editor' }]);
+  };
+
+  const updateRole = (index: number, role: TeamRole) => {
+    setAssignments(current =>
+      current.map((a, i) => (i === index ? { ...a, role } : a))
+    );
+  };
+
+  const removeAssignment = (index: number) => {
+    setAssignments(current => current.filter((_, i) => i !== index));
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} title={`Add members to ${teamId}`}>
+      <div className={styles.dialogBody}>
+        {loadingUsers ? (
+          <div className={styles.emptyInline}>Loading users…</div>
+        ) : (
+          <>
+            {assignments.map((assignment, index) => {
+              const user = users.find(u => u.id === assignment.user_id);
+              return (
+                <div key={assignment.user_id} className={styles.pickedRow}>
+                  <MemberAvatar user={user} size={24} />
+                  <div className={styles.pickedName}>
+                    {user ? getUserLabel(user) : assignment.user_id}
+                  </div>
+                  <RoleMenu
+                    current={assignment.role}
+                    disabled={isSaving}
+                    onSelect={role => updateRole(index, role)}
+                  />
+                  <button
+                    type="button"
+                    className={styles.removeMemberBtn}
+                    style={{ opacity: 1 }}
+                    onClick={() => removeAssignment(index)}
+                    disabled={isSaving}
+                  >
+                    <TbTrash size={11} />
+                  </button>
+                </div>
+              );
+            })}
+
+            {availableUsers.length > 0 ? (
+              <select
+                className={styles.select}
+                value=""
+                onChange={e => {
+                  if (e.target.value) pickUser(e.target.value);
+                }}
+              >
+                <option value="">Choose a person to add…</option>
+                {availableUsers.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {getUserLabel(user)}{user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
+                    {!user.is_active ? ' - inactive' : ''}
+                  </option>
+                ))}
+              </select>
+            ) : assignments.length === 0 ? (
+              <div className={styles.emptyInline}>All workspace users are already in this team.</div>
+            ) : null}
+          </>
+        )}
+
+        <div className={styles.dialogActions}>
+          <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={() => void onSave(assignments)}
+            disabled={assignments.length === 0 || isSaving}
+          >
+            {isSaving ? 'Saving…' : 'Add members'}
           </button>
         </div>
       </div>
