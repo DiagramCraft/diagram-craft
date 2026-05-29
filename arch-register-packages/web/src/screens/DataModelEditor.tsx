@@ -3,9 +3,10 @@ import styles from './DataModelEditor.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { Chip } from '../components/Chip';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
-import { apiFetch, resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
+import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
 import type { EntitySchema, SchemaField, FieldType } from '../api';
 import { ICON_MAP } from '../components/TypeBadge';
+import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 
 type DataModelEditorProps = {
   workspaceId: string;
@@ -30,7 +31,10 @@ export const DataModelEditor = ({
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
+
+  const createSchemaMutation = useCreateSchema(workspaceId);
+  const updateSchemaMutation = useUpdateSchema(workspaceId);
+  const deleteSchemaMutation = useDeleteSchema(workspaceId);
 
   const selectedIndex = schemas.findIndex(s => s.id === selectedSchemaId);
   const selected = selectedIndex >= 0 ? schemas[selectedIndex] : null;
@@ -47,47 +51,41 @@ export const DataModelEditor = ({
 
   const handleSave = useCallback(async () => {
     if (!selected || !dirty) return;
-    setSaving(true);
     try {
-      await apiFetch(`/api/${workspaceId}/schemas/${selected.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ name, fields, color, icon }),
+      await updateSchemaMutation.mutateAsync({
+        schemaId: selected.id,
+        data: { name, fields, color, icon },
       });
       setDirty(false);
       onSchemaUpdated();
     } catch {
       // TODO: surface error
-    } finally {
-      setSaving(false);
     }
-  }, [selected, name, fields, color, icon, dirty, workspaceId, onSchemaUpdated]);
+  }, [selected, name, fields, color, icon, dirty, updateSchemaMutation, onSchemaUpdated]);
 
   const handleCreateType = useCallback(async () => {
     try {
-      const created = await apiFetch<EntitySchema>(`/api/${workspaceId}/schemas`, {
-        method: 'POST',
-        body: JSON.stringify({ name: 'New type', fields: [] }),
-      });
+      const created = await createSchemaMutation.mutateAsync({ name: 'New type', fields: [] });
       onSchemaUpdated();
       onSelectSchema(created.id);
     } catch {
       // TODO: surface error
     }
-  }, [workspaceId, onSchemaUpdated, onSelectSchema]);
+  }, [createSchemaMutation, onSchemaUpdated, onSelectSchema]);
 
   const handleDeleteType = useCallback(async () => {
     if (!selected) return;
     const ok = window.confirm(`Delete "${selected.name}"? This cannot be undone.`);
     if (!ok) return;
     try {
-      await apiFetch(`/api/${workspaceId}/schemas/${selected.id}`, { method: 'DELETE' });
+      await deleteSchemaMutation.mutateAsync(selected.id);
       onSchemaUpdated();
       onSelectSchema(schemas.find(s => s.id !== selected.id)?.id ?? '');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to delete';
       window.alert(msg);
     }
-  }, [selected, workspaceId, onSchemaUpdated, onSelectSchema, schemas]);
+  }, [selected, deleteSchemaMutation, onSchemaUpdated, onSelectSchema, schemas]);
 
   const updateField = (fieldId: string, patch: Partial<SchemaField>) => {
     setFields(prev => prev.map(f => (f.id === fieldId ? { ...f, ...patch } as SchemaField : f)));
@@ -299,9 +297,9 @@ export const DataModelEditor = ({
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
                       onClick={handleSave}
-                      disabled={saving}
+                      disabled={updateSchemaMutation.isPending}
                     >
-                      {saving ? 'Saving...' : 'Save'}
+                      {updateSchemaMutation.isPending ? 'Saving...' : 'Save'}
                     </button>
                   )}
                 </div>

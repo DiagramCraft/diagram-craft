@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
-import { apiFetch, updateLifecycleStates, updateOwnerOptions } from '../api';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
@@ -12,6 +11,8 @@ import type {
 } from '../api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../hooks/useAudit';
+import { useUpdateWorkspace, useDeleteWorkspace } from '../hooks/useWorkspaces';
+import { useUpdateLifecycleStates, useUpdateOwnerOptions } from '../hooks/useWorkspaceConfig';
 
 type WorkspaceSettingsProps = {
   workspace: Workspace;
@@ -105,7 +106,8 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
   const [slug, setSlug] = useState(workspace.url_slug);
   const [shortCode, setShortCode] = useState(workspace.short_code);
   const [description, setDescription] = useState(workspace.description);
-  const [saving, setSaving] = useState(false);
+  
+  const updateWorkspaceMutation = useUpdateWorkspace();
 
   const isDirty =
     name !== workspace.name ||
@@ -114,17 +116,16 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
     description !== workspace.description;
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
     try {
-      await apiFetch(`/api/workspaces/${workspace.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ name, url_slug: slug, short_code: shortCode, description }),
+      await updateWorkspaceMutation.mutateAsync({
+        workspaceId: workspace.id,
+        data: { name, url_slug: slug, short_code: shortCode, description },
       });
       onWorkspaceUpdated();
-    } finally {
-      setSaving(false);
+    } catch {
+      // Error handling could be improved
     }
-  }, [workspace.id, name, slug, shortCode, description, onWorkspaceUpdated]);
+  }, [workspace.id, name, slug, shortCode, description, updateWorkspaceMutation, onWorkspaceUpdated]);
 
   const handleCancel = () => {
     setName(workspace.name);
@@ -137,8 +138,8 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
         <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || saving}>
-          {saving ? 'Saving...' : 'Save changes'}
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
+          {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
         </button>
       </div>
       <div className={styles.section}>
@@ -238,7 +239,9 @@ const LifecycleOwnersSection = ({
   const [owners, setOwners] = useState<EditOwner[]>(() =>
     ownerOptions.map(o => ({ id: o.id }))
   );
-  const [saving, setSaving] = useState(false);
+  
+  const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
+  const updateOwnerOptionsMutation = useUpdateOwnerOptions(workspace.url_slug);
 
   const statesDirty = JSON.stringify(states) !== JSON.stringify(lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color })));
   const ownersDirty = JSON.stringify(owners) !== JSON.stringify(ownerOptions.map(o => ({ id: o.id })));
@@ -250,25 +253,22 @@ const LifecycleOwnersSection = ({
   };
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
     try {
       if (statesDirty) {
-        await updateLifecycleStates(
-          workspace.url_slug,
+        await updateLifecycleStatesMutation.mutateAsync(
           states.map((s, i) => ({ id: s.id, label: s.label, color: s.color, sort_order: i }))
         );
       }
       if (ownersDirty) {
-        await updateOwnerOptions(
-          workspace.url_slug,
+        await updateOwnerOptionsMutation.mutateAsync(
           owners.map((o, i) => ({ id: o.id, sort_order: i }))
         );
       }
       onConfigUpdated();
-    } finally {
-      setSaving(false);
+    } catch {
+      // Error handling could be improved
     }
-  }, [workspace.url_slug, states, owners, statesDirty, ownersDirty, onConfigUpdated]);
+  }, [states, owners, statesDirty, ownersDirty, updateLifecycleStatesMutation, updateOwnerOptionsMutation, onConfigUpdated]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => i === index ? { ...s, ...patch } : s));
@@ -292,8 +292,8 @@ const LifecycleOwnersSection = ({
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
         <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || saving}>
-          {saving ? 'Saving...' : 'Save changes'}
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending}>
+          {(updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending) ? 'Saving...' : 'Save changes'}
         </button>
       </div>
 
@@ -577,21 +577,21 @@ const DangerSection = ({
   onWorkspaceDeleted: () => void;
 }) => {
   const [confirm, setConfirm] = useState('');
-  const [deleting, setDeleting] = useState(false);
+  
+  const deleteWorkspaceMutation = useDeleteWorkspace();
 
   const canDelete = confirm === workspace.name;
 
   const handleDelete = useCallback(async () => {
     if (!canDelete) return;
-    setDeleting(true);
     try {
-      await apiFetch(`/api/workspaces/${workspace.id}`, { method: 'DELETE' });
+      await deleteWorkspaceMutation.mutateAsync(workspace.id);
       onWorkspaceDeleted();
       navigate({ view: 'home', workspaceId: null });
     } catch {
-      setDeleting(false);
+      // Error handling could be improved
     }
-  }, [workspace.id, canDelete, navigate, onWorkspaceDeleted]);
+  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate, onWorkspaceDeleted]);
 
   return (
     <div className={styles.blockList}>
@@ -617,10 +617,10 @@ const DangerSection = ({
           <button
             type="button"
             className={styles.btnDanger}
-            disabled={!canDelete || deleting}
+            disabled={!canDelete || deleteWorkspaceMutation.isPending}
             onClick={handleDelete}
           >
-            {deleting ? 'Deleting...' : 'Delete workspace'}
+            {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
           </button>
         </div>
       </div>

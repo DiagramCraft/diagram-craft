@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog } from './Dialog';
-import { createDiagramFile, ApiError } from '../api';
+import { ApiError } from '../api';
 import type { FileEntry } from '../api';
+import { useCreateDiagramFile } from '../hooks/useProjectFiles';
 import styles from './AddWorkspaceDialog.module.css';
 
 type AddDiagramDialogProps = {
@@ -16,8 +17,8 @@ type AddDiagramDialogProps = {
 export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projectId, folder }: AddDiagramDialogProps) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const createDiagramMutation = useCreateDiagramFile(workspaceId, projectId);
 
   useEffect(() => {
     if (open) {
@@ -38,10 +39,9 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       setError('Name cannot contain /');
       return;
     }
-    setSubmitting(true);
     setError('');
     try {
-      const file = await createDiagramFile(workspaceId, projectId, trimmed, folder);
+      const file = await createDiagramMutation.mutateAsync({ name: trimmed, folder });
       onCreated(file);
       onClose();
     } catch (err) {
@@ -50,8 +50,6 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       } else {
         setError('Something went wrong');
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -75,8 +73,8 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
           <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create diagram'}
+          <button type="submit" className={styles.btnSubmit} disabled={createDiagramMutation.isPending}>
+            {createDiagramMutation.isPending ? 'Creating...' : 'Create diagram'}
           </button>
         </div>
       </form>

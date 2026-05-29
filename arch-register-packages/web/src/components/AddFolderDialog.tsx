@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Dialog } from './Dialog';
-import { createFolder, ApiError } from '../api';
+import { ApiError } from '../api';
+import { useCreateFolder } from '../hooks/useProjectFiles';
 import styles from './AddWorkspaceDialog.module.css';
 
 type AddFolderDialogProps = {
@@ -15,8 +16,8 @@ type AddFolderDialogProps = {
 export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, projectId, parentFolder }: AddFolderDialogProps) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const createFolderMutation = useCreateFolder(workspaceId, projectId);
 
   useEffect(() => {
     if (open) {
@@ -37,11 +38,10 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
       setError('Folder name cannot contain /');
       return;
     }
-    setSubmitting(true);
     setError('');
     try {
       const path = parentFolder ? `${parentFolder}/${trimmed}` : trimmed;
-      await createFolder(workspaceId, projectId, path);
+      await createFolderMutation.mutateAsync(path);
       onCreated();
       onClose();
     } catch (err) {
@@ -50,8 +50,6 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
       } else {
         setError('Something went wrong');
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -75,8 +73,8 @@ export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, project
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
           <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create folder'}
+          <button type="submit" className={styles.btnSubmit} disabled={createFolderMutation.isPending}>
+            {createFolderMutation.isPending ? 'Creating...' : 'Create folder'}
           </button>
         </div>
       </form>

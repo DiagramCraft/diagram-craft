@@ -9,8 +9,9 @@ import {
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
 import type { ViewId, NavigateFn, RoutePatch } from '../routing';
-import { fetchEntityFacets, fetchProjectFiles, resolveSchemaColor } from '../api';
-import type { EntityFacets, EntitySchema, Project, FileTree, WorkspaceLifecycleState } from '../api';
+import { fetchEntityFacets, resolveSchemaColor } from '../api';
+import { useProjectFiles } from '../hooks/useProjectFiles';
+import type { EntityFacets, EntitySchema, Project, WorkspaceLifecycleState } from '../api';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
@@ -201,19 +202,10 @@ const ProjectsSidebar = ({
   navigate: NavigateFn;
   setProjectSidebarTab: (tab: ProjectSidebarTab) => void;
 }) => {
-  const [fileTree, setFileTree] = useState<FileTree | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const selectedProject = projects.find(project => project.id === projectId) ?? null;
 
-  useEffect(() => {
-    if (!workspaceId || !projectId) {
-      setFileTree(null);
-      return;
-    }
-    fetchProjectFiles(workspaceId, projectId)
-      .then(setFileTree)
-      .catch(() => setFileTree(null));
-  }, [workspaceId, projectId]);
+  const { data: fileTree = null } = useProjectFiles(workspaceId ?? '', projectId ?? '');
 
   const toggle = (key: string) =>
     setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
