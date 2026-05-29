@@ -72,6 +72,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -92,6 +93,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -114,6 +116,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -141,6 +144,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -165,6 +169,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -195,6 +200,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -246,6 +252,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -270,6 +277,7 @@ describe('PermissionChecker - Subtree Grants', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -341,6 +349,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -361,6 +370,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -381,6 +391,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -403,6 +414,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -424,6 +436,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],
@@ -445,6 +458,7 @@ describe('PermissionChecker - Visibility Inheritance', () => {
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema],

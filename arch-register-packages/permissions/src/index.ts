@@ -2,6 +2,9 @@
 export type {
   GlobalRole,
   GlobalPermission,
+  WorkspaceRole,
+  WorkspaceCapability,
+  WorkspaceMember,
   EntityRole,
   EntityAction,
   ProjectAction,
@@ -28,7 +31,16 @@ export type {
 export { encodeRefs, decodeRefs } from './utils.js';
 
 // Export constants and helper functions
-export { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS, getGlobalPermissionsForRoles } from './constants.js';
+export {
+  ROLE_ACTIONS,
+  GLOBAL_ROLES,
+  GLOBAL_ROLE_PERMISSIONS,
+  WORKSPACE_ROLE_CAPABILITIES,
+  WORKSPACE_ROLES,
+  WORKSPACE_CAPABILITY_GROUPS,
+  getGlobalPermissionsForRoles,
+  workspaceRoleHasCapability,
+} from './constants.js';
 
 // Export authorization context builder helpers
 export {

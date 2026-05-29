@@ -56,19 +56,23 @@ export const WorkspaceLayout = () => {
 
   const {
     canManageWorkspaces,
+    canManageGlobalRoles,
     canViewSchemas,
     canEditSchemas,
     canManageTeams,
     canViewAudit,
     canCreateProjects,
     canCreateEntities,
+    canManageMembers,
   } = useWorkspacePermissions(ws?.id);
 
   const availableSettingsSections = useMemo(() => [
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
     ...(canManageTeams ? ['lifecycle-owners'] : []),
+    ...(canManageMembers ? ['roles', 'members'] : []),
+    ...(canManageGlobalRoles ? ['global-permissions'] : []),
     ...(canViewAudit ? ['audit'] : []),
-  ], [canManageWorkspaces, canManageTeams, canViewAudit]);
+  ], [canManageWorkspaces, canManageTeams, canManageMembers, canManageGlobalRoles, canViewAudit]);
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
@@ -135,12 +139,14 @@ export const WorkspaceLayout = () => {
     ownerOptions,
     permissions: {
       canManageWorkspaces,
+      canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
       canViewAudit,
       canCreateProjects,
       canCreateEntities,
+      canManageMembers,
     },
     availableSettingsSections,
     defaultSettingsSection,
@@ -148,8 +154,8 @@ export const WorkspaceLayout = () => {
     openAddEntityDialog: () => setAddEntityOpen(true),
   }), [
     ws, workspaceSlug, schemas, projects, lifecycleStates, ownerOptions,
-    canManageWorkspaces, canViewSchemas, canEditSchemas, canManageTeams,
-    canViewAudit, canCreateProjects, canCreateEntities,
+    canManageWorkspaces, canManageGlobalRoles, canViewSchemas, canEditSchemas, canManageTeams,
+    canViewAudit, canCreateProjects, canCreateEntities, canManageMembers,
     availableSettingsSections, defaultSettingsSection,
   ]);
 

@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../db/database.js';
 import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
-import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
+import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 
 const BASE = '/api/:workspace/audit';
@@ -32,7 +32,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
       const workspace = await resolveWorkspace(event, db);
 
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'view_audit');
+      requireWorkspaceCapability(authCtx, 'ws.audit');
 
       const query = getQuery(event);
 
@@ -60,7 +60,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'view_audit');
+      requireWorkspaceCapability(authCtx, 'ws.audit');
 
       const rows = await db.audit.listAuditLogs(workspace);
       const byOperationMap = new Map<string, number>();

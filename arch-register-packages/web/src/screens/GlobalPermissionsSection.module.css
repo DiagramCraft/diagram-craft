@@ -1,0 +1,242 @@
+.container {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rolePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-0);
+  color: var(--fg-1);
+  font-size: 11px;
+}
+
+.assignedRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.tableWrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  background: var(--bg-1);
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.table td {
+  background: var(--bg-2);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.clickableRow:hover td {
+  background: var(--bg-1);
+}
+
+.userCell {
+  min-width: 220px;
+}
+
+.userName {
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.userMeta {
+  color: var(--fg-3);
+  font-size: 11px;
+  margin-top: 1px;
+}
+
+.inactive {
+  color: var(--warn);
+}
+
+.rolesCell {
+  min-width: 280px;
+}
+
+.noRoles {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.btn,
+.btnPrimary {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-1);
+  color: var(--fg-1);
+}
+
+.btnPrimary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.btn:disabled,
+.btnPrimary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.empty {
+  padding: 18px 16px;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.statusCell {
+  width: 120px;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dialogMeta {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.dialogList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialogRoleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-1);
+  padding: 12px;
+}
+
+.dialogRoleRow input {
+  margin-top: 2px;
+}
+
+.dialogRoleTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-0);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dialogRoleDescription {
+  margin-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.fieldLeft {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.fieldHint {
+  margin-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fieldRight {
+  min-width: 0;
+}
+
+.select {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg-input);
+  color: var(--fg-0);
+  font-size: 12px;
+}
+
+.emptyInline {
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.5;
+}

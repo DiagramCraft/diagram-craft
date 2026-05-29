@@ -10,6 +10,7 @@ import {
   seedProjects,
   seedSchemas,
   seedTeamMemberships,
+  seedWorkspaceMembers,
   seedWorkspaces
 } from '../db/seedData.js';
 import type { ContainmentField, ReferenceField } from '../types.js';
@@ -138,8 +139,17 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
     await db.identityAuth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
   }
 
+  for (const member of seedWorkspaceMembers) {
+    await db.workspaceAdmin.setWorkspaceMemberRole(
+      member.workspace,
+      member.user_id,
+      member.role,
+      member.created_at
+    );
+  }
+
   console.log(
-    `  Created ${seedLocalUsers.length} test users with seeded team memberships and global roles (password: test)`
+    `  Created ${seedLocalUsers.length} test users with seeded team memberships, workspace roles and global roles (password: test)`
   );
 };
 

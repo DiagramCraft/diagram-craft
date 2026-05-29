@@ -14,10 +14,16 @@ import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../hooks/useWorkspaces';
 import { useUpdateLifecycleStates, useUpdateOwnerOptions } from '../hooks/useWorkspaceConfig';
+import { RolesPermissionsSection } from './RolesPermissionsSection';
+import { GlobalPermissionsSection } from './GlobalPermissionsSection';
+import { MembersSection } from './MembersSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
   'lifecycle-owners': { title: 'Lifecycle & Owners', sub: 'Configure valid lifecycle states and owner values for entities in this workspace.' },
+  roles: { title: 'Roles & permissions', sub: 'Manage built-in workspace roles and their capabilities.' },
+  members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
+  'global-permissions': { title: 'Global permissions', sub: 'Assign platform-wide roles for workspace and platform administration.' },
   audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
@@ -40,6 +46,8 @@ export const WorkspaceSettings = () => {
   const ownerOptions = ctx.ownerOptions;
   const availableSections = ctx.availableSettingsSections;
   const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
+  const [globalPermissionsAddDialogOpen, setGlobalPermissionsAddDialogOpen] = useState(false);
+  const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
 
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
@@ -77,6 +85,28 @@ export const WorkspaceSettings = () => {
           </div>
           <div className={styles.sub}>{meta.sub}</div>
         </div>
+        {section === 'global-permissions' && (
+          <div className={styles.headActions}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => setGlobalPermissionsAddDialogOpen(true)}
+            >
+              <TbPlus size={12} /> Add user
+            </button>
+          </div>
+        )}
+        {section === 'members' && (
+          <div className={styles.headActions}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => setMembersAddDialogOpen(true)}
+            >
+              <TbPlus size={12} /> Add user
+            </button>
+          </div>
+        )}
       </div>
 
       {section === 'general' && (
@@ -87,6 +117,22 @@ export const WorkspaceSettings = () => {
           workspace={workspace}
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
+        />
+      )}
+      {section === 'roles' && (
+        <RolesPermissionsSection workspaceSlug={workspaceSlug} />
+      )}
+      {section === 'members' && (
+        <MembersSection
+          workspaceSlug={workspaceSlug}
+          addDialogOpen={membersAddDialogOpen}
+          onCloseAddDialog={() => setMembersAddDialogOpen(false)}
+        />
+      )}
+      {section === 'global-permissions' && (
+        <GlobalPermissionsSection
+          addDialogOpen={globalPermissionsAddDialogOpen}
+          onCloseAddDialog={() => setGlobalPermissionsAddDialogOpen(false)}
         />
       )}
       {section === 'audit' && (

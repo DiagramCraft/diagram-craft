@@ -282,27 +282,28 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       ]);
       const globalRoles = roleAssignments.map(assignment => assignment.role);
       const globalPermissions = [...getGlobalPermissionsForRoles(globalRoles)];
-      const workspaceMemberships = await Promise.all(
-        workspaces.map(async workspace => ({
-          workspace_id: workspace.id,
-          memberships: (await db.workspaceAdmin.listTeamMemberships(workspace.id))
-            .filter(membership => membership.user_id === user.id)
-            .map(membership => membership.team_id)
-        }))
-      );
 
-      const ownerOptionsByWorkspace: Record<
-        string,
-        Array<{ id: string; name: string; type: 'team' }>
-      > = {};
-      for (const workspace of workspaces) {
-        const owners = await db.workspaceAdmin.listOwners(workspace.id);
-        ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
-          id: o.id,
-          name: o.id,
-          type: 'team' as const
-        }));
-      }
+      const workspaceData = await Promise.all(
+        workspaces.map(async workspace => {
+          const [teamMemberships, owners, workspaceRole] = await Promise.all([
+            db.workspaceAdmin.listTeamMemberships(workspace.id),
+            db.workspaceAdmin.listOwners(workspace.id),
+            db.workspaceAdmin.getWorkspaceRole(workspace.id, user.id),
+          ]);
+          return {
+            workspace_id: workspace.id,
+            team_ids: teamMemberships
+              .filter(m => m.user_id === user.id)
+              .map(m => m.team_id),
+            owner_options: owners.map(o => ({
+              id: o.id,
+              name: o.id,
+              type: 'team' as const,
+            })),
+            workspace_role: workspaceRole,
+          };
+        })
+      );
 
       return {
         id: user.id,
@@ -313,24 +314,29 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         last_login_at: user.last_login_at?.toISOString() ?? null,
         global_roles: globalRoles,
         global_permissions: globalPermissions,
-        team_memberships: workspaceMemberships
-          .filter(workspace => workspace.memberships.length > 0)
-          .map(workspace => ({
-            workspace_id: workspace.workspace_id,
-            team_ids: workspace.memberships
+        team_memberships: workspaceData
+          .filter(ws => ws.team_ids.length > 0)
+          .map(ws => ({
+            workspace_id: ws.workspace_id,
+            team_ids: ws.team_ids,
           })),
-        owner_options_by_workspace: ownerOptionsByWorkspace
+        workspace_roles: Object.fromEntries(
+          workspaceData
+            .filter(ws => ws.workspace_role != null)
+            .map(ws => [ws.workspace_id, ws.workspace_role])
+        ),
+        owner_options_by_workspace: Object.fromEntries(
+          workspaceData.map(ws => [ws.workspace_id, ws.owner_options])
+        ),
       };
     })
   );
 
-  app.use(
+  app.get(
     '/api/auth/users',
     defineHandler(async event => {
-      httpAssert.true(event.req.method === 'GET', { status: 405, message: 'Method not allowed' });
-
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'manage_users');
+      requireGlobalPermission(authCtx, 'admin_platform');
 
       return (await db.identityAuth.listUsers()).map(user => ({
         id: user.id,
@@ -342,37 +348,41 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
     })
   );
 
-  app.use(
+  app.get(
     '/api/auth/users/:id/global-roles',
     defineHandler(async event => {
       const userId = event.context.params?.['id'];
       httpAssert.string(userId, { message: 'id is required' });
 
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
-      requireGlobalPermission(authCtx, 'manage_global_roles');
+      requireGlobalPermission(authCtx, 'manage_workspace_roles');
+      return await db.identityAuth.listGlobalRoleAssignments(userId);
+    })
+  );
 
-      if (event.req.method === 'GET') {
-        return await db.identityAuth.listGlobalRoleAssignments(userId);
-      }
+  app.put(
+    '/api/auth/users/:id/global-roles',
+    defineHandler(async event => {
+      const userId = event.context.params?.['id'];
+      httpAssert.string(userId, { message: 'id is required' });
 
-      if (event.req.method === 'PUT') {
-        const body = (await readBody(event).catch(() => undefined)) as
-          | { roles?: unknown }
-          | undefined;
-        httpAssert.array(body?.roles, { message: 'roles must be an array' });
-        const requestedRoles = body.roles as unknown[];
-        const roles = requestedRoles.filter(
-          (role): role is 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor' =>
-            typeof role === 'string' &&
-            ['platform_admin', 'schema_admin', 'user_admin', 'auditor'].includes(role)
-        );
-        httpAssert.true(roles.length === requestedRoles.length, {
-          message: 'roles contains invalid values'
-        });
-        return await db.identityAuth.replaceGlobalRoleAssignments(userId, roles, new Date());
-      }
+      const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
+      requireGlobalPermission(authCtx, 'manage_workspace_roles');
 
-      throw new HTTPError({ status: 405, message: 'Method not allowed' });
+      const body = (await readBody(event).catch(() => undefined)) as
+        | { roles?: unknown }
+        | undefined;
+      httpAssert.array(body?.roles, { message: 'roles must be an array' });
+      const requestedRoles = body.roles as unknown[];
+      const roles = requestedRoles.filter(
+        (role): role is 'global_admin' | 'workspace_admin' =>
+          typeof role === 'string' &&
+          ['global_admin', 'workspace_admin'].includes(role)
+      );
+      httpAssert.true(roles.length === requestedRoles.length, {
+        message: 'roles contains invalid values'
+      });
+      return await db.identityAuth.replaceGlobalRoleAssignments(userId, roles, new Date());
     })
   );
 

@@ -3,7 +3,7 @@ import type {
   UpdateWorkspaceInput,
   WorkspaceAdminDatabase
 } from './database.js';
-import type { TeamMembership, WorkspaceLifecycleState, WorkspaceOwner } from '../types.js';
+import type { TeamMembership, WorkspaceMember, WorkspaceLifecycleState, WorkspaceOwner, WorkspaceRole } from '../types.js';
 import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
 
 export class SqliteWorkspaceAdminDatabase
@@ -64,6 +64,7 @@ export class SqliteWorkspaceAdminDatabase
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspaceId]);
@@ -175,5 +176,53 @@ export class SqliteWorkspaceAdminDatabase
 
     tx();
     return await this.listTeamMemberships(workspace);
+  }
+
+  async listWorkspaceMembers(workspace: string) {
+    return this.all<WorkspaceMember>(
+      'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? ORDER BY role, user_id',
+      [workspace],
+      (row: Record<string, unknown>) => ({
+        workspace: String(row.workspace),
+        user_id: String(row.user_id),
+        role: String(row.role) as WorkspaceRole,
+        created_at: new Date(String(row.created_at)),
+      })
+    );
+  }
+
+  async getWorkspaceMember(workspace: string, userId: string) {
+    return this.get<WorkspaceMember>(
+      'SELECT workspace, user_id, role, created_at FROM workspace_member WHERE workspace = ? AND user_id = ?',
+      [workspace, userId],
+      (row: Record<string, unknown>) => ({
+        workspace: String(row.workspace),
+        user_id: String(row.user_id),
+        role: String(row.role) as WorkspaceRole,
+        created_at: new Date(String(row.created_at)),
+      })
+    );
+  }
+
+  async setWorkspaceMemberRole(workspace: string, userId: string, role: WorkspaceRole, createdAt: Date) {
+    this.run(
+      `INSERT INTO workspace_member (workspace, user_id, role, created_at)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(workspace, user_id) DO UPDATE SET role = excluded.role`,
+      [workspace, userId, role, createdAt.toISOString()]
+    );
+    return (await this.getWorkspaceMember(workspace, userId))!;
+  }
+
+  async removeWorkspaceMember(workspace: string, userId: string) {
+    const member = await this.getWorkspaceMember(workspace, userId);
+    if (!member) return null;
+    this.run('DELETE FROM workspace_member WHERE workspace = ? AND user_id = ?', [workspace, userId]);
+    return member;
+  }
+
+  async getWorkspaceRole(workspace: string, userId: string) {
+    const member = await this.getWorkspaceMember(workspace, userId);
+    return member?.role ?? null;
   }
 }

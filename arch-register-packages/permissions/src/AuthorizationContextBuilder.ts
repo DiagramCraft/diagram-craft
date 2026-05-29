@@ -4,7 +4,8 @@ import type {
   EntityGrant,
   EntitySchema,
   GlobalRole,
-  WorkspaceOwnerOption
+  WorkspaceOwnerOption,
+  WorkspaceRole
 } from './types.js';
 import { getGlobalPermissionsForRoles } from './constants.js';
 
@@ -42,11 +43,17 @@ export interface PermissionDataProvider {
    * Fetch workspace owner options (teams that can own records)
    */
   getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]>;
+
+  /**
+   * Fetch user's workspace role
+   */
+  getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null>;
 }
 
 export type AuthorizationContextData = {
   userId: string;
   globalRoles: GlobalRole[];
+  workspaceRole: WorkspaceRole | null;
   teamMemberships: string[];
   ownerOptions: WorkspaceOwnerOption[];
   schemas: EntitySchema[];
@@ -57,6 +64,7 @@ export type AuthorizationContextData = {
 export const buildAuthorizationContext = ({
   userId,
   globalRoles,
+  workspaceRole,
   teamMemberships,
   ownerOptions,
   schemas,
@@ -70,6 +78,7 @@ export const buildAuthorizationContext = ({
     userId,
     globalRoles: globalRolesSet,
     globalPermissions,
+    workspaceRole: workspaceRole ?? null,
     teamIds: new Set(teamMemberships),
     ownerOptions,
     schemas: new Map(schemas.map(schema => [schema.id, schema])),
@@ -83,9 +92,10 @@ export const fetchAuthorizationContextData = async (
   workspaceId: string,
   userId: string
 ): Promise<AuthorizationContextData> => {
-  const [globalRoles, teamMemberships, ownerOptions, schemas, entities, grants] =
+  const [globalRoles, workspaceRole, teamMemberships, ownerOptions, schemas, entities, grants] =
     await Promise.all([
       dataProvider.getGlobalRoles(userId),
+      dataProvider.getWorkspaceRole(workspaceId, userId),
       dataProvider.getTeamMemberships(workspaceId, userId),
       dataProvider.getOwnerOptions(workspaceId),
       dataProvider.getSchemas(workspaceId),
@@ -96,6 +106,7 @@ export const fetchAuthorizationContextData = async (
   return {
     userId,
     globalRoles,
+    workspaceRole,
     teamMemberships,
     ownerOptions,
     schemas,

@@ -14,6 +14,7 @@ type AuthContextType = {
   loginWithOidc: () => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
         team_memberships: userData.team_memberships,
+        workspace_roles: userData.workspace_roles ?? {},
         owner_options_by_workspace: userData.owner_options_by_workspace ?? {}
       });
       return true;
@@ -156,7 +158,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     loginWithOidc,
     logout,
-    refreshToken
+    refreshToken,
+    reloadUser: async () => {
+      await fetchCurrentUser();
+    }
   };
 
   return (

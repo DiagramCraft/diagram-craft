@@ -4,7 +4,7 @@ import type { EntitySchema } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
-import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
+import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
 
@@ -24,7 +24,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'view_schema');
+      requireWorkspaceCapability(authCtx, 'ws.view');
       try {
         const [schemas, entities] = await Promise.all([
           db.catalog.listSchemas(workspace),
@@ -45,7 +45,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'view_schema');
+      requireWorkspaceCapability(authCtx, 'ws.view');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       try {
@@ -63,7 +63,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
+      requireWorkspaceCapability(authCtx, 'schema.edit');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, fields = [], color, icon, default_owner } = body as Record<string, unknown>;
@@ -112,7 +112,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
+      requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -166,7 +166,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'edit_schema');
+      requireWorkspaceCapability(authCtx, 'schema.edit');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       try {

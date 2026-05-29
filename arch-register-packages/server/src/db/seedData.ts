@@ -7,6 +7,7 @@ import type {
   TeamMembership,
   Workspace,
   WorkspaceLifecycleState,
+  WorkspaceMember,
   WorkspaceOwner,
 } from '../types.js';
 
@@ -68,9 +69,14 @@ export const seedTeamMemberships: TeamMembership[] = [
 ];
 
 export const seedGlobalRoleAssignments: GlobalRoleAssignment[] = [
-  { user_id: 'admin', role: 'platform_admin', created_at: now },
-  { user_id: 'alice', role: 'schema_admin', created_at: now },
-  { user_id: 'auditor', role: 'auditor', created_at: now },
+  { user_id: 'admin', role: 'global_admin', created_at: now },
+];
+
+export const seedWorkspaceMembers: WorkspaceMember[] = [
+  { workspace: 'default', user_id: 'admin', role: 'owner', created_at: now },
+  { workspace: 'default', user_id: 'alice', role: 'admin', created_at: now },
+  { workspace: 'default', user_id: 'bob', role: 'editor', created_at: now },
+  { workspace: 'default', user_id: 'auditor', role: 'viewer', created_at: now },
 ];
 
 export const seedSchemas: EntitySchema[] = [

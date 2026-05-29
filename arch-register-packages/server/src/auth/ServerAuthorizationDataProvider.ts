@@ -4,7 +4,8 @@ import {
   type EntitySchema,
   type GlobalRole,
   type PermissionDataProvider,
-  type WorkspaceOwnerOption
+  type WorkspaceOwnerOption,
+  type WorkspaceRole
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
 
@@ -39,5 +40,9 @@ export class ServerDataProvider implements PermissionDataProvider {
   async getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]> {
     const owners = await this.db.workspaceAdmin.listOwners(workspaceId);
     return owners.map(o => ({ id: o.id, name: o.id, type: 'team' as const }));
+  }
+
+  async getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null> {
+    return this.db.workspaceAdmin.getWorkspaceRole(workspaceId, userId);
   }
 }

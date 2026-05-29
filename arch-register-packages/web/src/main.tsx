@@ -1,5 +1,5 @@
 import './tokens.css';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -11,14 +11,9 @@ import { router } from './router';
 
 const InnerApp = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const prevAuth = useRef({ isAuthenticated, isLoading });
 
-  // Only update + invalidate when auth state actually changes
-  if (
-    prevAuth.current.isAuthenticated !== isAuthenticated ||
-    prevAuth.current.isLoading !== isLoading
-  ) {
-    prevAuth.current = { isAuthenticated, isLoading };
+  // Update router context when auth state changes
+  useEffect(() => {
     router.update({
       context: {
         ...router.options.context,
@@ -26,7 +21,7 @@ const InnerApp = () => {
       },
     });
     router.invalidate();
-  }
+  }, [isAuthenticated, isLoading]);
 
   if (isLoading) {
     return (

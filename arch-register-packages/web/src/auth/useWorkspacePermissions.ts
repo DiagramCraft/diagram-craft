@@ -5,18 +5,21 @@ import {
   buildAuthorizationContext,
   type AuthorizationContext,
   type GlobalRole,
-  type WorkspaceOwnerOption
+  type WorkspaceOwnerOption,
+  type WorkspaceRole
 } from '@arch-register/permissions';
 import { useAuthorizationData, type WorkspaceTeamMembership } from './AuthorizationDataContext';
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;
+  canManageGlobalRoles: boolean;
   canViewSchemas: boolean;
   canEditSchemas: boolean;
   canManageTeams: boolean;
   canViewAudit: boolean;
   canCreateProjects: boolean;
   canCreateEntities: boolean;
+  canManageMembers: boolean;
 };
 
 const checker = new PermissionChecker();
@@ -35,10 +38,12 @@ const buildWorkspaceAuthorizationContext = (
       (membership: WorkspaceTeamMembership) => membership.workspace_id === workspaceId
     )?.team_ids ?? [];
   const ownerOptions = authorizationData.owner_options_by_workspace[workspaceId] ?? [];
+  const workspaceRole = (authorizationData.workspace_roles?.[workspaceId] ?? null) as WorkspaceRole | null;
 
   return buildAuthorizationContext({
     userId: '',
     globalRoles: authorizationData.global_roles as GlobalRole[],
+    workspaceRole,
     teamMemberships,
     ownerOptions: ownerOptions as WorkspaceOwnerOption[],
     schemas: [],
@@ -56,11 +61,17 @@ export const useWorkspacePermissions = (
     const context = buildWorkspaceAuthorizationContext(authorizationData, workspaceId);
 
     const canManageWorkspaces =
-      context != null && checker.hasGlobalPermission(context, 'admin_platform');
-    const canViewSchemas = context != null && checker.hasGlobalPermission(context, 'view_schema');
-    const canEditSchemas = context != null && checker.hasGlobalPermission(context, 'edit_schema');
-    const canManageTeams = context != null && checker.hasGlobalPermission(context, 'manage_teams');
-    const canViewAudit = context != null && checker.hasGlobalPermission(context, 'view_audit');
+      context != null && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canManageGlobalRoles =
+      authorizationData?.global_permissions.includes('manage_workspace_roles') ?? false;
+    const canViewSchemas = context != null && checker.hasWorkspaceCapability(context, 'ws.view');
+    const canEditSchemas =
+      context != null && checker.hasWorkspaceCapability(context, 'schema.edit');
+    const canManageTeams =
+      context != null && checker.hasWorkspaceCapability(context, 'people.teams');
+    const canViewAudit = context != null && checker.hasWorkspaceCapability(context, 'ws.audit');
+    const canManageMembers =
+      context != null && checker.hasWorkspaceCapability(context, 'people.invite');
     const canCreateProjects =
       context != null &&
       (capabilities.canCreateProject(context, null) ||
@@ -76,12 +87,14 @@ export const useWorkspacePermissions = (
 
     return {
       canManageWorkspaces,
+      canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
       canViewAudit,
       canCreateProjects,
-      canCreateEntities
+      canCreateEntities,
+      canManageMembers
     };
   }, [authorizationData, workspaceId]);
 };

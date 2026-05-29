@@ -38,7 +38,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     BASE,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, description = '' } = body as Record<string, unknown>;
@@ -122,7 +122,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     `${BASE}/:id`,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -169,7 +169,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     `${BASE}/:id`,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
 

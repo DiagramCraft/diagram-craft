@@ -211,16 +211,21 @@ export type User = {
   last_login_at: Date | null;
 };
 
-export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
+export type GlobalRole = 'global_admin' | 'workspace_admin';
 
 export type GlobalPermission =
-  | 'view_schema'
-  | 'edit_schema'
-  | 'manage_users'
-  | 'manage_teams'
-  | 'manage_global_roles'
-  | 'view_audit'
-  | 'admin_platform';
+  | 'admin_platform'
+  | 'create_workspaces'
+  | 'manage_workspace_roles';
+
+export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+
+export type WorkspaceMember = {
+  workspace: string;
+  user_id: string;
+  role: WorkspaceRole;
+  created_at: Date;
+};
 
 export type TeamMembership = {
   workspace: string;

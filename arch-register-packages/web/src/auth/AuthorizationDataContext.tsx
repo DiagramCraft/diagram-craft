@@ -4,6 +4,7 @@ import type {
   GlobalPermission,
   GlobalRole,
   WorkspaceOwnerOption,
+  WorkspaceRole,
   WorkspaceTeamMembership
 } from './types';
 
@@ -12,7 +13,8 @@ export type {
   WorkspaceOwnerOption,
   WorkspaceTeamMembership,
   GlobalPermission,
-  GlobalRole
+  GlobalRole,
+  WorkspaceRole
 };
 
 const AuthorizationDataContext = createContext<AuthBaseData | null>(null);

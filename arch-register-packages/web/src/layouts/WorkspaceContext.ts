@@ -10,12 +10,14 @@ export type WorkspaceContextType = {
   ownerOptions: WorkspaceOwnerOption[];
   permissions: {
     canManageWorkspaces: boolean;
+    canManageGlobalRoles: boolean;
     canViewSchemas: boolean;
     canEditSchemas: boolean;
     canManageTeams: boolean;
     canViewAudit: boolean;
     canCreateProjects: boolean;
     canCreateEntities: boolean;
+    canManageMembers: boolean;
   };
   availableSettingsSections: string[];
   defaultSettingsSection: string | null;

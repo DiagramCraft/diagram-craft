@@ -167,8 +167,20 @@ CREATE TABLE team_membership (
 
 CREATE TABLE global_role_assignment (
   user_id      TEXT NOT NULL,
-  role         TEXT NOT NULL CHECK (role IN ('platform_admin', 'schema_admin', 'user_admin', 'auditor')),
+  role         TEXT NOT NULL CHECK (role IN ('global_admin', 'workspace_admin')),
   created_at   TEXT NOT NULL,
   PRIMARY KEY (user_id, role),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE workspace_member (
+  workspace   TEXT NOT NULL,
+  user_id     TEXT NOT NULL,
+  role        TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'editor', 'reviewer', 'viewer')),
+  created_at  TEXT NOT NULL,
+  PRIMARY KEY (workspace, user_id),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX workspace_member_user_idx ON workspace_member(user_id);

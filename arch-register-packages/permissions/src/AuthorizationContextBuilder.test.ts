@@ -19,7 +19,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
   it('builds context with all required fields', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
-      globalRoles: ['schema_admin'],
+      globalRoles: ['workspace_admin'],
+      workspaceRole: null,
       teamMemberships: ['team-1', 'team-2'],
       ownerOptions: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
       schemas: [],
@@ -30,7 +31,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     const context = buildAuthorizationContext(data);
 
     expect(context.userId).toBe('user-1');
-    expect(context.globalRoles).toEqual(new Set(['schema_admin']));
+    expect(context.globalRoles).toEqual(new Set(['workspace_admin']));
     expect(context.teamIds).toEqual(new Set(['team-1', 'team-2']));
     expect(context.ownerOptions).toEqual([{ id: 'team-1', name: 'Engineering', type: 'team' }]);
     expect(context.schemas).toBeInstanceOf(Map);
@@ -41,7 +42,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
   it('derives global permissions from global roles', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
-      globalRoles: ['schema_admin'],
+      globalRoles: ['workspace_admin'],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [],
@@ -51,15 +53,16 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
 
     const context = buildAuthorizationContext(data);
 
-    expect(context.globalPermissions.has('view_schema')).toBe(true);
-    expect(context.globalPermissions.has('edit_schema')).toBe(true);
-    expect(context.globalPermissions.has('manage_users')).toBe(false);
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
+    expect(context.globalPermissions.has('manage_workspace_roles')).toBe(true);
+    expect(context.globalPermissions.has('admin_platform')).toBe(false);
   });
 
   it('combines permissions from multiple global roles', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
-      globalRoles: ['schema_admin', 'auditor'],
+      globalRoles: ['workspace_admin'],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [],
@@ -69,15 +72,15 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
 
     const context = buildAuthorizationContext(data);
 
-    expect(context.globalPermissions.has('view_schema')).toBe(true);
-    expect(context.globalPermissions.has('edit_schema')).toBe(true);
-    expect(context.globalPermissions.has('view_audit')).toBe(true);
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
+    expect(context.globalPermissions.has('manage_workspace_roles')).toBe(true);
   });
 
-  it('platform_admin gets admin_platform permission', () => {
+  it('global_admin gets admin_platform permission', () => {
     const data: AuthorizationContextData = {
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [],
@@ -88,9 +91,8 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     const context = buildAuthorizationContext(data);
 
     expect(context.globalPermissions.has('admin_platform')).toBe(true);
-    expect(context.globalPermissions.has('view_schema')).toBe(true);
-    expect(context.globalPermissions.has('edit_schema')).toBe(true);
-    expect(context.globalPermissions.has('manage_users')).toBe(true);
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
+    expect(context.globalPermissions.has('manage_workspace_roles')).toBe(true);
   });
 
   it('converts schemas array to Map keyed by id', () => {
@@ -121,6 +123,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [schema1, schema2],
@@ -175,6 +178,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [],
@@ -193,6 +197,7 @@ describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
     const data: AuthorizationContextData = {
       userId: 'user-1',
       globalRoles: [],
+      workspaceRole: null,
       teamMemberships: [],
       ownerOptions: [],
       schemas: [],
@@ -268,6 +273,10 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     async getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]> {
       return this.ownerOptions.get(workspaceId) ?? [];
     }
+
+    async getWorkspaceRole(_workspaceId: string, _userId: string) {
+      return null;
+    }
   }
 
   it('fetches all data from provider', async () => {
@@ -318,13 +327,13 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     provider.setEntities([entity]);
     provider.setGrants([grant]);
     provider.setTeamMemberships('workspace-1', 'user-1', ['team-1']);
-    provider.setGlobalRoles('user-1', ['schema_admin']);
+    provider.setGlobalRoles('user-1', ['workspace_admin']);
     provider.setOwnerOptions('workspace-1', [{ id: 'team-1', name: 'Engineering', type: 'team' }]);
 
     const data = await fetchAuthorizationContextData(provider, 'workspace-1', 'user-1');
 
     expect(data.userId).toBe('user-1');
-    expect(data.globalRoles).toEqual(['schema_admin']);
+    expect(data.globalRoles).toEqual(['workspace_admin']);
     expect(data.teamMemberships).toEqual(['team-1']);
     expect(data.ownerOptions).toEqual([{ id: 'team-1', name: 'Engineering', type: 'team' }]);
     expect(data.schemas).toEqual([schema]);
@@ -357,6 +366,7 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     const originalGetTeamMemberships = provider.getTeamMemberships.bind(provider);
     const originalGetGlobalRoles = provider.getGlobalRoles.bind(provider);
     const originalGetOwnerOptions = provider.getOwnerOptions.bind(provider);
+    const originalGetWorkspaceRole = provider.getWorkspaceRole.bind(provider);
 
     provider.getEntities = async (workspaceId: string) => {
       callOrder.push('entities');
@@ -388,6 +398,11 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
       return originalGetOwnerOptions(workspaceId);
     };
 
+    provider.getWorkspaceRole = async (workspaceId: string, userId: string) => {
+      callOrder.push('workspaceRole');
+      return originalGetWorkspaceRole(workspaceId, userId);
+    };
+
     await fetchAuthorizationContextData(provider, 'workspace-1', 'user-1');
 
     // All methods should be called (order doesn't matter due to parallel execution)
@@ -397,12 +412,13 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     expect(callOrder).toContain('teamMemberships');
     expect(callOrder).toContain('globalRoles');
     expect(callOrder).toContain('ownerOptions');
-    expect(callOrder.length).toBe(6);
+    expect(callOrder).toContain('workspaceRole');
+    expect(callOrder.length).toBe(7);
   });
 
   it('can be used to build authorization context', async () => {
     const provider = new TestDataProvider();
-    provider.setGlobalRoles('user-1', ['schema_admin']);
+    provider.setGlobalRoles('user-1', ['workspace_admin']);
     provider.setTeamMemberships('workspace-1', 'user-1', ['team-1']);
     provider.setOwnerOptions('workspace-1', [{ id: 'team-1', name: 'Engineering', type: 'team' }]);
 
@@ -410,9 +426,9 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
     const context = buildAuthorizationContext(data);
 
     expect(context.userId).toBe('user-1');
-    expect(context.globalRoles.has('schema_admin')).toBe(true);
+    expect(context.globalRoles.has('workspace_admin')).toBe(true);
     expect(context.teamIds.has('team-1')).toBe(true);
-    expect(context.globalPermissions.has('view_schema')).toBe(true);
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
   });
 });
 
@@ -485,7 +501,7 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
 
     async getGlobalRoles(userId: string): Promise<GlobalRole[]> {
       if (userId === 'architect-1') {
-        return ['schema_admin'];
+        return ['workspace_admin'];
       }
       return [];
     }
@@ -495,6 +511,10 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
         { id: 'team-engineering', name: 'Engineering', type: 'team' },
         { id: 'team-operations', name: 'Operations', type: 'team' }
       ];
+    }
+
+    async getWorkspaceRole(_workspaceId: string, _userId: string) {
+      return null;
     }
   }
 
@@ -517,8 +537,8 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
     const context = buildAuthorizationContext(data);
 
     expect(context.userId).toBe('architect-1');
-    expect(context.globalRoles.has('schema_admin')).toBe(true);
-    expect(context.globalPermissions.has('view_schema')).toBe(true);
-    expect(context.globalPermissions.has('edit_schema')).toBe(true);
+    expect(context.globalRoles.has('workspace_admin')).toBe(true);
+    expect(context.globalPermissions.has('create_workspaces')).toBe(true);
+    expect(context.globalPermissions.has('manage_workspace_roles')).toBe(true);
   });
 });

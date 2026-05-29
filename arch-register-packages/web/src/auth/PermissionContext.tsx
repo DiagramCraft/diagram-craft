@@ -96,9 +96,12 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
       );
       const ownerOptions = authData.owner_options_by_workspace[workspaceId] ?? [];
 
+      const workspaceRole = (authData.workspace_roles?.[workspaceId] ?? null) as import('@arch-register/permissions').WorkspaceRole | null;
+
       return buildAuthorizationContext({
         userId: user.id,
         globalRoles: authData.global_roles,
+        workspaceRole,
         teamMemberships: teamMembership?.team_ids ?? [],
         ownerOptions,
         schemas: [],
@@ -139,6 +142,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
       const context = buildAuthorizationContext({
         userId: user.id,
         globalRoles: authData.global_roles,
+        workspaceRole: null,
         teamMemberships: [],
         ownerOptions: [],
         schemas: [],

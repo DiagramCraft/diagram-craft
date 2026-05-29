@@ -1,3 +1,5 @@
+import type { GlobalRole } from '@arch-register/permissions';
+
 // ── Workspace types ───────────────────────────────────────────
 
 export type Workspace = {
@@ -614,4 +616,67 @@ export const updateOwnerOptions = (workspace: string, owners: WorkspaceOwnerOpti
   apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`, {
     method: 'PUT',
     body: JSON.stringify(owners),
+  });
+
+// ── Workspace Members ──────────────────────────────────────────
+
+export type WorkspaceMemberInfo = {
+  workspace: string;
+  user_id: string;
+  role: string;
+  display_name: string;
+  email: string | null;
+  created_at: string;
+};
+
+export const fetchWorkspaceMembers = (workspace: string) =>
+  apiFetch<WorkspaceMemberInfo[]>(`/api/${workspace}/config/members`);
+
+export type WorkspaceUserInfo = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: 'local' | 'oidc';
+  is_active: boolean;
+};
+
+export const fetchWorkspaceUsers = (workspace: string) =>
+  apiFetch<WorkspaceUserInfo[]>(`/api/${workspace}/config/users`);
+
+export const updateWorkspaceMemberRole = (
+  workspace: string,
+  userId: string,
+  role: string
+) =>
+  apiFetch<WorkspaceMemberInfo>(`/api/${workspace}/config/members/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  });
+
+// ── Global Role Admin ─────────────────────────────────────────
+
+export type AuthUserInfo = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: 'local' | 'oidc';
+  is_active: boolean;
+};
+
+export type GlobalRoleAssignment = {
+  user_id: string;
+  role: GlobalRole;
+  created_at: string;
+};
+
+export const fetchAuthUsers = () =>
+  apiFetch<AuthUserInfo[]>(`/api/auth/users`);
+
+export const fetchUserGlobalRoles = (userId: string) =>
+  apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`);
+
+export const updateUserGlobalRoles = (userId: string, roles: GlobalRole[]) =>
+  apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`, {
+    method: 'PUT',
+    body: JSON.stringify({ roles }),
   });

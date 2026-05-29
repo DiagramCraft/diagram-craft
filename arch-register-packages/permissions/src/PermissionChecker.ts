@@ -6,10 +6,11 @@ import type {
   EntitySchema,
   GlobalPermission,
   ProjectAction,
-  VisibilityMode
+  VisibilityMode,
+  WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
-import { GLOBAL_ROLE_PERMISSIONS, ROLE_ACTIONS } from './constants.js';
+import { ROLE_ACTIONS, WORKSPACE_ROLE_CAPABILITIES } from './constants.js';
 
 /**
  * Pure permission checker.
@@ -47,11 +48,12 @@ export class PermissionChecker {
 
   /**
    * Check if user has a specific assigned permission on a project.
-   * 
+   *
    * This checks:
-   * - Global platform_admin role
+   * - Global admin_platform permission
+   * - Workspace role with proj.edit capability
    * - Owner team membership
-   * 
+   *
    * @param context - Authorization context with user's roles and permissions
    * @param ownerTeamId - The team that owns the project (null for no owner)
    * @param _action - The specific action to check (currently all actions treated uniformly)
@@ -62,7 +64,11 @@ export class PermissionChecker {
     ownerTeamId: string | null,
     _action: ProjectAction
   ): boolean {
-    if (context.globalRoles.has('platform_admin')) {
+    if (context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+
+    if (this.hasWorkspaceCapability(context, 'proj.edit')) {
       return true;
     }
 
@@ -74,10 +80,27 @@ export class PermissionChecker {
   }
 
   /**
+   * Check if user has a specific workspace capability via their workspace role.
+   *
+   * global_admin users implicitly have all workspace capabilities.
+   */
+  hasWorkspaceCapability(context: AuthorizationContext, capability: WorkspaceCapability): boolean {
+    if (context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+
+    if (context.workspaceRole == null) {
+      return false;
+    }
+
+    return WORKSPACE_ROLE_CAPABILITIES[context.workspaceRole].includes(capability);
+  }
+
+  /**
    * Check if user has a specific assigned global permission.
    * 
    * This checks the user's global permissions set, which is derived from
-   * their global role assignments. platform_admin role grants all permissions.
+   * their global role assignments. global_admin role grants all permissions.
    * 
    * @param context - Authorization context with user's roles and permissions
    * @param permission - The specific global permission to check
@@ -102,17 +125,19 @@ export class PermissionChecker {
   protected getEntityActions(context: AuthorizationContext, entity: Entity): Set<EntityAction> {
     const actions = new Set<EntityAction>();
 
-    // Check global roles for entity permissions
-    for (const role of context.globalRoles) {
-      for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
-        if (
-          permission === 'view_entity' ||
-          permission === 'edit_entity' ||
-          permission === 'create_child' ||
-          permission === 'admin_entity'
-        ) {
-          actions.add(permission);
-        }
+    // Global admins get all entity actions
+    if (context.globalPermissions.has('admin_platform')) {
+      ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
+    }
+
+    // Workspace role grants entity actions
+    if (context.workspaceRole != null) {
+      if (this.hasWorkspaceCapability(context, 'ent.edit')) {
+        ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
+        ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'ws.view')) {
+        actions.add('view_entity');
       }
     }
 
