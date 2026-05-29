@@ -4,6 +4,7 @@ import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
+import { MemberAvatar } from '../components/MemberAvatar';
 import type { TeamAssignmentInfo, WorkspaceTeam, WorkspaceUserInfo } from '../api';
 import { useWorkspaceUsers } from '../hooks/useWorkspaceMembers';
 import {
@@ -81,39 +82,10 @@ const toMembershipPayload = (teams: TeamDraft[]) =>
 const getUserLabel = (user: WorkspaceUserInfo) =>
   user.display_name || user.email || user.id;
 
-const getUserInitials = (user: WorkspaceUserInfo) => {
-  const name = user.display_name || user.email || user.id;
-  return name
-    .split(/[\s@.]+/)
-    .slice(0, 2)
-    .map(w => w[0] ?? '')
-    .join('')
-    .toUpperCase();
-};
-
 const stableHue = (id: string) => {
   let hash = 0;
   for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
   return ((hash % 360) + 360) % 360;
-};
-
-const MemberAvatar = ({ user, size = 24 }: { user: WorkspaceUserInfo | undefined; size?: number }) => {
-  if (!user) return null;
-  const h = stableHue(user.id);
-  return (
-    <span
-      className={styles.avatar}
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.max(9, Math.round(size * 0.38)),
-        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
-      }}
-      title={getUserLabel(user)}
-    >
-      {getUserInitials(user)}
-    </span>
-  );
 };
 
 const getRoleOption = (role: TeamRole) =>
@@ -243,16 +215,17 @@ export const TeamsSection = ({
                     {leadUser && (
                       <>
                         <span className={styles.dim}>Lead</span>
-                        <MemberAvatar user={leadUser} size={18} />
+                        <MemberAvatar name={leadUser.display_name} email={leadUser.email} userId={leadUser.id} size={18} />
                         <span>{getUserLabel(leadUser)}</span>
                       </>
                     )}
                   </span>
                   <span className={styles.teamCount}>{teamAssignments.length}</span>
                   <span className={styles.teamAvatars}>
-                    {teamAssignments.slice(0, 4).map(a => (
-                      <MemberAvatar key={a.user_id} user={usersById.get(a.user_id)} size={20} />
-                    ))}
+                    {teamAssignments.slice(0, 4).map(a => {
+                      const u = usersById.get(a.user_id);
+                      return u ? <MemberAvatar key={a.user_id} name={u.display_name} email={u.email} userId={u.id} size={20} /> : null;
+                    })}
                     {teamAssignments.length > 4 && (
                       <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
                     )}
@@ -292,7 +265,7 @@ export const TeamsSection = ({
                           const user = usersById.get(a.user_id);
                           return (
                             <div key={a.user_id} className={styles.teamMember}>
-                              <MemberAvatar user={user} size={24} />
+                              <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={a.user_id} size={24} />
                               <div className={styles.teamMemberName}>
                                 <div>{user ? getUserLabel(user) : a.user_id}</div>
                                 <div className={`${styles.dim} ${styles.mono}`}>
@@ -523,7 +496,7 @@ const AddMembersDialog = ({
               const user = users.find(u => u.id === assignment.user_id);
               return (
                 <div key={assignment.user_id} className={styles.pickedRow}>
-                  <MemberAvatar user={user} size={24} />
+                  <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={assignment.user_id} size={24} />
                   <div className={styles.pickedName}>
                     {user ? getUserLabel(user) : assignment.user_id}
                   </div>

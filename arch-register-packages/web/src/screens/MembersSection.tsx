@@ -4,22 +4,13 @@ import { TbSearch } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
+import { MemberAvatar } from '../components/MemberAvatar';
 import { useWorkspaceMembers, useWorkspaceUsers, useUpdateWorkspaceMemberRole } from '../hooks/useWorkspaceMembers';
 import { useTeamAssignments, useTeams } from '../hooks/useWorkspaceConfig';
 import styles from './MembersSection.module.css';
 
 const getUserLabel = (user: { display_name: string; email: string | null; id?: string }) =>
   user.display_name || user.email || user.id || '';
-
-const getUserInitials = (user: { display_name: string; email: string | null }) => {
-  const name = user.display_name || user.email || '';
-  return name
-    .split(/[\s@.]+/)
-    .slice(0, 2)
-    .map(w => w[0] ?? '')
-    .join('')
-    .toUpperCase();
-};
 
 const stableHue = (id: string) => {
   let hash = 0;
@@ -33,25 +24,6 @@ const TeamChip = ({ teamId }: { teamId: string }) => {
     <span className={styles.teamChip}>
       <span className={styles.teamChipBar} style={{ background: `oklch(0.65 0.15 ${h})` }} />
       {teamId}
-    </span>
-  );
-};
-
-const MemberAvatar = ({ name, email, userId, size = 28 }: { name: string; email: string | null; userId: string; size?: number }) => {
-  const h = stableHue(userId);
-  const initials = getUserInitials({ display_name: name, email });
-  return (
-    <span
-      className={styles.avatar}
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.max(9, Math.round(size * 0.38)),
-        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
-      }}
-      title={name || email || userId}
-    >
-      {initials}
     </span>
   );
 };

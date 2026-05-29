@@ -6,6 +6,7 @@ import { fetchUserGlobalRoles, type AuthUserInfo } from '../api';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
+import { MemberAvatar } from '../components/MemberAvatar';
 import { useAuthUsers, useUpdateUserGlobalRoles, globalRolesKeys } from '../hooks/useGlobalRoles';
 import styles from './GlobalPermissionsSection.module.css';
 
@@ -17,41 +18,6 @@ const sameRoles = (left: GlobalRole[], right: GlobalRole[]) => {
 };
 
 const getUserLabel = (user: AuthUserInfo) => user.display_name || user.email || user.id;
-
-const getUserInitials = (user: AuthUserInfo) => {
-  const name = user.display_name || user.email || user.id;
-  return name
-    .split(/[\s@.]+/)
-    .slice(0, 2)
-    .map(w => w[0] ?? '')
-    .join('')
-    .toUpperCase();
-};
-
-const userHue = (id: string) => {
-  let hash = 0;
-  for (const ch of id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
-  return ((hash % 360) + 360) % 360;
-};
-
-const MemberAvatar = ({ name, email, userId, size = 28 }: { name: string; email: string | null; userId: string; size?: number }) => {
-  const h = userHue(userId);
-  const initials = getUserInitials({ id: userId, display_name: name, email, auth_provider: 'local', is_active: true });
-  return (
-    <span
-      className={styles.avatar}
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.max(9, Math.round(size * 0.38)),
-        background: `linear-gradient(135deg, oklch(0.52 0.13 ${h}), oklch(0.42 0.10 ${(h + 32) % 360}))`,
-      }}
-      title={name || email || userId}
-    >
-      {initials}
-    </span>
-  );
-};
 
 const RolesMenu = ({
   currentRoles,
