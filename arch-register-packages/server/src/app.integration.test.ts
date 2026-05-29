@@ -79,8 +79,12 @@ describe('arch-register sqlite integration', () => {
   let sqliteDir = '';
   let storageDir = '';
   let app: ReturnType<typeof createApp>;
+  let testUserToken: string;
 
   beforeAll(async () => {
+    // Set JWT_SECRET for all tests
+    process.env.JWT_SECRET = '12345678901234567890123456789012';
+    
     sqliteDir = await mkdtemp(join(tmpdir(), 'arch-register-sqlite-'));
     db = new SqliteDatabase(join(sqliteDir, 'db.sqlite'));
     storageDir = await mkdtemp(join(tmpdir(), 'arch-register-storage-'));
@@ -90,22 +94,63 @@ describe('arch-register sqlite integration', () => {
   beforeEach(async () => {
     await seedDb(db);
     await rm(storageDir, { recursive: true, force: true });
+    
+    // Create a test user with platform_admin role for each test
+    const testUser = await db.createUser({
+      id: 'test-admin',
+      email: 'test@example.com',
+      display_name: 'Test Admin',
+      auth_provider: 'local',
+      password_hash: 'hash',
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+      last_login_at: null,
+    });
+    await db.replaceGlobalRoleAssignments(testUser.id, ['platform_admin'], new Date());
+    testUserToken = generateAccessToken(testUser);
   }, 30000);
 
   afterAll(async () => {
     await db.close();
     await rm(storageDir, { recursive: true, force: true });
     await rm(sqliteDir, { recursive: true, force: true });
+    delete process.env.JWT_SECRET;
   });
 
   const json = async <T>(path: string, init?: RequestInit): Promise<{ response: Response; body: T }> => {
-    const response = await app.request(path, { ...init, signal: AbortSignal.timeout(5000) });
+    // Add auth header by default if not already present
+    const headers = new Headers(init?.headers);
+    if (!headers.has('authorization')) {
+      headers.set('authorization', `Bearer ${testUserToken}`);
+    }
+    if (!headers.has('content-type')) {
+      headers.set('content-type', 'application/json');
+    }
+    
+    const response = await app.request(path, { 
+      ...init, 
+      headers,
+      signal: AbortSignal.timeout(5000) 
+    });
     const body = (await response.json()) as T;
     return { response, body };
   };
 
   const text = async (path: string, init?: RequestInit) => {
-    const response = await app.request(path, { ...init, signal: AbortSignal.timeout(5000) });
+    // Add auth header by default if not already present
+    const headers = new Headers(init?.headers);
+    if (!headers.has('authorization')) {
+      headers.set('authorization', `Bearer ${testUserToken}`);
+    }
+    
+    const response = await app.request(path, { 
+      ...init, 
+      headers,
+      signal: AbortSignal.timeout(5000) 
+    });
     return { response, body: await response.text() };
   };
 
@@ -289,8 +334,6 @@ describe('arch-register sqlite integration', () => {
   }, 20000);
 
   it('enforces restricted subtree visibility and schema admin permissions', async () => {
-    process.env.JWT_SECRET = '12345678901234567890123456789012';
-
     const viewer = await db.createUser({
       id: 'viewer',
       email: 'viewer@example.com',
@@ -355,7 +398,5 @@ describe('arch-register sqlite integration', () => {
       signal: AbortSignal.timeout(5000),
     });
     expect(allowedSchemaWrite.status).toBe(200);
-
-    delete process.env.JWT_SECRET;
   }, 20000);
 });
