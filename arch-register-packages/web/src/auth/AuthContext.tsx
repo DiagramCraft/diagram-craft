@@ -1,12 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type ReactNode
-} from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { AuthorizationDataProvider } from './AuthorizationDataContext';
 
 export type User = {
   id: string;
@@ -58,14 +51,7 @@ type AuthContextType = {
   refreshToken: () => Promise<void>;
 };
 
-type PermissionsContextType = {
-  hasGlobalPermission: (permission: GlobalPermission) => boolean;
-  getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
-  getWorkspaceOwnerOptions: (workspaceId: string | null | undefined) => WorkspaceOwnerOption[];
-};
-
 const AuthContext = createContext<AuthContextType | null>(null);
-const PermissionsContext = createContext<PermissionsContextType | null>(null);
 
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -198,24 +184,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, [fetchCurrentUser, refreshToken]);
 
-  const hasGlobalPermission = useCallback(
-    (permission: GlobalPermission) => authBaseData?.global_permissions.includes(permission) ?? false,
-    [authBaseData]
-  );
-
-  const getWorkspaceTeamIds = useCallback(
-    (workspaceId: string | null | undefined) =>
-      authBaseData?.team_memberships.find(membership => membership.workspace_id === workspaceId)
-        ?.team_ids ?? [],
-    [authBaseData]
-  );
-
-  const getWorkspaceOwnerOptions = useCallback(
-    (workspaceId: string | null | undefined) =>
-      (workspaceId ? authBaseData?.owner_options_by_workspace[workspaceId] : undefined) ?? [],
-    [authBaseData]
-  );
-
   const authValue: AuthContextType = {
     user,
     isLoading,
@@ -226,17 +194,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshToken
   };
 
-  const permissionsValue: PermissionsContextType = {
-    hasGlobalPermission,
-    getWorkspaceTeamIds,
-    getWorkspaceOwnerOptions
-  };
-
   return (
     <AuthContext.Provider value={authValue}>
-      <PermissionsContext.Provider value={permissionsValue}>
-        {children}
-      </PermissionsContext.Provider>
+      <AuthorizationDataProvider value={authBaseData}>{children}</AuthorizationDataProvider>
     </AuthContext.Provider>
   );
 };
@@ -245,14 +205,6 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
-
-export const usePermissions = () => {
-  const context = useContext(PermissionsContext);
-  if (!context) {
-    throw new Error('usePermissions must be used within AuthProvider');
   }
   return context;
 };

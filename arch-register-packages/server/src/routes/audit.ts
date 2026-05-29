@@ -72,7 +72,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'view_audit');
+      requireGlobalPermission(authCtx, 'view_audit');
 
       try {
         const rows = await db.listAuditLogs(workspace);

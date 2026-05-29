@@ -1,11 +1,11 @@
 import {
-  PermissionEvaluator,
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
   type AuthorizationContext,
   type PermissionDataProvider
 } from '@arch-register/permissions';
 
 export class CachedPermissionEvaluator {
-  private readonly evaluator = new PermissionEvaluator();
   private contextCache = new Map<string, { context: AuthorizationContext; timestamp: number }>();
   private readonly cacheTtl = 5 * 60 * 1000;
 
@@ -21,7 +21,8 @@ export class CachedPermissionEvaluator {
       return cached.context;
     }
 
-    const context = await this.evaluator.buildContext(workspaceId, userId, dataProvider);
+    const contextData = await fetchAuthorizationContextData(dataProvider, workspaceId, userId);
+    const context = buildAuthorizationContext(contextData);
     this.contextCache.set(cacheKey, { context, timestamp: Date.now() });
     return context;
   }

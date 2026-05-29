@@ -2,12 +2,14 @@ import type { AuthenticatedEvent } from '../middleware/auth.js';
 import type { DatabaseAdapter } from '../db/database.js';
 import { type Entity, type GlobalPermission } from '../types.js';
 import {
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
   type AuthorizationContext,
   type EntityAction,
   PermissionEvaluator,
   ProjectAction
 } from '@arch-register/permissions';
-import { ServerDataProvider } from './ServerPermissionEvaluator.js';
+import { ServerDataProvider } from './ServerAuthorizationDataProvider.js';
 import { httpAssert } from '../utils/httpAssert';
 
 export const GLOBAL_WS = '__global__';
@@ -114,7 +116,7 @@ export const buildApiAuthCtx = async (
     message: 'Authentication required'
   });
 
-  const evaluator = new PermissionEvaluator();
   const dataProvider = new ServerDataProvider(db);
-  return evaluator.buildContext(workspace, userId, dataProvider);
+  const contextData = await fetchAuthorizationContextData(dataProvider, workspace, userId);
+  return buildAuthorizationContext(contextData);
 };

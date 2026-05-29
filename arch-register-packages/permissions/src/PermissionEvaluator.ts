@@ -5,36 +5,17 @@ import type {
   EntityGrant,
   EntitySchema,
   GlobalPermission,
-  GlobalRole,
   ProjectAction,
-  VisibilityMode,
-  WorkspaceOwnerOption
+  VisibilityMode
 } from './types.js';
 import { decodeRefs } from './types.js';
 import { GLOBAL_ROLE_PERMISSIONS, ROLE_ACTIONS } from './constants.js';
-import {
-  buildAuthorizationContext,
-  fetchAuthorizationContextData,
-  type PermissionDataProvider
-} from './AuthorizationContextBuilder.js';
 
 /**
- * Shared permission evaluator.
- * Implements permission checks and authorization context construction.
+ * Shared permission checker.
+ * Implements permission checks against an already-built authorization context.
  */
 export class PermissionEvaluator {
-  buildContext(
-    workspaceId: string,
-    userId: string,
-    dataProvider: PermissionDataProvider
-  ): Promise<AuthorizationContext> {
-    return fetchAuthorizationContextData(dataProvider, workspaceId, userId).then(
-      buildAuthorizationContext
-    );
-  }
-
-  // ── Entity Permissions ────────────────────────────────────────
-
   /**
    * Check if user has a specific permission on an entity
    */
@@ -46,8 +27,6 @@ export class PermissionEvaluator {
     const actions = this.getEntityActions(context, entity);
     return actions.has(action);
   }
-
-  // ── Project Permissions ───────────────────────────────────────
 
   /**
    * Check if user has a specific permission on a project
@@ -67,8 +46,6 @@ export class PermissionEvaluator {
 
     return false;
   }
-
-  // ── Global Permissions ────────────────────────────────────────
 
   /**
    * Check if user has an assigned global permission
@@ -90,7 +67,6 @@ export class PermissionEvaluator {
     return ownerTeamId != null && context.teamIds.has(ownerTeamId);
   }
 
-
   /**
    * Check if user can create a top-level entity for the given owner team
    */
@@ -105,9 +81,6 @@ export class PermissionEvaluator {
 
     return ownerTeamId != null && context.teamIds.has(ownerTeamId);
   }
-
-
-  // ── Protected Helper Methods ──────────────────────────────────
 
   /**
    * Get all entity actions available to the user for a specific entity
@@ -222,28 +195,5 @@ export class PermissionEvaluator {
       grant.entity_id === targetEntityId ||
       (grant.applies_to === 'subtree' && ancestorIds.has(grant.entity_id))
     );
-  }
-
-  /**
-   * Helper to build authorization context from fetched data
-   */
-  protected buildAuthorizationContextFromData(
-    userId: string,
-    globalRoles: string[],
-    teamMemberships: string[],
-    ownerOptions: WorkspaceOwnerOption[],
-    schemas: EntitySchema[],
-    entities: Entity[],
-    grants: EntityGrant[]
-  ): AuthorizationContext {
-    return buildAuthorizationContext({
-      userId,
-      globalRoles: globalRoles as GlobalRole[],
-      teamMemberships,
-      ownerOptions,
-      schemas,
-      entities,
-      grants
-    });
   }
 }
