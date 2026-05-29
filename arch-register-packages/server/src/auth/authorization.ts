@@ -1,13 +1,13 @@
-import { HTTPError } from 'h3';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import type { DatabaseAdapter } from '../db/database.js';
 import { type Entity, type GlobalPermission } from '../types.js';
 import {
   type AuthorizationContext,
   type EntityAction,
+  PermissionEvaluator,
   ProjectAction
 } from '@arch-register/permissions';
-import { ServerDataProvider, ServerPermissionEvaluator } from './ServerPermissionEvaluator.js';
+import { ServerDataProvider } from './ServerPermissionEvaluator.js';
 import { httpAssert } from '../utils/httpAssert';
 
 export const GLOBAL_WS = '__global__';
@@ -21,7 +21,7 @@ export const requireEntityAction = (
   action: EntityAction,
   message?: string
 ) => {
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   httpAssert.true(evaluator.hasEntityPermission(context, entity, action), {
     status: 403,
     statusText: 'Forbidden',
@@ -37,7 +37,7 @@ export const requireGlobalPermission = (
   permission: GlobalPermission,
   message?: string
 ) => {
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   httpAssert.true(evaluator.hasGlobalPermission(context, permission), {
     status: 403,
     statusText: 'Forbidden',
@@ -54,14 +54,12 @@ export const requireProjectAction = (
   action: ProjectAction,
   message?: string
 ) => {
-  const evaluator = new ServerPermissionEvaluator();
-  if (!evaluator.hasProjectPermission(context, ownerTeamId, action)) {
-    throw new HTTPError({
-      status: 403,
-      statusText: 'Forbidden',
-      message: message ?? 'Insufficient project permissions'
-    });
-  }
+  const evaluator = new PermissionEvaluator();
+  httpAssert.true(evaluator.hasProjectPermission(context, ownerTeamId, action), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'Insufficient project permissions'
+  });
 };
 
 /**
@@ -71,8 +69,8 @@ export const canCreateProject = (
   context: AuthorizationContext,
   ownerTeamId: string | null
 ): boolean => {
-  if (context.globalRoles.has('platform_admin')) return true;
-  return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+  const evaluator = new PermissionEvaluator();
+  return evaluator.canCreateProject(context, ownerTeamId);
 };
 
 /**
@@ -82,12 +80,8 @@ export const canCreateTopLevelEntity = (
   context: AuthorizationContext,
   ownerTeamId: string | null
 ): boolean => {
-  if (context.globalRoles.has('platform_admin')) return true;
-  
-  const evaluator = new ServerPermissionEvaluator();
-  if (!evaluator.hasGlobalPermission(context, 'view_schema')) return false;
-  
-  return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+  const evaluator = new PermissionEvaluator();
+  return evaluator.canCreateTopLevelEntity(context, ownerTeamId);
 };
 
 /**
@@ -98,13 +92,11 @@ export const requireCanCreateProject = (
   ownerTeamId: string | null,
   message?: string
 ) => {
-  if (!canCreateProject(context, ownerTeamId)) {
-    throw new HTTPError({
-      status: 403,
-      statusText: 'Forbidden',
-      message: message ?? 'You do not have permission to create a project for this owner team'
-    });
-  }
+  httpAssert.true(canCreateProject(context, ownerTeamId), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'You do not have permission to create a project for this owner team'
+  });
 };
 
 /**
@@ -122,7 +114,7 @@ export const buildApiAuthCtx = async (
     message: 'Authentication required'
   });
 
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   const dataProvider = new ServerDataProvider(db);
   return evaluator.buildContext(workspace, userId, dataProvider);
 };

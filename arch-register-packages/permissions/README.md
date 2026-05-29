@@ -18,9 +18,10 @@ pnpm add @arch-register/permissions
 
 ### Permission Types
 
-- **Global Permissions**: Platform-wide permissions (e.g., `view_schema`, `manage_users`)
+- **Global Permissions**: Assigned platform-wide permissions (e.g., `view_schema`, `manage_users`)
 - **Entity Permissions**: Entity-specific actions (e.g., `view_entity`, `edit_entity`, `admin_entity`)
 - **Project Permissions**: Project-level actions (e.g., `canEdit`, `canDelete`, `canManageFiles`)
+- **Computed Capabilities**: Context-dependent checks such as project creation and top-level entity creation
 
 ### Authorization Context
 
@@ -62,8 +63,12 @@ const canEditProject = evaluator.canEditProject(context, ownerTeamId);
 const projectCaps = evaluator.getProjectCapabilities(context, ownerTeamId);
 // { canEdit: true, canDelete: true, canManageFiles: true }
 
-// Check global permissions
+// Check assigned global permissions
 const canManageUsers = evaluator.hasGlobalPermission(context, 'manage_users');
+
+// Check computed capabilities
+const canCreateProject = evaluator.canCreateProject(context, ownerTeamId);
+const canCreateTopLevelEntity = evaluator.canCreateTopLevelEntity(context, ownerTeamId);
 ```
 
 ### Data Provider Interface
@@ -248,6 +253,15 @@ Project permissions are evaluated based on:
 - `schema_admin`: Can manage schemas
 - `user_admin`: Can manage users and teams
 - `auditor`: Can view audit logs
+
+## Computed capabilities
+
+Some checks depend on workspace context rather than assigned global permissions:
+
+- `canCreateProject(...)`
+
+- `canCreateTopLevelEntity(...)`
+
 
 ## Constants
 

@@ -24,9 +24,7 @@ export type GlobalPermission =
   | 'manage_teams'
   | 'manage_global_roles'
   | 'view_audit'
-  | 'admin_platform'
-  | 'create_project'
-  | 'create_top_level_entity';
+  | 'admin_platform';
 
 export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
 
@@ -61,8 +59,9 @@ type AuthContextType = {
 };
 
 type PermissionsContextType = {
-  hasGlobalPermission: (permission: GlobalPermission, workspaceId?: string | null) => boolean;
+  hasGlobalPermission: (permission: GlobalPermission) => boolean;
   getWorkspaceTeamIds: (workspaceId: string | null | undefined) => string[];
+  getWorkspaceOwnerOptions: (workspaceId: string | null | undefined) => WorkspaceOwnerOption[];
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -102,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
         team_memberships: userData.team_memberships,
-        owner_options_by_workspace: userData.owner_options_by_workspace || {}
+        owner_options_by_workspace: userData.owner_options_by_workspace ?? {}
       });
       return true;
     } catch (error) {
@@ -143,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (!res.ok) {
         const error = await res.json().catch(() => ({ message: 'Login failed' }));
-        throw new Error(error.message || 'Login failed');
+        throw new Error(error.message ?? 'Login failed');
       }
 
       const data = await res.json();
@@ -164,14 +163,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {
-    });
+    await authFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
     tokenExpiresAt.current = null;
     setUser(null);
     setAuthBaseData(null);
   }, []);
 
-  // Proactive token refresh before expiry
   useEffect(() => {
     const checkTokenExpiry = () => {
       if (!tokenExpiresAt.current || !user) return;
@@ -186,7 +183,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval);
   }, [refreshToken, user]);
 
-  // On mount: try /me, if 401 try refresh, otherwise not authenticated
   useEffect(() => {
     const init = async () => {
       const ok = await fetchCurrentUser();
@@ -203,35 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [fetchCurrentUser, refreshToken]);
 
   const hasGlobalPermission = useCallback(
-    (permission: GlobalPermission, workspaceId?: string | null) => {
-      if (!authBaseData) return false;
-      
-      // Handle virtual permissions
-      if (permission === 'create_project' || permission === 'create_top_level_entity') {
-        // Platform admins can always create
-        if (authBaseData.global_roles.includes('platform_admin')) {
-          return true;
-        }
-        
-        // For create_top_level_entity, also need view_schema permission
-        if (permission === 'create_top_level_entity' && 
-            !authBaseData.global_permissions.includes('view_schema')) {
-          return false;
-        }
-        
-        // Check if user belongs to any valid owner team in the workspace
-        if (workspaceId) {
-          const ownerOptions = authBaseData.owner_options_by_workspace[workspaceId] ?? [];
-          const teamIds = getWorkspaceTeamIds(workspaceId);
-          return ownerOptions.some(option => teamIds.includes(option.id));
-        }
-        
-        return false;
-      }
-      
-      // Standard permission check
-      return authBaseData.global_permissions.includes(permission);
-    },
+    (permission: GlobalPermission) => authBaseData?.global_permissions.includes(permission) ?? false,
     [authBaseData]
   );
 
@@ -239,6 +207,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     (workspaceId: string | null | undefined) =>
       authBaseData?.team_memberships.find(membership => membership.workspace_id === workspaceId)
         ?.team_ids ?? [],
+    [authBaseData]
+  );
+
+  const getWorkspaceOwnerOptions = useCallback(
+    (workspaceId: string | null | undefined) =>
+      (workspaceId ? authBaseData?.owner_options_by_workspace[workspaceId] : undefined) ?? [],
     [authBaseData]
   );
 
@@ -254,7 +228,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const permissionsValue: PermissionsContextType = {
     hasGlobalPermission,
-    getWorkspaceTeamIds
+    getWorkspaceTeamIds,
+    getWorkspaceOwnerOptions
   };
 
   return (

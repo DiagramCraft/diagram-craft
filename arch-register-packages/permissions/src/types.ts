@@ -9,9 +9,7 @@ export type GlobalPermission =
   | 'manage_teams'
   | 'manage_global_roles'
   | 'view_audit'
-  | 'admin_platform'
-  | 'create_project'
-  | 'create_top_level_entity';
+  | 'admin_platform';
 
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 

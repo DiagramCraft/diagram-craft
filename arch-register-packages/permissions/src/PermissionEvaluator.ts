@@ -11,62 +11,27 @@ import type {
   WorkspaceOwnerOption
 } from './types.js';
 import { decodeRefs } from './types.js';
+import { GLOBAL_ROLE_PERMISSIONS, ROLE_ACTIONS } from './constants.js';
 import {
-  GLOBAL_ROLE_PERMISSIONS,
-  ROLE_ACTIONS,
-  getGlobalPermissionsForRoles
-} from './constants.js';
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
+  type PermissionDataProvider
+} from './AuthorizationContextBuilder.js';
 
 /**
- * Data provider interface for fetching permission-related data.
- * Implementations provide data from different sources (database, API, etc.)
+ * Shared permission evaluator.
+ * Implements permission checks and authorization context construction.
  */
-export interface PermissionDataProvider {
-  /**
-   * Fetch all entities in workspace (for relationship traversal)
-   */
-  getEntities(workspaceId: string): Promise<Entity[]>;
-
-  /**
-   * Fetch all schemas (for field definitions)
-   */
-  getSchemas(workspaceId: string): Promise<EntitySchema[]>;
-
-  /**
-   * Fetch entity grants for permission evaluation
-   */
-  getEntityGrants(workspaceId: string): Promise<EntityGrant[]>;
-
-  /**
-   * Fetch user's team memberships
-   */
-  getTeamMemberships(workspaceId: string, userId: string): Promise<string[]>;
-
-  /**
-   * Fetch user's global role assignments
-   */
-  getGlobalRoles(userId: string): Promise<GlobalRole[]>;
-
-  /**
-   * Fetch workspace owner options (teams that can own records)
-   */
-  getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]>;
-}
-
-/**
- * Abstract base class for permission evaluation.
- * Implements shared permission logic that can be used by both server and web clients.
- */
-export abstract class PermissionEvaluator {
-  /**
-   * Build authorization context by fetching all necessary data.
-   * Must be implemented by concrete classes (server/web).
-   */
-  abstract buildContext(
+export class PermissionEvaluator {
+  buildContext(
     workspaceId: string,
     userId: string,
     dataProvider: PermissionDataProvider
-  ): Promise<AuthorizationContext>;
+  ): Promise<AuthorizationContext> {
+    return fetchAuthorizationContextData(dataProvider, workspaceId, userId).then(
+      buildAuthorizationContext
+    );
+  }
 
   // ── Entity Permissions ────────────────────────────────────────
 
@@ -92,55 +57,55 @@ export abstract class PermissionEvaluator {
     ownerTeamId: string | null,
     _action: ProjectAction
   ): boolean {
-    // Platform admins have all project permissions
     if (context.globalRoles.has('platform_admin')) {
       return true;
     }
 
-    // Team members of the owner team have all project permissions
     if (ownerTeamId != null && context.teamIds.has(ownerTeamId)) {
       return true;
     }
 
-    // Note: Currently all project actions are treated equally.
-    // Future enhancement: implement granular project permissions based on _action
     return false;
   }
 
   // ── Global Permissions ────────────────────────────────────────
 
   /**
-   * Check if user has a global permission
+   * Check if user has an assigned global permission
    */
   hasGlobalPermission(context: AuthorizationContext, permission: GlobalPermission): boolean {
-    // Handle virtual permissions with custom logic
-    if (permission === 'create_project') {
-      // Platform admins can always create projects
-      if (context.globalRoles.has('platform_admin')) {
-        return true;
-      }
-      // Check if user belongs to any valid owner team
-      return context.ownerOptions.some(option => context.teamIds.has(option.id));
-    }
-
-    if (permission === 'create_top_level_entity') {
-      // Platform admins can always create entities
-      if (context.globalRoles.has('platform_admin')) {
-        return true;
-      }
-      // Must have view_schema permission
-      if (!context.globalPermissions.has('view_schema')) {
-        return false;
-      }
-      // Check if user belongs to any valid owner team
-      return context.ownerOptions.some(option => context.teamIds.has(option.id));
-    }
-
-    // Standard permission check
     return (
       context.globalPermissions.has(permission) || context.globalPermissions.has('admin_platform')
     );
   }
+
+  /**
+   * Check if user can create a project for the given owner team
+   */
+  canCreateProject(context: AuthorizationContext, ownerTeamId: string | null): boolean {
+    if (context.globalRoles.has('platform_admin')) {
+      return true;
+    }
+
+    return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+  }
+
+
+  /**
+   * Check if user can create a top-level entity for the given owner team
+   */
+  canCreateTopLevelEntity(context: AuthorizationContext, ownerTeamId: string | null): boolean {
+    if (context.globalRoles.has('platform_admin')) {
+      return true;
+    }
+
+    if (!this.hasGlobalPermission(context, 'view_schema')) {
+      return false;
+    }
+
+    return ownerTeamId != null && context.teamIds.has(ownerTeamId);
+  }
+
 
   // ── Protected Helper Methods ──────────────────────────────────
 
@@ -150,7 +115,6 @@ export abstract class PermissionEvaluator {
   protected getEntityActions(context: AuthorizationContext, entity: Entity): Set<EntityAction> {
     const actions = new Set<EntityAction>();
 
-    // 1. Check global roles for entity actions
     for (const role of context.globalRoles) {
       for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
         if (
@@ -164,17 +128,14 @@ export abstract class PermissionEvaluator {
       }
     }
 
-    // 2. Check visibility mode (public entities are viewable by all)
     if (this.resolveEntityVisibility(context, entity) === 'public') {
       actions.add('view_entity');
     }
 
-    // 3. Check owner team membership (team owners get entity_admin role)
     if (entity.owner && context.teamIds.has(entity.owner)) {
       ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
     }
 
-    // 4. Check entity grants
     const ancestorIds = this.collectAncestorIds(context, entity);
     for (const grant of context.grants) {
       const principalMatches =
@@ -182,7 +143,6 @@ export abstract class PermissionEvaluator {
         (grant.principal_type === 'team' && context.teamIds.has(grant.principal_id));
 
       if (!principalMatches) continue;
-
       if (!this.hasApplicableGrant(grant, entity.id, ancestorIds)) continue;
 
       ROLE_ACTIONS[grant.role].forEach(action => actions.add(action));
@@ -276,18 +236,14 @@ export abstract class PermissionEvaluator {
     entities: Entity[],
     grants: EntityGrant[]
   ): AuthorizationContext {
-    const globalRolesSet = new Set(globalRoles) as Set<import('./types.js').GlobalRole>;
-    const globalPermissions = getGlobalPermissionsForRoles(globalRolesSet);
-
-    return {
+    return buildAuthorizationContext({
       userId,
-      globalRoles: globalRolesSet,
-      globalPermissions,
-      teamIds: new Set(teamMemberships),
+      globalRoles: globalRoles as GlobalRole[],
+      teamMemberships,
       ownerOptions,
-      schemas: new Map(schemas.map(schema => [schema.id, schema])),
-      entities: new Map(entities.map(entity => [entity.id, entity])),
+      schemas,
+      entities,
       grants
-    };
+    });
   }
 }

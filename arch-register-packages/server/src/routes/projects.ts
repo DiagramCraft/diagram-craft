@@ -7,9 +7,11 @@ import { resolveWorkspace } from './workspace-resolver.js';
 import { handleDbError } from '../utils/http.js';
 import { buildApiAuthCtx, requireProjectAction, requireCanCreateProject } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { AuthorizationContext } from '@arch-register/permissions';
-import { ServerPermissionEvaluator } from '../auth/ServerPermissionEvaluator';
-import { ProjectCapabilities } from '@arch-register/permissions';
+import {
+  AuthorizationContext,
+  PermissionEvaluator,
+  ProjectCapabilities
+} from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -52,7 +54,7 @@ const getProjectCapabilities = (
     };
   }
 
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   return {
     canEdit: evaluator.hasProjectPermission(context, ownerTeamId, 'edit_project'),
     canDelete: evaluator.hasProjectPermission(context, ownerTeamId, 'delete_project'),

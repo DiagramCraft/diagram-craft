@@ -13,10 +13,12 @@ import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
 import { buildApiAuthCtx, requireEntityAction, canCreateTopLevelEntity } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { ServerPermissionEvaluator } from '../auth/ServerPermissionEvaluator';
-import { AuthorizationContext } from '@arch-register/permissions';
-import { EntityCapabilities } from '@arch-register/permissions';
-import { EntitySchema } from '@arch-register/permissions';
+import {
+  AuthorizationContext,
+  EntityCapabilities,
+  EntitySchema,
+  PermissionEvaluator
+} from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/data';
 
@@ -102,7 +104,7 @@ const getEntityCapabilities = (
     };
   }
 
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   return {
     canView: evaluator.hasEntityPermission(context, entity, 'view_entity'),
     canEdit: evaluator.hasEntityPermission(context, entity, 'edit_entity'),
@@ -205,7 +207,7 @@ const relationFields = (fields: SchemaField[]) =>
   );
 
 export function createDataRoutes(db: DatabaseAdapter) {
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
   const router = new H3();
 
   router.get(

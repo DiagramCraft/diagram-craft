@@ -29,5 +29,13 @@ export { encodeRefs, decodeRefs } from './types.js';
 // Export constants and helper functions
 export { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS, getGlobalPermissionsForRoles } from './constants.js';
 
-// Export the abstract permission evaluator and its data provider interface
-export { PermissionEvaluator, type PermissionDataProvider } from './PermissionEvaluator.js';
+// Export authorization context builder helpers
+export {
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
+  type AuthorizationContextData,
+  type PermissionDataProvider
+} from './AuthorizationContextBuilder.js';
+
+// Export the abstract permission evaluator
+export { PermissionEvaluator } from './PermissionEvaluator.js';

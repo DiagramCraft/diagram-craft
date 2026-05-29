@@ -8,7 +8,7 @@ import { WorkspaceHome } from './screens/WorkspaceHome';
 import { EntityBrowser } from './screens/EntityBrowser';
 import { EntityDetail } from './screens/EntityDetail';
 import { DataModelEditor } from './screens/DataModelEditor';
-import { usePermissions } from './auth/AuthContext';
+import { useWorkspacePermissions } from './auth/useWorkspacePermissions';
 import { ProjectDetail } from './screens/ProjectDetail';
 import { SearchScreen } from './screens/SearchScreen';
 import { WorkspaceSettings } from './screens/WorkspaceSettings';
@@ -49,7 +49,6 @@ const RAIL_TO_VIEW: Record<string, ViewId> = {
 };
 
 const App = () => {
-  const { hasGlobalPermission } = usePermissions();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [route, setRoute] = useState<Route>({
     view: 'home',
@@ -97,13 +96,15 @@ const App = () => {
 
   const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
   const wsId = ws?.url_slug ?? '';
-  const canManageWorkspaces = hasGlobalPermission('admin_platform');
-  const canViewSchemas = hasGlobalPermission('view_schema');
-  const canEditSchemas = hasGlobalPermission('edit_schema');
-  const canManageTeams = hasGlobalPermission('manage_teams');
-  const canViewAudit = hasGlobalPermission('view_audit');
-  const canCreateProjects = hasGlobalPermission('create_project', ws?.id);
-  const canCreateEntities = hasGlobalPermission('create_top_level_entity', ws?.id);
+  const {
+    canManageWorkspaces,
+    canViewSchemas,
+    canEditSchemas,
+    canManageTeams,
+    canViewAudit,
+    canCreateProjects,
+    canCreateEntities
+  } = useWorkspacePermissions(ws?.id);
   const availableSettingsSections = [
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
     ...(canManageTeams ? ['lifecycle-owners'] : []),

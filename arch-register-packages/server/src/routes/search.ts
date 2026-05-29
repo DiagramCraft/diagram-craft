@@ -6,7 +6,7 @@ import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
 import { buildApiAuthCtx } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { ServerPermissionEvaluator } from '../auth/ServerPermissionEvaluator';
+import { PermissionEvaluator } from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/search';
 
@@ -122,7 +122,7 @@ const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldM
 
 export function createSearchRoutes(db: DatabaseAdapter) {
   const router = new H3();
-  const evaluator = new ServerPermissionEvaluator();
+  const evaluator = new PermissionEvaluator();
 
   router.get(
     BASE,
