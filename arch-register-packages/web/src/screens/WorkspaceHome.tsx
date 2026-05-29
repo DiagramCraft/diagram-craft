@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './WorkspaceHome.module.css';
 import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
@@ -8,8 +8,9 @@ import {
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
-import { resolveSchemaColor, fetchAuditLog } from '../api';
+import { resolveSchemaColor } from '../api';
 import type { EntitySchema, Project, AuditLogEntry } from '../api';
+import { useAuditLog } from '../hooks/useAudit';
 
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },
@@ -44,8 +45,6 @@ export const WorkspaceHome = ({
 }: WorkspaceHomeProps) => {
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [recentActivity, setRecentActivity] = useState<AuditLogEntry[]>([]);
-  const [activityLoading, setActivityLoading] = useState(true);
   
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
@@ -55,22 +54,12 @@ export const WorkspaceHome = ({
     ? projects
     : nonArchivedProjects.slice(0, collapsedProjectCount);
 
-  // Fetch recent activity from audit log
-  useEffect(() => {
-    if (!canViewAudit) {
-      setRecentActivity([]);
-      setActivityLoading(false);
-      return;
-    }
-    setActivityLoading(true);
-    fetchAuditLog(workspace.url_slug, { limit: MAX_RECENT_ACTIVITY_ENTRIES })
-      .then(setRecentActivity)
-      .catch(err => {
-        console.error('Failed to load audit log:', err);
-        setRecentActivity([]);
-      })
-      .finally(() => setActivityLoading(false));
-  }, [canViewAudit, workspace.url_slug]);
+  // Fetch recent activity from audit log using TanStack Query
+  const { data: recentActivity = [], isLoading: activityLoading } = useAuditLog(
+    workspace.url_slug,
+    { limit: MAX_RECENT_ACTIVITY_ENTRIES },
+    { enabled: canViewAudit }
+  );
 
   const formatRelativeTime = (timestamp: string): string => {
     const now = new Date();

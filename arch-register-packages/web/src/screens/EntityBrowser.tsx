@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import styles from './EntityBrowser.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -8,9 +8,10 @@ import {
   TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
-import { fetchEntities, fetchEntityFacets, fetchEntityTree, resolveSchemaColor, exportEntitiesToCSV, deleteEntity, cloneEntity } from '../api';
-import type { EntityRecord, EntityFacets, EntitySchema, WorkspaceLifecycleState, TreeNode, TreeEdge } from '../api';
+import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
+import type { EntityRecord, EntitySchema, WorkspaceLifecycleState, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
+import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
 
 type BrowserView = 'table' | 'cards' | 'tree';
 
@@ -26,55 +27,34 @@ type EntityBrowserProps = {
 };
 
 export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilter, statusFilter, ownerFilter, navigate, onAddEntity }: EntityBrowserProps) => {
-  const [entities, setEntities] = useState<EntityRecord[]>([]);
-  const [facets, setFacets] = useState<EntityFacets | null>(null);
-  const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
-  const [treeEdges, setTreeEdges] = useState<TreeEdge[]>([]);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>('table');
 
-  const refreshEntities = useCallback(() => {
-    fetchEntities(workspaceId, {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-      view: 'summary',
-    }).then(setEntities).catch(() => setEntities([]));
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
+  // Use TanStack Query hooks for data fetching
+  const { data: entities = [] } = useEntities(workspaceId, {
+    schemaId: typeFilter,
+    owner: ownerFilter,
+    lifecycle: statusFilter,
+    q,
+    view: 'summary',
+  });
 
-  const refreshTree = useCallback(() => {
-    fetchEntityTree(workspaceId, {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-    }).then(r => {
-      setTreeNodes(r.nodes);
-      setTreeEdges(r.edges);
-    }).catch(() => {
-      setTreeNodes([]);
-      setTreeEdges([]);
-    });
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
+  const { data: facets } = useEntityFacets(workspaceId);
 
-  const refreshFacets = useCallback(() => {
-    fetchEntityFacets(workspaceId).then(setFacets).catch(() => setFacets(null));
-  }, [workspaceId]);
+  const { data: treeData } = useEntityTree(workspaceId, {
+    schemaId: typeFilter,
+    owner: ownerFilter,
+    lifecycle: statusFilter,
+    q,
+  });
 
-  useEffect(() => {
-    refreshEntities();
-  }, [refreshEntities]);
+  const treeNodes = treeData?.nodes ?? [];
+  const treeEdges = treeData?.edges ?? [];
 
-  useEffect(() => {
-    if (view !== 'tree') return;
-    refreshTree();
-  }, [refreshTree, view]);
-
-  useEffect(() => {
-    refreshFacets();
-  }, [refreshFacets]);
+  // Mutations for delete and clone
+  const deleteMutation = useDeleteEntity(workspaceId);
+  const cloneMutation = useCloneEntity(workspaceId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -127,21 +107,18 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
   const handleDeleteEntity = async (entity: EntityRecord) => {
     if (!confirm(`Delete "${entity._name || entity._slug}"?`)) return;
     try {
-      await deleteEntity(workspaceId, entity._uid);
-      refreshEntities();
-      refreshFacets();
-      if (view === 'tree') refreshTree();
+      await deleteMutation.mutateAsync(entity._uid);
     } catch {
-      // ignore
+      // Error handling is done by TanStack Query
     }
   };
 
   const handleCloneEntity = async (entity: EntityRecord) => {
     try {
-      const cloned = await cloneEntity(workspaceId, entity._uid);
+      const cloned = await cloneMutation.mutateAsync(entity._uid);
       navigate({ view: 'entity-detail', entityId: cloned._uid });
     } catch {
-      // ignore
+      // Error handling is done by TanStack Query
     }
   };
 

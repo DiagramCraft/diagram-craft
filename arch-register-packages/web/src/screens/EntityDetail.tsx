@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import styles from './EntityDetail.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -8,9 +8,11 @@ import {
   TbTrash, TbPlus, TbX, TbCopy,
 } from 'react-icons/tb';
 import type { NavigateFn } from '../routing';
-import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog, deleteEntity, cloneEntity } from '../api';
-import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import { resolveSchemaColor } from '../api';
+import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
+import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
+import { useAuditLog } from '../hooks/useAudit';
 
 type EntityDetailProps = {
   workspaceId: string;
@@ -39,92 +41,24 @@ const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate, canViewAudit }: EntityDetailProps) => {
-  const [entity, setEntity] = useState<EntityRecord | null>(null);
-  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabId>('overview');
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<Record<string, unknown>>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
-  const [saving, setSaving] = useState(false);
-  const [refLookup, setRefLookup] = useState<RefLookup>(new Map());
-  const [relations, setRelations] = useState<EntityRelations>({ outgoing: [], incoming: [] });
-  const [referenceOptions, setReferenceOptions] = useState<Record<string, EntitySummary[]>>({});
-  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
-  const [loadingAudit, setLoadingAudit] = useState(false);
 
-  const refreshRelations = useCallback(() => {
-    fetchEntityRelations(workspaceId, entityId)
-      .then(nextRelations => {
-        setRelations(nextRelations);
-        const lookup: RefLookup = new Map();
-        nextRelations.outgoing.forEach(relation => {
-          lookup.set(relation.entityId, {
-            _uid: relation.entityId,
-            _workspace: workspaceId,
-            _schemaId: relation.entitySchemaId,
-            _name: relation.entityName,
-            _slug: relation.entitySlug,
-            _namespace: '',
-            _description: '',
-            _owner: null,
-            _lifecycle: null,
-            _tags: [],
-            _links: [],
-            canView: true,
-            canEdit: false,
-            canDelete: false,
-            canAdmin: false,
-            canCreateChild: false,
-          });
-        });
-        setRefLookup(lookup);
-      })
-      .catch(() => {
-        setRelations({ outgoing: [], incoming: [] });
-        setRefLookup(new Map());
-      });
-  }, [workspaceId, entityId]);
+  // Query hooks
+  const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(workspaceId, entityId);
+  const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
+    workspaceId,
+    { entityId, limit: 100 },
+    { enabled: canViewAudit && tab === 'changes' }
+  );
 
-  const refreshEntity = useCallback(() => {
-    setLoading(true);
-    fetchEntityById(workspaceId, entityId)
-      .then(data => {
-        setEntity(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setEntity(null);
-        setLoading(false);
-      });
-  }, [workspaceId, entityId]);
-
-  useEffect(() => {
-    refreshEntity();
-  }, [refreshEntity]);
-
-  useEffect(() => {
-    refreshRelations();
-  }, [refreshRelations]);
-
-  useEffect(() => {
-    if (!canViewAudit) {
-      setAuditLog([]);
-      setLoadingAudit(false);
-      return;
-    }
-    if (tab === 'changes' && entityId) {
-      setLoadingAudit(true);
-      fetchAuditLog(workspaceId, { entityId, limit: 100 })
-        .then(log => {
-          setAuditLog(log);
-          setLoadingAudit(false);
-        })
-        .catch(() => {
-          setAuditLog([]);
-          setLoadingAudit(false);
-        });
-    }
-  }, [canViewAudit, tab, entityId, workspaceId]);
+  // Mutation hooks
+  const updateEntity = useUpdateEntity(workspaceId);
+  const deleteEntity = useDeleteEntity(workspaceId);
+  const cloneEntity = useCloneEntity(workspaceId);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -139,13 +73,10 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent)';
 
-  useEffect(() => {
-    if (!schema) {
-      setReferenceOptions({});
-      return;
-    }
-
-    const targetSchemaIds = [...new Set(
+  // Get reference field schema IDs
+  const referenceSchemaIds = useMemo(() => {
+    if (!schema) return [];
+    return [...new Set(
       schema.fields
         .filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
           field.type === 'reference' || field.type === 'containment'
@@ -153,31 +84,51 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
         .map(field => field.schemaId)
         .filter(Boolean)
     )];
+  }, [schema]);
 
-    if (targetSchemaIds.length === 0) {
-      setReferenceOptions({});
-      return;
-    }
+  // Fetch entities for each reference schema
+  const referenceQueries = useEntitiesBySchema(workspaceId, referenceSchemaIds);
 
-    Promise.all(
-      targetSchemaIds.map(async schemaId => ({
-        schemaId,
-        entities: await fetchEntities(workspaceId, { schemaId, view: 'summary' }),
-      }))
-    )
-      .then(results => {
-        const nextOptions: Record<string, EntitySummary[]> = {};
-        results.forEach(result => {
-          nextOptions[result.schemaId] = result.entities;
-        });
-        setReferenceOptions(nextOptions);
-      })
-      .catch(() => setReferenceOptions({}));
-  }, [workspaceId, schema]);
+  // Build reference options from queries
+  const referenceOptions = useMemo(() => {
+    const options: Record<string, EntitySummary[]> = {};
+    referenceSchemaIds.forEach((schemaId, index) => {
+      const query = referenceQueries[index];
+      if (query?.data) {
+        options[schemaId] = query.data;
+      }
+    });
+    return options;
+  }, [referenceSchemaIds, referenceQueries]);
+
+  // Build reference lookup from relations
+  const refLookup = useMemo(() => {
+    const lookup: RefLookup = new Map();
+    relations.outgoing.forEach(relation => {
+      lookup.set(relation.entityId, {
+        _uid: relation.entityId,
+        _workspace: workspaceId,
+        _schemaId: relation.entitySchemaId,
+        _name: relation.entityName,
+        _slug: relation.entitySlug,
+        _namespace: '',
+        _description: '',
+        _owner: null,
+        _lifecycle: null,
+        _tags: [],
+        _links: [],
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+        canAdmin: false,
+        canCreateChild: false,
+      });
+    });
+    return lookup;
+  }, [relations, workspaceId]);
 
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
-
   const relationCount = outgoing.length + incoming.length;
 
   const startEdit = () => {
@@ -207,7 +158,6 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
 
   const saveEdit = async () => {
     if (!entity || !schema) return;
-    setSaving(true);
 
     const dataFields: Record<string, unknown> = {};
     for (const f of schema.fields) {
@@ -230,40 +180,29 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       ...dataFields,
     };
 
-    try {
-      const updated = await apiFetch<EntityRecord>(`/api/${workspaceId}/data/${entityId}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
-      setEntity(updated);
-      refreshRelations();
-      setEditing(false);
-      setEditState({});
-      setEditLinks([]);
-    } catch {
-      // keep editing on failure
-    } finally {
-      setSaving(false);
-    }
+    updateEntity.mutate(
+      { entityId, data: body },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          setEditState({});
+          setEditLinks([]);
+        },
+      }
+    );
   };
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${entity?._name || entity?._slug}"?`)) return;
-    try {
-      await deleteEntity(workspaceId, entityId);
-      navigate({ view: 'entity-browser' });
-    } catch {
-      // ignore
-    }
+    deleteEntity.mutate(entityId, {
+      onSuccess: () => navigate({ view: 'entity-browser' }),
+    });
   };
 
   const handleClone = async () => {
-    try {
-      const cloned = await cloneEntity(workspaceId, entityId);
-      navigate({ view: 'entity-detail', entityId: cloned._uid });
-    } catch {
-      // ignore
-    }
+    cloneEntity.mutate(entityId, {
+      onSuccess: (cloned) => navigate({ view: 'entity-detail', entityId: cloned._uid }),
+    });
   };
 
   if (loading) {
@@ -317,8 +256,8 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
                 </button>
               )}
               <button type="button" className={styles.btn} onClick={cancelEdit}>Cancel</button>
-              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={updateEntity.isPending}>
+                {updateEntity.isPending ? 'Saving...' : 'Save'}
               </button>
             </>
           )}

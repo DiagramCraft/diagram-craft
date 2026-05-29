@@ -10,7 +10,7 @@ import {
   TbStack2,
   TbX,
 } from 'react-icons/tb';
-import { searchArchRegister, resolveSchemaColor } from '../api';
+import { resolveSchemaColor } from '../api';
 import type {
   EntitySchema,
   EntitySearchResult,
@@ -23,6 +23,7 @@ import type { NavigateFn } from '../routing';
 import { TypeBadge } from '../components/TypeBadge';
 import { Chip } from '../components/Chip';
 import { StatusChip } from '../components/StatusChip';
+import { useSearch } from '../hooks/useSearch';
 import styles from './SearchScreen.module.css';
 
 type SearchScreenProps = {
@@ -101,11 +102,22 @@ export const SearchScreen = ({
   onQuerySubmit,
 }: SearchScreenProps) => {
   const [localQ, setLocalQ] = useState(query);
-  const [results, setResults] = useState<SearchResponse>(EMPTY_RESULTS);
-  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<SearchFilter>('all');
   const [selected, setSelected] = useState<RowId | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const trimmed = query.trim();
+
+  // Query hook - only enabled when there's a query
+  const { data: results = EMPTY_RESULTS, isLoading: loading } = useSearch(
+    workspaceId,
+    {
+      q: trimmed,
+      limitPerType: filter === 'all' ? 8 : 24,
+      types: filter === 'all' ? null : [filter],
+    },
+    { enabled: trimmed !== '' }
+  );
 
   // Sync parent query → local
   useEffect(() => {
@@ -116,41 +128,6 @@ export const SearchScreen = ({
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 60);
   }, []);
-
-  // Fetch results on submitted query change
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed === '') {
-      setResults(EMPTY_RESULTS);
-      setSelected(null);
-      setLoading(false);
-      return;
-    }
-
-    let active = true;
-    setLoading(true);
-
-    searchArchRegister(workspaceId, {
-      q: trimmed,
-      limitPerType: filter === 'all' ? 8 : 24,
-      types: filter === 'all' ? null : [filter],
-    })
-      .then(response => {
-        if (!active) return;
-        setResults(response);
-      })
-      .catch(() => {
-        if (!active) return;
-        setResults({ ...EMPTY_RESULTS, query: trimmed });
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [workspaceId, query, filter]);
 
   const schemaMap = useMemo(() => {
     const map = new Map<string, { schema: EntitySchema; index: number }>();
@@ -207,7 +184,6 @@ export const SearchScreen = ({
   );
 
   const totalResults = categoryCounts.all;
-  const trimmed = query.trim();
 
   // Auto-select first result
   useEffect(() => {

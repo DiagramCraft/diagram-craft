@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import styles from './App.module.css';
 import { TopBar } from './shell/TopBar';
 import type { BreadcrumbItem } from './shell/TopBar';
@@ -17,15 +17,15 @@ import { AddWorkspaceDialog } from './components/AddWorkspaceDialog';
 import { AddEntityDialog } from './components/AddEntityDialog';
 import { AddProjectDialog } from './components/AddProjectDialog';
 import type { Route, RoutePatch, ViewId } from './routing';
-import { apiFetch, fetchProjects, fetchLifecycleStates, fetchOwnerOptions } from './api';
 import type {
-  Workspace,
   EntitySchema,
-  Project,
-  WorkspaceLifecycleState,
-  WorkspaceOwnerOption
+  Project
 } from './api';
 import { TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings } from 'react-icons/tb';
+import { useWorkspaces } from './hooks/useWorkspaces';
+import { useSchemas } from './hooks/useSchemas';
+import { useProjects } from './hooks/useProjects';
+import { useWorkspaceConfig } from './hooks/useWorkspaceConfig';
 
 const getProjectSidebarTab = (project: Project | undefined): Route['projectSidebarTab'] =>
   project?.status === 'archived' ? 'archive' : 'projects';
@@ -49,7 +49,6 @@ const RAIL_TO_VIEW: Record<string, ViewId> = {
 };
 
 const App = () => {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [route, setRoute] = useState<Route>({
     view: 'home',
     workspaceId: null,
@@ -65,37 +64,28 @@ const App = () => {
     settingsSection: 'general',
     prev: null
   });
-  const [schemas, setSchemas] = useState<EntitySchema[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [lifecycleStates, setLifecycleStates] = useState<WorkspaceLifecycleState[]>([]);
-  const [ownerOptions, setOwnerOptions] = useState<WorkspaceOwnerOption[]>([]);
   const [query, setQuery] = useState('');
   const [submittedQuery, setSubmittedQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
 
-  const fetchWorkspaces = useCallback(async () => {
-    try {
-      const data = await apiFetch<Workspace[]>('/api/workspaces');
-      setWorkspaces(data);
-      setRoute(prev => {
-        if (!prev.workspaceId && data.length > 0) {
-          return { ...prev, workspaceId: data[0]!.id };
-        }
-        return prev;
-      });
-    } catch {
-      // Silently fail — workspaces list will be empty
-    }
-  }, []);
+  // Fetch workspaces using TanStack Query
+  const { data: workspaces = [] } = useWorkspaces();
 
-  useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
-
-  const ws = workspaces.find(w => w.id === route.workspaceId) ?? workspaces[0];
+  // Auto-select first workspace if none selected
+  const ws = workspaces.find((w: { id: string }) => w.id === route.workspaceId) ?? workspaces[0];
   const wsId = ws?.url_slug ?? '';
+
+  // Auto-navigate to first workspace on mount
+  if (!route.workspaceId && workspaces.length > 0 && workspaces[0]) {
+    setRoute(prev => ({ ...prev, workspaceId: workspaces[0]!.id }));
+  }
+  // Fetch workspace data using TanStack Query
+  const { data: schemas = [] } = useSchemas(wsId, !!wsId);
+  const { data: projects = [] } = useProjects(wsId);
+  const { lifecycleStates, ownerOptions } = useWorkspaceConfig(wsId, !!wsId);
+
   const {
     canManageWorkspaces,
     canViewSchemas,
@@ -111,36 +101,6 @@ const App = () => {
     ...(canViewAudit ? ['audit'] : [])
   ];
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
-
-  const refreshSchemas = useCallback(() => {
-    if (!wsId) return;
-    apiFetch<EntitySchema[]>(`/api/${wsId}/schemas`)
-      .then(setSchemas)
-      .catch(() => setSchemas([]));
-  }, [wsId]);
-
-  const refreshProjects = useCallback(() => {
-    if (!wsId) return;
-    fetchProjects(wsId)
-      .then(setProjects)
-      .catch(() => setProjects([]));
-  }, [wsId]);
-
-  const refreshWorkspaceConfig = useCallback(() => {
-    if (!wsId) return;
-    fetchLifecycleStates(wsId)
-      .then(setLifecycleStates)
-      .catch(() => setLifecycleStates([]));
-    fetchOwnerOptions(wsId)
-      .then(setOwnerOptions)
-      .catch(() => setOwnerOptions([]));
-  }, [wsId]);
-
-  useEffect(() => refreshSchemas(), [refreshSchemas]);
-
-  useEffect(() => refreshProjects(), [refreshProjects]);
-
-  useEffect(() => refreshWorkspaceConfig(), [refreshWorkspaceConfig]);
 
   const navigate = useCallback(
     (patch: RoutePatch) =>
@@ -193,7 +153,7 @@ const App = () => {
             projectId={route.projectId}
             folderFilter={route.folderFilter}
             navigate={navigate}
-            onProjectUpdated={refreshProjects}
+            onProjectUpdated={() => {}}
             ownerOptions={ownerOptions}
           />
         ) : null;
@@ -233,7 +193,7 @@ const App = () => {
           schemas={schemas}
           selectedSchemaId={route.schemaId}
           onSelectSchema={id => navigate({ schemaId: id })}
-          onSchemaUpdated={refreshSchemas}
+          onSchemaUpdated={() => {}}
           canEdit={canEditSchemas}
         />
       ) : null;
@@ -264,11 +224,11 @@ const App = () => {
               : (defaultSettingsSection ?? route.settingsSection)
           }
           navigate={navigate}
-          onWorkspaceUpdated={fetchWorkspaces}
-          onWorkspaceDeleted={fetchWorkspaces}
+          onWorkspaceUpdated={() => {}}
+          onWorkspaceDeleted={() => {}}
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
-          onConfigUpdated={refreshWorkspaceConfig}
+          onConfigUpdated={() => {}}
           availableSections={availableSettingsSections}
         />
       ) : null;
@@ -351,7 +311,6 @@ const App = () => {
             open={addWsOpen}
             onClose={() => setAddWsOpen(false)}
             onCreated={newWs => {
-              fetchWorkspaces();
               navigate({ workspaceId: newWs.id });
             }}
           />
@@ -361,7 +320,6 @@ const App = () => {
             open={addProjectOpen}
             onClose={() => setAddProjectOpen(false)}
             onCreated={project => {
-              refreshProjects();
               navigate({
                 view: 'project-detail',
                 projectId: project.id,

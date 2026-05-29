@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
 import type { NavigateFn } from '../routing';
-import { apiFetch, fetchAuditLog, updateLifecycleStates, updateOwnerOptions } from '../api';
+import { apiFetch, updateLifecycleStates, updateOwnerOptions } from '../api';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
@@ -11,6 +11,7 @@ import type {
   AuditOperation,
 } from '../api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
+import { useAuditLog } from '../hooks/useAudit';
 
 type WorkspaceSettingsProps = {
   workspace: Workspace;
@@ -449,25 +450,15 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
   const [operation, setOperation] = useState<'' | AuditOperation>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [entries, setEntries] = useState<AuditLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchAuditLog(workspace.url_slug, {
-      entityType: entityType || null,
-      operation: operation || null,
-      startDate: startDate ? toStartOfDay(startDate) : null,
-      endDate: endDate ? toEndOfDay(endDate) : null,
-      limit: 100,
-    })
-      .then(setEntries)
-      .catch(error => {
-        console.error('Failed to load audit log:', error);
-        setEntries([]);
-      })
-      .finally(() => setLoading(false));
-  }, [workspace.url_slug, entityType, operation, startDate, endDate]);
+  // Use TanStack Query for audit log fetching
+  const { data: entries = [], isLoading: loading } = useAuditLog(workspace.url_slug, {
+    entityType: entityType || null,
+    operation: operation || null,
+    startDate: startDate ? toStartOfDay(startDate) : null,
+    endDate: endDate ? toEndOfDay(endDate) : null,
+    limit: 100,
+  });
 
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
