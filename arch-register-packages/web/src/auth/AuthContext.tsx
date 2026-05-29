@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
+import { PermissionProvider } from './PermissionContext';
 
 export type User = {
   id: string;
@@ -196,7 +197,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={authValue}>
-      <AuthorizationDataProvider value={authBaseData}>{children}</AuthorizationDataProvider>
+      <AuthorizationDataProvider value={authBaseData}>
+        <PermissionProvider>{children}</PermissionProvider>
+      </AuthorizationDataProvider>
     </AuthContext.Provider>
   );
 };

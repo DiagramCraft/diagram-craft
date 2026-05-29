@@ -37,5 +37,6 @@ export {
   type PermissionDataProvider
 } from './AuthorizationContextBuilder.js';
 
-// Export the abstract permission evaluator
-export { PermissionEvaluator } from './PermissionEvaluator.js';
+// Export permission checker and capability evaluator
+export { PermissionChecker } from './PermissionChecker.js';
+export { CapabilityEvaluator } from './CapabilityEvaluator.js';

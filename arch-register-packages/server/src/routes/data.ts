@@ -11,13 +11,13 @@ import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { generateCsv, formatArrayForCsv } from '../utils/csv.js';
 import { handleDbError, parsePositiveInt, slugify } from '../utils/http.js';
-import { buildApiAuthCtx, requireEntityAction, canCreateTopLevelEntity } from '../auth/authorization.js';
+import { buildApiAuthCtx, requireEntityAction, requireCanCreateTopLevelEntity } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
   AuthorizationContext,
   EntityCapabilities,
   EntitySchema,
-  PermissionEvaluator
+  PermissionChecker
 } from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/data';
@@ -104,13 +104,13 @@ const getEntityCapabilities = (
     };
   }
 
-  const evaluator = new PermissionEvaluator();
+  const checker = new PermissionChecker();
   return {
-    canView: evaluator.hasEntityPermission(context, entity, 'view_entity'),
-    canEdit: evaluator.hasEntityPermission(context, entity, 'edit_entity'),
-    canDelete: evaluator.hasEntityPermission(context, entity, 'admin_entity'),
-    canAdmin: evaluator.hasEntityPermission(context, entity, 'admin_entity'),
-    canCreateChild: evaluator.hasEntityPermission(context, entity, 'create_child')
+    canView: checker.hasEntityPermission(context, entity, 'view_entity'),
+    canEdit: checker.hasEntityPermission(context, entity, 'edit_entity'),
+    canDelete: checker.hasEntityPermission(context, entity, 'admin_entity'),
+    canAdmin: checker.hasEntityPermission(context, entity, 'admin_entity'),
+    canCreateChild: checker.hasEntityPermission(context, entity, 'create_child')
   };
 };
 
@@ -207,7 +207,7 @@ const relationFields = (fields: SchemaField[]) =>
   );
 
 export function createDataRoutes(db: DatabaseAdapter) {
-  const evaluator = new PermissionEvaluator();
+  const checker = new PermissionChecker();
   const router = new H3();
 
   router.get(
@@ -225,7 +225,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
       try {
         const visibleEntities = (await db.listEntities(workspace)).filter(entity =>
-          evaluator.hasEntityPermission(authCtx, entity, 'view_entity')
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q })
           .sort((a, b) => a.name.localeCompare(b.name))
@@ -246,7 +246,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
         const entities = (await db.listEntities(workspace)).filter(entity =>
-          evaluator.hasEntityPermission(authCtx, entity, 'view_entity')
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const countBy = <T extends string | null>(values: T[]) =>
           [
@@ -291,7 +291,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.listEntities(workspace)
         ]);
         const allEntities = allEntitiesRaw.filter(entity =>
-          evaluator.hasEntityPermission(authCtx, entity, 'view_entity')
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const containmentFieldsBySchema = new Map<string, string[]>();
         for (const schema of schemas) {
@@ -360,7 +360,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           db.listEntities(workspace)
         ]);
         const allEntities = allEntitiesRaw.filter(entity =>
-          evaluator.hasEntityPermission(authCtx, entity, 'view_entity')
+          checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const schemaMap = new Map(schemas.map(s => [s.id, s]));
         const entities = filterEntities(allEntities, { schemaId, owner, lifecycle, q }).sort(
@@ -532,7 +532,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           'You do not have access to view this entity'
         );
         const entities = authCtx
-          ? entitiesRaw.filter(row => evaluator.hasEntityPermission(authCtx, row, 'view_entity'))
+          ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
           : entitiesRaw;
 
         const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
@@ -810,13 +810,12 @@ export function createDataRoutes(db: DatabaseAdapter) {
                 'You do not have permission to add children under one or more parent entities'
               )
             );
-          } else if (!canCreateTopLevelEntity(authCtx, owner)) {
-            throw new HTTPError({
-              status: 403,
-              statusText: 'Forbidden',
-              message:
-                'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
-            });
+          } else {
+            requireCanCreateTopLevelEntity(
+              authCtx,
+              owner,
+              'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
+            );
           }
         }
         const timestamp = new Date();

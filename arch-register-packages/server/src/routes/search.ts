@@ -6,7 +6,7 @@ import { parsePositiveInt } from '../utils/http.js';
 import { SEARCH_DEFAULTS } from '../constants.js';
 import { buildApiAuthCtx } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import { PermissionEvaluator } from '@arch-register/permissions';
+import { PermissionChecker } from '@arch-register/permissions';
 
 const BASE = '/api/:workspace/search';
 
@@ -122,7 +122,7 @@ const collectFieldMatches = (fields: SchemaField[], query: string): SchemaFieldM
 
 export function createSearchRoutes(db: DatabaseAdapter) {
   const router = new H3();
-  const evaluator = new PermissionEvaluator();
+  const checker = new PermissionChecker();
 
   router.get(
     BASE,
@@ -156,7 +156,7 @@ export function createSearchRoutes(db: DatabaseAdapter) {
       ]);
 
       const visibleEntities = authCtx
-        ? entities.filter(entity => evaluator.hasEntityPermission(authCtx, entity, 'view_entity'))
+        ? entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'))
         : entities;
 
       const projectsResults = types.includes('projects')

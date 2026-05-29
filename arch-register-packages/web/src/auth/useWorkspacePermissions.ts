@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import {
-  PermissionEvaluator,
+  PermissionChecker,
+  CapabilityEvaluator,
   buildAuthorizationContext,
   type AuthorizationContext,
   type GlobalRole,
@@ -21,7 +22,8 @@ type WorkspacePermissions = {
   canCreateEntities: boolean;
 };
 
-const evaluator = new PermissionEvaluator();
+const checker = new PermissionChecker();
+const capabilities = new CapabilityEvaluator();
 
 const buildWorkspaceAuthorizationContext = (
   authorizationData: ReturnType<typeof useAuthorizationData>,
@@ -57,16 +59,16 @@ export const useWorkspacePermissions = (
     const context = buildWorkspaceAuthorizationContext(authorizationData, workspaceId);
 
     const canManageWorkspaces =
-      context != null && evaluator.hasGlobalPermission(context, 'admin_platform');
-    const canViewSchemas = context != null && evaluator.hasGlobalPermission(context, 'view_schema');
-    const canEditSchemas = context != null && evaluator.hasGlobalPermission(context, 'edit_schema');
-    const canManageTeams = context != null && evaluator.hasGlobalPermission(context, 'manage_teams');
-    const canViewAudit = context != null && evaluator.hasGlobalPermission(context, 'view_audit');
+      context != null && checker.hasGlobalPermission(context, 'admin_platform');
+    const canViewSchemas = context != null && checker.hasGlobalPermission(context, 'view_schema');
+    const canEditSchemas = context != null && checker.hasGlobalPermission(context, 'edit_schema');
+    const canManageTeams = context != null && checker.hasGlobalPermission(context, 'manage_teams');
+    const canViewAudit = context != null && checker.hasGlobalPermission(context, 'view_audit');
     const firstOwnerTeamId = context?.ownerOptions[0]?.id ?? null;
     const canCreateProjects =
-      context != null && evaluator.canCreateProject(context, firstOwnerTeamId);
+      context != null && capabilities.canCreateProject(context, firstOwnerTeamId);
     const canCreateEntities =
-      context != null && evaluator.canCreateTopLevelEntity(context, firstOwnerTeamId);
+      context != null && capabilities.canCreateTopLevelEntity(context, firstOwnerTeamId);
 
     return {
       canManageWorkspaces,

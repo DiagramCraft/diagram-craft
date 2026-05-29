@@ -6,7 +6,8 @@ import {
   fetchAuthorizationContextData,
   type AuthorizationContext,
   type EntityAction,
-  PermissionEvaluator,
+  PermissionChecker,
+  CapabilityEvaluator,
   ProjectAction
 } from '@arch-register/permissions';
 import { ServerDataProvider } from './ServerAuthorizationDataProvider.js';
@@ -14,8 +15,15 @@ import { httpAssert } from '../utils/httpAssert';
 
 export const GLOBAL_WS = '__global__';
 
+// Singleton instances for performance
+const checker = new PermissionChecker();
+const capabilities = new CapabilityEvaluator();
+
 /**
- * Require a specific entity action, throw 403 if not allowed
+ * Require a specific entity action, throw 403 if not allowed.
+ * 
+ * This is an HTTP-specific helper that wraps PermissionChecker
+ * and throws an appropriate HTTP error.
  */
 export const requireEntityAction = (
   context: AuthorizationContext,
@@ -23,8 +31,7 @@ export const requireEntityAction = (
   action: EntityAction,
   message?: string
 ) => {
-  const evaluator = new PermissionEvaluator();
-  httpAssert.true(evaluator.hasEntityPermission(context, entity, action), {
+  httpAssert.true(checker.hasEntityPermission(context, entity, action), {
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'Insufficient entity permissions'
@@ -32,15 +39,17 @@ export const requireEntityAction = (
 };
 
 /**
- * Require a global permission, throw 403 if not allowed
+ * Require a global permission, throw 403 if not allowed.
+ * 
+ * This is an HTTP-specific helper that wraps PermissionChecker
+ * and throws an appropriate HTTP error.
  */
 export const requireGlobalPermission = (
   context: AuthorizationContext,
   permission: GlobalPermission,
   message?: string
 ) => {
-  const evaluator = new PermissionEvaluator();
-  httpAssert.true(evaluator.hasGlobalPermission(context, permission), {
+  httpAssert.true(checker.hasGlobalPermission(context, permission), {
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'Insufficient permissions'
@@ -48,7 +57,10 @@ export const requireGlobalPermission = (
 };
 
 /**
- * Require project edit permission, throw 403 if not allowed
+ * Require project action permission, throw 403 if not allowed.
+ * 
+ * This is an HTTP-specific helper that wraps PermissionChecker
+ * and throws an appropriate HTTP error.
  */
 export const requireProjectAction = (
   context: AuthorizationContext,
@@ -56,8 +68,7 @@ export const requireProjectAction = (
   action: ProjectAction,
   message?: string
 ) => {
-  const evaluator = new PermissionEvaluator();
-  httpAssert.true(evaluator.hasProjectPermission(context, ownerTeamId, action), {
+  httpAssert.true(checker.hasProjectPermission(context, ownerTeamId, action), {
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'Insufficient project permissions'
@@ -65,36 +76,17 @@ export const requireProjectAction = (
 };
 
 /**
- * Check if user can create a project with a specific owner
- */
-export const canCreateProject = (
-  context: AuthorizationContext,
-  ownerTeamId: string | null
-): boolean => {
-  const evaluator = new PermissionEvaluator();
-  return evaluator.canCreateProject(context, ownerTeamId);
-};
-
-/**
- * Check if user can create a top-level entity with a specific owner
- */
-export const canCreateTopLevelEntity = (
-  context: AuthorizationContext,
-  ownerTeamId: string | null
-): boolean => {
-  const evaluator = new PermissionEvaluator();
-  return evaluator.canCreateTopLevelEntity(context, ownerTeamId);
-};
-
-/**
- * Require project creation permission for specific owner, throw 403 if not allowed
+ * Require project creation capability for specific owner, throw 403 if not allowed.
+ * 
+ * This is an HTTP-specific helper that wraps CapabilityEvaluator
+ * and throws an appropriate HTTP error.
  */
 export const requireCanCreateProject = (
   context: AuthorizationContext,
   ownerTeamId: string | null,
   message?: string
 ) => {
-  httpAssert.true(canCreateProject(context, ownerTeamId), {
+  httpAssert.true(capabilities.canCreateProject(context, ownerTeamId), {
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'You do not have permission to create a project for this owner team'
@@ -102,7 +94,29 @@ export const requireCanCreateProject = (
 };
 
 /**
- * Build authorization context for an authenticated event
+ * Require top-level entity creation capability for specific owner, throw 403 if not allowed.
+ * 
+ * This is an HTTP-specific helper that wraps CapabilityEvaluator
+ * and throws an appropriate HTTP error.
+ */
+export const requireCanCreateTopLevelEntity = (
+  context: AuthorizationContext,
+  ownerTeamId: string | null,
+  message?: string
+) => {
+  httpAssert.true(capabilities.canCreateTopLevelEntity(context, ownerTeamId), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'You do not have permission to create a top-level entity for this owner team'
+  });
+};
+
+/**
+ * Build authorization context for an authenticated event.
+ * 
+ * This fetches all necessary permission data from the database
+ * and constructs an AuthorizationContext that can be used with
+ * PermissionChecker and CapabilityEvaluator.
  */
 export const buildApiAuthCtx = async (
   db: DatabaseAdapter,

@@ -14,97 +14,143 @@ This module implements a shared permission evaluation system that can be used by
 pnpm add @arch-register/permissions
 ```
 
+## Architecture
+
+The module is split into two main components with clear responsibilities:
+
+### PermissionChecker
+
+Checks **assigned permissions and roles** against an authorization context.
+
+- `hasEntityPermission()` - Check assigned entity permissions
+- `hasProjectPermission()` - Check assigned project permissions  
+- `hasGlobalPermission()` - Check assigned global permissions
+
+**Use when**: You need to verify if a user has a specific assigned permission.
+
+### CapabilityEvaluator
+
+Evaluates **computed capabilities** based on context and business rules.
+
+- `canCreateProject()` - Check if user can create a project with specific owner
+- `canCreateTopLevelEntity()` - Check if user can create top-level entity
+- `canEditProject()` - Check if user can edit a project
+- `canDeleteProject()` - Check if user can delete a project
+- `canManageProjectFiles()` - Check if user can manage project files
+
+**Use when**: You need to determine if a user CAN perform an action based on their roles, team memberships, and other contextual factors.
+
+### Key Distinction
+
+- **`has*` methods** = Checks assigned permissions/roles (static)
+- **`can*` methods** = Computes capabilities based on context (dynamic)
+
 ## Core Concepts
 
 ### Permission Types
 
 - **Global Permissions**: Assigned platform-wide permissions (e.g., `view_schema`, `manage_users`)
 - **Entity Permissions**: Entity-specific actions (e.g., `view_entity`, `edit_entity`, `admin_entity`)
-- **Project Permissions**: Project-level actions (e.g., `canEdit`, `canDelete`, `canManageFiles`)
-- **Computed Capabilities**: Context-dependent checks such as project creation and top-level entity creation
+- **Project Permissions**: Project-level actions (e.g., `edit_project`, `delete_project`, `manage_files`)
+- **Computed Capabilities**: Context-dependent checks (e.g., can create project for specific team)
 
 ### Authorization Context
 
 The `AuthorizationContext` contains all data needed for permission evaluation:
 - User's global roles and permissions
 - Team memberships
+- Owner options (teams that can own records)
 - Entity schemas and data
 - Entity grants (explicit permission assignments)
 
 ## Usage
 
-### Abstract Base Class
-
-The `PermissionEvaluator` abstract class provides the core permission logic:
+### Basic Usage
 
 ```typescript
-import { PermissionEvaluator, type AuthorizationContext, type Entity } from '@arch-register/permissions';
+import { 
+  PermissionChecker, 
+  CapabilityEvaluator,
+  buildAuthorizationContext,
+  type AuthorizationContext 
+} from '@arch-register/permissions';
 
-class MyPermissionEvaluator extends PermissionEvaluator {
-  async buildContext(workspaceId: string, userId: string): Promise<AuthorizationContext> {
-    // Implement data fetching
-  }
-}
+// Create instances
+const checker = new PermissionChecker();
+const capabilities = new CapabilityEvaluator();
 
-const evaluator = new MyPermissionEvaluator(dataProvider);
-const context = await evaluator.buildContext('workspace-id', 'user-id');
+// Build context (see below for data fetching)
+const context = buildAuthorizationContext({
+  userId: 'user-123',
+  globalRoles: ['schema_admin'],
+  teamMemberships: ['team-456'],
+  ownerOptions: [{ id: 'team-456', name: 'Engineering', type: 'team' }],
+  schemas: [...],
+  entities: [...],
+  grants: [...]
+});
 
-// Check entity permissions
-const canEdit = evaluator.hasEntityPermission(context, entity, 'edit_entity');
-
-// Get all entity capabilities
-const capabilities = evaluator.getEntityCapabilities(context, entity);
-// { canView: true, canEdit: true, canDelete: false, canAdmin: false, canCreateChild: true }
-
-// Check project permissions
-const canEditProject = evaluator.canEditProject(context, ownerTeamId);
-
-// Get all project capabilities
-const projectCaps = evaluator.getProjectCapabilities(context, ownerTeamId);
-// { canEdit: true, canDelete: true, canManageFiles: true }
-
-// Check assigned global permissions
-const canManageUsers = evaluator.hasGlobalPermission(context, 'manage_users');
+// Check assigned permissions
+const canEdit = checker.hasEntityPermission(context, entity, 'edit_entity');
+const canManageUsers = checker.hasGlobalPermission(context, 'manage_users');
+const canEditProject = checker.hasProjectPermission(context, ownerTeamId, 'edit_project');
 
 // Check computed capabilities
-const canCreateProject = evaluator.canCreateProject(context, ownerTeamId);
-const canCreateTopLevelEntity = evaluator.canCreateTopLevelEntity(context, ownerTeamId);
+const canCreateProject = capabilities.canCreateProject(context, ownerTeamId);
+const canCreateEntity = capabilities.canCreateTopLevelEntity(context, ownerTeamId);
 ```
 
-### Data Provider Interface
+### Building Authorization Context
 
-Implement the `PermissionDataProvider` interface to provide data:
+Use the helper functions to build context from raw data:
 
 ```typescript
-import { type PermissionDataProvider } from '@arch-register/permissions';
+import { 
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
+  type PermissionDataProvider 
+} from '@arch-register/permissions';
 
+// Option 1: Build from data you already have
+const context = buildAuthorizationContext({
+  userId: 'user-123',
+  globalRoles: ['platform_admin'],
+  teamMemberships: ['team-456'],
+  ownerOptions: [...],
+  schemas: [...],
+  entities: [...],
+  grants: [...]
+});
+
+// Option 2: Fetch data using a provider
 class MyDataProvider implements PermissionDataProvider {
-  async getEntities(workspaceId: string): Promise<Entity[]> {
-    // Fetch entities
-  }
-
-  async getSchemas(workspaceId: string): Promise<EntitySchema[]> {
-    // Fetch schemas
-  }
-
-  async getEntityGrants(workspaceId: string): Promise<EntityGrant[]> {
-    // Fetch grants
-  }
-
-  async getTeamMemberships(workspaceId: string, userId: string): Promise<string[]> {
-    // Fetch team IDs
-  }
-
-  async getGlobalRoles(userId: string): Promise<GlobalRole[]> {
-    // Fetch global roles
-  }
+  async getEntities(workspaceId: string) { /* ... */ }
+  async getSchemas(workspaceId: string) { /* ... */ }
+  async getEntityGrants(workspaceId: string) { /* ... */ }
+  async getTeamMemberships(workspaceId: string, userId: string) { /* ... */ }
+  async getGlobalRoles(userId: string) { /* ... */ }
+  async getOwnerOptions(workspaceId: string) { /* ... */ }
 }
+
+const dataProvider = new MyDataProvider();
+const contextData = await fetchAuthorizationContextData(
+  dataProvider,
+  'workspace-id',
+  'user-id'
+);
+const context = buildAuthorizationContext(contextData);
 ```
 
 ## Server Implementation Example
 
 ```typescript
-import { PermissionEvaluator, type AuthorizationContext, type PermissionDataProvider } from '@arch-register/permissions';
+import { 
+  PermissionChecker, 
+  CapabilityEvaluator,
+  buildAuthorizationContext,
+  fetchAuthorizationContextData,
+  type PermissionDataProvider 
+} from '@arch-register/permissions';
 import type { DatabaseAdapter } from './db/database.js';
 
 class ServerDataProvider implements PermissionDataProvider {
@@ -133,93 +179,93 @@ class ServerDataProvider implements PermissionDataProvider {
     const assignments = await this.db.listGlobalRoleAssignments(userId);
     return assignments.map(a => a.role);
   }
+
+  async getOwnerOptions(workspaceId: string) {
+    return this.db.listOwnerOptions(workspaceId);
+  }
 }
 
-export class ServerPermissionEvaluator extends PermissionEvaluator {
-  constructor(private db: DatabaseAdapter) {
-    super(new ServerDataProvider(db));
+// In your route handlers
+const checker = new PermissionChecker();
+const capabilities = new CapabilityEvaluator();
+
+async function handleRequest(db: DatabaseAdapter, workspaceId: string, userId: string) {
+  // Build context
+  const dataProvider = new ServerDataProvider(db);
+  const contextData = await fetchAuthorizationContextData(dataProvider, workspaceId, userId);
+  const context = buildAuthorizationContext(contextData);
+
+  // Check permissions
+  if (!checker.hasEntityPermission(context, entity, 'edit_entity')) {
+    throw new Error('Forbidden');
   }
 
-  async buildContext(workspaceId: string, userId: string): Promise<AuthorizationContext> {
-    const [globalRoles, teamMemberships, schemas, entities, grants] = await Promise.all([
-      this.dataProvider.getGlobalRoles(userId),
-      this.dataProvider.getTeamMemberships(workspaceId, userId),
-      this.dataProvider.getSchemas(workspaceId),
-      this.dataProvider.getEntities(workspaceId),
-      this.dataProvider.getEntityGrants(workspaceId),
-    ]);
-
-    return this.buildAuthorizationContextFromData(
-      userId,
-      globalRoles,
-      teamMemberships,
-      schemas,
-      entities,
-      grants
-    );
+  // Check capabilities
+  if (!capabilities.canCreateProject(context, ownerTeamId)) {
+    throw new Error('Cannot create project for this team');
   }
+
+  // Proceed with action...
 }
 ```
 
 ## Web Implementation Example
 
 ```typescript
-import { PermissionEvaluator, type AuthorizationContext, type PermissionDataProvider } from '@arch-register/permissions';
+import { 
+  PermissionChecker, 
+  CapabilityEvaluator,
+  buildAuthorizationContext,
+  type AuthorizationContext 
+} from '@arch-register/permissions';
 
-class WebDataProvider implements PermissionDataProvider {
-  constructor(private apiBaseUrl: string) {}
+// In a React context
+export const PermissionProvider = ({ children }) => {
+  const { user } = useAuth();
+  const authData = useAuthorizationData();
 
-  async getEntities(workspaceId: string) {
-    const res = await fetch(`${this.apiBaseUrl}/api/${workspaceId}/data`);
-    return res.json();
-  }
+  const checker = useMemo(() => new PermissionChecker(), []);
+  const capabilities = useMemo(() => new CapabilityEvaluator(), []);
 
-  async getSchemas(workspaceId: string) {
-    const res = await fetch(`${this.apiBaseUrl}/api/${workspaceId}/schemas`);
-    return res.json();
-  }
+  const buildContext = useCallback((workspaceId: string) => {
+    if (!user || !authData) return null;
 
-  async getEntityGrants(workspaceId: string) {
-    const res = await fetch(`${this.apiBaseUrl}/api/${workspaceId}/grants`);
-    return res.json();
-  }
-
-  async getTeamMemberships(workspaceId: string, userId: string) {
-    const res = await fetch(`${this.apiBaseUrl}/api/${workspaceId}/teams/memberships?userId=${userId}`);
-    return res.json();
-  }
-
-  async getGlobalRoles(userId: string) {
-    const res = await fetch(`${this.apiBaseUrl}/api/users/${userId}/roles`);
-    return res.json();
-  }
-}
-
-export class WebPermissionEvaluator extends PermissionEvaluator {
-  constructor(private apiBaseUrl: string) {
-    super(new WebDataProvider(apiBaseUrl));
-  }
-
-  async buildContext(workspaceId: string, userId: string): Promise<AuthorizationContext> {
-    // Consider caching this data
-    const [globalRoles, teamMemberships, schemas, entities, grants] = await Promise.all([
-      this.dataProvider.getGlobalRoles(userId),
-      this.dataProvider.getTeamMemberships(workspaceId, userId),
-      this.dataProvider.getSchemas(workspaceId),
-      this.dataProvider.getEntities(workspaceId),
-      this.dataProvider.getEntityGrants(workspaceId),
-    ]);
-
-    return this.buildAuthorizationContextFromData(
-      userId,
-      globalRoles,
-      teamMemberships,
-      schemas,
-      entities,
-      grants
+    const teamMembership = authData.team_memberships.find(
+      tm => tm.workspace_id === workspaceId
     );
-  }
-}
+    const ownerOptions = authData.owner_options_by_workspace[workspaceId] ?? [];
+
+    return buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: authData.global_roles,
+      teamMemberships: teamMembership?.team_ids ?? [],
+      ownerOptions,
+      schemas: [], // Fetch separately if needed
+      entities: [], // Fetch separately if needed
+      grants: []
+    });
+  }, [user, authData]);
+
+  const hasEntityPermission = useCallback((workspaceId, entity, action) => {
+    const context = buildContext(workspaceId);
+    return context ? checker.hasEntityPermission(context, entity, action) : false;
+  }, [buildContext, checker]);
+
+  const canCreateProject = useCallback((workspaceId, ownerTeamId) => {
+    const context = buildContext(workspaceId);
+    return context ? capabilities.canCreateProject(context, ownerTeamId) : false;
+  }, [buildContext, capabilities]);
+
+  return (
+    <PermissionContext.Provider value={{ 
+      hasEntityPermission, 
+      canCreateProject,
+      // ... other methods
+    }}>
+      {children}
+    </PermissionContext.Provider>
+  );
+};
 ```
 
 ## Permission Logic
@@ -237,8 +283,17 @@ Entity permissions are evaluated based on:
 
 Project permissions are evaluated based on:
 
-1. **Global Roles**: `platform_admin` can edit all projects
-2. **Owner Team Membership**: Team owners can edit their projects
+1. **Global Roles**: `platform_admin` can perform all project actions
+2. **Owner Team Membership**: Team owners can perform all project actions
+
+### Global Permissions
+
+Global permissions are derived from global role assignments:
+
+- `platform_admin`: All permissions
+- `schema_admin`: `view_schema`, `edit_schema`
+- `user_admin`: `manage_users`, `manage_teams`, `manage_global_roles`
+- `auditor`: `view_audit`
 
 ### Role Hierarchy
 
@@ -254,19 +309,26 @@ Project permissions are evaluated based on:
 - `user_admin`: Can manage users and teams
 - `auditor`: Can view audit logs
 
-## Computed capabilities
+## Computed Capabilities
 
-Some checks depend on workspace context rather than assigned global permissions:
+Some checks depend on workspace context rather than just assigned permissions:
 
-- `canCreateProject(...)`
+### `canCreateProject(context, ownerTeamId)`
 
-- `canCreateTopLevelEntity(...)`
+A user can create a project if:
+- They are a `platform_admin` (can create for any owner), OR
+- The owner is a team they are a member of
 
+### `canCreateTopLevelEntity(context, ownerTeamId)`
+
+A user can create a top-level entity if:
+- They are a `platform_admin` (can create for any owner), OR
+- They have `view_schema` permission AND the owner is a team they are a member of
 
 ## Constants
 
 ```typescript
-import { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS } from '@arch-register/permissions';
+import { ROLE_ACTIONS, GLOBAL_ROLE_PERMISSIONS, getGlobalPermissionsForRoles } from '@arch-register/permissions';
 
 // Maps entity roles to actions
 ROLE_ACTIONS['viewer'] // ['view_entity']
@@ -277,6 +339,9 @@ ROLE_ACTIONS['entity_admin'] // ['view_entity', 'edit_entity', 'create_child', '
 // Maps global roles to permissions
 GLOBAL_ROLE_PERMISSIONS['platform_admin'] // All permissions + entity actions
 GLOBAL_ROLE_PERMISSIONS['schema_admin'] // ['view_schema', 'edit_schema']
+
+// Get permissions for a set of roles
+const permissions = getGlobalPermissionsForRoles(new Set(['schema_admin', 'auditor']));
 ```
 
 ## Security Considerations
@@ -287,6 +352,23 @@ GLOBAL_ROLE_PERMISSIONS['schema_admin'] // ['view_schema', 'edit_schema']
 - Server must always verify permissions before executing actions
 - Client-side context may be stale; implement caching strategy
 - Never trust client-side permission decisions for security
+
+## Migration from PermissionEvaluator
+
+The old `PermissionEvaluator` class is still exported for backward compatibility but is deprecated. Migrate to the new API:
+
+```typescript
+// Old (deprecated)
+const evaluator = new PermissionEvaluator();
+evaluator.hasEntityPermission(context, entity, action);
+evaluator.canCreateProject(context, ownerTeamId);
+
+// New (recommended)
+const checker = new PermissionChecker();
+const capabilities = new CapabilityEvaluator();
+checker.hasEntityPermission(context, entity, action);
+capabilities.canCreateProject(context, ownerTeamId);
+```
 
 ## Development
 

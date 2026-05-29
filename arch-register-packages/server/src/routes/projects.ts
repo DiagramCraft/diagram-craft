@@ -9,7 +9,7 @@ import { buildApiAuthCtx, requireProjectAction, requireCanCreateProject } from '
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
   AuthorizationContext,
-  PermissionEvaluator,
+  PermissionChecker,
   ProjectCapabilities
 } from '@arch-register/permissions';
 
@@ -54,11 +54,11 @@ const getProjectCapabilities = (
     };
   }
 
-  const evaluator = new PermissionEvaluator();
+  const checker = new PermissionChecker();
   return {
-    canEdit: evaluator.hasProjectPermission(context, ownerTeamId, 'edit_project'),
-    canDelete: evaluator.hasProjectPermission(context, ownerTeamId, 'delete_project'),
-    canManageFiles: evaluator.hasProjectPermission(context, ownerTeamId, 'manage_files')
+    canEdit: checker.hasProjectPermission(context, ownerTeamId, 'edit_project'),
+    canDelete: checker.hasProjectPermission(context, ownerTeamId, 'delete_project'),
+    canManageFiles: checker.hasProjectPermission(context, ownerTeamId, 'manage_files')
   };
 };
 
