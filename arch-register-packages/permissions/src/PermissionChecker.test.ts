@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PermissionChecker } from './PermissionChecker.js';
 import { buildAuthorizationContext } from './AuthorizationContextBuilder.js';
-import type { Entity, EntitySchema, EntityGrant, AuthorizationContext } from './types.js';
+import type { Entity, EntityGrant } from './types.js';
 
 describe('PermissionChecker - Global Permissions', () => {
   const checker = new PermissionChecker();
@@ -412,7 +412,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
   it('viewer role grants only view permission', () => {
     const entity = createEntity('entity-1');
     const grant = createGrant('entity-1', 'user-1', 'viewer');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -432,7 +432,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
   it('editor role grants view and edit permissions', () => {
     const entity = createEntity('entity-1');
     const grant = createGrant('entity-1', 'user-1', 'editor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -452,7 +452,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
   it('contributor role grants view, edit, and create_child permissions', () => {
     const entity = createEntity('entity-1');
     const grant = createGrant('entity-1', 'user-1', 'contributor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -472,7 +472,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
   it('entity_admin role grants all permissions', () => {
     const entity = createEntity('entity-1');
     const grant = createGrant('entity-1', 'user-1', 'entity_admin');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -493,7 +493,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const entity = createEntity('entity-1');
     const viewerGrant = createGrant('entity-1', 'user-1', 'viewer');
     const editorGrant = createGrant('entity-1', 'user-1', 'editor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -513,7 +513,7 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const entity1 = createEntity('entity-1');
     const entity2 = createEntity('entity-2');
     const grant = createGrant('entity-1', 'user-1', 'entity_admin');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -569,7 +569,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
   it('team member inherits permissions from team grant', () => {
     const entity = createEntity('entity-1');
     const grant = createTeamGrant('entity-1', 'team-1', 'editor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -587,7 +587,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
   it('non-team member does not inherit team grant', () => {
     const entity = createEntity('entity-1');
     const grant = createTeamGrant('entity-1', 'team-1', 'editor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-2',
       globalRoles: [],
@@ -605,7 +605,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
     const entity = createEntity('entity-1');
     const team1Grant = createTeamGrant('entity-1', 'team-1', 'viewer');
     const team2Grant = createTeamGrant('entity-1', 'team-2', 'editor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
@@ -634,7 +634,7 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
       created_at: new Date()
     };
     const teamGrant = createTeamGrant('entity-1', 'team-1', 'contributor');
-    
+
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],

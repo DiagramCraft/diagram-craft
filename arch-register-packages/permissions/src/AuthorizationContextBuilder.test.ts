@@ -1,7 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { buildAuthorizationContext, fetchAuthorizationContextData } from './AuthorizationContextBuilder.js';
-import type { PermissionDataProvider, AuthorizationContextData } from './AuthorizationContextBuilder.js';
-import type { Entity, EntitySchema, EntityGrant, GlobalRole, WorkspaceOwnerOption } from './types.js';
+import {
+  buildAuthorizationContext,
+  fetchAuthorizationContextData
+} from './AuthorizationContextBuilder.js';
+import type {
+  PermissionDataProvider,
+  AuthorizationContextData
+} from './AuthorizationContextBuilder.js';
+import type {
+  Entity,
+  EntitySchema,
+  EntityGrant,
+  GlobalRole,
+  WorkspaceOwnerOption
+} from './types.js';
 
 describe('AuthorizationContextBuilder - buildAuthorizationContext', () => {
   it('builds context with all required fields', () => {
@@ -260,7 +272,7 @@ describe('AuthorizationContextBuilder - fetchAuthorizationContextData', () => {
 
   it('fetches all data from provider', async () => {
     const provider = new TestDataProvider();
-    
+
     const schema: EntitySchema = {
       id: 'schema-1',
       workspace: 'workspace-1',
@@ -478,7 +490,7 @@ describe('AuthorizationContextBuilder - Real-world Integration', () => {
       return [];
     }
 
-    async getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]> {
+    async getOwnerOptions(_workspaceId: string): Promise<WorkspaceOwnerOption[]> {
       return [
         { id: 'team-engineering', name: 'Engineering', type: 'team' },
         { id: 'team-operations', name: 'Operations', type: 'team' }
