@@ -73,10 +73,10 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       httpAssert.string(password, { message: 'Username and password are required' });
 
       // Try to find user by ID first, then by email
-      let user = await db.getUser(username);
+      let user = await db.identityAuth.getUser(username);
 
       if (!user && username.includes('@')) {
-        user = await db.getUserByEmail(username);
+        user = await db.identityAuth.getUserByEmail(username);
       }
 
       httpAssert.present(user, { status: 401, message: 'Invalid username or password' });
@@ -104,7 +104,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       });
 
       // Update last login
-      await db.updateUserLastLogin(user.id, new Date());
+      await db.identityAuth.updateUserLastLogin(user.id, new Date());
 
       const tokens = generateTokenPair(user);
       setTokenCookies(event, tokens);
@@ -168,11 +168,11 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       );
 
       // Find or create user — use issuer:sub as ID to avoid collisions across providers
-      let user = await db.getUserByOidc(claims.issuer, claims.sub);
+      let user = await db.identityAuth.getUserByOidc(claims.issuer, claims.sub);
 
       if (!user) {
         const userId = `${claims.issuer}:${claims.sub}`;
-        user = await db.createUser({
+        user = await db.identityAuth.createUser({
           id: userId,
           email: claims.email ?? null,
           display_name: claims.name,
@@ -186,7 +186,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
           last_login_at: new Date()
         });
       } else {
-        await db.updateUserLastLogin(user.id, new Date());
+        await db.identityAuth.updateUserLastLogin(user.id, new Date());
       }
 
       httpAssert.true(user.is_active, {
@@ -233,7 +233,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
         message: 'Invalid token type'
       });
 
-      const user = await db.getUser(payload.sub);
+      const user = await db.identityAuth.getUser(payload.sub);
 
       httpAssert.present(user, {
         status: 401,
@@ -277,15 +277,15 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       const user = event.context.user as User;
       const [roleAssignments, workspaces] = await Promise.all([
-        db.listGlobalRoleAssignments(user.id),
-        db.listWorkspaces()
+        db.identityAuth.listGlobalRoleAssignments(user.id),
+        db.workspaceAdmin.listWorkspaces()
       ]);
       const globalRoles = roleAssignments.map(assignment => assignment.role);
       const globalPermissions = [...getGlobalPermissionsForRoles(globalRoles)];
       const workspaceMemberships = await Promise.all(
         workspaces.map(async workspace => ({
           workspace_id: workspace.id,
-          memberships: (await db.listTeamMemberships(workspace.id))
+          memberships: (await db.workspaceAdmin.listTeamMemberships(workspace.id))
             .filter(membership => membership.user_id === user.id)
             .map(membership => membership.team_id)
         }))
@@ -296,7 +296,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         Array<{ id: string; name: string; type: 'team' }>
       > = {};
       for (const workspace of workspaces) {
-        const owners = await db.listOwners(workspace.id);
+        const owners = await db.workspaceAdmin.listOwners(workspace.id);
         ownerOptionsByWorkspace[workspace.id] = owners.map(o => ({
           id: o.id,
           name: o.id,
@@ -332,7 +332,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event as AuthenticatedEvent);
       requireGlobalPermission(authCtx, 'manage_users');
 
-      return (await db.listUsers()).map(user => ({
+      return (await db.identityAuth.listUsers()).map(user => ({
         id: user.id,
         email: user.email,
         display_name: user.display_name,
@@ -352,7 +352,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       requireGlobalPermission(authCtx, 'manage_global_roles');
 
       if (event.req.method === 'GET') {
-        return await db.listGlobalRoleAssignments(userId);
+        return await db.identityAuth.listGlobalRoleAssignments(userId);
       }
 
       if (event.req.method === 'PUT') {
@@ -369,7 +369,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         httpAssert.true(roles.length === requestedRoles.length, {
           message: 'roles contains invalid values'
         });
-        return await db.replaceGlobalRoleAssignments(userId, roles, new Date());
+        return await db.identityAuth.replaceGlobalRoleAssignments(userId, roles, new Date());
       }
 
       throw new HTTPError({ status: 405, message: 'Method not allowed' });

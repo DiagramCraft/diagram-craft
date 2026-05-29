@@ -1,4 +1,3 @@
-import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
   CreateUserInput,
   IdentityAuthDatabase,
@@ -11,10 +10,6 @@ export class SqliteIdentityAuthDatabase
   extends SqliteDatabaseBase
   implements IdentityAuthDatabase
 {
-  constructor(db: DatabaseType) {
-    super(db);
-  }
-
   async getUser(id: string) {
     return this.get('SELECT * FROM users WHERE id = ?', [id], sqliteMappers.user);
   }

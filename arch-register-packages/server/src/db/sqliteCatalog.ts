@@ -1,4 +1,3 @@
-import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
   CatalogDatabase,
   CreateEntityGrantInput,
@@ -10,10 +9,6 @@ import type {
 import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
 
 export class SqliteCatalogDatabase extends SqliteDatabaseBase implements CatalogDatabase {
-  constructor(db: DatabaseType) {
-    super(db);
-  }
-
   async resolveWorkspaceSlug(slug: string) {
     const row = this.get<{ id: string }>('SELECT id FROM workspace WHERE url_slug = ?', [slug]);
     return row?.id ?? null;

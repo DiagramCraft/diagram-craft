@@ -210,9 +210,11 @@ export type IdentityAuthDatabase = {
   ): Promise<GlobalRoleAssignment[]>;
 };
 
-export type DatabaseAdapter = CoreDatabase &
-  WorkspaceAdminDatabase &
-  CatalogDatabase &
-  ProjectsFilesDatabase &
-  AuditDatabase &
-  IdentityAuthDatabase;
+export type DatabaseAdapter = {
+  core: CoreDatabase;
+  workspaceAdmin: WorkspaceAdminDatabase;
+  catalog: CatalogDatabase;
+  projectsFiles: ProjectsFilesDatabase;
+  audit: AuditDatabase;
+  identityAuth: IdentityAuthDatabase;
+};

@@ -30,7 +30,13 @@ const main = async () => {
 
     const buf = Buffer.from(content, 'utf8');
     await storage.write(workspace, projectId, fileId, buf);
-    await db.updateProjectFileSizeById(workspace, projectId, fileId, buf.length, new Date());
+    await db.projectsFiles.updateProjectFileSizeById(
+      workspace,
+      projectId,
+      fileId,
+      buf.length,
+      new Date()
+    );
   };
 
   const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name);
@@ -59,7 +65,7 @@ const main = async () => {
   const shutdown = async () => {
     console.log('Shutting down...');
     await collaborationServer.close();
-    await db.close();
+    await db.core.close();
     server.close();
     process.exit(0);
   };

@@ -18,7 +18,7 @@ export function createPublicRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       try {
-        const rows = (await db.listSchemas(workspace)) as EntitySchema[];
+        const rows = (await db.catalog.listSchemas(workspace)) as EntitySchema[];
         return rows.map(toDiagramCraftSchema);
       } catch (e) {
         handleError(e, 'Failed to retrieve public schemas');
@@ -31,7 +31,7 @@ export function createPublicRoutes(db: DatabaseAdapter) {
     defineHandler(async event => {
       const workspace = await resolveWorkspace(event, db);
       try {
-        const rows = (await db.listEntities(workspace)) as Entity[];
+        const rows = (await db.catalog.listEntities(workspace)) as Entity[];
         return rows.map(toDiagramCraftData);
       } catch (e) {
         handleError(e, 'Failed to retrieve public data');

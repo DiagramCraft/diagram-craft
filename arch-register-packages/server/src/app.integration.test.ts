@@ -19,31 +19,31 @@ import {
 } from './db/seedData.js';
 
 const seedDb = async (db: DatabaseAdapter) => {
-  await db.reset();
+  await db.core.reset();
   for (const workspace of seedWorkspaces) {
-    await db.createWorkspace(workspace);
+    await db.workspaceAdmin.createWorkspace(workspace);
   }
   for (const workspace of seedWorkspaces) {
-    await db.replaceLifecycleStates(
+    await db.workspaceAdmin.replaceLifecycleStates(
       workspace.id,
       seedLifecycleStates.filter(state => state.workspace === workspace.id)
     );
-    await db.replaceOwners(
+    await db.workspaceAdmin.replaceOwners(
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );
   }
   for (const schema of seedSchemas) {
-    await db.createSchema(schema);
+    await db.catalog.createSchema(schema);
   }
   for (const entity of seedEntities) {
-    await db.createEntity(entity);
+    await db.catalog.createEntity(entity);
   }
   for (const project of seedProjects) {
-    await db.createProject(project);
+    await db.projectsFiles.createProject(project);
   }
   for (const file of seedProjectFiles) {
-    await db.upsertProjectFile({
+    await db.projectsFiles.upsertProjectFile({
       workspace: file.workspace,
       project_id: file.project_id,
       path: file.path,
@@ -82,9 +82,8 @@ describe('arch-register sqlite integration', () => {
   let testUserToken: string;
 
   beforeAll(async () => {
-    // Set JWT_SECRET for all tests
     process.env.JWT_SECRET = '12345678901234567890123456789012';
-    
+
     sqliteDir = await mkdtemp(join(tmpdir(), 'arch-register-sqlite-'));
     db = new SqliteDatabase(join(sqliteDir, 'db.sqlite'));
     storageDir = await mkdtemp(join(tmpdir(), 'arch-register-storage-'));
@@ -94,9 +93,8 @@ describe('arch-register sqlite integration', () => {
   beforeEach(async () => {
     await seedDb(db);
     await rm(storageDir, { recursive: true, force: true });
-    
-    // Create a test user with platform_admin role for each test
-    const testUser = await db.createUser({
+
+    const testUser = await db.identityAuth.createUser({
       id: 'test-admin',
       email: 'test@example.com',
       display_name: 'Test Admin',
@@ -107,21 +105,24 @@ describe('arch-register sqlite integration', () => {
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
-      last_login_at: null,
+      last_login_at: null
     });
-    await db.replaceGlobalRoleAssignments(testUser.id, ['platform_admin'], new Date());
+    await db.identityAuth.replaceGlobalRoleAssignments(
+      testUser.id,
+      ['platform_admin'],
+      new Date()
+    );
     testUserToken = generateAccessToken(testUser);
   }, 30000);
 
   afterAll(async () => {
-    await db.close();
+    await db.core.close();
     await rm(storageDir, { recursive: true, force: true });
     await rm(sqliteDir, { recursive: true, force: true });
     delete process.env.JWT_SECRET;
   });
 
   const json = async <T>(path: string, init?: RequestInit): Promise<{ response: Response; body: T }> => {
-    // Add auth header by default if not already present
     const headers = new Headers(init?.headers);
     if (!headers.has('authorization')) {
       headers.set('authorization', `Bearer ${testUserToken}`);
@@ -129,34 +130,33 @@ describe('arch-register sqlite integration', () => {
     if (!headers.has('content-type')) {
       headers.set('content-type', 'application/json');
     }
-    
-    const response = await app.request(path, { 
-      ...init, 
+
+    const response = await app.request(path, {
+      ...init,
       headers,
-      signal: AbortSignal.timeout(5000) 
+      signal: AbortSignal.timeout(5000)
     });
     const body = (await response.json()) as T;
     return { response, body };
   };
 
   const text = async (path: string, init?: RequestInit) => {
-    // Add auth header by default if not already present
     const headers = new Headers(init?.headers);
     if (!headers.has('authorization')) {
       headers.set('authorization', `Bearer ${testUserToken}`);
     }
-    
-    const response = await app.request(path, { 
-      ...init, 
+
+    const response = await app.request(path, {
+      ...init,
       headers,
-      signal: AbortSignal.timeout(5000) 
+      signal: AbortSignal.timeout(5000)
     });
     return { response, body: await response.text() };
   };
 
   const authHeaders = (token: string) => ({
     authorization: `Bearer ${token}`,
-    'content-type': 'application/json',
+    'content-type': 'application/json'
   });
 
   it('supports workspace config CRUD', async () => {
@@ -173,7 +173,9 @@ describe('arch-register sqlite integration', () => {
     expect(created.response.status).toBe(200);
     expect(created.body.id).toBe('platform-architecture');
 
-    const lifecycle = await json<WorkspaceSummary[]>('/api/platform-architecture/config/lifecycle-states');
+    const lifecycle = await json<WorkspaceSummary[]>(
+      '/api/platform-architecture/config/lifecycle-states'
+    );
     expect(lifecycle.body.map(row => row.id)).toEqual([
       'proposed',
       'experimental',
@@ -187,10 +189,7 @@ describe('arch-register sqlite integration', () => {
       body: JSON.stringify([{ id: 'platform-team' }, { id: 'data-team' }])
     });
     expect(updatedOwners.response.status).toBe(200);
-    expect(updatedOwners.body.map(row => row.id)).toEqual([
-      'platform-team',
-      'data-team'
-    ]);
+    expect(updatedOwners.body.map(row => row.id)).toEqual(['platform-team', 'data-team']);
   }, 20000);
 
   it('supports schema and entity CRUD, tree, relations, export, and audit', async () => {
@@ -239,9 +238,9 @@ describe('arch-register sqlite integration', () => {
     expect(relations.body.outgoing).toHaveLength(1);
 
     const tree = await json<TreeResponse>('/api/default/data/tree?q=billing');
-    expect(
-      tree.body.nodes.some(node => node._name === 'Billing Service' && node._isMatch)
-    ).toBe(true);
+    expect(tree.body.nodes.some(node => node._name === 'Billing Service' && node._isMatch)).toBe(
+      true
+    );
     expect(tree.body.edges.length).toBeGreaterThanOrEqual(1);
 
     const exported = await text('/api/default/data/export?q=billing');
@@ -313,9 +312,7 @@ describe('arch-register sqlite integration', () => {
     const search = await json<SearchResponse>(
       '/api/default/search?q=system&types=projects,files,entities,schemas'
     );
-    expect(
-      search.body.projects.some(project => project.id === createdProject.body.id)
-    ).toBe(false);
+    expect(search.body.projects.some(project => project.id === createdProject.body.id)).toBe(false);
     expect(
       search.body.files.some(fileResult => fileResult.projectId === createdProject.body.id)
     ).toBe(true);
@@ -334,7 +331,7 @@ describe('arch-register sqlite integration', () => {
   }, 20000);
 
   it('enforces restricted subtree visibility and schema admin permissions', async () => {
-    const viewer = await db.createUser({
+    const viewer = await db.identityAuth.createUser({
       id: 'viewer',
       email: 'viewer@example.com',
       display_name: 'Viewer',
@@ -345,10 +342,10 @@ describe('arch-register sqlite integration', () => {
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
-      last_login_at: null,
+      last_login_at: null
     });
 
-    const schemaAdmin = await db.createUser({
+    const schemaAdmin = await db.identityAuth.createUser({
       id: 'schema-admin',
       email: 'schema-admin@example.com',
       display_name: 'Schema Admin',
@@ -359,10 +356,14 @@ describe('arch-register sqlite integration', () => {
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
-      last_login_at: null,
+      last_login_at: null
     });
 
-    await db.replaceGlobalRoleAssignments(schemaAdmin.id, ['schema_admin'], new Date());
+    await db.identityAuth.replaceGlobalRoleAssignments(
+      schemaAdmin.id,
+      ['schema_admin'],
+      new Date()
+    );
 
     const restricted = await json<EntityResponse>('/api/default/data', {
       method: 'POST',
@@ -371,14 +372,14 @@ describe('arch-register sqlite integration', () => {
         _schemaId: '00000000-0000-0000-0000-000000000001',
         _name: 'Security Domain',
         _owner: 'security-team',
-        _visibilityMode: 'restricted',
-      }),
+        _visibilityMode: 'restricted'
+      })
     });
 
     const viewerToken = generateAccessToken(viewer);
     const deniedRead = await app.request(`/api/default/data/${restricted.body._uid}`, {
       headers: { authorization: `Bearer ${viewerToken}` },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
     expect(deniedRead.status).toBe(403);
 
@@ -386,7 +387,7 @@ describe('arch-register sqlite integration', () => {
       method: 'POST',
       headers: authHeaders(viewerToken),
       body: JSON.stringify({ name: 'Forbidden Schema', fields: [] }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
     expect(deniedSchemaWrite.status).toBe(403);
 
@@ -395,7 +396,7 @@ describe('arch-register sqlite integration', () => {
       method: 'POST',
       headers: authHeaders(schemaAdminToken),
       body: JSON.stringify({ name: 'Allowed Schema', fields: [] }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5000)
     });
     expect(allowedSchemaWrite.status).toBe(200);
   }, 20000);

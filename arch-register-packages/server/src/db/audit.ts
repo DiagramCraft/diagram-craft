@@ -31,11 +31,11 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     entitySlug = null,
     schemaId = null,
     changes,
-    metadata = {},
+    metadata = {}
   } = params;
 
   try {
-    await db.createAuditLog({
+    await db.audit.createAuditLog({
       workspace,
       timestamp: new Date(),
       user_id: STATIC_USER,
@@ -46,7 +46,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
       entity_slug: entitySlug,
       schema_id: schemaId,
       changes,
-      metadata,
+      metadata
     });
   } catch (error) {
     // Log error but don't fail the main operation

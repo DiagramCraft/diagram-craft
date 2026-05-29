@@ -35,10 +35,10 @@ const handleError = (error: unknown, fallback: string): never =>
   });
 
 const getLifecycleValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
-  new Set((await db.listLifecycleStates(workspace)).map(r => r.id));
+  new Set((await db.workspaceAdmin.listLifecycleStates(workspace)).map(r => r.id));
 
 const getOwnerValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
-  new Set((await db.listOwners(workspace)).map(r => r.id));
+  new Set((await db.workspaceAdmin.listOwners(workspace)).map(r => r.id));
 
 const includesQuery = (value: unknown, query: string) =>
   String(value ?? '')
@@ -229,7 +229,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const limit = parsePositiveInt(query['limit'], 'limit');
       const offset = parsePositiveInt(query['offset'], 'offset') ?? 0;
       try {
-        const visibleEntities = (await db.listEntities(workspace)).filter(entity =>
+        const visibleEntities = (await db.catalog.listEntities(workspace)).filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const rows = filterEntities(visibleEntities, { schemaId, owner, lifecycle, q })
@@ -250,7 +250,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const workspace = await resolveWorkspace(event, db);
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       try {
-        const entities = (await db.listEntities(workspace)).filter(entity =>
+        const entities = (await db.catalog.listEntities(workspace)).filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
         );
         const countBy = <T extends string | null>(values: T[]) =>
@@ -292,8 +292,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
       try {
         const [schemas, allEntitiesRaw] = await Promise.all([
-          db.listSchemas(workspace),
-          db.listEntities(workspace)
+          db.catalog.listSchemas(workspace),
+          db.catalog.listEntities(workspace)
         ]);
         const allEntities = allEntitiesRaw.filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
@@ -361,8 +361,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
       try {
         const [schemas, allEntitiesRaw] = await Promise.all([
-          db.listSchemas(workspace),
-          db.listEntities(workspace)
+          db.catalog.listSchemas(workspace),
+          db.catalog.listEntities(workspace)
         ]);
         const allEntities = allEntitiesRaw.filter(entity =>
           checker.hasEntityPermission(authCtx, entity, 'view_entity')
@@ -403,14 +403,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
           ];
           const rows = entities.map(entity => {
             const row: Record<string, unknown> = {
-              'Name': entity.name,
-              'Slug': entity.slug,
-              'Namespace': entity.namespace,
-              'Description': entity.description,
-              'Owner': entity.owner ?? '',
-              'Lifecycle': entity.lifecycle ?? '',
-              'Tags': formatArrayForCsv(entity.tags),
-              'Links': entity.links.length.toString(),
+              Name: entity.name,
+              Slug: entity.slug,
+              Namespace: entity.namespace,
+              Description: entity.description,
+              Owner: entity.owner ?? '',
+              Lifecycle: entity.lifecycle ?? '',
+              Tags: formatArrayForCsv(entity.tags),
+              Links: entity.links.length.toString(),
               'Schema Type': schema.name
             };
             for (const field of schema.fields) {
@@ -443,14 +443,14 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'Schema Type'
           ];
           const rows = entities.map(entity => ({
-            'Name': entity.name,
-            'Slug': entity.slug,
-            'Namespace': entity.namespace,
-            'Description': entity.description,
-            'Owner': entity.owner ?? '',
-            'Lifecycle': entity.lifecycle ?? '',
-            'Tags': formatArrayForCsv(entity.tags),
-            'Links': entity.links.length.toString(),
+            Name: entity.name,
+            Slug: entity.slug,
+            Namespace: entity.namespace,
+            Description: entity.description,
+            Owner: entity.owner ?? '',
+            Lifecycle: entity.lifecycle ?? '',
+            Tags: formatArrayForCsv(entity.tags),
+            Links: entity.links.length.toString(),
             'Schema Type': schemaMap.get(entity.schema_id)?.name ?? entity.schema_id
           }));
           csvContent = generateCsv(rows, columns);
@@ -480,7 +480,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
       try {
-        const row = await db.getEntity(workspace, id);
+        const row = await db.catalog.getEntity(workspace, id);
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
           authCtx,
@@ -505,9 +505,9 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
       try {
         const [entity, schemas, entitiesRaw] = await Promise.all([
-          db.getEntity(workspace, id),
-          db.listSchemas(workspace),
-          db.listEntities(workspace)
+          db.catalog.getEntity(workspace, id),
+          db.catalog.listSchemas(workspace),
+          db.catalog.listEntities(workspace)
         ]);
         httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
         requireEntityAction(
@@ -574,7 +574,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
 
-      const entity = await db.getEntity(workspace, id);
+      const entity = await db.catalog.getEntity(workspace, id);
       httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
 
       requireEntityAction(
@@ -587,7 +587,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       return {
         owner: entity.owner,
         visibility_mode: entity.visibility_mode,
-        grants: await db.getEntityGrants(workspace, id)
+        grants: await db.catalog.getEntityGrants(workspace, id)
       };
     })
   );
@@ -600,7 +600,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
 
-      const entity = await db.getEntity(workspace, id);
+      const entity = await db.catalog.getEntity(workspace, id);
       httpAssert.present(entity, { status: 404, message: `Data record '${id}' not found` });
 
       requireEntityAction(
@@ -653,7 +653,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       return {
         owner: entity.owner,
         visibility_mode: entity.visibility_mode,
-        grants: await db.replaceEntityGrants(workspace, id, rows)
+        grants: await db.catalog.replaceEntityGrants(workspace, id, rows)
       };
     })
   );
@@ -712,13 +712,13 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
       try {
         const [schema, entities] = await Promise.all([
-          db.getSchema(workspace, _schemaId),
-          db.listEntities(workspace)
+          db.catalog.getSchema(workspace, _schemaId),
+          db.catalog.listEntities(workspace)
         ]);
         httpAssert.present(schema, { status: 404, message: `Schema '${_schemaId}' not found` });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
         const parents = getEntityParentsFromPayload(schema, fields, entityLookup);
-        const fallbackOwner = (await db.listOwners(workspace))[0]?.id ?? null;
+        const fallbackOwner = (await db.workspaceAdmin.listOwners(workspace))[0]?.id ?? null;
         const owner = resolveCreateOwner(
           typeof _owner === 'string' ? _owner : null,
           parents,
@@ -745,7 +745,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           }
         }
         const timestamp = new Date();
-        const row = await db.createEntity({
+        const row = await db.catalog.createEntity({
           id: crypto.randomUUID(),
           workspace,
           slug,
@@ -840,7 +840,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         _visibilityMode === 'public' || _visibilityMode === 'restricted' ? _visibilityMode : null;
 
       try {
-        const oldRow = await db.getEntity(workspace, id);
+        const oldRow = await db.catalog.getEntity(workspace, id);
         httpAssert.present(oldRow, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
@@ -858,7 +858,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           );
         }
 
-        const row = await db.updateEntity(workspace, id, {
+        const row = await db.catalog.updateEntity(workspace, id, {
           slug,
           namespace,
           name,
@@ -900,7 +900,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
       try {
-        const source = await db.getEntity(workspace, id);
+        const source = await db.catalog.getEntity(workspace, id);
         httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
@@ -913,7 +913,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
         const baseName = source.name ? `${source.name} (copy)` : source.slug;
         const baseSlug = slugify(baseName);
         const timestamp = new Date();
-        const row = await db.createEntity({
+        const row = await db.catalog.createEntity({
           id: crypto.randomUUID(),
           workspace,
           slug: baseSlug,
@@ -959,7 +959,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.present(id, { message: 'id is required' });
       try {
-        const row = await db.getEntity(workspace, id);
+        const row = await db.catalog.getEntity(workspace, id);
         httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
         if (authCtx)
           requireEntityAction(
@@ -969,7 +969,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
             'You do not have permission to delete this entity'
           );
 
-        await db.deleteEntity(workspace, id);
+        await db.catalog.deleteEntity(workspace, id);
         await logAudit(db, {
           workspace,
           operation: 'delete',

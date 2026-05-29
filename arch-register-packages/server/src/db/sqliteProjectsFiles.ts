@@ -1,4 +1,3 @@
-import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
   CreateProjectInput,
   ProjectsFilesDatabase,
@@ -11,10 +10,6 @@ export class SqliteProjectsFilesDatabase
   extends SqliteDatabaseBase
   implements ProjectsFilesDatabase
 {
-  constructor(db: DatabaseType) {
-    super(db);
-  }
-
   async listProjects(workspace: string) {
     return this.all(
       'SELECT * FROM project WHERE workspace = ? ORDER BY name',

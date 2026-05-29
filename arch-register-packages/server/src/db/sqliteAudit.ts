@@ -1,12 +1,7 @@
-import type { Database as DatabaseType } from 'better-sqlite3';
 import type { AuditDatabase, CreateAuditLogInput } from './database.js';
 import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
 
 export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditDatabase {
-  constructor(db: DatabaseType) {
-    super(db);
-  }
-
   async listAuditLogs(workspace: string) {
     return this.all(
       'SELECT * FROM audit_log WHERE workspace = ? ORDER BY timestamp DESC',

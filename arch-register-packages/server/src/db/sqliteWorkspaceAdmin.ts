@@ -1,4 +1,3 @@
-import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
@@ -11,10 +10,6 @@ export class SqliteWorkspaceAdminDatabase
   extends SqliteDatabaseBase
   implements WorkspaceAdminDatabase
 {
-  constructor(db: DatabaseType) {
-    super(db);
-  }
-
   async listWorkspaces() {
     return this.all('SELECT * FROM workspace ORDER BY name', [], sqliteMappers.workspace);
   }
