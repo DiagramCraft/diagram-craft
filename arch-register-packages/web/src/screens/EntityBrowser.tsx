@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './EntityBrowser.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -7,74 +8,50 @@ import {
   TbSearch, TbDownload, TbPlus, TbList, TbLayoutGrid, TbBinaryTree2,
   TbChevronDown, TbChevronRight, TbDots, TbUsers, TbCopy, TbTrash,
 } from 'react-icons/tb';
-import type { NavigateFn } from '../routing';
-import { fetchEntities, fetchEntityFacets, fetchEntityTree, resolveSchemaColor, exportEntitiesToCSV, deleteEntity, cloneEntity } from '../api';
-import type { EntityRecord, EntityFacets, EntitySchema, WorkspaceLifecycleState, TreeNode, TreeEdge } from '../api';
+import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
+import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
+import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 type BrowserView = 'table' | 'cards' | 'tree';
 
-type EntityBrowserProps = {
-  workspaceId: string;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  typeFilter: string | null;
-  statusFilter: string | null;
-  ownerFilter: string | null;
-  navigate: NavigateFn;
-  onAddEntity?: () => void;
-};
-
-export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilter, statusFilter, ownerFilter, navigate, onAddEntity }: EntityBrowserProps) => {
-  const [entities, setEntities] = useState<EntityRecord[]>([]);
-  const [facets, setFacets] = useState<EntityFacets | null>(null);
-  const [treeNodes, setTreeNodes] = useState<TreeNode[]>([]);
-  const [treeEdges, setTreeEdges] = useState<TreeEdge[]>([]);
+export const EntityBrowser = () => {
+  const navigate = useNavigate();
+  const { workspaceSlug, schemas, lifecycleStates, permissions, openAddEntityDialog } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as { type?: string; status?: string; owner?: string };
+  const typeFilter = search.type ?? null;
+  const statusFilter = search.status ?? null;
+  const ownerFilter = search.owner ?? null;
+  const workspaceId = workspaceSlug;
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>('table');
 
-  const refreshEntities = useCallback(() => {
-    fetchEntities(workspaceId, {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-      view: 'summary',
-    }).then(setEntities).catch(() => setEntities([]));
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
+  // Use TanStack Query hooks for data fetching
+  const { data: entities = [] } = useEntities(workspaceId, {
+    schemaId: typeFilter,
+    owner: ownerFilter,
+    lifecycle: statusFilter,
+    q,
+    view: 'summary',
+  });
 
-  const refreshTree = useCallback(() => {
-    fetchEntityTree(workspaceId, {
-      schemaId: typeFilter,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-    }).then(r => {
-      setTreeNodes(r.nodes);
-      setTreeEdges(r.edges);
-    }).catch(() => {
-      setTreeNodes([]);
-      setTreeEdges([]);
-    });
-  }, [workspaceId, typeFilter, ownerFilter, statusFilter, q]);
+  const { data: facets } = useEntityFacets(workspaceId);
 
-  const refreshFacets = useCallback(() => {
-    fetchEntityFacets(workspaceId).then(setFacets).catch(() => setFacets(null));
-  }, [workspaceId]);
+  const { data: treeData } = useEntityTree(workspaceId, {
+    schemaId: typeFilter,
+    owner: ownerFilter,
+    lifecycle: statusFilter,
+    q,
+  });
 
-  useEffect(() => {
-    refreshEntities();
-  }, [refreshEntities]);
+  const treeNodes = treeData?.nodes ?? [];
+  const treeEdges = treeData?.edges ?? [];
 
-  useEffect(() => {
-    if (view !== 'tree') return;
-    refreshTree();
-  }, [refreshTree, view]);
-
-  useEffect(() => {
-    refreshFacets();
-  }, [refreshFacets]);
+  // Mutations for delete and clone
+  const deleteMutation = useDeleteEntity(workspaceId);
+  const cloneMutation = useCloneEntity(workspaceId);
 
   const schemaMap = useMemo(() => {
     const m = new Map<string, { schema: EntitySchema; index: number }>();
@@ -97,8 +74,23 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
     return xs;
   }, [entities, sort]);
 
-  const setStatusFilter = (v: string) => navigate({ statusFilter: v || null });
-  const setOwnerFilter = (v: string) => navigate({ ownerFilter: v || null });
+  const navigateEntities = useCallback((params: { type?: string; status?: string; owner?: string }) => {
+    navigate({
+      to: '/$workspaceSlug/entities',
+      params: { workspaceSlug },
+      search: params,
+    });
+  }, [navigate, workspaceSlug]);
+
+  const navigateToEntity = useCallback((entityId: string) => {
+    navigate({
+      to: '/$workspaceSlug/entities/$entityId',
+      params: { workspaceSlug, entityId },
+    });
+  }, [navigate, workspaceSlug]);
+
+  const setStatusFilter = (v: string) => navigateEntities({ type: typeFilter ?? undefined, status: v || undefined, owner: ownerFilter ?? undefined });
+  const setOwnerFilter = (v: string) => navigateEntities({ type: typeFilter ?? undefined, status: statusFilter ?? undefined, owner: v || undefined });
 
   const handleExport = async () => {
     try {
@@ -127,21 +119,18 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
   const handleDeleteEntity = async (entity: EntityRecord) => {
     if (!confirm(`Delete "${entity._name || entity._slug}"?`)) return;
     try {
-      await deleteEntity(workspaceId, entity._uid);
-      refreshEntities();
-      refreshFacets();
-      if (view === 'tree') refreshTree();
+      await deleteMutation.mutateAsync(entity._uid);
     } catch {
-      // ignore
+      // Error handling is done by TanStack Query
     }
   };
 
   const handleCloneEntity = async (entity: EntityRecord) => {
     try {
-      const cloned = await cloneEntity(workspaceId, entity._uid);
-      navigate({ view: 'entity-detail', entityId: cloned._uid });
+      const cloned = await cloneMutation.mutateAsync(entity._uid);
+      navigateToEntity(cloned._uid);
     } catch {
-      // ignore
+      // Error handling is done by TanStack Query
     }
   };
 
@@ -164,8 +153,8 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
         </div>
         <div className={styles.actions}>
           <button type="button" className={styles.btn} onClick={handleExport}><TbDownload size={12} /> Export CSV</button>
-          {onAddEntity && (
-            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={onAddEntity}><TbPlus size={12} /> New entity</button>
+          {permissions.canCreateEntities && (
+            <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={openAddEntityDialog}><TbPlus size={12} /> New entity</button>
           )}
         </div>
       </div>
@@ -183,7 +172,7 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
         <FilterDropdown
           label="Type"
           value={typeFilter ?? ''}
-          onChange={v => navigate({ typeFilter: v || null })}
+          onChange={v => navigateEntities({ type: v || undefined, status: statusFilter ?? undefined, owner: ownerFilter ?? undefined })}
           options={[
             { value: '', label: 'All types' },
             ...schemas.map(s => ({ value: s.id, label: s.name })),
@@ -255,7 +244,7 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
             <div>Try adjusting your search or filters.</div>
           </div>
         ) : (
-          <TreeView nodes={treeNodes} edges={treeEdges} schemaMap={schemaMap} navigate={navigate} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />
+          <TreeView nodes={treeNodes} edges={treeEdges} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />
         )
       ) : filtered.length === 0 ? (
         <div className={styles.empty}>
@@ -264,8 +253,8 @@ export const EntityBrowser = ({ workspaceId, schemas, lifecycleStates, typeFilte
         </div>
       ) : (
         <>
-          {view === 'table' && <TableView rows={filtered} schemaMap={schemaMap} navigate={navigate} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
-          {view === 'cards' && <CardsView rows={filtered} schemaMap={schemaMap} navigate={navigate} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
+          {view === 'table' && <TableView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
+          {view === 'cards' && <CardsView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
         </>
       )}
     </div>
@@ -301,7 +290,7 @@ const FilterDropdown = ({
 type ViewProps = {
   rows: EntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
 };
@@ -323,7 +312,7 @@ const entityMenuItems = (
   return items;
 };
 
-const TableView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) => (
+const TableView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewProps) => (
   <div className={styles.tableWrap}>
     <table className={styles.table}>
       <thead>
@@ -342,7 +331,7 @@ const TableView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) 
           return (
             <tr
               key={e._uid}
-              onClick={() => navigate({ view: 'entity-detail', entityId: e._uid })}
+              onClick={() => onEntityClick(e._uid)}
             >
               <td>
                 <div className={styles.tableName}>
@@ -373,7 +362,7 @@ const TableView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) 
   </div>
 );
 
-const CardsView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) => (
+const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewProps) => (
   <div className={styles.cardGrid}>
     {rows.map(e => {
       const s = schemaMap.get(e._schemaId);
@@ -382,7 +371,7 @@ const CardsView = ({ rows, schemaMap, navigate, onDelete, onClone }: ViewProps) 
         <div
           key={e._uid}
           className={styles.card}
-          onClick={() => navigate({ view: 'entity-detail', entityId: e._uid })}
+          onClick={() => onEntityClick(e._uid)}
         >
           <span className={styles.cardBar} style={{ background: color }} />
           <div className={styles.cardHead}>
@@ -415,14 +404,14 @@ type TreeViewProps = {
   nodes: TreeNode[];
   edges: TreeEdge[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
 };
 
 type TreeItem = TreeNode & { children: TreeItem[] };
 
-const TreeView = ({ nodes, edges, schemaMap, navigate, onDelete, onClone }: TreeViewProps) => {
+const TreeView = ({ nodes, edges, schemaMap, onEntityClick, onDelete, onClone }: TreeViewProps) => {
   const roots = useMemo(() => {
     const nodeMap = new Map<string, TreeItem>();
     for (const n of nodes) nodeMap.set(n._uid, { ...n, children: [] });
@@ -465,7 +454,7 @@ const TreeView = ({ nodes, edges, schemaMap, navigate, onDelete, onClone }: Tree
         </thead>
         <tbody>
           {roots.map(item => (
-            <TreeNodeRow key={item._uid} item={item} depth={0} schemaMap={schemaMap} navigate={navigate} onDelete={onDelete} onClone={onClone} />
+            <TreeNodeRow key={item._uid} item={item} depth={0} schemaMap={schemaMap} onEntityClick={onEntityClick} onDelete={onDelete} onClone={onClone} />
           ))}
         </tbody>
       </table>
@@ -477,14 +466,14 @@ const TreeNodeRow = ({
   item,
   depth,
   schemaMap,
-  navigate,
+  onEntityClick,
   onDelete,
   onClone,
 }: {
   item: TreeItem;
   depth: number;
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
   onDelete: (entity: EntityRecord) => void;
   onClone: (entity: EntityRecord) => void;
 }) => {
@@ -497,7 +486,7 @@ const TreeNodeRow = ({
     <>
       <tr
         className={isAncestor ? styles.treeRowAncestor : undefined}
-        onClick={() => navigate({ view: 'entity-detail', entityId: item._uid })}
+        onClick={() => onEntityClick(item._uid)}
       >
         <td>
           <div className={styles.tableName} style={{ paddingLeft: depth * 20 }}>
@@ -533,7 +522,7 @@ const TreeNodeRow = ({
         </td>
       </tr>
       {expanded && item.children.map(child => (
-        <TreeNodeRow key={child._uid} item={child} depth={depth + 1} schemaMap={schemaMap} navigate={navigate} onDelete={onDelete} onClone={onClone} />
+        <TreeNodeRow key={child._uid} item={child} depth={depth + 1} schemaMap={schemaMap} onEntityClick={onEntityClick} onDelete={onDelete} onClone={onClone} />
       ))}
     </>
   );

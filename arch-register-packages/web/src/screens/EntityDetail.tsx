@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import styles from './EntityDetail.module.css';
 import { TypeBadge } from '../components/TypeBadge';
 import { StatusChip } from '../components/StatusChip';
@@ -7,20 +8,12 @@ import {
   TbChevronLeft, TbChevronRight, TbEdit, TbDots, TbExternalLink,
   TbTrash, TbPlus, TbX, TbCopy,
 } from 'react-icons/tb';
-import type { NavigateFn } from '../routing';
-import { apiFetch, fetchEntities, fetchEntity as fetchEntityById, fetchEntityRelations, resolveSchemaColor, fetchAuditLog, deleteEntity, cloneEntity } from '../api';
-import type { EntityRecord, EntityRelations, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import { resolveSchemaColor } from '../api';
+import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
-
-type EntityDetailProps = {
-  workspaceId: string;
-  entityId: string;
-  schemas: EntitySchema[];
-  lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
-  navigate: NavigateFn;
-  canViewAudit: boolean;
-};
+import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
+import { useAuditLog } from '../hooks/useAudit';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 type TabId = 'overview' | 'topology' | 'relations' | 'changes';
 
@@ -38,93 +31,38 @@ type RefLookup = Map<string, EntitySummary>;
 const slugify = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, ownerOptions, navigate, canViewAudit }: EntityDetailProps) => {
-  const [entity, setEntity] = useState<EntityRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+export const EntityDetail = () => {
+  const navigate = useNavigate();
+  const { entityId } = useParams({ strict: false }) as { entityId: string };
+  const { workspaceSlug, schemas, lifecycleStates, ownerOptions, permissions } = useWorkspaceContext();
+  const workspaceId = workspaceSlug;
+  const canViewAudit = permissions.canViewAudit;
+
+  const navigateToEntity = useCallback((id: string) => {
+    navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: id } });
+  }, [navigate, workspaceSlug]);
+
+  const navigateToEntities = useCallback(() => {
+    navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
+  }, [navigate, workspaceSlug]);
   const [tab, setTab] = useState<TabId>('overview');
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<Record<string, unknown>>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
-  const [saving, setSaving] = useState(false);
-  const [refLookup, setRefLookup] = useState<RefLookup>(new Map());
-  const [relations, setRelations] = useState<EntityRelations>({ outgoing: [], incoming: [] });
-  const [referenceOptions, setReferenceOptions] = useState<Record<string, EntitySummary[]>>({});
-  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
-  const [loadingAudit, setLoadingAudit] = useState(false);
 
-  const refreshRelations = useCallback(() => {
-    fetchEntityRelations(workspaceId, entityId)
-      .then(nextRelations => {
-        setRelations(nextRelations);
-        const lookup: RefLookup = new Map();
-        nextRelations.outgoing.forEach(relation => {
-          lookup.set(relation.entityId, {
-            _uid: relation.entityId,
-            _workspace: workspaceId,
-            _schemaId: relation.entitySchemaId,
-            _name: relation.entityName,
-            _slug: relation.entitySlug,
-            _namespace: '',
-            _description: '',
-            _owner: null,
-            _lifecycle: null,
-            _tags: [],
-            _links: [],
-            canView: true,
-            canEdit: false,
-            canDelete: false,
-            canAdmin: false,
-            canCreateChild: false,
-          });
-        });
-        setRefLookup(lookup);
-      })
-      .catch(() => {
-        setRelations({ outgoing: [], incoming: [] });
-        setRefLookup(new Map());
-      });
-  }, [workspaceId, entityId]);
+  // Query hooks
+  const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const { data: relations = { outgoing: [], incoming: [] } } = useEntityRelations(workspaceId, entityId);
+  const { data: auditLog = [], isLoading: loadingAudit } = useAuditLog(
+    workspaceId,
+    { entityId, limit: 100 },
+    { enabled: canViewAudit && tab === 'changes' }
+  );
 
-  const refreshEntity = useCallback(() => {
-    setLoading(true);
-    fetchEntityById(workspaceId, entityId)
-      .then(data => {
-        setEntity(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setEntity(null);
-        setLoading(false);
-      });
-  }, [workspaceId, entityId]);
-
-  useEffect(() => {
-    refreshEntity();
-  }, [refreshEntity]);
-
-  useEffect(() => {
-    refreshRelations();
-  }, [refreshRelations]);
-
-  useEffect(() => {
-    if (!canViewAudit) {
-      setAuditLog([]);
-      setLoadingAudit(false);
-      return;
-    }
-    if (tab === 'changes' && entityId) {
-      setLoadingAudit(true);
-      fetchAuditLog(workspaceId, { entityId, limit: 100 })
-        .then(log => {
-          setAuditLog(log);
-          setLoadingAudit(false);
-        })
-        .catch(() => {
-          setAuditLog([]);
-          setLoadingAudit(false);
-        });
-    }
-  }, [canViewAudit, tab, entityId, workspaceId]);
+  // Mutation hooks
+  const updateEntity = useUpdateEntity(workspaceId);
+  const deleteEntity = useDeleteEntity(workspaceId);
+  const cloneEntity = useCloneEntity(workspaceId);
 
   const schemaEntry = useMemo(() => {
     if (!entity) return null;
@@ -139,13 +77,10 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
   const schema = schemaEntry?.schema ?? null;
   const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent)';
 
-  useEffect(() => {
-    if (!schema) {
-      setReferenceOptions({});
-      return;
-    }
-
-    const targetSchemaIds = [...new Set(
+  // Get reference field schema IDs
+  const referenceSchemaIds = useMemo(() => {
+    if (!schema) return [];
+    return [...new Set(
       schema.fields
         .filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
           field.type === 'reference' || field.type === 'containment'
@@ -153,31 +88,51 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
         .map(field => field.schemaId)
         .filter(Boolean)
     )];
+  }, [schema]);
 
-    if (targetSchemaIds.length === 0) {
-      setReferenceOptions({});
-      return;
-    }
+  // Fetch entities for each reference schema
+  const referenceQueries = useEntitiesBySchema(workspaceId, referenceSchemaIds);
 
-    Promise.all(
-      targetSchemaIds.map(async schemaId => ({
-        schemaId,
-        entities: await fetchEntities(workspaceId, { schemaId, view: 'summary' }),
-      }))
-    )
-      .then(results => {
-        const nextOptions: Record<string, EntitySummary[]> = {};
-        results.forEach(result => {
-          nextOptions[result.schemaId] = result.entities;
-        });
-        setReferenceOptions(nextOptions);
-      })
-      .catch(() => setReferenceOptions({}));
-  }, [workspaceId, schema]);
+  // Build reference options from queries
+  const referenceOptions = useMemo(() => {
+    const options: Record<string, EntitySummary[]> = {};
+    referenceSchemaIds.forEach((schemaId, index) => {
+      const query = referenceQueries[index];
+      if (query?.data) {
+        options[schemaId] = query.data;
+      }
+    });
+    return options;
+  }, [referenceSchemaIds, referenceQueries]);
+
+  // Build reference lookup from relations
+  const refLookup = useMemo(() => {
+    const lookup: RefLookup = new Map();
+    relations.outgoing.forEach(relation => {
+      lookup.set(relation.entityId, {
+        _uid: relation.entityId,
+        _workspace: workspaceId,
+        _schemaId: relation.entitySchemaId,
+        _name: relation.entityName,
+        _slug: relation.entitySlug,
+        _namespace: '',
+        _description: '',
+        _owner: null,
+        _lifecycle: null,
+        _tags: [],
+        _links: [],
+        canView: true,
+        canEdit: false,
+        canDelete: false,
+        canAdmin: false,
+        canCreateChild: false,
+      });
+    });
+    return lookup;
+  }, [relations, workspaceId]);
 
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
-
   const relationCount = outgoing.length + incoming.length;
 
   const startEdit = () => {
@@ -207,7 +162,6 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
 
   const saveEdit = async () => {
     if (!entity || !schema) return;
-    setSaving(true);
 
     const dataFields: Record<string, unknown> = {};
     for (const f of schema.fields) {
@@ -230,40 +184,29 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       ...dataFields,
     };
 
-    try {
-      const updated = await apiFetch<EntityRecord>(`/api/${workspaceId}/data/${entityId}`, {
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
-      setEntity(updated);
-      refreshRelations();
-      setEditing(false);
-      setEditState({});
-      setEditLinks([]);
-    } catch {
-      // keep editing on failure
-    } finally {
-      setSaving(false);
-    }
+    updateEntity.mutate(
+      { entityId, data: body },
+      {
+        onSuccess: () => {
+          setEditing(false);
+          setEditState({});
+          setEditLinks([]);
+        },
+      }
+    );
   };
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${entity?._name || entity?._slug}"?`)) return;
-    try {
-      await deleteEntity(workspaceId, entityId);
-      navigate({ view: 'entity-browser' });
-    } catch {
-      // ignore
-    }
+    deleteEntity.mutate(entityId, {
+      onSuccess: () => navigateToEntities(),
+    });
   };
 
   const handleClone = async () => {
-    try {
-      const cloned = await cloneEntity(workspaceId, entityId);
-      navigate({ view: 'entity-detail', entityId: cloned._uid });
-    } catch {
-      // ignore
-    }
+    cloneEntity.mutate(entityId, {
+      onSuccess: (cloned) => navigateToEntity(cloned._uid),
+    });
   };
 
   if (loading) {
@@ -275,7 +218,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       <div className={styles.empty}>
         <div className={styles.emptyTitle}>Entity not found</div>
         <div>The entity may have been deleted.</div>
-        <button type="button" className={styles.btn} onClick={() => navigate({ view: 'entity-browser' })}>
+        <button type="button" className={styles.btn} onClick={() => navigateToEntities()}>
           <TbChevronLeft size={12} /> Back to entities
         </button>
       </div>
@@ -293,7 +236,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
       {/* Header */}
       <div className={styles.head}>
         <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'entity-browser' })}>
+          <button type="button" className={styles.backLink} onClick={() => navigateToEntities()}>
             <TbChevronLeft size={12} /> Back to entities
           </button>
           <div className={styles.headRow}>
@@ -317,8 +260,8 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
                 </button>
               )}
               <button type="button" className={styles.btn} onClick={cancelEdit}>Cancel</button>
-              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={saving}>
-                {saving ? 'Saving...' : 'Save'}
+              <button type="button" className={styles.btnPrimary} onClick={saveEdit} disabled={updateEntity.isPending}>
+                {updateEntity.isPending ? 'Saving...' : 'Save'}
               </button>
             </>
           )}
@@ -385,7 +328,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
                       onChange={v => setEditState(s => ({ ...s, [f.id]: v }))}
                       refLookup={refLookup}
                       referenceOptions={referenceOptions}
-                      navigate={navigate}
+                      onEntityClick={navigateToEntity}
                     />
                   ))}
                 </div>
@@ -508,7 +451,7 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
           incoming={incoming}
           schemas={schemas}
           lifecycleStates={lifecycleStates}
-          navigate={navigate}
+          onEntityClick={navigateToEntity}
         />
       )}
 
@@ -525,14 +468,14 @@ export const EntityDetail = ({ workspaceId, entityId, schemas, lifecycleStates, 
               <div className={styles.sectionLabel}>Outgoing ({outgoing.length})</div>
               <div className={styles.relationsList}>
                 {outgoing.map((r, i) => (
-                  <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} navigate={navigate} />
+                  <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} onEntityClick={navigateToEntity} />
                 ))}
                 {outgoing.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
               </div>
               <div className={styles.sectionLabel}>Incoming ({incoming.length})</div>
               <div className={styles.relationsList}>
                 {incoming.map((r, i) => (
-                  <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} navigate={navigate} />
+                  <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} onEntityClick={navigateToEntity} />
                 ))}
                 {incoming.length === 0 && <div className={styles.dim} style={{ padding: 8 }}>None</div>}
               </div>
@@ -600,7 +543,7 @@ const PropertyRow = ({
   onChange,
   refLookup,
   referenceOptions,
-  navigate,
+  onEntityClick,
 }: {
   field: SchemaField;
   value: unknown;
@@ -609,7 +552,7 @@ const PropertyRow = ({
   onChange: (v: unknown) => void;
   refLookup: RefLookup;
   referenceOptions: Record<string, EntitySummary[]>;
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 }) => {
   const renderEditor = () => {
     if (field.type === 'reference' || field.type === 'containment') {
@@ -688,7 +631,7 @@ const PropertyRow = ({
                 key={id}
                 type="button"
                 className={styles.propLink}
-                onClick={() => navigate({ view: 'entity-detail', entityId: id })}
+                onClick={() => onEntityClick(id)}
               >
                 {label}
               </button>
@@ -719,12 +662,12 @@ const RelationRow = ({
   relation,
   direction,
   schemas,
-  navigate,
+  onEntityClick,
 }: {
   relation: Relation;
   direction: 'outgoing' | 'incoming';
   schemas: EntitySchema[];
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 }) => {
   const targetSchemaId = direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
@@ -735,7 +678,7 @@ const RelationRow = ({
     <button
       type="button"
       className={styles.relation}
-      onClick={() => navigate({ view: 'entity-detail', entityId: relation.entityId })}
+      onClick={() => onEntityClick(relation.entityId)}
     >
       <Chip tone="ghost">{relation.fieldName}</Chip>
       <TbChevronRight size={10} className={styles.dim} />
@@ -879,7 +822,7 @@ type TopologyViewProps = {
   incoming: Relation[];
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  navigate: NavigateFn;
+  onEntityClick: (entityId: string) => void;
 };
 
 const groupByField = (rels: Relation[]): [string, Relation[]][] => {
@@ -892,7 +835,7 @@ const groupByField = (rels: Relation[]): [string, Relation[]][] => {
   return [...groups.entries()];
 };
 
-const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, lifecycleStates, navigate }: TopologyViewProps) => {
+const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, lifecycleStates, onEntityClick }: TopologyViewProps) => {
   const parents = useMemo(() => outgoing.filter(r => r.kind === 'containment'), [outgoing]);
   const children = useMemo(() => incoming.filter(r => r.kind === 'containment'), [incoming]);
   const consumesRefs = useMemo(() => outgoing.filter(r => r.kind === 'reference'), [outgoing]);
@@ -999,7 +942,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             {parents.map((p, i) => {
               const { schema: ps, color: pc } = resolveRelColor(p);
               return (
-                <button key={i} type="button" className={styles.topoParentChip} onClick={() => navigate({ view: 'entity-detail', entityId: p.entityId })}>
+                <button key={i} type="button" className={styles.topoParentChip} onClick={() => onEntityClick(p.entityId)}>
                   <TypeBadge color={pc} name={ps?.name} icon={ps?.icon} size={14} />
                   <span className={styles.topoParentName}>{p.entityName}</span>
                   <span className={styles.dim}>part of</span>
@@ -1034,7 +977,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
               {children.map((c, i) => {
                 const { schema: cs, color: cc } = resolveRelColor(c);
                 return (
-                  <button key={i} type="button" className={styles.topoChildCard} onClick={() => navigate({ view: 'entity-detail', entityId: c.entityId })}>
+                  <button key={i} type="button" className={styles.topoChildCard} onClick={() => onEntityClick(c.entityId)}>
                     <span className={styles.topoCardBar} style={{ background: cc }} />
                     <div className={styles.topoChildHead}>
                       <TypeBadge color={cc} name={cs?.name} icon={cs?.icon} size={14} />
@@ -1068,7 +1011,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       type="button"
                       ref={setCardRef(`in-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => navigate({ view: 'entity-detail', entityId: r.entityId })}
+                      onClick={() => onEntityClick(r.entityId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />
@@ -1095,7 +1038,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
                       type="button"
                       ref={setCardRef(`out-${fieldName}-${i}`) as React.Ref<HTMLButtonElement>}
                       className={styles.topoRefCard}
-                      onClick={() => navigate({ view: 'entity-detail', entityId: r.entityId })}
+                      onClick={() => onEntityClick(r.entityId)}
                     >
                       <span className={styles.topoCardBar} style={{ background: rc }} />
                       <TypeBadge color={rc} name={rs?.name} icon={rs?.icon} size={14} />

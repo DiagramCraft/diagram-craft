@@ -1,23 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog } from './Dialog';
-import { createDiagramFile, ApiError } from '../api';
-import type { FileEntry } from '../api';
+import { Dialog } from '../components/Dialog';
+import { ApiError } from '../api';
+import { useCreateFolder } from '../hooks/useProjectFiles';
 import styles from './AddWorkspaceDialog.module.css';
 
-type AddDiagramDialogProps = {
+type AddFolderDialogProps = {
   open: boolean;
   onClose: () => void;
-  onCreated: (file: FileEntry) => void;
+  onCreated: () => void;
   workspaceId: string;
   projectId: string;
-  folder?: string | null;
+  parentFolder?: string;
 };
 
-export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projectId, folder }: AddDiagramDialogProps) => {
+export const AddFolderDialog = ({ open, onClose, onCreated, workspaceId, projectId, parentFolder }: AddFolderDialogProps) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
+  const createFolderMutation = useCreateFolder(workspaceId, projectId);
 
   useEffect(() => {
     if (open) {
@@ -35,14 +35,14 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       return;
     }
     if (trimmed.includes('/')) {
-      setError('Name cannot contain /');
+      setError('Folder name cannot contain /');
       return;
     }
-    setSubmitting(true);
     setError('');
     try {
-      const file = await createDiagramFile(workspaceId, projectId, trimmed, folder);
-      onCreated(file);
+      const path = parentFolder ? `${parentFolder}/${trimmed}` : trimmed;
+      await createFolderMutation.mutateAsync(path);
+      onCreated();
       onClose();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -50,33 +50,31 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
       } else {
         setError('Something went wrong');
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="New diagram">
+    <Dialog open={open} onClose={onClose} title="New folder">
       <form className={styles.form} onSubmit={handleSubmit}>
         <div className={styles.field}>
-          <label>Diagram name</label>
+          <label>Folder name</label>
           <input
             ref={nameRef}
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="e.g. System overview"
+            placeholder="e.g. Current state"
           />
         </div>
-        {folder && (
+        {parentFolder && (
           <div className="dim" style={{ fontSize: 12 }}>
-            Will be created in <strong>{folder}</strong>
+            Will be created inside <strong>{parentFolder}</strong>
           </div>
         )}
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>
           <button type="button" className={styles.btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" className={styles.btnSubmit} disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create diagram'}
+          <button type="submit" className={styles.btnSubmit} disabled={createFolderMutation.isPending}>
+            {createFolderMutation.isPending ? 'Creating...' : 'Create folder'}
           </button>
         </div>
       </form>

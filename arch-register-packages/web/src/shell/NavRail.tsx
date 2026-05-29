@@ -2,7 +2,7 @@ import styles from './NavRail.module.css';
 import {
   TbHome, TbStack2, TbDatabase, TbCode, TbSearch,
 } from 'react-icons/tb';
-import type { ViewId } from '../routing';
+import type { ViewId } from '../layouts/viewId';
 
 const ITEMS = [
   { id: 'home' as const, icon: TbHome, title: 'Workspace overview' },

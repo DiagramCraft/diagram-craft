@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Dialog } from './Dialog';
+import { Dialog } from '../components/Dialog';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceOwnerOption } from '../api';
 import { usePermissions } from '../auth/PermissionContext';

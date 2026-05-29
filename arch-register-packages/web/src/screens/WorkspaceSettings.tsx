@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
-import type { NavigateFn } from '../routing';
-import { apiFetch, fetchAuditLog, updateLifecycleStates, updateOwnerOptions } from '../api';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
@@ -11,18 +11,9 @@ import type {
   AuditOperation,
 } from '../api';
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
-
-type WorkspaceSettingsProps = {
-  workspace: Workspace;
-  section: string;
-  navigate: NavigateFn;
-  onWorkspaceUpdated: () => void;
-  onWorkspaceDeleted: () => void;
-  lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
-  onConfigUpdated: () => void;
-  availableSections: string[];
-};
+import { useAuditLog } from '../hooks/useAudit';
+import { useUpdateWorkspace, useDeleteWorkspace } from '../hooks/useWorkspaces';
+import { useUpdateLifecycleStates, useUpdateOwnerOptions } from '../hooks/useWorkspaceConfig';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -39,7 +30,17 @@ const COLOR_PRESETS = [
   { value: 'var(--fg-3)', label: 'Grey' },
 ];
 
-export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpdated, onWorkspaceDeleted, lifecycleStates, ownerOptions, onConfigUpdated, availableSections }: WorkspaceSettingsProps) => {
+export const WorkspaceSettings = () => {
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as { section?: string };
+  const ctx = useWorkspaceContext();
+  const workspace = ctx.workspace!;
+  const workspaceSlug = ctx.workspaceSlug;
+  const lifecycleStates = ctx.lifecycleStates;
+  const ownerOptions = ctx.ownerOptions;
+  const availableSections = ctx.availableSettingsSections;
+  const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
+
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
   if (!availableSections.includes(section)) {
@@ -47,7 +48,7 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
       <div className={styles.screen}>
         <div className={styles.head}>
           <div className={styles.headLeft}>
-            <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'home' })}>
+            <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
               <TbChevronLeft size={12} /> {workspace.name}
             </button>
             <span className={styles.breadcrumbSep}>/</span>
@@ -66,7 +67,7 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
     <div className={styles.screen}>
       <div className={styles.head}>
         <div className={styles.headLeft}>
-          <button type="button" className={styles.backLink} onClick={() => navigate({ view: 'home' })}>
+          <button type="button" className={styles.backLink} onClick={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}>
             <TbChevronLeft size={12} /> {workspace.name}
           </button>
           <span className={styles.breadcrumbSep}>/</span>
@@ -79,32 +80,32 @@ export const WorkspaceSettings = ({ workspace, section, navigate, onWorkspaceUpd
       </div>
 
       {section === 'general' && (
-        <GeneralSection workspace={workspace} onWorkspaceUpdated={onWorkspaceUpdated} />
+        <GeneralSection workspace={workspace} />
       )}
       {section === 'lifecycle-owners' && (
         <LifecycleOwnersSection
           workspace={workspace}
           lifecycleStates={lifecycleStates}
           ownerOptions={ownerOptions}
-          onConfigUpdated={onConfigUpdated}
         />
       )}
       {section === 'audit' && (
-        <AuditLogSection workspace={workspace} navigate={navigate} />
+        <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
       )}
       {section === 'danger' && (
-        <DangerSection workspace={workspace} navigate={navigate} onWorkspaceDeleted={onWorkspaceDeleted} />
+        <DangerSection workspace={workspace} />
       )}
     </div>
   );
 };
 
-const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspace; onWorkspaceUpdated: () => void }) => {
+const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   const [name, setName] = useState(workspace.name);
   const [slug, setSlug] = useState(workspace.url_slug);
   const [shortCode, setShortCode] = useState(workspace.short_code);
   const [description, setDescription] = useState(workspace.description);
-  const [saving, setSaving] = useState(false);
+
+  const updateWorkspaceMutation = useUpdateWorkspace();
 
   const isDirty =
     name !== workspace.name ||
@@ -113,17 +114,15 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
     description !== workspace.description;
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
     try {
-      await apiFetch(`/api/workspaces/${workspace.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ name, url_slug: slug, short_code: shortCode, description }),
+      await updateWorkspaceMutation.mutateAsync({
+        workspaceId: workspace.id,
+        data: { name, url_slug: slug, short_code: shortCode, description },
       });
-      onWorkspaceUpdated();
-    } finally {
-      setSaving(false);
+    } catch {
+      // Error handling could be improved
     }
-  }, [workspace.id, name, slug, shortCode, description, onWorkspaceUpdated]);
+  }, [workspace.id, name, slug, shortCode, description, updateWorkspaceMutation]);
 
   const handleCancel = () => {
     setName(workspace.name);
@@ -136,8 +135,8 @@ const GeneralSection = ({ workspace, onWorkspaceUpdated }: { workspace: Workspac
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
         <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || saving}>
-          {saving ? 'Saving...' : 'Save changes'}
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateWorkspaceMutation.isPending}>
+          {updateWorkspaceMutation.isPending ? 'Saving...' : 'Save changes'}
         </button>
       </div>
       <div className={styles.section}>
@@ -224,12 +223,10 @@ const LifecycleOwnersSection = ({
   workspace,
   lifecycleStates,
   ownerOptions,
-  onConfigUpdated,
 }: {
   workspace: Workspace;
   lifecycleStates: WorkspaceLifecycleState[];
   ownerOptions: WorkspaceOwnerOption[];
-  onConfigUpdated: () => void;
 }) => {
   const [states, setStates] = useState<EditLifecycleState[]>(() =>
     lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color }))
@@ -237,7 +234,9 @@ const LifecycleOwnersSection = ({
   const [owners, setOwners] = useState<EditOwner[]>(() =>
     ownerOptions.map(o => ({ id: o.id }))
   );
-  const [saving, setSaving] = useState(false);
+
+  const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
+  const updateOwnerOptionsMutation = useUpdateOwnerOptions(workspace.url_slug);
 
   const statesDirty = JSON.stringify(states) !== JSON.stringify(lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color })));
   const ownersDirty = JSON.stringify(owners) !== JSON.stringify(ownerOptions.map(o => ({ id: o.id })));
@@ -249,25 +248,21 @@ const LifecycleOwnersSection = ({
   };
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
     try {
       if (statesDirty) {
-        await updateLifecycleStates(
-          workspace.url_slug,
+        await updateLifecycleStatesMutation.mutateAsync(
           states.map((s, i) => ({ id: s.id, label: s.label, color: s.color, sort_order: i }))
         );
       }
       if (ownersDirty) {
-        await updateOwnerOptions(
-          workspace.url_slug,
+        await updateOwnerOptionsMutation.mutateAsync(
           owners.map((o, i) => ({ id: o.id, sort_order: i }))
         );
       }
-      onConfigUpdated();
-    } finally {
-      setSaving(false);
+    } catch {
+      // Error handling could be improved
     }
-  }, [workspace.url_slug, states, owners, statesDirty, ownersDirty, onConfigUpdated]);
+  }, [states, owners, statesDirty, ownersDirty, updateLifecycleStatesMutation, updateOwnerOptionsMutation]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => i === index ? { ...s, ...patch } : s));
@@ -291,8 +286,8 @@ const LifecycleOwnersSection = ({
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
         <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || saving}>
-          {saving ? 'Saving...' : 'Save changes'}
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending}>
+          {(updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending) ? 'Saving...' : 'Save changes'}
         </button>
       </div>
 
@@ -444,48 +439,39 @@ const formatRelativeTime = (timestamp: string): string => {
 const toStartOfDay = (date: string) => new Date(`${date}T00:00:00`).toISOString();
 const toEndOfDay = (date: string) => new Date(`${date}T23:59:59.999`).toISOString();
 
-const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; navigate: NavigateFn }) => {
+const AuditLogSection = ({ workspace, workspaceSlug }: { workspace: Workspace; workspaceSlug: string }) => {
+  const navigate = useNavigate();
   const [entityType, setEntityType] = useState<'' | AuditEntityType>('');
   const [operation, setOperation] = useState<'' | AuditOperation>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [entries, setEntries] = useState<AuditLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchAuditLog(workspace.url_slug, {
-      entityType: entityType || null,
-      operation: operation || null,
-      startDate: startDate ? toStartOfDay(startDate) : null,
-      endDate: endDate ? toEndOfDay(endDate) : null,
-      limit: 100,
-    })
-      .then(setEntries)
-      .catch(error => {
-        console.error('Failed to load audit log:', error);
-        setEntries([]);
-      })
-      .finally(() => setLoading(false));
-  }, [workspace.url_slug, entityType, operation, startDate, endDate]);
+  // Use TanStack Query for audit log fetching
+  const { data: entries = [], isLoading: loading } = useAuditLog(workspace.url_slug, {
+    entityType: entityType || null,
+    operation: operation || null,
+    startDate: startDate ? toStartOfDay(startDate) : null,
+    endDate: endDate ? toEndOfDay(endDate) : null,
+    limit: 100,
+  });
 
   const handleEntryClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({ view: 'entity-detail', entityId: entry.entity_id });
+        navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: entry.entity_id } });
         return;
       case 'project':
-        navigate({ view: 'project-detail', projectId: entry.entity_id, projectSidebarTab: 'projects', folderFilter: null });
+        navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: entry.entity_id }, search: { tab: 'projects' as const } });
         return;
       case 'entity_schema':
-        navigate({ view: 'data-model' });
+        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         return;
       case 'project_file': {
         const projectId = typeof entry.metadata['project_id'] === 'string' ? entry.metadata['project_id'] : null;
         const path = typeof entry.metadata['path'] === 'string' ? entry.metadata['path'] : null;
         const folderFilter = path?.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null;
         if (projectId) {
-          navigate({ view: 'project-detail', projectId, projectSidebarTab: 'projects', folderFilter });
+          navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: 'projects' as const, folder: folderFilter ?? undefined } });
         }
       }
     }
@@ -578,29 +564,25 @@ const AuditLogSection = ({ workspace, navigate }: { workspace: Workspace; naviga
 
 const DangerSection = ({
   workspace,
-  navigate,
-  onWorkspaceDeleted,
 }: {
   workspace: Workspace;
-  navigate: NavigateFn;
-  onWorkspaceDeleted: () => void;
 }) => {
+  const navigate = useNavigate();
   const [confirm, setConfirm] = useState('');
-  const [deleting, setDeleting] = useState(false);
+
+  const deleteWorkspaceMutation = useDeleteWorkspace();
 
   const canDelete = confirm === workspace.name;
 
   const handleDelete = useCallback(async () => {
     if (!canDelete) return;
-    setDeleting(true);
     try {
-      await apiFetch(`/api/workspaces/${workspace.id}`, { method: 'DELETE' });
-      onWorkspaceDeleted();
-      navigate({ view: 'home', workspaceId: null });
+      await deleteWorkspaceMutation.mutateAsync(workspace.id);
+      navigate({ to: '/' });
     } catch {
-      setDeleting(false);
+      // Error handling could be improved
     }
-  }, [workspace.id, canDelete, navigate, onWorkspaceDeleted]);
+  }, [workspace.id, canDelete, deleteWorkspaceMutation, navigate]);
 
   return (
     <div className={styles.blockList}>
@@ -626,10 +608,10 @@ const DangerSection = ({
           <button
             type="button"
             className={styles.btnDanger}
-            disabled={!canDelete || deleting}
+            disabled={!canDelete || deleteWorkspaceMutation.isPending}
             onClick={handleDelete}
           >
-            {deleting ? 'Deleting...' : 'Delete workspace'}
+            {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete workspace'}
           </button>
         </div>
       </div>

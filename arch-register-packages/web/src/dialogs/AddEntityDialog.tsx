@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Dialog } from './Dialog';
-import { apiFetch, fetchEntities, ApiError } from '../api';
+import { Dialog } from '../components/Dialog';
+import { apiFetch, ApiError } from '../api';
 import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
+import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
 
@@ -39,7 +40,6 @@ export const AddEntityDialog = ({
   const [meta, setMeta] = useState({ description: '', owner: '', lifecycle: '', namespace: 'default', tags: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [referenceOptions, setReferenceOptions] = useState<Record<string, EntitySummary[]>>({});
   const nameRef = useRef<HTMLInputElement>(null);
   const creatableOwnerOptions = useMemo(
     () => ownerOptions.filter(option => canCreateTopLevelEntity(workspaceId, option.id)),
@@ -67,13 +67,9 @@ export const AddEntityDialog = ({
 
   const selectedSchema = schemas.find(s => s.id === schemaId);
 
-  useEffect(() => {
-    if (!open || !selectedSchema) {
-      setReferenceOptions({});
-      return;
-    }
-
-    const targetSchemaIds = [
+  const targetSchemaIds = useMemo(() => {
+    if (!selectedSchema) return [];
+    return [
       ...new Set(
         selectedSchema.fields
           .filter((field): field is Extract<SchemaField, { type: 'reference' | 'containment' }> =>
@@ -83,27 +79,20 @@ export const AddEntityDialog = ({
           .filter(Boolean)
       ),
     ];
+  }, [selectedSchema]);
 
-    if (targetSchemaIds.length === 0) {
-      setReferenceOptions({});
-      return;
-    }
+  const entitiesQueries = useEntitiesBySchema(workspaceId, targetSchemaIds);
 
-    Promise.all(
-      targetSchemaIds.map(async schemaId => ({
-        schemaId,
-        entities: await fetchEntities(workspaceId, { schemaId, view: 'summary' }),
-      }))
-    )
-      .then(results => {
-        const nextOptions: Record<string, EntitySummary[]> = {};
-        results.forEach(result => {
-          nextOptions[result.schemaId] = result.entities;
-        });
-        setReferenceOptions(nextOptions);
-      })
-      .catch(() => setReferenceOptions({}));
-  }, [open, selectedSchema, workspaceId]);
+  const derivedReferenceOptions = useMemo(() => {
+    if (!open || targetSchemaIds.length === 0) return {};
+    const nextOptions: Record<string, EntitySummary[]> = {};
+    entitiesQueries.forEach((query, index) => {
+      if (query.data) {
+        nextOptions[targetSchemaIds[index]!] = query.data;
+      }
+    });
+    return nextOptions;
+  }, [open, targetSchemaIds, entitiesQueries]);
 
   const setField = (id: string, value: string) => setFields(f => ({ ...f, [id]: value }));
   const setMetaField = (key: string, value: string) => setMeta(m => ({ ...m, [key]: value }));
@@ -208,7 +197,7 @@ export const AddEntityDialog = ({
                       field={f}
                       value={fields[f.id] ?? ''}
                       onChange={v => setField(f.id, v)}
-                      referenceOptions={referenceOptions}
+                      referenceOptions={derivedReferenceOptions}
                     />
                   ))}
                 </div>

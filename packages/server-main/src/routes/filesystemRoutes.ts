@@ -21,7 +21,10 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
       if (result.type === 'file') {
         event.res.headers.append('Content-Type', result.contentType);
         return serveStatic(event, {
-          getContents: () => readFile(result.path),
+          getContents: async () => {
+            const buffer = await readFile(result.path);
+            return new Uint8Array(buffer);
+          },
           getMeta: () => ({
             size: result.size,
             mtime: result.modifiedAt
@@ -39,7 +42,10 @@ export function createFilesystemRoutes(fileSystemServer: FileSystemServer) {
       if (result.type === 'file') {
         event.res.headers.append('Content-Type', result.contentType);
         return serveStatic(event, {
-          getContents: () => readFile(result.path),
+          getContents: async () => {
+            const buffer = await readFile(result.path);
+            return new Uint8Array(buffer);
+          },
           getMeta: () => ({
             size: result.size,
             mtime: result.modifiedAt

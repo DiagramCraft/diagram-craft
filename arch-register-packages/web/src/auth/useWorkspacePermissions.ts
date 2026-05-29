@@ -7,10 +7,7 @@ import {
   type GlobalRole,
   type WorkspaceOwnerOption
 } from '@arch-register/permissions';
-import {
-  useAuthorizationData,
-  type WorkspaceTeamMembership
-} from './AuthorizationDataContext';
+import { useAuthorizationData, type WorkspaceTeamMembership } from './AuthorizationDataContext';
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;

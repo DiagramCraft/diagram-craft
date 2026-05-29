@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import styles from './ProjectDetail.module.css';
-import { AddFolderDialog } from '../components/AddFolderDialog';
-import { AddDiagramDialog } from '../components/AddDiagramDialog';
+import { AddFolderDialog } from '../dialogs/AddFolderDialog';
+import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { Dialog } from '../components/Dialog';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
 } from 'react-icons/tb';
-import type { NavigateFn } from '../routing';
-import { fetchProject, updateProject, deleteProject, ApiError } from '../api';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
+import { ApiError } from '../api';
 import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceOwnerOption } from '../api';
+import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },
@@ -17,47 +19,40 @@ const PROJECT_STATUSES = [
   { value: 'archived', label: 'Archived' },
 ] as const;
 
-type ProjectDetailProps = {
-  workspaceId: string;
-  projectId: string;
-  folderFilter: string | null;
-  navigate: NavigateFn;
-  onProjectUpdated: () => void;
-  ownerOptions: WorkspaceOwnerOption[];
-};
+export const ProjectDetail = () => {
+  const navigate = useNavigate();
+  const { projectId } = useParams({ strict: false }) as { projectId: string };
+  const search = useSearch({ strict: false }) as { tab?: string; folder?: string };
+  const { workspaceSlug, ownerOptions } = useWorkspaceContext();
+  const workspaceId = workspaceSlug;
+  const folderFilter = search.folder ?? null;
 
-export const ProjectDetail = ({
-  workspaceId,
-  projectId,
-  folderFilter,
-  navigate,
-  onProjectUpdated,
-  ownerOptions,
-}: ProjectDetailProps) => {
-  const [project, setProject] = useState<ProjectDetailData | null>(null);
   const [editing, setEditing] = useState(false);
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addFolderOpen, setAddFolderOpen] = useState(false);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
-  const [pinning, setPinning] = useState(false);
   const [pinError, setPinError] = useState('');
 
-  const refresh = useCallback(() => {
-    fetchProject(workspaceId, projectId)
-      .then(setProject)
-      .catch(() => setProject(null));
-  }, [workspaceId, projectId]);
+  // Query hooks
+  const { data: project, isLoading } = useProject(workspaceId, projectId);
+  const updateProject = useUpdateProject(workspaceId);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  if (isLoading) {
+    return (
+      <div className={styles.screen}>
+        <div className={styles.empty}>
+          <div className={styles.emptyTitle}>Loading project...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
       <div className={styles.screen}>
         <div className={styles.empty}>
-          <div className={styles.emptyTitle}>Loading project...</div>
+          <div className={styles.emptyTitle}>Project not found</div>
         </div>
       </div>
     );
@@ -79,22 +74,35 @@ export const ProjectDetail = ({
   const handleTogglePinned = async () => {
     const nextStatus = project.status === 'pinned' ? 'active' : 'pinned';
 
-    setPinning(true);
     setPinError('');
-    try {
-      await updateProject(workspaceId, project.id, {
-        name: project.name,
-        description: project.description,
-        owner: project.owner,
-        status: nextStatus,
-      });
-      refresh();
-      onProjectUpdated();
-    } catch (err) {
-      setPinError(err instanceof ApiError ? err.message : 'Could not update project status');
-    } finally {
-      setPinning(false);
-    }
+    updateProject.mutate(
+      {
+        projectId: project.id,
+        data: {
+          name: project.name,
+          description: project.description,
+          owner: project.owner,
+          status: nextStatus,
+        },
+      },
+      {
+        onError: (err) => {
+          setPinError(err instanceof ApiError ? err.message : 'Could not update project status');
+        },
+      }
+    );
+  };
+
+  const handleNavigateHome = () => {
+    navigate({ to: '/$workspaceSlug', params: { workspaceSlug } });
+  };
+
+  const handleNavigateProject = () => {
+    navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId }, search: { tab: search.tab as 'projects' | 'archive' | undefined } });
+  };
+
+  const handleNavigateDiagram = (diagramId: string) => {
+    navigate({ to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId', params: { workspaceSlug, projectId, diagramId } });
   };
 
   return (
@@ -103,9 +111,9 @@ export const ProjectDetail = ({
       <div className={styles.header}>
         <div>
           <div className={styles.eyebrow}>
-            <button type="button" onClick={() => navigate({ view: 'home' })}>Projects</button>
+            <button type="button" onClick={handleNavigateHome}>Projects</button>
             {' / '}
-            <button type="button" onClick={() => navigate({ folderFilter: null })}>{project.name}</button>
+            <button type="button" onClick={handleNavigateProject}>{project.name}</button>
             {folderFilter && <>{' / '}{folderFilter}</>}
           </div>
           <div className={styles.titleRow}>
@@ -115,7 +123,7 @@ export const ProjectDetail = ({
                 type="button"
                 className={`${styles.pinBtn} ${project.status === 'pinned' ? styles.pinBtnActive : ''}`}
                 onClick={handleTogglePinned}
-                disabled={pinning}
+                disabled={updateProject.isPending}
                 title={project.status === 'pinned' ? 'Unpin project' : 'Pin project'}
                 aria-label={project.status === 'pinned' ? 'Unpin project' : 'Pin project'}
               >
@@ -207,7 +215,7 @@ export const ProjectDetail = ({
         folderFilter={folderFilter}
         filter={filter}
         viewMode={viewMode}
-        navigate={navigate}
+        onOpenDiagram={handleNavigateDiagram}
         onNewDiagram={project.canManageFiles ? () => setAddDiagramOpen(true) : undefined}
       />
 
@@ -216,9 +224,9 @@ export const ProjectDetail = ({
           project={project}
           workspaceId={workspaceId}
           ownerOptions={ownerOptions}
-          onSaved={() => { setEditing(false); refresh(); onProjectUpdated(); }}
+          onSaved={() => { setEditing(false); }}
           onClose={() => setEditing(false)}
-          navigate={navigate}
+          onDelete={handleNavigateHome}
         />
       )}
 
@@ -226,7 +234,7 @@ export const ProjectDetail = ({
         <AddFolderDialog
           open={addFolderOpen}
           onClose={() => setAddFolderOpen(false)}
-          onCreated={() => { refresh(); onProjectUpdated(); }}
+          onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
         />
@@ -235,7 +243,7 @@ export const ProjectDetail = ({
         <AddDiagramDialog
           open={addDiagramOpen}
           onClose={() => setAddDiagramOpen(false)}
-          onCreated={() => { refresh(); onProjectUpdated(); }}
+          onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
           folder={folderFilter}
@@ -336,7 +344,7 @@ const DiagramsView = ({
   folderFilter,
   filter,
   viewMode,
-  navigate,
+  onOpenDiagram,
   onNewDiagram,
 }: {
   project: ProjectDetailData;
@@ -344,7 +352,7 @@ const DiagramsView = ({
   folderFilter: string | null;
   filter: string;
   viewMode: 'grid' | 'list';
-  navigate: NavigateFn;
+  onOpenDiagram: (diagramId: string) => void;
   onNewDiagram?: () => void;
 }) => {
   const lc = filter.toLowerCase();
@@ -393,7 +401,7 @@ const DiagramsView = ({
           <FileItem
             key={f.id}
             file={f}
-            onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+            onOpen={() => onOpenDiagram(f.id)}
           />
         ))}
         {addButton}
@@ -422,7 +430,7 @@ const DiagramsView = ({
             <FileItem
               key={f.id}
               file={f}
-              onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+              onOpen={() => onOpenDiagram(f.id)}
             />
           ))}
         </div>
@@ -438,7 +446,7 @@ const DiagramsView = ({
                 key={f.id}
                 file={f}
                 folder={g.path}
-                onOpen={() => navigate({ view: 'diagram', diagramId: f.id })}
+                onOpen={() => onOpenDiagram(f.id)}
               />
             ))}
           </div>
@@ -457,21 +465,23 @@ const ProjectSettings = ({
   ownerOptions,
   onSaved,
   onClose,
-  navigate,
+  onDelete,
 }: {
   project: ProjectDetailData;
   workspaceId: string;
   ownerOptions: WorkspaceOwnerOption[];
   onSaved: () => void;
   onClose: () => void;
-  navigate: NavigateFn;
+  onDelete: () => void;
 }) => {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description);
   const [owner, setOwner] = useState(project.owner ?? '');
   const [status, setStatus] = useState(project.status);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const updateProject = useUpdateProject(workspaceId);
+  const deleteProject = useDeleteProject(workspaceId);
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -479,32 +489,37 @@ const ProjectSettings = ({
       setError('Name is required');
       return;
     }
-    setSaving(true);
     setError('');
-    try {
-      await updateProject(workspaceId, project.id, {
-        name: trimmed,
-        description: description.trim(),
-        owner: owner || null,
-        status,
-      });
-      onSaved();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong');
-    } finally {
-      setSaving(false);
-    }
+    updateProject.mutate(
+      {
+        projectId: project.id,
+        data: {
+          name: trimmed,
+          description: description.trim(),
+          owner: owner || null,
+          status,
+        },
+      },
+      {
+        onSuccess: () => onSaved(),
+        onError: (err) => {
+          setError(err instanceof ApiError ? err.message : 'Something went wrong');
+        },
+      }
+    );
   };
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this project and all its files?')) return;
-    try {
-      await deleteProject(workspaceId, project.id);
-      navigate({ view: 'home', projectId: null });
-      onSaved();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong');
-    }
+    deleteProject.mutate(project.id, {
+      onSuccess: () => {
+        onDelete();
+        onSaved();
+      },
+      onError: (err) => {
+        setError(err instanceof ApiError ? err.message : 'Something went wrong');
+      },
+    });
   };
 
   return (
@@ -571,9 +586,9 @@ const ProjectSettings = ({
           type="button"
           className={`${styles.btn} ${styles.btnPrimary}`}
           onClick={handleSave}
-          disabled={saving}
+          disabled={updateProject.isPending}
         >
-          {saving ? 'Saving...' : 'Save'}
+          {updateProject.isPending ? 'Saving...' : 'Save'}
         </button>
       </div>
     </Dialog>

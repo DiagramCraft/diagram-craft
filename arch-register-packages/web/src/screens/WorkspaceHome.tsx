@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import styles from './WorkspaceHome.module.css';
 import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
@@ -6,10 +7,10 @@ import {
   TbDatabase, TbStack2, TbChartDots3, TbGitBranch,
   TbPlus, TbChevronRight,
 } from 'react-icons/tb';
-import type { Workspace } from '../api';
-import type { NavigateFn } from '../routing';
-import { resolveSchemaColor, fetchAuditLog } from '../api';
-import type { EntitySchema, Project, AuditLogEntry } from '../api';
+import { resolveSchemaColor } from '../api';
+import type { AuditLogEntry, Project } from '../api';
+import { useAuditLog } from '../hooks/useAudit';
+import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
 const PROJECT_STATUS_META = {
   pinned: { label: 'Pinned' },
@@ -17,35 +18,17 @@ const PROJECT_STATUS_META = {
   archived: { label: 'Archived' },
 } as const;
 
-type WorkspaceHomeProps = {
-  workspace: Workspace;
-  schemas: EntitySchema[];
-  projects: Project[];
-  navigate: NavigateFn;
-  onAddProject?: () => void;
-  onAddEntity?: () => void;
-  canViewAudit: boolean;
-  canViewSchemas: boolean;
-  canEditSchemas: boolean;
-};
-
 const MAX_RECENT_ACTIVITY_ENTRIES = 15;
 
-export const WorkspaceHome = ({
-  workspace,
-  schemas,
-  projects,
-  navigate,
-  onAddProject,
-  onAddEntity,
-  canViewAudit,
-  canViewSchemas,
-  canEditSchemas,
-}: WorkspaceHomeProps) => {
+export const WorkspaceHome = () => {
+  const navigate = useNavigate();
+  const {
+    workspace, workspaceSlug, schemas, projects, permissions,
+    openAddProjectDialog, openAddEntityDialog,
+  } = useWorkspaceContext();
+  const { canViewAudit, canViewSchemas, canEditSchemas, canCreateProjects, canCreateEntities } = permissions;
   const collapsedProjectCount = 6;
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [recentActivity, setRecentActivity] = useState<AuditLogEntry[]>([]);
-  const [activityLoading, setActivityLoading] = useState(true);
   
   const totalEntities = schemas.reduce((sum, s) => sum + s.entity_count, 0);
   const totalFiles = projects.reduce((sum, p) => sum + p.file_count, 0);
@@ -55,22 +38,14 @@ export const WorkspaceHome = ({
     ? projects
     : nonArchivedProjects.slice(0, collapsedProjectCount);
 
-  // Fetch recent activity from audit log
-  useEffect(() => {
-    if (!canViewAudit) {
-      setRecentActivity([]);
-      setActivityLoading(false);
-      return;
-    }
-    setActivityLoading(true);
-    fetchAuditLog(workspace.url_slug, { limit: MAX_RECENT_ACTIVITY_ENTRIES })
-      .then(setRecentActivity)
-      .catch(err => {
-        console.error('Failed to load audit log:', err);
-        setRecentActivity([]);
-      })
-      .finally(() => setActivityLoading(false));
-  }, [canViewAudit, workspace.url_slug]);
+  // Fetch recent activity from audit log using TanStack Query
+  const { data: recentActivity = [], isLoading: activityLoading } = useAuditLog(
+    workspaceSlug,
+    { limit: MAX_RECENT_ACTIVITY_ENTRIES },
+    { enabled: canViewAudit }
+  );
+
+  if (!workspace) return null;
 
   const formatRelativeTime = (timestamp: string): string => {
     const now = new Date();
@@ -90,13 +65,13 @@ export const WorkspaceHome = ({
   const handleActivityClick = (entry: AuditLogEntry) => {
     switch (entry.entity_type) {
       case 'entity':
-        navigate({ view: 'entity-detail', entityId: entry.entity_id });
+        navigate({ to: '/$workspaceSlug/entities/$entityId', params: { workspaceSlug, entityId: entry.entity_id } });
         break;
       case 'project':
-        navigate({ view: 'project-detail', projectId: entry.entity_id, projectSidebarTab: 'projects' });
+        navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: entry.entity_id }, search: { tab: 'projects' as const } });
         break;
       case 'entity_schema':
-        navigate({ view: 'data-model' });
+        navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } });
         break;
       // workspace and project_file don't have dedicated detail views yet
     }
@@ -131,16 +106,16 @@ export const WorkspaceHome = ({
           <div className={styles.sub}>{workspace.description}</div>
         </div>
         <div className={styles.actions}>
-          {onAddProject && (
-            <button type="button" className={styles.btn} onClick={onAddProject}>
+          {canCreateProjects && (
+            <button type="button" className={styles.btn} onClick={openAddProjectDialog}>
               <TbPlus size={12} /> New project
             </button>
           )}
-          {onAddEntity && (
+          {canCreateEntities && (
             <button
               type="button"
               className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={onAddEntity}
+              onClick={openAddEntityDialog}
             >
               <TbPlus size={12} /> New entity
             </button>
@@ -196,7 +171,7 @@ export const WorkspaceHome = ({
                   key={p.id}
                   project={p}
                   expanded={showAllProjects}
-                  onClick={() => navigate({ view: 'project-detail', projectId: p.id, projectSidebarTab: 'projects' })}
+                  onClick={() => navigate({ to: '/$workspaceSlug/projects/$projectId', params: { workspaceSlug, projectId: p.id }, search: { tab: 'projects' as const } })}
                 />
               ))
             ) : (
@@ -217,7 +192,7 @@ export const WorkspaceHome = ({
                     type="button"
                     key={s.id}
                     className={styles.typecard}
-                    onClick={() => navigate({ view: 'entity-browser', typeFilter: s.id })}
+                    onClick={() => navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug }, search: { type: s.id } })}
                   >
                     <span className={styles.typecardBar} style={{ background: resolveSchemaColor(s, i) }} />
                     <span className={styles.typecardIcon}>
@@ -236,7 +211,7 @@ export const WorkspaceHome = ({
                   <button
                     type="button"
                     className={`${styles.typecard} ${styles.typecardAdd}`}
-                    onClick={() => navigate({ view: 'data-model' })}
+                    onClick={() => navigate({ to: '/$workspaceSlug/model', params: { workspaceSlug } })}
                   >
                     <span className={styles.typecardIcon}>
                       <TbPlus size={14} />
@@ -258,7 +233,7 @@ export const WorkspaceHome = ({
                 <button
                   type="button"
                   className={styles.link}
-                  onClick={() => navigate({ view: 'workspace-settings', settingsSection: 'audit' })}
+                  onClick={() => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug }, search: { section: 'audit' } })}
                 >
                   All activity &rarr;
                 </button>

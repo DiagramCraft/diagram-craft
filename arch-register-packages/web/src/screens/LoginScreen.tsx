@@ -1,35 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { useAuthConfig } from '../hooks/useAuthConfig';
 import styles from './LoginScreen.module.css';
-
-const BASE = import.meta.env.VITE_API_URL ?? '';
 
 export const LoginScreen = () => {
   const { login, loginWithOidc, isLoading } = useAuth();
-  const [authMode, setAuthMode] = useState<'local' | 'oidc' | null>(null);
+  const { data: authConfig, isLoading: isLoadingConfig } = useAuthConfig();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    const detectAuthMode = async () => {
-      try {
-        const res = await fetch(`${BASE}/api/auth/config`);
-        if (res.ok) {
-          const config = await res.json();
-          setAuthMode(config.mode);
-        } else {
-          setAuthMode('local');
-        }
-      } catch {
-        setAuthMode('local');
-      }
-    };
-
-    detectAuthMode();
-  }, []);
+  const authMode = authConfig?.mode ?? 'local';
 
   const handleLocalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +50,7 @@ export const LoginScreen = () => {
     if (error) setError('');
   };
 
-  if (isLoading || authMode === null) {
+  if (isLoading || isLoadingConfig) {
     return (
       <div className={styles.app}>
         <main className={styles.stage}>
