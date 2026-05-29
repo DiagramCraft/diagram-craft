@@ -1,0 +1,121 @@
+import type { Database as DatabaseType } from 'better-sqlite3';
+import type {
+  CreateUserInput,
+  IdentityAuthDatabase,
+  UpdateUserInput
+} from './database.js';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+import type { GlobalRole } from '../types.js';
+
+export class SqliteIdentityAuthDatabase
+  extends SqliteDatabaseBase
+  implements IdentityAuthDatabase
+{
+  constructor(db: DatabaseType) {
+    super(db);
+  }
+
+  async getUser(id: string) {
+    return this.get('SELECT * FROM users WHERE id = ?', [id], sqliteMappers.user);
+  }
+
+  async getUserByEmail(email: string) {
+    return this.get('SELECT * FROM users WHERE email = ?', [email], sqliteMappers.user);
+  }
+
+  async getUserByOidc(issuer: string, subject: string) {
+    return this.get(
+      'SELECT * FROM users WHERE oidc_issuer = ? AND oidc_subject = ?',
+      [issuer, subject],
+      sqliteMappers.user
+    );
+  }
+
+  async createUser(input: CreateUserInput) {
+    this.run(
+      'INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.email,
+        input.display_name,
+        input.auth_provider,
+        input.password_hash,
+        input.oidc_issuer,
+        input.oidc_subject,
+        input.is_active ? 1 : 0,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString(),
+        input.last_login_at?.toISOString() ?? null
+      ]
+    );
+    return (await this.getUser(input.id))!;
+  }
+
+  async updateUser(id: string, input: UpdateUserInput) {
+    const sets: string[] = [];
+    const values: unknown[] = [];
+
+    if (input.email !== undefined) {
+      sets.push('email = ?');
+      values.push(input.email);
+    }
+    if (input.display_name !== undefined) {
+      sets.push('display_name = ?');
+      values.push(input.display_name);
+    }
+    if (input.password_hash !== undefined) {
+      sets.push('password_hash = ?');
+      values.push(input.password_hash);
+    }
+    if (input.is_active !== undefined) {
+      sets.push('is_active = ?');
+      values.push(input.is_active ? 1 : 0);
+    }
+
+    sets.push('updated_at = ?');
+    values.push(input.updated_at.toISOString());
+    values.push(id);
+
+    this.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, values);
+    return await this.getUser(id);
+  }
+
+  async updateUserLastLogin(id: string, timestamp: Date) {
+    this.run('UPDATE users SET last_login_at = ? WHERE id = ?', [timestamp.toISOString(), id]);
+  }
+
+  async listUsers() {
+    return this.all('SELECT * FROM users ORDER BY display_name', [], sqliteMappers.user);
+  }
+
+  async listGlobalRoleAssignments(userId?: string) {
+    if (userId) {
+      return this.all(
+        'SELECT user_id, role, created_at FROM global_role_assignment WHERE user_id = ? ORDER BY role',
+        [userId],
+        sqliteMappers.globalRoleAssignment
+      );
+    }
+
+    return this.all(
+      'SELECT user_id, role, created_at FROM global_role_assignment ORDER BY user_id, role',
+      [],
+      sqliteMappers.globalRoleAssignment
+    );
+  }
+
+  async replaceGlobalRoleAssignments(userId: string, roles: GlobalRole[], createdAt: Date) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM global_role_assignment WHERE user_id = ?', [userId]);
+      for (const role of roles) {
+        this.run(
+          'INSERT INTO global_role_assignment (user_id, role, created_at) VALUES (?, ?, ?)',
+          [userId, role, createdAt.toISOString()]
+        );
+      }
+    });
+
+    tx();
+    return await this.listGlobalRoleAssignments(userId);
+  }
+}

@@ -107,12 +107,13 @@ export type CreateEntityGrantInput = Omit<EntityGrant, 'id'> & {
   id: string;
 };
 
-export type DatabaseAdapter = {
+export type CoreDatabase = {
   driver: DbDriver;
   close(): Promise<void>;
   reset(): Promise<void>;
+};
 
-  resolveWorkspaceSlug(slug: string): Promise<string | null>;
+export type WorkspaceAdminDatabase = {
   listWorkspaces(): Promise<Workspace[]>;
   getWorkspace(id: string): Promise<Workspace | null>;
   createWorkspace(input: CreateWorkspaceInput): Promise<Workspace>;
@@ -128,6 +129,10 @@ export type DatabaseAdapter = {
   replaceOwners(ws: string, owners: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
   listTeamMemberships(ws: string): Promise<TeamMembership[]>;
   replaceTeamMemberships(ws: string, memberships: TeamMembership[]): Promise<TeamMembership[]>;
+};
+
+export type CatalogDatabase = {
+  resolveWorkspaceSlug(slug: string): Promise<string | null>;
 
   listSchemas(ws: string): Promise<EntitySchema[]>;
   getSchema(ws: string, id: string): Promise<EntitySchema | null>;
@@ -147,7 +152,9 @@ export type DatabaseAdapter = {
     entityId: string,
     grants: CreateEntityGrantInput[]
   ): Promise<EntityGrant[]>;
+};
 
+export type ProjectsFilesDatabase = {
   listProjects(ws: string): Promise<Project[]>;
   getProject(ws: string, id: string): Promise<Project | null>;
   createProject(input: CreateProjectInput): Promise<Project>;
@@ -180,10 +187,14 @@ export type DatabaseAdapter = {
     projectId: string,
     folderPath: string
   ): Promise<ProjectFile[]>;
+};
 
+export type AuditDatabase = {
   listAuditLogs(ws: string): Promise<AuditLogEntry[]>;
   createAuditLog(input: CreateAuditLogInput): Promise<AuditLogEntry>;
+};
 
+export type IdentityAuthDatabase = {
   getUser(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
   getUserByOidc(issuer: string, subject: string): Promise<User | null>;
@@ -198,3 +209,10 @@ export type DatabaseAdapter = {
     createdAt: Date
   ): Promise<GlobalRoleAssignment[]>;
 };
+
+export type DatabaseAdapter = CoreDatabase &
+  WorkspaceAdminDatabase &
+  CatalogDatabase &
+  ProjectsFilesDatabase &
+  AuditDatabase &
+  IdentityAuthDatabase;
