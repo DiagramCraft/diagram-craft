@@ -9,7 +9,7 @@ import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles.js';
 import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin.js';
 
 export class SqliteDatabase implements DatabaseAdapter {
-  private readonly db;
+  private db;
   private readonly filePath: string;
 
   readonly core;
@@ -24,11 +24,11 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.db = new Database(filePath);
     this.configure();
 
-    this.workspaceAdmin = new SqliteWorkspaceAdminDatabase(this.db);
-    this.catalog = new SqliteCatalogDatabase(this.db);
-    this.projectsFiles = new SqliteProjectsFilesDatabase(this.db);
-    this.audit = new SqliteAuditDatabase(this.db);
-    this.identityAuth = new SqliteIdentityAuthDatabase(this.db);
+    this.workspaceAdmin = new SqliteWorkspaceAdminDatabase(() => this.db);
+    this.catalog = new SqliteCatalogDatabase(() => this.db);
+    this.projectsFiles = new SqliteProjectsFilesDatabase(() => this.db);
+    this.audit = new SqliteAuditDatabase(() => this.db);
+    this.identityAuth = new SqliteIdentityAuthDatabase(() => this.db);
 
     this.core = {
       driver: 'sqlite' as const,
@@ -39,11 +39,10 @@ export class SqliteDatabase implements DatabaseAdapter {
         this.db.close();
         await rm(this.filePath, { force: true });
         await mkdir(dirname(this.filePath), { recursive: true });
-        const nextDb = new Database(this.filePath);
-        nextDb.pragma('foreign_keys = ON');
-        nextDb.pragma('journal_mode = WAL');
+        this.db = new Database(this.filePath);
+        this.configure();
         const schemaSql = await readFile(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
-        nextDb.exec(schemaSql);
+        this.db.exec(schemaSql);
       }
     };
   }

@@ -169,7 +169,11 @@ export const sqliteMappers = {
 };
 
 export class SqliteDatabaseBase {
-  constructor(protected db: DatabaseType) {}
+  constructor(private readonly getDb: () => DatabaseType) {}
+
+  protected get db() {
+    return this.getDb();
+  }
 
   protected all<T>(
     sql: string,
