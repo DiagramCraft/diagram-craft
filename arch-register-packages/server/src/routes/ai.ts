@@ -13,23 +13,19 @@ export const createAIRoutes = (aiServer: AIServer) => {
   // Helper function to validate content type and size
   const validateRequest = (event: H3Event<EventHandlerRequest>) => {
     const contentTypeStr = event.req.headers.get('content-type');
-    if (contentTypeStr && !contentTypeStr.startsWith(CONTENT_TYPE_JSON)) {
-      throw new HTTPError({
-        status: 415,
-        statusText: 'Unsupported Media Type',
-        message: `Content-Type must be ${CONTENT_TYPE_JSON}`
-      });
-    }
+    httpAssert.true(contentTypeStr?.startsWith(CONTENT_TYPE_JSON), {
+      status: 415,
+      statusText: 'Unsupported Media Type',
+      message: `Content-Type must be ${CONTENT_TYPE_JSON}`
+    });
 
     const contentLengthStr = event.req.headers.get('content-length');
     const contentLength = parseInt(contentLengthStr ?? '0', 10);
-    if (contentLength > MAX_REQUEST_SIZE) {
-      throw new HTTPError({
-        status: 413,
-        statusText: 'Payload Too Large',
-        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
-      });
-    }
+    httpAssert.true(contentLength <= MAX_REQUEST_SIZE, {
+      status: 413,
+      statusText: 'Payload Too Large',
+      message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
+    });
   };
 
   // Helper function to handle errors consistently

@@ -1,10 +1,6 @@
 import { HTTPError } from 'h3';
-import type {
-  AIGenerateRequest,
-  AIResult,
-  AIServer,
-  AIMessage
-} from './aiServer.js';
+import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from './aiServer.js';
+import { httpAssert } from '../utils/httpAssert';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const REQUEST_TIMEOUT = 120000;
@@ -45,7 +41,7 @@ export class OpenRouterAIServer implements AIServer {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.config.apiKey}`,
+          'Authorization': `Bearer ${this.config.apiKey}`,
           'HTTP-Referer': this.config.siteUrl ?? 'http://localhost',
           'X-Title': this.config.appName ?? 'ArchRegister'
         },
@@ -72,9 +68,9 @@ export class OpenRouterAIServer implements AIServer {
       }
 
       if (request.stream ?? true) {
-        if (response.body === null) {
-          throw new Error('OpenRouter returned an empty streaming response');
-        }
+        httpAssert.present(response.body, {
+          message: 'OpenRouter returned an empty streaming response'
+        });
 
         return {
           type: 'stream',
