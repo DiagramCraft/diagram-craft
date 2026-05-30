@@ -1,57 +1,50 @@
 import type { GlobalRole } from '@arch-register/permissions';
+import type {
+  Workspace,
+  EntitySchema,
+  SchemaField,
+  TextField,
+  BooleanField,
+  SelectField,
+  ReferenceField,
+  ContainmentField,
+  EntityRecord,
+  EntitySummary,
+  EntityLink,
+  Project,
+  ProjectDetail,
+  ProjectFile,
+  FileTree,
+  AuditLogEntry,
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption,
+  WorkspaceMemberInfo,
+  WorkspaceUserInfo,
+} from '@arch-register/api-types';
 
-// ── Workspace types ───────────────────────────────────────────
-
-export type Workspace = {
-  id: string;
-  name: string;
-  url_slug: string;
-  short_code: string;
-  description: string;
-  created_at: string;
-  updated_at: string;
+// Re-export commonly used types for convenience
+export type {
+  Workspace,
+  EntitySchema,
+  SchemaField,
+  TextField,
+  BooleanField,
+  SelectField,
+  ReferenceField,
+  ContainmentField,
+  EntityRecord,
+  EntitySummary,
+  EntityLink,
+  Project,
+  ProjectDetail,
+  ProjectFile,
+  FileTree,
+  AuditLogEntry,
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption,
+  WorkspaceMemberInfo,
+  WorkspaceUserInfo,
 };
-
-// ── Schema field types ────────────────────────────────────────
-
-export type TextField = {
-  id: string;
-  name: string;
-  type: 'text' | 'longtext';
-};
-
-export type BooleanField = {
-  id: string;
-  name: string;
-  type: 'boolean';
-};
-
-export type SelectField = {
-  id: string;
-  name: string;
-  type: 'select';
-  options: Array<{ value: string; label: string }>;
-};
-
-export type ReferenceField = {
-  id: string;
-  name: string;
-  type: 'reference';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-export type ContainmentField = {
-  id: string;
-  name: string;
-  type: 'containment';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-export type SchemaField = TextField | BooleanField | SelectField | ReferenceField | ContainmentField;
 
 export type FieldType = SchemaField['type'];
 
@@ -63,18 +56,6 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'reference', label: 'Reference' },
   { value: 'containment', label: 'Containment' },
 ];
-
-export type EntitySchema = {
-  id: string;
-  workspace: string;
-  name: string;
-  fields: SchemaField[];
-  color: string | null;
-  icon: string | null;
-  entity_count: number;
-  created_at: string;
-  updated_at: string;
-};
 
 export const SCHEMA_COLORS = [
   'var(--tag-component)',
@@ -171,38 +152,6 @@ export const apiFetch = async <T>(path: string, init?: RequestInit): Promise<T> 
 };
 
 // ── Entity types ──────────────────────────────────────────────
-
-export type EntityLink = {
-  url: string;
-  title: string;
-  type?: string;
-};
-
-export type EntityCapabilities = {
-  canView: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-  canCreateChild: boolean;
-};
-
-export type EntitySummary = EntityCapabilities & {
-  _uid: string;
-  _workspace: string;
-  _schemaId: string;
-  _name: string;
-  _slug: string;
-  _namespace: string;
-  _description: string;
-  _owner: string | null;
-  _lifecycle: string | null;
-  _tags: string[];
-  _links: EntityLink[];
-};
-
-export type EntityRecord = EntitySummary & {
-  [key: string]: unknown;
-};
 
 export type EntityFacetBucket = {
   value: string | null;
@@ -318,40 +267,6 @@ export const fetchEntityRelations = (workspace: string, id: string) =>
   apiFetch<EntityRelations>(`/api/${workspace}/data/${id}/relations`);
 
 // ── Project types ─────────────────────────────────────────────
-
-export type ProjectCapabilities = {
-  canEdit: boolean;
-  canDelete: boolean;
-  canManageFiles: boolean;
-};
-
-export type Project = ProjectCapabilities & {
-  id: string;
-  workspace: string;
-  name: string;
-  description: string;
-  owner: string | null;
-  status: 'pinned' | 'active' | 'archived';
-  file_count: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type FileEntry = {
-  id: string;
-  path: string;
-  name: string;
-  size_bytes: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type FileTree = {
-  folders: Array<{ path: string; files: FileEntry[] }>;
-  rootFiles: FileEntry[];
-};
-
-export type ProjectDetail = Project & { files: FileTree };
 
 export type ProjectSearchResult = {
   id: string;
@@ -512,12 +427,13 @@ const emptyDiagram = (name: string) => {
   };
 };
 
-export type ProjectFile = FileEntry;
+// Local alias for backward compatibility
+export type FileEntry = ProjectFile;
 
 export const createDiagramFile = (workspace: string, projectId: string, name: string, folder?: string | null) => {
   const fileName = `${name}.json`;
   const filePath = folder ? `${folder}/${fileName}` : fileName;
-  return apiFetch<FileEntry>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
+  return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
     method: 'PUT',
     body: JSON.stringify(emptyDiagram(name)),
   });
@@ -534,24 +450,6 @@ export const createFolder = (workspace: string, projectId: string, path: string)
 export type AuditOperation = 'create' | 'update' | 'delete';
 
 export type AuditEntityType = 'workspace' | 'entity_schema' | 'entity' | 'project' | 'project_file';
-
-export type AuditLogEntry = {
-  id: string;
-  workspace: string;
-  timestamp: string;
-  user_id: string;
-  operation: AuditOperation;
-  entity_type: AuditEntityType;
-  entity_id: string;
-  entity_name: string;
-  entity_slug: string | null;
-  schema_id: string | null;
-  changes: {
-    old?: Record<string, unknown>;
-    new?: Record<string, unknown>;
-  };
-  metadata: Record<string, unknown>;
-};
 
 export type AuditStats = {
   total: number;
@@ -588,13 +486,6 @@ export const fetchAuditStats = (workspace: string) =>
 
 // ── Workspace Config API ─────────────────────────────────────
 
-export type WorkspaceLifecycleState = {
-  id: string;
-  label: string;
-  color: string;
-  sort_order: number;
-};
-
 export type WorkspaceTeam = {
   id: string;
   sort_order: number;
@@ -620,25 +511,8 @@ export const updateTeams = (workspace: string, teams: WorkspaceTeam[]) =>
 
 // ── Workspace Members ──────────────────────────────────────────
 
-export type WorkspaceMemberInfo = {
-  workspace: string;
-  user_id: string;
-  role: string;
-  display_name: string;
-  email: string | null;
-  created_at: string;
-};
-
 export const fetchWorkspaceMembers = (workspace: string) =>
   apiFetch<WorkspaceMemberInfo[]>(`/api/${workspace}/config/members`);
-
-export type WorkspaceUserInfo = {
-  id: string;
-  email: string | null;
-  display_name: string;
-  auth_provider: 'local' | 'oidc';
-  is_active: boolean;
-};
 
 export const fetchWorkspaceUsers = (workspace: string) =>
   apiFetch<WorkspaceUserInfo[]>(`/api/${workspace}/config/users`);

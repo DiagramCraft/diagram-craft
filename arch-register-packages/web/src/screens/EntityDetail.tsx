@@ -121,6 +121,7 @@ export const EntityDetail = () => {
         _lifecycle: null,
         _tags: [],
         _links: [],
+        _visibilityMode: null,
         canView: true,
         canEdit: false,
         canDelete: false,
