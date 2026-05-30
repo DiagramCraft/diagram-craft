@@ -52,23 +52,27 @@ export const WorkspaceLayout = () => {
 
   const { data: schemas = [] } = useSchemas(workspaceSlug, !!workspaceSlug);
   const { data: projects = [] } = useProjects(workspaceSlug);
-  const { lifecycleStates, ownerOptions } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
+  const { lifecycleStates, teams } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
 
   const {
     canManageWorkspaces,
+    canManageGlobalRoles,
     canViewSchemas,
     canEditSchemas,
     canManageTeams,
     canViewAudit,
     canCreateProjects,
     canCreateEntities,
+    canManageMembers,
   } = useWorkspacePermissions(ws?.id);
 
   const availableSettingsSections = useMemo(() => [
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
-    ...(canManageTeams ? ['lifecycle-owners'] : []),
+    ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
+    ...(canManageMembers ? ['roles', 'members'] : []),
+    ...(canManageGlobalRoles ? ['global-permissions'] : []),
     ...(canViewAudit ? ['audit'] : []),
-  ], [canManageWorkspaces, canManageTeams, canViewAudit]);
+  ], [canManageWorkspaces, canManageTeams, canManageMembers, canManageGlobalRoles, canViewAudit]);
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
@@ -132,24 +136,26 @@ export const WorkspaceLayout = () => {
     schemas,
     projects,
     lifecycleStates,
-    ownerOptions,
+    teams,
     permissions: {
       canManageWorkspaces,
+      canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
       canViewAudit,
       canCreateProjects,
       canCreateEntities,
+      canManageMembers,
     },
     availableSettingsSections,
     defaultSettingsSection,
     openAddProjectDialog: () => setAddProjectOpen(true),
     openAddEntityDialog: () => setAddEntityOpen(true),
   }), [
-    ws, workspaceSlug, schemas, projects, lifecycleStates, ownerOptions,
-    canManageWorkspaces, canViewSchemas, canEditSchemas, canManageTeams,
-    canViewAudit, canCreateProjects, canCreateEntities,
+    ws, workspaceSlug, schemas, projects, lifecycleStates, teams,
+    canManageWorkspaces, canManageGlobalRoles, canViewSchemas, canEditSchemas, canManageTeams,
+    canViewAudit, canCreateProjects, canCreateEntities, canManageMembers,
     availableSettingsSections, defaultSettingsSection,
   ]);
 
@@ -201,7 +207,7 @@ export const WorkspaceLayout = () => {
               });
             }}
             workspaceId={workspaceSlug}
-            ownerOptions={ownerOptions}
+            teams={teams}
           />
         )}
         {workspaceSlug && canCreateEntities && (
@@ -217,7 +223,7 @@ export const WorkspaceLayout = () => {
             workspaceId={workspaceSlug}
             schemas={schemas}
             lifecycleStates={lifecycleStates}
-            ownerOptions={ownerOptions}
+            teams={teams}
             preselectedSchemaId={null}
           />
         )}

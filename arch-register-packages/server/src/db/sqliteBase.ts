@@ -149,6 +149,7 @@ export const sqliteMappers = {
     workspace: String(row['workspace']),
     team_id: String(row['team_id']),
     user_id: String(row['user_id']),
+    role: String(row['role']) as TeamMembership['role'],
     created_at: toDate(row['created_at'])
   }),
   globalRoleAssignment: (row: Record<string, unknown>): GlobalRoleAssignment => ({

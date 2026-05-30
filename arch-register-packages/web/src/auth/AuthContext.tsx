@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { AuthorizationDataProvider } from './AuthorizationDataContext';
-import type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData } from './types';
+import type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData } from './types';
 
-export type { User, GlobalPermission, GlobalRole, WorkspaceTeamMembership, WorkspaceOwnerOption, AuthBaseData };
+export type { User, GlobalPermission, GlobalRole, WorkspaceTeam, AuthBaseData };
 
 type AuthMeResponse = User & AuthBaseData;
 
@@ -14,6 +14,7 @@ type AuthContextType = {
   loginWithOidc: () => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  reloadUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -51,8 +52,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setAuthBaseData({
         global_roles: userData.global_roles,
         global_permissions: userData.global_permissions,
-        team_memberships: userData.team_memberships,
-        owner_options_by_workspace: userData.owner_options_by_workspace ?? {}
+        team_assignments_by_workspace: userData.team_assignments_by_workspace ?? {},
+        workspace_roles: userData.workspace_roles ?? {},
+        teams_by_workspace: userData.teams_by_workspace ?? {}
       });
       return true;
     } catch (error) {
@@ -156,7 +158,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     loginWithOidc,
     logout,
-    refreshToken
+    refreshToken,
+    reloadUser: async () => {
+      await fetchCurrentUser();
+    }
   };
 
   return (

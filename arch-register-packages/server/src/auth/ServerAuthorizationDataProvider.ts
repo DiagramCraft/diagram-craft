@@ -4,7 +4,9 @@ import {
   type EntitySchema,
   type GlobalRole,
   type PermissionDataProvider,
-  type WorkspaceOwnerOption
+  type TeamAssignment,
+  type WorkspaceTeam,
+  type WorkspaceRole
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
 
@@ -26,9 +28,11 @@ export class ServerDataProvider implements PermissionDataProvider {
     return this.db.catalog.listEntityGrants(workspaceId);
   }
 
-  async getTeamMemberships(workspaceId: string, userId: string): Promise<string[]> {
-    const memberships = await this.db.workspaceAdmin.listTeamMemberships(workspaceId);
-    return memberships.filter(m => m.user_id === userId).map(m => m.team_id);
+  async getTeamAssignments(workspaceId: string, userId: string): Promise<TeamAssignment[]> {
+    const memberships = await this.db.workspaceAdmin.listTeamAssignments(workspaceId);
+    return memberships
+      .filter(m => m.user_id === userId)
+      .map(m => ({ teamId: m.team_id, role: m.role }));
   }
 
   async getGlobalRoles(userId: string): Promise<GlobalRole[]> {
@@ -36,8 +40,12 @@ export class ServerDataProvider implements PermissionDataProvider {
     return assignments.map(a => a.role);
   }
 
-  async getOwnerOptions(workspaceId: string): Promise<WorkspaceOwnerOption[]> {
-    const owners = await this.db.workspaceAdmin.listOwners(workspaceId);
-    return owners.map(o => ({ id: o.id, name: o.id, type: 'team' as const }));
+  async getTeams(workspaceId: string): Promise<WorkspaceTeam[]> {
+    const teams = await this.db.workspaceAdmin.listTeams(workspaceId);
+    return teams.map(team => ({ id: team.id, name: team.id, type: 'team' as const }));
+  }
+
+  async getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null> {
+    return this.db.workspaceAdmin.getWorkspaceRole(workspaceId, userId);
   }
 }

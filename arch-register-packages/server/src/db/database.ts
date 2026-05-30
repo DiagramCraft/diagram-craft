@@ -11,7 +11,9 @@ import type {
   User,
   Workspace,
   WorkspaceLifecycleState,
-  WorkspaceOwner
+  WorkspaceMember,
+  WorkspaceOwner,
+  WorkspaceRole
 } from '../types.js';
 
 export type DbDriver = 'postgres' | 'sqlite';
@@ -125,10 +127,16 @@ export type WorkspaceAdminDatabase = {
     ws: string,
     states: WorkspaceLifecycleState[]
   ): Promise<WorkspaceLifecycleState[]>;
-  listOwners(ws: string): Promise<WorkspaceOwner[]>;
-  replaceOwners(ws: string, owners: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
-  listTeamMemberships(ws: string): Promise<TeamMembership[]>;
-  replaceTeamMemberships(ws: string, memberships: TeamMembership[]): Promise<TeamMembership[]>;
+  listTeams(ws: string): Promise<WorkspaceOwner[]>;
+  replaceTeams(ws: string, teams: WorkspaceOwner[]): Promise<WorkspaceOwner[]>;
+  listTeamAssignments(ws: string): Promise<TeamMembership[]>;
+  replaceTeamAssignments(ws: string, assignments: TeamMembership[]): Promise<TeamMembership[]>;
+
+  listWorkspaceMembers(ws: string): Promise<WorkspaceMember[]>;
+  getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
+  setWorkspaceMemberRole(ws: string, userId: string, role: WorkspaceRole, createdAt: Date): Promise<WorkspaceMember>;
+  removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
+  getWorkspaceRole(ws: string, userId: string): Promise<WorkspaceRole | null>;
 };
 
 export type CatalogDatabase = {

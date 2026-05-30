@@ -6,10 +6,12 @@ import type {
   EntitySchema,
   GlobalPermission,
   ProjectAction,
-  VisibilityMode
+  TeamRole,
+  VisibilityMode,
+  WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
-import { GLOBAL_ROLE_PERMISSIONS, ROLE_ACTIONS } from './constants.js';
+import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS, WORKSPACE_ROLE_CAPABILITIES } from './constants.js';
 
 /**
  * Pure permission checker.
@@ -47,11 +49,12 @@ export class PermissionChecker {
 
   /**
    * Check if user has a specific assigned permission on a project.
-   * 
+   *
    * This checks:
-   * - Global platform_admin role
+   * - Global admin_platform permission
+   * - Workspace role with proj.edit capability
    * - Owner team membership
-   * 
+   *
    * @param context - Authorization context with user's roles and permissions
    * @param ownerTeamId - The team that owns the project (null for no owner)
    * @param _action - The specific action to check (currently all actions treated uniformly)
@@ -62,22 +65,47 @@ export class PermissionChecker {
     ownerTeamId: string | null,
     _action: ProjectAction
   ): boolean {
-    if (context.globalRoles.has('platform_admin')) {
+    if (context.globalPermissions.has('admin_platform')) {
       return true;
     }
 
-    if (ownerTeamId != null && context.teamIds.has(ownerTeamId)) {
+    if (this.hasWorkspaceCapability(context, 'proj.edit')) {
       return true;
+    }
+
+    if (ownerTeamId != null) {
+      for (const role of this.getTeamRoles(context, ownerTeamId)) {
+        if (TEAM_ROLE_PERMISSIONS[role].projectActions.includes(_action)) {
+          return true;
+        }
+      }
     }
 
     return false;
   }
 
   /**
+   * Check if user has a specific workspace capability via their workspace role.
+   *
+   * global_admin users implicitly have all workspace capabilities.
+   */
+  hasWorkspaceCapability(context: AuthorizationContext, capability: WorkspaceCapability): boolean {
+    if (context.globalPermissions.has('admin_platform')) {
+      return true;
+    }
+
+    if (context.workspaceRole == null) {
+      return false;
+    }
+
+    return WORKSPACE_ROLE_CAPABILITIES[context.workspaceRole].includes(capability);
+  }
+
+  /**
    * Check if user has a specific assigned global permission.
    * 
    * This checks the user's global permissions set, which is derived from
-   * their global role assignments. platform_admin role grants all permissions.
+   * their global role assignments. global_admin role grants all permissions.
    * 
    * @param context - Authorization context with user's roles and permissions
    * @param permission - The specific global permission to check
@@ -102,17 +130,19 @@ export class PermissionChecker {
   protected getEntityActions(context: AuthorizationContext, entity: Entity): Set<EntityAction> {
     const actions = new Set<EntityAction>();
 
-    // Check global roles for entity permissions
-    for (const role of context.globalRoles) {
-      for (const permission of GLOBAL_ROLE_PERMISSIONS[role]) {
-        if (
-          permission === 'view_entity' ||
-          permission === 'edit_entity' ||
-          permission === 'create_child' ||
-          permission === 'admin_entity'
-        ) {
-          actions.add(permission);
-        }
+    // Global admins get all entity actions
+    if (context.globalPermissions.has('admin_platform')) {
+      ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
+    }
+
+    // Workspace role grants entity actions
+    if (context.workspaceRole != null) {
+      if (this.hasWorkspaceCapability(context, 'ent.edit')) {
+        ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
+        ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'ws.view')) {
+        actions.add('view_entity');
       }
     }
 
@@ -121,17 +151,29 @@ export class PermissionChecker {
       actions.add('view_entity');
     }
 
-    // Owner team members get entity_admin role
-    if (entity.owner && context.teamIds.has(entity.owner)) {
-      ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
+    const ancestorIds = this.collectAncestorIds(context, entity);
+
+    // Direct owner team permissions apply to the entity itself
+    if (entity.owner) {
+      for (const role of this.getTeamRoles(context, entity.owner)) {
+        TEAM_ROLE_PERMISSIONS[role].directEntityActions.forEach(teamAction => actions.add(teamAction));
+      }
+    }
+
+    // Ancestor owner teams contribute descendant permissions downward.
+    for (const ancestorId of ancestorIds) {
+      const ancestor = context.entities.get(ancestorId);
+      if (!ancestor?.owner) continue;
+      for (const role of this.getTeamRoles(context, ancestor.owner)) {
+        TEAM_ROLE_PERMISSIONS[role].descendantEntityActions.forEach(teamAction => actions.add(teamAction));
+      }
     }
 
     // Check explicit entity grants
-    const ancestorIds = this.collectAncestorIds(context, entity);
     for (const grant of context.grants) {
       const principalMatches =
         (grant.principal_type === 'user' && grant.principal_id === context.userId) ||
-        (grant.principal_type === 'team' && context.teamIds.has(grant.principal_id));
+        (grant.principal_type === 'team' && context.teamRolesByTeam.has(grant.principal_id));
 
       if (!principalMatches) continue;
       if (!this.hasApplicableGrant(grant, entity.id, ancestorIds)) continue;
@@ -238,5 +280,9 @@ export class PermissionChecker {
       grant.entity_id === targetEntityId ||
       (grant.applies_to === 'subtree' && ancestorIds.has(grant.entity_id))
     );
+  }
+
+  protected getTeamRoles(context: AuthorizationContext, teamId: string): Set<TeamRole> {
+    return context.teamRolesByTeam.get(teamId) ?? new Set<TeamRole>();
   }
 }

@@ -1,15 +1,33 @@
 // ── Core Permission Types ─────────────────────────────────────
 
-export type GlobalRole = 'platform_admin' | 'schema_admin' | 'user_admin' | 'auditor';
+export type GlobalRole = 'global_admin' | 'workspace_admin';
 
 export type GlobalPermission =
-  | 'view_schema'
-  | 'edit_schema'
-  | 'manage_users'
-  | 'manage_teams'
-  | 'manage_global_roles'
-  | 'view_audit'
-  | 'admin_platform';
+  | 'admin_platform'
+  | 'create_workspaces'
+  | 'manage_workspace_roles';
+
+export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+
+export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
+
+export type WorkspaceCapability =
+  | 'ws.view'
+  | 'ws.settings'
+  | 'ws.delete'
+  | 'ws.audit'
+  | 'people.invite'
+  | 'people.role'
+  | 'people.remove'
+  | 'people.teams'
+  | 'proj.create'
+  | 'proj.edit'
+  | 'ent.edit'
+  | 'ent.propose'
+  | 'comments'
+  | 'export'
+  | 'schema.edit'
+  | 'schema.publish';
 
 export type EntityRole = 'viewer' | 'editor' | 'contributor' | 'entity_admin';
 
@@ -121,10 +139,15 @@ export type Entity = {
 
 // ── Owner Types ───────────────────────────────────────────────
 
-export type WorkspaceOwnerOption = {
+export type WorkspaceTeam = {
   id: string;
   name: string;
   type: 'team';
+};
+
+export type TeamAssignment = {
+  teamId: string;
+  role: TeamRole;
 };
 
 // ── Grant Types ───────────────────────────────────────────────
@@ -140,17 +163,27 @@ export type EntityGrant = {
   created_at: Date;
 };
 
+// ── Workspace Member ─────────────────────────────────────────
+
+export type WorkspaceMember = {
+  workspace: string;
+  user_id: string;
+  role: WorkspaceRole;
+  created_at: Date;
+};
+
 // ── Authorization Context ─────────────────────────────────────
 
 export type AuthorizationContext = {
   userId: string;
   globalRoles: Set<GlobalRole>;
   globalPermissions: Set<GlobalPermission>;
+  workspaceRole: WorkspaceRole | null;
   teamIds: Set<string>;
-  ownerOptions: WorkspaceOwnerOption[];
+  teamAssignments: TeamAssignment[];
+  teamRolesByTeam: Map<string, Set<TeamRole>>;
+  teams: WorkspaceTeam[];
   schemas: Map<string, EntitySchema>;
   entities: Map<string, Entity>;
   grants: EntityGrant[];
 };
-
-

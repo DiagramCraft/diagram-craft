@@ -9,7 +9,8 @@ import {
   seedProjectFiles,
   seedProjects,
   seedSchemas,
-  seedTeamMemberships,
+  seedTeamAssignments,
+  seedWorkspaceMembers,
   seedWorkspaces
 } from '../db/seedData.js';
 import type { ContainmentField, ReferenceField } from '../types.js';
@@ -121,9 +122,9 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
   }
 
   for (const workspace of seedWorkspaces) {
-    await db.workspaceAdmin.replaceTeamMemberships(
+    await db.workspaceAdmin.replaceTeamAssignments(
       workspace.id,
-      seedTeamMemberships.filter(membership => membership.workspace === workspace.id)
+      seedTeamAssignments.filter(assignment => assignment.workspace === workspace.id)
     );
   }
 
@@ -138,8 +139,17 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
     await db.identityAuth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
   }
 
+  for (const member of seedWorkspaceMembers) {
+    await db.workspaceAdmin.setWorkspaceMemberRole(
+      member.workspace,
+      member.user_id,
+      member.role,
+      member.created_at
+    );
+  }
+
   console.log(
-    `  Created ${seedLocalUsers.length} test users with seeded team memberships and global roles (password: test)`
+    `  Created ${seedLocalUsers.length} test users with seeded team assignments, workspace roles and global roles (password: test)`
   );
 };
 
@@ -152,7 +162,7 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
       workspace.id,
       seedLifecycleStates.filter(state => state.workspace === workspace.id)
     );
-    await db.workspaceAdmin.replaceOwners(
+    await db.workspaceAdmin.replaceTeams(
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );

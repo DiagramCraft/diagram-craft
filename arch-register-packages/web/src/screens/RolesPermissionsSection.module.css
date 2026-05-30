@@ -1,0 +1,180 @@
+/* Roles & Permissions Section */
+
+.container {
+  padding: 0 24px 24px;
+}
+
+/* Role card grid */
+.roleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.roleCard {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roleCard:hover {
+  border-color: var(--fg-3);
+}
+
+.roleCardSelected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.roleCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rolePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-0);
+}
+
+.roleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.builtinChip {
+  font-size: 10px;
+  color: var(--fg-3);
+  background: var(--bg-2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.roleDescription {
+  font-size: 11px;
+  color: var(--fg-2);
+  line-height: 1.4;
+}
+
+.roleStats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--fg-3);
+  margin-top: auto;
+}
+
+.roleStatValue {
+  color: var(--fg-1);
+  font-weight: 600;
+}
+
+/* Add custom role button */
+.addRoleCard {
+  background: var(--bg-1);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: var(--fg-3);
+  font-size: 12px;
+  min-height: 100px;
+}
+
+/* Permission matrix */
+.matrixWrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.matrix th,
+.matrix td {
+  padding: 6px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.matrix th {
+  color: var(--fg-2);
+  font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.matrix td:first-child,
+.matrix th:first-child {
+  text-align: left;
+  padding-left: 16px;
+}
+
+.matrixHeaderRow th {
+  background: var(--bg-1);
+  padding: 10px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.matrixGroupRow td {
+  background: var(--bg-2);
+  font-weight: 600;
+  color: var(--fg-1);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 16px;
+}
+
+.matrixCapRow td {
+  background: var(--bg-0);
+}
+
+.matrixCapName {
+  color: var(--fg-1);
+}
+
+.matrixCheck {
+  color: var(--ok);
+  font-size: 14px;
+}
+
+.matrixDash {
+  color: var(--fg-3);
+  font-size: 11px;
+}
+
+.matrixColHighlight {
+  background: color-mix(in srgb, var(--accent) 8%, transparent) !important;
+}
+
+.matrix tr:last-child td {
+  border-bottom: none;
+}

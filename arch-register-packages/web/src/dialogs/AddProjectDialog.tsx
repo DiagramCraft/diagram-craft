@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Dialog } from '../components/Dialog';
 import { createProject, ApiError } from '../api';
-import type { Project, WorkspaceOwnerOption } from '../api';
+import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
 import styles from './AddWorkspaceDialog.module.css';
 
@@ -16,10 +16,10 @@ type AddProjectDialogProps = {
   onClose: () => void;
   onCreated: (project: Project) => void;
   workspaceId: string;
-  ownerOptions: WorkspaceOwnerOption[];
+  teams: WorkspaceTeam[];
 };
 
-export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerOptions }: AddProjectDialogProps) => {
+export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams }: AddProjectDialogProps) => {
   const { canCreateProject } = usePermissions();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -28,9 +28,9 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerO
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const creatableOwnerOptions = useMemo(
-    () => ownerOptions.filter(option => canCreateProject(workspaceId, option.id)),
-    [canCreateProject, ownerOptions, workspaceId]
+  const creatableTeams = useMemo(
+    () => teams.filter(team => canCreateProject(workspaceId, team.id)),
+    [canCreateProject, teams, workspaceId]
   );
   const canCreateWithoutOwner = canCreateProject(workspaceId, null);
 
@@ -38,12 +38,12 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerO
     if (open) {
       setName('');
       setDescription('');
-      setOwner(canCreateWithoutOwner ? '' : (creatableOwnerOptions[0]?.id ?? ''));
+      setOwner(canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''));
       setStatus('active');
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
-  }, [canCreateWithoutOwner, creatableOwnerOptions, open]);
+  }, [canCreateWithoutOwner, creatableTeams, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,9 +108,9 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, ownerO
           <label>Owner</label>
           <select value={owner} onChange={e => setOwner(e.target.value)}>
             {canCreateWithoutOwner && <option value="">No owner</option>}
-            {creatableOwnerOptions.map(option => (
-              <option key={option.id} value={option.id}>
-                {option.id}
+            {creatableTeams.map(team => (
+              <option key={team.id} value={team.id}>
+                {team.id}
               </option>
             ))}
           </select>

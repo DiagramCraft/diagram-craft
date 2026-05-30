@@ -46,6 +46,7 @@ export class PostgresDatabase implements DatabaseAdapter {
         try {
           await this.sql`DROP TABLE IF EXISTS global_role_assignment CASCADE`;
           await this.sql`DROP TABLE IF EXISTS team_membership CASCADE`;
+          await this.sql`DROP TABLE IF EXISTS workspace_member CASCADE`;
           await this.sql`DROP TABLE IF EXISTS users CASCADE`;
           await this.sql`DROP TABLE IF EXISTS audit_log CASCADE`;
           await this.sql`DROP TABLE IF EXISTS project_file CASCADE`;

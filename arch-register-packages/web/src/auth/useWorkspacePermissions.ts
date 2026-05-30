@@ -5,18 +5,22 @@ import {
   buildAuthorizationContext,
   type AuthorizationContext,
   type GlobalRole,
-  type WorkspaceOwnerOption
+  type TeamAssignment,
+  type WorkspaceTeam,
+  type WorkspaceRole
 } from '@arch-register/permissions';
-import { useAuthorizationData, type WorkspaceTeamMembership } from './AuthorizationDataContext';
+import { useAuthorizationData } from './AuthorizationDataContext';
 
 type WorkspacePermissions = {
   canManageWorkspaces: boolean;
+  canManageGlobalRoles: boolean;
   canViewSchemas: boolean;
   canEditSchemas: boolean;
   canManageTeams: boolean;
   canViewAudit: boolean;
   canCreateProjects: boolean;
   canCreateEntities: boolean;
+  canManageMembers: boolean;
 };
 
 const checker = new PermissionChecker();
@@ -30,17 +34,23 @@ const buildWorkspaceAuthorizationContext = (
     return null;
   }
 
-  const teamMemberships =
-    authorizationData.team_memberships.find(
-      (membership: WorkspaceTeamMembership) => membership.workspace_id === workspaceId
-    )?.team_ids ?? [];
-  const ownerOptions = authorizationData.owner_options_by_workspace[workspaceId] ?? [];
+  const teamAssignments =
+    (authorizationData.team_assignments_by_workspace?.[workspaceId] ?? []).map(
+      assignment =>
+        ({
+          teamId: assignment.team_id,
+          role: assignment.role,
+        }) satisfies TeamAssignment
+    ) ?? [];
+  const teams = authorizationData.teams_by_workspace?.[workspaceId] ?? [];
+  const workspaceRole = (authorizationData.workspace_roles?.[workspaceId] ?? null) as WorkspaceRole | null;
 
   return buildAuthorizationContext({
     userId: '',
     globalRoles: authorizationData.global_roles as GlobalRole[],
-    teamMemberships,
-    ownerOptions: ownerOptions as WorkspaceOwnerOption[],
+    workspaceRole,
+    teamAssignments,
+    teams: teams as WorkspaceTeam[],
     schemas: [],
     entities: [],
     grants: []
@@ -56,32 +66,40 @@ export const useWorkspacePermissions = (
     const context = buildWorkspaceAuthorizationContext(authorizationData, workspaceId);
 
     const canManageWorkspaces =
-      context != null && checker.hasGlobalPermission(context, 'admin_platform');
-    const canViewSchemas = context != null && checker.hasGlobalPermission(context, 'view_schema');
-    const canEditSchemas = context != null && checker.hasGlobalPermission(context, 'edit_schema');
-    const canManageTeams = context != null && checker.hasGlobalPermission(context, 'manage_teams');
-    const canViewAudit = context != null && checker.hasGlobalPermission(context, 'view_audit');
+      context != null && checker.hasWorkspaceCapability(context, 'ws.settings');
+    const canManageGlobalRoles =
+      authorizationData?.global_permissions.includes('manage_workspace_roles') ?? false;
+    const canViewSchemas = context != null && checker.hasWorkspaceCapability(context, 'ws.view');
+    const canEditSchemas =
+      context != null && checker.hasWorkspaceCapability(context, 'schema.edit');
+    const canManageTeams =
+      context != null && checker.hasWorkspaceCapability(context, 'people.teams');
+    const canViewAudit = context != null && checker.hasWorkspaceCapability(context, 'ws.audit');
+    const canManageMembers =
+      context != null && checker.hasWorkspaceCapability(context, 'people.invite');
     const canCreateProjects =
       context != null &&
       (capabilities.canCreateProject(context, null) ||
-        context.ownerOptions.some(ownerOption =>
-          capabilities.canCreateProject(context, ownerOption.id)
+        context.teams.some(team =>
+          capabilities.canCreateProject(context, team.id)
         ));
     const canCreateEntities =
       context != null &&
       (capabilities.canCreateTopLevelEntity(context, null) ||
-        context.ownerOptions.some(ownerOption =>
-          capabilities.canCreateTopLevelEntity(context, ownerOption.id)
+        context.teams.some(team =>
+          capabilities.canCreateTopLevelEntity(context, team.id)
         ));
 
     return {
       canManageWorkspaces,
+      canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
       canViewAudit,
       canCreateProjects,
-      canCreateEntities
+      canCreateEntities,
+      canManageMembers
     };
   }, [authorizationData, workspaceId]);
 };

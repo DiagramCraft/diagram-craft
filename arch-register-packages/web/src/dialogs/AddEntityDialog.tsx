@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Dialog } from '../components/Dialog';
 import { apiFetch, ApiError } from '../api';
-import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceOwnerOption } from '../api';
+import type { EntitySchema, EntitySummary, SchemaField, WorkspaceLifecycleState, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle } from 'react-icons/tb';
@@ -19,7 +19,7 @@ type AddEntityDialogProps = {
   workspaceId: string;
   schemas: EntitySchema[];
   lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
+  teams: WorkspaceTeam[];
   preselectedSchemaId?: string | null;
 };
 
@@ -30,7 +30,7 @@ export const AddEntityDialog = ({
   workspaceId,
   schemas,
   lifecycleStates,
-  ownerOptions,
+  teams,
   preselectedSchemaId,
 }: AddEntityDialogProps) => {
   const { canCreateTopLevelEntity } = usePermissions();
@@ -41,9 +41,9 @@ export const AddEntityDialog = ({
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
-  const creatableOwnerOptions = useMemo(
-    () => ownerOptions.filter(option => canCreateTopLevelEntity(workspaceId, option.id)),
-    [canCreateTopLevelEntity, ownerOptions, workspaceId]
+  const creatableTeams = useMemo(
+    () => teams.filter(team => canCreateTopLevelEntity(workspaceId, team.id)),
+    [canCreateTopLevelEntity, teams, workspaceId]
   );
   const canCreateWithoutOwner = canCreateTopLevelEntity(workspaceId, null);
 
@@ -55,7 +55,7 @@ export const AddEntityDialog = ({
       setFields({});
       setMeta({
         description: '',
-        owner: canCreateWithoutOwner ? '' : (creatableOwnerOptions[0]?.id ?? ''),
+        owner: canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''),
         lifecycle: '',
         namespace: 'default',
         tags: ''
@@ -63,7 +63,7 @@ export const AddEntityDialog = ({
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
-  }, [canCreateWithoutOwner, creatableOwnerOptions, open, preselectedSchemaId, schemas]);
+  }, [canCreateWithoutOwner, creatableTeams, open, preselectedSchemaId, schemas]);
 
   const selectedSchema = schemas.find(s => s.id === schemaId);
 
@@ -223,8 +223,8 @@ export const AddEntityDialog = ({
                 <label>Owner</label>
                 <select value={meta.owner} onChange={e => setMetaField('owner', e.target.value)}>
                   {canCreateWithoutOwner && <option value="">—</option>}
-                  {creatableOwnerOptions.map(o => (
-                    <option key={o.id} value={o.id}>{o.id}</option>
+                  {creatableTeams.map(team => (
+                    <option key={team.id} value={team.id}>{team.id}</option>
                   ))}
                 </select>
               </div>

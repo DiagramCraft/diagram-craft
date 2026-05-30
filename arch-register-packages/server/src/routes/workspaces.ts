@@ -38,7 +38,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     BASE,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
       const { name, description = '' } = body as Record<string, unknown>;
@@ -94,7 +94,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         ]);
 
-        await db.workspaceAdmin.replaceOwners(id, [
+        await db.workspaceAdmin.replaceTeams(id, [
           { id: 'platform-team', workspace: id, sort_order: 0, created_at: timestamp },
           { id: 'ux-team', workspace: id, sort_order: 1, created_at: timestamp },
           { id: 'security-team', workspace: id, sort_order: 2, created_at: timestamp }
@@ -122,7 +122,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     `${BASE}/:id`,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
@@ -169,7 +169,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     `${BASE}/:id`,
     defineHandler(async event => {
       const authCtx = await buildApiAuthCtx(db, '__global__', event as AuthenticatedEvent);
-      if (authCtx) requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'admin_platform');
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
 

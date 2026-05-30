@@ -6,6 +6,7 @@ import {
   fetchAuthorizationContextData,
   type AuthorizationContext,
   type EntityAction,
+  type WorkspaceCapability,
   PermissionChecker,
   CapabilityEvaluator,
   ProjectAction
@@ -40,7 +41,7 @@ export const requireEntityAction = (
 
 /**
  * Require a global permission, throw 403 if not allowed.
- * 
+ *
  * This is an HTTP-specific helper that wraps PermissionChecker
  * and throws an appropriate HTTP error.
  */
@@ -53,6 +54,24 @@ export const requireGlobalPermission = (
     status: 403,
     statusText: 'Forbidden',
     message: message ?? 'Insufficient permissions'
+  });
+};
+
+/**
+ * Require a workspace capability, throw 403 if not allowed.
+ *
+ * Checks workspace role capabilities. global_admin users implicitly
+ * have all workspace capabilities.
+ */
+export const requireWorkspaceCapability = (
+  context: AuthorizationContext,
+  capability: WorkspaceCapability,
+  message?: string
+) => {
+  httpAssert.true(checker.hasWorkspaceCapability(context, capability), {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'Insufficient workspace permissions'
   });
 };
 

@@ -7,6 +7,7 @@ import {
   TbStack2, TbDatabase,
   TbUsers, TbChartDots3, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
+  TbShieldLock,
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import { useProjectFiles } from '../hooks/useProjectFiles';
@@ -486,7 +487,11 @@ type SettingsNavItem = {
 
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
-  { id: 'lifecycle-owners', label: 'Lifecycle & Owners', icon: <TbTag size={12} />, group: 'Workspace' },
+  { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
+  { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
+  { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
+  { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
+  { id: 'global-permissions', label: 'Global permissions', icon: <TbShieldLock size={12} />, group: 'Global Settings' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
 ];

@@ -1,11 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import type {
   WorkspaceLifecycleState,
-  WorkspaceOwnerOption,
   AuditEntityType,
   AuditLogEntry,
   AuditOperation,
@@ -13,11 +12,21 @@ import type {
 import { TbChevronLeft, TbPlus, TbTrash } from 'react-icons/tb';
 import { useAuditLog } from '../hooks/useAudit';
 import { useUpdateWorkspace, useDeleteWorkspace } from '../hooks/useWorkspaces';
-import { useUpdateLifecycleStates, useUpdateOwnerOptions } from '../hooks/useWorkspaceConfig';
+import {
+  useUpdateLifecycleStates,
+} from '../hooks/useWorkspaceConfig';
+import { RolesPermissionsSection } from './RolesPermissionsSection';
+import { GlobalPermissionsSection } from './GlobalPermissionsSection';
+import { MembersSection } from './MembersSection';
+import { TeamsSection } from './TeamsSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
-  'lifecycle-owners': { title: 'Lifecycle & Owners', sub: 'Configure valid lifecycle states and owner values for entities in this workspace.' },
+  'lifecycle-owners': { title: 'Lifecycle', sub: 'Configure valid lifecycle states for entities in this workspace.' },
+  roles: { title: 'Roles & permissions', sub: 'Manage built-in workspace roles and their capabilities.' },
+  teams: { title: 'Teams', sub: 'Manage owner teams and assign users a team role for owned entities and projects.' },
+  members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
+  'global-permissions': { title: 'Global permissions', sub: 'Assign platform-wide roles for workspace and platform administration.' },
   audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
@@ -37,9 +46,11 @@ export const WorkspaceSettings = () => {
   const workspace = ctx.workspace!;
   const workspaceSlug = ctx.workspaceSlug;
   const lifecycleStates = ctx.lifecycleStates;
-  const ownerOptions = ctx.ownerOptions;
   const availableSections = ctx.availableSettingsSections;
   const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
+  const [globalPermissionsAddDialogOpen, setGlobalPermissionsAddDialogOpen] = useState(false);
+  const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
+  const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
 
   const meta = SECTION_META[section] ?? SECTION_META['general']!;
 
@@ -77,6 +88,39 @@ export const WorkspaceSettings = () => {
           </div>
           <div className={styles.sub}>{meta.sub}</div>
         </div>
+        {section === 'global-permissions' && (
+          <div className={styles.headActions}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => setGlobalPermissionsAddDialogOpen(true)}
+            >
+              <TbPlus size={12} /> Add user
+            </button>
+          </div>
+        )}
+        {section === 'members' && (
+          <div className={styles.headActions}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => setMembersAddDialogOpen(true)}
+            >
+              <TbPlus size={12} /> Add user
+            </button>
+          </div>
+        )}
+        {section === 'teams' && (
+          <div className={styles.headActions}>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              onClick={() => setTeamsAddDialogOpen(true)}
+            >
+              <TbPlus size={12} /> Add team
+            </button>
+          </div>
+        )}
       </div>
 
       {section === 'general' && (
@@ -86,7 +130,29 @@ export const WorkspaceSettings = () => {
         <LifecycleOwnersSection
           workspace={workspace}
           lifecycleStates={lifecycleStates}
-          ownerOptions={ownerOptions}
+        />
+      )}
+      {section === 'roles' && (
+        <RolesPermissionsSection workspaceSlug={workspaceSlug} />
+      )}
+      {section === 'teams' && (
+        <TeamsSection
+          workspaceSlug={workspaceSlug}
+          addDialogOpen={teamsAddDialogOpen}
+          onCloseAddDialog={() => setTeamsAddDialogOpen(false)}
+        />
+      )}
+      {section === 'members' && (
+        <MembersSection
+          workspaceSlug={workspaceSlug}
+          addDialogOpen={membersAddDialogOpen}
+          onCloseAddDialog={() => setMembersAddDialogOpen(false)}
+        />
+      )}
+      {section === 'global-permissions' && (
+        <GlobalPermissionsSection
+          addDialogOpen={globalPermissionsAddDialogOpen}
+          onCloseAddDialog={() => setGlobalPermissionsAddDialogOpen(false)}
         />
       )}
       {section === 'audit' && (
@@ -215,36 +281,30 @@ type EditLifecycleState = {
   color: string;
 };
 
-type EditOwner = {
-  id: string;
-};
+const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
+  lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
 
 const LifecycleOwnersSection = ({
   workspace,
   lifecycleStates,
-  ownerOptions,
 }: {
   workspace: Workspace;
   lifecycleStates: WorkspaceLifecycleState[];
-  ownerOptions: WorkspaceOwnerOption[];
 }) => {
-  const [states, setStates] = useState<EditLifecycleState[]>(() =>
-    lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color }))
-  );
-  const [owners, setOwners] = useState<EditOwner[]>(() =>
-    ownerOptions.map(o => ({ id: o.id }))
-  );
+  const [states, setStates] = useState<EditLifecycleState[]>(() => buildLifecycleStateDraft(lifecycleStates));
 
   const updateLifecycleStatesMutation = useUpdateLifecycleStates(workspace.url_slug);
-  const updateOwnerOptionsMutation = useUpdateOwnerOptions(workspace.url_slug);
 
-  const statesDirty = JSON.stringify(states) !== JSON.stringify(lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color })));
-  const ownersDirty = JSON.stringify(owners) !== JSON.stringify(ownerOptions.map(o => ({ id: o.id })));
-  const isDirty = statesDirty || ownersDirty;
+  useEffect(() => {
+    setStates(buildLifecycleStateDraft(lifecycleStates));
+  }, [lifecycleStates]);
+
+  const initialStates = buildLifecycleStateDraft(lifecycleStates);
+  const statesDirty = JSON.stringify(states) !== JSON.stringify(initialStates);
+  const isDirty = statesDirty;
 
   const handleCancel = () => {
-    setStates(lifecycleStates.map(s => ({ id: s.id, label: s.label, color: s.color })));
-    setOwners(ownerOptions.map(o => ({ id: o.id })));
+    setStates(initialStates);
   };
 
   const handleSave = useCallback(async () => {
@@ -254,15 +314,10 @@ const LifecycleOwnersSection = ({
           states.map((s, i) => ({ id: s.id, label: s.label, color: s.color, sort_order: i }))
         );
       }
-      if (ownersDirty) {
-        await updateOwnerOptionsMutation.mutateAsync(
-          owners.map((o, i) => ({ id: o.id, sort_order: i }))
-        );
-      }
     } catch {
       // Error handling could be improved
     }
-  }, [states, owners, statesDirty, ownersDirty, updateLifecycleStatesMutation, updateOwnerOptionsMutation]);
+  }, [states, statesDirty, updateLifecycleStatesMutation]);
 
   const updateState = (index: number, patch: Partial<EditLifecycleState>) =>
     setStates(prev => prev.map((s, i) => i === index ? { ...s, ...patch } : s));
@@ -273,21 +328,17 @@ const LifecycleOwnersSection = ({
   const addState = () =>
     setStates(prev => [...prev, { id: '', label: '', color: 'var(--fg-3)' }]);
 
-  const updateOwner = (index: number, id: string) =>
-    setOwners(prev => prev.map((o, i) => i === index ? { id } : o));
-
-  const removeOwner = (index: number) =>
-    setOwners(prev => prev.filter((_, i) => i !== index));
-
-  const addOwner = () =>
-    setOwners(prev => [...prev, { id: '' }]);
-
   return (
     <div className={styles.blockList}>
       <div className={styles.sectionActions}>
         <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
-        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending}>
-          {(updateLifecycleStatesMutation.isPending || updateOwnerOptionsMutation.isPending) ? 'Saving...' : 'Save changes'}
+        <button
+          type="button"
+          className={styles.btnPrimary}
+          onClick={handleSave}
+          disabled={!isDirty || updateLifecycleStatesMutation.isPending}
+        >
+          {updateLifecycleStatesMutation.isPending ? 'Saving...' : 'Save changes'}
         </button>
       </div>
 
@@ -342,34 +393,6 @@ const LifecycleOwnersSection = ({
           ))}
           <button type="button" className={styles.btn} onClick={addState} style={{ marginTop: 8 }}>
             <TbPlus size={12} /> Add state
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Owners</div>
-          <div className={styles.sectionSub}>Define the valid owner values that can be assigned to entities.</div>
-        </div>
-        <div className={styles.sectionBody}>
-          {owners.map((o, i) => (
-            <div key={i} className={styles.field} style={{ gridTemplateColumns: '1fr auto' }}>
-              <div className={styles.fieldRight}>
-                <input
-                  className={styles.input}
-                  value={o.id}
-                  onChange={e => updateOwner(i, e.target.value)}
-                  placeholder="Owner name (e.g. platform-team)"
-                  style={{ maxWidth: 340 }}
-                />
-              </div>
-              <button type="button" className={styles.btn} onClick={() => removeOwner(i)} style={{ padding: '0 6px' }}>
-                <TbTrash size={12} />
-              </button>
-            </div>
-          ))}
-          <button type="button" className={styles.btn} onClick={addOwner} style={{ marginTop: 8 }}>
-            <TbPlus size={12} /> Add owner
           </button>
         </div>
       </div>

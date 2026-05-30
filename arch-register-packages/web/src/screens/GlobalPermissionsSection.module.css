@@ -1,0 +1,264 @@
+.container {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.assignedRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.tableWrap {
+  border: 1px solid var(--border-subtle, var(--border));
+  border-radius: 8px;
+  overflow: visible;
+  background: var(--bg-2);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--fg-3);
+  background: var(--bg-1);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+.table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-3);
+}
+
+.table td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.roleBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.roleMenuCheck {
+  width: 14px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Member name + avatar */
+.memberName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.memberNameMain {
+  color: var(--fg-0);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.memberNameSub {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--fg-3);
+  font-family: var(--font-mono, monospace);
+}
+
+.avatar {
+  color: var(--fg-0, #fff);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.noRoles {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: var(--r);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--bg-4);
+  color: var(--fg-0);
+  border-color: var(--border-strong, var(--border));
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  composes: btn;
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
+  color: var(--fg-0);
+}
+
+.btnPrimary:hover {
+  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
+  border-color: var(--accent);
+}
+
+.empty {
+  padding: 18px 16px;
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.error {
+  color: var(--danger);
+}
+
+/* Dialog */
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dialogMeta {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+.dialogList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialogRoleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-1);
+  padding: 12px;
+}
+
+.dialogRoleRow input {
+  margin-top: 2px;
+}
+
+.dialogRoleTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-0);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dialogRoleDescription {
+  margin-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.fieldLeft {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--fg-0);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.fieldHint {
+  margin-top: 4px;
+  color: var(--fg-3);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.fieldRight {
+  min-width: 0;
+}
+
+.select {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--bg-input);
+  color: var(--fg-0);
+  font-size: 12px;
+}
+
+.emptyInline {
+  color: var(--fg-3);
+  font-size: 12px;
+  line-height: 1.5;
+}

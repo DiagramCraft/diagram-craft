@@ -1,3 +1,5 @@
+import type { GlobalRole } from '@arch-register/permissions';
+
 // ── Workspace types ───────────────────────────────────────────
 
 export type Workspace = {
@@ -593,7 +595,7 @@ export type WorkspaceLifecycleState = {
   sort_order: number;
 };
 
-export type WorkspaceOwnerOption = {
+export type WorkspaceTeam = {
   id: string;
   sort_order: number;
 };
@@ -607,11 +609,94 @@ export const updateLifecycleStates = (workspace: string, states: WorkspaceLifecy
     body: JSON.stringify(states),
   });
 
-export const fetchOwnerOptions = (workspace: string) =>
-  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`);
+export const fetchTeams = (workspace: string) =>
+  apiFetch<WorkspaceTeam[]>(`/api/${workspace}/config/teams`);
 
-export const updateOwnerOptions = (workspace: string, owners: WorkspaceOwnerOption[]) =>
-  apiFetch<WorkspaceOwnerOption[]>(`/api/${workspace}/config/owners`, {
+export const updateTeams = (workspace: string, teams: WorkspaceTeam[]) =>
+  apiFetch<WorkspaceTeam[]>(`/api/${workspace}/config/teams`, {
     method: 'PUT',
-    body: JSON.stringify(owners),
+    body: JSON.stringify(teams),
+  });
+
+// ── Workspace Members ──────────────────────────────────────────
+
+export type WorkspaceMemberInfo = {
+  workspace: string;
+  user_id: string;
+  role: string;
+  display_name: string;
+  email: string | null;
+  created_at: string;
+};
+
+export const fetchWorkspaceMembers = (workspace: string) =>
+  apiFetch<WorkspaceMemberInfo[]>(`/api/${workspace}/config/members`);
+
+export type WorkspaceUserInfo = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: 'local' | 'oidc';
+  is_active: boolean;
+};
+
+export const fetchWorkspaceUsers = (workspace: string) =>
+  apiFetch<WorkspaceUserInfo[]>(`/api/${workspace}/config/users`);
+
+export type TeamAssignmentInfo = {
+  workspace: string;
+  team_id: string;
+  user_id: string;
+  role: import('@arch-register/permissions').TeamRole;
+  created_at: string;
+};
+
+export const fetchTeamAssignments = (workspace: string) =>
+  apiFetch<TeamAssignmentInfo[]>(`/api/${workspace}/config/team-assignments`);
+
+export const updateTeamAssignments = (
+  workspace: string,
+  assignments: Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>
+) =>
+  apiFetch<TeamAssignmentInfo[]>(`/api/${workspace}/config/team-assignments`, {
+    method: 'PUT',
+    body: JSON.stringify(assignments),
+  });
+
+export const updateWorkspaceMemberRole = (
+  workspace: string,
+  userId: string,
+  role: string
+) =>
+  apiFetch<WorkspaceMemberInfo>(`/api/${workspace}/config/members/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role }),
+  });
+
+// ── Global Role Admin ─────────────────────────────────────────
+
+export type AuthUserInfo = {
+  id: string;
+  email: string | null;
+  display_name: string;
+  auth_provider: 'local' | 'oidc';
+  is_active: boolean;
+};
+
+export type GlobalRoleAssignment = {
+  user_id: string;
+  role: GlobalRole;
+  created_at: string;
+};
+
+export const fetchAuthUsers = () =>
+  apiFetch<AuthUserInfo[]>(`/api/auth/users`);
+
+export const fetchUserGlobalRoles = (userId: string) =>
+  apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`);
+
+export const updateUserGlobalRoles = (userId: string, roles: GlobalRole[]) =>
+  apiFetch<GlobalRoleAssignment[]>(`/api/auth/users/${userId}/global-roles`, {
+    method: 'PUT',
+    body: JSON.stringify({ roles }),
   });

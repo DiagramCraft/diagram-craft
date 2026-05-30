@@ -3,124 +3,89 @@ import { PermissionChecker } from './PermissionChecker.js';
 import { buildAuthorizationContext } from './AuthorizationContextBuilder.js';
 import type { Entity, EntityGrant } from './types.js';
 
+const teamAssignments = (...teamIds: string[]) =>
+  teamIds.map(teamId => ({ teamId, role: 'team_admin' as const }));
+
 describe('PermissionChecker - Global Permissions', () => {
   const checker = new PermissionChecker();
 
-  it('platform_admin has all global permissions', () => {
+  it('supports teamAssignments and teams as the primary context shape', () => {
+    const context = buildAuthorizationContext({
+      userId: 'team-admin',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-1', role: 'team_admin' }],
+      teams: [{ id: 'team-1', name: 'Engineering', type: 'team' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(checker.hasProjectPermission(context, 'team-1', 'edit_project')).toBe(true);
+  });
+
+  it('global_admin has all global permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
     });
 
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'edit_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_teams')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_global_roles')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'view_audit')).toBe(true);
     expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(true);
+    expect(checker.hasGlobalPermission(context, 'create_workspaces')).toBe(true);
+    expect(checker.hasGlobalPermission(context, 'manage_workspace_roles')).toBe(true);
   });
 
-  it('schema_admin can view and edit schemas', () => {
+  it('workspace_admin can create workspaces and manage workspace roles', () => {
     const context = buildAuthorizationContext({
-      userId: 'schema-admin',
-      globalRoles: ['schema_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      userId: 'workspace-admin',
+      globalRoles: ['workspace_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
     });
 
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'edit_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'view_audit')).toBe(false);
-  });
-
-  it('user_admin can manage users, teams, and roles', () => {
-    const context = buildAuthorizationContext({
-      userId: 'user-admin',
-      globalRoles: ['user_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
-      schemas: [],
-      entities: [],
-      grants: []
-    });
-
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_teams')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_global_roles')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'edit_schema')).toBe(false);
-  });
-
-  it('auditor can only view audit logs', () => {
-    const context = buildAuthorizationContext({
-      userId: 'auditor',
-      globalRoles: ['auditor'],
-      teamMemberships: [],
-      ownerOptions: [],
-      schemas: [],
-      entities: [],
-      grants: []
-    });
-
-    expect(checker.hasGlobalPermission(context, 'view_audit')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(false);
-  });
-
-  it('user with multiple roles has combined permissions', () => {
-    const context = buildAuthorizationContext({
-      userId: 'multi-role-user',
-      globalRoles: ['schema_admin', 'auditor'],
-      teamMemberships: [],
-      ownerOptions: [],
-      schemas: [],
-      entities: [],
-      grants: []
-    });
-
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'edit_schema')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'view_audit')).toBe(true);
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'create_workspaces')).toBe(true);
+    expect(checker.hasGlobalPermission(context, 'manage_workspace_roles')).toBe(true);
+    expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(false);
   });
 
   it('user with no roles has no permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'regular-user',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
     });
 
-    expect(checker.hasGlobalPermission(context, 'view_schema')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'edit_schema')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'manage_users')).toBe(false);
-    expect(checker.hasGlobalPermission(context, 'view_audit')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'admin_platform')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'create_workspaces')).toBe(false);
+    expect(checker.hasGlobalPermission(context, 'manage_workspace_roles')).toBe(false);
   });
 });
 
 describe('PermissionChecker - Project Permissions', () => {
   const checker = new PermissionChecker();
 
-  it('platform_admin can perform all project actions', () => {
+  it('global_admin can perform all project actions', () => {
     const context = buildAuthorizationContext({
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -135,8 +100,9 @@ describe('PermissionChecker - Project Permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'team-member',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -151,8 +117,9 @@ describe('PermissionChecker - Project Permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'other-user',
       globalRoles: [],
-      teamMemberships: ['team-2'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -167,8 +134,9 @@ describe('PermissionChecker - Project Permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'multi-team-user',
       globalRoles: [],
-      teamMemberships: ['team-1', 'team-2', 'team-3'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2', 'team-3'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -184,8 +152,9 @@ describe('PermissionChecker - Project Permissions', () => {
     const context = buildAuthorizationContext({
       userId: 'regular-user',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -194,12 +163,13 @@ describe('PermissionChecker - Project Permissions', () => {
     expect(checker.hasProjectPermission(context, null, 'edit_project')).toBe(false);
   });
 
-  it('platform_admin can access project with null owner', () => {
+  it('global_admin can access project with null owner', () => {
     const context = buildAuthorizationContext({
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [],
       grants: []
@@ -235,8 +205,9 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -250,8 +221,9 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -262,13 +234,14 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
     expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(false);
   });
 
-  it('platform_admin has all permissions on public entities', () => {
+  it('global_admin has all permissions on public entities', () => {
     const entity = createPublicEntity('entity-1');
     const context = buildAuthorizationContext({
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -285,8 +258,9 @@ describe('PermissionChecker - Entity Permissions with Public Visibility', () => 
     const context = buildAuthorizationContext({
       userId: 'team-member',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -325,8 +299,9 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
     const context = buildAuthorizationContext({
       userId: 'any-user',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -340,8 +315,9 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
     const context = buildAuthorizationContext({
       userId: 'team-member',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -353,13 +329,14 @@ describe('PermissionChecker - Entity Permissions with Restricted Visibility', ()
     expect(checker.hasEntityPermission(context, entity, 'admin_entity')).toBe(true);
   });
 
-  it('platform_admin has full access to restricted entity', () => {
+  it('global_admin has full access to restricted entity', () => {
     const entity = createRestrictedEntity('entity-1');
     const context = buildAuthorizationContext({
       userId: 'admin-user',
-      globalRoles: ['platform_admin'],
-      teamMemberships: [],
-      ownerOptions: [],
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: []
@@ -416,8 +393,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -436,8 +414,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -456,8 +435,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -476,8 +456,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -497,8 +478,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [viewerGrant, editorGrant]
@@ -517,8 +499,9 @@ describe('PermissionChecker - Entity Grants with Direct User Assignment', () => 
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: [],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity1, entity2],
       grants: [grant]
@@ -573,8 +556,9 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -591,8 +575,9 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
     const context = buildAuthorizationContext({
       userId: 'user-2',
       globalRoles: [],
-      teamMemberships: ['team-2'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [grant]
@@ -609,8 +594,9 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: ['team-1', 'team-2'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1', 'team-2'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [team1Grant, team2Grant]
@@ -638,8 +624,9 @@ describe('PermissionChecker - Entity Grants with Team Assignment', () => {
     const context = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      teamMemberships: ['team-1'],
-      ownerOptions: [],
+      workspaceRole: null,
+      teamAssignments: teamAssignments('team-1'),
+      teams: [],
       schemas: [],
       entities: [entity],
       grants: [userGrant, teamGrant]

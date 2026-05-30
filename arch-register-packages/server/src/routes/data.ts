@@ -37,8 +37,8 @@ const handleError = (error: unknown, fallback: string): never =>
 const getLifecycleValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
   new Set((await db.workspaceAdmin.listLifecycleStates(workspace)).map(r => r.id));
 
-const getOwnerValues = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
-  new Set((await db.workspaceAdmin.listOwners(workspace)).map(r => r.id));
+const getTeamIds = async (db: DatabaseAdapter, workspace: string): Promise<Set<string>> =>
+  new Set((await db.workspaceAdmin.listTeams(workspace)).map(r => r.id));
 
 const includesQuery = (value: unknown, query: string) =>
   String(value ?? '')
@@ -49,15 +49,15 @@ const resolveCreateOwner = (
   explicitOwner: string | null,
   parentEntities: Entity[],
   schema: EntitySchema,
-  ownerValues: Set<string>,
+  teamIds: Set<string>,
   fallbackOwner: string | null
 ) => {
-  if (explicitOwner && ownerValues.has(explicitOwner)) return explicitOwner;
+  if (explicitOwner && teamIds.has(explicitOwner)) return explicitOwner;
   const inheritedOwner =
-    parentEntities.find(parent => parent.owner && ownerValues.has(parent.owner))?.owner ?? null;
+    parentEntities.find(parent => parent.owner && teamIds.has(parent.owner))?.owner ?? null;
   if (inheritedOwner) return inheritedOwner;
-  if (schema.default_owner && ownerValues.has(schema.default_owner)) return schema.default_owner;
-  if (fallbackOwner && ownerValues.has(fallbackOwner)) return fallbackOwner;
+  if (schema.default_owner && teamIds.has(schema.default_owner)) return schema.default_owner;
+  if (fallbackOwner && teamIds.has(fallbackOwner)) return fallbackOwner;
   return null;
 };
 
@@ -702,7 +702,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const lifecycleValues = await getLifecycleValues(db, workspace);
       const lifecycle =
         typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
-      const ownerValues = await getOwnerValues(db, workspace);
+      const teamIds = await getTeamIds(db, workspace);
       const tags = Array.isArray(_tags)
         ? _tags.filter((t): t is string => typeof t === 'string')
         : [];
@@ -718,12 +718,12 @@ export function createDataRoutes(db: DatabaseAdapter) {
         httpAssert.present(schema, { status: 404, message: `Schema '${_schemaId}' not found` });
         const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
         const parents = getEntityParentsFromPayload(schema, fields, entityLookup);
-        const fallbackOwner = (await db.workspaceAdmin.listOwners(workspace))[0]?.id ?? null;
+        const fallbackOwner = (await db.workspaceAdmin.listTeams(workspace))[0]?.id ?? null;
         const owner = resolveCreateOwner(
           typeof _owner === 'string' ? _owner : null,
           parents,
           schema,
-          ownerValues,
+          teamIds,
           fallbackOwner
         );
         if (authCtx) {
@@ -830,8 +830,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
       const lifecycleValues = await getLifecycleValues(db, workspace);
       const lifecycle =
         typeof _lifecycle === 'string' && lifecycleValues.has(_lifecycle) ? _lifecycle : null;
-      const ownerValues = await getOwnerValues(db, workspace);
-      const owner = typeof _owner === 'string' && ownerValues.has(_owner) ? _owner : null;
+      const teamIds = await getTeamIds(db, workspace);
+      const owner = typeof _owner === 'string' && teamIds.has(_owner) ? _owner : null;
       const tags = Array.isArray(_tags)
         ? _tags.filter((t): t is string => typeof t === 'string')
         : [];

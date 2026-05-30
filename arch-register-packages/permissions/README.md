@@ -63,7 +63,7 @@ Evaluates **computed capabilities** based on context and business rules.
 - `canDeleteProject()` - Check if user can delete a project
 - `canManageProjectFiles()` - Check if user can manage project files
 
-**Use when**: You need to determine if a user CAN perform an action based on their roles, team memberships, and other contextual factors.
+**Use when**: You need to determine if a user CAN perform an action based on their roles, team assignments, ownership, and other contextual factors.
 
 ### Key Distinction
 
@@ -83,10 +83,26 @@ Evaluates **computed capabilities** based on context and business rules.
 
 The `AuthorizationContext` contains all data needed for permission evaluation:
 - User's global roles and permissions
-- Team memberships
-- Owner options (teams that can own records)
+- Team assignments (team + role)
+- Owner teams available in the workspace
 - Entity schemas and data
 - Entity grants (explicit permission assignments)
+
+### Workspace Settings Model
+
+The admin UI is intentionally split into separate settings sections:
+
+- `Lifecycle`: manages entity lifecycle states
+- `Teams`: manages owner teams and team-role assignments
+- `Members`: manages workspace membership roles
+- `Global permissions`: manages platform-wide global roles
+
+Those sections map directly to the permission model:
+
+- lifecycle configuration does not grant permissions
+- team roles grant access over content owned by a team
+- workspace roles grant workspace-wide capabilities
+- global roles grant cross-workspace platform capabilities
 
 ## Usage
 
@@ -108,8 +124,8 @@ const capabilities = new CapabilityEvaluator();
 const context = buildAuthorizationContext({
   userId: 'user-123',
   globalRoles: ['schema_admin'],
-  teamMemberships: ['team-456'],
-  ownerOptions: [{ id: 'team-456', name: 'Engineering', type: 'team' }],
+  teamAssignments: [{ teamId: 'team-456', role: 'team_admin' }],
+  teams: [{ id: 'team-456', name: 'team-456', type: 'team' }],
   schemas: [...],
   entities: [...],
   grants: [...]
@@ -140,8 +156,8 @@ import {
 const context = buildAuthorizationContext({
   userId: 'user-123',
   globalRoles: ['platform_admin'],
-  teamMemberships: ['team-456'],
-  ownerOptions: [...],
+  teamAssignments: [{ teamId: 'team-456', role: 'team_admin' }],
+  teams: [...],
   schemas: [...],
   entities: [...],
   grants: [...]
@@ -152,9 +168,10 @@ class MyDataProvider implements PermissionDataProvider {
   async getEntities(workspaceId: string) { /* ... */ }
   async getSchemas(workspaceId: string) { /* ... */ }
   async getEntityGrants(workspaceId: string) { /* ... */ }
-  async getTeamMemberships(workspaceId: string, userId: string) { /* ... */ }
+  async getTeamAssignments(workspaceId: string, userId: string) { /* ... */ }
   async getGlobalRoles(userId: string) { /* ... */ }
-  async getOwnerOptions(workspaceId: string) { /* ... */ }
+  async getTeams(workspaceId: string) { /* ... */ }
+  async getWorkspaceRole(workspaceId: string, userId: string) { /* ... */ }
 }
 
 const dataProvider = new MyDataProvider();
@@ -193,11 +210,11 @@ class ServerDataProvider implements PermissionDataProvider {
     return this.db.listEntityGrants(workspaceId);
   }
 
-  async getTeamMemberships(workspaceId: string, userId: string) {
-    const memberships = await this.db.listTeamMemberships(workspaceId);
-    return memberships
-      .filter(m => m.user_id === userId)
-      .map(m => m.team_id);
+  async getTeamAssignments(workspaceId: string, userId: string) {
+    const assignments = await this.db.listTeamAssignments(workspaceId);
+    return assignments
+      .filter(assignment => assignment.user_id === userId)
+      .map(assignment => ({ teamId: assignment.team_id, role: assignment.role }));
   }
 
   async getGlobalRoles(userId: string) {
@@ -205,8 +222,12 @@ class ServerDataProvider implements PermissionDataProvider {
     return assignments.map(a => a.role);
   }
 
-  async getOwnerOptions(workspaceId: string) {
-    return this.db.listOwnerOptions(workspaceId);
+  async getTeams(workspaceId: string) {
+    return this.db.listTeams(workspaceId);
+  }
+
+  async getWorkspaceRole(workspaceId: string, userId: string) {
+    return this.db.getWorkspaceRole(workspaceId, userId);
   }
 }
 
@@ -255,16 +276,17 @@ export const PermissionProvider = ({ children }) => {
   const buildContext = useCallback((workspaceId: string) => {
     if (!user || !authData) return null;
 
-    const teamMembership = authData.team_memberships.find(
-      tm => tm.workspace_id === workspaceId
-    );
-    const ownerOptions = authData.owner_options_by_workspace[workspaceId] ?? [];
+    const teamAssignments = authData.team_assignments_by_workspace?.[workspaceId] ?? [];
+    const teams = authData.teams_by_workspace?.[workspaceId] ?? [];
 
     return buildAuthorizationContext({
       userId: user.id,
       globalRoles: authData.global_roles,
-      teamMemberships: teamMembership?.team_ids ?? [],
-      ownerOptions,
+      teamAssignments: teamAssignments.map(assignment => ({
+        teamId: assignment.team_id,
+        role: assignment.role
+      })),
+      teams,
       schemas: [], // Fetch separately if needed
       entities: [], // Fetch separately if needed
       grants: []
@@ -301,15 +323,26 @@ Entity permissions are evaluated based on:
 
 1. **Global Roles**: `platform_admin` has all entity actions
 2. **Visibility Mode**: Public entities are viewable by all
-3. **Owner Team Membership**: Team owners get `entity_admin` role
-4. **Entity Grants**: Explicit role assignments on entities or subtrees
+3. **Direct Owner Team Permissions**: The entity's owner team role contributes direct permissions
+4. **Descendant Owner Team Permissions**: Ancestor owner team roles contribute descendant permissions
+5. **Entity Grants**: Explicit role assignments on entities or subtrees
 
 ### Project Permissions
 
 Project permissions are evaluated based on:
 
 1. **Global Roles**: `platform_admin` can perform all project actions
-2. **Owner Team Membership**: Team owners can perform all project actions
+2. **Owner Team Roles**: Project permissions come from the role assignment in the owner team
+
+### Administrative Layers
+
+The system has three distinct administrative layers:
+
+1. **Global Roles**: platform-wide administration
+2. **Workspace Member Roles**: workspace-wide collaboration capabilities
+3. **Owner Team Roles**: access to entities and projects owned by a specific team
+
+These layers are independent. A user may hold roles at one layer without holding roles at the others.
 
 ### Global Permissions
 
@@ -334,6 +367,23 @@ Global permissions are derived from global role assignments:
 - `user_admin`: Can manage users and teams
 - `auditor`: Can view audit logs
 
+### Team Roles
+
+Team assignments are role-bearing. A user does not merely belong to a team; they belong with a specific role.
+
+- `team_admin`: Full direct owner permissions, descendant edit/create permissions, full project permissions
+- `team_editor`: Edit-oriented direct owner permissions, narrower descendant permissions, project edit/file permissions
+- `team_reviewer`: Read-only direct and descendant permissions
+
+Each team role contributes two permission sets for entities:
+
+- `directEntityActions`: apply to entities directly owned by the team
+- `descendantEntityActions`: apply to descendants of entities owned by the team
+
+This preserves hierarchical evaluation while allowing ownership boundaries to remain meaningful.
+
+Team roles are administered through the `Teams` workspace settings screen, while workspace member roles and global roles are administered separately.
+
 ## Computed Capabilities
 
 Some checks depend on workspace context rather than just assigned permissions:
@@ -342,13 +392,13 @@ Some checks depend on workspace context rather than just assigned permissions:
 
 A user can create a project if:
 - They are a `platform_admin` (can create for any owner), OR
-- The owner is a team they are a member of
+- They have a team role on the chosen owner team that grants project creation
 
 ### `canCreateTopLevelEntity(context, ownerTeamId)`
 
 A user can create a top-level entity if:
 - They are a `platform_admin` (can create for any owner), OR
-- They have `view_schema` permission AND the owner is a team they are a member of
+- They have a team role on the chosen owner team that grants entity creation
 
 ## Constants
 

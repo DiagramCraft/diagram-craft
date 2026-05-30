@@ -34,7 +34,7 @@ const slugify = (name: string) =>
 export const EntityDetail = () => {
   const navigate = useNavigate();
   const { entityId } = useParams({ strict: false }) as { entityId: string };
-  const { workspaceSlug, schemas, lifecycleStates, ownerOptions, permissions } = useWorkspaceContext();
+  const { workspaceSlug, schemas, lifecycleStates, teams, permissions } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const canViewAudit = permissions.canViewAudit;
 
@@ -363,7 +363,7 @@ export const EntityDetail = () => {
                 </span>
               </div>
             )}
-            <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} selectOptions={['', ...ownerOptions.map(o => o.id)]} />
+            <MetaPropRow label="Owner" value={entity._owner ?? '—'} editing={editing} editValue={editState['_owner'] as string} onChange={v => setEditState(s => ({ ...s, _owner: v }))} selectOptions={['', ...teams.map(team => team.id)]} />
             <MetaPropRow label="Lifecycle" value={entity._lifecycle ?? '—'} editing={editing} editValue={editState['_lifecycle'] as string} onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))} selectOptions={['', ...lifecycleStates.map(s => s.id)]} />
             {(entity._tags.length > 0 || editing) && (
               <div className={styles.metaPropRow}>

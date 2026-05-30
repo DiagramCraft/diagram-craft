@@ -28,7 +28,7 @@ const seedDb = async (db: DatabaseAdapter) => {
       workspace.id,
       seedLifecycleStates.filter(state => state.workspace === workspace.id)
     );
-    await db.workspaceAdmin.replaceOwners(
+    await db.workspaceAdmin.replaceTeams(
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );
@@ -109,7 +109,7 @@ describe('arch-register sqlite integration', () => {
     });
     await db.identityAuth.replaceGlobalRoleAssignments(
       testUser.id,
-      ['platform_admin'],
+      ['global_admin'],
       new Date()
     );
     testUserToken = generateAccessToken(testUser);
@@ -361,7 +361,14 @@ describe('arch-register sqlite integration', () => {
 
     await db.identityAuth.replaceGlobalRoleAssignments(
       schemaAdmin.id,
-      ['schema_admin'],
+      ['workspace_admin'],
+      new Date()
+    );
+
+    await db.workspaceAdmin.setWorkspaceMemberRole(
+      'default',
+      schemaAdmin.id,
+      'admin',
       new Date()
     );
 
