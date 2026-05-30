@@ -1,12 +1,12 @@
 import { H3, defineHandler } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import type { Workspace } from '../types.js';
 import { logAudit, extractEntityFields, computeChanges } from '../db/audit.js';
 import { handleDbError, slugify } from '../utils/http.js';
 import type { StorageAdapter } from '../storage/storage.js';
 import { buildApiAuthCtx, requireGlobalPermission } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
+import { toApiWorkspace } from '../api/transforms.js';
 
 const BASE = '/api/workspaces';
 
@@ -27,7 +27,8 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
     BASE,
     defineHandler(async () => {
       try {
-        return (await db.workspaceAdmin.listWorkspaces()) as Workspace[];
+        const workspaces = await db.workspaceAdmin.listWorkspaces();
+        return workspaces.map(toApiWorkspace);
       } catch (e) {
         handleError(e, 'Failed to retrieve workspaces');
       }
@@ -111,7 +112,7 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           }
         });
 
-        return row;
+        return toApiWorkspace(row);
       } catch (e) {
         handleError(e, 'Failed to create workspace');
       }
@@ -147,18 +148,27 @@ export function createWorkspaceRoutes(db: DatabaseAdapter, storage?: StorageAdap
           updated_at: new Date()
         });
 
-        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+                const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
 
-        await logAudit(db, {
-          workspace: id,
-          operation: 'update',
-          entityType: 'workspace',
-          entityId: id,
-          entityName: row!.name,
-          changes
-        });
+                await logAudit(db, {
 
-        return row!;
+                  workspace: id,
+
+                  operation: 'update',
+
+                  entityType: 'workspace',
+
+                  entityId: id,
+
+                  entityName: row!.name,
+
+                  changes
+
+                });
+
+        
+
+                return toApiWorkspace(row!);
       } catch (e) {
         handleError(e, 'Failed to update workspace');
       }

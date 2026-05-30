@@ -3,10 +3,10 @@ import type { DatabaseAdapter } from '../db/database.js';
 import {
   decodeRefs,
   type Entity,
-  type EntityApiResponse,
   type EntityLink,
   type SchemaField
 } from '../types.js';
+import { toApiEntity, toApiEntitySummary } from '../api/transforms.js';
 import { computeChanges, extractEntityFields, logAudit } from '../db/audit.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { formatArrayForCsv, generateCsv } from '../utils/csv.js';
@@ -18,8 +18,6 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
-  AuthorizationContext,
-  EntityCapabilities,
   EntitySchema,
   PermissionChecker
 } from '@arch-register/permissions';
@@ -95,30 +93,6 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
   );
 };
 
-const getEntityCapabilities = (
-  context: AuthorizationContext | null,
-  entity: Entity
-): EntityCapabilities => {
-  if (!context) {
-    return {
-      canView: true,
-      canEdit: true,
-      canDelete: true,
-      canAdmin: true,
-      canCreateChild: true
-    };
-  }
-
-  const checker = new PermissionChecker();
-  return {
-    canView: checker.hasEntityPermission(context, entity, 'view_entity'),
-    canEdit: checker.hasEntityPermission(context, entity, 'edit_entity'),
-    canDelete: checker.hasEntityPermission(context, entity, 'admin_entity'),
-    canAdmin: checker.hasEntityPermission(context, entity, 'admin_entity'),
-    canCreateChild: checker.hasEntityPermission(context, entity, 'create_child')
-  };
-};
-
 const filterEntities = (
   entities: Entity[],
   options: {
@@ -138,58 +112,7 @@ const filterEntities = (
   });
 };
 
-const toApiFormat = (row: Entity, authCtx: AuthorizationContext): EntityApiResponse => ({
-  _uid: row.id,
-  _workspace: row.workspace,
-  _schemaId: row.schema_id,
-  _name: row.name,
-  _slug: row.slug,
-  _namespace: row.namespace,
-  _description: row.description,
-  _owner: row.owner,
-  _lifecycle: row.lifecycle,
-  _tags: row.tags,
-  _links: row.links,
-  _visibilityMode: row.visibility_mode,
-  ...getEntityCapabilities(authCtx, row),
-  ...row.data
-});
 
-type EntitySummaryResponse = {
-  _uid: string;
-  _workspace: string;
-  _schemaId: string;
-  _name: string;
-  _slug: string;
-  _namespace: string;
-  _description: string;
-  _owner: string | null;
-  _lifecycle: string | null;
-  _tags: string[];
-  _links: EntityLink[];
-  _visibilityMode: Entity['visibility_mode'];
-  canView: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canAdmin: boolean;
-  canCreateChild: boolean;
-};
-
-const toSummaryFormat = (row: Entity, authCtx: AuthorizationContext): EntitySummaryResponse => ({
-  _uid: row.id,
-  _workspace: row.workspace,
-  _schemaId: row.schema_id,
-  _name: row.name,
-  _slug: row.slug,
-  _namespace: row.namespace,
-  _description: row.description,
-  _owner: row.owner,
-  _lifecycle: row.lifecycle,
-  _tags: row.tags,
-  _links: row.links,
-  _visibilityMode: row.visibility_mode,
-  ...getEntityCapabilities(authCtx, row)
-});
 
 type RelationRecord = {
   entityId: string;
@@ -236,8 +159,8 @@ export function createDataRoutes(db: DatabaseAdapter) {
           .sort((a, b) => a.name.localeCompare(b.name))
           .slice(offset, limit != null ? offset + limit : undefined);
         return view === 'summary'
-          ? rows.map(row => toSummaryFormat(row, authCtx))
-          : rows.map(row => toApiFormat(row, authCtx));
+          ? rows.map(row => toApiEntitySummary(row, authCtx))
+          : rows.map(row => toApiEntity(row, authCtx));
       } catch (e) {
         handleError(e, 'Failed to retrieve data');
       }
@@ -337,7 +260,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
 
         return {
           nodes: [...allIncluded.values()].map(row => ({
-            ...toSummaryFormat(row, authCtx),
+            ...toApiEntitySummary(row, authCtx),
             _isMatch: matchIds.has(row.id)
           })),
           edges
@@ -488,7 +411,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           'view_entity',
           'You do not have access to view this entity'
         );
-        return toApiFormat(row, authCtx);
+        return toApiEntity(row, authCtx);
       } catch (e) {
         handleError(e, 'Failed to retrieve data record');
       }
@@ -776,7 +699,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           }
         });
 
-        return toApiFormat(row, authCtx);
+        return toApiEntity(row, authCtx);
       } catch (e) {
         handleError(e, 'Failed to create data record');
       }
@@ -885,7 +808,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           changes
         });
 
-        return toApiFormat(row!, authCtx);
+        return toApiEntity(row!, authCtx);
       } catch (e) {
         handleError(e, 'Failed to update data record');
       }
@@ -944,7 +867,7 @@ export function createDataRoutes(db: DatabaseAdapter) {
           }
         });
 
-        return toApiFormat(row, authCtx);
+        return toApiEntity(row, authCtx);
       } catch (e) {
         handleError(e, 'Failed to clone data record');
       }

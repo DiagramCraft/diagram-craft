@@ -1,27 +1,12 @@
 import { H3, defineHandler, getQuery } from 'h3';
 import type { DatabaseAdapter } from '../db/database.js';
-import type { AuditLogEntry, AuditLogApiResponse } from '../types.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { parsePositiveInt } from '../utils/http.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
+import { toApiAuditLogEntry } from '../api/transforms.js';
 
 const BASE = '/api/:workspace/audit';
-
-const toApiFormat = (row: AuditLogEntry): AuditLogApiResponse => ({
-  id: row.id,
-  workspace: row.workspace,
-  timestamp: row.timestamp.toISOString(),
-  user_id: row.user_id,
-  operation: row.operation,
-  entity_type: row.entity_type,
-  entity_id: row.entity_id,
-  entity_name: row.entity_name,
-  entity_slug: row.entity_slug,
-  schema_id: row.schema_id,
-  changes: row.changes,
-  metadata: row.metadata
-});
 
 export const createAuditRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
@@ -51,7 +36,7 @@ export const createAuditRoutes = (db: DatabaseAdapter) => {
       if (startDate) rows = rows.filter(row => row.timestamp >= new Date(startDate));
       if (endDate) rows = rows.filter(row => row.timestamp <= new Date(endDate));
 
-      return rows.slice(offset, offset + limit).map(toApiFormat);
+      return rows.slice(offset, offset + limit).map(toApiAuditLogEntry);
     })
   );
 

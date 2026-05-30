@@ -13,12 +13,9 @@ import {
   requireProjectAction
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import {
-  AuthorizationContext,
-  PermissionChecker,
-  ProjectCapabilities
-} from '@arch-register/permissions';
 import { httpAssert } from '../utils/httpAssert.js';
+import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api/transforms.js';
+import type { FileTree } from '@arch-register/api-types';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -48,85 +45,38 @@ const parseProjectStatus = (value: unknown): ProjectStatus => {
   return value as ProjectStatus;
 };
 
-const getProjectCapabilities = (
-  context: AuthorizationContext | null,
-  ownerTeamId: string | null
-): ProjectCapabilities => {
-  if (!context) {
-    return {
-      canEdit: true,
-      canDelete: true,
-      canManageFiles: true
-    };
-  }
-
-  const checker = new PermissionChecker();
-  return {
-    canEdit: checker.hasProjectPermission(context, ownerTeamId, 'edit_project'),
-    canDelete: checker.hasProjectPermission(context, ownerTeamId, 'delete_project'),
-    canManageFiles: checker.hasProjectPermission(context, ownerTeamId, 'manage_files')
-  };
-};
-
 const resolveProjectOwner = (owner: unknown, teamIds: Set<string>) =>
   typeof owner === 'string' && teamIds.has(owner) ? owner : null;
 
-type FileEntry = {
-  id: string;
-  path: string;
-  name: string;
-  size_bytes: number;
-  created_at: Date;
-  updated_at: Date;
-};
+const buildFileTree = (files: ProjectFile[]): FileTree => {
+  const rootFiles = files
+    .filter(f => f.path.indexOf('/') === -1)
+    .map(toApiProjectFile);
 
-type FileTreeResponse = {
-  folders: Array<{ path: string; files: FileEntry[] }>;
-  rootFiles: FileEntry[];
-};
-
-const buildFileTree = (files: ProjectFile[]): FileTreeResponse => {
-  const rootFiles: FileEntry[] = [];
-  const folderMap = new Map<string, FileEntry[]>();
+  const folderMap = new Map<string, ProjectFile[]>();
 
   for (const f of files) {
-    const entry: FileEntry = {
-      id: f.id,
-      path: f.path,
-      name: f.name,
-      size_bytes: f.size_bytes,
-      created_at: f.created_at,
-      updated_at: f.updated_at
-    };
-
     const lastSlash = f.path.lastIndexOf('/');
-    if (lastSlash === -1) {
-      rootFiles.push(entry);
-    } else {
+    if (lastSlash !== -1) {
       const folder = f.path.substring(0, lastSlash);
       const existing = folderMap.get(folder);
       if (existing) {
-        existing.push(entry);
+        existing.push(f);
       } else {
-        folderMap.set(folder, [entry]);
+        folderMap.set(folder, [f]);
       }
     }
   }
 
   const folders = Array.from(folderMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([path, files]) => ({ path, files }));
+    .map(([path, files]) => ({ 
+      path, 
+      files: files.map(toApiProjectFile)
+    }));
 
   return { folders, rootFiles };
 };
-
-const toProjectResponse = <T extends { owner: string | null }>(
-  project: T,
-  authCtx: AuthorizationContext
-) => ({
-  ...project,
-  ...getProjectCapabilities(authCtx, project.owner)
-});
 
 export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter) => {
   const router = new H3();
@@ -152,7 +102,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         }
         return visibleProjects
           .map(project =>
-            toProjectResponse({ ...project, file_count: fileCounts.get(project.id) ?? 0 }, authCtx)
+            toApiProject(project, fileCounts.get(project.id) ?? 0, authCtx)
           )
           .sort((a, b) => {
             const rank = { pinned: 0, active: 1, archived: 2 } as const;
@@ -177,7 +127,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
 
         const files = await db.projectsFiles.listProjectFiles(workspace, id);
 
-        return toProjectResponse({ ...project, files: buildFileTree(files) }, authCtx);
+        return toApiProjectDetail(project, buildFileTree(files), authCtx);
       } catch (e) {
         handleError(e, 'Failed to retrieve project');
       }
@@ -228,7 +178,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           }
         });
 
-        return toProjectResponse(row, authCtx);
+        return toApiProject(row, 0, authCtx);
       } catch (e) {
         handleError(e, 'Failed to create project');
       }
@@ -284,18 +234,29 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           updated_at: new Date()
         });
 
-        const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
+                const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row!));
 
-        await logAudit(db, {
-          workspace,
-          operation: 'update',
-          entityType: 'project',
-          entityId: id,
-          entityName: row!.name,
-          changes
-        });
+                await logAudit(db, {
 
-        return toProjectResponse(row!, authCtx);
+                  workspace,
+
+                  operation: 'update',
+
+                  entityType: 'project',
+
+                  entityId: id,
+
+                  entityName: row!.name,
+
+                  changes
+
+                });
+
+        
+
+                const fileCount = (await db.projectsFiles.listProjectFiles(workspace, id)).length;
+
+                return toApiProject(row!, fileCount, authCtx);
       } catch (e) {
         handleError(e, 'Failed to update project');
       }
