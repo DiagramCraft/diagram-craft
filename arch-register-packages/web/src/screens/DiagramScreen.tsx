@@ -5,7 +5,10 @@ import { TbArrowLeft } from 'react-icons/tb';
 import { initializeDiagramCraft, getIncludedPackages } from '../diagramcraft-initial-config';
 import { EmbeddableEditor } from '@diagram-craft/main/EmbeddableEditor';
 import { DefaultDataProvider } from '@diagram-craft/model/data-providers/dataProviderDefault';
-import { UrlDataProviderId } from '@diagram-craft/model/data-providers/dataProviderUrl';
+import {
+  UrlDataProvider,
+  UrlDataProviderId
+} from '@diagram-craft/model/data-providers/dataProviderUrl';
 import type { DataSchema } from '@diagram-craft/model/diagramDocumentDataSchemas';
 import { deserializeDiagramDocument } from '@diagram-craft/model/serialization/deserialize';
 import type {
@@ -36,6 +39,32 @@ export const DiagramScreen = () => {
   const docRef = useRef<DiagramDocument | null>(null);
   const fileInfoRef = useRef<{ path: string; name: string } | null>(null);
 
+  const normalizePublicSchemas = useCallback(
+    (publicSchemas: PublicSchema[]) =>
+      publicSchemas.map(schema => ({
+        ...schema,
+        providerId: ARCH_REGISTER_PUBLIC_PROVIDER_ID
+      })),
+    []
+  );
+
+  const makePublicProvider = useCallback(
+    (publicSchemas: PublicSchema[]) => {
+      const normalizedSchemas = normalizePublicSchemas(publicSchemas);
+      const provider = new UrlDataProvider(
+        JSON.stringify({
+          schemas: normalizedSchemas,
+          data: [],
+          schemaUrl: `/api/public/${workspaceId}/schemas`,
+          dataUrl: `/api/public/${workspaceId}/data`
+        })
+      );
+      provider.id = ARCH_REGISTER_PUBLIC_PROVIDER_ID;
+      return provider;
+    },
+    [normalizePublicSchemas, workspaceId]
+  );
+
   const injectPublicProvider = useCallback(
     (
       diagramData: SerializedDiagramDocument,
@@ -45,10 +74,7 @@ export const DiagramScreen = () => {
         typeof diagramData.data === 'object' && diagramData.data !== null
           ? (diagramData.data as Record<string, unknown>)
           : {};
-      const normalizedSchemas = publicSchemas.map(schema => ({
-        ...schema,
-        providerId: ARCH_REGISTER_PUBLIC_PROVIDER_ID
-      }));
+      const normalizedSchemas = normalizePublicSchemas(publicSchemas);
 
       return {
         ...diagramData,
@@ -75,20 +101,8 @@ export const DiagramScreen = () => {
         }
       };
     },
-    [workspaceId]
+    [normalizePublicSchemas, workspaceId]
   );
-
-  const suppressDefaultProvider = useCallback(async (document: DiagramDocument) => {
-    const defaultProvider = document.data.providers.find(
-      provider => provider instanceof DefaultDataProvider
-    );
-
-    if (!defaultProvider) return;
-
-    for (const schema of [...defaultProvider.schemas]) {
-      await defaultProvider.deleteSchema(schema);
-    }
-  }, []);
 
   // Save on close as a safety net (server auto-save handles ongoing persistence)
   const save = useCallback(async () => {
@@ -120,9 +134,59 @@ export const DiagramScreen = () => {
   }, [save, navigate, workspaceSlug, projectId]);
 
   useEffect(() => {
+    let releaseDataChange = () => {};
+
     const loadDiagram = async () => {
       try {
         setLoading(true);
+
+        const suppressDefaultProvider = async (document: DiagramDocument) => {
+          const defaultProvider = document.data.providers.find(
+            provider => provider instanceof DefaultDataProvider
+          );
+
+          if (!defaultProvider) return;
+
+          for (const schema of [...defaultProvider.schemas]) {
+            await defaultProvider.deleteSchema(schema);
+          }
+        };
+
+        let reconcileInFlight = false;
+
+        const reconcilePublicProvider = async (
+          document: DiagramDocument,
+          publicSchemas: PublicSchema[]
+        ) => {
+          if (reconcileInFlight) return;
+          reconcileInFlight = true;
+
+          try {
+            document.data.setProviders([makePublicProvider(publicSchemas)]);
+            await suppressDefaultProvider(document);
+          } finally {
+            reconcileInFlight = false;
+          }
+        };
+
+        const hasExpectedSchemas = (document: DiagramDocument, publicSchemas: PublicSchema[]) => {
+          const currentSchemaIds = document.data.db.schemas.map(schema => schema.id).sort();
+          const expectedSchemaIds = publicSchemas.map(schema => schema.id).sort();
+
+          return (
+            currentSchemaIds.length === expectedSchemaIds.length &&
+            currentSchemaIds.every((schemaId, index) => schemaId === expectedSchemaIds[index])
+          );
+        };
+
+        const enforcePublicProvider = async (
+          document: DiagramDocument,
+          publicSchemas: PublicSchema[]
+        ) => {
+          if (hasExpectedSchemas(document, publicSchemas)) return;
+
+          await reconcilePublicProvider(document, publicSchemas);
+        };
 
         const { documentFactory, diagramFactory } = initializeDiagramCraft();
         const includedPackages = getIncludedPackages();
@@ -165,21 +229,20 @@ export const DiagramScreen = () => {
         const root = await documentFactory.loadCRDT(roomName, userState, () => {});
         const document = await documentFactory.createDocument(root, roomName, () => {});
 
+        const publicSchemasResponse = await fetch(`/api/public/${workspaceId}/schemas`);
+        if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
+        const publicSchemas = (await publicSchemasResponse.json()) as PublicSchema[];
+
         // If the CRDT already has state (another client is connected), use it directly.
         // Otherwise, this is the first client — load from REST and deserialize.
         if (document.diagrams.length === 0) {
-          const [diagramResponse, publicSchemasResponse] = await Promise.all([
-            fetch(`/api/${workspaceId}/projects/${projectId}/files/${file.path}`),
-            fetch(`/api/public/${workspaceId}/schemas`)
-          ]);
+          const diagramResponse = await fetch(
+            `/api/${workspaceId}/projects/${projectId}/files/${file.path}`
+          );
           if (!diagramResponse.ok) throw new Error('Failed to load diagram content');
-          if (!publicSchemasResponse.ok) throw new Error('Failed to load public schemas');
-          const [rawDiagramData, publicSchemas] = await Promise.all([
-            diagramResponse.json(),
-            publicSchemasResponse.json()
-          ]);
+          const rawDiagramData = await diagramResponse.json();
           const serializedDiagramData = rawDiagramData as SerializedDiagramDocument;
-          const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas as PublicSchema[]);
+          const diagramData = injectPublicProvider(serializedDiagramData, publicSchemas);
 
           await deserializeDiagramDocument(diagramData, document, diagramFactory, {
             includedPackages
@@ -187,7 +250,12 @@ export const DiagramScreen = () => {
         }
 
         await document.load();
-        await suppressDefaultProvider(document);
+        await reconcilePublicProvider(document, publicSchemas);
+
+        const handleDataChange = () => {
+          void enforcePublicProvider(document, publicSchemas);
+        };
+        releaseDataChange = document.data.on('change', handleDataChange);
 
         if (document.diagrams.length === 0) {
           throw new Error('Diagram file contains no diagrams');
@@ -206,13 +274,14 @@ export const DiagramScreen = () => {
 
     return () => {
       CollaborationConfig.Backend.disconnect(() => {});
+      releaseDataChange();
       if (docRef.current) {
         docRef.current.deactivate(() => {});
         docRef.current.release();
         docRef.current = null;
       }
     };
-  }, [workspaceId, projectId, diagramId, injectPublicProvider, suppressDefaultProvider]);
+  }, [workspaceId, projectId, diagramId, injectPublicProvider, makePublicProvider]);
 
   const { documentFactory, diagramFactory } = initializeDiagramCraft();
 

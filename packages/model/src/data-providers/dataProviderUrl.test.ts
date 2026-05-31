@@ -142,6 +142,30 @@ describe('UrlDataProvider', () => {
       refreshSchemasSpy.mockRestore();
       refreshDataSpy.mockRestore();
     });
+
+    it('should preserve the assigned provider id on refreshed schemas', async () => {
+      const provider = new UrlDataProvider(
+        JSON.stringify({
+          schemas: [],
+          data: [],
+          dataUrl,
+          schemaUrl
+        }),
+        true
+      );
+
+      provider.id = 'arch-register-public';
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(provider.schemas).toEqual([
+        expect.objectContaining({
+          id: testSchema.id,
+          providerId: 'arch-register-public'
+        })
+      ]);
+    });
   });
 
   describe('getById', () => {

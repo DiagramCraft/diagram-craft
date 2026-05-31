@@ -31,7 +31,7 @@ export class RESTDataProvider
       this.fetchTimeout = d.fetchTimeout ?? 10000;
 
       if (autoRefresh && d.baseUrl) {
-        this.initializeWithAutoRefresh();
+        this.scheduleAutoRefresh();
       }
     } else {
       this.data = [];

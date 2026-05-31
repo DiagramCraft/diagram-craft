@@ -25,13 +25,25 @@ export abstract class BaseHTTPDataProvider
     super();
 
     if (autoRefresh) {
-      setTimeout(() => this.initializeWithAutoRefresh(), 200);
+      this.scheduleAutoRefresh();
     }
   }
 
   protected async initializeWithAutoRefresh(): Promise<void> {
     await this.refreshSchemas(false);
     await this.refreshData(false);
+  }
+
+  protected scheduleAutoRefresh(): void {
+    queueMicrotask(() => {
+      void this.initializeWithAutoRefresh().catch(error => {
+        console.error('[DataProvider:autoRefresh] refresh failed', {
+          providerType: this.providerId,
+          providerInstanceId: this.id,
+          error
+        });
+      });
+    });
   }
 
   abstract verifySettings(): Promise<string | undefined>;

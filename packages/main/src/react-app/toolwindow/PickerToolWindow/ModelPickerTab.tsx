@@ -463,6 +463,7 @@ const DataProviderQueryView = (props: {
   displayMode: 'list' | 'grid';
   onChangeDisplayMode: (mode: 'list' | 'grid') => void;
   showItemAddDialog: () => void;
+  gridEnabled: boolean;
 }) => {
   const document = useDocument();
   const db = document.data.db;
@@ -537,7 +538,7 @@ const DataProviderQueryView = (props: {
             <ToggleButtonGroup.Item value={'list'}>
               <TbLayoutList />
             </ToggleButtonGroup.Item>
-            <ToggleButtonGroup.Item value={'grid'}>
+            <ToggleButtonGroup.Item value={'grid'} disabled={!props.gridEnabled}>
               <TbLayoutGrid />
             </ToggleButtonGroup.Item>
           </ToggleButtonGroup.Root>
@@ -593,10 +594,20 @@ export const ModelPickerTab = () => {
   });
 
   const [selectedSchema, setSelectedSchema] = useState<string | undefined>(db.schemas[0]!.id);
+  const selectedSchemaDefinition = db.schemas.find(s => s.id === selectedSchema) ?? db.schemas[0];
+  const gridEnabled =
+    selectedSchemaDefinition !== undefined &&
+    document.data.templates.bySchema(selectedSchemaDefinition.id).length > 0;
 
   if (db.schemas.length > 0 && db.schemas.find(s => s.id === selectedSchema) === undefined) {
     setSelectedSchema(db.schemas[0]!.id);
   }
+
+  useEffect(() => {
+    if (displayMode === 'grid' && !gridEnabled) {
+      setDisplayMode('list');
+    }
+  }, [displayMode, gridEnabled]);
 
   // Handle delete confirmation
   const handleDeleteItem = (item: Data) => {
@@ -678,6 +689,7 @@ export const ModelPickerTab = () => {
                 displayMode={displayMode}
                 onChangeDisplayMode={setDisplayMode}
                 showItemAddDialog={() => setAddItemDialog(true)}
+                gridEnabled={!!gridEnabled}
               />
             </div>
           </ToolWindowPanel>
