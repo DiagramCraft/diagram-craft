@@ -74,6 +74,25 @@
     &[data-disabled] .eItemRightSlot {
       color: var(--cmp-fg-disabled);
     }
+
+    &[data-type="danger"] {
+      color: var(--red-11);
+
+      &[data-highlighted] {
+        background-color: var(--red-3);
+        color: var(--red-12);
+      }
+
+      .eItemLeftSlot,
+      .eItemRightSlot {
+        color: var(--red-11);
+      }
+
+      &[data-highlighted] .eItemLeftSlot,
+      &[data-highlighted] .eItemRightSlot {
+        color: var(--red-12);
+      }
+    }
   }
 
   .eSeparator {

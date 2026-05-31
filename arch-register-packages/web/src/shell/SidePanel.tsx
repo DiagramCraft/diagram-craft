@@ -3,7 +3,8 @@ import { useNavigate, useMatches, useSearch } from '@tanstack/react-router';
 import styles from './SidePanel.module.css';
 import { TreeRow } from '../components/TreeRow';
 import { TypeBadge } from '../components/TypeBadge';
-import { ContextMenu, type ContextMenuItem } from '../components/ContextMenu';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Dialog } from '../components/Dialog';
 import {
@@ -11,6 +12,7 @@ import {
   TbUsers, TbFileVector, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
   TbShieldLock, TbPlus, TbPencil, TbCopy,
+  TbFolder,
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -294,61 +296,87 @@ const ProjectsSidebar = ({
     return root;
   };
 
-  const buildMoveToSubmenu = (
-    file: FileEntry,
-    folders: string[],
-    currentFolder: string | null
-  ): ContextMenuItem[] => {
+
+
+  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
     const folderTree = buildFolderTree(folders);
     
-    const buildSubmenuItems = (nodes: FolderNode[]): ContextMenuItem[] => {
-      return nodes.map(node => ({
-        label: node.name,
-        icon: <TbFolderOpen size={13} />,
-        checked: node.path === currentFolder,
-        submenu: node.children.length > 0 
-          ? buildSubmenuItems(node.children)
-          : undefined,
-        onClick: node.path !== currentFolder
-          ? () => moveFileMutation.mutate({ file, targetFolder: node.path })
-          : undefined,
-      }));
+    const renderFolderNodes = (nodes: FolderNode[]): React.ReactNode => {
+      return nodes.map(node => {
+        const isCurrentFolder = node.path === currentFolder;
+        if (node.children.length > 0) {
+          return (
+            <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
+              <Menu.Item
+                leftSlot={<TbFolder size={13} />}
+                disabled={isCurrentFolder}
+                onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+              >
+                {node.name}
+              </Menu.Item>
+              {renderFolderNodes(node.children)}
+            </Menu.SubMenu>
+          );
+        }
+        return (
+          <Menu.Item
+            key={node.path}
+            leftSlot={<TbFolder size={13} />}
+            disabled={isCurrentFolder}
+            onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+          >
+            {node.name}
+          </Menu.Item>
+        );
+      });
     };
     
-    const items: ContextMenuItem[] = [
-      {
-        label: 'Root',
-        icon: <TbFolderOpen size={13} />,
-        checked: currentFolder === null,
-        onClick: currentFolder !== null
-          ? () => moveFileMutation.mutate({ file, targetFolder: null })
-          : undefined,
-      },
-    ];
-    
-    if (folderTree.length > 0) {
-      items.push(...buildSubmenuItems(folderTree));
-    }
-    
-    return items;
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbFolderOpen size={13} />}
+          disabled={currentFolder === null}
+          onClick={() => moveFileMutation.mutate({ file, targetFolder: null })}
+        >
+          Root
+        </Menu.Item>
+        {folderTree.length > 0 && renderFolderNodes(folderTree)}
+      </>
+    );
   };
 
-
-
-  const getMenuItems = (target: SidebarMenuTarget): ContextMenuItem[] => {
+  const renderMenu = (target: SidebarMenuTarget) => {
     if (target.type === 'project') {
-      return [
-        { label: 'New diagram', icon: <TbPlus size={13} />, onClick: () => setAddDiagramState({ projectId: target.projectId, folder: null }) },
-        { label: 'New folder', icon: <TbFolderOpen size={13} />, onClick: () => setAddFolderState({ projectId: target.projectId, parent: null }) },
-      ];
+      return (
+        <>
+          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramState({ projectId: target.projectId, folder: null })}>
+            New diagram
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setAddFolderState({ projectId: target.projectId, parent: null })}>
+            New folder
+          </Menu.Item>
+        </>
+      );
     }
     if (target.type === 'folder') {
-      return [
-        { label: 'New diagram', icon: <TbPlus size={13} />, onClick: () => setAddDiagramState({ projectId: target.projectId, folder: target.path }) },
-        { label: 'New folder', icon: <TbFolderOpen size={13} />, onClick: () => setAddFolderState({ projectId: target.projectId, parent: target.path }) },
-        { label: 'Rename', icon: <TbPencil size={13} />, separatorBefore: true, onClick: () => setRenameTarget(target) },
-        { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget(target) },
-      ];
+      return (
+        <>
+          <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => setAddDiagramState({ projectId: target.projectId, folder: target.path })}>
+            New diagram
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => setAddFolderState({ projectId: target.projectId, parent: target.path })}>
+            New folder
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+            Rename
+          </Menu.Item>
+          <Menu.Separator />
+          <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget(target)}>
+            Delete
+          </Menu.Item>
+        </>
+      );
     }
     // diagram
     const allFolders = (fileTree?.folders ?? []).map(f => f.path);
@@ -356,16 +384,23 @@ const ProjectsSidebar = ({
       ? target.file.path.substring(0, target.file.path.lastIndexOf('/'))
       : null;
     
-    return [
-      { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(target.file) },
-      { 
-        label: 'Move to…', 
-        icon: <TbFolderOpen size={13} />, 
-        submenu: buildMoveToSubmenu(target.file, allFolders, currentFolder),
-      },
-      { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget(target) },
-      { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget(target) },
-    ];
+    return (
+      <>
+        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => cloneFileMutation.mutate(target.file)}>
+          Clone
+        </Menu.Item>
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(target.file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget(target)}>
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget(target)}>
+          Delete
+        </Menu.Item>
+      </>
+    );
   };
 
   const handleConfirmDelete = () => {
@@ -551,12 +586,13 @@ const ProjectsSidebar = ({
       </div>
 
       {menu && (
-        <ContextMenu
+        <ContextMenu.Imperative
           x={menu.x}
           y={menu.y}
-          items={getMenuItems(menu.target)}
           onClose={() => setMenu(null)}
-        />
+        >
+          {renderMenu(menu.target)}
+        </ContextMenu.Imperative>
       )}
 
       {renameTarget && renameTarget.type !== 'project' && (

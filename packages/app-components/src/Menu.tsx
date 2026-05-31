@@ -19,6 +19,7 @@ type ItemProps = {
   leftSlot?: ReactElement;
   rightSlot?: ReactElement | string;
   className?: string;
+  type?: 'regular' | 'danger';
 };
 
 const Item = (props: ItemProps) => {
@@ -27,7 +28,7 @@ const Item = (props: ItemProps) => {
       className={props.className ?? styles.eItem}
       disabled={props.disabled}
       onClick={props.onClick}
-      data-type={'regular'}
+      data-type={props.type ?? 'regular'}
     >
       {props.leftSlot && <div className={styles.eItemLeftSlot}>{props.leftSlot}</div>}
       <span>{props.children}</span>
