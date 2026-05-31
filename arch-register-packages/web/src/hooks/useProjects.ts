@@ -66,6 +66,7 @@ export const useUpdateProject = (workspaceId: string) => {
         description?: string;
         owner?: string | null;
         status?: 'pinned' | 'active' | 'archived';
+        color?: string | null;
       };
     }) => updateProject(workspaceId, projectId, data),
     onSuccess: (updatedProject, variables) => {

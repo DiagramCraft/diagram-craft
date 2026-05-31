@@ -163,6 +163,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           description: typeof description === 'string' ? description : '',
           owner: resolvedOwner,
           status: projectStatus,
+          color: null,
           created_at: timestamp,
           updated_at: timestamp
         });

@@ -105,6 +105,7 @@ export const sqliteMappers = {
     description: String(row['description']),
     owner: row['owner'] == null ? null : String(row['owner']),
     status: String(row['status']) as Project['status'],
+    color: row['color'] == null ? null : String(row['color']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
