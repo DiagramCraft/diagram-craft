@@ -11,6 +11,7 @@ import {
 import { resolveSchemaColor } from '../api';
 import type { EntityRecord, EntitySchema, EntitySummary, SchemaField, AuditLogEntry, WorkspaceLifecycleState } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useEntity, useEntityRelations, useUpdateEntity, useDeleteEntity, useCloneEntity, useEntitiesBySchema } from '../hooks/useEntities';
 import { useAuditLog } from '../hooks/useAudit';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -49,6 +50,7 @@ export const EntityDetail = () => {
   const [editing, setEditing] = useState(false);
   const [editState, setEditState] = useState<Record<string, unknown>>({});
   const [editLinks, setEditLinks] = useState<EntitySummary['_links']>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
@@ -197,8 +199,12 @@ export const EntityDetail = () => {
     );
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`Delete "${entity?._name || entity?._slug}"?`)) return;
+  const handleDelete = () => {
+    setConfirmDelete(true);
+  };
+
+  const doDelete = () => {
+    setConfirmDelete(false);
     deleteEntity.mutate(entityId, {
       onSuccess: () => navigateToEntities(),
     });
@@ -489,6 +495,16 @@ export const EntityDetail = () => {
       {tab === 'changes' && (
         <ChangeHistory auditLog={auditLog} loading={loadingAudit} />
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete entity?"
+        message={<>The entity <b>{entityName}</b> will be permanently deleted.</>}
+        detail="This can't be undone."
+        confirmLabel="Delete entity"
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 };

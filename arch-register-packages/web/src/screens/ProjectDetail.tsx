@@ -1,23 +1,37 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import styles from './ProjectDetail.module.css';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { Dialog } from '../components/Dialog';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ContextMenu, type ContextMenuItem } from '../components/ContextMenu';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
+  TbCopy,
 } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { ApiError } from '../api';
 import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceTeam } from '../api';
 import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
+import {
+  useDeleteProjectFile,
+  useDeleteProjectFolder,
+  useRenameProjectFolder,
+  useCloneProjectFile,
+  useRenameProjectFile,
+} from '../hooks/useProjectFiles';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },
   { value: 'active', label: 'Active' },
   { value: 'archived', label: 'Archived' },
 ] as const;
+
+type MenuTarget =
+  | { type: 'diagram'; file: FileEntry }
+  | { type: 'folder'; path: string };
 
 export const ProjectDetail = () => {
   const navigate = useNavigate();
@@ -31,12 +45,26 @@ export const ProjectDetail = () => {
   const [filter, setFilter] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [addFolderOpen, setAddFolderOpen] = useState(false);
+  const [addFolderParent, setAddFolderParent] = useState<string | null>(null);
   const [addDiagramOpen, setAddDiagramOpen] = useState(false);
+  const [addDiagramFolder, setAddDiagramFolder] = useState<string | null>(null);
   const [pinError, setPinError] = useState('');
+
+  // Context menu state
+  const [menu, setMenu] = useState<{ x: number; y: number; target: MenuTarget } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<MenuTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MenuTarget | null>(null);
 
   // Query hooks
   const { data: project, isLoading } = useProject(workspaceId, projectId);
   const updateProject = useUpdateProject(workspaceId);
+
+  // File mutation hooks
+  const deleteFileMutation = useDeleteProjectFile(workspaceId, projectId);
+  const deleteFolderMutation = useDeleteProjectFolder(workspaceId, projectId);
+  const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
+  const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
+  const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
 
   if (isLoading) {
     return (
@@ -103,6 +131,51 @@ export const ProjectDetail = () => {
 
   const handleNavigateDiagram = (diagramId: string) => {
     navigate({ to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId', params: { workspaceSlug, projectId, diagramId } });
+  };
+
+  const openContextMenu = (e: React.MouseEvent, target: MenuTarget) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({ x: e.clientX, y: e.clientY, target });
+  };
+
+  const getDiagramMenuItems = (file: FileEntry): ContextMenuItem[] => [
+    { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(file) },
+    { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget({ type: 'diagram', file }) },
+    { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'diagram', file }) },
+  ];
+
+  const getFolderMenuItems = (path: string): ContextMenuItem[] => [
+    { label: 'New diagram', icon: <TbPlus size={13} />, onClick: () => { setAddDiagramFolder(path); setAddDiagramOpen(true); } },
+    { label: 'New folder', icon: <TbFolderOpen size={13} />, onClick: () => { setAddFolderParent(path); setAddFolderOpen(true); } },
+    { label: 'Rename', icon: <TbPencil size={13} />, separatorBefore: true, onClick: () => setRenameTarget({ type: 'folder', path }) },
+    { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'folder', path }) },
+  ];
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'diagram') {
+      deleteFileMutation.mutate(deleteTarget.file.path);
+    } else {
+      deleteFolderMutation.mutate(deleteTarget.path);
+    }
+    setDeleteTarget(null);
+  };
+
+  const handleRenameConfirm = (newName: string) => {
+    if (!renameTarget) return;
+    const trimmed = newName.trim();
+    if (!trimmed) { setRenameTarget(null); return; }
+    if (renameTarget.type === 'diagram') {
+      if (trimmed !== renameTarget.file.name) {
+        renameFileMutation.mutate({ file: renameTarget.file, newName: trimmed });
+      }
+    } else {
+      if (trimmed !== renameTarget.path) {
+        renameFolderMutation.mutate({ oldPath: renameTarget.path, newPath: trimmed });
+      }
+    }
+    setRenameTarget(null);
   };
 
   return (
@@ -216,7 +289,8 @@ export const ProjectDetail = () => {
         filter={filter}
         viewMode={viewMode}
         onOpenDiagram={handleNavigateDiagram}
-        onNewDiagram={project.canManageFiles ? () => setAddDiagramOpen(true) : undefined}
+        onNewDiagram={project.canManageFiles ? () => { setAddDiagramFolder(folderFilter); setAddDiagramOpen(true); } : undefined}
+        onContextMenu={project.canManageFiles ? openContextMenu : undefined}
       />
 
       {editing && project.canEdit && (
@@ -233,22 +307,56 @@ export const ProjectDetail = () => {
       {project.canManageFiles && (
         <AddFolderDialog
           open={addFolderOpen}
-          onClose={() => setAddFolderOpen(false)}
+          onClose={() => { setAddFolderOpen(false); setAddFolderParent(null); }}
           onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
+          parentFolder={addFolderParent ?? undefined}
         />
       )}
       {project.canManageFiles && (
         <AddDiagramDialog
           open={addDiagramOpen}
-          onClose={() => setAddDiagramOpen(false)}
+          onClose={() => { setAddDiagramOpen(false); setAddDiagramFolder(null); }}
           onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
-          folder={folderFilter}
+          folder={addDiagramFolder}
         />
       )}
+
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={menu.target.type === 'diagram' ? getDiagramMenuItems(menu.target.file) : getFolderMenuItems(menu.target.path)}
+          onClose={() => setMenu(null)}
+        />
+      )}
+
+      <RenameDialog
+        open={!!renameTarget}
+        currentName={renameTarget ? (renameTarget.type === 'diagram' ? renameTarget.file.name : renameTarget.path) : ''}
+        entityType={renameTarget?.type === 'folder' ? 'folder' : 'diagram'}
+        onRename={handleRenameConfirm}
+        onCancel={() => setRenameTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={deleteTarget?.type === 'folder' ? 'Delete folder?' : 'Delete diagram?'}
+        message={
+          deleteTarget ? (
+            deleteTarget.type === 'folder'
+              ? <>The folder <b>{deleteTarget.path}</b> and all diagrams inside it will be permanently deleted.</>
+              : <>The diagram <b>{deleteTarget.file.name}</b> will be permanently deleted.</>
+          ) : ''
+        }
+        detail="This can't be undone."
+        confirmLabel={deleteTarget?.type === 'folder' ? 'Delete folder' : 'Delete diagram'}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };
@@ -264,12 +372,14 @@ const DiagramCard = ({
   file,
   folder,
   onOpen,
+  onContextMenu,
 }: {
   file: FileEntry;
   folder?: string;
   onOpen: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }) => (
-  <button type="button" className={styles.diagramCard} onClick={onOpen}>
+  <button type="button" className={styles.diagramCard} onClick={onOpen} onContextMenu={onContextMenu}>
     <div className={styles.diagramThumb}>
       <div className={styles.diagramThumbGrid} />
       <div className={styles.diagramThumbNodes}>
@@ -322,12 +432,14 @@ const DiagramRow = ({
   file,
   folder,
   onOpen,
+  onContextMenu,
 }: {
   file: FileEntry;
   folder?: string;
   onOpen: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }) => (
-  <button type="button" className={styles.diagramRow} onClick={onOpen}>
+  <button type="button" className={styles.diagramRow} onClick={onOpen} onContextMenu={onContextMenu}>
     <div className={styles.diagramRowName}>{file.name}</div>
     <div className={styles.diagramRowFolder}>
       {folder && <><TbFolder size={10} /> {folder}</>}
@@ -338,6 +450,67 @@ const DiagramRow = ({
   </button>
 );
 
+const RenameDialog = ({
+  open,
+  currentName,
+  entityType,
+  onRename,
+  onCancel,
+}: {
+  open: boolean;
+  currentName: string;
+  entityType: 'diagram' | 'folder';
+  onRename: (newName: string) => void;
+  onCancel: () => void;
+}) => {
+  const [name, setName] = useState(currentName);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setName(currentName);
+      setTimeout(() => {
+        const el = inputRef.current;
+        if (el) { el.focus(); el.select(); }
+      }, 0);
+    }
+  }, [open, currentName]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (trimmed) onRename(trimmed);
+  };
+
+  return (
+    <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{ fontSize: 12, color: 'var(--fg-2)' }}>Name</label>
+          <input
+            ref={inputRef}
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{
+              fontSize: 13,
+              padding: '6px 8px',
+              background: 'var(--bg-1)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--r)',
+              color: 'var(--fg-0)',
+              outline: 'none',
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button type="button" className={styles.btn} onClick={onCancel}>Cancel</button>
+          <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`} disabled={!name.trim()}>Rename</button>
+        </div>
+      </form>
+    </Dialog>
+  );
+};
+
 const DiagramsView = ({
   project,
   visibleFiles,
@@ -346,6 +519,7 @@ const DiagramsView = ({
   viewMode,
   onOpenDiagram,
   onNewDiagram,
+  onContextMenu,
 }: {
   project: ProjectDetailData;
   visibleFiles: FileEntry[];
@@ -354,6 +528,7 @@ const DiagramsView = ({
   viewMode: 'grid' | 'list';
   onOpenDiagram: (diagramId: string) => void;
   onNewDiagram?: () => void;
+  onContextMenu?: (e: React.MouseEvent, target: MenuTarget) => void;
 }) => {
   const lc = filter.toLowerCase();
   const filtered = lc
@@ -380,8 +555,16 @@ const DiagramsView = ({
     );
   }
 
-  const FileItem = viewMode === 'list' ? DiagramRow : DiagramCard;
   const containerClass = viewMode === 'list' ? styles.diagramList : styles.diagramGrid;
+  const FileItem = viewMode === 'list' ? DiagramRow : DiagramCard;
+
+  const fileItemProps = (f: FileEntry, folder?: string) => ({
+    key: f.id,
+    file: f,
+    folder,
+    onOpen: () => onOpenDiagram(f.id),
+    onContextMenu: onContextMenu ? (e: React.MouseEvent) => onContextMenu(e, { type: 'diagram' as const, file: f }) : undefined,
+  });
 
   const addButton = onNewDiagram == null ? null : viewMode === 'list' ? (
     <button type="button" className={styles.diagramRowAdd} onClick={onNewDiagram}>
@@ -398,11 +581,7 @@ const DiagramsView = ({
     return (
       <div className={containerClass}>
         {filtered.map(f => (
-          <FileItem
-            key={f.id}
-            file={f}
-            onOpen={() => onOpenDiagram(f.id)}
-          />
+          <FileItem {...fileItemProps(f)} />
         ))}
         {addButton}
       </div>
@@ -427,11 +606,7 @@ const DiagramsView = ({
       {rootFiles.length > 0 && (
         <div className={containerClass}>
           {rootFiles.map(f => (
-            <FileItem
-              key={f.id}
-              file={f}
-              onOpen={() => onOpenDiagram(f.id)}
-            />
+            <FileItem {...fileItemProps(f)} />
           ))}
         </div>
       )}
@@ -442,12 +617,7 @@ const DiagramsView = ({
           </div>
           <div className={containerClass}>
             {g.files.map(f => (
-              <FileItem
-                key={f.id}
-                file={f}
-                folder={g.path}
-                onOpen={() => onOpenDiagram(f.id)}
-              />
+              <FileItem {...fileItemProps(f, g.path)} />
             ))}
           </div>
         </div>
@@ -479,6 +649,7 @@ const ProjectSettings = ({
   const [owner, setOwner] = useState(project.owner ?? '');
   const [status, setStatus] = useState(project.status);
   const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateProject = useUpdateProject(workspaceId);
   const deleteProject = useDeleteProject(workspaceId);
@@ -509,8 +680,12 @@ const ProjectSettings = ({
     );
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this project and all its files?')) return;
+  const handleDelete = () => {
+    setConfirmDelete(true);
+  };
+
+  const doDelete = () => {
+    setConfirmDelete(false);
     deleteProject.mutate(project.id, {
       onSuccess: () => {
         onDelete();
@@ -591,6 +766,16 @@ const ProjectSettings = ({
           {updateProject.isPending ? 'Saving...' : 'Save'}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete project?"
+        message={<>The project <b>{project.name}</b> and all its diagrams will be permanently deleted.</>}
+        detail="This can't be undone."
+        confirmLabel="Delete project"
+        onConfirm={doDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </Dialog>
   );
 };

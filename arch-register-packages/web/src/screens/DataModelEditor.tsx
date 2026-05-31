@@ -9,6 +9,7 @@ import type { EntitySchema, SchemaField, FieldType } from '../api';
 import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 export const DataModelEditor = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export const DataModelEditor = () => {
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
@@ -69,10 +71,14 @@ export const DataModelEditor = () => {
     }
   }, [createSchemaMutation, onSelectSchema]);
 
-  const handleDeleteType = useCallback(async () => {
+  const handleDeleteType = useCallback(() => {
     if (!selected) return;
-    const ok = window.confirm(`Delete "${selected.name}"? This cannot be undone.`);
-    if (!ok) return;
+    setConfirmDelete(true);
+  }, [selected]);
+
+  const doDeleteType = useCallback(async () => {
+    if (!selected) return;
+    setConfirmDelete(false);
     try {
       await deleteSchemaMutation.mutateAsync(selected.id);
       onSelectSchema(schemas.find(s => s.id !== selected.id)?.id ?? '');
@@ -313,6 +319,16 @@ export const DataModelEditor = () => {
           <div>Select an entity type from the sidebar to edit its schema.</div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete entity type?"
+        message={selected ? <>The entity type <b>{selected.name}</b> will be permanently deleted.</> : ''}
+        detail="This can't be undone."
+        confirmLabel="Delete type"
+        onConfirm={doDeleteType}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 };

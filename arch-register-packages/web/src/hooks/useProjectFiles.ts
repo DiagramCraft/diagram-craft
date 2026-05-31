@@ -3,7 +3,13 @@ import {
   fetchProjectFiles,
   createDiagramFile,
   createFolder,
+  deleteProjectFile,
+  deleteProjectFolder,
+  renameProjectFolder,
+  cloneProjectFile,
+  renameProjectFile,
 } from '../api';
+import type { ProjectFile } from '../api';
 import { projectKeys } from './useProjects';
 
 // Query keys factory
@@ -55,5 +61,57 @@ export const useCreateFolder = (workspaceId: string, projectId: string) => {
         queryKey: projectFileKeys.list(workspaceId, projectId),
       });
     },
+  });
+};
+
+const invalidateProjectAndFiles = (queryClient: ReturnType<typeof useQueryClient>, workspaceId: string, projectId: string) => {
+  queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
+  queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+};
+
+export const useDeleteProjectFile = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (filePath: string) => deleteProjectFile(workspaceId, projectId, filePath),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+export const useDeleteProjectFolder = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (folderPath: string) => deleteProjectFolder(workspaceId, projectId, folderPath),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+export const useRenameProjectFolder = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ oldPath, newPath }: { oldPath: string; newPath: string }) =>
+      renameProjectFolder(workspaceId, projectId, oldPath, newPath),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+export const useCloneProjectFile = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: ProjectFile) => cloneProjectFile(workspaceId, projectId, file),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+export const useRenameProjectFile = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) =>
+      renameProjectFile(workspaceId, projectId, file, newName),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
   });
 };

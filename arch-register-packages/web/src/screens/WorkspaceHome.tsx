@@ -4,7 +4,7 @@ import styles from './WorkspaceHome.module.css';
 import { Chip } from '../components/Chip';
 import { TypeBadge } from '../components/TypeBadge';
 import {
-  TbDatabase, TbStack2, TbChartDots3, TbGitBranch,
+  TbDatabase, TbFolders, TbFileVector, TbGitBranch,
   TbPlus, TbChevronRight,
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../api';
@@ -134,13 +134,13 @@ export const WorkspaceHome = () => {
           label="Projects"
           value={projects.length}
           sub={`${totalFiles} diagrams`}
-          icon={<TbStack2 size={14} />}
+          icon={<TbFolders size={14} />}
         />
         <StatCard
           label="Diagrams"
           value={totalFiles}
           sub="across all projects"
-          icon={<TbChartDots3 size={14} />}
+          icon={<TbFileVector size={14} />}
         />
         <StatCard
           label="Entity types"
@@ -327,7 +327,7 @@ const ProjectRow = ({
 }) => (
   <button type="button" className={styles.projectRow} onClick={onClick}>
     <div className={styles.projectRowL}>
-      <TbStack2 size={14} />
+      <TbFolders size={14} />
       <span className={styles.projectName}>{project.name}</span>
     </div>
     <div className={styles.projectRowR}>

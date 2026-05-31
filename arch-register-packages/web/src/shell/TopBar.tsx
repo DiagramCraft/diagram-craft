@@ -4,10 +4,13 @@ import { IconButton } from '../components/IconButton';
 import {
   TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
   TbSettings, TbCheck, TbPlus, TbLogout,
+  TbFolders, TbDatabase, TbBuildingCommunity,
+  TbSun, TbMoon,
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
 import { useAuth } from '../auth/AuthContext';
-import { DropdownMenu } from '../components/DropdownMenu';
+import { useTheme } from '../hooks/useTheme';
+import type { Theme } from '../hooks/useTheme';
 
 type BreadcrumbItem = {
   label: string;
@@ -25,8 +28,12 @@ type TopBarProps = {
   onQuerySubmit: (q: string) => void;
   onOpenSettings: () => void;
   onAddWorkspace: () => void;
+  onNewProject: () => void;
+  onNewEntity: () => void;
   canOpenSettings: boolean;
   canAddWorkspace: boolean;
+  canNewProject: boolean;
+  canNewEntity: boolean;
 };
 
 export const TopBar = ({
@@ -39,10 +46,13 @@ export const TopBar = ({
   onQuerySubmit,
   onOpenSettings,
   onAddWorkspace,
+  onNewProject,
+  onNewEntity,
   canOpenSettings,
   canAddWorkspace,
+  canNewProject,
+  canNewEntity,
 }: TopBarProps) => {
-  const { user, logout } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -65,9 +75,12 @@ export const TopBar = ({
   return (
     <div className={styles.topbar}>
       <div className={styles.left}>
-        <IconButton title="Menu">
-          <TbMenu2 size={14} />
-        </IconButton>
+        <AppMenu
+          onNewProject={canNewProject ? onNewProject : undefined}
+          onNewEntity={canNewEntity ? onNewEntity : undefined}
+          onAddWorkspace={canAddWorkspace ? onAddWorkspace : undefined}
+          onOpenSettings={canOpenSettings ? onOpenSettings : undefined}
+        />
         <div className={styles.sep} />
         <WorkspaceSwitcher
           workspaces={workspaces}
@@ -93,22 +106,7 @@ export const TopBar = ({
         </div>
       </div>
       <div className={styles.right}>
-        {canOpenSettings && (
-          <IconButton title="Workspace settings" onClick={onOpenSettings}>
-            <TbSettings size={14} />
-          </IconButton>
-        )}
-        <DropdownMenu
-          trigger={
-            <div className={styles.avatar} title={user?.display_name ?? ''}>
-              {getInitials(user?.display_name ?? '')}
-            </div>
-          }
-          header={<>Signed in as <strong>{user?.display_name}</strong></>}
-          items={[
-            { label: 'Log out', icon: <TbLogout size={14} />, onClick: logout },
-          ]}
-        />
+        <AccountMenu />
       </div>
     </div>
   );
@@ -200,6 +198,169 @@ const WorkspaceSwitcher = ({
           )}
         </div>
       )}
+    </div>
+  );
+};
+
+const AppMenu = ({
+  onNewProject,
+  onNewEntity,
+  onAddWorkspace,
+  onOpenSettings,
+}: {
+  onNewProject?: () => void;
+  onNewEntity?: () => void;
+  onAddWorkspace?: () => void;
+  onOpenSettings?: () => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const hasCreateItems = onNewProject ?? onNewEntity;
+  const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings;
+  if (!hasItems) return <IconButton title="Menu"><TbMenu2 size={14} /></IconButton>;
+
+  return (
+    <div className={styles.appMenu} ref={ref}>
+      <IconButton title="Menu" onClick={() => setOpen(o => !o)}>
+        <TbMenu2 size={14} />
+      </IconButton>
+      {open && (
+        <div className={styles.appMenuDrop}>
+          {hasCreateItems && (
+            <>
+              <div className={styles.menuLabel}>Create</div>
+              {onNewProject && (
+                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onNewProject(); }}>
+                  <TbFolders size={14} /> New project
+                </button>
+              )}
+              {onNewEntity && (
+                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onNewEntity(); }}>
+                  <TbDatabase size={14} /> New entity
+                </button>
+              )}
+            </>
+          )}
+          {(onAddWorkspace ?? onOpenSettings) && (
+            <>
+              {hasCreateItems && <div className={styles.menuSep} />}
+              {onAddWorkspace && (
+                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
+                  <TbBuildingCommunity size={14} /> New workspace
+                </button>
+              )}
+              {onOpenSettings && (
+                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onOpenSettings(); }}>
+                  <TbSettings size={14} /> Workspace settings
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AccountMenu = () => {
+  const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open]);
+
+  const displayName = user?.display_name ?? '';
+  const email = user?.email ?? '';
+
+  return (
+    <div className={styles.acctMenu} ref={ref}>
+      <button
+        type="button"
+        className={styles.avatar}
+        title={displayName}
+        onClick={() => setOpen(o => !o)}
+      >
+        {getInitials(displayName)}
+      </button>
+      {open && (
+        <div className={styles.acctMenuDrop}>
+          <div className={styles.acctHeader}>
+            <div className={styles.acctAvatar}>{getInitials(displayName)}</div>
+            <div className={styles.acctInfo}>
+              <div className={styles.acctName}>{displayName}</div>
+              {email && <div className={styles.acctEmail}>{email}</div>}
+            </div>
+          </div>
+          <div className={styles.menuSep} />
+          <div className={styles.menuLabel}>Theme</div>
+          <ThemeToggle theme={theme} onSetTheme={setTheme} />
+          <div className={styles.menuSep} />
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => { setOpen(false); logout(); }}
+          >
+            <TbLogout size={14} /> Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {
+  const opts = [
+    { value: 'light' as const, label: 'Light', icon: <TbSun size={13} /> },
+    { value: 'dark' as const, label: 'Dark', icon: <TbMoon size={13} /> },
+  ];
+  return (
+    <div className={styles.themeToggle} role="radiogroup" aria-label="Theme">
+      {opts.map(o => (
+        <button
+          key={o.value}
+          type="button"
+          role="radio"
+          aria-checked={theme === o.value}
+          className={`${styles.themeOpt} ${theme === o.value ? styles.themeOptActive : ''}`}
+          onMouseDown={e => e.stopPropagation()}
+          onClick={() => onSetTheme(o.value)}
+        >
+          {o.icon}
+          <span>{o.label}</span>
+        </button>
+      ))}
     </div>
   );
 };

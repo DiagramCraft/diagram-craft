@@ -5,9 +5,10 @@ import { TbChevronRight } from 'react-icons/tb';
 type TreeRowProps = {
   depth?: number;
   icon?: ReactNode;
-  label: string;
+  label: ReactNode;
   active?: boolean;
   onClick?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   trailing?: ReactNode;
   expandable?: boolean;
   expanded?: boolean;
@@ -22,6 +23,7 @@ export const TreeRow = ({
   label,
   active,
   onClick,
+  onContextMenu,
   trailing,
   expandable,
   expanded,
@@ -33,6 +35,7 @@ export const TreeRow = ({
     className={`${styles.row} ${active ? styles.active : ''} ${className ?? ''}`}
     style={{ paddingLeft: 8 + depth * 12 }}
     onClick={onClick}
+    onContextMenu={onContextMenu}
   >
     {expandable ? (
       <button

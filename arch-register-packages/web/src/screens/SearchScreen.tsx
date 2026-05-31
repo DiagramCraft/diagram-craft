@@ -7,7 +7,7 @@ import {
   TbFolder,
   TbHome,
   TbSearch,
-  TbStack2,
+  TbFolders,
   TbX,
 } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
@@ -36,10 +36,10 @@ type SearchPreview =
 
 type RowId = { kind: string; id: string };
 
-const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbStack2 }> = [
-  { value: 'all', label: 'All', icon: TbStack2 },
+const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: typeof TbFolders }> = [
+  { value: 'all', label: 'All', icon: TbFolders },
   { value: 'entities', label: 'Entities', icon: TbDatabase },
-  { value: 'projects', label: 'Projects', icon: TbStack2 },
+  { value: 'projects', label: 'Projects', icon: TbFolders },
   { value: 'files', label: 'Diagrams', icon: TbFolder },
   { value: 'schemas', label: 'Schemas', icon: TbCode },
 ];
@@ -524,7 +524,7 @@ const ResultRow = ({
         onDoubleClick={onOpen}
       >
         <span className={styles.rowIcon}>
-          <TbStack2 size={14} />
+          <TbFolders size={14} />
         </span>
         <div className={styles.rowBody}>
           <div className={styles.rowTitle}>
@@ -733,7 +733,7 @@ const PreviewPane = ({
     return (
       <div className={styles.previewBody}>
         <div className={styles.previewHead}>
-          <span className={styles.previewIcon}><TbStack2 size={16} /></span>
+          <span className={styles.previewIcon}><TbFolders size={16} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.previewEyebrow}>Project</div>
             <div className={styles.previewTitle}><Hi s={p.name} q={q} /></div>
