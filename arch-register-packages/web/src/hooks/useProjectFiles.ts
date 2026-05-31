@@ -8,6 +8,7 @@ import {
   renameProjectFolder,
   cloneProjectFile,
   renameProjectFile,
+  moveProjectFile,
   fetchProjectTemplates,
   toggleTemplateStatus,
   createDiagramFromTemplate,
@@ -115,6 +116,22 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
   return useMutation({
     mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) =>
       renameProjectFile(workspaceId, projectId, file, newName),
+    onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+// Hook for moving a project file to a different folder
+export const useMoveProjectFile = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ 
+      file, 
+      targetFolder 
+    }: { 
+      file: ProjectFile; 
+      targetFolder: string | null;
+    }) => moveProjectFile(workspaceId, projectId, file, targetFolder),
     onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
   });
 };

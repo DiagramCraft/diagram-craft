@@ -21,6 +21,7 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
+  useMoveProjectFile,
 } from '../hooks/useProjectFiles';
 import type { EntityFacets, EntitySchema, Project, WorkspaceLifecycleState } from '../api';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
@@ -253,12 +254,86 @@ const ProjectsSidebar = ({
   const renameFolderMutation = useRenameProjectFolder(workspaceSlug, projectId ?? '');
   const cloneFileMutation = useCloneProjectFile(workspaceSlug, projectId ?? '');
   const renameFileMutation = useRenameProjectFile(workspaceSlug, projectId ?? '');
+  const moveFileMutation = useMoveProjectFile(workspaceSlug, projectId ?? '');
 
   const openMenu = (e: React.MouseEvent, target: SidebarMenuTarget) => {
     e.preventDefault();
     e.stopPropagation();
     setMenu({ x: e.clientX, y: e.clientY, target });
   };
+
+  type FolderNode = {
+    path: string;
+    name: string;
+    children: FolderNode[];
+  };
+
+  const buildFolderTree = (folders: string[]): FolderNode[] => {
+    const root: FolderNode[] = [];
+    const map = new Map<string, FolderNode>();
+    
+    const sorted = [...folders].sort();
+    
+    for (const path of sorted) {
+      const parts = path.split('/');
+      const name = parts[parts.length - 1] ?? path;
+      const node: FolderNode = { path, name, children: [] };
+      map.set(path, node);
+      
+      if (parts.length === 1) {
+        root.push(node);
+      } else {
+        const parentPath = parts.slice(0, -1).join('/');
+        const parent = map.get(parentPath);
+        if (parent) {
+          parent.children.push(node);
+        }
+      }
+    }
+    
+    return root;
+  };
+
+  const buildMoveToSubmenu = (
+    file: FileEntry,
+    folders: string[],
+    currentFolder: string | null
+  ): ContextMenuItem[] => {
+    const folderTree = buildFolderTree(folders);
+    
+    const buildSubmenuItems = (nodes: FolderNode[]): ContextMenuItem[] => {
+      return nodes.map(node => ({
+        label: node.name,
+        icon: <TbFolderOpen size={13} />,
+        checked: node.path === currentFolder,
+        submenu: node.children.length > 0 
+          ? buildSubmenuItems(node.children)
+          : undefined,
+        onClick: node.path !== currentFolder
+          ? () => moveFileMutation.mutate({ file, targetFolder: node.path })
+          : undefined,
+      }));
+    };
+    
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Root',
+        icon: <TbFolderOpen size={13} />,
+        checked: currentFolder === null,
+        onClick: currentFolder !== null
+          ? () => moveFileMutation.mutate({ file, targetFolder: null })
+          : undefined,
+      },
+    ];
+    
+    if (folderTree.length > 0) {
+      items.push(...buildSubmenuItems(folderTree));
+    }
+    
+    return items;
+  };
+
+
 
   const getMenuItems = (target: SidebarMenuTarget): ContextMenuItem[] => {
     if (target.type === 'project') {
@@ -276,8 +351,18 @@ const ProjectsSidebar = ({
       ];
     }
     // diagram
+    const allFolders = (fileTree?.folders ?? []).map(f => f.path);
+    const currentFolder = target.file.path.includes('/') 
+      ? target.file.path.substring(0, target.file.path.lastIndexOf('/'))
+      : null;
+    
     return [
       { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(target.file) },
+      { 
+        label: 'Move to…', 
+        icon: <TbFolderOpen size={13} />, 
+        submenu: buildMoveToSubmenu(target.file, allFolders, currentFolder),
+      },
       { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget(target) },
       { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget(target) },
     ];

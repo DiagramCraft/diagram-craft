@@ -482,6 +482,130 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
     })
   );
 
+  router.put(
+    `${BASE}/:id/files/relocate/**:path`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const id = getParam(event, 'id');
+      const filePath = getParam(event, 'path');
+
+      const body = await event.req.json().catch(() => undefined);
+      httpAssert.json(body, { message: 'Request body must be valid JSON' });
+
+      const { newPath } = body as Record<string, unknown>;
+      httpAssert.string(newPath, { message: 'newPath is required' });
+
+      try {
+        const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+        const project = await db.projectsFiles.getProject(workspace, id);
+        httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
+
+        if (authCtx)
+          requireProjectAction(
+            authCtx,
+            project.owner,
+            'edit_project',
+            'You do not have permission to modify this project'
+          );
+
+        const existingFile = await db.projectsFiles.getProjectFileByPath(workspace, id, filePath);
+        httpAssert.present(existingFile, { status: 404, message: `File '${filePath}' not found` });
+
+        // Check if source and target are the same
+        if (filePath === newPath) {
+          return existingFile;
+        }
+
+        // Check if target path already exists
+        const targetExists = await db.projectsFiles.getProjectFileByPath(workspace, id, newPath);
+        httpAssert.true(!targetExists, {
+          status: 409,
+          message: `A file already exists at '${newPath}'`
+        });
+
+        // Read file content
+        const content = await storage.read(workspace, id, existingFile.id);
+        const fileData = JSON.parse(content.toString('utf8'));
+
+        // Update internal name if filename changed
+        const newFileName = newPath.includes('/')
+          ? newPath.substring(newPath.lastIndexOf('/') + 1)
+          : newPath;
+        const displayName = newFileName.endsWith('.json')
+          ? newFileName.slice(0, -5)
+          : newFileName;
+
+        if (fileData && typeof fileData === 'object' && 'name' in fileData) {
+          fileData.name = displayName;
+        }
+
+        const timestamp = new Date();
+
+        // Create at new path
+        const newFile = await db.projectsFiles.upsertProjectFile({
+          workspace,
+          project_id: id,
+          path: newPath,
+          name: displayName,
+          size_bytes: content.length,
+          created_atIfNew: existingFile.created_at,
+          updated_at: timestamp
+        });
+
+        // Preserve template flags
+        if (existingFile.is_template || existingFile.is_workspace_template) {
+          await db.projectsFiles.updateProjectFileTemplateStatus(
+            workspace,
+            id,
+            newFile.id,
+            existingFile.is_template ?? false,
+            existingFile.is_workspace_template ?? false,
+            timestamp
+          );
+        }
+
+        // Write updated content to storage
+        await storage.write(workspace, id, newFile.id, Buffer.from(JSON.stringify(fileData), 'utf8'));
+
+        // Delete old file
+        await db.projectsFiles.deleteProjectFileByPath(workspace, id, filePath);
+        await storage.delete(workspace, id, existingFile.id).catch(() => {});
+
+        // Determine operation type for audit log
+        const oldFolder = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : null;
+        const newFolder = newPath.includes('/') ? newPath.substring(0, newPath.lastIndexOf('/')) : null;
+        const oldName = filePath.includes('/') ? filePath.substring(filePath.lastIndexOf('/') + 1) : filePath;
+        const newName = newPath.includes('/') ? newPath.substring(newPath.lastIndexOf('/') + 1) : newPath;
+
+        const isMoved = oldFolder !== newFolder;
+        const isRenamed = oldName !== newName;
+        const operation = isMoved && isRenamed ? 'move_rename' : isMoved ? 'move' : 'rename';
+
+        await logAudit(db, {
+          workspace,
+          operation: 'update',
+          entityType: 'project_file',
+          entityId: newFile.id,
+          entityName: displayName,
+          changes: {
+            old: { path: filePath, name: existingFile.name },
+            new: { path: newPath, name: displayName }
+          },
+          metadata: {
+            project_id: id,
+            operation,
+            from_folder: oldFolder,
+            to_folder: newFolder
+          }
+        });
+
+        return newFile;
+      } catch (e) {
+        handleError(e, 'Failed to relocate file');
+      }
+    })
+  );
+
   router.post(
     `${BASE}/:id/folders`,
     defineHandler(async event => {
