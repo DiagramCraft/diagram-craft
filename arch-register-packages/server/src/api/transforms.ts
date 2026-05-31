@@ -141,9 +141,12 @@ export const toApiProject = (
 
 export const toApiProjectFile = (file: InternalProjectFile): ProjectFile => ({
   id: file.id,
+  project_id: file.project_id,
   path: file.path,
   name: file.name,
   size_bytes: file.size_bytes,
+  is_template: file.is_template,
+  is_workspace_template: file.is_workspace_template,
   created_at: file.created_at.toISOString(),
   updated_at: file.updated_at.toISOString(),
 });

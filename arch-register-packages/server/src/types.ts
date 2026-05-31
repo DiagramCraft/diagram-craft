@@ -142,6 +142,8 @@ export type ProjectFile = {
   path: string;
   name: string;
   size_bytes: number;
+  is_template: boolean;
+  is_workspace_template: boolean;
   created_at: Date;
   updated_at: Date;
 };

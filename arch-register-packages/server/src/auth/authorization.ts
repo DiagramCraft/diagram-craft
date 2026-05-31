@@ -78,6 +78,29 @@ export const requireWorkspaceCapability = (
 /**
  * Require project action permission, throw 403 if not allowed.
  * 
+
+/**
+ * Require workspace admin role, throw 403 if not allowed.
+ * 
+ * Checks if user has workspace admin role or global admin permission.
+ */
+export const requireWorkspaceAdmin = (
+  context: AuthorizationContext,
+  message?: string
+) => {
+  const isWorkspaceAdmin = checker.hasWorkspaceCapability(context, 'people.role');
+  const isGlobalAdmin = checker.hasGlobalPermission(context, 'admin_platform');
+  
+  httpAssert.true(isWorkspaceAdmin || isGlobalAdmin, {
+    status: 403,
+    statusText: 'Forbidden',
+    message: message ?? 'Workspace admin permission required'
+  });
+};
+
+/**
+ * Require project action permission, throw 403 if not allowed.
+ * 
  * This is an HTTP-specific helper that wraps PermissionChecker
  * and throws an appropriate HTTP error.
  */

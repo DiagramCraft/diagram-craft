@@ -115,6 +115,8 @@ export const sqliteMappers = {
     path: String(row['path']),
     name: String(row['name']),
     size_bytes: Number(row['size_bytes']),
+    is_template: Boolean(row['is_template']),
+    is_workspace_template: Boolean(row['is_workspace_template']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),

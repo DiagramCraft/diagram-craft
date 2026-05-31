@@ -102,11 +102,30 @@ export class PostgresProjectsFilesDatabase
     }
   }
 
+  async updateProjectFileTemplateStatus(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    isTemplate: boolean,
+    isWorkspaceTemplate: boolean,
+    updated_at: Date
+  ) {
+    try {
+      await this.sql`
+        UPDATE project_file
+        SET is_template = ${isTemplate}, is_workspace_template = ${isWorkspaceTemplate}, updated_at = ${updated_at}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async upsertProjectFile(input: UpsertProjectFileInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
-        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at)
-        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.created_atIfNew}, ${input.updated_at})
+        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path)
         DO UPDATE SET
           name = EXCLUDED.name,
@@ -125,8 +144,8 @@ export class PostgresProjectsFilesDatabase
   ) {
     try {
       const [row] = await this.sql<PostgresRowTypes['projectFile'][]>`
-        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at)
-        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, ${input.created_atIfNew}, ${input.updated_at})
+        INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at)
+        VALUES (${crypto.randomUUID()}, ${input.workspace}, ${input.project_id}, ${input.path}, ${input.name}, ${input.size_bytes}, false, false, ${input.created_atIfNew}, ${input.updated_at})
         ON CONFLICT (workspace, project_id, path) DO NOTHING
         RETURNING *
       `;

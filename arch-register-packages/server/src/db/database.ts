@@ -178,6 +178,14 @@ export type ProjectsFilesDatabase = {
     sizeBytes: number,
     updated_at: Date
   ): Promise<void>;
+  updateProjectFileTemplateStatus(
+    ws: string,
+    projectId: string,
+    fileId: string,
+    isTemplate: boolean,
+    isWorkspaceTemplate: boolean,
+    updated_at: Date
+  ): Promise<void>;
   upsertProjectFile(input: UpsertProjectFileInput): Promise<ProjectFile>;
   createProjectFileIfAbsent(
     input: Omit<UpsertProjectFileInput, 'updated_at'> & { updated_at: Date }

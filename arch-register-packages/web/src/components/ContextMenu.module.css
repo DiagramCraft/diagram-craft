@@ -43,3 +43,14 @@
 .itemDanger:hover {
   background: color-mix(in srgb, var(--red) 10%, transparent);
 }
+
+.submenu {
+  position: absolute;
+  z-index: 201;
+  min-width: 160px;
+  padding: 4px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}

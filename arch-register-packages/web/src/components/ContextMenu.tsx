@@ -6,7 +6,9 @@ export type ContextMenuItem = {
   icon?: ReactNode;
   danger?: boolean;
   separatorBefore?: boolean;
-  onClick: () => void;
+  checked?: boolean;
+  submenu?: ContextMenuItem[];
+  onClick?: () => void;
 };
 
 type ContextMenuProps = {
@@ -19,6 +21,7 @@ type ContextMenuProps = {
 export const ContextMenu = ({ x, y, items, onClose }: ContextMenuProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y, ready: false });
+  const [openSubmenu, setOpenSubmenu] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -68,17 +71,57 @@ export const ContextMenu = ({ x, y, items, onClose }: ContextMenuProps) => {
       role="menu"
     >
       {items.map((it, i) => (
-        <div key={i}>
+        <div key={i} style={{ position: 'relative' }}>
           {it.separatorBefore && <div className={styles.separator} />}
           <button
             type="button"
             className={it.danger ? styles.itemDanger : styles.item}
             role="menuitem"
-            onClick={() => { onClose(); it.onClick(); }}
+            onClick={() => {
+              if (it.submenu) {
+                setOpenSubmenu(openSubmenu === i ? null : i);
+              } else if (it.onClick) {
+                onClose();
+                it.onClick();
+              }
+            }}
+            onMouseEnter={() => {
+              if (it.submenu) setOpenSubmenu(i);
+            }}
           >
             {it.icon && <span>{it.icon}</span>}
+            {it.checked !== undefined && <span style={{ marginRight: '4px' }}>{it.checked ? '✓' : ' '}</span>}
             {it.label}
+            {it.submenu && <span style={{ marginLeft: 'auto', paddingLeft: '12px' }}>▸</span>}
           </button>
+          {it.submenu && openSubmenu === i && (
+            <div
+              className={styles.submenu}
+              style={{ left: '100%', top: 0 }}
+              onMouseDown={e => e.stopPropagation()}
+            >
+              {it.submenu.map((subItem, j) => (
+                <button
+                  key={j}
+                  type="button"
+                  className={subItem.danger ? styles.itemDanger : styles.item}
+                  role="menuitem"
+                  onClick={() => {
+                    if (subItem.onClick) {
+                      onClose();
+                      subItem.onClick();
+                    }
+                  }}
+                >
+                  {subItem.icon && <span>{subItem.icon}</span>}
+                  <span style={{ width: '16px', display: 'inline-block', textAlign: 'center' }}>
+                    {subItem.checked !== undefined ? (subItem.checked ? '✓' : '') : ''}
+                  </span>
+                  {subItem.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ))}
     </div>

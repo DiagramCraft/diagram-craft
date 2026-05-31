@@ -8,6 +8,9 @@ import {
   renameProjectFolder,
   cloneProjectFile,
   renameProjectFile,
+  fetchProjectTemplates,
+  toggleTemplateStatus,
+  createDiagramFromTemplate,
 } from '../api';
 import type { ProjectFile } from '../api';
 import { projectKeys } from './useProjects';
@@ -113,5 +116,57 @@ export const useRenameProjectFile = (workspaceId: string, projectId: string) => 
     mutationFn: ({ file, newName }: { file: ProjectFile; newName: string }) =>
       renameProjectFile(workspaceId, projectId, file, newName),
     onSuccess: () => invalidateProjectAndFiles(queryClient, workspaceId, projectId),
+  });
+};
+
+// Hook for fetching project templates
+export const useProjectTemplates = (workspaceId: string, projectId: string) => {
+  return useQuery({
+    queryKey: ['project-templates', workspaceId, projectId],
+    queryFn: () => fetchProjectTemplates(workspaceId, projectId),
+    enabled: !!workspaceId && !!projectId,
+  });
+};
+
+// Hook for toggling template status
+export const useToggleTemplateStatus = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ 
+      filePath, 
+      isTemplate, 
+      isWorkspaceTemplate 
+    }: { 
+      filePath: string; 
+      isTemplate: boolean; 
+      isWorkspaceTemplate: boolean;
+    }) => toggleTemplateStatus(workspaceId, projectId, filePath, isTemplate, isWorkspaceTemplate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
+      queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId, projectId] });
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+    },
+  });
+};
+
+// Hook for creating diagram from template
+export const useCreateDiagramFromTemplate = (workspaceId: string, projectId: string) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ 
+      name, 
+      templateFile, 
+      folder 
+    }: { 
+      name: string; 
+      templateFile: ProjectFile; 
+      folder?: string | null;
+    }) => createDiagramFromTemplate(workspaceId, projectId, name, templateFile, folder),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
+    },
   });
 };

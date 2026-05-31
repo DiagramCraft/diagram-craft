@@ -95,6 +95,20 @@ export class SqliteProjectsFilesDatabase
     );
   }
 
+  async updateProjectFileTemplateStatus(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    isTemplate: boolean,
+    isWorkspaceTemplate: boolean,
+    updated_at: Date
+  ) {
+    this.run(
+      'UPDATE project_file SET is_template = ?, is_workspace_template = ?, updated_at = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+      [isTemplate ? 1 : 0, isWorkspaceTemplate ? 1 : 0, updated_at.toISOString(), workspace, projectId, fileId]
+    );
+  }
+
   async upsertProjectFile(input: UpsertProjectFileInput) {
     const id = crypto.randomUUID();
     const tx = this.db.transaction(() => {
@@ -110,7 +124,7 @@ export class SqliteProjectsFilesDatabase
         );
       } else {
         this.run(
-          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO project_file (id, workspace, project_id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             id,
             input.workspace,
@@ -118,6 +132,8 @@ export class SqliteProjectsFilesDatabase
             input.path,
             input.name,
             input.size_bytes,
+            0,
+            0,
             input.created_atIfNew.toISOString(),
             input.updated_at.toISOString()
           ]

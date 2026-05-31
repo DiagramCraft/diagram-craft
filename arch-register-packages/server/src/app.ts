@@ -11,6 +11,7 @@ import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
 import { createPublicRoutes } from './routes/public.js';
 import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
+import { createTemplateRoutes } from './routes/templates.js';
 import { requireAuth } from './middleware/auth.js';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -60,6 +61,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(createDataRoutes(db));
   app.use(createPublicRoutes(db));
   app.use(createSearchRoutes(db));
+  app.use(createTemplateRoutes(db));
   app.use(createProjectRoutes(db, storage));
   app.use(createAuditRoutes(db));
   app.use(createWorkspaceConfigRoutes(db));

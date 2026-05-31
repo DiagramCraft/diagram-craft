@@ -19,6 +19,9 @@ type AssertType = {
   /** Asserts that a value is a non-empty string */
   string: (arg: unknown, err?: ErrorInput) => asserts arg is string;
 
+  /** Asserts that a value is a boolean */
+  boolean: (arg: unknown, err?: ErrorInput) => asserts arg is boolean;
+
   /** Asserts that an array is non-empty */
   array: <T = unknown>(
     arg: T[] | ReadonlyArray<T> | undefined | null | unknown,
@@ -72,6 +75,14 @@ export const httpAssert: AssertType = {
     if (err?.status) err.statusText ??= STATUS_TEXTS[err.status];
     if (typeof o !== 'string' || o === '') {
       throw new HTTPError(err ?? { status: 400, message: 'Required string is missing' });
+    }
+  },
+
+  boolean: (o: unknown, err?: ErrorInput): asserts o is boolean => {
+    if (err) err.status ??= 400;
+    if (err?.status) err.statusText ??= STATUS_TEXTS[err.status];
+    if (typeof o !== 'boolean') {
+      throw new HTTPError(err ?? { status: 400, message: 'Required value must be a boolean' });
     }
   }
 };
