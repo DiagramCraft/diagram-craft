@@ -172,6 +172,9 @@ importers:
       '@arch-register/permissions':
         specifier: workspace:*
         version: link:../permissions
+      '@diagram-craft/app-components':
+        specifier: workspace:^
+        version: link:../../packages/app-components
       '@diagram-craft/canvas':
         specifier: workspace:^
         version: link:../../packages/canvas

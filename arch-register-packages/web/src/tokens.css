@@ -62,6 +62,16 @@
   --r-sm: 3px;
   --r: 4px;
   --r-md: 6px;
+
+  /* Component tokens for diagram-craft compatibility */
+  --cmp-bg: var(--bg-2);
+  --cmp-fg: var(--fg-0);
+  --cmp-fg-disabled: var(--fg-disabled);
+  --cmp-border: var(--border);
+  --accent-bg-selected: var(--accent-bg);
+  --accent-fg: var(--accent);
+  --panel-fg: var(--fg-0);
+  --popover-shadow: 0 0 0 0.5px var(--border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
 }
 
 /* ===================================================================

@@ -4,6 +4,8 @@ import { Menu as _Menu } from './Menu';
 import styles from './Menu.module.css';
 import { Tooltip } from './Tooltip';
 
+
+
 type RootProps = {
   children: React.ReactNode;
 };
@@ -51,8 +53,38 @@ const Menu = (props: MenuProps) => {
   );
 };
 
+type ImperativeContextMenuProps = {
+  x: number;
+  y: number;
+  children: React.ReactNode;
+  onClose: () => void;
+};
+
+const ImperativeContextMenu = ({ x, y, children, onClose }: ImperativeContextMenuProps) => {
+  return (
+    <_Menu.Context type={'context'}>
+      <BaseUIContextMenu.Root open onOpenChange={(open) => !open && onClose()}>
+        <BaseUIContextMenu.Portal>
+          <BaseUIContextMenu.Positioner 
+            style={{ 
+              position: 'fixed',
+              left: x,
+              top: y 
+            }}
+          >
+            <BaseUIContextMenu.Popup className={styles.cMenu}>
+              {children}
+            </BaseUIContextMenu.Popup>
+          </BaseUIContextMenu.Positioner>
+        </BaseUIContextMenu.Portal>
+      </BaseUIContextMenu.Root>
+    </_Menu.Context>
+  );
+};
+
 export const ContextMenu = {
   Root,
   Trigger,
-  Menu
+  Menu,
+  Imperative: ImperativeContextMenu
 };

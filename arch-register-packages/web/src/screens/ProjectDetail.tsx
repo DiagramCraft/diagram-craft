@@ -4,7 +4,8 @@ import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { Dialog } from '../components/Dialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { ContextMenu, type ContextMenuItem } from '../components/ContextMenu';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
@@ -199,99 +200,126 @@ export const ProjectDetail = () => {
     return root;
   };
 
-  const buildMoveToSubmenu = (
-    file: FileEntry,
-    folders: string[],
-    currentFolder: string | null
-  ): ContextMenuItem[] => {
+
+
+  const renderMoveToSubmenu = (file: FileEntry, folders: string[], currentFolder: string | null) => {
     const folderTree = buildFolderTree(folders);
     
-    const buildSubmenuItems = (nodes: FolderNode[]): ContextMenuItem[] => {
-      return nodes.map(node => ({
-        label: node.name,
-        icon: <TbFolder size={13} />,
-        checked: node.path === currentFolder,
-        submenu: node.children.length > 0 
-          ? buildSubmenuItems(node.children)
-          : undefined,
-        onClick: node.path !== currentFolder
-          ? () => moveFileMutation.mutate({ file, targetFolder: node.path })
-          : undefined,
-      }));
+    const renderFolderNodes = (nodes: FolderNode[]): React.ReactNode => {
+      return nodes.map(node => {
+        const isCurrentFolder = node.path === currentFolder;
+        if (node.children.length > 0) {
+          return (
+            <Menu.SubMenu key={node.path} label={node.name} leftSlot={<TbFolder size={13} />}>
+              <Menu.Item
+                leftSlot={<TbFolder size={13} />}
+                disabled={isCurrentFolder}
+                onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+              >
+                {node.name}
+              </Menu.Item>
+              {renderFolderNodes(node.children)}
+            </Menu.SubMenu>
+          );
+        }
+        return (
+          <Menu.Item
+            key={node.path}
+            leftSlot={<TbFolder size={13} />}
+            disabled={isCurrentFolder}
+            onClick={() => moveFileMutation.mutate({ file, targetFolder: node.path })}
+          >
+            {node.name}
+          </Menu.Item>
+        );
+      });
     };
     
-    const items: ContextMenuItem[] = [
-      {
-        label: 'Root',
-        icon: <TbFolderOpen size={13} />,
-        checked: currentFolder === null,
-        onClick: currentFolder !== null
-          ? () => moveFileMutation.mutate({ file, targetFolder: null })
-          : undefined,
-      },
-    ];
-    
-    if (folderTree.length > 0) {
-      items.push(...buildSubmenuItems(folderTree));
-    }
-    
-    return items;
+    return (
+      <>
+        <Menu.Item
+          leftSlot={<TbFolderOpen size={13} />}
+          disabled={currentFolder === null}
+          onClick={() => moveFileMutation.mutate({ file, targetFolder: null })}
+        >
+          Root
+        </Menu.Item>
+        {folderTree.length > 0 && renderFolderNodes(folderTree)}
+      </>
+    );
   };
 
-
-  const getDiagramMenuItems = (file: FileEntry): ContextMenuItem[] => {
+  const renderDiagramMenu = (file: FileEntry) => {
     const currentFolder = file.path.includes('/')
       ? file.path.substring(0, file.path.lastIndexOf('/'))
       : null;
     
     const allFolders = project.files.folders
       .map(f => f.path)
-      .filter(path => path !== currentFolder); // Exclude current folder
+      .filter(path => path !== currentFolder);
     
-    return [
-      { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(file) },
-      { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget({ type: 'diagram', file }) },
-      { 
-        label: 'Move to…',
-        icon: <TbFolderOpen size={13} />,
-        separatorBefore: true,
-        submenu: buildMoveToSubmenu(file, allFolders, currentFolder),
-      },
-      { 
-        label: 'Template…',
-        icon: <TbStar size={13} />,
-        submenu: [
-          {
-            label: 'Workspace Template',
-            checked: file.is_workspace_template === true,
-            onClick: () => handleToggleTemplate(file, true)
-          },
-          {
-            label: 'Project Template',
-            checked: file.is_template === true && file.is_workspace_template !== true,
-            onClick: () => handleToggleTemplate(file, false)
-          },
-          {
-            label: 'None',
-            checked: file.is_template !== true && file.is_workspace_template !== true,
-            onClick: () => toggleTemplateStatusMutation.mutate({
+    return (
+      <>
+        <Menu.Item leftSlot={<TbCopy size={13} />} onClick={() => cloneFileMutation.mutate(file)}>
+          Clone
+        </Menu.Item>
+        <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget({ type: 'diagram', file })}>
+          Rename
+        </Menu.Item>
+        <Menu.Separator />
+        <Menu.SubMenu label="Move to…" leftSlot={<TbFolderOpen size={13} />}>
+          {renderMoveToSubmenu(file, allFolders, currentFolder)}
+        </Menu.SubMenu>
+        <Menu.SubMenu label="Template…" leftSlot={<TbStar size={13} />}>
+          <Menu.CheckboxItem
+            checked={file.is_workspace_template === true}
+            onCheckedChange={() => handleToggleTemplate(file, true)}
+          >
+            Workspace Template
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            checked={file.is_template === true && file.is_workspace_template !== true}
+            onCheckedChange={() => handleToggleTemplate(file, false)}
+          >
+            Project Template
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem
+            checked={file.is_template !== true && file.is_workspace_template !== true}
+            onCheckedChange={() => toggleTemplateStatusMutation.mutate({
               filePath: file.path,
               isTemplate: false,
               isWorkspaceTemplate: false,
-            })
-          }
-        ]
-      },
-      { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'diagram', file }) },
-    ];
+            })}
+          >
+            None
+          </Menu.CheckboxItem>
+        </Menu.SubMenu>
+        <Menu.Separator />
+        <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget({ type: 'diagram', file })}>
+          Delete
+        </Menu.Item>
+      </>
+    );
   };
 
-  const getFolderMenuItems = (path: string): ContextMenuItem[] => [
-    { label: 'New diagram', icon: <TbPlus size={13} />, onClick: () => { setAddDiagramFolder(path); setAddDiagramOpen(true); } },
-    { label: 'New folder', icon: <TbFolderOpen size={13} />, onClick: () => { setAddFolderParent(path); setAddFolderOpen(true); } },
-    { label: 'Rename', icon: <TbPencil size={13} />, separatorBefore: true, onClick: () => setRenameTarget({ type: 'folder', path }) },
-    { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'folder', path }) },
-  ];
+  const renderFolderMenu = (path: string) => (
+    <>
+      <Menu.Item leftSlot={<TbPlus size={13} />} onClick={() => { setAddDiagramFolder(path); setAddDiagramOpen(true); }}>
+        New diagram
+      </Menu.Item>
+      <Menu.Item leftSlot={<TbFolderOpen size={13} />} onClick={() => { setAddFolderParent(path); setAddFolderOpen(true); }}>
+        New folder
+      </Menu.Item>
+      <Menu.Separator />
+      <Menu.Item leftSlot={<TbPencil size={13} />} onClick={() => setRenameTarget({ type: 'folder', path })}>
+        Rename
+      </Menu.Item>
+      <Menu.Separator />
+      <Menu.Item type="danger" leftSlot={<TbTrash size={13} />} onClick={() => setDeleteTarget({ type: 'folder', path })}>
+        Delete
+      </Menu.Item>
+    </>
+  );
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
@@ -468,12 +496,13 @@ export const ProjectDetail = () => {
       )}
 
       {menu && (
-        <ContextMenu
+        <ContextMenu.Imperative
           x={menu.x}
           y={menu.y}
-          items={menu.target.type === 'diagram' ? getDiagramMenuItems(menu.target.file) : getFolderMenuItems(menu.target.path)}
           onClose={() => setMenu(null)}
-        />
+        >
+          {menu.target.type === 'diagram' ? renderDiagramMenu(menu.target.file) : renderFolderMenu(menu.target.path)}
+        </ContextMenu.Imperative>
       )}
 
       <RenameDialog
