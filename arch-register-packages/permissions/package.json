@@ -8,7 +8,9 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@arch-register/api-types": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.7.2"
   }

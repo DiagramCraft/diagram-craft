@@ -794,6 +794,10 @@ components:
           type: string
         name:
           type: string
+        url_slug:
+          type: string
+        short_code:
+          type: string
         description:
           type: string
         created_at:
@@ -802,7 +806,7 @@ components:
         updated_at:
           type: string
           format: date-time
-      required: [id, name, description, created_at, updated_at]
+      required: [id, name, url_slug, short_code, description, created_at, updated_at]
 
     CreateWorkspaceRequest:
       type: object
@@ -816,6 +820,61 @@ components:
 
     UpdateWorkspaceRequest:
       $ref: '#/components/schemas/CreateWorkspaceRequest'
+
+    WorkspaceLifecycleState:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        color:
+          type: string
+        sort_order:
+          type: integer
+      required: [id, label, color, sort_order]
+
+    WorkspaceOwnerOption:
+      type: object
+      properties:
+        id:
+          type: string
+        sort_order:
+          type: integer
+      required: [id, sort_order]
+
+    WorkspaceMemberInfo:
+      type: object
+      properties:
+        workspace:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required: [workspace, user_id, role, display_name, email, created_at]
+
+    WorkspaceUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        display_name:
+          type: string
+        auth_provider:
+          type: string
+        is_active:
+          type: boolean
+      required: [id, email, display_name, auth_provider, is_active]
 
     TextField:
       type: object
@@ -936,13 +995,15 @@ components:
           type: [string, 'null']
         icon:
           type: [string, 'null']
+        entity_count:
+          type: integer
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-      required: [id, workspace, name, fields, color, icon, created_at, updated_at]
+      required: [id, workspace, name, fields, color, icon, entity_count, created_at, updated_at]
 
     EntitySchemaWithCount:
       allOf:
@@ -1018,6 +1079,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityLink'
+        _visibilityMode:
+          type: [string, 'null']
+          enum: [public, restricted, null]
+        canView:
+          type: boolean
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
+        canAdmin:
+          type: boolean
+        canCreateChild:
+          type: boolean
       required:
         - _uid
         - _workspace
@@ -1030,6 +1104,12 @@ components:
         - _lifecycle
         - _tags
         - _links
+        - _visibilityMode
+        - canView
+        - canEdit
+        - canDelete
+        - canAdmin
+        - canCreateChild
 
     EntityRecord:
       allOf:
@@ -1265,13 +1345,25 @@ components:
           type: string
         description:
           type: string
+        owner:
+          type: [string, 'null']
+        status:
+          type: [string, 'null']
+        file_count:
+          type: integer
+        canEdit:
+          type: boolean
+        canDelete:
+          type: boolean
+        canManageFiles:
+          type: boolean
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-      required: [id, workspace, name, description, created_at, updated_at]
+      required: [id, workspace, name, description, owner, status, file_count, canEdit, canDelete, canManageFiles, created_at, updated_at]
 
     ProjectWithFileCount:
       allOf:
@@ -1366,6 +1458,39 @@ components:
             - $ref: '#/components/schemas/ProjectFile'
             - type: 'null'
       required: [success, path, marker]
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+        operation:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: [string, 'null']
+        entity_name:
+          type: [string, 'null']
+        entity_slug:
+          type: [string, 'null']
+        schema_id:
+          type: [string, 'null']
+        changes:
+          type: object
+          additionalProperties: true
+        metadata:
+          type: object
+          additionalProperties: true
+      required: [id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata]
 
     RenameFolderRequest:
       type: object
