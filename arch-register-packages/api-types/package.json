@@ -16,10 +16,13 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "validate:openapi": "tsx scripts/validate-openapi.ts"
   },
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2",
+    "yaml": "^2.6.1"
   }
 }

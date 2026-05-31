@@ -1,3 +1,30 @@
+// ── Imports from @arch-register/api-types ─────────────────────
+
+import type {
+  EntityLink,
+  TextField,
+  BooleanField,
+  SelectField,
+  ReferenceField,
+  ContainmentField,
+  SchemaField,
+  VisibilityMode as ApiVisibilityMode,
+} from '@arch-register/api-types';
+
+// Re-export for convenience
+export type { 
+  EntityLink, 
+  TextField,
+  BooleanField,
+  SelectField,
+  ReferenceField,
+  ContainmentField,
+  SchemaField 
+};
+
+// Re-export VisibilityMode with local name
+export type VisibilityMode = ApiVisibilityMode;
+
 // ── Core Permission Types ─────────────────────────────────────
 
 export type GlobalRole = 'global_admin' | 'workspace_admin';
@@ -37,7 +64,7 @@ export type ProjectAction = 'edit_project' | 'delete_project' | 'manage_files';
 
 export type EntityGrantScope = 'self' | 'subtree';
 
-export type VisibilityMode = 'public' | 'restricted';
+// Note: VisibilityMode is imported from @arch-register/api-types
 
 // ── Capability Types ──────────────────────────────────────────
 
@@ -56,57 +83,9 @@ export type ProjectCapabilities = {
 };
 
 // ── Entity & Schema Types ─────────────────────────────────────
+// Note: EntityLink, SchemaField, and VisibilityMode are imported from @arch-register/api-types
 
-export type EntityLink = {
-  url: string;
-  title: string;
-  type?: string;
-};
-
-export type TextField = {
-  id: string;
-  name: string;
-  type: 'text' | 'longtext';
-};
-
-export type BooleanField = {
-  id: string;
-  name: string;
-  type: 'boolean';
-};
-
-export type SelectField = {
-  id: string;
-  name: string;
-  type: 'select';
-  options: Array<{ value: string; label: string }>;
-};
-
-export type ReferenceField = {
-  id: string;
-  name: string;
-  type: 'reference';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-export type ContainmentField = {
-  id: string;
-  name: string;
-  type: 'containment';
-  schemaId: string;
-  minCount: number;
-  maxCount: number;
-};
-
-export type SchemaField =
-  | TextField
-  | BooleanField
-  | SelectField
-  | ReferenceField
-  | ContainmentField;
-
+// Internal EntitySchema type with Date objects (for database layer)
 export type EntitySchema = {
   id: string;
   workspace: string;
@@ -119,6 +98,7 @@ export type EntitySchema = {
   updated_at: Date;
 };
 
+// Internal Entity type with Date objects (for database layer)
 export type Entity = {
   id: string;
   workspace: string;
