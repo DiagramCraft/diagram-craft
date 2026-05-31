@@ -30,7 +30,7 @@ export const ContextMenu = ({ x, y, items, onClose }: ContextMenuProps) => {
     if (left + r.width + pad > window.innerWidth) left = window.innerWidth - r.width - pad;
     if (top + r.height + pad > window.innerHeight) top = window.innerHeight - r.height - pad;
     setPos({ left: Math.max(pad, left), top: Math.max(pad, top), ready: true });
-  }, [x, y, items]);
+  }, [x, y]);
 
   useEffect(() => {
     const close = () => onClose();
@@ -71,6 +71,7 @@ export const ContextMenu = ({ x, y, items, onClose }: ContextMenuProps) => {
         <div key={i}>
           {it.separatorBefore && <div className={styles.separator} />}
           <button
+            type="button"
             className={it.danger ? styles.itemDanger : styles.item}
             role="menuitem"
             onClick={() => { onClose(); it.onClick(); }}

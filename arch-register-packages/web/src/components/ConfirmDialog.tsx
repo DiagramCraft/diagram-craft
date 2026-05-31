@@ -61,10 +61,10 @@ export const ConfirmDialog = ({
           </span>
         </div>
         <div className={styles.footerActions}>
-          <button className={styles.btnCancel} onClick={onCancel}>
+          <button type="button" className={styles.btnCancel} onClick={onCancel}>
             Cancel
           </button>
-          <button ref={confirmRef} className={styles.btnConfirm} onClick={onConfirm}>
+          <button type="button" ref={confirmRef} className={styles.btnConfirm} onClick={onConfirm}>
             <TbTrash size={11} /> {confirmLabel}
           </button>
         </div>

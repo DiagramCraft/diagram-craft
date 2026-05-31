@@ -581,7 +581,7 @@ const DiagramsView = ({
     return (
       <div className={containerClass}>
         {filtered.map(f => (
-          <FileItem {...fileItemProps(f)} />
+          <FileItem key={f.path} {...fileItemProps(f)} />
         ))}
         {addButton}
       </div>
@@ -606,7 +606,7 @@ const DiagramsView = ({
       {rootFiles.length > 0 && (
         <div className={containerClass}>
           {rootFiles.map(f => (
-            <FileItem {...fileItemProps(f)} />
+            <FileItem key={f.path} {...fileItemProps(f)} />
           ))}
         </div>
       )}
@@ -617,7 +617,7 @@ const DiagramsView = ({
           </div>
           <div className={containerClass}>
             {g.files.map(f => (
-              <FileItem {...fileItemProps(f, g.path)} />
+              <FileItem key={f.path} {...fileItemProps(f, g.path)} />
             ))}
           </div>
         </div>

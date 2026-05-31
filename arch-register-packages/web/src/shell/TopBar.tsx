@@ -346,13 +346,12 @@ const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Them
     { value: 'dark' as const, label: 'Dark', icon: <TbMoon size={13} /> },
   ];
   return (
-    <div className={styles.themeToggle} role="radiogroup" aria-label="Theme">
+    <div className={styles.themeToggle} aria-label="Theme">
       {opts.map(o => (
         <button
           key={o.value}
           type="button"
-          role="radio"
-          aria-checked={theme === o.value}
+          aria-pressed={theme === o.value}
           className={`${styles.themeOpt} ${theme === o.value ? styles.themeOptActive : ''}`}
           onMouseDown={e => e.stopPropagation()}
           onClick={() => onSetTheme(o.value)}
