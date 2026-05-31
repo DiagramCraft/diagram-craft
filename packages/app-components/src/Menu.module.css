@@ -9,7 +9,7 @@
 .cMenu {
   min-width: 220px;
   background-color: var(--cmp-bg);
-  font-family: var(--font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
+  font-family: var(--font-sans, system-ui);
   border-radius: 6px;
   overflow: hidden;
   padding: 5px;
