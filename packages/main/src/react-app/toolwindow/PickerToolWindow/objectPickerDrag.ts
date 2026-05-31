@@ -100,14 +100,10 @@ export class ObjectPickerDrag extends AbstractPickerDrag {
       }
     }
 
-    const sourceDiagram = this.source[0]!.diagram;
-    const sourceLayer = sourceDiagram.activeLayer;
-    assertRegularLayer(sourceLayer);
-
     const activeLayer = this.diagram.activeLayer;
     assertRegularLayer(activeLayer);
 
-    this._elements = cloneElements(sourceLayer.elements, activeLayer);
+    this._elements = cloneElements(this.source, activeLayer);
 
     const sourceBounds = Box.boundingBox(this.source.map(e => e.bounds));
     const bounds = Box.boundingBox(this._elements.map(e => e.bounds));

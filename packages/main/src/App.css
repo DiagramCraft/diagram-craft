@@ -61,6 +61,7 @@
 
 :root {
   --cmp-radius: 4px;
+  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .light-theme {
@@ -177,7 +178,7 @@
 }
 
 .dc {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
 

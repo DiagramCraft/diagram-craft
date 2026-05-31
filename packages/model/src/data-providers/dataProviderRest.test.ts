@@ -158,6 +158,29 @@ describe('RESTDataProvider', () => {
       refreshSchemasSpy.mockRestore();
       refreshDataSpy.mockRestore();
     });
+
+    it('should preserve the assigned provider id on refreshed schemas', async () => {
+      const provider = new RESTDataProvider(
+        JSON.stringify({
+          schemas: [],
+          data: [],
+          baseUrl
+        }),
+        true
+      );
+
+      provider.id = 'rest-provider';
+
+      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      expect(provider.schemas).toEqual([
+        expect.objectContaining({
+          id: testSchema.id,
+          providerId: 'rest-provider'
+        })
+      ]);
+    });
   });
 
   describe('getById', () => {

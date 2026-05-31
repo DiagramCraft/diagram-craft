@@ -4,6 +4,7 @@
   min-height: 110px;
   z-index: 200;
   background: var(--canvas-bg);
+  font-family: var(--font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
   border-radius: 4px;
   line-Height: 0;
   display: flex;

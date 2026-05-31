@@ -22,7 +22,7 @@ export class UrlDataProvider extends BaseHTTPDataProvider {
       this.dataUrl = d.dataUrl;
 
       if (autoRefresh) {
-        this.initializeWithAutoRefresh();
+        this.scheduleAutoRefresh();
       }
     } else {
       this.data = [];
