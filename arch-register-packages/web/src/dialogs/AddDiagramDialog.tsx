@@ -140,7 +140,7 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
               </div>
             )}
           </div>
-          <button className={styles.closeBtn} onClick={onClose} title="Close (Esc)">
+          <button type="button" className={styles.closeBtn} onClick={onClose} title="Close (Esc)">
             <TbX size={14} />
           </button>
         </div>
@@ -218,8 +218,8 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
             <span><span className={styles.kbd}>⌘</span><span className={styles.kbd}>⏎</span> to create</span>
           </div>
           <div className={styles.footerRight}>
-            <button className={styles.btnGhost} onClick={onClose}>Cancel</button>
-            <button className={styles.btnPrimary} onClick={handleSubmit} disabled={isPending}>
+            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+            <button type="button" className={styles.btnPrimary} onClick={handleSubmit} disabled={isPending}>
               <TbPlus size={11} /> {isPending ? 'Creating...' : 'Create diagram'}
             </button>
           </div>
