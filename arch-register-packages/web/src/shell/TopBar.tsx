@@ -36,13 +36,17 @@ type TopBarProps = {
   onQueryChange: (q: string) => void;
   onQuerySubmit: (q: string) => void;
   onOpenSettings: () => void;
+  onOpenGlobalSettings: () => void;
   onAddWorkspace: () => void;
   onNewProject: () => void;
   onNewEntity: () => void;
   canOpenSettings: boolean;
+  canOpenGlobalSettings: boolean;
   canAddWorkspace: boolean;
   canNewProject: boolean;
   canNewEntity: boolean;
+  hideWorkspaceSwitcher?: boolean;
+  hideSearch?: boolean;
 };
 
 export const TopBar = ({
@@ -54,13 +58,17 @@ export const TopBar = ({
   onQueryChange,
   onQuerySubmit,
   onOpenSettings,
+  onOpenGlobalSettings,
   onAddWorkspace,
   onNewProject,
   onNewEntity,
   canOpenSettings,
+  canOpenGlobalSettings,
   canAddWorkspace,
   canNewProject,
-  canNewEntity
+  canNewEntity,
+  hideWorkspaceSwitcher = false,
+  hideSearch = false
 }: TopBarProps) => {
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -89,30 +97,38 @@ export const TopBar = ({
           onNewEntity={canNewEntity ? onNewEntity : undefined}
           onAddWorkspace={canAddWorkspace ? onAddWorkspace : undefined}
           onOpenSettings={canOpenSettings ? onOpenSettings : undefined}
+          onOpenGlobalSettings={canOpenGlobalSettings ? onOpenGlobalSettings : undefined}
+          showDisabledItems={hideWorkspaceSwitcher}
         />
-        <div className={styles.sep} />
-        <WorkspaceSwitcher
-          workspaces={workspaces}
-          current={currentWs}
-          onPick={onPickWs}
-          onAddWorkspace={onAddWorkspace}
-          canAddWorkspace={canAddWorkspace}
-        />
+        {!hideWorkspaceSwitcher && (
+          <>
+            <div className={styles.sep} />
+            <WorkspaceSwitcher
+              workspaces={workspaces}
+              current={currentWs}
+              onPick={onPickWs}
+              onAddWorkspace={onAddWorkspace}
+              canAddWorkspace={canAddWorkspace}
+            />
+          </>
+        )}
         <div className={styles.sep} />
         <Breadcrumbs trail={trail} />
       </div>
       <div className={styles.center}>
-        <div className={styles.search}>
-          <TbSearch size={12} />
-          <input
-            ref={searchRef}
-            placeholder="Search entities, diagrams, projects..."
-            value={query}
-            onChange={e => onQueryChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-          <span className={styles.kbd}>&#8984;K</span>
-        </div>
+        {!hideSearch && (
+          <div className={styles.search}>
+            <TbSearch size={12} />
+            <input
+              ref={searchRef}
+              placeholder="Search entities, diagrams, projects..."
+              value={query}
+              onChange={e => onQueryChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <span className={styles.kbd}>&#8984;K</span>
+          </div>
+        )}
       </div>
       <div className={styles.right}>
         <AccountMenu />
@@ -220,12 +236,16 @@ const AppMenu = ({
   onNewProject,
   onNewEntity,
   onAddWorkspace,
-  onOpenSettings
+  onOpenSettings,
+  onOpenGlobalSettings,
+  showDisabledItems = false
 }: {
   onNewProject?: () => void;
   onNewEntity?: () => void;
   onAddWorkspace?: () => void;
   onOpenSettings?: () => void;
+  onOpenGlobalSettings?: () => void;
+  showDisabledItems?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -247,7 +267,7 @@ const AppMenu = ({
   }, [open]);
 
   const hasCreateItems = onNewProject ?? onNewEntity;
-  const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings;
+  const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems;
   if (!hasItems)
     return (
       <IconButton title="Menu">
@@ -262,60 +282,76 @@ const AppMenu = ({
       </IconButton>
       {open && (
         <div className={styles.appMenuDrop}>
-          {hasCreateItems && (
+          {(hasCreateItems || showDisabledItems) && (
             <>
               <div className={styles.menuLabel}>Create</div>
-              {onNewProject && (
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  if (onNewProject) {
                     setOpen(false);
                     onNewProject();
-                  }}
-                >
-                  <TbFolders size={14} /> New project
-                </button>
-              )}
-              {onNewEntity && (
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
+                  }
+                }}
+                disabled={!onNewProject}
+              >
+                <TbFolders size={14} /> New project
+              </button>
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  if (onNewEntity) {
                     setOpen(false);
                     onNewEntity();
-                  }}
-                >
-                  <TbDatabase size={14} /> New entity
-                </button>
-              )}
+                  }
+                }}
+                disabled={!onNewEntity}
+              >
+                <TbDatabase size={14} /> New entity
+              </button>
             </>
           )}
-          {(onAddWorkspace ?? onOpenSettings) && (
+          {(onAddWorkspace ?? onOpenSettings ?? onOpenGlobalSettings ?? showDisabledItems) && (
             <>
-              {hasCreateItems && <div className={styles.menuSep} />}
-              {onAddWorkspace && (
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  onClick={() => {
+              {(hasCreateItems || showDisabledItems) && <div className={styles.menuSep} />}
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  if (onAddWorkspace) {
                     setOpen(false);
                     onAddWorkspace();
-                  }}
-                >
-                  <TbBuildingCommunity size={14} /> New workspace
-                </button>
-              )}
-              {onOpenSettings && (
+                  }
+                }}
+                disabled={!onAddWorkspace}
+              >
+                <TbBuildingCommunity size={14} /> New workspace
+              </button>
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  if (onOpenSettings) {
+                    setOpen(false);
+                    onOpenSettings();
+                  }
+                }}
+                disabled={!onOpenSettings}
+              >
+                <TbSettings size={14} /> Workspace settings
+              </button>
+              {onOpenGlobalSettings && (
                 <button
                   type="button"
                   className={styles.menuItem}
                   onClick={() => {
                     setOpen(false);
-                    onOpenSettings();
+                    onOpenGlobalSettings();
                   }}
                 >
-                  <TbSettings size={14} /> Workspace settings
+                  <TbSettings size={14} /> Global settings
                 </button>
               )}
             </>

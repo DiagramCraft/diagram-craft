@@ -10,7 +10,6 @@ export type WorkspaceContextType = {
   teams: WorkspaceTeam[];
   permissions: {
     canManageWorkspaces: boolean;
-    canManageGlobalRoles: boolean;
     canViewSchemas: boolean;
     canEditSchemas: boolean;
     canManageTeams: boolean;

@@ -30,6 +30,7 @@ import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { deriveActiveView } from '../layouts/deriveActiveView';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
+import { GlobalSettingsSidebar } from './GlobalSettingsSidebar';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
@@ -78,6 +79,8 @@ export const SidePanel = () => {
         availableSections={ctx.availableSettingsSections}
       />
     );
+  } else if (view === 'global-settings') {
+    body = <GlobalSettingsSidebar />;
   }
 
   return <div className={styles.panel}>{body}</div>;
