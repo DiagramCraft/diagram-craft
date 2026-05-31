@@ -18,7 +18,7 @@ import { deriveActiveView } from './deriveActiveView';
 import type { ViewId } from './viewId';
 import type { Project } from '../api';
 import {
-  TbHome, TbStack2, TbDatabase, TbCode, TbSearch, TbSettings,
+  TbHome, TbFolders, TbDatabase, TbCode, TbSearch, TbSettings,
 } from 'react-icons/tb';
 
 const RAIL_TO_PATH: Record<string, string> = {
@@ -172,8 +172,12 @@ export const WorkspaceLayout = () => {
           onQuerySubmit={handleQuerySubmit}
           onOpenSettings={handleOpenSettings}
           onAddWorkspace={() => setAddWsOpen(true)}
+          onNewProject={() => setAddProjectOpen(true)}
+          onNewEntity={() => setAddEntityOpen(true)}
           canOpenSettings={availableSettingsSections.length > 0}
           canAddWorkspace={canManageWorkspaces}
+          canNewProject={canCreateProjects}
+          canNewEntity={canCreateEntities}
         />
         <div className={`${styles.body} ${showSidebar ? '' : styles.bodyNoSidebar}`.trim()}>
           <NavRail
@@ -256,7 +260,7 @@ const buildTrail = (
       const p = projects.find(x => x.id === allParams.projectId);
       items.push({
         label: 'Projects',
-        icon: <TbStack2 size={12} />,
+        icon: <TbFolders size={12} />,
         onClick: () => {
           const def = getDefaultProject(projects);
           if (def) {
@@ -312,7 +316,7 @@ const buildTrail = (
       const p = projects.find(x => x.id === allParams.projectId);
       items.push({
         label: 'Projects',
-        icon: <TbStack2 size={12} />,
+        icon: <TbFolders size={12} />,
         onClick: () => {
           const def = getDefaultProject(projects);
           if (def) {

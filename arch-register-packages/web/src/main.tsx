@@ -1,4 +1,16 @@
 import './tokens.css';
+
+// Apply saved theme immediately to avoid flash of wrong theme
+(() => {
+  try {
+    const saved = localStorage.getItem('ar-theme');
+    if (saved === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
+    }
+  } catch { /* ignore */ }
+})();
+
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';

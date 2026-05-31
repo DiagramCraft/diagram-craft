@@ -1,0 +1,147 @@
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px 16px 16px;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: oklch(0.78 0.16 25);
+  background: color-mix(in oklch, var(--danger) 16%, transparent);
+  border: 1px solid color-mix(in oklch, var(--danger) 34%, var(--border));
+}
+
+.textBlock {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-0);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.message {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.message b {
+  color: var(--fg-0);
+  font-weight: 600;
+}
+
+.detail {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--fg-3);
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle, var(--border));
+  border-radius: var(--r);
+  padding: 7px 9px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+}
+
+.footerHint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--fg-3);
+  font-family: var(--font-mono, monospace);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  font-family: var(--font-mono, monospace);
+  color: var(--fg-2);
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnCancel {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-2);
+}
+
+.btnCancel:hover {
+  background: var(--bg-3);
+  color: var(--fg-0);
+}
+
+.btnConfirm {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--danger);
+  border: 1px solid color-mix(in oklch, var(--danger) 70%, black);
+  color: oklch(0.98 0.01 25);
+}
+
+.btnConfirm:hover {
+  background: oklch(0.66 0.19 25);
+  border-color: var(--danger);
+  color: oklch(0.99 0.01 25);
+}
+
+.btnConfirm:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--danger) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.panel {
+  width: 420px;
+  padding: 0;
+  overflow: hidden;
+}

@@ -445,6 +445,59 @@ export const createFolder = (workspace: string, projectId: string, path: string)
     body: JSON.stringify({ path }),
   });
 
+export const deleteProjectFile = (workspace: string, projectId: string, filePath: string) =>
+  apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/files/${filePath}`, {
+    method: 'DELETE',
+  });
+
+export const deleteProjectFolder = (workspace: string, projectId: string, folderPath: string) =>
+  apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/folders/${folderPath}`, {
+    method: 'DELETE',
+  });
+
+export const renameProjectFolder = (workspace: string, projectId: string, oldPath: string, newPath: string) =>
+  apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/folders/rename`, {
+    method: 'PUT',
+    body: JSON.stringify({ oldPath, newPath }),
+  });
+
+export const fetchProjectFileContent = (workspace: string, projectId: string, filePath: string) =>
+  apiFetch<Record<string, unknown>>(`/api/${workspace}/projects/${projectId}/files/${filePath}`);
+
+export const cloneProjectFile = async (workspace: string, projectId: string, file: ProjectFile) => {
+  const content = await fetchProjectFileContent(workspace, projectId, file.path);
+  const baseName = file.name;
+  const cloneName = `${baseName} (copy)`;
+  const folder = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : null;
+  const clonePath = folder ? `${folder}/${cloneName}.json` : `${cloneName}.json`;
+  if (content && typeof content === 'object' && 'name' in content) {
+    (content as Record<string, unknown>).name = cloneName;
+  }
+  return apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${clonePath}`, {
+    method: 'PUT',
+    body: JSON.stringify(content),
+  });
+};
+
+export const renameProjectFile = async (workspace: string, projectId: string, file: ProjectFile, newName: string) => {
+  const content = await fetchProjectFileContent(workspace, projectId, file.path);
+  const folder = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : null;
+  const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
+  if (content && typeof content === 'object' && 'name' in content) {
+    (content as Record<string, unknown>).name = newName;
+  }
+  // Create at new path
+  const created = await apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${newPath}`, {
+    method: 'PUT',
+    body: JSON.stringify(content),
+  });
+  // Delete old path
+  await apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/files/${file.path}`, {
+    method: 'DELETE',
+  });
+  return created;
+};
+
 // ── Audit Log API ─────────────────────────────────────────────
 
 export type AuditOperation = 'create' | 'update' | 'delete';

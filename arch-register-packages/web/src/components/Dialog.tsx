@@ -26,7 +26,7 @@ export const Dialog = ({ open, onClose, title, children, panelClassName }: Dialo
   return (
     <div className={styles.backdrop} onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`${styles.panel} ${panelClassName ?? ''}`.trim()} ref={panelRef}>
-        <h2 className={styles.title}>{title}</h2>
+        {title && <h2 className={styles.title}>{title}</h2>}
         {children}
       </div>
     </div>

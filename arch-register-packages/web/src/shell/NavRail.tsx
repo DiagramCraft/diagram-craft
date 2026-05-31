@@ -1,12 +1,12 @@
 import styles from './NavRail.module.css';
 import {
-  TbHome, TbStack2, TbDatabase, TbCode, TbSearch,
+  TbHome, TbFolders, TbDatabase, TbCode, TbSearch,
 } from 'react-icons/tb';
 import type { ViewId } from '../layouts/viewId';
 
 const ITEMS = [
   { id: 'home' as const, icon: TbHome, title: 'Workspace overview' },
-  { id: 'projects' as const, icon: TbStack2, title: 'Projects' },
+  { id: 'projects' as const, icon: TbFolders, title: 'Projects' },
   { id: 'entities' as const, icon: TbDatabase, title: 'Entities' },
   { id: 'model' as const, icon: TbCode, title: 'Data model' },
   { id: 'search' as const, icon: TbSearch, title: 'Search' },

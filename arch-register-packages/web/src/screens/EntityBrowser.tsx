@@ -11,6 +11,7 @@ import {
 import { resolveSchemaColor, exportEntitiesToCSV } from '../api';
 import type { EntityRecord, EntitySchema, TreeNode, TreeEdge } from '../api';
 import { DropdownMenu, type MenuItem } from '../components/DropdownMenu';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useEntities, useEntityFacets, useEntityTree, useDeleteEntity, useCloneEntity } from '../hooks/useEntities';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 
@@ -27,6 +28,7 @@ export const EntityBrowser = () => {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('name');
   const [view, setView] = useState<BrowserView>('table');
+  const [deleteTarget, setDeleteTarget] = useState<EntityRecord | null>(null);
 
   // Use TanStack Query hooks for data fetching
   const { data: entities = [] } = useEntities(workspaceId, {
@@ -116,10 +118,15 @@ export const EntityBrowser = () => {
     }
   };
 
-  const handleDeleteEntity = async (entity: EntityRecord) => {
-    if (!confirm(`Delete "${entity._name || entity._slug}"?`)) return;
+  const handleDeleteEntity = (entity: EntityRecord) => {
+    setDeleteTarget(entity);
+  };
+
+  const doDeleteEntity = async () => {
+    if (!deleteTarget) return;
+    setDeleteTarget(null);
     try {
-      await deleteMutation.mutateAsync(entity._uid);
+      await deleteMutation.mutateAsync(deleteTarget._uid);
     } catch {
       // Error handling is done by TanStack Query
     }
@@ -257,6 +264,16 @@ export const EntityBrowser = () => {
           {view === 'cards' && <CardsView rows={filtered} schemaMap={schemaMap} onEntityClick={navigateToEntity} onDelete={handleDeleteEntity} onClone={handleCloneEntity} />}
         </>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete entity?"
+        message={deleteTarget ? <>The entity <b>{deleteTarget._name || deleteTarget._slug}</b> will be permanently deleted.</> : ''}
+        detail="This can't be undone."
+        confirmLabel="Delete entity"
+        onConfirm={doDeleteEntity}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

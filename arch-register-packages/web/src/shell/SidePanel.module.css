@@ -131,3 +131,35 @@
 .dangerRow:hover {
   background: color-mix(in oklch, var(--danger) 12%, transparent) !important;
 }
+
+.renameBtn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+}
+
+.renameBtn:hover {
+  background: var(--bg-4);
+}
+
+.renameBtnPrimary {
+  composes: renameBtn;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.renameBtnPrimary:hover {
+  background: var(--accent-strong);
+}
+
+.renameBtnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
