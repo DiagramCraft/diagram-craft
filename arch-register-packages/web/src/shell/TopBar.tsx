@@ -2,10 +2,19 @@ import { type KeyboardEvent as ReactKeyboardEvent, useState, useEffect, useRef }
 import styles from './TopBar.module.css';
 import { IconButton } from '../components/IconButton';
 import {
-  TbMenu2, TbChevronDown, TbChevronRight, TbSearch,
-  TbSettings, TbCheck, TbPlus, TbLogout,
-  TbFolders, TbDatabase, TbBuildingCommunity,
-  TbSun, TbMoon,
+  TbMenu2,
+  TbChevronDown,
+  TbChevronRight,
+  TbSearch,
+  TbSettings,
+  TbCheck,
+  TbPlus,
+  TbLogout,
+  TbFolders,
+  TbDatabase,
+  TbBuildingCommunity,
+  TbSun,
+  TbMoon
 } from 'react-icons/tb';
 import type { Workspace } from '../api';
 import { useAuth } from '../auth/AuthContext';
@@ -51,7 +60,7 @@ export const TopBar = ({
   canOpenSettings,
   canAddWorkspace,
   canNewProject,
-  canNewEntity,
+  canNewEntity
 }: TopBarProps) => {
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -126,7 +135,7 @@ const WorkspaceSwitcher = ({
   current,
   onPick,
   onAddWorkspace,
-  canAddWorkspace,
+  canAddWorkspace
 }: {
   workspaces: Workspace[];
   current: string;
@@ -181,9 +190,7 @@ const WorkspaceSwitcher = ({
               </span>
               <span style={{ flex: 1 }}>
                 <div>{w.name}</div>
-                {w.description && (
-                  <div className={styles.menuSub}>{w.description}</div>
-                )}
+                {w.description && <div className={styles.menuSub}>{w.description}</div>}
               </span>
               {w.id === current && <TbCheck size={14} />}
             </button>
@@ -191,7 +198,14 @@ const WorkspaceSwitcher = ({
           {canAddWorkspace && (
             <>
               <div className={styles.menuSep} />
-              <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
+              <button
+                type="button"
+                className={styles.menuItem}
+                onClick={() => {
+                  setOpen(false);
+                  onAddWorkspace();
+                }}
+              >
                 <TbPlus size={12} /> New workspace...
               </button>
             </>
@@ -206,7 +220,7 @@ const AppMenu = ({
   onNewProject,
   onNewEntity,
   onAddWorkspace,
-  onOpenSettings,
+  onOpenSettings
 }: {
   onNewProject?: () => void;
   onNewEntity?: () => void;
@@ -234,7 +248,12 @@ const AppMenu = ({
 
   const hasCreateItems = onNewProject ?? onNewEntity;
   const hasItems = hasCreateItems ?? onAddWorkspace ?? onOpenSettings;
-  if (!hasItems) return <IconButton title="Menu"><TbMenu2 size={14} /></IconButton>;
+  if (!hasItems)
+    return (
+      <IconButton title="Menu">
+        <TbMenu2 size={14} />
+      </IconButton>
+    );
 
   return (
     <div className={styles.appMenu} ref={ref}>
@@ -247,12 +266,26 @@ const AppMenu = ({
             <>
               <div className={styles.menuLabel}>Create</div>
               {onNewProject && (
-                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onNewProject(); }}>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setOpen(false);
+                    onNewProject();
+                  }}
+                >
                   <TbFolders size={14} /> New project
                 </button>
               )}
               {onNewEntity && (
-                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onNewEntity(); }}>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setOpen(false);
+                    onNewEntity();
+                  }}
+                >
                   <TbDatabase size={14} /> New entity
                 </button>
               )}
@@ -262,12 +295,26 @@ const AppMenu = ({
             <>
               {hasCreateItems && <div className={styles.menuSep} />}
               {onAddWorkspace && (
-                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onAddWorkspace(); }}>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setOpen(false);
+                    onAddWorkspace();
+                  }}
+                >
                   <TbBuildingCommunity size={14} /> New workspace
                 </button>
               )}
               {onOpenSettings && (
-                <button type="button" className={styles.menuItem} onClick={() => { setOpen(false); onOpenSettings(); }}>
+                <button
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    setOpen(false);
+                    onOpenSettings();
+                  }}
+                >
                   <TbSettings size={14} /> Workspace settings
                 </button>
               )}
@@ -330,7 +377,10 @@ const AccountMenu = () => {
           <button
             type="button"
             className={styles.menuItem}
-            onClick={() => { setOpen(false); logout(); }}
+            onClick={() => {
+              setOpen(false);
+              logout();
+            }}
           >
             <TbLogout size={14} /> Sign out
           </button>
@@ -343,10 +393,10 @@ const AccountMenu = () => {
 const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {
   const opts = [
     { value: 'light' as const, label: 'Light', icon: <TbSun size={13} /> },
-    { value: 'dark' as const, label: 'Dark', icon: <TbMoon size={13} /> },
+    { value: 'dark' as const, label: 'Dark', icon: <TbMoon size={13} /> }
   ];
   return (
-    <div className={styles.themeToggle} aria-label="Theme">
+    <div className={styles.themeToggle}>
       {opts.map(o => (
         <button
           key={o.value}

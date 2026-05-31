@@ -559,7 +559,6 @@ const DiagramsView = ({
   const FileItem = viewMode === 'list' ? DiagramRow : DiagramCard;
 
   const fileItemProps = (f: FileEntry, folder?: string) => ({
-    key: f.id,
     file: f,
     folder,
     onOpen: () => onOpenDiagram(f.id),
