@@ -16,7 +16,6 @@ import {
   useUpdateLifecycleStates,
 } from '../hooks/useWorkspaceConfig';
 import { RolesPermissionsSection } from './RolesPermissionsSection';
-import { GlobalPermissionsSection } from './GlobalPermissionsSection';
 import { MembersSection } from './MembersSection';
 import { TeamsSection } from './TeamsSection';
 
@@ -26,7 +25,6 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   roles: { title: 'Roles & permissions', sub: 'Manage built-in workspace roles and their capabilities.' },
   teams: { title: 'Teams', sub: 'Manage owner teams and assign users a team role for owned entities and projects.' },
   members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
-  'global-permissions': { title: 'Global permissions', sub: 'Assign platform-wide roles for workspace and platform administration.' },
   audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
@@ -48,7 +46,6 @@ export const WorkspaceSettings = () => {
   const lifecycleStates = ctx.lifecycleStates;
   const availableSections = ctx.availableSettingsSections;
   const section = availableSections.includes(search.section ?? '') ? (search.section ?? 'general') : (ctx.defaultSettingsSection ?? 'general');
-  const [globalPermissionsAddDialogOpen, setGlobalPermissionsAddDialogOpen] = useState(false);
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
 
@@ -88,17 +85,6 @@ export const WorkspaceSettings = () => {
           </div>
           <div className={styles.sub}>{meta.sub}</div>
         </div>
-        {section === 'global-permissions' && (
-          <div className={styles.headActions}>
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              onClick={() => setGlobalPermissionsAddDialogOpen(true)}
-            >
-              <TbPlus size={12} /> Add user
-            </button>
-          </div>
-        )}
         {section === 'members' && (
           <div className={styles.headActions}>
             <button
@@ -147,12 +133,6 @@ export const WorkspaceSettings = () => {
           workspaceSlug={workspaceSlug}
           addDialogOpen={membersAddDialogOpen}
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
-        />
-      )}
-      {section === 'global-permissions' && (
-        <GlobalPermissionsSection
-          addDialogOpen={globalPermissionsAddDialogOpen}
-          onCloseAddDialog={() => setGlobalPermissionsAddDialogOpen(false)}
         />
       )}
       {section === 'audit' && (

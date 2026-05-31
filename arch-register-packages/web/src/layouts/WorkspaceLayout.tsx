@@ -13,6 +13,7 @@ import { useSchemas } from '../hooks/useSchemas';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
+import { useAuthorizationData } from '../auth/AuthorizationDataContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { deriveActiveView } from './deriveActiveView';
 import type { ViewId } from './viewId';
@@ -56,7 +57,6 @@ export const WorkspaceLayout = () => {
 
   const {
     canManageWorkspaces,
-    canManageGlobalRoles,
     canViewSchemas,
     canEditSchemas,
     canManageTeams,
@@ -66,13 +66,16 @@ export const WorkspaceLayout = () => {
     canManageMembers,
   } = useWorkspacePermissions(ws?.id);
 
+  // Get global permissions separately for the global settings link
+  const authData = useAuthorizationData();
+  const canManageGlobalRoles = authData?.global_permissions?.includes('manage_workspace_roles') ?? false;
+
   const availableSettingsSections = useMemo(() => [
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
     ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
     ...(canManageMembers ? ['roles', 'members'] : []),
-    ...(canManageGlobalRoles ? ['global-permissions'] : []),
     ...(canViewAudit ? ['audit'] : []),
-  ], [canManageWorkspaces, canManageTeams, canManageMembers, canManageGlobalRoles, canViewAudit]);
+  ], [canManageWorkspaces, canManageTeams, canManageMembers, canViewAudit]);
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
@@ -128,6 +131,13 @@ export const WorkspaceLayout = () => {
     }
   }, [defaultSettingsSection, navigate, workspaceSlug]);
 
+  const handleOpenGlobalSettings = useCallback(() => {
+    navigate({ 
+      to: '/$workspaceSlug/settings/global',
+      params: { workspaceSlug }
+    });
+  }, [navigate, workspaceSlug]);
+
   const trail = buildTrail(activeView, workspaceSlug, projects, matches, navigate);
 
   const contextValue = useMemo(() => ({
@@ -139,7 +149,6 @@ export const WorkspaceLayout = () => {
     teams,
     permissions: {
       canManageWorkspaces,
-      canManageGlobalRoles,
       canViewSchemas,
       canEditSchemas,
       canManageTeams,
@@ -154,7 +163,7 @@ export const WorkspaceLayout = () => {
     openAddEntityDialog: () => setAddEntityOpen(true),
   }), [
     ws, workspaceSlug, schemas, projects, lifecycleStates, teams,
-    canManageWorkspaces, canManageGlobalRoles, canViewSchemas, canEditSchemas, canManageTeams,
+    canManageWorkspaces, canViewSchemas, canEditSchemas, canManageTeams,
     canViewAudit, canCreateProjects, canCreateEntities, canManageMembers,
     availableSettingsSections, defaultSettingsSection,
   ]);
@@ -171,10 +180,12 @@ export const WorkspaceLayout = () => {
           onQueryChange={setQuery}
           onQuerySubmit={handleQuerySubmit}
           onOpenSettings={handleOpenSettings}
+          onOpenGlobalSettings={handleOpenGlobalSettings}
           onAddWorkspace={() => setAddWsOpen(true)}
           onNewProject={() => setAddProjectOpen(true)}
           onNewEntity={() => setAddEntityOpen(true)}
           canOpenSettings={availableSettingsSections.length > 0}
+          canOpenGlobalSettings={canManageGlobalRoles}
           canAddWorkspace={canManageWorkspaces}
           canNewProject={canCreateProjects}
           canNewEntity={canCreateEntities}
@@ -303,6 +314,13 @@ const buildTrail = (
         label: 'Settings',
         icon: <TbSettings size={12} />,
         onClick: () => navigate({ to: '/$workspaceSlug/settings', params: { workspaceSlug } }),
+      });
+      break;
+    case 'global-settings':
+      items.push({
+        label: 'Global Settings',
+        icon: <TbSettings size={12} />,
+        onClick: () => navigate({ to: '/$workspaceSlug/settings/global', params: { workspaceSlug } }),
       });
       break;
     case 'search':

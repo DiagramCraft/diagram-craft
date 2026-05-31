@@ -6,4 +6,5 @@ export type ViewId =
   | 'data-model'
   | 'diagram'
   | 'workspace-settings'
+  | 'global-settings'
   | 'search';
