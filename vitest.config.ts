@@ -15,6 +15,7 @@ export default defineConfig({
     css: false,
     pool: 'threads',
     coverage: {
+      all: true,
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
       reportsDirectory: './coverage'
