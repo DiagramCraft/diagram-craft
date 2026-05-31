@@ -480,35 +480,52 @@ export const cloneProjectFile = async (workspace: string, projectId: string, fil
   });
 };
 
-export const renameProjectFile = async (workspace: string, projectId: string, file: ProjectFile, newName: string) => {
-  const content = await fetchProjectFileContent(workspace, projectId, file.path);
-  const folder = file.path.includes('/') ? file.path.substring(0, file.path.lastIndexOf('/')) : null;
+// Unified relocate function for move/rename operations
+export const relocateProjectFile = async (
+  workspace: string,
+  projectId: string,
+  file: ProjectFile,
+  newPath: string
+) => {
+  return apiFetch<ProjectFile>(
+    `/api/${workspace}/projects/${projectId}/files/relocate/${file.path}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ newPath }),
+    }
+  );
+};
+
+// Convenience wrapper for move operation
+export const moveProjectFile = async (
+  workspace: string,
+  projectId: string,
+  file: ProjectFile,
+  targetFolder: string | null
+) => {
+  const fileName = file.path.includes('/')
+    ? file.path.substring(file.path.lastIndexOf('/') + 1)
+    : file.path;
+  
+  const newPath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
+  
+  return relocateProjectFile(workspace, projectId, file, newPath);
+};
+
+// Convenience wrapper for rename operation
+export const renameProjectFile = async (
+  workspace: string,
+  projectId: string,
+  file: ProjectFile,
+  newName: string
+) => {
+  const folder = file.path.includes('/') 
+    ? file.path.substring(0, file.path.lastIndexOf('/')) 
+    : null;
+  
   const newPath = folder ? `${folder}/${newName}.json` : `${newName}.json`;
-  if (content && typeof content === 'object' && 'name' in content) {
-    (content as Record<string, unknown>).name = newName;
-  }
-  // Create at new path
-  const created = await apiFetch<ProjectFile>(`/api/${workspace}/projects/${projectId}/files/${newPath}`, {
-    method: 'PUT',
-    body: JSON.stringify(content),
-  });
   
-  // Preserve template flags if the original file had them
-  if (file.is_template || file.is_workspace_template) {
-    await toggleTemplateStatus(
-      workspace,
-      projectId,
-      newPath,
-      file.is_template ?? false,
-      file.is_workspace_template ?? false
-    );
-  }
-  
-  // Delete old path
-  await apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/files/${file.path}`, {
-    method: 'DELETE',
-  });
-  return created;
+  return relocateProjectFile(workspace, projectId, file, newPath);
 };
 
 

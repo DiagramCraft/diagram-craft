@@ -21,6 +21,7 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
+  useMoveProjectFile,
   useToggleTemplateStatus,
 } from '../hooks/useProjectFiles';
 
@@ -66,6 +67,7 @@ export const ProjectDetail = () => {
   const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
   const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
+  const moveFileMutation = useMoveProjectFile(workspaceId, projectId);
   const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
 
   if (isLoading) {
@@ -161,37 +163,128 @@ export const ProjectDetail = () => {
     }
   };
 
-  const getDiagramMenuItems = (file: FileEntry): ContextMenuItem[] => [
-    { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(file) },
-    { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget({ type: 'diagram', file }) },
-    { 
-      label: 'Template…',
-      icon: <TbStar size={13} />,
-      separatorBefore: true,
-      submenu: [
-        {
-          label: 'Workspace Template',
-          checked: file.is_workspace_template === true,
-          onClick: () => handleToggleTemplate(file, true)
-        },
-        {
-          label: 'Project Template',
-          checked: file.is_template === true && file.is_workspace_template !== true,
-          onClick: () => handleToggleTemplate(file, false)
-        },
-        {
-          label: 'None',
-          checked: file.is_template !== true && file.is_workspace_template !== true,
-          onClick: () => toggleTemplateStatusMutation.mutate({
-            filePath: file.path,
-            isTemplate: false,
-            isWorkspaceTemplate: false,
-          })
+
+  type FolderNode = {
+    path: string;
+    name: string;
+    children: FolderNode[];
+  };
+
+  const buildFolderTree = (folders: string[]): FolderNode[] => {
+    const root: FolderNode[] = [];
+    const map = new Map<string, FolderNode>();
+    
+    // Sort folders to ensure parents come before children
+    const sorted = [...folders].sort();
+    
+    for (const path of sorted) {
+      const parts = path.split('/');
+      const name = parts[parts.length - 1] ?? path;
+      const node: FolderNode = { path, name, children: [] };
+      map.set(path, node);
+      
+      if (parts.length === 1) {
+        // Top-level folder
+        root.push(node);
+      } else {
+        // Nested folder - find parent
+        const parentPath = parts.slice(0, -1).join('/');
+        const parent = map.get(parentPath);
+        if (parent) {
+          parent.children.push(node);
         }
-      ]
-    },
-    { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'diagram', file }) },
-  ];
+      }
+    }
+    
+    return root;
+  };
+
+  const buildMoveToSubmenu = (
+    file: FileEntry,
+    folders: string[],
+    currentFolder: string | null
+  ): ContextMenuItem[] => {
+    const folderTree = buildFolderTree(folders);
+    
+    const buildSubmenuItems = (nodes: FolderNode[]): ContextMenuItem[] => {
+      return nodes.map(node => ({
+        label: node.name,
+        icon: <TbFolder size={13} />,
+        checked: node.path === currentFolder,
+        submenu: node.children.length > 0 
+          ? buildSubmenuItems(node.children)
+          : undefined,
+        onClick: node.path !== currentFolder
+          ? () => moveFileMutation.mutate({ file, targetFolder: node.path })
+          : undefined,
+      }));
+    };
+    
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Root',
+        icon: <TbFolderOpen size={13} />,
+        checked: currentFolder === null,
+        onClick: currentFolder !== null
+          ? () => moveFileMutation.mutate({ file, targetFolder: null })
+          : undefined,
+      },
+    ];
+    
+    if (folderTree.length > 0) {
+      items.push(...buildSubmenuItems(folderTree));
+    }
+    
+    return items;
+  };
+
+
+  const getDiagramMenuItems = (file: FileEntry): ContextMenuItem[] => {
+    const currentFolder = file.path.includes('/')
+      ? file.path.substring(0, file.path.lastIndexOf('/'))
+      : null;
+    
+    const allFolders = project.files.folders
+      .map(f => f.path)
+      .filter(path => path !== currentFolder); // Exclude current folder
+    
+    return [
+      { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(file) },
+      { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget({ type: 'diagram', file }) },
+      { 
+        label: 'Move to…',
+        icon: <TbFolderOpen size={13} />,
+        separatorBefore: true,
+        submenu: buildMoveToSubmenu(file, allFolders, currentFolder),
+      },
+      { 
+        label: 'Template…',
+        icon: <TbStar size={13} />,
+        submenu: [
+          {
+            label: 'Workspace Template',
+            checked: file.is_workspace_template === true,
+            onClick: () => handleToggleTemplate(file, true)
+          },
+          {
+            label: 'Project Template',
+            checked: file.is_template === true && file.is_workspace_template !== true,
+            onClick: () => handleToggleTemplate(file, false)
+          },
+          {
+            label: 'None',
+            checked: file.is_template !== true && file.is_workspace_template !== true,
+            onClick: () => toggleTemplateStatusMutation.mutate({
+              filePath: file.path,
+              isTemplate: false,
+              isWorkspaceTemplate: false,
+            })
+          }
+        ]
+      },
+      { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'diagram', file }) },
+    ];
+  };
 
   const getFolderMenuItems = (path: string): ContextMenuItem[] => [
     { label: 'New diagram', icon: <TbPlus size={13} />, onClick: () => { setAddDiagramFolder(path); setAddDiagramOpen(true); } },
@@ -356,7 +449,7 @@ export const ProjectDetail = () => {
         <AddFolderDialog
           open={addFolderOpen}
           onClose={() => { setAddFolderOpen(false); setAddFolderParent(null); }}
-          onCreated={() => {}}
+          onCreated={() => { setMenu(null); }}
           workspaceId={workspaceId}
           projectId={projectId}
           parentFolder={addFolderParent ?? undefined}
@@ -682,9 +775,10 @@ const DiagramsView = ({
           {rootFiles.map(f => (
             <FileItem key={f.path} {...fileItemProps(f)} />
           ))}
+          {folderGroups.length === 0 && addButton}
         </div>
       )}
-      {folderGroups.map(g => (
+      {folderGroups.map((g, idx) => (
         <div key={g.path}>
           <div className={styles.sectionLabel}>
             <TbFolder size={11} /> {g.path}
@@ -693,12 +787,15 @@ const DiagramsView = ({
             {g.files.map(f => (
               <FileItem key={f.path} {...fileItemProps(f, g.path)} />
             ))}
+            {idx === folderGroups.length - 1 && addButton}
           </div>
         </div>
       ))}
-      <div className={containerClass} style={{ marginTop: folderGroups.length > 0 || rootFiles.length > 0 ? 8 : 0 }}>
-        {addButton}
-      </div>
+      {rootFiles.length === 0 && folderGroups.length === 0 && (
+        <div className={containerClass}>
+          {addButton}
+        </div>
+      )}
     </>
   );
 };
