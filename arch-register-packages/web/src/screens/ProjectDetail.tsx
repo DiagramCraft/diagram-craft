@@ -369,6 +369,7 @@ export const ProjectDetail = () => {
           onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
+          projectName={project.name}
           folder={addDiagramFolder}
         />
       )}
