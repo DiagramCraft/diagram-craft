@@ -57,5 +57,5 @@ jobs:
       - name: TypeScript check
         run: pnpm run lint:tsc
 
-      - name: Test
-        run: pnpm run test
+      - name: Test with coverage
+        run: pnpm run test:coverage

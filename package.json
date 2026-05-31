@@ -15,6 +15,7 @@
     "electron:pack": "pnpm run -C packages/electron-app pack",
     "electron:dist": "pnpm run -C packages/main build && pnpm run -C packages/electron-app build && pnpm run -C packages/electron-app dist",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
