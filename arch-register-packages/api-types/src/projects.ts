@@ -51,7 +51,7 @@ export type CreateProjectRequest = {
   status?: 'pinned' | 'active' | 'archived';
 };
 
-export type UpdateProjectRequest = CreateProjectRequest;
+export type UpdateProjectRequest = Partial<CreateProjectRequest>;
 
 export type CreateFolderRequest = {
   path: string;

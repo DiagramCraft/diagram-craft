@@ -17,7 +17,7 @@ export type CreateWorkspaceRequest = {
   description?: string;
 };
 
-export type UpdateWorkspaceRequest = CreateWorkspaceRequest;
+export type UpdateWorkspaceRequest = Partial<CreateWorkspaceRequest>;
 
 // ── Workspace Configuration ───────────────────────────────────
 

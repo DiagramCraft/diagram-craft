@@ -12,6 +12,9 @@ export type EntityLink = {
 
 // ── Capability Types ──────────────────────────────────────────
 
+// Generic capability type for reusable permission patterns
+export type Capabilities<T extends string = string> = Record<`can${Capitalize<T>}`, boolean>;
+
 export type EntityCapabilities = {
   canView: boolean;
   canEdit: boolean;
