@@ -26,6 +26,12 @@ export class ToggleDarkModeAction extends AbstractToggleAction {
     const themeMode = this.state ? 'light' : 'dark';
     UserState.get().themeMode = themeMode;
     applyThemeMode(themeMode);
+    
+    // Dispatch custom event for same-window sync with arch-register
+    window.dispatchEvent(new CustomEvent('diagram-craft:theme-change', {
+      detail: { themeMode }
+    }));
+    
     this.emit('actionTriggered');
   }
 }

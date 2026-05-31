@@ -67,9 +67,9 @@ jobs:
         if: always() && github.event_name == 'pull_request'
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            cp coverage/coverage-summary.json coverage-pr.json
+            cp coverage/coverage-summary.json /tmp/coverage-pr.json
           else
-            echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"functions":{"pct":0},"branches":{"pct":0}}}' > coverage-pr.json
+            echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"functions":{"pct":0},"branches":{"pct":0}}}' > /tmp/coverage-pr.json
           fi
 
       - name: Checkout base branch
@@ -92,9 +92,9 @@ jobs:
         if: always() && github.event_name == 'pull_request'
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            cp coverage/coverage-summary.json coverage-base.json
+            cp coverage/coverage-summary.json /tmp/coverage-base.json
           else
-            echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"functions":{"pct":0},"branches":{"pct":0}}}' > coverage-base.json
+            echo '{"total":{"lines":{"pct":0},"statements":{"pct":0},"functions":{"pct":0},"branches":{"pct":0}}}' > /tmp/coverage-base.json
           fi
 
       - name: Compare coverage and comment
@@ -107,13 +107,13 @@ jobs:
             let prCoverage, baseCoverage;
 
             try {
-              prCoverage = JSON.parse(fs.readFileSync('coverage-pr.json', 'utf8'));
+              prCoverage = JSON.parse(fs.readFileSync('/tmp/coverage-pr.json', 'utf8'));
             } catch (e) {
               prCoverage = { total: { lines: { pct: 0 }, statements: { pct: 0 }, functions: { pct: 0 }, branches: { pct: 0 } } };
             }
 
             try {
-              baseCoverage = JSON.parse(fs.readFileSync('coverage-base.json', 'utf8'));
+              baseCoverage = JSON.parse(fs.readFileSync('/tmp/coverage-base.json', 'utf8'));
             } catch (e) {
               baseCoverage = { total: { lines: { pct: 0 }, statements: { pct: 0 }, functions: { pct: 0 }, branches: { pct: 0 } } };
             }
