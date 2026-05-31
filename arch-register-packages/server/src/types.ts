@@ -131,6 +131,7 @@ export type Project = {
   description: string;
   owner: string | null;
   status: 'pinned' | 'active' | 'archived';
+  color: string | null;
   created_at: Date;
   updated_at: Date;
 };
