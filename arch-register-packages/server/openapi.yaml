@@ -299,6 +299,80 @@ paths:
         default:
           $ref: '#/components/responses/Error'
 
+  /api/{workspace}/data/tree:
+    get:
+      tags: [Entities]
+      summary: Get entity tree with containment relationships
+      operationId: getEntityTree
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: _schemaId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: owner
+          in: query
+          schema:
+            type: string
+        - name: lifecycle
+          in: query
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+        - name: q
+          in: query
+          description: Case-insensitive substring match on name, slug, description, owner, and tags.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity tree with nodes and edges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityTreeResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/export:
+    get:
+      tags: [Entities]
+      summary: Export entities as CSV
+      operationId: exportEntities
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: _schemaId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: owner
+          in: query
+          schema:
+            type: string
+        - name: lifecycle
+          in: query
+          schema:
+            $ref: '#/components/schemas/LifecycleStatus'
+        - name: q
+          in: query
+          description: Case-insensitive substring match on name, slug, description, owner, and tags.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
   /api/{workspace}/data/{id}:
     get:
       tags: [Entities]
@@ -385,6 +459,80 @@ paths:
               schema:
                 $ref: '#/components/schemas/EntityRelations'
         '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/{id}/access:
+    get:
+      tags: [Entities]
+      summary: Get entity access grants
+      operationId: getEntityAccess
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Entity access configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityAccessResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Entities]
+      summary: Update entity access grants
+      operationId: updateEntityAccess
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityAccessRequest'
+      responses:
+        '200':
+          description: Entity access updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityAccessResponse'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/data/{id}/clone:
+    post:
+      tags: [Entities]
+      summary: Clone an entity
+      operationId: cloneEntity
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Entity cloned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityRecord'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
           $ref: '#/components/responses/Error'
         '404':
           $ref: '#/components/responses/Error'
@@ -624,6 +772,37 @@ paths:
         default:
           $ref: '#/components/responses/Error'
 
+  /api/{workspace}/projects/{id}/files/relocate/{path}:
+    put:
+      tags: [Projects]
+      summary: Move or rename a project file
+      operationId: relocateProjectFile
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+        - $ref: '#/components/parameters/FilePathPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelocateFileRequest'
+      responses:
+        '200':
+          description: File relocated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectFile'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
   /api/{workspace}/projects/{id}/folders:
     post:
       tags: [Projects]
@@ -770,6 +949,632 @@ paths:
           $ref: '#/components/responses/Error'
         '403':
           $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/audit:
+    get:
+      tags: [Audit]
+      summary: List audit log entries
+      operationId: listAuditLogs
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: entityType
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: string
+        - name: operation
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogEntry'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/audit/stats:
+    get:
+      tags: [Audit]
+      summary: Get audit log statistics
+      operationId: getAuditStats
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Audit statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditStatsResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/config:
+    get:
+      tags: [Authentication]
+      summary: Get authentication configuration
+      operationId: getAuthConfig
+      responses:
+        '200':
+          description: Authentication configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthConfigResponse'
+
+  /api/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with username and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/oidc/authorize:
+    get:
+      tags: [Authentication]
+      summary: Initiate OIDC authentication flow
+      operationId: oidcAuthorize
+      responses:
+        '200':
+          description: Authorization URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OIDCAuthorizeResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/oidc/callback:
+    get:
+      tags: [Authentication]
+      summary: OIDC callback endpoint
+      operationId: oidcCallback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to frontend with auth cookies set
+        '400':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New authentication tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout and clear auth cookies
+      operationId: logout
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+
+  /api/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get current user information
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/users:
+    get:
+      tags: [Authentication]
+      summary: List all users (admin only)
+      operationId: listUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceUserInfo'
+        '403':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/auth/users/{id}/global-roles:
+    get:
+      tags: [Authentication]
+      summary: Get user's global roles
+      operationId: getUserGlobalRoles
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User's global roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlobalRoleAssignment'
+        '403':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Authentication]
+      summary: Update user's global roles
+      operationId: updateUserGlobalRoles
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGlobalRolesRequest'
+      responses:
+        '200':
+          description: Updated global roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GlobalRoleAssignment'
+        '403':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/public/{workspace}/schemas:
+    get:
+      tags: [Public]
+      summary: Get public schemas (no auth required)
+      operationId: getPublicSchemas
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Public schemas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/public/{workspace}/data:
+    get:
+      tags: [Public]
+      summary: Get public data (no auth required)
+      operationId: getPublicData
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Public data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/lifecycle-states:
+    get:
+      tags: [Configuration]
+      summary: Get workspace lifecycle states
+      operationId: getLifecycleStates
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Lifecycle states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceLifecycleState'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Configuration]
+      summary: Update workspace lifecycle states
+      operationId: updateLifecycleStates
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkspaceLifecycleState'
+      responses:
+        '200':
+          description: Updated lifecycle states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceLifecycleState'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/teams:
+    get:
+      tags: [Configuration]
+      summary: Get workspace teams
+      operationId: getTeams
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceOwnerOption'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Configuration]
+      summary: Update workspace teams
+      operationId: updateTeams
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkspaceOwnerOption'
+      responses:
+        '200':
+          description: Updated teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceOwnerOption'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/owners:
+    get:
+      tags: [Configuration]
+      summary: Get workspace owners (alias for teams)
+      operationId: getOwners
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Owners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceOwnerOption'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Configuration]
+      summary: Update workspace owners (alias for teams)
+      operationId: updateOwners
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkspaceOwnerOption'
+      responses:
+        '200':
+          description: Updated owners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceOwnerOption'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/team-assignments:
+    get:
+      tags: [Configuration]
+      summary: Get team assignments
+      operationId: getTeamAssignments
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Team assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamAssignment'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Configuration]
+      summary: Update team assignments
+      operationId: updateTeamAssignments
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TeamAssignment'
+      responses:
+        '200':
+          description: Updated team assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamAssignment'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/team-memberships:
+    get:
+      tags: [Configuration]
+      summary: Get team memberships (alias for team-assignments)
+      operationId: getTeamMemberships
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Team memberships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamAssignment'
+        default:
+          $ref: '#/components/responses/Error'
+    put:
+      tags: [Configuration]
+      summary: Update team memberships (alias for team-assignments)
+      operationId: updateTeamMemberships
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TeamAssignment'
+      responses:
+        '200':
+          description: Updated team memberships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamAssignment'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/members:
+    get:
+      tags: [Configuration]
+      summary: Get workspace members
+      operationId: getWorkspaceMembers
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Workspace members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceMemberInfo'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/users:
+    get:
+      tags: [Configuration]
+      summary: Get all users
+      operationId: getUsers
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkspaceUserInfo'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/members/{userId}/role:
+    put:
+      tags: [Configuration]
+      summary: Update workspace member role
+      operationId: updateMemberRole
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberInfo'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/config/members/{userId}:
+    delete:
+      tags: [Configuration]
+      summary: Remove workspace member
+      operationId: removeMember
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Member removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMemberInfo'
         '404':
           $ref: '#/components/responses/Error'
         default:
@@ -1580,7 +2385,290 @@ components:
       required: [oldPath, newPath]
       additionalProperties: false
 
+    RelocateFileRequest:
+      type: object
+      properties:
+        newPath:
+          type: string
+      required: [newPath]
+      additionalProperties: false
 
+    EntityTreeResponse:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/EntitySummary'
+              - type: object
+                properties:
+                  _isMatch:
+                    type: boolean
+                required: [_isMatch]
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              childId:
+                type: string
+                format: uuid
+              parentId:
+                type: string
+                format: uuid
+            required: [childId, parentId]
+      required: [nodes, edges]
+
+    EntityAccessGrant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workspace:
+          type: string
+        entity_id:
+          type: string
+          format: uuid
+        principal_type:
+          type: string
+          enum: [user, team]
+        principal_id:
+          type: string
+        role:
+          type: string
+          enum: [viewer, editor, contributor, entity_admin]
+        applies_to:
+          type: string
+          enum: [self, subtree]
+        created_at:
+          type: string
+          format: date-time
+      required: [id, workspace, entity_id, principal_type, principal_id, role, applies_to, created_at]
+
+    EntityAccessResponse:
+      type: object
+      properties:
+        owner:
+          type: [string, 'null']
+        visibility_mode:
+          type: [string, 'null']
+          enum: [public, restricted, null]
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityAccessGrant'
+      required: [owner, visibility_mode, grants]
+
+    EntityAccessRequest:
+      type: object
+      properties:
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              principal_type:
+                type: string
+                enum: [user, team]
+              principal_id:
+                type: string
+              role:
+                type: string
+                enum: [viewer, editor, contributor, entity_admin]
+              applies_to:
+                type: string
+                enum: [self, subtree]
+            required: [principal_type, principal_id, role, applies_to]
+      required: [grants]
+
+    AuditStatsResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        byOperation:
+          type: array
+          items:
+            type: object
+            properties:
+              operation:
+                type: string
+              count:
+                type: integer
+            required: [operation, count]
+        byEntityType:
+          type: array
+          items:
+            type: object
+            properties:
+              entity_type:
+                type: string
+              count:
+                type: integer
+            required: [entity_type, count]
+        recentActivity:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+            required: [date, count]
+      required: [total, byOperation, byEntityType, recentActivity]
+
+    AuthConfigResponse:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [local, oidc]
+      required: [mode]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          const: Bearer
+        expires_in:
+          type: integer
+      required: [access_token, refresh_token, token_type, expires_in]
+
+    OIDCAuthorizeResponse:
+      type: object
+      properties:
+        authorization_url:
+          type: string
+      required: [authorization_url]
+
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+
+    CurrentUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        display_name:
+          type: string
+        auth_provider:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_login_at:
+          type: [string, 'null']
+          format: date-time
+        global_roles:
+          type: array
+          items:
+            type: string
+        global_permissions:
+          type: array
+          items:
+            type: string
+        team_assignments_by_workspace:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                team_id:
+                  type: string
+                role:
+                  type: string
+              required: [team_id, role]
+        workspace_roles:
+          type: object
+          additionalProperties:
+            type: string
+        teams_by_workspace:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                type:
+                  type: string
+                  const: team
+              required: [id, name, type]
+      required: [id, email, display_name, auth_provider, created_at, last_login_at, global_roles, global_permissions, team_assignments_by_workspace, workspace_roles, teams_by_workspace]
+
+    GlobalRoleAssignment:
+      type: object
+      properties:
+        user_id:
+          type: string
+        role:
+          type: string
+          enum: [global_admin, workspace_admin]
+        created_at:
+          type: string
+          format: date-time
+      required: [user_id, role, created_at]
+
+    UpdateGlobalRolesRequest:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [global_admin, workspace_admin]
+      required: [roles]
+
+    TeamAssignment:
+      type: object
+      properties:
+        workspace:
+          type: string
+        team_id:
+          type: string
+        user_id:
+          type: string
+        role:
+          type: string
+          enum: [team_admin, team_editor, team_reviewer]
+        created_at:
+          type: string
+          format: date-time
+      required: [workspace, team_id, user_id, role, created_at]
+
+    UpdateMemberRoleRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [owner, admin, editor, reviewer, viewer]
+      required: [role]
 
     UpdateTemplateStatusRequest:
       type: object
