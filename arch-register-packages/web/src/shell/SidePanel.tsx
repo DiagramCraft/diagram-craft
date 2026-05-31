@@ -136,7 +136,6 @@ const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySche
                   search: { tab: p.status === 'archived' ? 'archive' as const : 'projects' as const },
                 })}
                 trailing={<span className="dim mono">{p.file_count}</span>}
-                tagColor={p.color ?? undefined}
               />
             ))}
           </div>
@@ -525,7 +524,6 @@ const ProjectsSidebar = ({
                     onClick={() => navigateToProject(p)}
                     onContextMenu={e => openMenu(e, { type: 'project', projectId: p.id })}
                     trailing={<span className="dim mono">{p.file_count}</span>}
-                    tagColor={p.color ?? undefined}
                   />
                   {isOpen && tree && (
                     <>

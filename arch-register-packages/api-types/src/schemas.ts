@@ -64,7 +64,7 @@ export type CreateSchemaRequest = {
   icon?: string | null;
 };
 
-export type UpdateSchemaRequest = Partial<CreateSchemaRequest>;
+export type UpdateSchemaRequest = CreateSchemaRequest;
 
 // ── Search Result ─────────────────────────────────────────────
 

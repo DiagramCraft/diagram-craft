@@ -28,7 +28,7 @@ export class SqliteProjectsFilesDatabase
 
   async createProject(input: CreateProjectInput) {
     this.run(
-      'INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -36,7 +36,6 @@ export class SqliteProjectsFilesDatabase
         input.description,
         input.owner,
         input.status,
-        input.color,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -46,13 +45,12 @@ export class SqliteProjectsFilesDatabase
 
   async updateProject(workspace: string, id: string, input: UpdateProjectInput) {
     this.run(
-      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, color = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE project SET name = ?, description = ?, owner = ?, status = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
         input.owner,
         input.status,
-        input.color,
         input.updated_at.toISOString(),
         workspace,
         id

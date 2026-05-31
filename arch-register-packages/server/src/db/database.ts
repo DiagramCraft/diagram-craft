@@ -76,7 +76,6 @@ export type UpdateProjectInput = {
   description: string;
   owner: string | null;
   status: Project['status'];
-  color: string | null;
   updated_at: Date;
 };
 

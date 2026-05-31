@@ -95,7 +95,6 @@ CREATE TABLE project (
   description TEXT NOT NULL DEFAULT '',
   owner       TEXT,
   status      TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('pinned', 'active', 'archived')),
-  color       TEXT,
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL,
   UNIQUE (workspace, name),

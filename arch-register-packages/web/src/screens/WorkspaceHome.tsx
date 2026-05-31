@@ -327,20 +327,7 @@ const ProjectRow = ({
 }) => (
   <button type="button" className={styles.projectRow} onClick={onClick}>
     <div className={styles.projectRowL}>
-      {project.color ? (
-        <span
-          style={{
-            display: 'inline-block',
-            width: 14,
-            height: 14,
-            borderRadius: 'var(--r-sm)',
-            background: project.color,
-            flexShrink: 0,
-          }}
-        />
-      ) : (
-        <TbFolders size={14} />
-      )}
+      <TbFolders size={14} />
       <span className={styles.projectName}>{project.name}</span>
     </div>
     <div className={styles.projectRowR}>

@@ -17,8 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary'],
-      reportsDirectory: './coverage',
-      include: ['packages/*/src/**/*.{ts,tsx}', 'arch-register-packages/*/src/**/*.{ts,tsx}']
+      reportsDirectory: './coverage'
     }
   },
   resolve: {

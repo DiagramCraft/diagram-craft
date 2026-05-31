@@ -37,9 +37,7 @@ export type CreateEntityRequest = {
   [key: string]: unknown;
 };
 
-export type UpdateEntityRequest = Partial<CreateEntityRequest> & {
-  [key: string]: unknown;
-};
+export type UpdateEntityRequest = CreateEntityRequest;
 
 // ── Facets ────────────────────────────────────────────────────
 

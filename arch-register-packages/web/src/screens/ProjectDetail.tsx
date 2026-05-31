@@ -13,7 +13,7 @@ import {
 } from 'react-icons/tb';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
-import { ApiError, SCHEMA_COLORS } from '../api';
+import { ApiError } from '../api';
 import type { ProjectDetail as ProjectDetailData, FileEntry, WorkspaceTeam } from '../api';
 import { useProject, useUpdateProject, useDeleteProject } from '../hooks/useProjects';
 import {
@@ -848,7 +848,6 @@ const ProjectSettings = ({
   const [description, setDescription] = useState(project.description);
   const [owner, setOwner] = useState(project.owner ?? '');
   const [status, setStatus] = useState(project.status);
-  const [color, setColor] = useState(project.color ?? '');
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -870,7 +869,6 @@ const ProjectSettings = ({
           description: description.trim(),
           owner: owner || null,
           status,
-          color: color || null,
         },
       },
       {
@@ -930,48 +928,6 @@ const ProjectSettings = ({
             </option>
           ))}
         </select>
-      </div>
-      <div className={styles.formRow}>
-        <label className={styles.formLabel}>Color</label>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {SCHEMA_COLORS.map(c => (
-            <button
-              type="button"
-              key={c}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 'var(--r)',
-                background: c,
-                border: color === c ? '2px solid var(--fg-0)' : '1px solid var(--border)',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-              onClick={() => setColor(c)}
-            />
-          ))}
-          <button
-            type="button"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 'var(--r)',
-              background: 'transparent',
-              border: !color ? '2px solid var(--fg-0)' : '1px solid var(--border)',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
-              color: 'var(--fg-2)',
-            }}
-            onClick={() => setColor('')}
-            title="No color"
-          >
-            ×
-          </button>
-        </div>
       </div>
       <div className={styles.formRow}>
         <label className={styles.formLabel}>Owner</label>
