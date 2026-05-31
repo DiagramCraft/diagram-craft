@@ -54,8 +54,11 @@ export type {
   CreateFolderRequest,
   CreateFolderResponse,
   RenameFolderRequest,
+  RenameFileRequest,
   ProjectSearchResult,
   ProjectFileSearchResult,
+  ProjectTemplatesResponse,
+  ToggleTemplateStatusRequest,
 } from './projects.js';
 
 // ── Workspace Types ───────────────────────────────────────────

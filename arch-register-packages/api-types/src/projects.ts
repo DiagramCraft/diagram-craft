@@ -18,11 +18,14 @@ export type Project = ProjectCapabilities & {
 
 export type ProjectFile = {
   id: string;
+  project_id: string;
   path: string;
   name: string;
   size_bytes: number;
   created_at: string;
   updated_at: string;
+  is_template?: boolean;
+  is_workspace_template?: boolean;
 };
 
 export type FileFolder = {
@@ -65,6 +68,10 @@ export type RenameFolderRequest = {
   newPath: string;
 };
 
+export type RenameFileRequest = {
+  newName: string;
+};
+
 // ── Search Result ─────────────────────────────────────────────
 
 export type ProjectSearchResult = {
@@ -80,4 +87,16 @@ export type ProjectFileSearchResult = {
   fileId: string;
   path: string;
   name: string;
+};
+
+// ── Template Types ────────────────────────────────────────────
+
+export type ProjectTemplatesResponse = {
+  workspaceTemplates: ProjectFile[];
+  projectTemplates: ProjectFile[];
+};
+
+export type ToggleTemplateStatusRequest = {
+  is_template: boolean;
+  is_workspace_template: boolean;
 };

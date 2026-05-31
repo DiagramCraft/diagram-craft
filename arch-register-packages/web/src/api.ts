@@ -20,6 +20,7 @@ import type {
   WorkspaceOwnerOption,
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
+  ProjectTemplatesResponse,
 } from '@arch-register/api-types';
 
 // Re-export commonly used types for convenience
@@ -491,12 +492,82 @@ export const renameProjectFile = async (workspace: string, projectId: string, fi
     method: 'PUT',
     body: JSON.stringify(content),
   });
+  
+  // Preserve template flags if the original file had them
+  if (file.is_template || file.is_workspace_template) {
+    await toggleTemplateStatus(
+      workspace,
+      projectId,
+      newPath,
+      file.is_template ?? false,
+      file.is_workspace_template ?? false
+    );
+  }
+  
   // Delete old path
   await apiFetch<{ success: boolean }>(`/api/${workspace}/projects/${projectId}/files/${file.path}`, {
     method: 'DELETE',
   });
   return created;
 };
+
+
+// ── Template API ──────────────────────────────────────────────
+
+export const fetchProjectTemplates = (workspace: string, projectId: string) =>
+  apiFetch<ProjectTemplatesResponse>(`/api/${workspace}/projects/${projectId}/templates`);
+
+export const toggleTemplateStatus = (
+  workspace: string,
+  projectId: string,
+  filePath: string,
+  isTemplate: boolean,
+  isWorkspaceTemplate: boolean
+) =>
+  apiFetch<ProjectFile>(
+    `/api/${workspace}/projects/${projectId}/template-status/${filePath}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ 
+        is_template: isTemplate, 
+        is_workspace_template: isWorkspaceTemplate 
+      }),
+    }
+  );
+
+export const createDiagramFromTemplate = async (
+  workspace: string,
+  projectId: string,
+  name: string,
+  templateFile: ProjectFile,
+  folder?: string | null
+) => {
+  // Fetch template content from the template's project (not the current project)
+  const templateContent = await fetchProjectFileContent(
+    workspace,
+    templateFile.project_id,
+    templateFile.path
+  );
+  
+  // Update name in content
+  const newContent = {
+    ...templateContent,
+    name,
+  };
+  
+  // Create new diagram (template flags are in database, not file content)
+  const fileName = `${name}.json`;
+  const filePath = folder ? `${folder}/${fileName}` : fileName;
+  
+  return apiFetch<ProjectFile>(
+    `/api/${workspace}/projects/${projectId}/files/${filePath}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(newContent),
+    }
+  );
+};
+
 
 // ── Audit Log API ─────────────────────────────────────────────
 

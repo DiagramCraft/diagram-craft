@@ -103,14 +103,16 @@ CREATE TABLE project (
 );
 
 CREATE TABLE project_file (
-  id          TEXT PRIMARY KEY,
-  workspace   TEXT NOT NULL,
-  project_id  TEXT NOT NULL,
-  path        TEXT NOT NULL,
-  name        TEXT NOT NULL,
-  size_bytes  INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL,
-  updated_at  TEXT NOT NULL,
+  id                    TEXT PRIMARY KEY,
+  workspace             TEXT NOT NULL,
+  project_id            TEXT NOT NULL,
+  path                  TEXT NOT NULL,
+  name                  TEXT NOT NULL,
+  size_bytes            INTEGER NOT NULL DEFAULT 0,
+  is_template           INTEGER NOT NULL DEFAULT 0,
+  is_workspace_template INTEGER NOT NULL DEFAULT 0,
+  created_at            TEXT NOT NULL,
+  updated_at            TEXT NOT NULL,
   UNIQUE (workspace, project_id, path),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE RESTRICT,
   FOREIGN KEY (workspace, project_id) REFERENCES project(workspace, id) ON DELETE CASCADE

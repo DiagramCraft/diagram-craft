@@ -21,6 +21,7 @@ import {
   useRenameProjectFolder,
   useCloneProjectFile,
   useRenameProjectFile,
+  useToggleTemplateStatus,
 } from '../hooks/useProjectFiles';
 
 const PROJECT_STATUSES = [
@@ -65,6 +66,7 @@ export const ProjectDetail = () => {
   const renameFolderMutation = useRenameProjectFolder(workspaceId, projectId);
   const cloneFileMutation = useCloneProjectFile(workspaceId, projectId);
   const renameFileMutation = useRenameProjectFile(workspaceId, projectId);
+  const toggleTemplateStatusMutation = useToggleTemplateStatus(workspaceId, projectId);
 
   if (isLoading) {
     return (
@@ -139,9 +141,55 @@ export const ProjectDetail = () => {
     setMenu({ x: e.clientX, y: e.clientY, target });
   };
 
+  const handleToggleTemplate = (file: FileEntry, isWorkspaceTemplate: boolean = false) => {
+    if (isWorkspaceTemplate) {
+      // Toggle workspace template status
+      const newIsWorkspaceTemplate = !file.is_workspace_template;
+      toggleTemplateStatusMutation.mutate({
+        filePath: file.path,
+        isTemplate: newIsWorkspaceTemplate, // Must be template if workspace template
+        isWorkspaceTemplate: newIsWorkspaceTemplate,
+      });
+    } else {
+      // Toggle project template status
+      const newIsTemplate = !file.is_template;
+      toggleTemplateStatusMutation.mutate({
+        filePath: file.path,
+        isTemplate: newIsTemplate,
+        isWorkspaceTemplate: false, // Project templates are not workspace templates
+      });
+    }
+  };
+
   const getDiagramMenuItems = (file: FileEntry): ContextMenuItem[] => [
     { label: 'Clone', icon: <TbCopy size={13} />, onClick: () => cloneFileMutation.mutate(file) },
     { label: 'Rename', icon: <TbPencil size={13} />, onClick: () => setRenameTarget({ type: 'diagram', file }) },
+    { 
+      label: 'Template…',
+      icon: <TbStar size={13} />,
+      separatorBefore: true,
+      submenu: [
+        {
+          label: 'Workspace Template',
+          checked: file.is_workspace_template === true,
+          onClick: () => handleToggleTemplate(file, true)
+        },
+        {
+          label: 'Project Template',
+          checked: file.is_template === true && file.is_workspace_template !== true,
+          onClick: () => handleToggleTemplate(file, false)
+        },
+        {
+          label: 'None',
+          checked: file.is_template !== true && file.is_workspace_template !== true,
+          onClick: () => toggleTemplateStatusMutation.mutate({
+            filePath: file.path,
+            isTemplate: false,
+            isWorkspaceTemplate: false,
+          })
+        }
+      ]
+    },
     { label: 'Delete', icon: <TbTrash size={13} />, danger: true, separatorBefore: true, onClick: () => setDeleteTarget({ type: 'diagram', file }) },
   ];
 
@@ -321,6 +369,7 @@ export const ProjectDetail = () => {
           onCreated={() => {}}
           workspaceId={workspaceId}
           projectId={projectId}
+          projectName={project.name}
           folder={addDiagramFolder}
         />
       )}
@@ -394,7 +443,19 @@ const DiagramCard = ({
       </div>
     </div>
     <div className={styles.diagramMeta}>
-      <div className={styles.diagramName}>{file.name}</div>
+      <div className={styles.diagramName}>
+        {file.name}
+        {file.is_workspace_template && (
+          <span className={styles.templateBadge} title="Workspace template">
+            <TbStar size={10} /> Workspace
+          </span>
+        )}
+        {file.is_template && !file.is_workspace_template && (
+          <span className={styles.templateBadge} title="Project template">
+            <TbStar size={10} /> Project
+          </span>
+        )}
+      </div>
       <div className={styles.diagramSub}>
         {folder && <><TbFolder size={10} /> {folder} &middot; </>}
         {new Date(file.updated_at).toLocaleDateString()}
@@ -440,7 +501,21 @@ const DiagramRow = ({
   onContextMenu?: (e: React.MouseEvent) => void;
 }) => (
   <button type="button" className={styles.diagramRow} onClick={onOpen} onContextMenu={onContextMenu}>
-    <div className={styles.diagramRowName}>{file.name}</div>
+    <div className={styles.diagramRowName}>
+      {file.name}
+    </div>
+    <div className={styles.diagramRowTemplate}>
+      {file.is_workspace_template && (
+        <span className={styles.templateBadge} title="Workspace template">
+          <TbStar size={10} /> Workspace
+        </span>
+      )}
+      {file.is_template && !file.is_workspace_template && (
+        <span className={styles.templateBadge} title="Project template">
+          <TbStar size={10} /> Project
+        </span>
+      )}
+    </div>
     <div className={styles.diagramRowFolder}>
       {folder && <><TbFolder size={10} /> {folder}</>}
     </div>

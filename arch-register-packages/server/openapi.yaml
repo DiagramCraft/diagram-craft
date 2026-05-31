@@ -703,6 +703,78 @@ paths:
         default:
           $ref: '#/components/responses/Error'
 
+
+  /api/{workspace}/templates:
+    get:
+      tags: [Projects]
+      summary: List all templates in workspace
+      operationId: listTemplates
+      description: Returns all templates (workspace-level and project-level) that the user has access to
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+      responses:
+        '200':
+          description: Templates grouped by type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatesResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/templates:
+    get:
+      tags: [Projects]
+      summary: List templates available for a project
+      operationId: listProjectTemplates
+      description: Returns workspace templates and project-specific templates
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+      responses:
+        '200':
+          description: Templates available for this project
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectTemplatesResponse'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /api/{workspace}/projects/{id}/template-status/{path}:
+    put:
+      tags: [Projects]
+      summary: Update template status for a file
+      operationId: updateTemplateStatus
+      description: Mark or unmark a file as a template. Workspace templates require workspace admin permissions.
+      parameters:
+        - $ref: '#/components/parameters/WorkspacePath'
+        - $ref: '#/components/parameters/UuidIdPath'
+        - $ref: '#/components/parameters/FilePathPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateStatusRequest'
+      responses:
+        '200':
+          description: Template status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectFile'
+        '400':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
 components:
   parameters:
     WorkspacePath:
@@ -1396,13 +1468,19 @@ components:
           type: string
         size_bytes:
           type: integer
+        is_template:
+          type: boolean
+          description: Whether this file is marked as a template
+        is_workspace_template:
+          type: boolean
+          description: Whether this template is available workspace-wide
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-      required: [id, path, name, size_bytes, created_at, updated_at]
+      required: [id, path, name, size_bytes, is_template, is_workspace_template, created_at, updated_at]
 
     FileFolder:
       type: object
@@ -1501,3 +1579,49 @@ components:
           type: string
       required: [oldPath, newPath]
       additionalProperties: false
+
+
+
+    UpdateTemplateStatusRequest:
+      type: object
+      properties:
+        is_template:
+          type: boolean
+          description: Whether the file should be marked as a template
+        is_workspace_template:
+          type: boolean
+          description: Whether the template should be available workspace-wide (requires workspace admin)
+      required: [is_template, is_workspace_template]
+      additionalProperties: false
+
+    TemplatesResponse:
+      type: object
+      properties:
+        workspaceTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFile'
+          description: Templates available across the entire workspace
+        projectTemplates:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/ProjectFile'
+          description: Templates organized by project ID
+      required: [workspaceTemplates, projectTemplates]
+
+    ProjectTemplatesResponse:
+      type: object
+      properties:
+        workspaceTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFile'
+          description: Templates available across the entire workspace
+        projectTemplates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectFile'
+          description: Templates specific to this project
+      required: [workspaceTemplates, projectTemplates]
