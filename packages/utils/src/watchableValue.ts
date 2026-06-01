@@ -28,6 +28,11 @@ import { Releasables, type Releasable } from './releasable';
 /**
  * A value container that emits events when its value changes.
  * Extends EventEmitter to provide change notifications when the value is updated.
+ *
+ * Call {@link release} when the instance is no longer needed to remove listeners
+ * registered directly on this value, and to tear down any upstream subscriptions
+ * created by {@link WatchableValue.from}.
+ *
  * @template T The type of value being watched
  */
 export class WatchableValue<T>
@@ -67,6 +72,13 @@ export class WatchableValue<T>
     }
   }
 
+  /**
+   * Releases all listeners owned by this instance.
+   *
+   * For derived values created with {@link WatchableValue.from}, this also unsubscribes
+   * from all source values. After release, the current value is retained but no further
+   * change notifications or recomputations will occur.
+   */
   release() {
     this.#releasables.release();
     this.clearListeners();
@@ -75,19 +87,21 @@ export class WatchableValue<T>
   /**
    * Creates a new instance of `WatchableValue` based on the provided function and array of `WatchableValue` arguments.
    * The resulting value updates whenever any of the input `WatchableValue` instances change.
+   * The returned value owns subscriptions to the source values and should be released
+   * when it is no longer needed.
    *
    * @param fn - A function that computes a new value based on the array of `WatchableValue` instances.
    * @param arg - An array of `WatchableValue` instances that the result depends on.
    * @return A new `WatchableValue` instance that tracks the computed result of the function.
    */
   // biome-ignore lint/suspicious/noExplicitAny: false positive
-  static from<T, K extends [WatchableValue<any>, ...WatchableValue<any>[]]>(
+  static from<T, K extends readonly [WatchableValue<any>, ...WatchableValue<any>[]]>(
     fn: (arg: K) => T,
     arg: K
   ) {
     const v = new WatchableValue(fn(arg));
 
-    for (const wv of arg) {
+    for (const wv of new Set(arg)) {
       v.#releasables.add(wv.on('change', () => v.set(fn(arg))));
     }
 
