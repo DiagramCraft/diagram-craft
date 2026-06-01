@@ -97,6 +97,18 @@ export class SqliteProjectsFilesDatabase
     );
   }
 
+  async updateProjectFilePreview(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    previewSvg: string | null
+  ) {
+    this.run(
+      'UPDATE project_file SET preview_svg = ? WHERE workspace = ? AND project_id = ? AND id = ?',
+      [previewSvg, workspace, projectId, fileId]
+    );
+  }
+
   async updateProjectFileTemplateStatus(
     workspace: string,
     projectId: string,

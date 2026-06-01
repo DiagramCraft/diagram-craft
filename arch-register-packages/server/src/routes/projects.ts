@@ -16,6 +16,8 @@ import type { AuthenticatedEvent } from '../middleware/auth.js';
 import { httpAssert } from '../utils/httpAssert.js';
 import { toApiProject, toApiProjectFile, toApiProjectDetail } from '../api/transforms.js';
 import type { FileTree } from '@arch-register/api-types';
+import { generateSvgPreview } from '../preview/svgPreviewGenerator.js';
+import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 
 const BASE = '/api/:workspace/projects';
 const PROJECT_STATUSES = ['pinned', 'active', 'archived'] as const;
@@ -404,6 +406,15 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
         });
 
         await storage.write(workspace, id, row.id, content);
+
+        try {
+          const previewSvg = generateSvgPreview(body as SerializedDiagramDocument);
+          if (previewSvg) {
+            await db.projectsFiles.updateProjectFilePreview(workspace, id, row.id, previewSvg);
+          }
+        } catch {
+          // Preview generation is best-effort — don't fail the save
+        }
 
         if (isUpdate) {
           const changes = computeChanges(

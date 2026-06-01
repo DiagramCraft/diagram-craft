@@ -147,6 +147,7 @@ export type ProjectFile = {
   size_bytes: number;
   is_template: boolean;
   is_workspace_template: boolean;
+  preview_svg: string | null;
   created_at: Date;
   updated_at: Date;
 };

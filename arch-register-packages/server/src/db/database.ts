@@ -180,6 +180,12 @@ export type ProjectsFilesDatabase = {
     sizeBytes: number,
     updated_at: Date
   ): Promise<void>;
+  updateProjectFilePreview(
+    ws: string,
+    projectId: string,
+    fileId: string,
+    previewSvg: string | null
+  ): Promise<void>;
   updateProjectFileTemplateStatus(
     ws: string,
     projectId: string,

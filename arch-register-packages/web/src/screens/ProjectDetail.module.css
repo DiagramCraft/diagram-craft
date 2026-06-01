@@ -348,8 +348,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, oklch(0.21 0.005 260) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(0.21 0.005 260) 1px, transparent 1px);
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
   background-size: 12px 12px;
 }
 

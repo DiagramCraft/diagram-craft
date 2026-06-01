@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import styles from './DiagramScreen.module.css';
 import { TbArrowLeft } from 'react-icons/tb';
 import { initializeDiagramCraft, getIncludedPackages } from '../diagramcraft-initial-config';
@@ -20,6 +21,8 @@ import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationC
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../auth/AuthContext';
+import { projectFileKeys } from '../hooks/useProjectFiles';
+import { projectKeys } from '../hooks/useProjects';
 import { stableHue } from '../components/MemberAvatar';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
@@ -33,7 +36,11 @@ export const DiagramScreen = () => {
     diagramId: string;
   };
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
+  const userId = user?.id;
+  const userDisplayName = user?.display_name;
+  const userColor = user?.color;
   const workspaceId = workspaceSlug;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,12 +136,18 @@ export const DiagramScreen = () => {
 
   const handleClose = useCallback(async () => {
     await save();
+    await queryClient.refetchQueries({
+      queryKey: projectFileKeys.list(workspaceId, projectId),
+    });
+    await queryClient.refetchQueries({
+      queryKey: projectKeys.detail(workspaceId, projectId),
+    });
     navigate({
       to: '/$workspaceSlug/projects/$projectId',
       params: { workspaceSlug, projectId },
       search: { tab: 'projects' as const },
     });
-  }, [save, navigate, workspaceSlug, projectId]);
+  }, [save, queryClient, navigate, workspaceId, workspaceSlug, projectId]);
 
   useEffect(() => {
     let releaseDataChange = () => {};
@@ -223,10 +236,10 @@ export const DiagramScreen = () => {
 
         // Connect to collaboration backend and sync CRDT state
         const config = AppConfig.get();
-        const userState = user
+        const userState = userId && userDisplayName
           ? {
-              name: user.display_name,
-              color: user.color ?? `oklch(0.52 0.13 ${stableHue(user.id)})`,
+              name: userDisplayName,
+              color: userColor ?? `oklch(0.52 0.13 ${stableHue(userId)})`,
               avatar: config.awareness.avatar()
             }
           : {
@@ -290,7 +303,16 @@ export const DiagramScreen = () => {
         docRef.current = null;
       }
     };
-  }, [workspaceId, projectId, diagramId, injectPublicProvider, makePublicProvider]);
+  }, [
+    workspaceId,
+    projectId,
+    diagramId,
+    injectPublicProvider,
+    makePublicProvider,
+    userId,
+    userDisplayName,
+    userColor,
+  ]);
 
   const { documentFactory, diagramFactory } = initializeDiagramCraft();
 

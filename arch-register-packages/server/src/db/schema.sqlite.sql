@@ -114,6 +114,7 @@ CREATE TABLE project_file (
   size_bytes            INTEGER NOT NULL DEFAULT 0,
   is_template           INTEGER NOT NULL DEFAULT 0,
   is_workspace_template INTEGER NOT NULL DEFAULT 0,
+  preview_svg           TEXT,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   UNIQUE (workspace, project_id, path),
