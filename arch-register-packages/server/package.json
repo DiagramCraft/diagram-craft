@@ -21,14 +21,14 @@
     "argon2": "^0.31.2",
     "better-sqlite3": "^12.10.0",
     "dotenv": "^17.2.3",
-    "h3": "^2.0.1-rc.5",
+    "h3": "^2.0.1-rc.22",
     "jsonwebtoken": "^9.0.2",
     "lib0": "^0.2.117",
     "openid-client": "^5.6.5",
     "postgres": "^3.4.5",
-    "ws": "^8.20.0",
+    "ws": "^8.21.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.30"
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.5",
