@@ -20,7 +20,6 @@ import { Selection } from '@diagram-craft/model/selection';
 import { EventHelper } from '@diagram-craft/utils/eventHelper';
 import { rawHTML } from '../component/vdom';
 import styles from './canvas.css?inline';
-import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
 import { Context } from '../context';
 import { unique } from '@diagram-craft/utils/array';
 import { BaseCanvasComponent, BaseCanvasProps } from './BaseCanvasComponent';
@@ -35,6 +34,7 @@ import {
 } from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHighlightComponent } from '../components/AnchorHighlightComponent';
 import { MoveTool } from '../tools/moveTool';
+import { PanTool } from '../tools/panTool';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { HoverOverlayComponent } from '../components/HoverOverlayComponent';
 import { getAncestorWithClass } from '@diagram-craft/utils/dom';

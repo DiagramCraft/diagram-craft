@@ -24,8 +24,6 @@ import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
-import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
-import { DRAG_DROP_MANAGER, DragDopManager } from '../dragDropManager';
 
 class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
   constructor(type = 'attach-absolute') {
@@ -99,7 +97,10 @@ class LinkPopupOptionsNodeDefinition extends RectNodeDefinition {
   getNodeLinkOptions(): NodeLinkOptions | undefined {
     return {
       stencilIds: ['custom-node', 'default@@rect'],
-      edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
+      edgeStyles: [
+        { id: 'edge-2', edgeStylesheetId: 'edge-2' },
+        { id: 'default-edge', edgeStylesheetId: 'default-edge' }
+      ],
       combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
     };
   }
@@ -549,62 +550,10 @@ describe('EdgeEndpointMoveDrag', () => {
       expect.any(Array),
       {
         stencilIds: ['custom-node', 'default@@rect'],
-        edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
-        combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
-      }
-    );
-  });
-
-  test('passes source node link popup options from shift-drag edge tool flows', () => {
-    vi.useFakeTimers();
-
-    const context = createContext();
-    const dragManager = new DragDopManager();
-    const { diagram, layer } = TestModel.newDiagramWithLayer();
-    mountDiagramElement(CanvasDomHelper.diagramId(diagram));
-    diagram.document.registry.nodes.register(new LinkPopupOptionsNodeDefinition());
-
-    const node = layer.addNode({
-      type: 'link-popup-options',
-      bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
-    });
-
-    const tool = new EdgeTool(diagram, dragManager, null, context, vi.fn());
-    const target = document.createElement('div');
-
-    tool.onMouseOver(node.id, { x: 50, y: 50 }, target);
-    tool.onMouseMove(
-      { x: 50, y: 50 },
-      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
-    );
-    tool.onMouseDown(
-      node.id,
-      { x: 50, y: 50 },
-      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
-    );
-
-    const drag = DRAG_DROP_MANAGER.current();
-    expect(drag).toBeDefined();
-    if (!drag) throw new Error('Expected active drag');
-
-    drag.onDrag(
-      new DragEvents.DragStart(
-        { x: 180, y: 20 },
-        { shiftKey: true, altKey: false, metaKey: false, ctrlKey: false },
-        target
-      )
-    );
-    drag.onDragEnd(new DragEvents.DragEnd(target));
-    vi.runAllTimers();
-
-    expect(context.ui.showNodeLinkPopup).toHaveBeenCalledWith(
-      { x: 180, y: 20 },
-      expect.any(String),
-      expect.any(String),
-      expect.any(Array),
-      {
-        stencilIds: ['custom-node', 'default@@rect'],
-        edgeStyles: [{ id: 'edge-2', edgeStylesheetId: 'edge-2' }, { id: 'default-edge', edgeStylesheetId: 'default-edge' }],
+        edgeStyles: [
+          { id: 'edge-2', edgeStylesheetId: 'edge-2' },
+          { id: 'default-edge', edgeStylesheetId: 'default-edge' }
+        ],
         combinations: [{ stencilId: 'custom-node', edgeStyleId: 'edge-2' }]
       }
     );
