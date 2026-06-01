@@ -5,7 +5,7 @@ import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
 import { NodeTool } from '@diagram-craft/canvas/tools/nodeTool';
 import { PenTool } from '@diagram-craft/canvas-app/tools/penTool';
 import { FreehandTool } from '@diagram-craft/canvas-app/tools/freehandTool';
-import { PanTool } from '@diagram-craft/canvas-app/tools/panTool';
+import { PanTool } from '@diagram-craft/canvas/tools/panTool';
 import { RectTool } from '@diagram-craft/canvas-app/tools/rectTool';
 import { ZoomTool } from '@diagram-craft/canvas-app/tools/zoomTool';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';

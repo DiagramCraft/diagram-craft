@@ -19,13 +19,16 @@ import type { DiagramNode } from '@diagram-craft/model/diagramNode';
 import type { DiagramEdge } from '@diagram-craft/model/diagramEdge';
 import { UnitOfWork } from '@diagram-craft/model/unitOfWork';
 import type { NodeProps } from '@diagram-craft/model/diagramProps';
+import { assertRegularLayer } from '@diagram-craft/model/diagramLayerUtils';
 import { AnchorHandleDrag } from './anchorHandleDrag';
 import { projectToPointHandle } from './anchorHandleDragSource';
 import { Point } from '@diagram-craft/geometry/point';
 import type { Anchor } from '@diagram-craft/model/anchor';
 import type { NodeLinkOptions } from '@diagram-craft/model/stencilRegistry';
-import { EdgeTool } from '@diagram-craft/canvas-app/tools/edgeTool';
-import { DRAG_DROP_MANAGER, DragDopManager } from '../dragDropManager';
+import { ElementFactory } from '@diagram-craft/model/elementFactory';
+import { createProvisionalLinkedNode } from '../linkedNode';
+import { ShapeNodeDefinition } from '../shape/shapeNodeDefinition';
+import { DRAG_DROP_MANAGER } from '../dragDropManager';
 
 class AbsoluteAttachNodeDefinition extends RectNodeDefinition {
   constructor(type = 'attach-absolute') {
@@ -243,6 +246,69 @@ const dragAcrossNodes = (
   drag.onDragEnd();
 
   return { edge };
+};
+
+class TestEdgeToolEndpointMoveDrag extends EdgeEndpointMoveDrag {
+  onDragEnd() {
+    super.onDragEnd();
+
+    const undoManager = this.edge.diagram.undoManager;
+
+    if (this.modifiers?.shiftKey && this.hoverElement === undefined) {
+      const start = this.edge.start;
+      if (!(start instanceof AnchorEndpoint)) {
+        throw new Error('Expected anchor endpoint');
+      }
+
+      const point = this.point!;
+      const newNode = createProvisionalLinkedNode(start.node, this.edge, point);
+      const nodeId = newNode.id;
+
+      setTimeout(() => {
+        const definition = start.node.getDefinition();
+        const nodeLinkOptions =
+          definition instanceof ShapeNodeDefinition
+            ? definition.getNodeLinkOptions(start.node)
+            : undefined;
+
+        this.context.ui.showNodeLinkPopup(
+          point,
+          nodeId,
+          this.edge.id,
+          [...undoManager.getToMark()],
+          nodeLinkOptions
+        );
+      }, 0);
+    }
+  }
+}
+
+const startShiftDragEdgeToolFlow = (
+  diagram: ReturnType<typeof TestModel.newDiagramWithLayer>['diagram'],
+  node: DiagramNode,
+  context: Context
+) => {
+  const layer = diagram.activeLayer;
+  assertRegularLayer(layer);
+  const edge = ElementFactory.edge({
+    start: new AnchorEndpoint(node, 'c'),
+    end: new FreeEndpoint(diagram.viewBox.toDiagramPoint({ x: 50, y: 50 })),
+    metadata: {
+      style: diagram.document.styles.activeEdgeStylesheet.id
+    },
+    layer
+  });
+
+  diagram.undoManager.setMark();
+  diagram.undoManager.execute('Add edge', uow => {
+    layer.addElement(edge, uow);
+    uow.select(diagram, [edge]);
+  });
+
+  const drag = new TestEdgeToolEndpointMoveDrag(diagram, edge, 'end', context);
+  DRAG_DROP_MANAGER.initiate(drag);
+
+  return edge;
 };
 
 afterEach(() => {
@@ -559,7 +625,6 @@ describe('EdgeEndpointMoveDrag', () => {
     vi.useFakeTimers();
 
     const context = createContext();
-    const dragManager = new DragDopManager();
     const { diagram, layer } = TestModel.newDiagramWithLayer();
     mountDiagramElement(CanvasDomHelper.diagramId(diagram));
     diagram.document.registry.nodes.register(new LinkPopupOptionsNodeDefinition());
@@ -569,19 +634,8 @@ describe('EdgeEndpointMoveDrag', () => {
       bounds: { x: 0, y: 0, w: 100, h: 100, r: 0 }
     });
 
-    const tool = new EdgeTool(diagram, dragManager, null, context, vi.fn());
     const target = document.createElement('div');
-
-    tool.onMouseOver(node.id, { x: 50, y: 50 }, target);
-    tool.onMouseMove(
-      { x: 50, y: 50 },
-      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
-    );
-    tool.onMouseDown(
-      node.id,
-      { x: 50, y: 50 },
-      { shiftKey: false, altKey: false, metaKey: false, ctrlKey: false }
-    );
+    startShiftDragEdgeToolFlow(diagram, node, context);
 
     const drag = DRAG_DROP_MANAGER.current();
     expect(drag).toBeDefined();

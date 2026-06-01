@@ -1,8 +1,8 @@
-import { AbstractTool } from '@diagram-craft/canvas/tool';
-import { Context } from '@diagram-craft/canvas/context';
-import { DragDopManager, Modifiers } from '@diagram-craft/canvas/dragDropManager';
-import { AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
-import { Diagram } from '@diagram-craft/model/diagram';
+import type { Context } from '../context';
+import { type DragDopManager, type Modifiers } from '../dragDropManager';
+import { AbstractTool } from '../tool';
+import { type AbsoluteOffset, Point } from '@diagram-craft/geometry/point';
+import { type Diagram } from '@diagram-craft/model/diagram';
 
 export class PanTool extends AbstractTool {
   private isMouseDown = false;
