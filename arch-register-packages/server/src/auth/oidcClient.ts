@@ -1,28 +1,25 @@
-import { Issuer, Client, generators } from 'openid-client';
+import * as client from 'openid-client';
 
-let cachedClient: Client | null = null;
+let cachedConfig: client.Configuration | null = null;
 
-export const getOidcClient = async (): Promise<Client> => {
-  if (cachedClient) return cachedClient;
+const getOidcConfig = async (): Promise<client.Configuration> => {
+  if (cachedConfig) return cachedConfig;
 
   const issuerUrl = process.env['OIDC_ISSUER'];
   const clientId = process.env['OIDC_CLIENT_ID'];
   const clientSecret = process.env['OIDC_CLIENT_SECRET'];
-  const redirectUri = process.env['OIDC_REDIRECT_URI'];
 
-  if (!issuerUrl || !clientId || !clientSecret || !redirectUri) {
+  if (!issuerUrl || !clientId || !clientSecret) {
     throw new Error('OIDC configuration incomplete');
   }
 
-  const issuer = await Issuer.discover(issuerUrl);
-  cachedClient = new issuer.Client({
-    client_id: clientId,
-    client_secret: clientSecret,
-    redirect_uris: [redirectUri],
-    response_types: ['code']
-  });
+  cachedConfig = await client.discovery(
+    new URL(issuerUrl),
+    clientId,
+    clientSecret
+  );
 
-  return cachedClient;
+  return cachedConfig;
 };
 
 export const generateAuthUrl = async (): Promise<{
@@ -31,46 +28,67 @@ export const generateAuthUrl = async (): Promise<{
   nonce: string;
   codeVerifier: string;
 }> => {
-  const client = await getOidcClient();
-  const state = generators.state();
-  const nonce = generators.nonce();
-  const codeVerifier = generators.codeVerifier();
-  const codeChallenge = generators.codeChallenge(codeVerifier);
+  const config = await getOidcConfig();
+  const redirectUri = process.env['OIDC_REDIRECT_URI'];
+
+  if (!redirectUri) {
+    throw new Error('OIDC_REDIRECT_URI not configured');
+  }
+
+  const state = client.randomState();
+  const nonce = client.randomNonce();
+  const codeVerifier = client.randomPKCECodeVerifier();
+  const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
 
   const scope = process.env['OIDC_SCOPE'] ?? 'openid profile email';
 
-  const url = client.authorizationUrl({
+  const parameters: Record<string, string> = {
+    redirect_uri: redirectUri,
     scope,
     state,
     nonce,
     code_challenge: codeChallenge,
     code_challenge_method: 'S256'
-  });
+  };
 
-  return { url, state, nonce, codeVerifier };
+  const authUrl = client.buildAuthorizationUrl(config, parameters);
+
+  return { 
+    url: authUrl.href, 
+    state, 
+    nonce, 
+    codeVerifier 
+  };
 };
 
 export const handleCallback = async (
-  callbackParams: Record<string, string>,
+  callbackUrl: string,
   state: string,
   nonce: string,
   codeVerifier: string
 ) => {
-  const client = await getOidcClient();
-  const redirectUri = process.env['OIDC_REDIRECT_URI']!;
+  const config = await getOidcConfig();
 
-  const tokenSet = await client.callback(redirectUri, callbackParams, {
-    state,
-    nonce,
-    code_verifier: codeVerifier
-  });
+  const tokens = await client.authorizationCodeGrant(
+    config,
+    new URL(callbackUrl),
+    {
+      pkceCodeVerifier: codeVerifier,
+      expectedState: state,
+      expectedNonce: nonce
+    }
+  );
 
-  const claims = tokenSet.claims();
+  const claims = tokens.claims();
+
+  if (!claims) {
+    throw new Error('No ID token returned by authorization server');
+  }
 
   return {
     sub: claims.sub,
-    email: claims.email,
-    name: claims.name ?? claims.preferred_username ?? claims.email ?? claims.sub,
+    email: claims.email as string | undefined,
+    name: (claims.name ?? claims.preferred_username ?? claims.email ?? claims.sub) as string,
     issuer: claims.iss
   };
 };
