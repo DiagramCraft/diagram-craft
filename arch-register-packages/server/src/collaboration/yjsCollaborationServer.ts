@@ -12,6 +12,7 @@ import { DiagramAutoSave, type AutoSaveWriter } from './diagramAutoSave.js';
 import { createLogger } from '../utils/logger.js';
 
 export type TempPathResolver = (name: string) => string;
+export type WebSocketAuthenticator = (request: IncomingMessage) => Promise<boolean>;
 
 const log = createLogger('YjsCollaborationServer');
 
@@ -251,7 +252,8 @@ export class YjsCollaborationServer implements CollaborationServer {
   constructor(
     private readonly basePath = YJS_WEBSOCKET_PATH,
     private readonly autoSaveWriter?: AutoSaveWriter,
-    private readonly tempPathResolver?: TempPathResolver
+    private readonly tempPathResolver?: TempPathResolver,
+    private readonly authenticator?: WebSocketAuthenticator
   ) {
     this.webSocketServer.on('connection', (connection: WebSocket, request: IncomingMessage) => {
       const docName = getDocName(request.url ?? this.basePath, this.basePath);
@@ -267,11 +269,26 @@ export class YjsCollaborationServer implements CollaborationServer {
       }
     });
 
-    this.upgradeHandler = (request, socket, head) => {
+    this.upgradeHandler = async (request, socket, head) => {
       if (!matchesPath(request.url ?? '', this.basePath)) {
         socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
         socket.destroy();
         return;
+      }
+
+      if (this.authenticator) {
+        try {
+          const authenticated = await this.authenticator(request);
+          if (!authenticated) {
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+        } catch {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
       }
 
       this.webSocketServer.handleUpgrade(request, socket, head, (connection: WebSocket) => {

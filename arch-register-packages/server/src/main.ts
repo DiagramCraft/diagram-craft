@@ -4,6 +4,7 @@ import { toNodeListener } from 'h3/node';
 import { createDatabase } from './db/factory.js';
 import { createStorage } from './storage/storage.js';
 import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.js';
+import { verifyToken } from './utils/jwt.js';
 import { OpenRouterAIServer } from './ai/openRouterAiServer.js';
 import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
@@ -39,7 +40,23 @@ const main = async () => {
     );
   };
 
-  const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name);
+  const wsAuthenticator = async (request: import('node:http').IncomingMessage) => {
+    const cookieHeader = request.headers.cookie ?? '';
+    const match = cookieHeader.match(/(?:^|;\s*)ar_access_token=([^;]*)/);
+    const token = match?.[1];
+    if (!token) return false;
+
+    try {
+      const payload = verifyToken(token);
+      if (payload.type !== 'access') return false;
+      const user = await db.identityAuth.getUser(payload.sub);
+      return !!user?.is_active;
+    } catch {
+      return false;
+    }
+  };
+
+  const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name, wsAuthenticator);
 
   const openrouterApiKey = process.env['OPENROUTER_API_KEY'];
   if (openrouterApiKey) {
