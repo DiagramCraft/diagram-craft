@@ -103,6 +103,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null
@@ -340,6 +341,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null
@@ -354,6 +356,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null

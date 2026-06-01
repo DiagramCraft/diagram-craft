@@ -7,6 +7,7 @@ export type User = {
   auth_provider: 'local' | 'oidc';
   created_at: string;
   last_login_at: string | null;
+  color: string | null;
 };
 
 export type { GlobalPermission, GlobalRole, WorkspaceRole };

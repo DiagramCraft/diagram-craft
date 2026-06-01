@@ -340,7 +340,7 @@ export const searchArchRegister = (
 
 export const createProject = (
   workspace: string,
-  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived' }
+  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived'; color?: string | null }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects`, {
     method: 'POST',
@@ -350,7 +350,7 @@ export const createProject = (
 export const updateProject = (
   workspace: string,
   id: string,
-  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived' }
+  body: { name: string; description?: string; owner?: string | null; status?: 'pinned' | 'active' | 'archived'; color?: string | null }
 ) =>
   apiFetch<Project>(`/api/${workspace}/projects/${id}`, {
     method: 'PUT',

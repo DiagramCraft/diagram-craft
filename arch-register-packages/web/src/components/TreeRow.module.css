@@ -82,5 +82,5 @@
   width: 4px;
   height: 14px;
   border-radius: 2px;
-  margin-left: 4px;
+  flex-shrink: 0;
 }

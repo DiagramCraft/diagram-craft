@@ -14,12 +14,15 @@ import {
   TbDatabase,
   TbBuildingCommunity,
   TbSun,
-  TbMoon
+  TbMoon,
+  TbUser
 } from 'react-icons/tb';
+import { useNavigate } from '@tanstack/react-router';
 import type { Workspace } from '../api';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import type { Theme } from '../hooks/useTheme';
+import { resolveAvatarBackground } from '../components/MemberAvatar';
 
 type BreadcrumbItem = {
   label: string;
@@ -363,6 +366,7 @@ const AppMenu = ({
 };
 
 const AccountMenu = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -386,6 +390,7 @@ const AccountMenu = () => {
 
   const displayName = user?.display_name ?? '';
   const email = user?.email ?? '';
+  const avatarColor = resolveAvatarBackground(user?.id ?? '', user?.color);
 
   return (
     <div className={styles.acctMenu} ref={ref}>
@@ -394,18 +399,32 @@ const AccountMenu = () => {
         className={styles.avatar}
         title={displayName}
         onClick={() => setOpen(o => !o)}
+        style={{ background: avatarColor }}
       >
         {getInitials(displayName)}
       </button>
       {open && (
         <div className={styles.acctMenuDrop}>
           <div className={styles.acctHeader}>
-            <div className={styles.acctAvatar}>{getInitials(displayName)}</div>
+            <div className={styles.acctAvatar} style={{ background: avatarColor }}>
+              {getInitials(displayName)}
+            </div>
             <div className={styles.acctInfo}>
               <div className={styles.acctName}>{displayName}</div>
               {email && <div className={styles.acctEmail}>{email}</div>}
             </div>
           </div>
+          <div className={styles.menuSep} />
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              setOpen(false);
+              navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug: window.location.pathname.split('/')[1] ?? '' } });
+            }}
+          >
+            <TbUser size={14} /> Account Settings
+          </button>
           <div className={styles.menuSep} />
           <div className={styles.menuLabel}>Theme</div>
           <ThemeToggle theme={theme} onSetTheme={setTheme} />

@@ -65,6 +65,8 @@ export const sqliteMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     sort_order: Number(row['sort_order']),
+    color: row['color'] == null ? null : String(row['color']),
+    description: String(row['description']),
     created_at: toDate(row['created_at'])
   }),
   schema: (row: Record<string, unknown>): EntitySchema => ({
@@ -105,6 +107,7 @@ export const sqliteMappers = {
     description: String(row['description']),
     owner: row['owner'] == null ? null : String(row['owner']),
     status: String(row['status']) as Project['status'],
+    color: row['color'] == null ? null : String(row['color']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),
@@ -143,6 +146,7 @@ export const sqliteMappers = {
     oidc_issuer: row['oidc_issuer'] == null ? null : String(row['oidc_issuer']),
     oidc_subject: row['oidc_subject'] == null ? null : String(row['oidc_subject']),
     is_active: Boolean(row['is_active']),
+    color: row['color'] == null ? null : String(row['color']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at']),
     last_login_at: row['last_login_at'] == null ? null : toDate(row['last_login_at'])

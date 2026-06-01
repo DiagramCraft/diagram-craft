@@ -2,6 +2,7 @@ import { type TeamRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbChevronRight, TbEdit, TbPlus, TbTrash } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
+import { ColorPicker } from '../components/ColorPicker';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../components/MemberAvatar';
@@ -18,6 +19,8 @@ import styles from './TeamsSection.module.css';
 
 type TeamDraft = {
   id: string;
+  color?: string | null;
+  description?: string;
   assignments: EditAssignment[];
 };
 
@@ -59,6 +62,8 @@ const buildTeamDrafts = (
 ): TeamDraft[] =>
   teams.map(team => ({
     id: team.id,
+    color: team.color,
+    description: team.description,
     assignments: sortAssignments(
       assignments
         .filter(assignment => assignment.team_id === team.id)
@@ -67,7 +72,12 @@ const buildTeamDrafts = (
   }));
 
 const toOwnerPayload = (teams: TeamDraft[]) =>
-  teams.map((team, index) => ({ id: team.id.trim(), sort_order: index }));
+  teams.map((team, index) => ({ 
+    id: team.id.trim(), 
+    sort_order: index,
+    color: team.color,
+    description: team.description
+  }));
 
 const toMembershipPayload = (teams: TeamDraft[]) =>
   teams.flatMap(team =>
@@ -200,14 +210,17 @@ export const TeamsSection = ({
                 >
                   <span
                     className={styles.teamColorBar}
-                    style={{ background: `oklch(0.65 0.15 ${stableHue(team.id)})` }}
+                    style={{ background: team.color ?? `oklch(0.65 0.15 ${stableHue(team.id)})` }}
                   />
-                  <span className={styles.teamName}>{team.id}</span>
+                  <div className={styles.teamNameSection}>
+                    <span className={styles.teamName}>{team.id}</span>
+                  </div>
+                  {team.description && <span className={styles.teamDescription}>{team.description}</span>}
                   <span className={styles.teamLeadRow}>
                     {leadUser && (
                       <>
                         <span className={styles.dim}>Lead</span>
-                        <MemberAvatar name={leadUser.display_name} email={leadUser.email} userId={leadUser.id} size={18} />
+                        <MemberAvatar name={leadUser.display_name} email={leadUser.email} userId={leadUser.id} color={leadUser.color ?? null} size={18} />
                         <span>{getUserLabel(leadUser)}</span>
                       </>
                     )}
@@ -216,7 +229,7 @@ export const TeamsSection = ({
                   <span className={styles.teamAvatars}>
                     {teamAssignments.slice(0, 4).map(a => {
                       const u = usersById.get(a.user_id);
-                      return u ? <MemberAvatar key={a.user_id} name={u.display_name} email={u.email} userId={u.id} size={20} /> : null;
+                      return u ? <MemberAvatar key={a.user_id} name={u.display_name} email={u.email} userId={u.id} color={u.color ?? null} size={20} /> : null;
                     })}
                     {teamAssignments.length > 4 && (
                       <span className={styles.avatarMore}>+{teamAssignments.length - 4}</span>
@@ -257,7 +270,7 @@ export const TeamsSection = ({
                           const user = usersById.get(a.user_id);
                           return (
                             <div key={a.user_id} className={styles.teamMember}>
-                              <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={a.user_id} size={24} />
+                              <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={a.user_id} color={user?.color ?? null} size={24} />
                               <div className={styles.teamMemberName}>
                                 <div>{user ? getUserLabel(user) : a.user_id}</div>
                                 <div className={`${styles.dim} ${styles.mono}`}>
@@ -296,14 +309,16 @@ export const TeamsSection = ({
         open={editTeam != null}
         mode="edit"
         initialTeamId={editTeam?.id ?? ''}
+        initialColor={editTeam?.color}
+        initialDescription={editTeam?.description}
         onClose={() => setEditTeamId(null)}
-        onSave={async newId => {
+        onSave={async (newId, color, description) => {
           if (!editTeam) return;
-          const renamedTeam = { ...editTeam, id: newId };
-          const nextTeams = teamDrafts.map(team => (team.id === editTeam.id ? renamedTeam : team));
+          const updatedTeam = { ...editTeam, id: newId, color, description };
+          const nextTeams = teamDrafts.map(team => (team.id === editTeam.id ? updatedTeam : team));
           await persistTeams(nextTeams, updateTeams.mutateAsync, updateTeamAssignments.mutateAsync);
-          setEditTeamId(newId);
           if (openId === editTeam.id) setOpenId(newId);
+          setEditTeamId(null);
         }}
         isSaving={isSaving}
       />
@@ -312,10 +327,12 @@ export const TeamsSection = ({
         open={addDialogOpen}
         mode="create"
         initialTeamId=""
+        initialColor={null}
+        initialDescription=""
         onClose={onCloseAddDialog}
-        onSave={async newId => {
+        onSave={async (newId, color, description) => {
           await persistTeams(
-            [...teamDrafts, { id: newId, assignments: [] }],
+            [...teamDrafts, { id: newId, color, description, assignments: [] }],
             updateTeams.mutateAsync,
             updateTeamAssignments.mutateAsync
           );
@@ -365,6 +382,8 @@ const TeamDialog = ({
   open,
   mode,
   initialTeamId,
+  initialColor,
+  initialDescription,
   onClose,
   onSave,
   isSaving,
@@ -372,22 +391,28 @@ const TeamDialog = ({
   open: boolean;
   mode: 'create' | 'edit';
   initialTeamId: string;
+  initialColor?: string | null;
+  initialDescription?: string;
   onClose: () => void;
-  onSave: (teamId: string) => Promise<void>;
+  onSave: (teamId: string, color: string | null, description: string) => Promise<void>;
   isSaving: boolean;
 }) => {
   const [teamId, setTeamId] = useState(initialTeamId);
+  const [color, setColor] = useState<string | null>(initialColor ?? null);
+  const [description, setDescription] = useState(initialDescription ?? '');
   const teamInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setTeamId(initialTeamId);
+    setColor(initialColor ?? null);
+    setDescription(initialDescription ?? '');
     setTimeout(() => teamInputRef.current?.focus(), 0);
-  }, [initialTeamId, open]);
+  }, [initialTeamId, initialColor, initialDescription, open]);
 
   if (!open) return null;
 
-  const isDirty = teamId.trim() !== initialTeamId;
+  const isDirty = teamId.trim() !== initialTeamId || color !== initialColor || description !== initialDescription;
 
   return (
     <Dialog
@@ -412,6 +437,32 @@ const TeamDialog = ({
           </div>
         </div>
 
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Description</div>
+            <div className={styles.fieldHint}>Brief description of the team's responsibilities.</div>
+          </div>
+          <div className={styles.fieldRight}>
+            <textarea
+              className={styles.textarea}
+              value={description}
+              onChange={event => setDescription(event.target.value)}
+              placeholder="Responsible for..."
+              rows={3}
+            />
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <div className={styles.fieldLeft}>
+            <div className={styles.fieldLabel}>Color</div>
+            <div className={styles.fieldHint}>Visual identifier for the team.</div>
+          </div>
+          <div className={styles.fieldRight}>
+            <ColorPicker value={color} onChange={setColor} disabled={isSaving} size="small" />
+          </div>
+        </div>
+
         <div className={styles.dialogActions}>
           <button type="button" className={styles.btn} onClick={onClose} disabled={isSaving}>
             Cancel
@@ -419,7 +470,7 @@ const TeamDialog = ({
           <button
             type="button"
             className={styles.btnPrimary}
-            onClick={() => void onSave(teamId.trim())}
+            onClick={() => void onSave(teamId.trim(), color, description)}
             disabled={!teamId.trim() || !isDirty || isSaving}
           >
             {isSaving ? 'Saving…' : mode === 'create' ? 'Add team' : 'Save team'}
@@ -488,7 +539,7 @@ const AddMembersDialog = ({
               const user = users.find(u => u.id === assignment.user_id);
               return (
                 <div key={assignment.user_id} className={styles.pickedRow}>
-                  <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={assignment.user_id} size={24} />
+                  <MemberAvatar name={user?.display_name ?? ''} email={user?.email ?? null} userId={assignment.user_id} color={user?.color ?? null} size={24} />
                   <div className={styles.pickedName}>
                     {user ? getUserLabel(user) : assignment.user_id}
                   </div>

@@ -46,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: userData.email,
         display_name: userData.display_name,
         auth_provider: userData.auth_provider,
+        color: userData.color,
         created_at: userData.created_at,
         last_login_at: userData.last_login_at
       });

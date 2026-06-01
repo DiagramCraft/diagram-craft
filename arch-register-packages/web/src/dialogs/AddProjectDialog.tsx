@@ -3,6 +3,7 @@ import { Dialog } from '../components/Dialog';
 import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
+import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
 
 const PROJECT_STATUSES = [
@@ -25,6 +26,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
   const [description, setDescription] = useState('');
   const [owner, setOwner] = useState('');
   const [status, setStatus] = useState<'pinned' | 'active' | 'archived'>('active');
+  const [color, setColor] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -40,6 +42,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
       setDescription('');
       setOwner(canCreateWithoutOwner ? '' : (creatableTeams[0]?.id ?? ''));
       setStatus('active');
+      setColor(null);
       setError('');
       setTimeout(() => nameRef.current?.focus(), 0);
     }
@@ -60,6 +63,7 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
         description: description.trim(),
         owner: owner || null,
         status,
+        color,
       });
       onCreated(project);
       onClose();
@@ -114,6 +118,10 @@ export const AddProjectDialog = ({ open, onClose, onCreated, workspaceId, teams 
               </option>
             ))}
           </select>
+        </div>
+        <div className={styles.field}>
+          <label>Color</label>
+          <ColorPicker value={color} onChange={setColor} size="small" />
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <div className={styles.actions}>

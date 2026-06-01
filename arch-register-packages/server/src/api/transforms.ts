@@ -133,6 +133,7 @@ export const toApiProject = (
   description: project.description,
   owner: project.owner,
   status: project.status,
+  color: project.color,
   file_count: fileCount,
   created_at: project.created_at.toISOString(),
   updated_at: project.updated_at.toISOString(),

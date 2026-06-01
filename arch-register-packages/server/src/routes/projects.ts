@@ -163,6 +163,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           description: typeof description === 'string' ? description : '',
           owner: resolvedOwner,
           status: projectStatus,
+          color: typeof body.color === 'string' ? body.color : null,
           created_at: timestamp,
           updated_at: timestamp
         });
@@ -231,6 +232,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
               : oldRow.description,
           owner: resolvedOwner,
           status: projectStatus ?? oldRow.status,
+          color: body.color !== undefined ? (typeof body.color === 'string' ? body.color : null) : oldRow.color,
           updated_at: new Date()
         });
 

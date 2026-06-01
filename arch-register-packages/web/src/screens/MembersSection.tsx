@@ -178,6 +178,7 @@ export const MembersSection = ({
                           name={member.display_name}
                           email={member.email}
                           userId={member.user_id}
+                          color={userInfo?.color ?? null}
                         />
                         <div>
                           <div className={styles.memberNameMain}>{member.display_name}</div>

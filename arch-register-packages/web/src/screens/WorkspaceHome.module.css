@@ -189,6 +189,7 @@
 }
 
 .projectRow {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -197,6 +198,15 @@
   border-radius: var(--r);
   text-align: left;
   color: var(--fg-1);
+}
+
+.projectColorBar {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
 }
 
 .projectRow:hover {

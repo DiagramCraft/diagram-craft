@@ -31,6 +31,8 @@ export type WorkspaceLifecycleState = {
 export type WorkspaceOwnerOption = {
   id: string;
   sort_order: number;
+  color?: string | null;
+  description?: string;
 };
 
 // ── Workspace Members ─────────────────────────────────────────
@@ -50,4 +52,5 @@ export type WorkspaceUserInfo = {
   display_name: string;
   auth_provider: 'local' | 'oidc';
   is_active: boolean;
+  color?: string | null;
 };

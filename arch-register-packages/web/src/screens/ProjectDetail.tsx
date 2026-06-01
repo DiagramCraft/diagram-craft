@@ -6,6 +6,7 @@ import { Dialog } from '../components/Dialog';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
+import { ColorPicker } from '../components/ColorPicker';
 import {
   TbPlus, TbFolder, TbFolderOpen, TbSearch,
   TbLayoutGrid, TbList, TbTrash, TbPencil, TbStar,
@@ -848,11 +849,21 @@ const ProjectSettings = ({
   const [description, setDescription] = useState(project.description);
   const [owner, setOwner] = useState(project.owner ?? '');
   const [status, setStatus] = useState(project.status);
+  const [color, setColor] = useState<string | null>(project.color ?? null);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const updateProject = useUpdateProject(workspaceId);
   const deleteProject = useDeleteProject(workspaceId);
+
+  useEffect(() => {
+    setName(project.name);
+    setDescription(project.description);
+    setOwner(project.owner ?? '');
+    setStatus(project.status);
+    setColor(project.color ?? null);
+    setError('');
+  }, [project]);
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -869,6 +880,7 @@ const ProjectSettings = ({
           description: description.trim(),
           owner: owner || null,
           status,
+          color,
         },
       },
       {
@@ -943,6 +955,10 @@ const ProjectSettings = ({
             </option>
           ))}
         </select>
+      </div>
+      <div className={styles.formRow}>
+        <label className={styles.formLabel}>Color</label>
+        <ColorPicker value={color} onChange={setColor} size="small" />
       </div>
       {error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
       <div className={styles.formActions}>

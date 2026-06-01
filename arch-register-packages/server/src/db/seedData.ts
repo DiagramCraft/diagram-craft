@@ -33,23 +33,51 @@ export const seedLifecycleStates: WorkspaceLifecycleState[] = [
 ];
 
 export const seedOwners: WorkspaceOwner[] = [
-  { id: 'Platform Engineering', workspace: 'default', sort_order: 0, created_at: now },
-  { id: 'Design Systems', workspace: 'default', sort_order: 1, created_at: now },
-  { id: 'Security & Compliance', workspace: 'default', sort_order: 2, created_at: now },
-  { id: 'Data Platform', workspace: 'default', sort_order: 3, created_at: now },
+  { 
+    id: 'Platform Engineering', 
+    workspace: 'default', 
+    sort_order: 0, 
+    color: 'var(--tag-component)',
+    description: 'Responsible for platform infrastructure and core services',
+    created_at: now 
+  },
+  { 
+    id: 'Design Systems', 
+    workspace: 'default', 
+    sort_order: 1, 
+    color: 'var(--tag-api)',
+    description: 'Maintains design system and UI component libraries',
+    created_at: now 
+  },
+  { 
+    id: 'Security & Compliance', 
+    workspace: 'default', 
+    sort_order: 2, 
+    color: 'var(--danger)',
+    description: 'Ensures security standards and regulatory compliance',
+    created_at: now 
+  },
+  { 
+    id: 'Data Platform', 
+    workspace: 'default', 
+    sort_order: 3, 
+    color: 'var(--tag-database)',
+    description: 'Manages data infrastructure and analytics pipelines',
+    created_at: now 
+  },
 ];
 
 export const seedLocalUsers = [
-  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist' },
-  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen' },
-  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez' },
-  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo' },
-  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski' },
-  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg' },
-  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann' },
-  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel' },
-  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois' },
-  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson' },
+  { id: 'globaladmin', email: 'emma.lindqvist@example.com', display_name: 'Emma Lindqvist', color: 'var(--tag-component)' },
+  { id: 'workspaceadmin', email: 'james.chen@example.com', display_name: 'James Chen', color: 'var(--tag-api)' },
+  { id: 'workspaceowner', email: 'sofia.martinez@example.com', display_name: 'Sofia Martinez', color: 'var(--tag-service)' },
+  { id: 'platformteamadmin', email: 'daniel.okonkwo@example.com', display_name: 'Daniel Okonkwo', color: 'var(--tag-database)' },
+  { id: 'platformteameditor', email: 'anna.kowalski@example.com', display_name: 'Anna Kowalski', color: 'var(--tag-system)' },
+  { id: 'designteamadmin', email: 'marcus.berg@example.com', display_name: 'Marcus Berg', color: 'var(--danger)' },
+  { id: 'securityteamadmin', email: 'lena.hoffmann@example.com', display_name: 'Lena Hoffmann', color: 'oklch(0.65 0.15 340)' },
+  { id: 'workspaceeditor', email: 'raj.patel@example.com', display_name: 'Raj Patel', color: 'oklch(0.65 0.12 170)' },
+  { id: 'workspacereviewer', email: 'clara.dubois@example.com', display_name: 'Clara Dubois', color: 'oklch(0.65 0.14 200)' },
+  { id: 'workspaceviewer', email: 'oscar.nilsson@example.com', display_name: 'Oscar Nilsson', color: 'oklch(0.70 0.14 55)' },
 ] as const;
 
 export const seedTeamAssignments: TeamMembership[] = [
@@ -406,6 +434,7 @@ export const seedProjects: Project[] = [
     description: 'Redesign of the customer portal frontend and API layer.',
     owner: 'Design Systems',
     status: 'active',
+    color: 'var(--tag-api)',
     created_at: now,
     updated_at: now,
   },
@@ -416,6 +445,7 @@ export const seedProjects: Project[] = [
     description: 'Migration from legacy auth to the new identity platform.',
     owner: 'Security & Compliance',
     status: 'pinned',
+    color: 'var(--danger)',
     created_at: now,
     updated_at: now,
   },

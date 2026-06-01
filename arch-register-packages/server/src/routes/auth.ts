@@ -181,6 +181,7 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
           oidc_issuer: claims.issuer,
           oidc_subject: claims.sub,
           is_active: true,
+          color: null,
           created_at: new Date(),
           updated_at: new Date(),
           last_login_at: new Date()
@@ -323,6 +324,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         email: user.email,
         display_name: user.display_name,
         auth_provider: user.auth_provider,
+        color: user.color,
         created_at: user.created_at.toISOString(),
         last_login_at: user.last_login_at?.toISOString() ?? null,
         global_roles: globalRoles,
@@ -330,6 +332,48 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         team_assignments_by_workspace: teamAssignmentsByWorkspace,
         workspace_roles: workspaceRoles,
         teams_by_workspace: teamsByWorkspace,
+      };
+    })
+  );
+
+  // PATCH /api/users/:id - Update current user's own account settings
+  app.patch(
+    '/api/users/:id',
+    defineHandler(async event => {
+      const authenticatedUser = event.context.user as User;
+      const id = event.context.params?.['id'];
+      httpAssert.string(id, { message: 'id is required' });
+      httpAssert.true(id === authenticatedUser.id, {
+        status: 403,
+        message: 'You can only update your own account settings'
+      });
+
+      const body = (await readBody(event).catch(() => undefined)) as
+        | { color?: unknown }
+        | undefined;
+      httpAssert.json(body, { message: 'Request body must be a JSON object' });
+
+      if (body.color !== undefined && body.color !== null) {
+        httpAssert.string(body.color, { message: 'color must be a string if provided' });
+      }
+
+      const updatedUser = await db.identityAuth.updateUser(id, {
+        color: (body.color as string | null | undefined) ?? null,
+        updated_at: new Date()
+      });
+
+      httpAssert.present(updatedUser, { status: 404, message: 'User not found' });
+
+      return {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        display_name: updatedUser.display_name,
+        auth_provider: updatedUser.auth_provider,
+        is_active: updatedUser.is_active,
+        color: updatedUser.color,
+        created_at: updatedUser.created_at.toISOString(),
+        updated_at: updatedUser.updated_at.toISOString(),
+        last_login_at: updatedUser.last_login_at?.toISOString() ?? null,
       };
     })
   );
