@@ -1,4 +1,5 @@
 import type {
+  BuiltinWorkspaceRole,
   EntityAction,
   EntityRole,
   GlobalPermission,
@@ -6,7 +7,8 @@ import type {
   ProjectAction,
   TeamRole,
   WorkspaceCapability,
-  WorkspaceRole
+  WorkspaceRole,
+  WorkspaceRoleDefinition
 } from './types.js';
 
 /**
@@ -88,7 +90,7 @@ export const GLOBAL_ROLES: Array<{
 /**
  * Maps workspace roles to capabilities within a workspace.
  */
-export const WORKSPACE_ROLE_CAPABILITIES: Record<WorkspaceRole, WorkspaceCapability[]> = {
+export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, WorkspaceCapability[]> = {
   owner: [
     'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',
     'people.invite', 'people.role', 'people.remove', 'people.teams',
@@ -118,19 +120,14 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<WorkspaceRole, WorkspaceCapabil
 /**
  * Metadata for workspace roles — used by the admin UI.
  */
-export const WORKSPACE_ROLES: Array<{
-  id: WorkspaceRole;
-  name: string;
-  description: string;
-  tone: string;
-  builtin: boolean;
-}> = [
+export const BUILTIN_WORKSPACE_ROLES: WorkspaceRoleDefinition[] = [
   {
     id: 'owner',
     name: 'Owner',
     description: 'Full access to everything, including billing and workspace deletion.',
     tone: 'var(--tag-system)',
     builtin: true,
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['owner'],
   },
   {
     id: 'admin',
@@ -138,6 +135,7 @@ export const WORKSPACE_ROLES: Array<{
     description: 'Manage members, teams, integrations and the data model.',
     tone: 'var(--accent)',
     builtin: true,
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['admin'],
   },
   {
     id: 'editor',
@@ -145,6 +143,7 @@ export const WORKSPACE_ROLES: Array<{
     description: 'Create and edit diagrams, entities and projects.',
     tone: 'var(--tag-component)',
     builtin: true,
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['editor'],
   },
   {
     id: 'reviewer',
@@ -152,6 +151,7 @@ export const WORKSPACE_ROLES: Array<{
     description: 'Comment on diagrams and propose changes — read-only otherwise.',
     tone: 'var(--tag-api)',
     builtin: true,
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['reviewer'],
   },
   {
     id: 'viewer',
@@ -159,8 +159,11 @@ export const WORKSPACE_ROLES: Array<{
     description: 'Read-only access to all content in the workspace.',
     tone: 'var(--fg-3)',
     builtin: true,
+    capabilities: WORKSPACE_ROLE_CAPABILITIES['viewer'],
   },
 ];
+
+export const WORKSPACE_ROLES = BUILTIN_WORKSPACE_ROLES;
 
 /**
  * Capability groups for the permission matrix UI.
@@ -223,10 +226,34 @@ export const getGlobalPermissionsForRoles = (roles: Iterable<GlobalRole>): Set<G
   return permissions;
 };
 
+export const getBuiltinWorkspaceRole = (
+  roleId: WorkspaceRole
+): WorkspaceRoleDefinition | null =>
+  BUILTIN_WORKSPACE_ROLES.find(role => role.id === roleId) ?? null;
+
+export const resolveWorkspaceRoleDefinitions = (
+  customRoles: WorkspaceRoleDefinition[] = []
+): WorkspaceRoleDefinition[] => {
+  const roles = [...BUILTIN_WORKSPACE_ROLES];
+  const reservedIds = new Set(BUILTIN_WORKSPACE_ROLES.map(role => role.id));
+
+  for (const role of customRoles) {
+    if (reservedIds.has(role.id)) continue;
+    roles.push({
+      ...role,
+      builtin: false,
+    });
+  }
+
+  return roles;
+};
+
 /**
  * Check if a workspace role has a specific capability
  */
 export const workspaceRoleHasCapability = (
   role: WorkspaceRole,
-  capability: WorkspaceCapability
-): boolean => WORKSPACE_ROLE_CAPABILITIES[role].includes(capability);
+  capability: WorkspaceCapability,
+  roles: Iterable<WorkspaceRoleDefinition> = BUILTIN_WORKSPACE_ROLES
+): boolean =>
+  Array.from(roles).find(roleDefinition => roleDefinition.id === role)?.capabilities.includes(capability) ?? false;

@@ -18,8 +18,11 @@ import type {
   AuditLogEntry,
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
+  WorkspaceRoleDefinition,
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
+  CreateWorkspaceRoleRequest,
+  UpdateWorkspaceRoleRequest,
   ProjectTemplatesResponse,
 } from '@arch-register/api-types';
 import type {
@@ -49,6 +52,7 @@ export type {
   AuditLogEntry,
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
+  WorkspaceRoleDefinition,
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
 };
@@ -748,6 +752,33 @@ export const fetchWorkspaceMembers = (workspace: string) =>
 
 export const fetchWorkspaceUsers = (workspace: string) =>
   apiFetch<WorkspaceUserInfo[]>(`/api/${workspace}/config/users`);
+
+export const fetchWorkspaceRoles = (workspace: string) =>
+  apiFetch<WorkspaceRoleDefinition[]>(`/api/${workspace}/config/roles`);
+
+export const createWorkspaceRole = (
+  workspace: string,
+  role: CreateWorkspaceRoleRequest
+) =>
+  apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles`, {
+    method: 'POST',
+    body: JSON.stringify(role),
+  });
+
+export const updateWorkspaceRole = (
+  workspace: string,
+  roleId: string,
+  role: UpdateWorkspaceRoleRequest
+) =>
+  apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles/${roleId}`, {
+    method: 'PUT',
+    body: JSON.stringify(role),
+  });
+
+export const deleteWorkspaceRole = (workspace: string, roleId: string) =>
+  apiFetch<WorkspaceRoleDefinition>(`/api/${workspace}/config/roles/${roleId}`, {
+    method: 'DELETE',
+  });
 
 export type TeamAssignmentInfo = {
   workspace: string;

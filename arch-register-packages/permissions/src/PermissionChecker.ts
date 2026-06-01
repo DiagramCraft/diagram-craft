@@ -11,7 +11,7 @@ import type {
   WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
-import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS, WORKSPACE_ROLE_CAPABILITIES } from './constants.js';
+import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
 
 /**
  * Pure permission checker.
@@ -98,7 +98,7 @@ export class PermissionChecker {
       return false;
     }
 
-    return WORKSPACE_ROLE_CAPABILITIES[context.workspaceRole].includes(capability);
+    return context.workspaceRoles.get(context.workspaceRole)?.capabilities.includes(capability) ?? false;
   }
 
   /**

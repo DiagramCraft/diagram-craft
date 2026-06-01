@@ -34,7 +34,18 @@ export type GlobalPermission =
   | 'create_workspaces'
   | 'manage_workspace_roles';
 
-export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+export type BuiltinWorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
+
+export type WorkspaceRole = string;
+
+export type WorkspaceRoleDefinition = {
+  id: WorkspaceRole;
+  name: string;
+  description: string;
+  tone: string;
+  builtin: boolean;
+  capabilities: WorkspaceCapability[];
+};
 
 export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
 
@@ -159,6 +170,7 @@ export type AuthorizationContext = {
   globalRoles: Set<GlobalRole>;
   globalPermissions: Set<GlobalPermission>;
   workspaceRole: WorkspaceRole | null;
+  workspaceRoles: Map<string, WorkspaceRoleDefinition>;
   teamIds: Set<string>;
   teamAssignments: TeamAssignment[];
   teamRolesByTeam: Map<string, Set<TeamRole>>;

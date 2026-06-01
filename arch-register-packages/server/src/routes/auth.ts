@@ -7,7 +7,7 @@ import { generateAuthUrl, handleCallback } from '../auth/oidcClient.js';
 import { clearAuthCookies, setAuthCookies } from '../utils/cookies.js';
 import type { JWTPayload, User } from '../types.js';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from '../auth/authorization.js';
-import { getGlobalPermissionsForRoles } from '@arch-register/permissions';
+import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from '@arch-register/permissions';
 import { AuthenticatedEvent } from '../middleware/auth';
 import { httpAssert } from '../utils/httpAssert.js';
 
@@ -292,10 +292,11 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
 
       const workspaceData = await Promise.all(
         workspaces.map(async workspace => {
-          const [teamAssignments, teams, workspaceRole] = await Promise.all([
+          const [teamAssignments, teams, workspaceRole, customRoles] = await Promise.all([
             db.workspaceAdmin.listTeamAssignments(workspace.id),
             db.workspaceAdmin.listTeams(workspace.id),
             db.workspaceAdmin.getWorkspaceRole(workspace.id, user.id),
+            db.workspaceAdmin.listCustomWorkspaceRoles(workspace.id),
           ]);
           return {
             workspace_id: workspace.id,
@@ -308,6 +309,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
               type: 'team' as const,
             })),
             workspace_role: workspaceRole,
+            workspace_roles: resolveWorkspaceRoleDefinitions(customRoles),
           };
         })
       );
@@ -325,6 +327,9 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       const teamsByWorkspace = Object.fromEntries(
         workspaceData.map(ws => [ws.workspace_id, ws.teams])
       );
+      const workspaceRoleDefinitionsByWorkspace = Object.fromEntries(
+        workspaceData.map(ws => [ws.workspace_id, ws.workspace_roles])
+      );
       return {
         id: user.id,
         email: user.email,
@@ -337,6 +342,7 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
         global_permissions: globalPermissions,
         team_assignments_by_workspace: teamAssignmentsByWorkspace,
         workspace_roles: workspaceRoles,
+        workspace_role_definitions_by_workspace: workspaceRoleDefinitionsByWorkspace,
         teams_by_workspace: teamsByWorkspace,
       };
     })

@@ -35,6 +35,44 @@ export type WorkspaceOwnerOption = {
   description?: string;
 };
 
+export type WorkspaceRoleCapability =
+  | 'ws.view'
+  | 'ws.settings'
+  | 'ws.delete'
+  | 'ws.audit'
+  | 'people.invite'
+  | 'people.role'
+  | 'people.remove'
+  | 'people.teams'
+  | 'proj.create'
+  | 'proj.edit'
+  | 'ent.edit'
+  | 'ent.propose'
+  | 'comments'
+  | 'export'
+  | 'schema.edit'
+  | 'schema.publish';
+
+export type WorkspaceRoleDefinition = {
+  id: string;
+  name: string;
+  description: string;
+  tone: string;
+  builtin: boolean;
+  capabilities: WorkspaceRoleCapability[];
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type CreateWorkspaceRoleRequest = {
+  name: string;
+  description: string;
+  tone?: string;
+  capabilities: WorkspaceRoleCapability[];
+};
+
+export type UpdateWorkspaceRoleRequest = CreateWorkspaceRoleRequest;
+
 // ── Workspace Members ─────────────────────────────────────────
 
 export type WorkspaceMemberInfo = {

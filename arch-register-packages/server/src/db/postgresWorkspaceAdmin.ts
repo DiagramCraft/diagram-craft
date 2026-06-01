@@ -4,7 +4,13 @@ import type {
   WorkspaceAdminDatabase
 } from './database.js';
 import { normalizePostgresError, PostgresDatabaseBase, type PostgresRowTypes } from './postgresBase.js';
-import type { WorkspaceLifecycleState, WorkspaceMember, WorkspaceOwner, WorkspaceRole, TeamMembership } from '../types.js';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceMember,
+  WorkspaceOwner,
+  TeamMembership,
+  WorkspaceRoleDefinition
+} from '../types.js';
 
 export class PostgresWorkspaceAdminDatabase
   extends PostgresDatabaseBase
@@ -70,6 +76,7 @@ export class PostgresWorkspaceAdminDatabase
         await tx`DELETE FROM entity WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_member WHERE workspace = ${id}`;
+        await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
         await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_owner WHERE workspace = ${id}`;
@@ -200,7 +207,7 @@ export class PostgresWorkspaceAdminDatabase
     return row ?? null;
   }
 
-  async setWorkspaceMemberRole(workspace: string, userId: string, role: WorkspaceRole, createdAt: Date) {
+  async setWorkspaceMemberRole(workspace: string, userId: string, role: string, createdAt: Date) {
     const [row] = await this.sql<WorkspaceMember[]>`
       INSERT INTO workspace_member (workspace, user_id, role, created_at)
       VALUES (${workspace}, ${userId}, ${role}, ${createdAt})
@@ -223,5 +230,76 @@ export class PostgresWorkspaceAdminDatabase
   async getWorkspaceRole(workspace: string, userId: string) {
     const member = await this.getWorkspaceMember(workspace, userId);
     return member?.role ?? null;
+  }
+
+  async listCustomWorkspaceRoles(workspace: string) {
+    return await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+      SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
+      FROM workspace_role
+      WHERE workspace = ${workspace}
+      ORDER BY name, id
+    `;
+  }
+
+  async getCustomWorkspaceRole(workspace: string, roleId: string) {
+    const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+      SELECT id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
+      FROM workspace_role
+      WHERE workspace = ${workspace} AND id = ${roleId}
+    `;
+    return row ?? null;
+  }
+
+  async createCustomWorkspaceRole(input: WorkspaceRoleDefinition) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+        INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.tone}, ${this.json(input.capabilities)}, ${input.created_at}, ${input.updated_at})
+        RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateCustomWorkspaceRole(
+    workspace: string,
+    roleId: string,
+    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
+  ) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+        UPDATE workspace_role
+        SET name = ${input.name},
+            description = ${input.description},
+            tone = ${input.tone},
+            capabilities = ${this.json(input.capabilities)},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND id = ${roleId}
+        RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteCustomWorkspaceRole(workspace: string, roleId: string) {
+    const [row] = await this.sql<PostgresRowTypes['workspaceRoleDefinition'][]>`
+      DELETE FROM workspace_role
+      WHERE workspace = ${workspace} AND id = ${roleId}
+      RETURNING id, workspace, name, description, tone, FALSE AS builtin, capabilities, created_at, updated_at
+    `;
+    return row ?? null;
+  }
+
+  async countWorkspaceMembersByRole(workspace: string, roleId: string) {
+    const [row] = await this.sql<{ count: number }[]>`
+      SELECT COUNT(*)::int AS count
+      FROM workspace_member
+      WHERE workspace = ${workspace} AND role = ${roleId}
+    `;
+    return row?.count ?? 0;
   }
 }

@@ -13,7 +13,7 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
-  WorkspaceRole
+  WorkspaceRoleDefinition
 } from '../types.js';
 
 export type DbDriver = 'postgres' | 'sqlite';
@@ -136,9 +136,19 @@ export type WorkspaceAdminDatabase = {
 
   listWorkspaceMembers(ws: string): Promise<WorkspaceMember[]>;
   getWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
-  setWorkspaceMemberRole(ws: string, userId: string, role: WorkspaceRole, createdAt: Date): Promise<WorkspaceMember>;
+  setWorkspaceMemberRole(ws: string, userId: string, role: string, createdAt: Date): Promise<WorkspaceMember>;
   removeWorkspaceMember(ws: string, userId: string): Promise<WorkspaceMember | null>;
-  getWorkspaceRole(ws: string, userId: string): Promise<WorkspaceRole | null>;
+  getWorkspaceRole(ws: string, userId: string): Promise<string | null>;
+  listCustomWorkspaceRoles(ws: string): Promise<WorkspaceRoleDefinition[]>;
+  getCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinition | null>;
+  createCustomWorkspaceRole(input: WorkspaceRoleDefinition): Promise<WorkspaceRoleDefinition>;
+  updateCustomWorkspaceRole(
+    ws: string,
+    roleId: string,
+    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
+  ): Promise<WorkspaceRoleDefinition | null>;
+  deleteCustomWorkspaceRole(ws: string, roleId: string): Promise<WorkspaceRoleDefinition | null>;
+  countWorkspaceMembersByRole(ws: string, roleId: string): Promise<number>;
 };
 
 export type CatalogDatabase = {

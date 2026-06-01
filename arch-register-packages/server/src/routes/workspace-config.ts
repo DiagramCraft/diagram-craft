@@ -1,15 +1,74 @@
+import { randomUUID } from 'node:crypto';
 import { H3, defineHandler } from 'h3';
+import {
+  BUILTIN_WORKSPACE_ROLES,
+  WORKSPACE_CAPABILITY_GROUPS,
+  resolveWorkspaceRoleDefinitions
+} from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
 import { resolveWorkspace } from './workspace-resolver.js';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
-import type { TeamRole, WorkspaceRole } from '../types.js';
+import type { TeamRole, WorkspaceRoleCapability } from '../types.js';
 import { httpAssert } from '../utils/httpAssert.js';
 
 const BASE = '/api/:workspace/config';
 
-const VALID_WORKSPACE_ROLES: WorkspaceRole[] = ['owner', 'admin', 'editor', 'reviewer', 'viewer'];
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
+const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group => group.caps.map(cap => cap.id));
+
+const sanitizeText = (text: string): string => {
+  return text
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '')
+    .trim();
+};
+
+const parseWorkspaceRoleInput = (body: unknown) => {
+  httpAssert.true(body != null && typeof body === 'object', {
+    message: 'Request body must be a JSON object'
+  });
+
+  const data = body as Record<string, unknown>;
+  httpAssert.string(data['name'], { message: 'name is required and must be a string' });
+  if (data['description'] !== undefined) {
+    httpAssert.string(data['description'], { message: 'description must be a string if provided' });
+  }
+  if (data['tone'] !== undefined) {
+    httpAssert.string(data['tone'], { message: 'tone must be a string if provided' });
+  }
+  httpAssert.array(data['capabilities'], { message: 'capabilities must be an array' });
+
+  const capabilities = (data['capabilities'] as unknown[]).map(capability => {
+    httpAssert.true(
+      typeof capability === 'string' && VALID_WORKSPACE_CAPABILITIES.includes(capability as WorkspaceRoleCapability),
+      { message: 'capabilities contains invalid values' }
+    );
+    return capability as WorkspaceRoleCapability;
+  });
+
+  const name = sanitizeText(data['name'] as string);
+  const description = data['description'] !== undefined ? sanitizeText(data['description'] as string) : '';
+  const tone = data['tone'] !== undefined ? (data['tone'] as string).trim() : 'var(--accent)';
+  
+  httpAssert.true(name.length > 0 && name.length <= 100, {
+    message: 'name must be between 1 and 100 characters'
+  });
+  httpAssert.true(description.length <= 500, {
+    message: 'description must not exceed 500 characters'
+  });
+  httpAssert.true(/^(var\(--[\w-]+\)|#[0-9a-fA-F]{3,8}|rgb|hsl)/.test(tone), {
+    message: 'tone must be a valid CSS color value'
+  });
+
+  return {
+    name,
+    description,
+    tone,
+    capabilities: [...new Set(capabilities)],
+  };
+};
 
 export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
   const router = new H3();
@@ -86,6 +145,98 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       return await db.workspaceAdmin.listTeams(workspace);
+    })
+  );
+
+  router.get(
+    `${BASE}/roles`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.role');
+      return resolveWorkspaceRoleDefinitions(await db.workspaceAdmin.listCustomWorkspaceRoles(workspace));
+    })
+  );
+
+  router.post(
+    `${BASE}/roles`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.role');
+      const body = await event.req.json().catch(() => undefined);
+      const input = parseWorkspaceRoleInput(body);
+      httpAssert.true(input.name.length > 0, { message: 'name is required' });
+
+      const now = new Date();
+      return await db.workspaceAdmin.createCustomWorkspaceRole({
+        id: randomUUID(),
+        workspace,
+        name: input.name,
+        description: input.description,
+        tone: input.tone,
+        builtin: false,
+        capabilities: input.capabilities,
+        created_at: now,
+        updated_at: now,
+      });
+    })
+  );
+
+  router.put(
+    `${BASE}/roles/:roleId`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.role');
+
+      const roleId = event.context.params?.['roleId'];
+      httpAssert.string(roleId, { message: 'roleId is required' });
+      httpAssert.true(!BUILTIN_WORKSPACE_ROLES.some(role => role.id === roleId), {
+        status: 400,
+        message: 'Built-in roles cannot be edited'
+      });
+
+      const body = await event.req.json().catch(() => undefined);
+      const input = parseWorkspaceRoleInput(body);
+      httpAssert.true(input.name.length > 0, { message: 'name is required' });
+
+      const updated = await db.workspaceAdmin.updateCustomWorkspaceRole(workspace, roleId, {
+        name: input.name,
+        description: input.description,
+        tone: input.tone,
+        builtin: false,
+        capabilities: input.capabilities,
+        updated_at: new Date(),
+      });
+      httpAssert.present(updated, { status: 404, message: 'Role not found' });
+      return updated;
+    })
+  );
+
+  router.delete(
+    `${BASE}/roles/:roleId`,
+    defineHandler(async event => {
+      const workspace = await resolveWorkspace(event, db);
+      const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
+      requireWorkspaceCapability(authCtx, 'people.role');
+
+      const roleId = event.context.params?.['roleId'];
+      httpAssert.string(roleId, { message: 'roleId is required' });
+      httpAssert.true(!BUILTIN_WORKSPACE_ROLES.some(role => role.id === roleId), {
+        status: 400,
+        message: 'Built-in roles cannot be deleted'
+      });
+
+      const memberCount = await db.workspaceAdmin.countWorkspaceMembersByRole(workspace, roleId);
+      httpAssert.true(memberCount === 0, {
+        status: 409,
+        message: 'Role is still assigned to workspace members'
+      });
+
+      const deleted = await db.workspaceAdmin.deleteCustomWorkspaceRole(workspace, roleId);
+      httpAssert.present(deleted, { status: 404, message: 'Role not found' });
+      return deleted;
     })
   );
 
@@ -348,18 +499,25 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
 
       const body = (await event.req.json().catch(() => undefined)) as { role?: unknown } | undefined;
       const role = body?.role;
-      httpAssert.true(
-        typeof role === 'string' && VALID_WORKSPACE_ROLES.includes(role as WorkspaceRole),
-        { message: `role must be one of: ${VALID_WORKSPACE_ROLES.join(', ')}` }
-      );
+      httpAssert.string(role, { message: 'role is required and must be a string' });
 
-      const user = await db.identityAuth.getUser(userId);
+      const [user, customRoles] = await Promise.all([
+        db.identityAuth.getUser(userId),
+        db.workspaceAdmin.listCustomWorkspaceRoles(workspace)
+      ]);
+      
       httpAssert.present(user, { status: 404, message: 'User not found' });
+      
+      const validRoleIds = new Set(resolveWorkspaceRoleDefinitions(customRoles).map(r => r.id));
+      httpAssert.true(
+        validRoleIds.has(role),
+        { message: 'role must reference an existing workspace role' }
+      );
 
       const member = await db.workspaceAdmin.setWorkspaceMemberRole(
         workspace,
         userId,
-        role as WorkspaceRole,
+        role,
         new Date()
       );
       return member;

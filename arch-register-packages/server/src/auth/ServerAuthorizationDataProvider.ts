@@ -6,7 +6,8 @@ import {
   type PermissionDataProvider,
   type TeamAssignment,
   type WorkspaceTeam,
-  type WorkspaceRole
+  type WorkspaceRole,
+  resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../db/database.js';
 
@@ -47,5 +48,9 @@ export class ServerDataProvider implements PermissionDataProvider {
 
   async getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null> {
     return this.db.workspaceAdmin.getWorkspaceRole(workspaceId, userId);
+  }
+
+  async getWorkspaceRoles(workspaceId: string) {
+    return resolveWorkspaceRoleDefinitions(await this.db.workspaceAdmin.listCustomWorkspaceRoles(workspaceId));
   }
 }

@@ -6,9 +6,10 @@ import type {
   GlobalRole,
   TeamAssignment,
   WorkspaceTeam,
-  WorkspaceRole
+  WorkspaceRole,
+  WorkspaceRoleDefinition
 } from './types.js';
-import { getGlobalPermissionsForRoles } from './constants.js';
+import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from './constants.js';
 
 /**
  * Data provider interface for fetching permission-related data.
@@ -49,12 +50,18 @@ export interface PermissionDataProvider {
    * Fetch user's workspace role
    */
   getWorkspaceRole(workspaceId: string, userId: string): Promise<WorkspaceRole | null>;
+
+  /**
+   * Fetch available workspace roles
+   */
+  getWorkspaceRoles?(workspaceId: string): Promise<WorkspaceRoleDefinition[]>;
 }
 
 export type AuthorizationContextData = {
   userId: string;
   globalRoles: GlobalRole[];
   workspaceRole: WorkspaceRole | null;
+  workspaceRoles?: WorkspaceRoleDefinition[];
   teamAssignments?: TeamAssignment[];
   teams?: WorkspaceTeam[];
   schemas: EntitySchema[];
@@ -66,6 +73,7 @@ export const buildAuthorizationContext = ({
   userId,
   globalRoles,
   workspaceRole,
+  workspaceRoles,
   teamAssignments,
   teams,
   schemas,
@@ -73,6 +81,7 @@ export const buildAuthorizationContext = ({
   grants
 }: AuthorizationContextData): AuthorizationContext => {
   const normalizedTeams = teams ?? [];
+  const normalizedWorkspaceRoles = resolveWorkspaceRoleDefinitions(workspaceRoles ?? []);
   const globalRolesSet = new Set(globalRoles);
   const globalPermissions = getGlobalPermissionsForRoles(globalRolesSet);
   const normalizedAssignments = teamAssignments ?? [];
@@ -88,6 +97,7 @@ export const buildAuthorizationContext = ({
     globalRoles: globalRolesSet,
     globalPermissions,
     workspaceRole: workspaceRole ?? null,
+    workspaceRoles: new Map(normalizedWorkspaceRoles.map(role => [role.id, role])),
     teamIds: new Set(normalizedAssignments.map(assignment => assignment.teamId)),
     teamAssignments: normalizedAssignments,
     teamRolesByTeam,
@@ -103,10 +113,11 @@ export const fetchAuthorizationContextData = async (
   workspaceId: string,
   userId: string
 ): Promise<AuthorizationContextData> => {
-  const [globalRoles, workspaceRole, teamAssignments, teams, schemas, entities, grants] =
+  const [globalRoles, workspaceRole, workspaceRoles, teamAssignments, teams, schemas, entities, grants] =
     await Promise.all([
       dataProvider.getGlobalRoles(userId),
       dataProvider.getWorkspaceRole(workspaceId, userId),
+      dataProvider.getWorkspaceRoles?.(workspaceId) ?? Promise.resolve([]),
       dataProvider.getTeamAssignments(workspaceId, userId),
       dataProvider.getTeams(workspaceId),
       dataProvider.getSchemas(workspaceId),
@@ -118,6 +129,7 @@ export const fetchAuthorizationContextData = async (
     userId,
     globalRoles,
     workspaceRole,
+    workspaceRoles,
     teamAssignments,
     teams,
     schemas,
