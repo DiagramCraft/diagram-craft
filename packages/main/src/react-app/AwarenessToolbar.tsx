@@ -5,6 +5,14 @@ import { debounce } from '@diagram-craft/utils/debounce';
 import React from 'react';
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 
+const getInitials = (name: string) =>
+  name
+    .split(/[\s@.]+/)
+    .slice(0, 2)
+    .map(w => w[0] ?? '')
+    .join('')
+    .toUpperCase();
+
 export const AwarenessToolbar = () => {
   const redraw = useRedraw();
   const redrawDebounced = debounce(redraw, 500);
@@ -28,8 +36,7 @@ export const AwarenessToolbar = () => {
             className={styles.eUser}
             style={{ '--avatar-color': user.color } as React.CSSProperties}
           >
-            {user.name[0]}
-            {user.name.at(1)?.toUpperCase()}
+            {getInitials(user.name)}
           </div>
         ))}
     </div>

@@ -6,7 +6,7 @@
   gap: 4px;
 
   .eUser {
-    background: #cccccc;
+    background: var(--avatar-color, #cccccc);
     height: 20px;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
@@ -19,8 +19,8 @@
 
     margin-left: -15px;
 
-    color: var(--avatar-color);
-    border: 1px solid var(--avatar-color);
+    color: white;
+    border: 1px solid color-mix(in oklch, var(--avatar-color, #cccccc) 80%, black 20%);
 
     &:nth-child(1) {
       margin-left: 0;

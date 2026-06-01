@@ -15,7 +15,7 @@ export const setAuthCookies = (
     httpOnly: true,
     secure,
     sameSite: 'lax',
-    path: '/api',
+    path: '/',
     maxAge: accessExpiresIn
   });
 
@@ -35,7 +35,7 @@ export const clearAuthCookies = (event: H3Event) => {
     httpOnly: true,
     secure,
     sameSite: 'lax',
-    path: '/api',
+    path: '/',
     maxAge: 0
   });
 

@@ -19,6 +19,8 @@ import { serializeDiagramDocument } from '@diagram-craft/model/serialization/ser
 import { CollaborationConfig } from '@diagram-craft/collaboration/collaborationConfig';
 import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
+import { useAuth } from '../auth/AuthContext';
+import { stableHue } from '../components/MemberAvatar';
 
 const ARCH_REGISTER_PUBLIC_PROVIDER_ID = 'arch-register-public';
 type PublicSchema = Omit<DataSchema, 'providerId'> & { providerId?: string };
@@ -31,6 +33,7 @@ export const DiagramScreen = () => {
     diagramId: string;
   };
   const navigate = useNavigate();
+  const { user } = useAuth();
   const workspaceId = workspaceSlug;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -220,11 +223,17 @@ export const DiagramScreen = () => {
 
         // Connect to collaboration backend and sync CRDT state
         const config = AppConfig.get();
-        const userState = {
-          name: config.awareness.name(),
-          color: config.awareness.color(),
-          avatar: config.awareness.avatar()
-        };
+        const userState = user
+          ? {
+              name: user.display_name,
+              color: user.color ?? `oklch(0.52 0.13 ${stableHue(user.id)})`,
+              avatar: config.awareness.avatar()
+            }
+          : {
+              name: config.awareness.name(),
+              color: config.awareness.color(),
+              avatar: config.awareness.avatar()
+            };
 
         const root = await documentFactory.loadCRDT(roomName, userState, () => {});
         const document = await documentFactory.createDocument(root, roomName, () => {});
