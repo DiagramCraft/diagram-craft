@@ -1,0 +1,59 @@
+import { createOpenRouterText, openRouterText } from '@tanstack/ai-openrouter';
+import { createOpenaiChat, openaiText } from '@tanstack/ai-openai';
+import { decrypt } from '../utils/encryption.js';
+import type { DatabaseAdapter } from '../db/database.js';
+
+import type { AiProvider } from '@arch-register/api-types';
+
+export type EffectiveAiConfig = {
+  provider: AiProvider;
+  apiKey: string;
+  model: string;
+  temperature: number;
+  systemPrompt: string | null;
+};
+
+const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet-4-20250514';
+const DEFAULT_OPENAI_MODEL = 'gpt-4o';
+const DEFAULT_TEMPERATURE = 0.7;
+
+export const resolveAiConfig = async (
+  db: DatabaseAdapter,
+  workspaceId: string
+): Promise<EffectiveAiConfig | null> => {
+  const wsConfig = await db.ai.getAiConfig(workspaceId);
+  const provider = (wsConfig?.provider ?? 'openrouter') as AiProvider;
+
+  const apiKey = wsConfig?.api_key_enc
+    ? decrypt(wsConfig.api_key_enc)
+    : provider === 'openai'
+      ? process.env['OPENAI_API_KEY']
+      : process.env['OPENROUTER_API_KEY'];
+
+  if (!apiKey) return null;
+
+  const defaultModel = provider === 'openai' ? DEFAULT_OPENAI_MODEL : DEFAULT_OPENROUTER_MODEL;
+
+  return {
+    provider,
+    apiKey,
+    model: wsConfig?.model ?? (provider === 'openai' ? process.env['OPENAI_MODEL'] : process.env['OPENROUTER_MODEL']) ?? defaultModel,
+    temperature: wsConfig?.temperature ?? DEFAULT_TEMPERATURE,
+    systemPrompt: wsConfig?.system_prompt ?? null,
+  };
+};
+
+export const createAiTextAdapter = (config: EffectiveAiConfig) => {
+  if (config.provider === 'openai') {
+    if (config.apiKey === process.env['OPENAI_API_KEY']) {
+      return openaiText(config.model as any);
+    }
+    return createOpenaiChat(config.model as any, config.apiKey);
+  }
+
+  // OpenRouter (default)
+  if (config.apiKey === process.env['OPENROUTER_API_KEY']) {
+    return openRouterText(config.model as any);
+  }
+  return createOpenRouterText(config.model as any, config.apiKey);
+};

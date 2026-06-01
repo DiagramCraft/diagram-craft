@@ -9,6 +9,7 @@ import { PostgresCatalogDatabase } from './postgresCatalog.js';
 import { PostgresIdentityAuthDatabase } from './postgresIdentityAuth.js';
 import { PostgresProjectsFilesDatabase } from './postgresProjectsFiles.js';
 import { PostgresWorkspaceAdminDatabase } from './postgresWorkspaceAdmin.js';
+import { PostgresAiDatabase } from './postgresAi.js';
 import { SERVER_DEFAULTS } from '../constants.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +23,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly projectsFiles: PostgresProjectsFilesDatabase;
   readonly audit: PostgresAuditDatabase;
   readonly identityAuth: PostgresIdentityAuthDatabase;
+  readonly ai: PostgresAiDatabase;
   readonly core;
 
   constructor(connectionString: string) {
@@ -36,6 +38,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.projectsFiles = new PostgresProjectsFilesDatabase(this.sql);
     this.audit = new PostgresAuditDatabase(this.sql);
     this.identityAuth = new PostgresIdentityAuthDatabase(this.sql);
+    this.ai = new PostgresAiDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,
@@ -44,6 +47,9 @@ export class PostgresDatabase implements DatabaseAdapter {
       },
       reset: async () => {
         try {
+          await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
+          await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
+          await this.sql`DROP TABLE IF EXISTS workspace_ai_config CASCADE`;
           await this.sql`DROP TABLE IF EXISTS global_role_assignment CASCADE`;
           await this.sql`DROP TABLE IF EXISTS team_membership CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_member CASCADE`;

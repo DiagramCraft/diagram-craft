@@ -161,7 +161,8 @@ export const useToggleTemplateStatus = (workspaceId: string, projectId: string) 
     }) => toggleTemplateStatus(workspaceId, projectId, filePath, isTemplate, isWorkspaceTemplate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectFileKeys.list(workspaceId, projectId) });
-      queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId, projectId] });
+      // Invalidate all project templates in the workspace since workspace templates are shared
+      queryClient.invalidateQueries({ queryKey: ['project-templates', workspaceId] });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(workspaceId, projectId) });
     },
   });

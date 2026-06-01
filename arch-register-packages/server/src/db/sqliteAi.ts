@@ -1,0 +1,118 @@
+import type { AiDatabase, CreateConversationInput, CreateMessageInput, UpsertAiConfigInput } from './database.js';
+import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
+
+export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
+  async getAiConfig(ws: string) {
+    return this.get(
+      'SELECT * FROM workspace_ai_config WHERE workspace = ?',
+      [ws],
+      sqliteMappers.aiConfig
+    );
+  }
+
+  async upsertAiConfig(ws: string, input: UpsertAiConfigInput) {
+    const now = new Date().toISOString();
+    const existing = await this.getAiConfig(ws);
+
+    if (existing) {
+      this.run(
+        `UPDATE workspace_ai_config
+         SET provider = COALESCE(?, provider),
+             api_key_enc = COALESCE(?, api_key_enc),
+             model = ?,
+             temperature = ?,
+             system_prompt = ?,
+             enabled = COALESCE(?, enabled),
+             updated_at = ?
+         WHERE workspace = ?`,
+        [
+          input.provider ?? null,
+          input.api_key_enc ?? null,
+          input.model !== undefined ? input.model : existing.model,
+          input.temperature !== undefined ? input.temperature : existing.temperature,
+          input.system_prompt !== undefined ? input.system_prompt : existing.system_prompt,
+          input.enabled != null ? (input.enabled ? 1 : 0) : null,
+          now,
+          ws
+        ]
+      );
+    } else {
+      this.run(
+        `INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, model, temperature, system_prompt, enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          ws,
+          input.provider ?? 'openrouter',
+          input.api_key_enc ?? null,
+          input.model ?? null,
+          input.temperature ?? null,
+          input.system_prompt ?? null,
+          input.enabled != null ? (input.enabled ? 1 : 0) : 1,
+          now,
+          now
+        ]
+      );
+    }
+
+    return (await this.getAiConfig(ws))!;
+  }
+
+  async listConversations(ws: string, userId: string) {
+    return this.all(
+      'SELECT * FROM ai_conversation WHERE workspace = ? AND user_id = ? ORDER BY updated_at DESC',
+      [ws, userId],
+      sqliteMappers.aiConversation
+    );
+  }
+
+  async getConversation(ws: string, id: string) {
+    return this.get(
+      'SELECT * FROM ai_conversation WHERE id = ? AND workspace = ?',
+      [id, ws],
+      sqliteMappers.aiConversation
+    );
+  }
+
+  async createConversation(input: CreateConversationInput) {
+    this.run(
+      'INSERT INTO ai_conversation (id, workspace, user_id, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [input.id, input.workspace, input.user_id, input.title, input.created_at.toISOString(), input.updated_at.toISOString()]
+    );
+    return (await this.getConversation(input.workspace, input.id))!;
+  }
+
+  async updateConversationTitle(ws: string, id: string, title: string) {
+    this.run(
+      'UPDATE ai_conversation SET title = ?, updated_at = ? WHERE id = ? AND workspace = ?',
+      [title, new Date().toISOString(), id, ws]
+    );
+    return this.getConversation(ws, id);
+  }
+
+  async deleteConversation(ws: string, id: string) {
+    const existing = await this.getConversation(ws, id);
+    if (!existing) return null;
+    this.run('DELETE FROM ai_conversation WHERE id = ? AND workspace = ?', [id, ws]);
+    return existing;
+  }
+
+  async listMessages(conversationId: string) {
+    return this.all(
+      'SELECT * FROM ai_message WHERE conversation_id = ? ORDER BY created_at ASC',
+      [conversationId],
+      sqliteMappers.aiMessage
+    );
+  }
+
+  async createMessage(input: CreateMessageInput) {
+    this.run(
+      'INSERT INTO ai_message (id, conversation_id, role, content, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [input.id, input.conversation_id, input.role, input.content, JSON.stringify(input.metadata), input.created_at.toISOString()]
+    );
+    return (await this.get(
+      'SELECT * FROM ai_message WHERE id = ?',
+      [input.id],
+      sqliteMappers.aiMessage
+    ))!;
+  }
+}

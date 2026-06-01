@@ -17,6 +17,8 @@ import { SearchScreen } from '../screens/SearchScreen';
 import { WorkspaceSettings } from '../screens/WorkspaceSettings';
 import { GlobalSettings } from '../screens/GlobalSettings';
 import { AccountSettings } from '../screens/AccountSettings';
+import { AssistantScreen } from '../screens/AssistantScreen';
+import { ExtractScreen } from '../screens/ExtractScreen';
 import { apiFetch } from '../api';
 import type { Workspace } from '../api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
@@ -26,6 +28,7 @@ import {
   validateSettingsSearch,
   validateSearchSearch,
   validateModelSearch,
+  validateAssistantSearch,
 } from './searchParams';
 
 // ─── Root Route ───────────────────────────────────────────────
@@ -160,6 +163,21 @@ const accountSettingsRoute = createRoute({
   component: AccountSettings,
 });
 
+// ─── AI Assistant ───────────────────────────────────────────
+const assistantRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'assistant',
+  validateSearch: validateAssistantSearch,
+  component: AssistantScreen,
+});
+
+// ─── AI Extract ─────────────────────────────────────────────
+const extractRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'extract',
+  component: ExtractScreen,
+});
+
 // ─── Route Tree ──────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -176,6 +194,8 @@ export const routeTree = rootRoute.addChildren([
       settingsRoute,
       globalSettingsRoute,
       accountSettingsRoute,
+      assistantRoute,
+      extractRoute,
     ]),
   ]),
 ]);

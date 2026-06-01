@@ -1,0 +1,216 @@
+import { useState, useCallback, useEffect } from 'react';
+import styles from './WorkspaceSettings.module.css';
+import { useAiConfig, useUpdateAiConfig } from '../hooks/useAiConfig';
+import type { UpsertAiConfigRequest, AiProvider } from '@arch-register/api-types';
+
+export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
+  const { data: config } = useAiConfig(workspaceSlug);
+  const updateConfig = useUpdateAiConfig(workspaceSlug);
+
+  const [enabled, setEnabled] = useState(false);
+  const [provider, setProvider] = useState<AiProvider>('openrouter');
+  const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState('');
+  const [temperature, setTemperature] = useState(0.7);
+  const [systemPrompt, setSystemPrompt] = useState('');
+
+  useEffect(() => {
+    if (config) {
+      setEnabled(config.enabled);
+      setProvider(config.provider);
+      setModel(config.model ?? '');
+      setTemperature(config.temperature ?? 0.7);
+      setSystemPrompt(config.system_prompt ?? '');
+      setApiKey('');
+    }
+  }, [config]);
+
+  const isDirty =
+    !config ||
+    enabled !== config.enabled ||
+    provider !== config.provider ||
+    apiKey !== '' ||
+    model !== (config.model ?? '') ||
+    temperature !== (config.temperature ?? 0.7) ||
+    systemPrompt !== (config.system_prompt ?? '');
+
+  const handleSave = useCallback(async () => {
+    const data: UpsertAiConfigRequest = {
+      enabled,
+      provider,
+      model: model || null,
+      temperature,
+      system_prompt: systemPrompt || null,
+    };
+    if (apiKey) {
+      data.api_key = apiKey;
+    }
+    await updateConfig.mutateAsync(data);
+    setApiKey('');
+  }, [enabled, provider, apiKey, model, temperature, systemPrompt, updateConfig]);
+
+  const handleCancel = () => {
+    if (config) {
+      setEnabled(config.enabled);
+      setProvider(config.provider);
+      setModel(config.model ?? '');
+      setTemperature(config.temperature ?? 0.7);
+      setSystemPrompt(config.system_prompt ?? '');
+      setApiKey('');
+    }
+  };
+
+  return (
+    <div className={styles.blockList}>
+      <div className={styles.sectionActions}>
+        <button type="button" className={styles.btn} onClick={handleCancel} disabled={!isDirty}>Cancel</button>
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={!isDirty || updateConfig.isPending}>
+          {updateConfig.isPending ? 'Saving...' : 'Save changes'}
+        </button>
+      </div>
+
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <div className={styles.sectionTitle}>AI Assistant</div>
+          <div className={styles.sectionSub}>Configure the AI assistant for this workspace.</div>
+        </div>
+        <div className={styles.sectionBody}>
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Enabled</div>
+              <div className={styles.fieldHint}>Allow members to use AI features in this workspace.</div>
+            </div>
+            <div className={styles.fieldRight}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                <span style={{
+                  position: 'relative', display: 'inline-block',
+                  width: 36, height: 20, flexShrink: 0,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={e => setEnabled(e.target.checked)}
+                    style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }}
+                  />
+                  <span style={{
+                    position: 'absolute', inset: 0,
+                    borderRadius: 999,
+                    background: enabled ? 'var(--accent)' : 'var(--bg-3)',
+                    border: `1px solid ${enabled ? 'var(--accent)' : 'var(--border)'}`,
+                    transition: 'background 0.15s, border-color 0.15s',
+                  }} />
+                  <span style={{
+                    position: 'absolute',
+                    top: 2, left: enabled ? 18 : 2,
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: 'white',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    transition: 'left 0.15s',
+                  }} />
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--fg-1)' }}>{enabled ? 'Enabled' : 'Disabled'}</span>
+              </label>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Provider</div>
+            </div>
+            <div className={styles.fieldRight}>
+              <select
+                className={styles.input}
+                value={provider}
+                onChange={e => setProvider(e.target.value as AiProvider)}
+                style={{ maxWidth: 340 }}
+              >
+                <option value="openrouter">OpenRouter</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>API Key</div>
+              <div className={styles.fieldHint}>
+                {config?.has_api_key
+                  ? 'A key is configured. Enter a new value to replace it.'
+                  : 'Required to use AI features.'}
+              </div>
+            </div>
+            <div className={styles.fieldRight}>
+              <input
+                className={styles.input}
+                type="password"
+                value={apiKey}
+                onChange={e => setApiKey(e.target.value)}
+                placeholder={config?.has_api_key ? '••••••••' : provider === 'openai' ? 'sk-...' : 'sk-or-...'}
+                autoComplete="off"
+                style={{ maxWidth: 340 }}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Model</div>
+              <div className={styles.fieldHint}>OpenRouter model identifier, e.g. anthropic/claude-sonnet-4-20250514</div>
+            </div>
+            <div className={styles.fieldRight}>
+              <input
+                className={styles.input}
+                value={model}
+                onChange={e => setModel(e.target.value)}
+                placeholder={provider === 'openai' ? 'gpt-4o' : 'anthropic/claude-sonnet-4-20250514'}
+                style={{ maxWidth: 340 }}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Temperature</div>
+              <div className={styles.fieldHint}>Controls randomness. 0 is deterministic, 1 is most creative.</div>
+            </div>
+            <div className={styles.fieldRight}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, maxWidth: 340 }}>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={temperature}
+                  onChange={e => setTemperature(Number(e.target.value))}
+                  style={{ flex: 1 }}
+                />
+                <span style={{ fontFamily: 'var(--mono)', fontSize: 12, minWidth: 32, textAlign: 'right' }}>
+                  {temperature.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>System prompt</div>
+              <div className={styles.fieldHint}>
+                Additional instructions prepended to every conversation. Schema context is always included automatically.
+              </div>
+            </div>
+            <div className={styles.fieldRight}>
+              <textarea
+                className={styles.input}
+                value={systemPrompt}
+                onChange={e => setSystemPrompt(e.target.value)}
+                placeholder="Optional extra instructions for the AI..."
+                rows={4}
+                style={{ maxWidth: 500, resize: 'vertical' }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

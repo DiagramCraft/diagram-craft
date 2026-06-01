@@ -9,10 +9,10 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Dialog } from '../components/Dialog';
 import {
   TbFolders, TbDatabase,
-  TbUsers, TbFileVector, TbFolderOpen,
+  TbUsers, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
   TbShieldLock, TbPlus, TbPencil, TbCopy,
-  TbFolder,
+  TbFolder, TbSparkles,
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -532,25 +532,9 @@ const ProjectsSidebar = ({
                   />
                   {isOpen && tree && (
                     <>
-                      {tree.rootFiles
-                        .filter(f => !f.path.endsWith('/.keep'))
-                        .map(f => (
-                          <TreeRow
-                            key={f.id}
-                            depth={1}
-                            icon={<TbFileVector size={12} />}
-                            label={f.name}
-                            onClick={() => navigate({
-                              to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                              params: { workspaceSlug, projectId: p.id, diagramId: f.id },
-                            })}
-                            onContextMenu={e => openMenu(e, { type: 'diagram', file: f, projectId: p.id })}
-                          />
-                        ))}
                       {tree.folders.map(folder => {
                         const folderKey = `${p.id}:${folder.path}`;
                         const folderOpen = expanded[folderKey] ?? true;
-                        const files = folder.files.filter(f => !f.path.endsWith('/.keep'));
                         return (
                           <div key={folder.path}>
                             <TreeRow
@@ -564,19 +548,6 @@ const ProjectsSidebar = ({
                               onClick={() => navigateToProject(p, folder.path)}
                               onContextMenu={e => openMenu(e, { type: 'folder', path: folder.path, projectId: p.id })}
                             />
-                            {folderOpen && files.map(f => (
-                              <TreeRow
-                                key={f.id}
-                                depth={2}
-                                icon={<TbFileVector size={12} />}
-                                label={f.name}
-                                onClick={() => navigate({
-                                  to: '/$workspaceSlug/projects/$projectId/diagrams/$diagramId',
-                                  params: { workspaceSlug, projectId: p.id, diagramId: f.id },
-                                })}
-                                onContextMenu={e => openMenu(e, { type: 'diagram', file: f, projectId: p.id })}
-                              />
-                            ))}
                           </div>
                         );
                       })}
@@ -832,6 +803,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
   { id: 'global-permissions', label: 'Global permissions', icon: <TbShieldLock size={12} />, group: 'Global Settings' },
+  { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },
   { id: 'danger', label: 'Danger zone', icon: <TbTrash size={12} />, group: 'Workspace', tone: 'danger' },
 ];

@@ -7,6 +7,7 @@ import { SqliteCatalogDatabase } from './sqliteCatalog.js';
 import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth.js';
 import { SqliteProjectsFilesDatabase } from './sqliteProjectsFiles.js';
 import { SqliteWorkspaceAdminDatabase } from './sqliteWorkspaceAdmin.js';
+import { SqliteAiDatabase } from './sqliteAi.js';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -18,6 +19,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly projectsFiles;
   readonly audit;
   readonly identityAuth;
+  readonly ai;
 
   constructor(filePath: string) {
     this.filePath = filePath;
@@ -29,6 +31,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.projectsFiles = new SqliteProjectsFilesDatabase(() => this.db);
     this.audit = new SqliteAuditDatabase(() => this.db);
     this.identityAuth = new SqliteIdentityAuthDatabase(() => this.db);
+    this.ai = new SqliteAiDatabase(() => this.db);
 
     this.core = {
       driver: 'sqlite' as const,

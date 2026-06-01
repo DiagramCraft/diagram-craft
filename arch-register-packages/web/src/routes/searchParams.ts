@@ -48,3 +48,14 @@ export type ModelSearchParams = {
 export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchParams => ({
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
 });
+
+// Assistant params
+export type AssistantSearchParams = {
+  conversation?: string;
+  layout?: 'conversation' | 'split';
+};
+
+export const validateAssistantSearch = (raw: Record<string, unknown>): AssistantSearchParams => ({
+  conversation: typeof raw.conversation === 'string' ? raw.conversation : undefined,
+  layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined,
+});

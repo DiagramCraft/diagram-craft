@@ -207,3 +207,41 @@ CREATE TABLE workspace_role (
   UNIQUE (workspace, name),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
 );
+
+CREATE TABLE workspace_ai_config (
+  workspace       TEXT PRIMARY KEY,
+  provider        TEXT NOT NULL DEFAULT 'openrouter',
+  api_key_enc     TEXT,
+  model           TEXT,
+  temperature     REAL,
+  system_prompt   TEXT,
+  enabled         INTEGER NOT NULL DEFAULT 1,
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL,
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
+);
+
+CREATE TABLE ai_conversation (
+  id              TEXT PRIMARY KEY,
+  workspace       TEXT NOT NULL,
+  user_id         TEXT NOT NULL,
+  title           TEXT NOT NULL DEFAULT 'New chat',
+  created_at      TEXT NOT NULL,
+  updated_at      TEXT NOT NULL,
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX ai_conversation_ws_user_idx ON ai_conversation(workspace, user_id, updated_at DESC);
+
+CREATE TABLE ai_message (
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  role            TEXT NOT NULL CHECK (role IN ('system', 'user', 'assistant')),
+  content         TEXT NOT NULL,
+  metadata        TEXT NOT NULL DEFAULT '{}',
+  created_at      TEXT NOT NULL,
+  FOREIGN KEY (conversation_id) REFERENCES ai_conversation(id) ON DELETE CASCADE
+);
+
+CREATE INDEX ai_message_conversation_idx ON ai_message(conversation_id, created_at);

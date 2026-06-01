@@ -8,4 +8,6 @@ export type ViewId =
   | 'workspace-settings'
   | 'global-settings'
   | 'account-settings'
-  | 'search';
+  | 'search'
+  | 'assistant'
+  | 'extract';
