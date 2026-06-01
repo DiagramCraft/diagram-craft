@@ -45,7 +45,7 @@ importers:
         specifier: ^28.0.1
         version: 28.0.3
       '@vitest/coverage-v8':
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(vitest@4.1.7)
       jsdom:
         specifier: ^29.0.2
@@ -75,7 +75,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       vitest:
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@8.0.14)
 
   arch-register-packages/api-types:
@@ -130,7 +130,7 @@ importers:
         specifier: ^17.2.3
         version: 17.4.2
       h3:
-        specifier: ^2.0.1-rc.5
+        specifier: ^2.0.1-rc.22
         version: 2.0.1-rc.22
       jsonwebtoken:
         specifier: ^9.0.2
@@ -151,7 +151,7 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(yjs@13.6.31)
       yjs:
-        specifier: ^13.6.30
+        specifier: ^13.6.31
         version: 13.6.31
     devDependencies:
       '@types/jsonwebtoken':
@@ -224,13 +224,13 @@ importers:
         specifier: ^5.100.14
         version: 5.100.14(@tanstack/react-query@5.100.14(react@19.2.6))(react@19.2.6)
       '@tanstack/react-router':
-        specifier: ^1.170.9
+        specifier: ^1.170.10
         version: 1.170.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6
       react-dom:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       react-icons:
         specifier: ^5.3.0
@@ -240,19 +240,19 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       '@types/react':
-        specifier: ^19.2.2
+        specifier: ^19.2.15
         version: 19.2.15
       '@types/react-dom':
         specifier: ^19.2.2
         version: 19.2.3(@types/react@19.2.15)
       '@vitejs/plugin-react':
-        specifier: ^6.0.1
+        specifier: ^6.0.2
         version: 6.0.2(vite@8.0.14)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
       vite:
-        specifier: ^8.0.10
+        specifier: ^8.0.14
         version: 8.0.14(@types/node@24.12.4)(@vitejs/devtools@0.1.15)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0)
 
   packages/app-components:
@@ -267,10 +267,10 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       react:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6
       react-dom:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       react-icons:
         specifier: ^5.3.0
@@ -280,7 +280,7 @@ importers:
         specifier: ^10.3.5
         version: 10.4.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.25.12)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(storybook@10.4.1(@testing-library/dom@10.4.1)(@types/react@19.2.15)(prettier@3.8.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)(vite@8.0.14)
       '@types/react':
-        specifier: ^19.2.2
+        specifier: ^19.2.15
         version: 19.2.15
       '@types/react-dom':
         specifier: ^19.2.2
@@ -397,17 +397,17 @@ importers:
         specifier: workspace:^
         version: link:../canvas
       react:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6
       react-dom:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       react-icons:
         specifier: ^5.3.0
         version: 5.6.0(react@19.2.6)
     devDependencies:
       '@types/react':
-        specifier: ^19.2.2
+        specifier: ^19.2.15
         version: 19.2.15
       '@types/react-dom':
         specifier: ^19.2.2
@@ -425,11 +425,11 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(yjs@13.6.31)
       yjs:
-        specifier: ^13.6.30
+        specifier: ^13.6.31
         version: 13.6.31
     devDependencies:
       vitest:
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@8.0.14)
 
   packages/electron-app:
@@ -441,7 +441,7 @@ importers:
         specifier: workspace:^
         version: link:../utils
       electron-log:
-        specifier: ^5.4.3
+        specifier: ^5.4.4
         version: 5.4.4
     devDependencies:
       electron:
@@ -460,7 +460,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       wait-on:
-        specifier: ^9.0.1
+        specifier: ^9.0.10
         version: 9.0.10
 
   packages/electron-client-api:
@@ -476,7 +476,7 @@ importers:
         version: link:../utils
     devDependencies:
       vitest:
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@8.0.14)
 
   packages/graph:
@@ -557,10 +557,10 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       react:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6
       react-dom:
-        specifier: ^19.2.5
+        specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       react-icons:
         specifier: ^5.3.0
@@ -579,7 +579,7 @@ importers:
         specifier: ^10.3.5
         version: 10.4.1(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(esbuild@0.25.12)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(storybook@10.4.1(@testing-library/dom@10.4.1)(@types/react@19.2.15)(prettier@3.8.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@6.0.3)(vite@8.0.14)
       '@types/react':
-        specifier: ^19.2.2
+        specifier: ^19.2.15
         version: 19.2.15
       '@types/react-dom':
         specifier: ^19.2.2
@@ -588,16 +588,16 @@ importers:
         specifier: 0.1.15
         version: 0.1.15(@pnpm/logger@1001.0.1)(typescript@6.0.3)(vite@8.0.14)
       '@vitejs/plugin-react':
-        specifier: ^6.0.1
+        specifier: ^6.0.2
         version: 6.0.2(vite@8.0.14)
       storybook:
         specifier: ^10.3.5
         version: 10.4.1(@testing-library/dom@10.4.1)(@types/react@19.2.15)(prettier@3.8.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       vite:
-        specifier: ^8.0.10
+        specifier: ^8.0.14
         version: 8.0.14(@types/node@24.12.4)(@vitejs/devtools@0.1.15)(esbuild@0.25.12)(jiti@2.7.0)(tsx@4.22.3)(yaml@2.9.0)
       vitest:
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@8.0.14)
 
   packages/markdown:
@@ -625,7 +625,7 @@ importers:
         version: 1.0.4
     devDependencies:
       vitest:
-        specifier: ^4.1.5
+        specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@8.0.14)
 
   packages/server-main:
@@ -643,7 +643,7 @@ importers:
         specifier: workspace:*
         version: link:../utils
       h3:
-        specifier: ^2.0.1-rc.5
+        specifier: ^2.0.1-rc.22
         version: 2.0.1-rc.22
       lib0:
         specifier: ^0.2.117
@@ -655,7 +655,7 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(yjs@13.6.31)
       yjs:
-        specifier: ^13.6.30
+        specifier: ^13.6.31
         version: 13.6.31
     devDependencies:
       '@types/ws':

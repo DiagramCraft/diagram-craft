@@ -18,7 +18,7 @@
   "dependencies": {
     "@diagram-craft/electron-client-api": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
-    "electron-log": "^5.4.3"
+    "electron-log": "^5.4.4"
   },
   "devDependencies": {
     "electron": "^41.2.1",
@@ -26,7 +26,7 @@
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.1.3",
     "typescript": "^6.0.3",
-    "wait-on": "^9.0.1"
+    "wait-on": "^9.0.10"
   },
   "build": {
     "appId": "com.diagramcraft.app",
