@@ -114,6 +114,7 @@ CREATE TABLE project_file (
   size_bytes            INTEGER     NOT NULL DEFAULT 0,
   is_template           BOOLEAN     NOT NULL DEFAULT FALSE,
   is_workspace_template BOOLEAN     NOT NULL DEFAULT FALSE,
+  preview_svg           TEXT,
   created_at            TIMESTAMPTZ NOT NULL,
   updated_at            TIMESTAMPTZ NOT NULL,
   UNIQUE (workspace, project_id, path),

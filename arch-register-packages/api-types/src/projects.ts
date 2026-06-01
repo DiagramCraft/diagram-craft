@@ -27,6 +27,7 @@ export type ProjectFile = {
   updated_at: string;
   is_template?: boolean;
   is_workspace_template?: boolean;
+  preview_svg?: string | null;
 };
 
 export type FileFolder = {

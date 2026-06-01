@@ -555,14 +555,18 @@ const DiagramCard = ({
     <div className={styles.diagramThumb}>
       <div className={styles.diagramThumbGrid} />
       <div className={styles.diagramThumbNodes}>
-        <svg viewBox="0 0 140 80" preserveAspectRatio="none">
-          <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-          <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-          <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-          <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--bg-3))" stroke="var(--tag-component)" />
-          <path d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
-            stroke="var(--fg-3)" fill="none" />
-        </svg>
+        {file.preview_svg ? (
+          <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
+        ) : (
+          <svg viewBox="0 0 140 80" preserveAspectRatio="none">
+            <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
+            <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
+            <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
+            <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--bg-3))" stroke="var(--tag-component)" />
+            <path d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
+              stroke="var(--fg-3)" fill="none" />
+          </svg>
+        )}
       </div>
     </div>
     <div className={styles.diagramMeta}>

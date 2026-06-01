@@ -103,6 +103,23 @@ export class PostgresProjectsFilesDatabase
     }
   }
 
+  async updateProjectFilePreview(
+    workspace: string,
+    projectId: string,
+    fileId: string,
+    previewSvg: string | null
+  ) {
+    try {
+      await this.sql`
+        UPDATE project_file
+        SET preview_svg = ${previewSvg}
+        WHERE workspace = ${workspace} AND project_id = ${projectId} AND id = ${fileId}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
   async updateProjectFileTemplateStatus(
     workspace: string,
     projectId: string,

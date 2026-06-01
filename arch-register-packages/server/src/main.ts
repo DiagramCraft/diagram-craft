@@ -9,6 +9,7 @@ import { OpenRouterAIServer } from './ai/openRouterAiServer.js';
 import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
+import { generateSvgPreview } from './preview/svgPreviewGenerator.js';
 
 const PORT = Number(process.env['PORT'] ?? SERVER_DEFAULTS.PORT);
 
@@ -38,6 +39,16 @@ const main = async () => {
       buf.length,
       new Date()
     );
+
+    try {
+      const parsed = JSON.parse(content);
+      const previewSvg = generateSvgPreview(parsed);
+      if (previewSvg) {
+        await db.projectsFiles.updateProjectFilePreview(workspace, projectId, fileId, previewSvg);
+      }
+    } catch {
+      // Preview generation is best-effort
+    }
   };
 
   const wsAuthenticator = async (request: import('node:http').IncomingMessage) => {

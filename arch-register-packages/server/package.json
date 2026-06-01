@@ -16,6 +16,7 @@
     "@arch-register/permissions": "workspace:*",
     "@diagram-craft/canvas": "workspace:^",
     "@diagram-craft/collaboration": "workspace:^",
+    "@diagram-craft/geometry": "workspace:^",
     "@diagram-craft/model": "workspace:^",
     "@diagram-craft/utils": "workspace:^",
     "argon2": "^0.44.0",

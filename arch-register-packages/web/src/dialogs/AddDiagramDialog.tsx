@@ -38,7 +38,6 @@ const BlankPreview = () => (
 export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projectId, projectName, folder }: AddDiagramDialogProps) => {
   const [selected, setSelected] = useState<ProjectFile | 'blank'>('blank');
   const [name, setName] = useState('');
-  const [nameDirty, setNameDirty] = useState(false);
   const [error, setError] = useState('');
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -56,20 +55,9 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
     if (!open) return;
     setSelected('blank');
     setName('');
-    setNameDirty(false);
     setError('');
     setTimeout(() => nameRef.current?.focus(), 30);
   }, [open]);
-
-  // Default name follows template selection unless user has edited
-  useEffect(() => {
-    if (nameDirty) return;
-    if (selected === 'blank') {
-      setName('');
-    } else {
-      setName(selected.name);
-    }
-  }, [selected, nameDirty]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -180,7 +168,11 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
                     title={t.name}
                   >
                     <span className={styles.cardThumb}>
-                      <DummyPreview />
+                      {t.preview_svg ? (
+                        <div dangerouslySetInnerHTML={{ __html: t.preview_svg }} />
+                      ) : (
+                        <DummyPreview />
+                      )}
                       {selected !== 'blank' && selected.id === t.id && (
                         <span className={styles.cardCheck}><TbCheck size={10} /></span>
                       )}
@@ -200,7 +192,7 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
               className={styles.nameInput}
               placeholder={selected === 'blank' ? 'Untitled diagram' : selected.name}
               value={name}
-              onChange={e => { setName(e.target.value); setNameDirty(true); }}
+              onChange={e => setName(e.target.value)}
             />
             {folder && (
               <div style={{ fontSize: 11, color: 'var(--fg-2)', marginTop: 2 }}>
