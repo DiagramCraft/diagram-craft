@@ -163,6 +163,7 @@ export const toApiProjectDetail = (
   description: project.description,
   owner: project.owner,
   status: project.status,
+  color: project.color,
   file_count: files.folders.reduce((sum, f) => sum + f.files.length, 0) + files.rootFiles.length,
   created_at: project.created_at.toISOString(),
   updated_at: project.updated_at.toISOString(),

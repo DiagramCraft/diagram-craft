@@ -5,6 +5,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  type Project,
   type ProjectDetail,
 } from '../api';
 

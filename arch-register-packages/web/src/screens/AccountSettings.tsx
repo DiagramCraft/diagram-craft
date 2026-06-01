@@ -32,15 +32,17 @@ export const AccountSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  useEffect(() => {
+    if (user) {
+      setSelectedColor(user.color ?? null);
+      setDisplayName(user.display_name);
+    }
+  }, [user]);
+
   if (!user) return null;
 
   const section = search.section === 'appearance' ? 'appearance' : 'profile';
   const meta = SECTION_META[section] ?? SECTION_META['profile']!;
-
-  useEffect(() => {
-    setSelectedColor(user.color ?? null);
-    setDisplayName(user.display_name);
-  }, [user.color, user.display_name, user.id]);
 
   const handleSave = async () => {
     setIsSaving(true);

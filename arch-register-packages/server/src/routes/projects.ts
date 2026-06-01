@@ -141,7 +141,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const { name, description = '', owner, status } = body as Record<string, unknown>;
+      const { name, description = '', owner, status, color } = body as Record<string, unknown>;
       httpAssert.present(name, { message: 'name is required' });
       const projectStatus = parseProjectStatus(status);
 
@@ -163,7 +163,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
           description: typeof description === 'string' ? description : '',
           owner: resolvedOwner,
           status: projectStatus,
-          color: typeof body.color === 'string' ? body.color : null,
+          color: typeof color === 'string' ? color : null,
           created_at: timestamp,
           updated_at: timestamp
         });
@@ -194,7 +194,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
-      const { name, description, owner, status } = body as Record<string, unknown>;
+      const { name, description, owner, status, color } = body as Record<string, unknown>;
       httpAssert.present(name, { message: 'name is required' });
       const projectStatus = status === undefined ? undefined : parseProjectStatus(status);
 
@@ -232,7 +232,7 @@ export const createProjectRoutes = (db: DatabaseAdapter, storage: StorageAdapter
               : oldRow.description,
           owner: resolvedOwner,
           status: projectStatus ?? oldRow.status,
-          color: body.color !== undefined ? (typeof body.color === 'string' ? body.color : null) : oldRow.color,
+          color: color !== undefined ? (typeof color === 'string' ? color : null) : oldRow.color,
           updated_at: new Date()
         });
 

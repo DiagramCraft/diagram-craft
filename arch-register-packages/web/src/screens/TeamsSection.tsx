@@ -71,12 +71,12 @@ const buildTeamDrafts = (
     ),
   }));
 
-const toOwnerPayload = (teams: TeamDraft[]) =>
+const toOwnerPayload = (teams: TeamDraft[]): WorkspaceTeam[] =>
   teams.map((team, index) => ({ 
     id: team.id.trim(), 
     sort_order: index,
-    color: team.color,
-    description: team.description
+    color: team.color ?? null,
+    description: team.description ?? ''
   }));
 
 const toMembershipPayload = (teams: TeamDraft[]) =>
@@ -366,7 +366,7 @@ export const TeamsSection = ({
 
 const persistTeams = async (
   teams: TeamDraft[],
-  saveOwners: (owners: Array<{ id: string; sort_order: number }>) => Promise<unknown>,
+  saveOwners: (owners: WorkspaceTeam[]) => Promise<unknown>,
   saveMemberships: (
     memberships: Array<{ team_id: string; user_id: string; role: TeamRole }>
   ) => Promise<unknown>

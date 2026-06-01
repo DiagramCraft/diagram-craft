@@ -630,6 +630,8 @@ export const fetchAuditStats = (workspace: string) =>
 export type WorkspaceTeam = {
   id: string;
   sort_order: number;
+  color: string | null;
+  description: string;
 };
 
 export const fetchLifecycleStates = (workspace: string) =>
