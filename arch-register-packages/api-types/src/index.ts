@@ -68,6 +68,10 @@ export type {
   UpdateWorkspaceRequest,
   WorkspaceLifecycleState,
   WorkspaceOwnerOption,
+  WorkspaceRoleCapability,
+  WorkspaceRoleDefinition,
+  CreateWorkspaceRoleRequest,
+  UpdateWorkspaceRoleRequest,
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
 } from './workspaces.js';

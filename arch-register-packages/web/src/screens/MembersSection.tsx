@@ -1,14 +1,16 @@
-import { WORKSPACE_ROLES, type WorkspaceRole } from '@arch-register/permissions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { Chip } from '../components/Chip';
 import { Dialog } from '../components/Dialog';
 import { DropdownMenu } from '../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../components/MemberAvatar';
+import { useAuth } from '../auth/AuthContext';
 import { getUserLabel } from '../utils/userLabel';
 import { useWorkspaceMembers, useWorkspaceUsers, useUpdateWorkspaceMemberRole } from '../hooks/useWorkspaceMembers';
 import { useTeamAssignments, useTeams } from '../hooks/useWorkspaceConfig';
+import { useWorkspaceRoles } from '../hooks/useWorkspaceRoles';
 import styles from './MembersSection.module.css';
+import type { WorkspaceRoleDefinition } from '../api';
 
 const TeamChip = ({ teamId }: { teamId: string }) => {
   const h = stableHue(teamId);
@@ -22,12 +24,14 @@ const TeamChip = ({ teamId }: { teamId: string }) => {
 
 const RoleMenu = ({
   current,
+  roles,
   onSelect,
 }: {
-  current: WorkspaceRole;
-  onSelect: (role: WorkspaceRole) => void;
+  current: string;
+  roles: WorkspaceRoleDefinition[];
+  onSelect: (role: string) => void;
 }) => {
-  const roleMeta = WORKSPACE_ROLES.find(r => r.id === current);
+  const roleMeta = roles.find(r => r.id === current);
   if (!roleMeta) return null;
 
   return (
@@ -37,7 +41,7 @@ const RoleMenu = ({
           <Chip tone="ghost" dot={roleMeta.tone}>{roleMeta.name}</Chip>
         </button>
       }
-      items={WORKSPACE_ROLES.map(role => ({
+      items={roles.map(role => ({
         label: role.name,
         icon: <span className={styles.roleMenuDot} style={{ background: role.tone }} />,
         onClick: () => onSelect(role.id),
@@ -57,9 +61,11 @@ export const MembersSection = ({
 }) => {
   const { data: members = [], isLoading, error } = useWorkspaceMembers(workspaceSlug);
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
+  const { data: roles = [] } = useWorkspaceRoles(workspaceSlug);
   const { data: teams = [] } = useTeams(workspaceSlug);
   const { data: teamAssignments = [] } = useTeamAssignments(workspaceSlug);
   const updateMemberRole = useUpdateWorkspaceMemberRole(workspaceSlug);
+  const { user, reloadUser } = useAuth();
 
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -125,7 +131,7 @@ export const MembersSection = ({
               onChange={e => setRoleFilter(e.target.value)}
             >
               <option value="">Any role</option>
-              {WORKSPACE_ROLES.map(r => (
+              {roles.map(r => (
                 <option key={r.id} value={r.id}>{r.name}</option>
               ))}
             </select>
@@ -188,8 +194,15 @@ export const MembersSection = ({
                     </td>
                     <td>
                       <RoleMenu
-                        current={member.role as WorkspaceRole}
-                        onSelect={role => updateMemberRole.mutate({ userId: member.user_id, role })}
+                        current={member.role}
+                        roles={roles}
+                        onSelect={role => {
+                          void updateMemberRole.mutateAsync({ userId: member.user_id, role }).then(() => {
+                            if (member.user_id === user?.id) {
+                              void reloadUser();
+                            }
+                          });
+                        }}
                       />
                     </td>
                     <td>
@@ -227,9 +240,13 @@ export const MembersSection = ({
         onClose={onCloseAddDialog}
         onSave={async (userId, role) => {
           await updateMemberRole.mutateAsync({ userId, role });
+          if (userId === user?.id) {
+            await reloadUser();
+          }
           onCloseAddDialog();
         }}
         isSaving={updateMemberRole.isPending}
+        roles={roles}
       />
     </div>
   );
@@ -242,6 +259,7 @@ const AddMemberDialog = ({
   onClose,
   onSave,
   isSaving,
+  roles,
 }: {
   open: boolean;
   users: Array<{
@@ -252,19 +270,20 @@ const AddMemberDialog = ({
   }>;
   loading: boolean;
   onClose: () => void;
-  onSave: (userId: string, role: WorkspaceRole) => Promise<void>;
+  onSave: (userId: string, role: string) => Promise<void>;
   isSaving: boolean;
+  roles: WorkspaceRoleDefinition[];
 }) => {
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedRole, setSelectedRole] = useState<WorkspaceRole>('viewer');
+  const [selectedRole, setSelectedRole] = useState('viewer');
   const userRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setSelectedUserId(users[0]?.id ?? '');
-    setSelectedRole('viewer');
+    setSelectedRole(roles.find(role => role.id === 'viewer')?.id ?? roles[0]?.id ?? '');
     setTimeout(() => userRef.current?.focus(), 0);
-  }, [open, users]);
+  }, [open, roles, users]);
 
   if (!open) return null;
 
@@ -307,9 +326,9 @@ const AddMemberDialog = ({
                 <select
                   className={styles.select}
                   value={selectedRole}
-                  onChange={event => setSelectedRole(event.target.value as WorkspaceRole)}
+                  onChange={event => setSelectedRole(event.target.value)}
                 >
-                  {WORKSPACE_ROLES.map(role => (
+                  {roles.map(role => (
                     <option key={role.id} value={role.id}>
                       {role.name}
                     </option>

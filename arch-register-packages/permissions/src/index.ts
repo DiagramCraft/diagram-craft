@@ -2,7 +2,9 @@
 export type {
   GlobalRole,
   GlobalPermission,
+  BuiltinWorkspaceRole,
   WorkspaceRole,
+  WorkspaceRoleDefinition,
   TeamRole,
   WorkspaceCapability,
   TeamAssignment,
@@ -38,10 +40,13 @@ export {
   GLOBAL_ROLES,
   GLOBAL_ROLE_PERMISSIONS,
   TEAM_ROLE_PERMISSIONS,
+  BUILTIN_WORKSPACE_ROLES,
   WORKSPACE_ROLE_CAPABILITIES,
   WORKSPACE_ROLES,
   WORKSPACE_CAPABILITY_GROUPS,
   getGlobalPermissionsForRoles,
+  getBuiltinWorkspaceRole,
+  resolveWorkspaceRoleDefinitions,
   workspaceRoleHasCapability,
 } from './constants.js';
 

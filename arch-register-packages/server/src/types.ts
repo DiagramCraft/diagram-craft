@@ -227,12 +227,42 @@ export type GlobalPermission =
 
 export type WorkspaceRole = 'owner' | 'admin' | 'editor' | 'reviewer' | 'viewer';
 
+export type WorkspaceRoleCapability =
+  | 'ws.view'
+  | 'ws.settings'
+  | 'ws.delete'
+  | 'ws.audit'
+  | 'people.invite'
+  | 'people.role'
+  | 'people.remove'
+  | 'people.teams'
+  | 'proj.create'
+  | 'proj.edit'
+  | 'ent.edit'
+  | 'ent.propose'
+  | 'comments'
+  | 'export'
+  | 'schema.edit'
+  | 'schema.publish';
+
+export type WorkspaceRoleDefinition = {
+  id: string;
+  workspace: string;
+  name: string;
+  description: string;
+  tone: string;
+  builtin: boolean;
+  capabilities: WorkspaceRoleCapability[];
+  created_at: Date;
+  updated_at: Date;
+};
+
 export type TeamRole = 'team_admin' | 'team_editor' | 'team_reviewer';
 
 export type WorkspaceMember = {
   workspace: string;
   user_id: string;
-  role: WorkspaceRole;
+  role: string;
   created_at: Date;
 };
 

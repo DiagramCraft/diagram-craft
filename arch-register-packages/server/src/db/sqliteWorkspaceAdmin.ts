@@ -3,7 +3,14 @@ import type {
   UpdateWorkspaceInput,
   WorkspaceAdminDatabase
 } from './database.js';
-import type { TeamMembership, WorkspaceMember, WorkspaceLifecycleState, WorkspaceOwner, WorkspaceRole } from '../types.js';
+import type {
+  TeamMembership,
+  WorkspaceMember,
+  WorkspaceLifecycleState,
+  WorkspaceOwner,
+  WorkspaceRole,
+  WorkspaceRoleDefinition
+} from '../types.js';
 import { SqliteDatabaseBase, sqliteMappers } from './sqliteBase.js';
 
 export class SqliteWorkspaceAdminDatabase
@@ -65,6 +72,7 @@ export class SqliteWorkspaceAdminDatabase
       this.run('DELETE FROM entity WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspaceId]);
@@ -207,7 +215,7 @@ export class SqliteWorkspaceAdminDatabase
     );
   }
 
-  async setWorkspaceMemberRole(workspace: string, userId: string, role: WorkspaceRole, createdAt: Date) {
+  async setWorkspaceMemberRole(workspace: string, userId: string, role: string, createdAt: Date) {
     this.run(
       `INSERT INTO workspace_member (workspace, user_id, role, created_at)
        VALUES (?, ?, ?, ?)
@@ -227,5 +235,98 @@ export class SqliteWorkspaceAdminDatabase
   async getWorkspaceRole(workspace: string, userId: string) {
     const member = await this.getWorkspaceMember(workspace, userId);
     return member?.role ?? null;
+  }
+
+  async listCustomWorkspaceRoles(workspace: string) {
+    return this.all(
+      'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? ORDER BY name, id',
+      [workspace],
+      sqliteMappers.workspaceRoleDefinition
+    );
+  }
+
+  async getCustomWorkspaceRole(workspace: string, roleId: string) {
+    return this.get(
+      'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? AND id = ?',
+      [workspace, roleId],
+      sqliteMappers.workspaceRoleDefinition
+    );
+  }
+
+  async createCustomWorkspaceRole(input: WorkspaceRoleDefinition) {
+    const existing = this.get(
+      'SELECT id FROM workspace_role WHERE workspace = ? AND LOWER(name) = LOWER(?)',
+      [input.workspace, input.name]
+    );
+    if (existing) {
+      throw new Error('A role with this name already exists');
+    }
+    
+    this.run(
+      'INSERT INTO workspace_role (id, workspace, name, description, tone, capabilities, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.name,
+        input.description,
+        input.tone,
+        JSON.stringify(input.capabilities),
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getCustomWorkspaceRole(input.workspace, input.id))!;
+  }
+
+  async updateCustomWorkspaceRole(
+    workspace: string,
+    roleId: string,
+    input: Omit<WorkspaceRoleDefinition, 'id' | 'workspace' | 'created_at'>
+  ) {
+    this.run(
+      'UPDATE workspace_role SET name = ?, description = ?, tone = ?, capabilities = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [
+        input.name,
+        input.description,
+        input.tone,
+        JSON.stringify(input.capabilities),
+        input.updated_at.toISOString(),
+        workspace,
+        roleId
+      ]
+    );
+    return await this.getCustomWorkspaceRole(workspace, roleId);
+  }
+
+  async deleteCustomWorkspaceRole(workspace: string, roleId: string) {
+    const tx = this.db.transaction((ws: string, rid: string) => {
+      const role = this.get(
+        'SELECT id, workspace, name, description, tone, 0 as builtin, capabilities, created_at, updated_at FROM workspace_role WHERE workspace = ? AND id = ?',
+        [ws, rid],
+        sqliteMappers.workspaceRoleDefinition
+      );
+      if (!role) return null;
+      
+      const memberCount = this.get<{ count: number }>(
+        'SELECT COUNT(*) as count FROM workspace_member WHERE workspace = ? AND role = ?',
+        [ws, rid]
+      );
+      if (memberCount && memberCount.count > 0) {
+        throw new Error('Role is still assigned to workspace members');
+      }
+      
+      this.run('DELETE FROM workspace_role WHERE workspace = ? AND id = ?', [ws, rid]);
+      return role;
+    });
+    
+    return tx(workspace, roleId);
+  }
+
+  async countWorkspaceMembersByRole(workspace: string, roleId: string) {
+    const row = this.get<{ count: number }>(
+      'SELECT COUNT(*) as count FROM workspace_member WHERE workspace = ? AND role = ?',
+      [workspace, roleId]
+    );
+    return row?.count ?? 0;
   }
 }

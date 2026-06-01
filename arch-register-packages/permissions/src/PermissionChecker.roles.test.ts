@@ -6,14 +6,14 @@ import {
   TEAM_ROLE_PERMISSIONS,
 } from './constants.js';
 import type {
+  BuiltinWorkspaceRole,
   Entity,
   EntitySchema,
   TeamRole,
   WorkspaceCapability,
-  WorkspaceRole,
 } from './types.js';
 
-const ALL_WORKSPACE_ROLES: WorkspaceRole[] = ['owner', 'admin', 'editor', 'reviewer', 'viewer'];
+const ALL_WORKSPACE_ROLES: BuiltinWorkspaceRole[] = ['owner', 'admin', 'editor', 'reviewer', 'viewer'];
 
 const ALL_CAPABILITIES: WorkspaceCapability[] = [
   'ws.view', 'ws.settings', 'ws.delete', 'ws.audit',

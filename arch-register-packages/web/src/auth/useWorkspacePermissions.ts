@@ -44,11 +44,13 @@ const buildWorkspaceAuthorizationContext = (
     ) ?? [];
   const teams = authorizationData.teams_by_workspace?.[workspaceId] ?? [];
   const workspaceRole = (authorizationData.workspace_roles?.[workspaceId] ?? null) as WorkspaceRole | null;
+  const workspaceRoles = authorizationData.workspace_role_definitions_by_workspace?.[workspaceId] ?? [];
 
   return buildAuthorizationContext({
     userId: '',
     globalRoles: authorizationData.global_roles as GlobalRole[],
     workspaceRole,
+    workspaceRoles,
     teamAssignments,
     teams: teams as WorkspaceTeam[],
     schemas: [],

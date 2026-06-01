@@ -55,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         global_permissions: userData.global_permissions,
         team_assignments_by_workspace: userData.team_assignments_by_workspace ?? {},
         workspace_roles: userData.workspace_roles ?? {},
+        workspace_role_definitions_by_workspace: userData.workspace_role_definitions_by_workspace ?? {},
         teams_by_workspace: userData.teams_by_workspace ?? {}
       });
       return true;

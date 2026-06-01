@@ -9,6 +9,7 @@ import type {
   User,
   Workspace,
   WorkspaceLifecycleState,
+  WorkspaceRoleDefinition,
   WorkspaceOwner,
   TeamMembership,
   EntityGrant
@@ -54,4 +55,5 @@ export type PostgresRowTypes = {
   auditLog: AuditLogEntry;
   user: User;
   globalRoleAssignment: GlobalRoleAssignment;
+  workspaceRoleDefinition: WorkspaceRoleDefinition;
 };

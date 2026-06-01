@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchWorkspaceMembers, fetchWorkspaceUsers, updateWorkspaceMemberRole } from '../api';
-import type { WorkspaceRole } from '@arch-register/permissions';
 
 export const workspaceMembersKeys = {
   all: ['workspace-members'] as const,
@@ -30,7 +29,7 @@ export const useUpdateWorkspaceMemberRole = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: WorkspaceRole }) =>
+    mutationFn: ({ userId, role }: { userId: string; role: string }) =>
       updateWorkspaceMemberRole(workspaceSlug, userId, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workspaceMembersKeys.list(workspaceSlug) });

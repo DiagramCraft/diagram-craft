@@ -77,6 +77,7 @@
   font-size: 11px;
   color: var(--fg-3);
   margin-top: auto;
+  margin-bottom: 8px;
 }
 
 .roleStatValue {
@@ -95,11 +96,15 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  cursor: not-allowed;
-  opacity: 0.5;
+  cursor: pointer;
   color: var(--fg-3);
   font-size: 12px;
   min-height: 100px;
+  transition: border-color 0.15s;
+}
+
+.addRoleCard:hover {
+  border-color: var(--accent);
 }
 
 /* Permission matrix */
@@ -177,4 +182,212 @@
 
 .matrix tr:last-child td {
   border-bottom: none;
+}
+
+.roleActions {
+  display: flex;
+  gap: 8px;
+}
+
+.roleActionBtn {
+  border: 1px solid var(--border);
+  background: var(--bg-0);
+  color: var(--fg-2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dialogPanel {
+  width: min(860px, calc(100vw - 32px));
+  max-width: min(860px, calc(100vw - 32px));
+}
+
+.dialogBody {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dialogField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dialogLabel {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.requiredMark,
+.optionalMark {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+}
+
+.requiredMark {
+  color: var(--danger);
+}
+
+.optionalMark {
+  color: var(--fg-3);
+}
+
+.dialogInput,
+.dialogTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  background: var(--bg-0);
+  color: var(--fg-0);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.dialogTextarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.dialogMeta {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+
+.colorPickerWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.capabilityList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.capabilityGroup {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.capabilityGroupTitle {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.capabilityRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--fg-1);
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.capabilityRow:hover {
+  background: var(--bg-1);
+}
+
+.capabilityCheckbox {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-0);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.capabilityCheckbox::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  transform: scale(0);
+  transition: transform 0.12s ease;
+  clip-path: polygon(14% 44%, 0 59%, 39% 100%, 100% 18%, 84% 4%, 39% 62%);
+  background: white;
+}
+
+.capabilityCheckbox:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.capabilityCheckbox:checked::before {
+  transform: scale(1);
+}
+
+.capabilityCheckbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dialogBtn,
+.dialogBtnPrimary,
+.dialogBtnDanger {
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+}
+
+.dialogBtn {
+  border: 1px solid var(--border);
+  background: var(--bg-0);
+  color: var(--fg-1);
+}
+
+.dialogBtnPrimary {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: white;
+}
+
+.dialogBtnDanger {
+  border: 1px solid var(--danger);
+  background: var(--danger);
+  color: white;
+}
+
+.dialogError {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.deleteCopy {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+@media (max-width: 720px) {
+  .capabilityList {
+    grid-template-columns: 1fr;
+  }
 }

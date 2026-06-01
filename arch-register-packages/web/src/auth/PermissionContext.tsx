@@ -101,6 +101,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
             }) satisfies TeamAssignment
         ) ?? [];
       const teams = authData.teams_by_workspace?.[workspaceId] ?? [];
+      const workspaceRoles = authData.workspace_role_definitions_by_workspace?.[workspaceId] ?? [];
 
       const workspaceRole = (authData.workspace_roles?.[workspaceId] ?? null) as import('@arch-register/permissions').WorkspaceRole | null;
 
@@ -108,6 +109,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         userId: user.id,
         globalRoles: authData.global_roles,
         workspaceRole,
+        workspaceRoles,
         teamAssignments,
         teams,
         schemas: [],
@@ -149,6 +151,7 @@ export const PermissionProvider = ({ children }: { children: ReactNode }) => {
         userId: user.id,
         globalRoles: authData.global_roles,
         workspaceRole: null,
+        workspaceRoles: [],
         teamAssignments: [],
         teams: [],
         schemas: [],

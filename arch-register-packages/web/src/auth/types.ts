@@ -1,4 +1,10 @@
-import type { GlobalRole, GlobalPermission, TeamRole, WorkspaceRole } from '@arch-register/permissions';
+import type {
+  GlobalRole,
+  GlobalPermission,
+  TeamRole,
+  WorkspaceRole,
+  WorkspaceRoleDefinition
+} from '@arch-register/permissions';
 
 export type User = {
   id: string;
@@ -10,7 +16,7 @@ export type User = {
   color: string | null;
 };
 
-export type { GlobalPermission, GlobalRole, WorkspaceRole };
+export type { GlobalPermission, GlobalRole, WorkspaceRole, WorkspaceRoleDefinition };
 
 export type WorkspaceTeam = {
   id: string;
@@ -29,5 +35,6 @@ export type AuthBaseData = {
     }>
   >;
   workspace_roles: Record<string, WorkspaceRole>;
+  workspace_role_definitions_by_workspace?: Record<string, WorkspaceRoleDefinition[]>;
   teams_by_workspace?: Record<string, WorkspaceTeam[]>;
 };

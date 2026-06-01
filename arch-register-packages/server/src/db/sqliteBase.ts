@@ -12,6 +12,7 @@ import type {
   User,
   Workspace,
   WorkspaceLifecycleState,
+  WorkspaceRoleDefinition,
   WorkspaceOwner
 } from '../types.js';
 import { SQLITE_ERROR_PATTERNS } from '../constants.js';
@@ -163,6 +164,17 @@ export const sqliteMappers = {
     user_id: String(row['user_id']),
     role: String(row['role']) as GlobalRoleAssignment['role'],
     created_at: toDate(row['created_at'])
+  }),
+  workspaceRoleDefinition: (row: Record<string, unknown>): WorkspaceRoleDefinition => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    description: String(row['description']),
+    tone: String(row['tone']),
+    builtin: Boolean(row['builtin']),
+    capabilities: parseJson<WorkspaceRoleDefinition['capabilities']>(row['capabilities'], []),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
   }),
   entityGrant: (row: Record<string, unknown>): EntityGrant => ({
     id: String(row['id']),

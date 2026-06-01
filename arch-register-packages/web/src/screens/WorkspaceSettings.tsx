@@ -22,7 +22,7 @@ import { TeamsSection } from './TeamsSection';
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
   'lifecycle-owners': { title: 'Lifecycle', sub: 'Configure valid lifecycle states for entities in this workspace.' },
-  roles: { title: 'Roles & permissions', sub: 'Manage built-in workspace roles and their capabilities.' },
+  roles: { title: 'Roles & permissions', sub: 'Manage built-in roles and create custom workspace roles.' },
   teams: { title: 'Teams', sub: 'Manage owner teams and assign users a team role for owned entities and projects.' },
   members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
   audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },

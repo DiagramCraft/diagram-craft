@@ -184,7 +184,7 @@ CREATE TABLE global_role_assignment (
 CREATE TABLE workspace_member (
   workspace   TEXT NOT NULL,
   user_id     TEXT NOT NULL,
-  role        TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'editor', 'reviewer', 'viewer')),
+  role        TEXT NOT NULL,
   created_at  TEXT NOT NULL,
   PRIMARY KEY (workspace, user_id),
   FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE,
@@ -192,3 +192,18 @@ CREATE TABLE workspace_member (
 );
 
 CREATE INDEX workspace_member_user_idx ON workspace_member(user_id);
+CREATE INDEX workspace_member_role_idx ON workspace_member(workspace, role);
+
+CREATE TABLE workspace_role (
+  id           TEXT NOT NULL,
+  workspace    TEXT NOT NULL,
+  name         TEXT NOT NULL,
+  description  TEXT NOT NULL DEFAULT '',
+  tone         TEXT NOT NULL DEFAULT 'var(--accent)',
+  capabilities TEXT NOT NULL DEFAULT '[]',
+  created_at   TEXT NOT NULL,
+  updated_at   TEXT NOT NULL,
+  PRIMARY KEY (workspace, id),
+  UNIQUE (workspace, name),
+  FOREIGN KEY (workspace) REFERENCES workspace(id) ON DELETE CASCADE
+);
