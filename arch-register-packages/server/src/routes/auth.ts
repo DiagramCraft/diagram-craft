@@ -155,13 +155,19 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       oidcStateStore.delete(state);
 
-      const callbackParams: Record<string, string> = {};
+      // Construct the full callback URL with query parameters
+      const redirectUri = process.env['OIDC_REDIRECT_URI'];
+      if (!redirectUri) {
+        throw new Error('OIDC_REDIRECT_URI not configured');
+      }
+      
+      const callbackUrl = new URL(redirectUri);
       for (const [key, value] of Object.entries(query)) {
-        callbackParams[key] = String(value);
+        callbackUrl.searchParams.set(key, String(value));
       }
 
       const claims = await handleCallback(
-        callbackParams,
+        callbackUrl.href,
         storedState.state,
         storedState.nonce,
         storedState.codeVerifier
