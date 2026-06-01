@@ -76,6 +76,7 @@ export type UpdateProjectInput = {
   description: string;
   owner: string | null;
   status: Project['status'];
+  color: string | null;
   updated_at: Date;
 };
 
@@ -102,6 +103,7 @@ export type UpdateUserInput = {
   display_name?: string;
   password_hash?: string | null;
   is_active?: boolean;
+  color?: string | null;
   updated_at: Date;
 };
 

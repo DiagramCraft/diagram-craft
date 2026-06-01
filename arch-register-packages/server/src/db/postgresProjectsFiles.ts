@@ -26,8 +26,8 @@ export class PostgresProjectsFilesDatabase
   async createProject(input: CreateProjectInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['project'][]>`
-        INSERT INTO project (id, workspace, name, description, owner, status, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO project (id, workspace, name, description, owner, status, color, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${input.owner}, ${input.status}, ${input.color}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -44,6 +44,7 @@ export class PostgresProjectsFilesDatabase
             description = ${input.description},
             owner = ${input.owner},
             status = ${input.status},
+            color = ${input.color},
             updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *

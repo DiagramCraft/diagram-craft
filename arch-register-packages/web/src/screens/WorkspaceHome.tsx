@@ -326,8 +326,15 @@ const ProjectRow = ({
   onClick: () => void;
 }) => (
   <button type="button" className={styles.projectRow} onClick={onClick}>
+    {project.color && (
+      <span 
+        className={styles.projectColorBar} 
+        style={{ background: project.color }}
+        aria-hidden="true"
+      />
+    )}
     <div className={styles.projectRowL}>
-      <TbFolders size={14} />
+      <TbFolders size={14} style={project.color ? { color: project.color } : undefined} />
       <span className={styles.projectName}>{project.name}</span>
     </div>
     <div className={styles.projectRowR}>

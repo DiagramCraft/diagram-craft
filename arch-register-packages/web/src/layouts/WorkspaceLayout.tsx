@@ -323,6 +323,13 @@ const buildTrail = (
         onClick: () => navigate({ to: '/$workspaceSlug/settings/global', params: { workspaceSlug } }),
       });
       break;
+    case 'account-settings':
+      items.push({
+        label: 'Account Settings',
+        icon: <TbSettings size={12} />,
+        onClick: () => navigate({ to: '/$workspaceSlug/account', params: { workspaceSlug } }),
+      });
+      break;
     case 'search':
       items.push({
         label: 'Search',

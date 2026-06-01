@@ -31,6 +31,7 @@ import { deriveActiveView } from '../layouts/deriveActiveView';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
 import { AddFolderDialog } from '../dialogs/AddFolderDialog';
 import { GlobalSettingsSidebar } from './GlobalSettingsSidebar';
+import { AccountSettingsSidebar } from './AccountSettingsSidebar';
 
 const PROJECT_GROUPS = [
   { status: 'pinned', title: 'Pinned Projects' },
@@ -81,6 +82,8 @@ export const SidePanel = () => {
     );
   } else if (view === 'global-settings') {
     body = <GlobalSettingsSidebar />;
+  } else if (view === 'account-settings') {
+    body = <AccountSettingsSidebar />;
   }
 
   return <div className={styles.panel}>{body}</div>;
@@ -128,7 +131,7 @@ const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySche
             {group.projects.map(p => (
               <TreeRow
                 key={p.id}
-                icon={<TbFolders size={12} />}
+                icon={<TbFolders size={12} style={p.color ? { color: p.color } : undefined} />}
                 label={p.name}
                 onClick={() => navigate({
                   to: '/$workspaceSlug/projects/$projectId',
@@ -136,6 +139,7 @@ const HomeSidebar = ({ schemas, projects, workspaceSlug }: { schemas: EntitySche
                   search: { tab: p.status === 'archived' ? 'archive' as const : 'projects' as const },
                 })}
                 trailing={<span className="dim mono">{p.file_count}</span>}
+                tagColor={p.color ?? undefined}
               />
             ))}
           </div>
@@ -518,12 +522,13 @@ const ProjectsSidebar = ({
                     expandable
                     expanded={isOpen}
                     onExpand={() => toggle(p.id)}
-                    icon={<TbFolders size={12} />}
+                    icon={<TbFolders size={12} style={p.color ? { color: p.color } : undefined} />}
                     label={p.name}
                     active={isSelected && !folderFilter}
                     onClick={() => navigateToProject(p)}
                     onContextMenu={e => openMenu(e, { type: 'project', projectId: p.id })}
                     trailing={<span className="dim mono">{p.file_count}</span>}
+                    tagColor={p.color ?? undefined}
                   />
                   {isOpen && tree && (
                     <>

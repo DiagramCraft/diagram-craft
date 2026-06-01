@@ -78,6 +78,8 @@ export type WorkspaceOwner = {
   id: string;
   workspace: string;
   sort_order: number;
+  color: string | null;
+  description: string;
   created_at: Date;
 };
 
@@ -131,6 +133,7 @@ export type Project = {
   description: string;
   owner: string | null;
   status: 'pinned' | 'active' | 'archived';
+  color: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -208,6 +211,7 @@ export type User = {
   oidc_issuer: string | null;
   oidc_subject: string | null;
   is_active: boolean;
+  color: string | null;
   created_at: Date;
   updated_at: Date;
   last_login_at: Date | null;

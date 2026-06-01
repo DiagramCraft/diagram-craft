@@ -16,6 +16,7 @@ import { DataModelEditor } from '../screens/DataModelEditor';
 import { SearchScreen } from '../screens/SearchScreen';
 import { WorkspaceSettings } from '../screens/WorkspaceSettings';
 import { GlobalSettings } from '../screens/GlobalSettings';
+import { AccountSettings } from '../screens/AccountSettings';
 import { apiFetch } from '../api';
 import type { Workspace } from '../api';
 import { workspaceKeys } from '../hooks/useWorkspaces';
@@ -152,6 +153,13 @@ const globalSettingsRoute = createRoute({
   component: GlobalSettings,
 });
 
+// ─── Account Settings ────────────────────────────────────────
+const accountSettingsRoute = createRoute({
+  getParentRoute: () => workspaceRoute,
+  path: 'account',
+  component: AccountSettings,
+});
+
 // ─── Route Tree ──────────────────────────────────────────────
 export const routeTree = rootRoute.addChildren([
   loginRoute,
@@ -167,6 +175,7 @@ export const routeTree = rootRoute.addChildren([
       searchRoute,
       settingsRoute,
       globalSettingsRoute,
+      accountSettingsRoute,
     ]),
   ]),
 ]);

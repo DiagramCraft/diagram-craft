@@ -103,6 +103,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null
@@ -330,6 +331,28 @@ describe('arch-register sqlite integration', () => {
     expect(audit.body.total).toBeGreaterThan(0);
   }, 20000);
 
+  it('allows users to update their own account settings', async () => {
+    const updated = await json<{
+      id: string;
+      display_name: string;
+      color: string | null;
+    }>('/api/users/test-admin', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        display_name: 'Updated Admin',
+        color: 'var(--tag-api)'
+      })
+    });
+
+    expect(updated.response.status).toBe(200);
+    expect(updated.body.display_name).toBe('Updated Admin');
+    expect(updated.body.color).toBe('var(--tag-api)');
+
+    const persisted = await db.identityAuth.getUser('test-admin');
+    expect(persisted?.display_name).toBe('Updated Admin');
+    expect(persisted?.color).toBe('var(--tag-api)');
+  }, 20000);
+
   it('enforces restricted subtree visibility and schema admin permissions', async () => {
     const viewer = await db.identityAuth.createUser({
       id: 'viewer',
@@ -340,6 +363,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null
@@ -354,6 +378,7 @@ describe('arch-register sqlite integration', () => {
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: null,
       created_at: new Date(),
       updated_at: new Date(),
       last_login_at: null

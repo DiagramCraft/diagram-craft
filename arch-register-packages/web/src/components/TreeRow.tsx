@@ -59,7 +59,7 @@ export const TreeRow = ({
     )}
     <span className={styles.icon}>{icon}</span>
     <span className={styles.label}>{label}</span>
-    {tagColor && <span className={styles.tag} style={{ background: tagColor }} />}
     {trailing && <span className={styles.trailing}>{trailing}</span>}
+    {tagColor && <span className={styles.tag} style={{ background: tagColor }} />}
   </div>
 );

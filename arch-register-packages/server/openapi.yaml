@@ -1178,6 +1178,43 @@ paths:
 
   /api/auth/users/{id}/global-roles:
     get:
+
+  /api/users/{id}:
+    patch:
+      tags: [Authentication]
+      summary: Update current user's account settings
+      operationId: updateUserAccount
+      description: Allows users to update their own account settings. Users can only update their own account.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID (must match authenticated user's ID)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserAccountRequest'
+      responses:
+        '200':
+          description: User account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceUserInfo'
+        '403':
+          description: Forbidden - can only update own account
+          $ref: '#/components/responses/Error'
+        '404':
+          description: User not found
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+
+
       tags: [Authentication]
       summary: Get user's global roles
       operationId: getUserGlobalRoles
@@ -1718,6 +1755,10 @@ components:
           type: string
         sort_order:
           type: integer
+        color:
+          type: [string, 'null']
+        description:
+          type: string
       required: [id, sort_order]
 
     WorkspaceMemberInfo:
@@ -1751,6 +1792,8 @@ components:
           type: string
         is_active:
           type: boolean
+        color:
+          type: [string, 'null']
       required: [id, email, display_name, auth_provider, is_active]
 
     TextField:
@@ -2226,6 +2269,8 @@ components:
           type: [string, 'null']
         status:
           type: [string, 'null']
+        color:
+          type: [string, 'null']
         file_count:
           type: integer
         canEdit:
@@ -2240,7 +2285,7 @@ components:
         updated_at:
           type: string
           format: date-time
-      required: [id, workspace, name, description, owner, status, file_count, canEdit, canDelete, canManageFiles, created_at, updated_at]
+      required: [id, workspace, name, description, owner, status, color, file_count, canEdit, canDelete, canManageFiles, created_at, updated_at]
 
     ProjectWithFileCount:
       allOf:
@@ -2258,6 +2303,13 @@ components:
           type: string
         description:
           type: string
+        owner:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [pinned, active, archived]
+        color:
+          type: [string, 'null']
       required: [name]
       additionalProperties: false
 
@@ -2713,3 +2765,16 @@ components:
             $ref: '#/components/schemas/ProjectFile'
           description: Templates specific to this project
       required: [workspaceTemplates, projectTemplates]
+
+
+
+    UpdateUserAccountRequest:
+      type: object
+      properties:
+        color:
+          type: [string, 'null']
+          description: User's preferred color for avatar/display
+        display_name:
+          type: string
+          description: User's display name
+      additionalProperties: false

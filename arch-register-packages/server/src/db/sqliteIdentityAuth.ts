@@ -28,7 +28,7 @@ export class SqliteIdentityAuthDatabase
 
   async createUser(input: CreateUserInput) {
     this.run(
-      'INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.email,
@@ -38,6 +38,7 @@ export class SqliteIdentityAuthDatabase
         input.oidc_issuer,
         input.oidc_subject,
         input.is_active ? 1 : 0,
+        input.color,
         input.created_at.toISOString(),
         input.updated_at.toISOString(),
         input.last_login_at?.toISOString() ?? null
@@ -65,6 +66,10 @@ export class SqliteIdentityAuthDatabase
     if (input.is_active !== undefined) {
       sets.push('is_active = ?');
       values.push(input.is_active ? 1 : 0);
+    }
+    if (input.color !== undefined) {
+      sets.push('color = ?');
+      values.push(input.color);
     }
 
     sets.push('updated_at = ?');

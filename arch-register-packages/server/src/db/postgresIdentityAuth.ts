@@ -35,19 +35,20 @@ export class PostgresIdentityAuthDatabase
   async createUser(input: CreateUserInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['user'][]>`
-        INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, created_at, updated_at, last_login_at)
+        INSERT INTO users (id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at)
         VALUES (
           ${input.id},
-          ${input.email},
+          ${input.email ?? null},
           ${input.display_name},
           ${input.auth_provider},
-          ${input.password_hash},
-          ${input.oidc_issuer},
-          ${input.oidc_subject},
+          ${input.password_hash ?? null},
+          ${input.oidc_issuer ?? null},
+          ${input.oidc_subject ?? null},
           ${input.is_active},
+          ${input.color ?? null},
           ${input.created_at},
           ${input.updated_at},
-          ${input.last_login_at}
+          ${input.last_login_at ?? null}
         )
         RETURNING *
       `;
@@ -65,6 +66,7 @@ export class PostgresIdentityAuthDatabase
       if (input.display_name !== undefined) sets.display_name = input.display_name;
       if (input.password_hash !== undefined) sets.password_hash = input.password_hash;
       if (input.is_active !== undefined) sets.is_active = input.is_active;
+      if (input.color !== undefined) sets.color = input.color;
 
       const [row] = await this.sql<PostgresRowTypes['user'][]>`
         UPDATE users

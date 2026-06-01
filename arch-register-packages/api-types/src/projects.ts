@@ -9,6 +9,7 @@ export type Project = ProjectCapabilities & {
   description: string;
   owner: string | null;
   status: 'pinned' | 'active' | 'archived';
+  color: string | null;
   file_count: number;
   created_at: string;
   updated_at: string;
@@ -49,6 +50,7 @@ export type CreateProjectRequest = {
   description?: string;
   owner?: string | null;
   status?: 'pinned' | 'active' | 'archived';
+  color?: string | null;
 };
 
 export type UpdateProjectRequest = CreateProjectRequest;

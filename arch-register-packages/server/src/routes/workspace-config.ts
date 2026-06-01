@@ -99,9 +99,15 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
-      const owners = body as Array<{ id?: unknown; sort_order?: unknown }>;
+      const owners = body as Array<{ id?: unknown; sort_order?: unknown; color?: unknown; description?: unknown }>;
       for (const o of owners) {
         httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+        if (o.color !== undefined && o.color !== null) {
+          httpAssert.string(o.color, { message: 'color must be a string if provided' });
+        }
+        if (o.description !== undefined) {
+          httpAssert.string(o.description, { message: 'description must be a string if provided' });
+        }
       }
 
       const ids = owners.map(o => o.id as string);
@@ -116,6 +122,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
           id: o.id as string,
           workspace,
           sort_order: i,
+          color: (o.color as string | null | undefined) ?? null,
+          description: (o.description as string | undefined) ?? '',
           created_at: now
         }))
       );
@@ -132,9 +140,15 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
       const body = await event.req.json().catch(() => undefined);
       httpAssert.array(body, { message: 'Request body must be a JSON array' });
 
-      const owners = body as Array<{ id?: unknown; sort_order?: unknown }>;
+      const owners = body as Array<{ id?: unknown; sort_order?: unknown; color?: unknown; description?: unknown }>;
       for (const o of owners) {
         httpAssert.string(o.id, { message: 'Each owner must have a string id' });
+        if (o.color !== undefined && o.color !== null) {
+          httpAssert.string(o.color, { message: 'color must be a string if provided' });
+        }
+        if (o.description !== undefined) {
+          httpAssert.string(o.description, { message: 'description must be a string if provided' });
+        }
       }
 
       const ids = owners.map(o => o.id as string);
@@ -149,6 +163,8 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
           id: o.id as string,
           workspace,
           sort_order: i,
+          color: (o.color as string | null | undefined) ?? null,
+          description: (o.description as string | undefined) ?? '',
           created_at: now
         }))
       );
@@ -314,6 +330,7 @@ export function createWorkspaceConfigRoutes(db: DatabaseAdapter) {
         display_name: user.display_name,
         auth_provider: user.auth_provider,
         is_active: user.is_active,
+        color: user.color,
       }));
     })
   );

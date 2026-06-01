@@ -115,6 +115,7 @@ const seedTestUsers = async (db: Awaited<ReturnType<typeof createDatabase>>) => 
       oidc_issuer: null,
       oidc_subject: null,
       is_active: true,
+      color: user.color,
       created_at: now,
       updated_at: now,
       last_login_at: null

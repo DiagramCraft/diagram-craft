@@ -5,6 +5,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  type Project,
   type ProjectDetail,
 } from '../api';
 
@@ -46,10 +47,17 @@ export const useCreateProject = (workspaceId: string) => {
       description?: string;
       owner?: string | null;
       status?: 'pinned' | 'active' | 'archived';
+      color?: string | null;
     }) => createProject(workspaceId, body),
-    onSuccess: () => {
-      // Invalidate project list to show the new project
-      queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceId) });
+    onSuccess: (newProject) => {
+      // Update project list cache with the new project
+      queryClient.setQueryData(
+        projectKeys.list(workspaceId),
+        (old: Project[] | undefined) => {
+          if (!old) return [newProject];
+          return [...old, newProject];
+        }
+      );
     },
   });
 };
@@ -66,9 +74,18 @@ export const useUpdateProject = (workspaceId: string) => {
         description?: string;
         owner?: string | null;
         status?: 'pinned' | 'active' | 'archived';
+        color?: string | null;
       };
     }) => updateProject(workspaceId, projectId, data),
     onSuccess: (updatedProject, variables) => {
+      // Update the project list cache
+      queryClient.setQueryData(
+        projectKeys.list(workspaceId),
+        (old: Project[] | undefined) => {
+          if (!old) return old;
+          return old.map(p => p.id === variables.projectId ? updatedProject : p);
+        }
+      );
       // Update the project detail cache
       queryClient.setQueryData(
         projectKeys.detail(workspaceId, variables.projectId),
@@ -77,8 +94,6 @@ export const useUpdateProject = (workspaceId: string) => {
           return { ...old, ...updatedProject };
         }
       );
-      // Invalidate project list to reflect changes
-      queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceId) });
     },
   });
 };

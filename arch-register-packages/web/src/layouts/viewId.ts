@@ -7,4 +7,5 @@ export type ViewId =
   | 'diagram'
   | 'workspace-settings'
   | 'global-settings'
+  | 'account-settings'
   | 'search';
