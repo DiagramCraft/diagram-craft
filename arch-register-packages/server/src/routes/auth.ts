@@ -349,15 +349,19 @@ export const createAuthProtectedRoutes = (db: DatabaseAdapter) => {
       });
 
       const body = (await readBody(event).catch(() => undefined)) as
-        | { color?: unknown }
+        | { color?: unknown; display_name?: unknown }
         | undefined;
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
 
       if (body.color !== undefined && body.color !== null) {
         httpAssert.string(body.color, { message: 'color must be a string if provided' });
       }
+      if (body.display_name !== undefined) {
+        httpAssert.string(body.display_name, { message: 'display_name must be a string if provided' });
+      }
 
       const updatedUser = await db.identityAuth.updateUser(id, {
+        display_name: body.display_name as string | undefined,
         color: (body.color as string | null | undefined) ?? null,
         updated_at: new Date()
       });
