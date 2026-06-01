@@ -16,11 +16,11 @@
     "@diagram-craft/collaboration": "workspace:*",
     "@diagram-craft/model": "workspace:*",
     "@diagram-craft/utils": "workspace:*",
-    "h3": "^2.0.1-rc.5",
+    "h3": "^2.0.1-rc.22",
     "lib0": "^0.2.117",
-    "ws": "^8.20.0",
+    "ws": "^8.21.0",
     "y-protocols": "^1.0.7",
-    "yjs": "^13.6.30"
+    "yjs": "^13.6.31"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
