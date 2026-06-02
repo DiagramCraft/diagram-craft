@@ -100,8 +100,8 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                   <span style={{
                     position: 'absolute', inset: 0,
                     borderRadius: 999,
-                    background: enabled ? 'var(--accent)' : 'var(--bg-3)',
-                    border: `1px solid ${enabled ? 'var(--accent)' : 'var(--border)'}`,
+                    background: enabled ? 'var(--accent-fg)' : 'var(--cmp-bg)',
+                    border: `1px solid ${enabled ? 'var(--accent-fg)' : 'var(--cmp-border)'}`,
                     transition: 'background 0.15s, border-color 0.15s',
                   }} />
                   <span style={{
@@ -113,7 +113,7 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
                     transition: 'left 0.15s',
                   }} />
                 </span>
-                <span style={{ fontSize: 12, color: 'var(--fg-1)' }}>{enabled ? 'Enabled' : 'Disabled'}</span>
+                <span style={{ fontSize: 12, color: 'var(--base-fg-dim)' }}>{enabled ? 'Enabled' : 'Disabled'}</span>
               </label>
             </div>
           </div>

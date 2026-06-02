@@ -18,20 +18,20 @@ type AddDiagramDialogProps = {
 // Dummy SVG preview (matches the one used in project detail grid cards)
 const DummyPreview = () => (
   <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet">
-    <rect x="14" y="18" width="36" height="20" rx="2" fill="var(--bg-3, #2a2a2e)" stroke="var(--border-strong, #444)" strokeWidth="1" />
-    <rect x="62" y="8" width="36" height="20" rx="2" fill="var(--bg-3, #2a2a2e)" stroke="var(--border-strong, #444)" strokeWidth="1" />
-    <rect x="62" y="52" width="36" height="20" rx="2" fill="var(--bg-3, #2a2a2e)" stroke="var(--border-strong, #444)" strokeWidth="1" />
-    <rect x="110" y="30" width="36" height="20" rx="2" fill="color-mix(in oklch, var(--accent) 28%, var(--bg-3, #2a2a2e))" stroke="var(--accent)" strokeWidth="1" />
+    <rect x="14" y="18" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
+    <rect x="62" y="8" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
+    <rect x="62" y="52" width="36" height="20" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" strokeWidth="1" />
+    <rect x="110" y="30" width="36" height="20" rx="2" fill="color-mix(in oklch, var(--accent-fg) 28%, var(--cmp-bg))" stroke="var(--accent-fg)" strokeWidth="1" />
     <path d="M50 28 L62 18 M50 28 L62 62 M98 18 L110 40 M98 62 L110 40"
-      stroke="var(--fg-3, #666)" fill="none" strokeWidth="1" />
+      stroke="var(--cmp-fg-disabled)" fill="none" strokeWidth="1" />
   </svg>
 );
 
 const BlankPreview = () => (
   <svg viewBox="0 0 160 90">
     <rect x="20" y="14" width="120" height="62" rx="4" fill="none"
-      stroke="var(--border, #444)" strokeWidth="1.5" strokeDasharray="5 5" />
-    <path d="M80 36v18M71 45h18" stroke="var(--fg-3, #666)" strokeWidth="2" strokeLinecap="round" />
+      stroke="var(--cmp-border)" strokeWidth="1.5" strokeDasharray="5 5" />
+    <path d="M80 36v18M71 45h18" stroke="var(--cmp-fg-disabled)" strokeWidth="2" strokeLinecap="round" />
   </svg>
 );
 
@@ -195,7 +195,7 @@ export const AddDiagramDialog = ({ open, onClose, onCreated, workspaceId, projec
               onChange={e => setName(e.target.value)}
             />
             {folder && (
-              <div style={{ fontSize: 11, color: 'var(--fg-2)', marginTop: 2 }}>
+              <div style={{ fontSize: 11, color: 'var(--base-fg-more-dim)', marginTop: 2 }}>
                 Will be created in <b>{folder}</b>
               </div>
             )}

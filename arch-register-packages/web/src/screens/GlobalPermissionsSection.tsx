@@ -165,7 +165,7 @@ export const GlobalPermissionsSection = ({
                       />
                     </td>
                     <td>
-                      <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--ok)' : 'var(--fg-3)'}>
+                      <Chip tone="ghost" dot={assignedUser.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}>
                         {assignedUser.is_active ? 'Active' : 'Inactive'}
                       </Chip>
                     </td>

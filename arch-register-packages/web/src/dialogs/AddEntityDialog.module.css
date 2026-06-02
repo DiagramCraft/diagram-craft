@@ -23,7 +23,7 @@
 .field label {
   font-size: 11px;
   font-weight: 500;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   display: flex;
@@ -34,12 +34,12 @@
 .field input,
 .field textarea,
 .field select {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   padding: 6px 8px;
   font-size: 13px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.15s;
@@ -48,7 +48,7 @@
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .field textarea {
@@ -65,12 +65,12 @@
 
 .hint {
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-top: 2px;
 }
 
 .required {
-  color: var(--danger);
+  color: var(--error-fg);
   font-weight: bold;
 }
 
@@ -79,13 +79,13 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin: 0;
   display: flex;
   align-items: center;
   gap: 6px;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .contentGrid {
@@ -97,8 +97,8 @@
 }
 
 .propertiesSection {
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 10px 12px;
   display: flex;
@@ -115,8 +115,8 @@
 
 /* Metadata section - dimmer background */
 .metaSection {
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 10px 12px;
   display: flex;
@@ -129,7 +129,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -159,21 +159,21 @@
 }
 
 .btnCancel {
-  background: var(--bg-3);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
 }
 
 .btnCancel:hover {
-  background: var(--bg-4);
+  background: var(--cmp-bg-hover);
 }
 
 .btnSubmit {
-  background: var(--accent);
+  background: var(--accent-fg);
   color: white;
 }
 
 .btnSubmit:hover {
-  background: var(--accent-strong);
+  background: var(--accent-fg-hover);
 }
 
 .btnSubmit:disabled {
@@ -183,7 +183,7 @@
 
 .error {
   font-size: 12px;
-  color: var(--danger);
+  color: var(--error-fg);
 }
 
 @media (max-width: 900px) {

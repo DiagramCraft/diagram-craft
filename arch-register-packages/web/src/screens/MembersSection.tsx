@@ -218,7 +218,7 @@ export const MembersSection = ({
                     </td>
                     <td>
                       {userInfo ? (
-                        <Chip tone="ghost" dot={userInfo.is_active ? 'var(--ok)' : 'var(--fg-3)'}>
+                        <Chip tone="ghost" dot={userInfo.is_active ? 'var(--green)' : 'var(--cmp-fg-disabled)'}>
                           {userInfo.is_active ? 'Active' : 'Inactive'}
                         </Chip>
                       ) : (

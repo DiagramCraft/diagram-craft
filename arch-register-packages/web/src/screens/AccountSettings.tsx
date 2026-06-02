@@ -216,10 +216,10 @@ export const AccountSettings = () => {
                         size={48}
                       />
                       <div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--fg-0)' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--base-fg)' }}>
                           {user.display_name}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--fg-2)' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--base-fg-more-dim)' }}>
                           {user.email ?? 'No email'}
                         </div>
                       </div>

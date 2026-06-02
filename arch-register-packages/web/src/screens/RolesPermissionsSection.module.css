@@ -13,8 +13,8 @@
 }
 
 .roleCard {
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   padding: 14px;
   cursor: pointer;
@@ -25,12 +25,12 @@
 }
 
 .roleCard:hover {
-  border-color: var(--fg-3);
+  border-color: var(--cmp-fg-disabled);
 }
 
 .roleCardSelected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
+  border-color: var(--accent-fg);
+  box-shadow: 0 0 0 1px var(--accent-fg);
 }
 
 .roleCardHeader {
@@ -45,7 +45,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .roleDot {
@@ -57,8 +57,8 @@
 
 .builtinChip {
   font-size: 10px;
-  color: var(--fg-3);
-  background: var(--bg-2);
+  color: var(--cmp-fg-disabled);
+  background: var(--panel-bg);
   border-radius: 4px;
   padding: 1px 6px;
   text-transform: uppercase;
@@ -67,7 +67,7 @@
 
 .roleDescription {
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   line-height: 1.4;
 }
 
@@ -75,20 +75,20 @@
   display: flex;
   gap: 12px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-top: auto;
   margin-bottom: 8px;
 }
 
 .roleStatValue {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-weight: 600;
 }
 
 /* Add custom role button */
 .addRoleCard {
-  background: var(--bg-1);
-  border: 1px dashed var(--border);
+  background: var(--base-bg);
+  border: 1px dashed var(--cmp-border);
   border-radius: 8px;
   padding: 14px;
   display: flex;
@@ -97,19 +97,19 @@
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
   min-height: 100px;
   transition: border-color 0.15s;
 }
 
 .addRoleCard:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 /* Permission matrix */
 .matrixWrap {
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -124,11 +124,11 @@
 .matrix td {
   padding: 6px 12px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--cmp-border);
 }
 
 .matrix th {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-weight: 600;
   font-size: 11px;
   white-space: nowrap;
@@ -141,7 +141,7 @@
 }
 
 .matrixHeaderRow th {
-  background: var(--bg-1);
+  background: var(--base-bg);
   padding: 10px 12px;
   position: sticky;
   top: 0;
@@ -149,9 +149,9 @@
 }
 
 .matrixGroupRow td {
-  background: var(--bg-2);
+  background: var(--panel-bg);
   font-weight: 600;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -159,25 +159,25 @@
 }
 
 .matrixCapRow td {
-  background: var(--bg-0);
+  background: var(--base-bg);
 }
 
 .matrixCapName {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
 }
 
 .matrixCheck {
-  color: var(--ok);
+  color: var(--green);
   font-size: 14px;
 }
 
 .matrixDash {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
 }
 
 .matrixColHighlight {
-  background: color-mix(in srgb, var(--accent) 8%, transparent) !important;
+  background: color-mix(in srgb, var(--accent-fg) 8%, transparent) !important;
 }
 
 .matrix tr:last-child td {
@@ -190,9 +190,9 @@
 }
 
 .roleActionBtn {
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-2);
+  border: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+  color: var(--base-fg-more-dim);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 11px;
@@ -223,7 +223,7 @@
 
 .dialogLabel {
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 .requiredMark,
@@ -235,20 +235,20 @@
 }
 
 .requiredMark {
-  color: var(--danger);
+  color: var(--error-fg);
 }
 
 .optionalMark {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .dialogInput,
 .dialogTextarea {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-0);
+  border: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+  color: var(--base-fg);
   border-radius: 6px;
   padding: 8px 10px;
 }
@@ -260,7 +260,7 @@
 
 .dialogMeta {
   font-size: 12px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .colorPickerWrap {
@@ -276,7 +276,7 @@
 }
 
 .capabilityGroup {
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   padding: 10px;
   display: flex;
@@ -295,14 +295,14 @@
   gap: 8px;
   min-width: 0;
   font-size: 12px;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   padding: 6px 8px;
   border-radius: 6px;
   transition: background 0.15s ease;
 }
 
 .capabilityRow:hover {
-  background: var(--bg-1);
+  background: var(--base-bg);
 }
 
 .capabilityCheckbox {
@@ -310,9 +310,9 @@
   width: 16px;
   height: 16px;
   margin: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: 4px;
-  background: var(--bg-0);
+  background: var(--base-bg);
   display: grid;
   place-content: center;
   flex-shrink: 0;
@@ -330,9 +330,9 @@
 }
 
 .capabilityCheckbox:checked {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-fg) 18%, transparent);
 }
 
 .capabilityCheckbox:checked::before {
@@ -359,31 +359,31 @@
 }
 
 .dialogBtn {
-  border: 1px solid var(--border);
-  background: var(--bg-0);
-  color: var(--fg-1);
+  border: 1px solid var(--cmp-border);
+  background: var(--base-bg);
+  color: var(--base-fg-dim);
 }
 
 .dialogBtnPrimary {
-  border: 1px solid var(--accent);
-  background: var(--accent);
+  border: 1px solid var(--accent-fg);
+  background: var(--accent-fg);
   color: white;
 }
 
 .dialogBtnDanger {
-  border: 1px solid var(--danger);
-  background: var(--danger);
+  border: 1px solid var(--error-fg);
+  background: var(--error-fg);
   color: white;
 }
 
 .dialogError {
-  color: var(--danger);
+  color: var(--error-fg);
   font-size: 12px;
 }
 
 .deleteCopy {
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 @media (max-width: 720px) {

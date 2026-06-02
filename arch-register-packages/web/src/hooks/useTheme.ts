@@ -47,10 +47,10 @@ const getInitialTheme = (): Theme => {
   return migrateTheme();
 };
 
-const applyTheme = (theme: Theme) => {
+export const applyTheme = (theme: Theme) => {
   const root = document.documentElement;
+  const body = document.body;
 
-  // Arch Register's original approach
   if (theme === 'light') {
     root.setAttribute('data-theme', 'light');
     root.classList.remove('dark');
@@ -59,12 +59,13 @@ const applyTheme = (theme: Theme) => {
     root.classList.add('dark');
   }
 
-  // Also apply diagram-craft's approach for embedded editor
   const dcClass = theme === 'dark' ? 'dark-theme' : 'light-theme';
   const removeClass = theme === 'dark' ? 'light-theme' : 'dark-theme';
 
   root.classList.remove(removeClass);
   root.classList.add(dcClass);
+  body.classList.remove(removeClass);
+  body.classList.add(dcClass);
 };
 
 export const useTheme = () => {

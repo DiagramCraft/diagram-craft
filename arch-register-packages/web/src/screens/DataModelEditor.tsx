@@ -301,7 +301,7 @@ export const DataModelEditor = () => {
                   </div>
                 ) : (
                   <div className={styles.fieldsTable}>
-                    <div style={{ padding: '16px', color: 'var(--fg-3)', textAlign: 'center', fontSize: 12 }}>
+                    <div style={{ padding: '16px', color: 'var(--cmp-fg-disabled)', textAlign: 'center', fontSize: 12 }}>
                       No fields defined yet. Click "Add field" to get started.
                     </div>
                   </div>

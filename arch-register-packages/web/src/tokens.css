@@ -1,60 +1,12 @@
-/* Arch Register — design tokens built on @radix-ui/colors */
-@import '@radix-ui/colors/gray-dark.css';
-@import '@radix-ui/colors/gray-dark-alpha.css';
-@import '@radix-ui/colors/blue-dark.css';
-@import '@radix-ui/colors/green-dark.css';
-@import '@radix-ui/colors/red-dark.css';
-@import '@radix-ui/colors/orange-dark.css';
+@import '../../../packages/main/src/tokens.css';
 
 :root {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Surfaces */
-  --bg-0: var(--gray-1);
-  --bg-1: var(--gray-1);
-  --bg-2: var(--gray-2);
-  --bg-3: var(--gray-4);
-  --bg-4: var(--gray-5);
-  --bg-input: var(--gray-3);
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
-  /* Borders & dividers */
-  --border-subtle: var(--gray-4);
-  --border: var(--gray-6);
-  --border-strong: var(--gray-7);
-
-  /* Text */
-  --fg-0: var(--gray-12);
-  --fg-1: var(--gray-11);
-  --fg-2: var(--gray-9);
-  --fg-3: var(--gray-8);
-  --fg-disabled: var(--gray-7);
-
-  /* Accent — blue (oklch values so they don't depend on .dark class) */
-  --accent: oklch(0.66 0.17 258);
-  --accent-strong: oklch(0.72 0.18 258);
-  --accent-dim: oklch(0.40 0.10 258);
-  --accent-bg: oklch(0.30 0.08 258 / 0.30);
-
-  /* Type-tag swatches */
-  --tag-component: oklch(0.62 0.13 145);
-  --tag-api: oklch(0.66 0.16 258);
-  --tag-service: oklch(0.66 0.14 35);
-  --tag-database: oklch(0.62 0.14 295);
-  --tag-system: oklch(0.66 0.14 80);
-
-  /* Status */
-  --ok: oklch(0.66 0.14 145);
-  --warn: oklch(0.72 0.15 80);
-  --danger: oklch(0.62 0.18 25);
-
-  /* Type */
-  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo,
-  Consolas, monospace;
-
-  /* Sizing */
   --row: 28px;
   --row-lg: 32px;
   --rail: 44px;
@@ -63,68 +15,26 @@
   --r: 4px;
   --r-md: 6px;
 
-  /* Component tokens for diagram-craft compatibility */
-  --cmp-bg: var(--bg-2);
-  --cmp-fg: var(--fg-0);
-  --cmp-fg-disabled: var(--fg-disabled);
-  --cmp-border: var(--border);
-  --accent-bg-selected: var(--accent-bg);
-  --accent-fg: var(--accent);
-  --panel-fg: var(--fg-0);
-  --popover-shadow: 0 0 0 0.5px var(--border), 0 10px 60px rgba(0, 0, 0, 0.17), 0 10px 32px -16px rgba(0, 0, 0, 0.35);
+  --tag-component: oklch(0.62 0.13 145);
+  --tag-api: oklch(0.66 0.16 258);
+  --tag-service: oklch(0.66 0.14 35);
+  --tag-database: oklch(0.62 0.14 295);
+  --tag-system: oklch(0.66 0.14 80);
 }
 
-/* ===================================================================
-   Light theme — override the token ladder. Applied via
-   document.documentElement.dataset.theme = "light". Components read
-   tokens, so flipping these cascades through the whole app.
-   =================================================================== */
 :root[data-theme="light"] {
-  /* Surfaces — white raised elements over a light-grey canvas.
-     Hue 260 on achromatics keeps color-mix(in oklch) from drifting pink. */
-  --bg-0: oklch(0.928 0.004 260);
-  --bg-1: oklch(0.978 0.003 260);
-  --bg-2: oklch(0.958 0.004 260);
-  --bg-3: oklch(1 0 260);
-  --bg-4: oklch(0.918 0.006 260);
-  --bg-input: oklch(1 0 260);
-
-  /* Borders & dividers */
-  --border-subtle: oklch(0.918 0.004 260);
-  --border: oklch(0.866 0.005 260);
-  --border-strong: oklch(0.788 0.006 260);
-
-  /* Text — dark ink */
-  --fg-0: oklch(0.24 0.012 260);
-  --fg-1: oklch(0.34 0.010 260);
-  --fg-2: oklch(0.50 0.008 260);
-  --fg-3: oklch(0.60 0.006 260);
-  --fg-disabled: oklch(0.72 0.004 260);
-
-  /* Accent — deepen the blue so it carries on white */
-  --accent: oklch(0.55 0.18 258);
-  --accent-strong: oklch(0.48 0.19 258);
-  --accent-dim: oklch(0.82 0.07 258);
-  --accent-bg: oklch(0.55 0.16 258 / 0.12);
-
-  /* Type-tag swatches — slightly darker for contrast on light surfaces */
   --tag-component: oklch(0.52 0.14 145);
   --tag-api: oklch(0.52 0.17 258);
   --tag-service: oklch(0.55 0.16 35);
   --tag-database: oklch(0.50 0.16 295);
   --tag-system: oklch(0.58 0.13 80);
-
-  /* Status */
-  --ok: oklch(0.52 0.15 145);
-  --warn: oklch(0.62 0.15 75);
-  --danger: oklch(0.55 0.20 25);
 }
 
-/* Light-theme scrollbar overrides */
 :root[data-theme="light"] :where(.ar-app) ::-webkit-scrollbar-thumb {
   background: oklch(0.82 0.005 260);
-  border: 2px solid var(--bg-1);
+  border: 2px solid var(--base-bg);
 }
+
 :root[data-theme="light"] :where(.ar-app) ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.74 0.006 260);
 }
@@ -137,17 +47,15 @@ body {
 }
 
 body {
-  background: var(--bg-0);
+  background: var(--base-bg);
 }
 
 #root {
   height: 100%;
 }
 
-/* ── Scoped resets ─────────────────────────────────────────────────── */
-
 .ar-app {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-family: var(--font-sans);
   font-size: 12.5px;
   line-height: 1.4;
@@ -183,7 +91,6 @@ body {
   color: inherit;
 }
 
-/* Custom scrollbars */
 :where(.ar-app) ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -195,7 +102,7 @@ body {
 
 :where(.ar-app) ::-webkit-scrollbar-thumb {
   background: var(--gray-5);
-  border: 2px solid var(--bg-1);
+  border: 2px solid var(--base-bg);
   border-radius: 6px;
 }
 
@@ -207,13 +114,11 @@ body {
   background: transparent;
 }
 
-/* Focus ring */
 :where(.ar-app) :focus-visible {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--accent-fg);
   outline-offset: 1px;
 }
 
-/* Utility */
 :where(.ar-app) .mono {
   font-family: var(--font-mono);
 }
@@ -223,5 +128,5 @@ body {
 }
 
 :where(.ar-app) .dim {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }

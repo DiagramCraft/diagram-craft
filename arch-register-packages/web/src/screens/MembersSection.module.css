@@ -19,14 +19,14 @@
   max-width: 280px;
   min-width: 180px;
   padding: 0 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
-  background: var(--bg-input, var(--bg-2));
-  color: var(--fg-2);
+  background: var(--cmp-bg);
+  color: var(--base-fg-more-dim);
 }
 
 .search:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .searchInput {
@@ -34,13 +34,13 @@
   border: 0;
   outline: 0;
   flex: 1;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12px;
   min-width: 0;
 }
 
 .searchInput::placeholder {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .filter {
@@ -49,19 +49,19 @@
   gap: 4px;
   height: 26px;
   padding: 0 6px 0 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
-  background: var(--bg-2);
+  background: var(--panel-bg);
   font-size: 12px;
   cursor: pointer;
 }
 
 .filter:hover {
-  border-color: var(--border-strong, var(--border));
+  border-color: var(--base-fg-more-dim);
 }
 
 .filterLabel {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
 }
 
@@ -70,17 +70,17 @@
   background: transparent;
   border: 0;
   outline: 0;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12px;
   cursor: pointer;
   padding-right: 2px;
 }
 
 .tableWrap {
-  border: 1px solid var(--border-subtle, var(--border));
+  border: 1px solid var(--panel-border);
   border-radius: 8px;
   overflow: visible;
-  background: var(--bg-2);
+  background: var(--panel-bg);
 }
 
 .table {
@@ -95,15 +95,15 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--fg-3);
-  background: var(--bg-1);
+  color: var(--cmp-fg-disabled);
+  background: var(--base-bg);
   padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--cmp-border);
   white-space: nowrap;
 }
 
 .table tbody tr {
-  border-bottom: 1px solid var(--border-subtle, var(--border));
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .table tbody tr:last-child {
@@ -111,7 +111,7 @@
 }
 
 .table tbody tr:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 .table td {
@@ -127,7 +127,7 @@
 }
 
 .memberNameMain {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -137,12 +137,12 @@
 .memberNameSub {
   font-size: 11px;
   line-height: 1.3;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-family: var(--font-mono, monospace);
 }
 
 .avatar {
-  color: var(--fg-0, #fff);
+  color: var(--base-fg);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -153,7 +153,7 @@
 }
 
 .dim {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .roleBtn {
@@ -183,11 +183,11 @@
   gap: 6px;
   height: 22px;
   padding: 0 8px 0 6px;
-  background: var(--bg-3);
-  border: 1px solid var(--border-subtle, var(--border));
+  background: var(--cmp-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r);
   font-size: 11.5px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   white-space: nowrap;
 }
 
@@ -204,17 +204,17 @@
   height: 22px;
   padding: 0 6px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .empty {
   padding: 18px 16px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
 }
 
 .error {
-  color: var(--danger);
+  color: var(--error-fg);
   font-size: 12px;
 }
 
@@ -237,14 +237,14 @@
 }
 
 .fieldLabel {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-size: 12.5px;
   font-weight: 500;
 }
 
 .fieldHint {
   margin-top: 4px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -257,10 +257,10 @@
   width: 100%;
   height: 32px;
   padding: 0 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
-  background: var(--bg-input);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
   font-size: 12px;
 }
 
@@ -276,18 +276,18 @@
   gap: 6px;
   height: 28px;
   padding: 0 10px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-dim);
   border-radius: var(--r);
   font-size: 12px;
   cursor: pointer;
 }
 
 .btn:hover {
-  background: var(--bg-4);
-  color: var(--fg-0);
-  border-color: var(--border-strong, var(--border));
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+  border-color: var(--base-fg-more-dim);
 }
 
 .btn:disabled {
@@ -297,12 +297,12 @@
 
 .btnPrimary {
   composes: btn;
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
-  color: var(--fg-0);
+  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
+  color: var(--base-fg);
 }
 
 .btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
-  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
+  border-color: var(--accent-fg);
 }

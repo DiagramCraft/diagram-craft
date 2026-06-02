@@ -33,19 +33,19 @@ const TEAM_ROLE_OPTIONS: Array<{ value: TeamRole; label: string; tone: string; d
   {
     value: 'team_admin',
     label: 'Team admin',
-    tone: 'var(--danger)',
+    tone: 'var(--error-fg)',
     description: 'Full owner-team access plus team administration.',
   },
   {
     value: 'team_editor',
     label: 'Team editor',
-    tone: 'var(--accent)',
+    tone: 'var(--accent-fg)',
     description: 'Can edit owned entities and projects.',
   },
   {
     value: 'team_reviewer',
     label: 'Team reviewer',
-    tone: 'var(--ok)',
+    tone: 'var(--green)',
     description: 'Read-only access across owned content.',
   },
 ];

@@ -26,8 +26,8 @@
   width: 640px;
   max-width: 100%;
   max-height: calc(100vh - 12vh);
-  background: var(--bg-2);
-  border: 1px solid var(--border-strong, var(--border));
+  background: var(--panel-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 8px;
   box-shadow:
     0 1px 0 oklch(1 0 0 / 0.04) inset,
@@ -50,7 +50,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 16px 16px 14px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--cmp-border);
 }
 
 .headerLeft {
@@ -63,14 +63,14 @@
   font-size: 10.5px;
   letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: var(--fg-3, var(--fg-2));
+  color: var(--cmp-fg-disabled);
   margin-bottom: 4px;
 }
 
 .title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
   margin: 0;
   line-height: 1.25;
 }
@@ -78,7 +78,7 @@
 .subtitle {
   margin-top: 4px;
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   line-height: 1.45;
   max-width: 460px;
 }
@@ -90,7 +90,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r, 4px);
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   border: 1px solid transparent;
   background: none;
   cursor: pointer;
@@ -98,9 +98,9 @@
 }
 
 .closeBtn:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
-  border-color: var(--border);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  border-color: var(--cmp-border);
 }
 
 /* Body */
@@ -120,21 +120,21 @@
   width: 100%;
   text-align: left;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r-md, 6px);
-  background: var(--bg-1);
+  background: var(--base-bg);
   cursor: pointer;
   transition: background 80ms, border-color 80ms;
 }
 
 .blankOption:hover {
-  background: var(--bg-2);
-  border-color: var(--border-strong, var(--border));
+  background: var(--panel-bg);
+  border-color: var(--base-fg-more-dim);
 }
 
 .blankOption.isActive {
-  background: color-mix(in oklch, var(--accent) 12%, var(--bg-2));
-  border-color: color-mix(in oklch, var(--accent) 55%, var(--border));
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--panel-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 55%, var(--cmp-border));
 }
 
 .blankThumb {
@@ -142,8 +142,8 @@
   height: 52px;
   border-radius: var(--r, 4px);
   overflow: hidden;
-  background: var(--bg-0, var(--bg-1));
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
 }
 
 .blankThumb svg {
@@ -162,12 +162,12 @@
 .blankName {
   font-size: 13px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .blankDesc {
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   line-height: 1.4;
 }
 
@@ -177,14 +177,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-strong, var(--border));
+  border: 1px solid var(--base-fg-more-dim);
   border-radius: 999px;
   color: #fff;
 }
 
 .blankOption.isActive .radio {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
 }
 
 /* Divider */
@@ -196,7 +196,7 @@
   font-size: 10.5px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: var(--fg-3, var(--fg-2));
+  color: var(--cmp-fg-disabled);
 }
 
 .divider::before,
@@ -204,7 +204,7 @@
   content: "";
   height: 1px;
   flex: 1;
-  background: var(--border);
+  background: var(--cmp-border);
 }
 
 /* Template grid */
@@ -219,21 +219,21 @@
   flex-direction: column;
   text-align: left;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r-md, 6px);
-  background: var(--bg-1);
+  background: var(--base-bg);
   cursor: pointer;
   transition: background 80ms, border-color 80ms;
 }
 
 .card:hover {
-  background: var(--bg-2);
-  border-color: var(--border-strong, var(--border));
+  background: var(--panel-bg);
+  border-color: var(--base-fg-more-dim);
 }
 
 .card.isActive {
-  background: color-mix(in oklch, var(--accent) 12%, var(--bg-2));
-  border-color: color-mix(in oklch, var(--accent) 55%, var(--border));
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--panel-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 55%, var(--cmp-border));
 }
 
 .cardThumb {
@@ -241,8 +241,8 @@
   display: block;
   border-radius: var(--r, 4px);
   overflow: hidden;
-  background: var(--bg-0, var(--bg-1));
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
   margin-bottom: 8px;
 }
 
@@ -262,7 +262,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background: var(--accent-fg);
   color: #fff;
   border-radius: 999px;
   font-size: 9px;
@@ -271,7 +271,7 @@
 .cardName {
   font-size: 12px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 /* Name field */
@@ -285,30 +285,30 @@
 .nameLabel {
   font-size: 11px;
   font-weight: 500;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .nameInput {
-  background: var(--bg-input, var(--bg-1));
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r, 4px);
   padding: 6px 8px;
   font-size: 13px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-sans, inherit);
   outline: none;
   transition: border-color 0.15s;
 }
 
 .nameInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .error {
   font-size: 12px;
-  color: var(--danger, #e55);
+  color: var(--error-fg, #e55);
   margin-top: 4px;
 }
 
@@ -319,8 +319,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--bg-1);
-  border-top: 1px solid var(--border);
+  background: var(--base-bg);
+  border-top: 1px solid var(--cmp-border);
 }
 
 .footerLeft {
@@ -328,15 +328,15 @@
   align-items: center;
   gap: 14px;
   font-size: 11px;
-  color: var(--fg-3, var(--fg-2));
+  color: var(--cmp-fg-disabled);
   font-variant-numeric: tabular-nums;
 }
 
 .kbd {
   display: inline-block;
   padding: 1px 4px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: 3px;
   font-size: 10px;
   line-height: 1.4;
@@ -355,13 +355,13 @@
   font-weight: 500;
   border-radius: var(--r, 4px);
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--bg-2);
-  color: var(--fg-1);
+  border: 1px solid var(--cmp-border);
+  background: var(--panel-bg);
+  color: var(--base-fg-dim);
 }
 
 .btnGhost:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 .btnPrimary {
@@ -370,16 +370,17 @@
   font-weight: 500;
   border-radius: var(--r, 4px);
   cursor: pointer;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: white;
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
+  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
+  color: var(--base-fg);
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: var(--accent-strong, var(--accent));
+  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
+  border-color: var(--accent-fg);
 }
 
 .btnPrimary:disabled {

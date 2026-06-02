@@ -1,6 +1,6 @@
 .panel {
-  background: var(--bg-2);
-  border-right: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -11,7 +11,7 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
   padding: 0 6px 0 8px;
   height: 32px;
   gap: 6px;
@@ -28,7 +28,7 @@
   height: 28px;
   padding: 0 10px;
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   border-bottom: 1.5px solid transparent;
   background: none;
   border-top: none;
@@ -39,12 +39,12 @@
 }
 
 .headerTab:hover {
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .headerTabActive {
-  color: var(--fg-0);
-  border-bottom-color: var(--accent);
+  color: var(--base-fg);
+  border-bottom-color: var(--accent-chroma);
 }
 
 .headerActions {
@@ -60,12 +60,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 .action:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
 }
 
 .scroll {
@@ -78,7 +78,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   padding: 10px 8px 4px;
   display: flex;
   align-items: center;
@@ -95,7 +95,7 @@
   align-items: center;
   gap: 10px;
   padding: 12px 10px 8px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
   margin-bottom: 4px;
 }
 
@@ -103,8 +103,8 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
-  color: var(--fg-0);
+  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
+  color: var(--base-fg);
   font-size: 10px;
   font-weight: 600;
   display: flex;
@@ -115,7 +115,7 @@
 }
 
 .settingsWsName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   font-size: 12.5px;
 }
@@ -129,7 +129,7 @@
 }
 
 .dangerRow:hover {
-  background: color-mix(in oklch, var(--danger) 12%, transparent) !important;
+  background: color-mix(in oklch, var(--error-fg) 12%, transparent) !important;
 }
 
 .renameBtn {
@@ -139,24 +139,24 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-dim);
 }
 
 .renameBtn:hover {
-  background: var(--bg-4);
+  background: var(--cmp-bg-hover);
 }
 
 .renameBtnPrimary {
   composes: renameBtn;
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
   color: white;
 }
 
 .renameBtnPrimary:hover {
-  background: var(--accent-strong);
+  background: var(--accent-fg-hover);
 }
 
 .renameBtnPrimary:disabled {

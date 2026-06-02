@@ -26,7 +26,7 @@ type RoleDraft = {
 const buildDraft = (role?: WorkspaceRoleDefinition | null): RoleDraft => ({
   name: role?.name ?? '',
   description: role?.description ?? '',
-  tone: role?.tone ?? 'var(--accent)',
+  tone: role?.tone ?? 'var(--accent-fg)',
   capabilities: role?.capabilities ?? [],
 });
 
@@ -289,7 +289,7 @@ const RoleEditorDialog = ({
           <div className={styles.colorPickerWrap}>
             <ColorPicker
               value={draft.tone}
-              onChange={color => setDraft(current => ({ ...current, tone: color ?? 'var(--accent)' }))}
+              onChange={color => setDraft(current => ({ ...current, tone: color ?? 'var(--accent-fg)' }))}
               disabled={pending}
               size="small"
             />

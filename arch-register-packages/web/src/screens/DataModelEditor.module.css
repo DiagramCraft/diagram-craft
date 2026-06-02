@@ -19,19 +19,19 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-bottom: 4px;
 }
 
 .title {
   font-size: 22px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   letter-spacing: -0.2px;
 }
 
 .sub {
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   margin-top: 4px;
   max-width: 640px;
 }
@@ -44,8 +44,8 @@
 
 /* Editor panel */
 .editor {
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 16px;
 }
@@ -65,14 +65,14 @@
 
 .editorTitle {
   font-size: 16px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
 }
 
 .modeToggle {
   display: inline-flex;
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r);
   overflow: hidden;
 }
@@ -80,17 +80,17 @@
 .modeToggle button {
   padding: 0 12px;
   height: 26px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-size: 11.5px;
 }
 
 .modeToggle button:hover {
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .modeActive {
-  color: var(--fg-0) !important;
-  background: var(--bg-3);
+  color: var(--base-fg) !important;
+  background: var(--cmp-bg);
 }
 
 /* Form rows */
@@ -126,7 +126,7 @@
 
 .formLabel {
   font-size: 11px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
@@ -134,9 +134,9 @@
 
 .input {
   height: 28px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
   padding: 0 8px;
   border-radius: var(--r);
   font-size: 12px;
@@ -145,7 +145,7 @@
 }
 
 .input:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .textarea {
@@ -168,7 +168,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin: 16px 0 8px;
   display: flex;
   align-items: center;
@@ -178,8 +178,8 @@
 
 /* Fields table */
 .fieldsTable {
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   overflow: hidden;
 }
@@ -195,16 +195,16 @@
 }
 
 .fieldsTh {
-  background: var(--bg-2);
-  color: var(--fg-3);
+  background: var(--panel-bg);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .fieldRow {
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .fieldRow:last-child {
@@ -212,18 +212,18 @@
 }
 
 .fieldRow:hover {
-  background: var(--bg-2);
+  background: var(--panel-bg);
 }
 
 .fieldHandle {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   cursor: grab;
   user-select: none;
   text-align: center;
 }
 
 .fieldName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-mono);
 }
 
@@ -235,52 +235,52 @@
   height: 24px;
   padding: 0 6px;
   font-size: 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
   border-radius: var(--r);
   outline: none;
   width: 100%;
 }
 
 .inlineInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .inlineSelect {
   height: 24px;
   padding: 0 6px;
   font-size: 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg);
   border-radius: var(--r);
   outline: none;
   width: 100%;
   appearance: none;
   padding-right: 22px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--fg-2) 50%),
-    linear-gradient(135deg, var(--fg-2) 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--base-fg-more-dim) 50%),
+    linear-gradient(135deg, var(--base-fg-more-dim) 50%, transparent 50%);
   background-position: calc(100% - 13px) 10px, calc(100% - 9px) 10px;
   background-size: 4px 4px, 4px 4px;
   background-repeat: no-repeat;
 }
 
 .inlineSelect:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 /* JSON view */
 .json {
-  background: var(--bg-0);
-  border: 1px solid var(--border-subtle);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 14px;
   margin: 0;
   font-family: var(--font-mono);
   font-size: 11.5px;
   line-height: 1.55;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   overflow: auto;
   max-height: 540px;
 }
@@ -292,50 +292,50 @@
   gap: 6px;
   height: 28px;
   padding: 0 10px;
-  background: var(--bg-3);
-  border: 1px solid var(--border);
-  color: var(--fg-1);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
+  color: var(--base-fg-dim);
   border-radius: var(--r);
   font-size: 12px;
   cursor: pointer;
 }
 
 .btn:hover {
-  background: var(--bg-4);
-  color: var(--fg-0);
-  border-color: var(--border-strong);
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+  border-color: var(--base-fg-more-dim);
 }
 
 .btnPrimary {
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  border-color: color-mix(in oklch, var(--accent) 50%, var(--border));
-  color: var(--fg-0);
+  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
+  color: var(--base-fg);
 }
 
 .btnPrimary:hover {
-  background: color-mix(in oklch, var(--accent) 30%, var(--bg-3));
-  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-fg) 30%, var(--cmp-bg));
+  border-color: var(--accent-fg);
 }
 
 .btnGhost {
   background: transparent;
   border-color: transparent;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 .btnGhost:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
 }
 
 .btnDanger {
   background: transparent;
-  border-color: color-mix(in oklch, var(--danger) 30%, var(--border));
+  border-color: color-mix(in oklch, var(--error-fg) 30%, var(--cmp-border));
   color: oklch(0.72 0.16 25);
 }
 
 .btnDanger:hover {
-  background: color-mix(in oklch, var(--danger) 12%, transparent);
+  background: color-mix(in oklch, var(--error-fg) 12%, transparent);
 }
 
 /* Icon button */
@@ -346,12 +346,12 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .iconBtn:hover {
-  color: var(--fg-1);
-  background: var(--bg-3);
+  color: var(--base-fg-dim);
+  background: var(--cmp-bg);
 }
 
 /* Empty state */
@@ -362,13 +362,13 @@
   justify-content: center;
   padding: 48px 24px;
   gap: 8px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
 }
 
 .emptyTitle {
   font-size: 14px;
   font-weight: 500;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
 }
 
 /* Form actions row */
@@ -376,7 +376,7 @@
   display: flex;
   gap: 6px;
   padding-top: 8px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--panel-border);
   margin-top: 16px;
 }
 
@@ -392,12 +392,12 @@
   width: 18px;
   height: 18px;
   border-radius: 3px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   cursor: pointer;
 }
 
 .swatchActive {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-fg);
 }
 
 /* Icon picker */
@@ -415,18 +415,18 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--r);
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .iconOption:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
 }
 
 .iconOptionActive {
   background: var(--accent-bg);
-  color: var(--accent-strong);
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 35%, transparent);
+  color: var(--accent-fg-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent-fg) 35%, transparent);
 }
 
 /* Checkbox */
@@ -434,7 +434,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--base-fg-more-dim);
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
@@ -442,8 +442,8 @@
 }
 
 .checkbox:checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
 }
 
 .checkbox:checked::after {

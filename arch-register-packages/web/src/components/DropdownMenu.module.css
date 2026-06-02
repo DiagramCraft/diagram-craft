@@ -11,8 +11,8 @@
   min-width: 140px;
   padding: 4px;
   margin-top: 2px;
-  background: var(--bg-1);
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -20,13 +20,13 @@
 .header {
   padding: 6px 10px;
   font-size: 12px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   white-space: nowrap;
 }
 
 .separator {
   height: 1px;
-  background: var(--border);
+  background: var(--cmp-border);
   margin: 4px 0;
 }
 
@@ -38,7 +38,7 @@
   padding: 6px 10px;
   border: none;
   background: none;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-size: 13px;
   border-radius: calc(var(--r) - 2px);
   cursor: pointer;
@@ -47,7 +47,7 @@
 }
 
 .item:hover {
-  background: var(--bg-3);
+  background: var(--cmp-bg);
 }
 
 .itemDanger {

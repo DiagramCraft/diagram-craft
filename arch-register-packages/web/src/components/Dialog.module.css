@@ -9,8 +9,8 @@
 }
 
 .panel {
-  background: var(--bg-2);
-  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r-md);
   min-width: 360px;
   max-width: 480px;
@@ -21,7 +21,7 @@
 .title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
   margin: 0 0 4px;
   line-height: 1.3;
 }

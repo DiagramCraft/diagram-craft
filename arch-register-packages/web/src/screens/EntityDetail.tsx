@@ -77,7 +77,7 @@ export const EntityDetail = () => {
   }, [entity, schemas]);
 
   const schema = schemaEntry?.schema ?? null;
-  const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent)';
+  const color = schemaEntry ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index) : 'var(--accent-fg)';
 
   // Get reference field schema IDs
   const referenceSchemaIds = useMemo(() => {
@@ -689,7 +689,7 @@ const RelationRow = ({
   const targetSchemaId = direction === 'outgoing' ? relation.entitySchemaId : relation.entitySchemaId;
   const schemaIdx = schemas.findIndex(s => s.id === targetSchemaId);
   const targetSchema = schemaIdx >= 0 ? schemas[schemaIdx] : null;
-  const targetColor = targetSchema ? resolveSchemaColor(targetSchema, schemaIdx) : 'var(--accent)';
+  const targetColor = targetSchema ? resolveSchemaColor(targetSchema, schemaIdx) : 'var(--accent-fg)';
 
   return (
     <button
@@ -867,7 +867,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
   const resolveRelColor = useCallback((rel: Relation) => {
     const idx = schemas.findIndex(s => s.id === rel.entitySchemaId);
     const s = idx >= 0 ? schemas[idx] : null;
-    return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent)' };
+    return { schema: s, color: s ? resolveSchemaColor(s, idx) : 'var(--accent-fg)' };
   }, [schemas]);
 
   const setCardRef = useCallback((key: string) => (el: HTMLElement | null) => {
@@ -945,7 +945,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
           <path
             key={edge.key}
             d={edge.d}
-            stroke="var(--border-strong)"
+            stroke="var(--base-fg-more-dim)"
             strokeWidth={1.2}
             fill="none"
             opacity={0.7}
@@ -968,7 +968,7 @@ const TopologyView = ({ entity, schema, color, outgoing, incoming, schemas, life
             })}
           </div>
           <svg width="12" height="18" viewBox="0 0 12 18" className={styles.topoParentArrow}>
-            <path d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10" stroke="var(--border-strong)" strokeWidth="1.2" fill="none" />
+            <path d="M 6 0 L 6 14 M 2 10 L 6 14 L 10 10" stroke="var(--base-fg-more-dim)" strokeWidth="1.2" fill="none" />
           </svg>
         </div>
       )}

@@ -25,7 +25,7 @@
 
 .section {
   padding: 11px 0;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .section:last-child {
@@ -45,9 +45,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-1);
-  color: var(--fg-2);
-  border: 1px solid var(--border);
+  background: var(--base-bg);
+  color: var(--base-fg-more-dim);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r-sm);
   font-size: 10.5px;
 }
@@ -55,14 +55,14 @@
 .sectionTitle {
   font-size: 12px;
   font-weight: 600;
-  color: var(--fg-0);
+  color: var(--base-fg);
   letter-spacing: 0.1px;
 }
 
 .sectionOpt {
   font-size: 10.5px;
-  color: var(--fg-3);
-  border: 1px solid var(--border);
+  color: var(--cmp-fg-disabled);
+  border: 1px solid var(--cmp-border);
   padding: 1px 6px;
   border-radius: 999px;
   text-transform: uppercase;
@@ -110,22 +110,22 @@
   text-transform: uppercase;
   font-weight: 600;
   font-size: 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   padding: 4px 6px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-sans);
   outline: none;
 }
 
 .badgeInput:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .badgeHint {
   font-size: 10px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-family: var(--font-mono);
 }
 
@@ -147,13 +147,13 @@
 .label {
   font-size: 11px;
   font-weight: 500;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
 .hint {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 11px;
   font-weight: 400;
   text-transform: none;
@@ -161,12 +161,12 @@
 }
 
 .input {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   padding: 5px 8px;
   font-size: 12.5px;
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.15s;
@@ -175,7 +175,7 @@
 }
 
 .input:focus {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .textarea {
@@ -190,24 +190,24 @@
 .inputPrefix {
   display: flex;
   align-items: center;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
+  background: var(--cmp-bg);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r);
   padding: 0 8px;
   transition: border-color 0.15s;
 }
 
 .inputPrefix:focus-within {
-  border-color: var(--accent);
+  border-color: var(--accent-fg);
 }
 
 .inputPrefixText {
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   font-size: 12px;
   font-family: var(--font-mono);
   flex-shrink: 0;
   padding-right: 4px;
-  border-right: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--panel-border);
   margin-right: 6px;
 }
 
@@ -228,7 +228,7 @@
   align-items: center;
   gap: 3px;
   font-size: 11px;
-  color: var(--ok);
+  color: var(--green);
   font-family: var(--font-mono);
   flex-shrink: 0;
   padding-left: 6px;
@@ -240,10 +240,10 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  background: var(--bg-1);
+  background: var(--base-bg);
   padding: 4px;
   border-radius: var(--r-md);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--panel-border);
 }
 
 .startBtn {
@@ -253,7 +253,7 @@
   gap: 6px;
   height: 30px;
   border-radius: var(--r);
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   background: transparent;
   border: 1px solid transparent;
   font-size: 12px;
@@ -263,13 +263,13 @@
 }
 
 .startBtn:hover {
-  color: var(--fg-0);
+  color: var(--base-fg);
 }
 
 .startBtnActive {
-  background: var(--bg-3);
-  color: var(--fg-0);
-  border-color: var(--border);
+  background: var(--cmp-bg);
+  color: var(--base-fg);
+  border-color: var(--cmp-border);
   box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
 }
 
@@ -282,15 +282,15 @@
   margin-top: 8px;
   padding: 8px 10px;
   font-size: 11.5px;
-  color: var(--fg-2);
-  background: var(--bg-1);
-  border: 1px dashed var(--border);
+  color: var(--base-fg-more-dim);
+  background: var(--base-bg);
+  border: 1px dashed var(--cmp-border);
   border-radius: var(--r);
   line-height: 1.45;
 }
 
 .note strong {
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   font-weight: 600;
 }
 
@@ -308,8 +308,8 @@
   flex-direction: column;
   gap: 3px;
   padding: 7px 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   text-align: left;
   cursor: pointer;
@@ -319,13 +319,13 @@
 }
 
 .templateCard:hover {
-  background: var(--bg-4);
-  border-color: var(--border);
+  background: var(--cmp-bg-hover);
+  border-color: var(--cmp-border);
 }
 
 .templateCardActive {
-  background: color-mix(in oklch, var(--accent) 12%, var(--bg-3));
-  border-color: color-mix(in oklch, var(--accent) 55%, var(--border));
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--cmp-bg));
+  border-color: color-mix(in oklch, var(--accent-fg) 55%, var(--cmp-border));
 }
 
 .templateCardHead {
@@ -335,7 +335,7 @@
 }
 
 .templateCardName {
-  color: var(--fg-0);
+  color: var(--base-fg);
   font-weight: 500;
   font-size: 12.5px;
 }
@@ -346,7 +346,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
+  background: var(--accent-fg);
   color: oklch(0.16 0.005 260);
   border-radius: 999px;
   font-size: 9px;
@@ -356,13 +356,13 @@
 
 .templateCardDesc {
   font-size: 11.5px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   line-height: 1.4;
 }
 
 .templateCardMeta {
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
   margin-top: 2px;
 }
 
@@ -388,7 +388,7 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--fg-1);
+  color: var(--base-fg-dim);
   cursor: pointer;
 }
 
@@ -396,7 +396,7 @@
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--base-fg-more-dim);
   border-radius: 3px;
   background: transparent;
   cursor: pointer;
@@ -405,8 +405,8 @@
 }
 
 .checkbox input[type='checkbox']:checked {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fg);
+  border-color: var(--accent-fg);
 }
 
 .checkbox input[type='checkbox']:checked::after {
@@ -426,9 +426,9 @@
 .errorBar {
   padding: 8px 16px;
   font-size: 12px;
-  color: var(--danger);
-  background: color-mix(in oklch, var(--danger) 8%, var(--bg-2));
-  border-top: 1px solid color-mix(in oklch, var(--danger) 25%, var(--border));
+  color: var(--error-fg);
+  background: color-mix(in oklch, var(--error-fg) 8%, var(--panel-bg));
+  border-top: 1px solid color-mix(in oklch, var(--error-fg) 25%, var(--cmp-border));
 }
 
 /* ── Footer ─────────────────────────────────────────────────── */
@@ -439,7 +439,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--cmp-border);
 }
 
 .footerHints {
@@ -447,7 +447,7 @@
   align-items: center;
   gap: 14px;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--cmp-fg-disabled);
 }
 
 .footerActions {
@@ -463,11 +463,11 @@
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cmp-border);
   border-radius: var(--r-sm);
-  background: var(--bg-1);
+  background: var(--base-bg);
   font-size: 10px;
-  color: var(--fg-2);
+  color: var(--base-fg-more-dim);
   font-family: var(--font-mono);
 }
 
@@ -477,14 +477,14 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--bg-3);
-  color: var(--fg-1);
+  border: 1px solid var(--cmp-border);
+  background: var(--cmp-bg);
+  color: var(--base-fg-dim);
   font-family: var(--font-sans);
 }
 
 .btnCancel:hover {
-  background: var(--bg-4);
+  background: var(--cmp-bg-hover);
 }
 
 .btnSubmit {
@@ -493,16 +493,16 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid color-mix(in oklch, var(--accent) 50%, var(--border));
-  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
-  color: var(--fg-0);
+  border: 1px solid color-mix(in oklch, var(--accent-fg) 50%, var(--cmp-border));
+  background: color-mix(in oklch, var(--accent-fg) 22%, var(--cmp-bg));
+  color: var(--base-fg);
   font-family: var(--font-sans);
   transition: background 80ms, border-color 80ms;
 }
 
 .btnSubmit:hover:not(:disabled) {
-  background: color-mix(in oklch, var(--accent) 32%, var(--bg-3));
-  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-fg) 32%, var(--cmp-bg));
+  border-color: var(--accent-fg);
 }
 
 .btnSubmit:disabled {

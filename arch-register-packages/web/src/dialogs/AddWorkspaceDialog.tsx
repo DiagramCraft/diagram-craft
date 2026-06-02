@@ -224,7 +224,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 style={{
                   background: color
                     ? `linear-gradient(135deg, ${color}, color-mix(in oklch, ${color} 60%, oklch(0.35 0.12 290)))`
-                    : 'var(--bg-4)'
+                    : 'var(--cmp-bg-hover)'
                 }}
               >
                 {badge || '—'}

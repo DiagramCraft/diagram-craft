@@ -279,11 +279,11 @@ const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
   lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
 
 const COLOR_PRESETS = [
-  { value: 'var(--ok)', label: 'Green' },
-  { value: 'var(--accent)', label: 'Blue' },
-  { value: 'var(--warn)', label: 'Yellow' },
-  { value: 'var(--danger)', label: 'Red' },
-  { value: 'var(--fg-3)', label: 'Grey' },
+  { value: 'var(--green)', label: 'Green' },
+  { value: 'var(--accent-fg)', label: 'Blue' },
+  { value: 'var(--warning-fg)', label: 'Yellow' },
+  { value: 'var(--error-fg)', label: 'Red' },
+  { value: 'var(--cmp-fg-disabled)', label: 'Grey' },
 ];
 
 const LifecycleOwnersSection = ({
@@ -328,7 +328,7 @@ const LifecycleOwnersSection = ({
     setStates(prev => prev.filter((_, i) => i !== index));
 
   const addState = () =>
-    setStates(prev => [...prev, { id: '', label: '', color: 'var(--fg-3)' }]);
+    setStates(prev => [...prev, { id: '', label: '', color: 'var(--cmp-fg-disabled)' }]);
 
   return (
     <div className={styles.blockList}>
@@ -380,7 +380,7 @@ const LifecycleOwnersSection = ({
                       height: 18,
                       borderRadius: '50%',
                       background: c.value,
-                      border: s.color === c.value ? '2px solid var(--fg-0)' : '2px solid transparent',
+                      border: s.color === c.value ? '2px solid var(--base-fg)' : '2px solid transparent',
                       cursor: 'pointer',
                       padding: 0,
                       flexShrink: 0,

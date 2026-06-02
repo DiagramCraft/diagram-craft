@@ -568,12 +568,12 @@ const DiagramCard = ({
           <div dangerouslySetInnerHTML={{ __html: file.preview_svg }} />
         ) : (
           <svg viewBox="0 0 140 80" preserveAspectRatio="none">
-            <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--bg-3)" stroke="var(--border-strong)" />
-            <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--bg-3))" stroke="var(--tag-component)" />
+            <rect x="10" y="14" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="56" y="6" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="56" y="44" width="32" height="18" rx="2" fill="var(--cmp-bg)" stroke="var(--base-fg-more-dim)" />
+            <rect x="100" y="26" width="32" height="18" rx="2" fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))" stroke="var(--tag-component)" />
             <path d="M42 23 L56 15 M42 23 L56 53 M88 15 L100 35 M88 53 L100 35"
-              stroke="var(--fg-3)" fill="none" />
+              stroke="var(--cmp-fg-disabled)" fill="none" />
           </svg>
         )}
       </div>
@@ -697,7 +697,7 @@ const RenameDialog = ({
     <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--fg-2)' }}>Name</label>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
           <input
             ref={inputRef}
             value={name}
@@ -705,10 +705,10 @@ const RenameDialog = ({
             style={{
               fontSize: 13,
               padding: '6px 8px',
-              background: 'var(--bg-1)',
-              border: '1px solid var(--border)',
+              background: 'var(--base-bg)',
+              border: '1px solid var(--cmp-border)',
               borderRadius: 'var(--r)',
-              color: 'var(--fg-0)',
+              color: 'var(--base-fg)',
               outline: 'none',
             }}
           />
@@ -973,7 +973,7 @@ const ProjectSettings = ({
         <label className={styles.formLabel}>Color</label>
         <ColorPicker value={color} onChange={setColor} size="small" />
       </div>
-      {error && <div style={{ fontSize: 12, color: 'var(--danger)' }}>{error}</div>}
+      {error && <div style={{ fontSize: 12, color: 'var(--error-fg)' }}>{error}</div>}
       <div className={styles.formActions}>
         <button type="button" className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
           <TbTrash size={12} /> Delete project

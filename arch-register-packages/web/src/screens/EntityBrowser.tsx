@@ -383,7 +383,7 @@ const CardsView = ({ rows, schemaMap, onEntityClick, onDelete, onClone }: ViewPr
   <div className={styles.cardGrid}>
     {rows.map(e => {
       const s = schemaMap.get(e._schemaId);
-      const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent)';
+      const color = s ? resolveSchemaColor(s.schema, s.index) : 'var(--accent-fg)';
       return (
         <div
           key={e._uid}

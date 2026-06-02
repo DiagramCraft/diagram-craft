@@ -200,7 +200,7 @@ const SidebarRenameDialog = ({
     <Dialog open={open} onClose={onCancel} title={`Rename ${entityType}`}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ fontSize: 12, color: 'var(--fg-2)' }}>Name</label>
+          <label style={{ fontSize: 12, color: 'var(--base-fg-more-dim)' }}>Name</label>
           <input
             ref={inputRef}
             value={name}
@@ -208,10 +208,10 @@ const SidebarRenameDialog = ({
             style={{
               fontSize: 13,
               padding: '6px 8px',
-              background: 'var(--bg-1)',
-              border: '1px solid var(--border)',
+              background: 'var(--base-bg)',
+              border: '1px solid var(--cmp-border)',
               borderRadius: 'var(--r)',
-              color: 'var(--fg-0)',
+              color: 'var(--base-fg)',
               outline: 'none',
             }}
           />
