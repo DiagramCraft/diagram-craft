@@ -5,6 +5,7 @@ CREATE TABLE workspace (
   name        TEXT        NOT NULL UNIQUE,
   url_slug    TEXT        NOT NULL UNIQUE,
   short_code  TEXT        NOT NULL DEFAULT '',
+  color       TEXT        NOT NULL DEFAULT '',
   description TEXT        NOT NULL DEFAULT '',
   created_at  TIMESTAMPTZ NOT NULL,
   updated_at  TIMESTAMPTZ NOT NULL
@@ -36,6 +37,7 @@ CREATE TABLE entity_schema (
   id          UUID        PRIMARY KEY,
   workspace   TEXT        NOT NULL,
   name        TEXT        NOT NULL,
+  description TEXT        NOT NULL DEFAULT '',
   fields      JSONB       NOT NULL DEFAULT '[]',
   color       TEXT,
   icon        TEXT,

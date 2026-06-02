@@ -187,7 +187,10 @@ const WorkspaceSwitcher = ({
   return (
     <div className={styles.wsSwitcher} ref={ref}>
       <button type="button" className={styles.wsBtn} onClick={() => setOpen(o => !o)}>
-        <span className={styles.wsBadge}>{ws.short_code}</span>
+        <span
+          className={styles.wsBadge}
+          style={ws.color ? { background: `linear-gradient(135deg, ${ws.color}, color-mix(in oklch, ${ws.color} 60%, oklch(0.35 0.12 290)))` } : undefined}
+        >{ws.short_code}</span>
         <span className={styles.wsName}>{ws.name}</span>
         <TbChevronDown size={12} />
       </button>
@@ -204,7 +207,13 @@ const WorkspaceSwitcher = ({
                 setOpen(false);
               }}
             >
-              <span className={styles.wsBadge} style={{ marginRight: 8 }}>
+              <span
+                className={styles.wsBadge}
+                style={{
+                  marginRight: 8,
+                  ...(w.color ? { background: `linear-gradient(135deg, ${w.color}, color-mix(in oklch, ${w.color} 60%, oklch(0.35 0.12 290)))` } : {}),
+                }}
+              >
                 {w.short_code}
               </span>
               <span style={{ flex: 1 }}>

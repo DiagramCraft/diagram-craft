@@ -51,7 +51,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       data,
     }: {
       schemaId: string;
-      data: { name: string; fields: SchemaField[]; color?: string | null; icon?: string | null };
+      data: { name: string; description?: string; fields: SchemaField[]; color?: string | null; icon?: string | null };
     }) =>
       apiFetch<EntitySchema>(`/api/${workspaceId}/schemas/${schemaId}`, {
         method: 'PUT',

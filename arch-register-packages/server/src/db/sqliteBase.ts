@@ -53,6 +53,7 @@ export const sqliteMappers = {
     name: String(row['name']),
     url_slug: String(row['url_slug']),
     short_code: String(row['short_code']),
+    color: String(row['color'] ?? ''),
     description: String(row['description']),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
@@ -77,6 +78,7 @@ export const sqliteMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
+    description: String(row['description'] ?? ''),
     fields: parseJson(row['fields'], []),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),

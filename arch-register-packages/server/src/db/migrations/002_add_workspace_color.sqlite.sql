@@ -1,0 +1,1 @@
+ALTER TABLE workspace ADD COLUMN color TEXT NOT NULL DEFAULT '';

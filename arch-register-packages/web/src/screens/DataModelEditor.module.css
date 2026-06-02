@@ -100,6 +100,7 @@
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .formRow > div {
@@ -145,6 +146,15 @@
 
 .input:focus {
   border-color: var(--accent);
+}
+
+.textarea {
+  height: auto;
+  min-height: 52px;
+  padding: 5px 8px;
+  resize: vertical;
+  line-height: 1.45;
+  font-family: var(--font-sans);
 }
 
 /* Fields section */

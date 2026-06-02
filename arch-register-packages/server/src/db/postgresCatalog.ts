@@ -32,8 +32,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: CreateSchemaInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['schema'][]>`
-        INSERT INTO entity_schema (id, workspace, name, fields, color, icon, default_owner, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -47,6 +47,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       const [row] = await this.sql<PostgresRowTypes['schema'][]>`
         UPDATE entity_schema
         SET name = ${input.name},
+            description = ${input.description},
             fields = ${this.json(input.fields)},
             color = ${input.color},
             icon = ${input.icon},

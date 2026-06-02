@@ -10,6 +10,7 @@ const schemas: EntitySchema[] = [
     id: 'application',
     workspace: 'ws-1',
     name: 'Application',
+    description: '',
     fields: [
       { id: 'tech', name: 'Tech', type: 'text' },
       { id: 'dependsOn', name: 'Depends on', type: 'reference', schemaId: 'capability', minCount: 0, maxCount: -1 }
@@ -24,6 +25,7 @@ const schemas: EntitySchema[] = [
     id: 'capability',
     workspace: 'ws-1',
     name: 'Capability',
+    description: '',
     fields: [
       { id: 'critical', name: 'Critical', type: 'boolean' }
     ],

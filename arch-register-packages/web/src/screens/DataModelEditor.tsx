@@ -18,6 +18,7 @@ export const DataModelEditor = () => {
   const canEdit = permissions.canEditSchemas;
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export const DataModelEditor = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
+      setDescription(selected.description);
       setFields(selected.fields);
       setColor(selected.color);
       setIcon(selected.icon);
@@ -54,13 +56,13 @@ export const DataModelEditor = () => {
     try {
       await updateSchemaMutation.mutateAsync({
         schemaId: selected.id,
-        data: { name, fields, color, icon },
+        data: { name, description, fields, color, icon },
       });
       setDirty(false);
     } catch {
       // TODO: surface error
     }
-  }, [selected, name, fields, color, icon, dirty, updateSchemaMutation]);
+  }, [selected, name, description, fields, color, icon, dirty, updateSchemaMutation]);
 
   const handleCreateType = useCallback(async () => {
     try {
@@ -191,6 +193,23 @@ export const DataModelEditor = () => {
                       readOnly={!canEdit}
                       onChange={e => {
                         setName(e.target.value);
+                        setDirty(true);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className={styles.formRow}>
+                  <div>
+                    <div className={styles.formLabel}>Description</div>
+                    <textarea
+                      className={`${styles.input} ${styles.textarea}`}
+                      value={description}
+                      readOnly={!canEdit}
+                      placeholder="What does this entity type represent?"
+                      onChange={e => {
+                        setDescription(e.target.value);
                         setDirty(true);
                       }}
                     />

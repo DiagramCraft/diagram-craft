@@ -30,8 +30,8 @@ export class PostgresWorkspaceAdminDatabase
   async createWorkspace(input: CreateWorkspaceInput) {
     try {
       const [row] = await this.sql<PostgresRowTypes['workspace'][]>`
-        INSERT INTO workspace (id, name, url_slug, short_code, description, created_at, updated_at)
-        VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.description}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at)
+        VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return row!;
@@ -47,6 +47,7 @@ export class PostgresWorkspaceAdminDatabase
         SET name = ${input.name},
             url_slug = ${input.url_slug},
             short_code = ${input.short_code},
+            color = ${input.color},
             description = ${input.description},
             updated_at = ${input.updated_at}
         WHERE id = ${id}

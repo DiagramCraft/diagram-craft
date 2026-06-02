@@ -75,7 +75,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const { name, fields = [], color, icon, default_owner } = body as Record<string, unknown>;
+      const { name, description = '', fields = [], color, icon, default_owner } = body as Record<string, unknown>;
       httpAssert.string(name, { message: 'name is required and must be a string' });
       const colorVal = typeof color === 'string' ? color : null;
       const iconVal = typeof icon === 'string' ? icon : null;
@@ -90,6 +90,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           id: crypto.randomUUID(),
           workspace,
           name: name as string,
+          description: typeof description === 'string' ? description : '',
           fields: Array.isArray(fields) ? (fields as EntitySchema['fields']) : [],
           color: colorVal,
           icon: iconVal,
@@ -126,7 +127,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       httpAssert.string(id, { message: 'id is required' });
       const body = await event.req.json().catch(() => undefined);
       httpAssert.json(body, { message: 'Request body must be a JSON object' });
-      const { name, fields, color, icon, default_owner } = body as Record<string, unknown>;
+      const { name, description, fields, color, icon, default_owner } = body as Record<string, unknown>;
       httpAssert.string(name, { message: 'name is required and must be a string' });
       const teamIds = new Set(
         (await db.workspaceAdmin.listTeams(workspace)).map(owner => owner.id)
@@ -137,6 +138,7 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
 
         const row = await db.catalog.updateSchema(workspace, id, {
           name: name as string,
+          description: description !== undefined ? (typeof description === 'string' ? description : '') : oldRow.description,
           fields:
             fields !== undefined && Array.isArray(fields)
               ? (fields as EntitySchema['fields'])
