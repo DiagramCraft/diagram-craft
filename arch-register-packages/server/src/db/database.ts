@@ -283,6 +283,7 @@ export type AiDatabase = {
   getConversation(ws: string, id: string): Promise<AiConversation | null>;
   createConversation(input: CreateConversationInput): Promise<AiConversation>;
   updateConversationTitle(ws: string, id: string, title: string): Promise<AiConversation | null>;
+  initConversationTitle(ws: string, id: string, title: string): Promise<void>;
   deleteConversation(ws: string, id: string): Promise<AiConversation | null>;
 
   listMessages(conversationId: string): Promise<AiMessage[]>;

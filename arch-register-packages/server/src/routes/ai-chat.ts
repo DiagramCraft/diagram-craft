@@ -84,14 +84,10 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
               created_at: new Date()
             });
 
-            // Auto-generate conversation title from first message if still "New conversation"
-            const conversation = await db.ai.getConversation(workspace, conversationId);
-            if (conversation?.title === 'New conversation') {
-              const title = textContent.length > 50
-                ? `${textContent.substring(0, 47)}...`
-                : textContent;
-              await db.ai.updateConversationTitle(workspace, conversationId, title);
-            }
+            const autoTitle = textContent.length > 50
+              ? `${textContent.substring(0, 47)}...`
+              : textContent;
+            await db.ai.initConversationTitle(workspace, conversationId, autoTitle);
           }
         }
       }

@@ -308,7 +308,7 @@ export type EntityGrant = {
   created_at: Date;
 };
 
-export type AiProvider = 'openrouter';
+export type AiProvider = 'openrouter' | 'openai';
 
 export type WorkspaceAiConfig = {
   workspace: string;

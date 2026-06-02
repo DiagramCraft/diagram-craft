@@ -92,6 +92,13 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
     return this.getConversation(ws, id);
   }
 
+  async initConversationTitle(ws: string, id: string, title: string) {
+    this.run(
+      "UPDATE ai_conversation SET title = ?, updated_at = ? WHERE id = ? AND workspace = ? AND title = 'New conversation'",
+      [title, new Date().toISOString(), id, ws]
+    );
+  }
+
   async deleteConversation(ws: string, id: string) {
     const existing = await this.getConversation(ws, id);
     if (!existing) return null;

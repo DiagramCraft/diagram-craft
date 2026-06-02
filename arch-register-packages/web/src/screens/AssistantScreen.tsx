@@ -274,11 +274,13 @@ const ApprovalCard = ({
 
 // ── Time helpers ──
 
+const DAY_MS = 86400000;
+
 const relTime = (iso: string) => {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
   const h = Math.floor(diff / 3600000);
-  const d = Math.floor(diff / 86400000);
+  const d = Math.floor(diff / DAY_MS);
   if (m < 1) return 'now';
   if (m < 60) return `${m}m`;
   if (h < 24) return `${h}h`;
@@ -290,10 +292,9 @@ const bucketLabel = (iso: string) => {
   const ts = new Date(iso).getTime();
   const startToday = new Date();
   startToday.setHours(0, 0, 0, 0);
-  const day = 86400000;
   if (ts >= startToday.getTime()) return 'Today';
-  if (ts >= startToday.getTime() - day) return 'Yesterday';
-  if (ts >= Date.now() - 7 * day) return 'Previous 7 days';
+  if (ts >= startToday.getTime() - DAY_MS) return 'Yesterday';
+  if (ts >= Date.now() - 7 * DAY_MS) return 'Previous 7 days';
   return 'Older';
 };
 

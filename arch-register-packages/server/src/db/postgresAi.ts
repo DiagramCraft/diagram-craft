@@ -95,6 +95,13 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
     return row ?? null;
   }
 
+  async initConversationTitle(ws: string, id: string, title: string) {
+    await this.sql`
+      UPDATE ai_conversation SET title = ${title}, updated_at = ${new Date()}
+      WHERE id = ${id} AND workspace = ${ws} AND title = 'New conversation'
+    `;
+  }
+
   async deleteConversation(ws: string, id: string) {
     const [row] = await this.sql<ConversationRow[]>`
       DELETE FROM ai_conversation WHERE id = ${id} AND workspace = ${ws}

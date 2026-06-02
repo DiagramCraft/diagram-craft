@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import styles from './NavRail.module.css';
 import {
   TbHome, TbFolders, TbDatabase, TbCode, TbSearch,
@@ -48,7 +49,7 @@ export const NavRail = ({ view, onPick, visibleItemIds }: NavRailProps) => {
         {visible.map(item => {
           const Ic = item.icon;
           return (
-            <div key={item.id}>
+            <Fragment key={item.id}>
               {item.separator && <div className={styles.separator} />}
               <button
                 type="button"
@@ -58,7 +59,7 @@ export const NavRail = ({ view, onPick, visibleItemIds }: NavRailProps) => {
               >
                 <Ic size={16} />
               </button>
-            </div>
+            </Fragment>
           );
         })}
       </div>
