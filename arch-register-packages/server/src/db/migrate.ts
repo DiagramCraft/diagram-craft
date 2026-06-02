@@ -17,7 +17,7 @@ const extractCreatedTables = (content: string): string[] => {
   
   for (const line of lines) {
     const match = line.match(/^--\s*@creates\s+(\w+)/);
-    if (match) {
+    if (match?.[1]) {
       tables.push(match[1]);
     }
   }
