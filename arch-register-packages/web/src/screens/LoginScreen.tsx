@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useAuthConfig } from '../hooks/useAuthConfig';
 import styles from './LoginScreen.module.css';
@@ -6,6 +7,8 @@ import styles from './LoginScreen.module.css';
 export const LoginScreen = () => {
   const { login, loginWithOidc, isLoading } = useAuth();
   const { data: authConfig, isLoading: isLoadingConfig } = useAuthConfig();
+  const navigate = useNavigate();
+  const search = useSearch({ from: '/login' });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,6 +31,12 @@ export const LoginScreen = () => {
     setIsSubmitting(true);
     try {
       await login(username, password);
+      // Redirect to the original destination or home
+      if (search.redirect) {
+        window.location.href = search.redirect;
+      } else {
+        navigate({ to: '/' });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Incorrect username or password.');
     } finally {
