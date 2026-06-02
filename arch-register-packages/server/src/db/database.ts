@@ -42,6 +42,7 @@ export type UpdateWorkspaceInput = {
   name: string;
   url_slug: string;
   short_code: string;
+  color: string;
   description: string;
   updated_at: Date;
 };
@@ -53,6 +54,7 @@ export type CreateSchemaInput = Omit<EntitySchema, 'created_at' | 'updated_at'> 
 
 export type UpdateSchemaInput = {
   name: string;
+  description: string;
   fields: EntitySchema['fields'];
   color: string | null;
   icon: string | null;

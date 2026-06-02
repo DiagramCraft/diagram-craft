@@ -27,12 +27,13 @@ export class SqliteWorkspaceAdminDatabase
 
   async createWorkspace(input: CreateWorkspaceInput) {
     this.run(
-      'INSERT INTO workspace (id, name, url_slug, short_code, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO workspace (id, name, url_slug, short_code, color, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.name,
         input.url_slug,
         input.short_code,
+        input.color,
         input.description,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
@@ -43,11 +44,12 @@ export class SqliteWorkspaceAdminDatabase
 
   async updateWorkspace(id: string, input: UpdateWorkspaceInput) {
     this.run(
-      'UPDATE workspace SET name = ?, url_slug = ?, short_code = ?, description = ?, updated_at = ? WHERE id = ?',
+      'UPDATE workspace SET name = ?, url_slug = ?, short_code = ?, color = ?, description = ?, updated_at = ? WHERE id = ?',
       [
         input.name,
         input.url_slug,
         input.short_code,
+        input.color,
         input.description,
         input.updated_at.toISOString(),
         id

@@ -20,6 +20,7 @@ export const seedWorkspaces: Workspace[] = [
     url_slug: 'default',
     short_code: 'DW',
     description: 'The default workspace',
+    color: '',
     created_at: now,
     updated_at: now,
   },
@@ -127,6 +128,7 @@ export const seedSchemas: EntitySchema[] = [
     id: '00000000-0000-0000-0000-000000000001',
     workspace: 'default',
     name: 'Domain',
+    description: 'A high-level grouping that owns one or more Systems.',
     fields: [],
     color: 'var(--tag-system)',
     icon: 'globe',
@@ -138,6 +140,7 @@ export const seedSchemas: EntitySchema[] = [
     id: '00000000-0000-0000-0000-000000000002',
     workspace: 'default',
     name: 'System',
+    description: 'A collection of resources that exposes one or more APIs to users and other Systems.',
     fields: [
       {
         id: 'domain',
@@ -158,6 +161,7 @@ export const seedSchemas: EntitySchema[] = [
     id: '00000000-0000-0000-0000-000000000003',
     workspace: 'default',
     name: 'Component',
+    description: 'A deployable unit of code within a System (service, library, website, etc.).',
     fields: [
       { id: 'technology', name: 'Technology', type: 'text' },
       {
@@ -203,6 +207,7 @@ export const seedSchemas: EntitySchema[] = [
     id: '00000000-0000-0000-0000-000000000004',
     workspace: 'default',
     name: 'API',
+    description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
     fields: [
       {
         id: 'api_type',
@@ -234,6 +239,7 @@ export const seedSchemas: EntitySchema[] = [
     id: '00000000-0000-0000-0000-000000000005',
     workspace: 'default',
     name: 'Resource',
+    description: 'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
     fields: [
       { id: 'resource_type', name: 'Type', type: 'text' },
       {

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Outlet, useParams, useNavigate, useMatches } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import { TopBar } from '../shell/TopBar';
 import type { BreadcrumbItem } from '../shell/TopBar';
@@ -8,7 +9,8 @@ import { SidePanel } from '../shell/SidePanel';
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
-import { useWorkspaces } from '../hooks/useWorkspaces';
+import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
+import { projectKeys } from '../hooks/useProjects';
 import { useSchemas } from '../hooks/useSchemas';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
@@ -43,6 +45,7 @@ const getDefaultProject = (projects: Project[]): Project | undefined =>
 export const WorkspaceLayout = () => {
   const { workspaceSlug } = useParams({ strict: false }) as { workspaceSlug: string };
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const matches = useMatches();
   const activeView = deriveActiveView(matches);
 
@@ -96,6 +99,8 @@ export const WorkspaceLayout = () => {
           params: { workspaceSlug, projectId: defaultProject.id },
           search: { tab: getProjectSidebarTab(defaultProject) },
         });
+      } else {
+        setAddProjectOpen(true);
       }
       return;
     }
@@ -211,6 +216,7 @@ export const WorkspaceLayout = () => {
             open={addWsOpen}
             onClose={() => setAddWsOpen(false)}
             onCreated={newWs => {
+              void queryClient.invalidateQueries({ queryKey: workspaceKeys.all });
               navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
             }}
           />
@@ -220,6 +226,7 @@ export const WorkspaceLayout = () => {
             open={addProjectOpen}
             onClose={() => setAddProjectOpen(false)}
             onCreated={project => {
+              void queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceSlug) });
               navigate({
                 to: '/$workspaceSlug/projects/$projectId',
                 params: { workspaceSlug, projectId: project.id },

@@ -36,6 +36,7 @@ export const useUpdateWorkspace = () => {
         name: string;
         url_slug: string;
         short_code: string;
+        color: string;
         description: string;
       };
     }) =>

@@ -47,6 +47,7 @@ export type EntitySchema = {
   id: string;
   workspace: string;
   name: string;
+  description: string;
   fields: SchemaField[];
   color: string | null;
   icon: string | null;
@@ -59,6 +60,7 @@ export type EntitySchema = {
 
 export type CreateSchemaRequest = {
   name: string;
+  description?: string;
   fields?: SchemaField[];
   color?: string | null;
   icon?: string | null;

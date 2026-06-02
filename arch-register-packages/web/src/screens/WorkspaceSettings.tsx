@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import styles from './WorkspaceSettings.module.css';
 import type { Workspace } from '../api';
+import { SCHEMA_COLORS } from '../api';
+import { ColorPicker } from '../components/ColorPicker';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import type {
@@ -31,13 +33,6 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
 
-const COLOR_PRESETS = [
-  { value: 'var(--ok)', label: 'Green' },
-  { value: 'var(--accent)', label: 'Blue' },
-  { value: 'var(--warn)', label: 'Yellow' },
-  { value: 'var(--danger)', label: 'Red' },
-  { value: 'var(--fg-3)', label: 'Grey' },
-];
 
 export const WorkspaceSettings = () => {
   const navigate = useNavigate();
@@ -150,10 +145,12 @@ export const WorkspaceSettings = () => {
   );
 };
 
+
 const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
   const [name, setName] = useState(workspace.name);
   const [slug, setSlug] = useState(workspace.url_slug);
   const [shortCode, setShortCode] = useState(workspace.short_code);
+  const [color, setColor] = useState(workspace.color ?? '');
   const [description, setDescription] = useState(workspace.description);
 
   const updateWorkspaceMutation = useUpdateWorkspace();
@@ -162,23 +159,25 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
     name !== workspace.name ||
     slug !== workspace.url_slug ||
     shortCode !== workspace.short_code ||
+    color !== (workspace.color ?? '') ||
     description !== workspace.description;
 
   const handleSave = useCallback(async () => {
     try {
       await updateWorkspaceMutation.mutateAsync({
         workspaceId: workspace.id,
-        data: { name, url_slug: slug, short_code: shortCode, description },
+        data: { name, url_slug: slug, short_code: shortCode, color, description },
       });
     } catch {
       // Error handling could be improved
     }
-  }, [workspace.id, name, slug, shortCode, description, updateWorkspaceMutation]);
+  }, [workspace.id, name, slug, shortCode, color, description, updateWorkspaceMutation]);
 
   const handleCancel = () => {
     setName(workspace.name);
     setSlug(workspace.url_slug);
     setShortCode(workspace.short_code);
+    setColor(workspace.color ?? '');
     setDescription(workspace.description);
   };
 
@@ -243,6 +242,16 @@ const GeneralSection = ({ workspace }: { workspace: Workspace }) => {
 
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Color</div>
+              <div className={styles.fieldHint}>Badge accent color in the workspace switcher.</div>
+            </div>
+            <div className={styles.fieldRight}>
+              <ColorPicker value={color} onChange={v => setColor(v ?? SCHEMA_COLORS[0]!)} size="small" />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>Description</div>
             </div>
             <div className={styles.fieldRight}>
@@ -268,6 +277,14 @@ type EditLifecycleState = {
 
 const buildLifecycleStateDraft = (lifecycleStates: WorkspaceLifecycleState[]) =>
   lifecycleStates.map(state => ({ id: state.id, label: state.label, color: state.color }));
+
+const COLOR_PRESETS = [
+  { value: 'var(--ok)', label: 'Green' },
+  { value: 'var(--accent)', label: 'Blue' },
+  { value: 'var(--warn)', label: 'Yellow' },
+  { value: 'var(--danger)', label: 'Red' },
+  { value: 'var(--fg-3)', label: 'Grey' },
+];
 
 const LifecycleOwnersSection = ({
   workspace,

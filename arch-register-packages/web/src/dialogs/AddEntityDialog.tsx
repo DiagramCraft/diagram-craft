@@ -171,6 +171,9 @@ export const AddEntityDialog = ({
               </option>
             ))}
           </select>
+          {selectedSchema?.description && (
+            <div className={styles.hint}>{selectedSchema.description}</div>
+          )}
         </div>
 
         {/* Name field */}

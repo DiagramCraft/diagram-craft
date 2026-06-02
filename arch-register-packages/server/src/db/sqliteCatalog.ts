@@ -32,11 +32,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: CreateSchemaInput) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, color, icon, default_owner, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
+        input.description,
         JSON.stringify(input.fields),
         input.color,
         input.icon,
@@ -50,9 +51,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: UpdateSchemaInput) {
     this.run(
-      'UPDATE entity_schema SET name = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, color = ?, icon = ?, default_owner = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
+        input.description,
         JSON.stringify(input.fields),
         input.color,
         input.icon,

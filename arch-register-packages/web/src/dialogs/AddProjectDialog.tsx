@@ -4,7 +4,7 @@ import { createProject, ApiError } from '../api';
 import type { Project, WorkspaceTeam } from '../api';
 import { usePermissions } from '../auth/PermissionContext';
 import { ColorPicker } from '../components/ColorPicker';
-import styles from './AddWorkspaceDialog.module.css';
+import styles from './AddEntityDialog.module.css';
 
 const PROJECT_STATUSES = [
   { value: 'pinned', label: 'Pinned' },

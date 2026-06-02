@@ -1,16 +1,150 @@
-.form {
+/* ── Dialog panel override ────────────────────────────────── */
+
+.dialogPanel {
+  width: 620px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
 }
 
-.field {
+/* ── Title (override Dialog default) ──────────────────────── */
+
+.dialogPanel h2 {
+  margin: 14px 0 0 14px;
+}
+
+/* ── Body ───────────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.section {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+
+.sectionStep {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-1);
+  color: var(--fg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 10.5px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-0);
+  letter-spacing: 0.1px;
+}
+
+.sectionOpt {
+  font-size: 10.5px;
+  color: var(--fg-3);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Identity layout ────────────────────────────────────────── */
+
+.identity {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.badgeCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.badgePreview {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: oklch(1 0 0 / 0.92);
+}
+
+.badgeInput {
+  width: 56px;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 4px 6px;
+  color: var(--fg-0);
+  font-family: var(--font-sans);
+  outline: none;
+}
+
+.badgeInput:focus {
+  border-color: var(--accent);
+}
+
+.badgeHint {
+  font-size: 10px;
+  color: var(--fg-3);
+  font-family: var(--font-mono);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ── Form primitives ────────────────────────────────────────── */
+
+.formRow {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.field label {
+.label {
   font-size: 11px;
   font-weight: 500;
   color: var(--fg-1);
@@ -18,50 +152,335 @@
   letter-spacing: 0.03em;
 }
 
-.field input,
-.field select,
-.field textarea {
+.hint {
+  color: var(--fg-3);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.input {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 6px 8px;
-  font-size: 13px;
+  padding: 5px 8px;
+  font-size: 12.5px;
   color: var(--fg-0);
   font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
+.input:focus {
   border-color: var(--accent);
 }
 
-.field textarea {
-  min-height: 60px;
+.textarea {
+  min-height: 44px;
   resize: vertical;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
+.mono {
+  font-family: var(--font-mono);
 }
 
-.actions button {
-  padding: 6px 14px;
+.inputPrefix {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0 8px;
+  transition: border-color 0.15s;
+}
+
+.inputPrefix:focus-within {
+  border-color: var(--accent);
+}
+
+.inputPrefixText {
+  color: var(--fg-3);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  padding-right: 4px;
+  border-right: 1px solid var(--border-subtle);
+  margin-right: 6px;
+}
+
+.inputUnstyled {
+  background: transparent;
+  border: none;
+  padding: 5px 0;
+  flex: 1;
+}
+
+.inputUnstyled:focus {
+  border: none;
+  outline: none;
+}
+
+.slugOk {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ok);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  padding-left: 6px;
+}
+
+/* ── Schema setup ───────────────────────────────────────────── */
+
+.startSeg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: var(--bg-1);
+  padding: 4px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.startBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  border-radius: var(--r);
+  color: var(--fg-2);
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 80ms, color 80ms, border-color 80ms;
+}
+
+.startBtn:hover {
+  color: var(--fg-0);
+}
+
+.startBtnActive {
+  background: var(--bg-3);
+  color: var(--fg-0);
+  border-color: var(--border);
+  box-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
+}
+
+/* ── Note box ───────────────────────────────────────────────── */
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: var(--fg-2);
+  background: var(--bg-1);
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  line-height: 1.45;
+}
+
+.note strong {
+  color: var(--fg-1);
+  font-weight: 600;
+}
+
+/* ── Template grid ──────────────────────────────────────────── */
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.templateCard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 80ms, border-color 80ms;
+  min-width: 0;
+}
+
+.templateCard:hover {
+  background: var(--bg-4);
+  border-color: var(--border);
+}
+
+.templateCardActive {
+  background: color-mix(in oklch, var(--accent) 12%, var(--bg-3));
+  border-color: color-mix(in oklch, var(--accent) 55%, var(--border));
+}
+
+.templateCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.templateCardName {
+  color: var(--fg-0);
+  font-weight: 500;
+  font-size: 12.5px;
+}
+
+.templateCardCheck {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: oklch(0.16 0.005 260);
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.templateCardDesc {
+  font-size: 11.5px;
+  color: var(--fg-2);
+  line-height: 1.4;
+}
+
+.templateCardMeta {
+  font-size: 11px;
+  color: var(--fg-3);
+  margin-top: 2px;
+}
+
+/* ── Copy panel ─────────────────────────────────────────────── */
+
+.copyPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.copyInclude {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--fg-1);
+  cursor: pointer;
+}
+
+.checkbox input[type='checkbox'] {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.checkbox input[type='checkbox']:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+/* ── Error ──────────────────────────────────────────────────── */
+
+.errorBar {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 8%, var(--bg-2));
+  border-top: 1px solid color-mix(in oklch, var(--danger) 25%, var(--border));
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.footerHints {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-1);
+  font-size: 10px;
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+}
+
+.btnCancel {
+  padding: 5px 12px;
   border-radius: var(--r);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  border: none;
-}
-
-.btnCancel {
+  border: 1px solid var(--border);
   background: var(--bg-3);
   color: var(--fg-1);
+  font-family: var(--font-sans);
 }
 
 .btnCancel:hover {
@@ -69,20 +488,24 @@
 }
 
 .btnSubmit {
-  background: var(--accent);
-  color: white;
+  padding: 5px 12px;
+  border-radius: var(--r);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid color-mix(in oklch, var(--accent) 50%, var(--border));
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-3));
+  color: var(--fg-0);
+  font-family: var(--font-sans);
+  transition: background 80ms, border-color 80ms;
 }
 
-.btnSubmit:hover {
-  background: var(--accent-strong);
+.btnSubmit:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 32%, var(--bg-3));
+  border-color: var(--accent);
 }
 
 .btnSubmit:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
-}
-
-.error {
-  font-size: 12px;
-  color: var(--danger);
 }
