@@ -7,6 +7,83 @@ import type { PostgresSqlClient } from './postgresBase.js';
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations');
 
+/**
+ * Parses migration file content to extract table names from @creates comments.
+ * Format: -- @creates table_name
+ */
+const extractCreatedTables = (content: string): string[] => {
+  const tables: string[] = [];
+  const lines = content.split('\n');
+  
+  for (const line of lines) {
+    const match = line.match(/^--\s*@creates\s+(\w+)/);
+    if (match) {
+      tables.push(match[1]);
+    }
+  }
+  
+  return tables;
+};
+
+/**
+ * Gets all tables created by migrations in reverse order (newest first).
+ * This allows proper cleanup during database reset.
+ */
+export const getMigrationTables = async (driver: 'postgres' | 'sqlite'): Promise<string[]> => {
+  const extension = driver === 'postgres' ? '.postgres.sql' : '.sqlite.sql';
+  
+  let files: string[];
+  try {
+    files = await readdir(migrationsDir);
+  } catch {
+    return [];
+  }
+
+  const migrationFiles = files
+    .filter(f => f.endsWith(extension))
+    .sort()
+    .reverse(); // Reverse order for proper cleanup
+
+  const allTables: string[] = [];
+  
+  for (const file of migrationFiles) {
+    const content = await readFile(join(migrationsDir, file), 'utf8');
+    const tables = extractCreatedTables(content);
+    allTables.push(...tables);
+  }
+  
+  return allTables;
+};
+
+/**
+ * Synchronous version for SQLite
+ */
+export const getMigrationTablesSync = (driver: 'postgres' | 'sqlite'): string[] => {
+  const extension = driver === 'postgres' ? '.postgres.sql' : '.sqlite.sql';
+  
+  let files: string[];
+  try {
+    files = readdirSync(migrationsDir);
+  } catch {
+    return [];
+  }
+
+  const migrationFiles = files
+    .filter(f => f.endsWith(extension))
+    .sort()
+    .reverse(); // Reverse order for proper cleanup
+
+  const allTables: string[] = [];
+  
+  for (const file of migrationFiles) {
+    const content = readFileSync(join(migrationsDir, file), 'utf8');
+    const tables = extractCreatedTables(content);
+    allTables.push(...tables);
+  }
+  
+  return allTables;
+};
+
 export const runSqliteMigrations = (db: SqliteDatabase): void => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (

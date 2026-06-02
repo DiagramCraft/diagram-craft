@@ -1,4 +1,5 @@
 -- Add OIDC authentication state storage table
+-- @creates oidc_auth_state
 CREATE TABLE oidc_auth_state (
   state         TEXT PRIMARY KEY,
   nonce         TEXT NOT NULL,

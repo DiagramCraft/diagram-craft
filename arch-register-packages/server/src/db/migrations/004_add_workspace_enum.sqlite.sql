@@ -1,3 +1,4 @@
+-- @creates workspace_enum
 CREATE TABLE IF NOT EXISTS workspace_enum (
   id         TEXT PRIMARY KEY,
   workspace  TEXT NOT NULL,
