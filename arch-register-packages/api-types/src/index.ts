@@ -86,3 +86,12 @@ export type {
   AuditLogEntry,
   AuditStats,
 } from './audit.js';
+
+// ── AI Types ─────────────────────────────────────────────────
+export type {
+  AiProvider,
+  WorkspaceAiConfig,
+  UpsertAiConfigRequest,
+  AiConversation,
+  AiMessageRecord,
+} from './ai.js';

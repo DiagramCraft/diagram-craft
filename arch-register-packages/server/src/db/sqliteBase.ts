@@ -1,5 +1,7 @@
 import type { Database as DatabaseType } from 'better-sqlite3';
 import type {
+  AiConversation,
+  AiMessage,
   AuditLogEntry,
   Entity,
   EntityGrant,
@@ -11,6 +13,7 @@ import type {
   TeamMembership,
   User,
   Workspace,
+  WorkspaceAiConfig,
   WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
   WorkspaceOwner
@@ -184,6 +187,34 @@ export const sqliteMappers = {
     principal_id: String(row['principal_id']),
     role: String(row['role']) as EntityGrant['role'],
     applies_to: String(row['applies_to']) as EntityGrant['applies_to'],
+    created_at: toDate(row['created_at'])
+  }),
+  aiConfig: (row: Record<string, unknown>): WorkspaceAiConfig => ({
+    workspace: String(row['workspace']),
+    provider: String(row['provider']) as WorkspaceAiConfig['provider'],
+    api_key_enc: row['api_key_enc'] == null ? null : String(row['api_key_enc']),
+    base_url: row['base_url'] == null ? null : String(row['base_url']),
+    model: row['model'] == null ? null : String(row['model']),
+    temperature: row['temperature'] == null ? null : Number(row['temperature']),
+    system_prompt: row['system_prompt'] == null ? null : String(row['system_prompt']),
+    enabled: Boolean(row['enabled']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
+  }),
+  aiConversation: (row: Record<string, unknown>): AiConversation => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    user_id: String(row['user_id']),
+    title: String(row['title']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
+  }),
+  aiMessage: (row: Record<string, unknown>): AiMessage => ({
+    id: String(row['id']),
+    conversation_id: String(row['conversation_id']),
+    role: String(row['role']) as AiMessage['role'],
+    content: String(row['content']),
+    metadata: parseJson(row['metadata'], {}),
     created_at: toDate(row['created_at'])
   })
 };

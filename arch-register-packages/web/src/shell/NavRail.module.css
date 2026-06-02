@@ -44,3 +44,9 @@
   background: var(--accent);
   border-radius: 2px;
 }
+
+.separator {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 6px;
+}

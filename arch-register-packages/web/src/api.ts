@@ -265,6 +265,27 @@ export const exportEntitiesToCSV = (workspace: string, options: FetchEntitiesOpt
 export const fetchEntity = (workspace: string, id: string) =>
   apiFetch<EntityRecord>(`/api/${workspace}/data/${id}`);
 
+export const createEntity = (
+  workspace: string,
+  entity: {
+    _schemaId: string;
+    _name: string;
+    _slug?: string;
+    _namespace?: string;
+    _description?: string;
+    _owner?: string | null;
+    _lifecycle?: string | null;
+    _tags?: string[];
+    _links?: EntityLink[];
+    _visibilityMode?: 'public' | 'restricted';
+    [key: string]: unknown;
+  }
+) =>
+  apiFetch<EntityRecord>(`/api/${workspace}/data`, {
+    method: 'POST',
+    body: JSON.stringify(entity),
+  });
+
 export const deleteEntity = (workspace: string, id: string) =>
   apiFetch<{ success: boolean }>(`/api/${workspace}/data/${id}`, { method: 'DELETE' });
 

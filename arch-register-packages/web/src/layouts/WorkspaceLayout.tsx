@@ -20,6 +20,7 @@ import type { ViewId } from './viewId';
 import type { Project } from '../api';
 import {
   TbHome, TbFolders, TbDatabase, TbCode, TbSearch, TbSettings,
+  TbSparkles, TbWand,
 } from 'react-icons/tb';
 
 const RAIL_TO_PATH: Record<string, string> = {
@@ -28,6 +29,8 @@ const RAIL_TO_PATH: Record<string, string> = {
   entities: 'entities',
   model: 'model',
   search: 'search',
+  assistant: 'assistant',
+  extract: 'extract',
 };
 
 const getProjectSidebarTab = (project: Project | undefined): 'projects' | 'archive' =>
@@ -74,12 +77,14 @@ export const WorkspaceLayout = () => {
     ...(canManageWorkspaces ? ['general', 'danger'] : []),
     ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
     ...(canManageMembers ? ['roles', 'members'] : []),
+    ...(canManageWorkspaces ? ['ai'] : []),
     ...(canViewAudit ? ['audit'] : []),
   ], [canManageWorkspaces, canManageTeams, canManageMembers, canViewAudit]);
 
   const defaultSettingsSection = availableSettingsSections[0] ?? null;
 
-  const showSidebar = activeView !== 'search' && activeView !== 'diagram';
+  const showSidebar = activeView !== 'search' && activeView !== 'diagram'
+    && activeView !== 'assistant' && activeView !== 'extract';
 
   const handleRailPick = useCallback((id: string) => {
     if (id === 'model' && !canViewSchemas) return;
@@ -335,6 +340,20 @@ const buildTrail = (
         label: 'Search',
         icon: <TbSearch size={12} />,
         onClick: () => navigate({ to: '/$workspaceSlug/search', params: { workspaceSlug } }),
+      });
+      break;
+    case 'assistant':
+      items.push({
+        label: 'AI Assistant',
+        icon: <TbSparkles size={12} />,
+        onClick: () => navigate({ to: '/$workspaceSlug/assistant', params: { workspaceSlug } }),
+      });
+      break;
+    case 'extract':
+      items.push({
+        label: 'AI Extract',
+        icon: <TbWand size={12} />,
+        onClick: () => navigate({ to: '/$workspaceSlug/extract', params: { workspaceSlug } }),
       });
       break;
     case 'diagram': {

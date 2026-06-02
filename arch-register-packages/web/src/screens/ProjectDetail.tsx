@@ -153,14 +153,20 @@ export const ProjectDetail = () => {
         filePath: file.path,
         isTemplate: newIsWorkspaceTemplate, // Must be template if workspace template
         isWorkspaceTemplate: newIsWorkspaceTemplate,
+      }, {
+        onSuccess: () => setMenu(null), // Close menu to force re-render with fresh data
       });
     } else {
       // Toggle project template status
-      const newIsTemplate = !file.is_template;
+      // If currently a workspace template, switch to project template (don't toggle off)
+      const isCurrentlyProjectTemplate = file.is_template && !file.is_workspace_template;
+      const newIsTemplate = !isCurrentlyProjectTemplate;
       toggleTemplateStatusMutation.mutate({
         filePath: file.path,
         isTemplate: newIsTemplate,
         isWorkspaceTemplate: false, // Project templates are not workspace templates
+      }, {
+        onSuccess: () => setMenu(null), // Close menu to force re-render with fresh data
       });
     }
   };
@@ -286,11 +292,14 @@ export const ProjectDetail = () => {
           </Menu.CheckboxItem>
           <Menu.CheckboxItem
             checked={file.is_template !== true && file.is_workspace_template !== true}
-            onCheckedChange={() => toggleTemplateStatusMutation.mutate({
-              filePath: file.path,
-              isTemplate: false,
-              isWorkspaceTemplate: false,
-            })}
+            onCheckedChange={() => {
+              setMenu(null);
+              toggleTemplateStatusMutation.mutate({
+                filePath: file.path,
+                isTemplate: false,
+                isWorkspaceTemplate: false,
+              });
+            }}
           >
             None
           </Menu.CheckboxItem>

@@ -9,6 +9,7 @@ import { createSchemaRoutes } from './routes/schemas.js';
 import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
+import { createAiChatRoutes } from './routes/ai-chat.js';
 import { createPublicRoutes } from './routes/public.js';
 import { createAuthRoutes, createAuthProtectedRoutes } from './routes/auth.js';
 import { createTemplateRoutes } from './routes/templates.js';
@@ -65,6 +66,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(createProjectRoutes(db, storage));
   app.use(createAuditRoutes(db));
   app.use(createWorkspaceConfigRoutes(db));
+  app.use(createAiChatRoutes(db));
 
   return app;
 };

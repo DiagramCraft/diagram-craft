@@ -308,6 +308,39 @@ export type EntityGrant = {
   created_at: Date;
 };
 
+export type AiProvider = 'openrouter' | 'openai';
+
+export type WorkspaceAiConfig = {
+  workspace: string;
+  provider: AiProvider;
+  api_key_enc: string | null;
+  base_url: string | null;
+  model: string | null;
+  temperature: number | null;
+  system_prompt: string | null;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type AiConversation = {
+  id: string;
+  workspace: string;
+  user_id: string;
+  title: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type AiMessage = {
+  id: string;
+  conversation_id: string;
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+};
+
 export type JWTPayload = {
   sub: string;
   email?: string;

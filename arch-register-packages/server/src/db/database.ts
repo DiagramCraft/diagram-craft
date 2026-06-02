@@ -1,4 +1,6 @@
 import type {
+  AiConversation,
+  AiMessage,
   AuditLogEntry,
   Entity,
   EntityGrant,
@@ -10,6 +12,7 @@ import type {
   TeamMembership,
   User,
   Workspace,
+  WorkspaceAiConfig,
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
@@ -244,6 +247,49 @@ export type IdentityAuthDatabase = {
   ): Promise<GlobalRoleAssignment[]>;
 };
 
+export type UpsertAiConfigInput = {
+  provider?: string;
+  api_key_enc?: string | null;
+  base_url?: string | null;
+  model?: string | null;
+  temperature?: number | null;
+  system_prompt?: string | null;
+  enabled?: boolean;
+};
+
+export type CreateConversationInput = {
+  id: string;
+  workspace: string;
+  user_id: string;
+  title: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type CreateMessageInput = {
+  id: string;
+  conversation_id: string;
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  metadata: Record<string, unknown>;
+  created_at: Date;
+};
+
+export type AiDatabase = {
+  getAiConfig(ws: string): Promise<WorkspaceAiConfig | null>;
+  upsertAiConfig(ws: string, input: UpsertAiConfigInput): Promise<WorkspaceAiConfig>;
+
+  listConversations(ws: string, userId: string): Promise<AiConversation[]>;
+  getConversation(ws: string, id: string): Promise<AiConversation | null>;
+  createConversation(input: CreateConversationInput): Promise<AiConversation>;
+  updateConversationTitle(ws: string, id: string, title: string): Promise<AiConversation | null>;
+  initConversationTitle(ws: string, id: string, title: string): Promise<void>;
+  deleteConversation(ws: string, id: string): Promise<AiConversation | null>;
+
+  listMessages(conversationId: string): Promise<AiMessage[]>;
+  createMessage(input: CreateMessageInput): Promise<AiMessage>;
+};
+
 export type DatabaseAdapter = {
   core: CoreDatabase;
   workspaceAdmin: WorkspaceAdminDatabase;
@@ -251,4 +297,5 @@ export type DatabaseAdapter = {
   projectsFiles: ProjectsFilesDatabase;
   audit: AuditDatabase;
   identityAuth: IdentityAuthDatabase;
+  ai: AiDatabase;
 };

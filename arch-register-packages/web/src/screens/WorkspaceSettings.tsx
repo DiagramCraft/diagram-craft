@@ -18,6 +18,7 @@ import {
 import { RolesPermissionsSection } from './RolesPermissionsSection';
 import { MembersSection } from './MembersSection';
 import { TeamsSection } from './TeamsSection';
+import { AiSettingsSection } from './AiSettingsSection';
 
 const SECTION_META: Record<string, { title: string; sub: string }> = {
   general: { title: 'General', sub: 'Name, description, and identity for this workspace.' },
@@ -25,6 +26,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   roles: { title: 'Roles & permissions', sub: 'Manage built-in roles and create custom workspace roles.' },
   teams: { title: 'Teams', sub: 'Manage owner teams and assign users a team role for owned entities and projects.' },
   members: { title: 'Members', sub: 'Browse workspace members and the role assigned to each person.' },
+  ai: { title: 'AI', sub: 'Configure the AI provider, model, and system prompt for the Assistant and Extract features.' },
   audit: { title: 'Audit log', sub: 'Browse recent activity across the workspace with filters for object type and date range.' },
   danger: { title: 'Danger zone', sub: 'Operations that can\'t be undone. Read carefully before clicking.' },
 };
@@ -134,6 +136,9 @@ export const WorkspaceSettings = () => {
           addDialogOpen={membersAddDialogOpen}
           onCloseAddDialog={() => setMembersAddDialogOpen(false)}
         />
+      )}
+      {section === 'ai' && (
+        <AiSettingsSection workspaceSlug={workspaceSlug} />
       )}
       {section === 'audit' && (
         <AuditLogSection workspace={workspace} workspaceSlug={workspaceSlug} />
