@@ -5,7 +5,6 @@ CREATE TABLE workspace (
   name        TEXT NOT NULL UNIQUE,
   url_slug    TEXT NOT NULL UNIQUE,
   short_code  TEXT NOT NULL DEFAULT '',
-  color       TEXT NOT NULL DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL
@@ -37,7 +36,6 @@ CREATE TABLE entity_schema (
   id          TEXT PRIMARY KEY,
   workspace   TEXT NOT NULL,
   name        TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT '',
   fields      TEXT NOT NULL DEFAULT '[]',
   color       TEXT,
   icon        TEXT,
