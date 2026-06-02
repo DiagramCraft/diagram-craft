@@ -1,0 +1,147 @@
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/gray-dark.css';
+@import '@radix-ui/colors/gray-alpha.css';
+@import '@radix-ui/colors/gray-dark-alpha.css';
+@import '@radix-ui/colors/blue.css';
+@import '@radix-ui/colors/blue-dark.css';
+@import '@radix-ui/colors/red.css';
+@import '@radix-ui/colors/red-dark.css';
+@import '@radix-ui/colors/green.css';
+@import '@radix-ui/colors/green-dark.css';
+@import '@radix-ui/colors/crimson.css';
+@import '@radix-ui/colors/crimson-dark.css';
+@import '@radix-ui/colors/orange.css';
+@import '@radix-ui/colors/orange-dark.css';
+@import '@radix-ui/colors/black-alpha.css';
+
+:root {
+  --cmp-radius: var(--theme-cmp-radius, 4px);
+  --font-sans: var(--theme-font-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
+}
+
+.dark-theme {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
+  --base-bg: var(--theme-dark-base-bg, var(--gray-1));
+  --base-fg: var(--theme-dark-base-fg, var(--gray-12));
+  --base-fg-dim: var(--theme-dark-base-fg-dim, var(--gray-11));
+  --base-fg-more-dim: var(--theme-dark-base-fg-more-dim, var(--gray-8));
+
+  --panel-bg: var(--theme-dark-panel-bg, var(--gray-2));
+  --panel-fg: var(--theme-dark-panel-fg, var(--gray-12));
+  --panel-border: var(--theme-dark-panel-border, var(--gray-4));
+
+  --accent-bg: var(--theme-dark-accent-bg, var(--blue-4));
+  --accent-bg-selected: var(--theme-dark-accent-bg-selected, var(--blue-5));
+  --accent-fg: var(--theme-dark-accent-fg, var(--blue-11));
+  --accent-fg-dimmed: var(--theme-dark-accent-fg-dimmed, var(--blue-6));
+  --accent-fg-hover: var(--theme-dark-accent-fg-hover, var(--blue-12));
+  --accent-border: var(--theme-dark-accent-border, var(--blue-6));
+  --accent-chroma: var(--theme-dark-accent-chroma, var(--blue-9));
+
+  --cmp-fg: var(--theme-dark-cmp-fg, var(--gray-12));
+  --cmp-fg-disabled: var(--theme-dark-cmp-fg-disabled, var(--gray-8));
+  --cmp-fg-dimmed: var(--theme-dark-cmp-fg-dimmed, var(--gray-6));
+  --cmp-bg: var(--theme-dark-cmp-bg, var(--gray-3));
+  --cmp-bg-hover: var(--theme-dark-cmp-bg-hover, var(--gray-4));
+  --cmp-border: var(--theme-dark-cmp-border, var(--gray-6));
+  --cmp-border-focus: var(--theme-dark-cmp-border-focus, var(--blue-5));
+  --cmp-border-shadow-focus: var(
+      --theme-dark-cmp-border-shadow-focus,
+      0 0 0 2px var(--cmp-border-focus)
+  );
+
+  --popover-shadow: var(
+      --theme-dark-popover-shadow,
+      0 0 0 0.5px var(--cmp-border),
+      0 10px 60px rgba(0, 0, 0, 0.32),
+      0 10px 32px -16px rgba(0, 0, 0, 0.5)
+  );
+
+  --highlight-reverse-bg: var(--theme-dark-highlight-reverse-bg, var(--blue-9));
+  --highlight-reverse-fg: var(--theme-dark-highlight-reverse-fg, var(--blue-12));
+
+  --canvas-fg: var(--theme-dark-canvas-fg, var(--gray-1));
+  --canvas-bg: var(--theme-dark-canvas-bg, var(--gray-12));
+  --canvas-bg-bright: var(--theme-dark-canvas-bg-bright, var(--gray-12));
+  --canvas-bg2: var(--theme-dark-canvas-bg2, white);
+
+  --green: var(--theme-dark-green, var(--green-9));
+  --error-fg: var(--theme-dark-error-fg, var(--red-9));
+  --warning-fg: var(--theme-dark-warning-fg, var(--orange-9));
+}
+
+.light-theme {
+  --accent-1: var(--blue-1);
+  --accent-2: var(--blue-2);
+  --accent-3: var(--blue-3);
+  --accent-4: var(--blue-4);
+  --accent-5: var(--blue-5);
+  --accent-6: var(--blue-6);
+  --accent-7: var(--blue-7);
+  --accent-8: var(--blue-8);
+  --accent-9: var(--blue-9);
+  --accent-10: var(--blue-10);
+  --accent-11: var(--blue-11);
+  --accent-12: var(--blue-12);
+
+  --base-bg: var(--theme-light-base-bg, var(--gray-1));
+  --base-fg: var(--theme-light-base-fg, var(--gray-12));
+  --base-fg-dim: var(--theme-light-base-fg-dim, var(--gray-11));
+  --base-fg-more-dim: var(--theme-light-base-fg-more-dim, var(--gray-9));
+
+  --panel-bg: var(--theme-light-panel-bg, var(--gray-2));
+  --panel-fg: var(--theme-light-panel-fg, var(--gray-12));
+  --panel-border: var(--theme-light-panel-border, var(--gray-4));
+
+  --accent-bg: var(--theme-light-accent-bg, var(--blue-4));
+  --accent-bg-selected: var(--theme-light-accent-bg-selected, var(--blue-5));
+  --accent-fg: var(--theme-light-accent-fg, var(--blue-11));
+  --accent-fg-dimmed: var(--theme-light-accent-fg-dimmed, var(--blue-6));
+  --accent-fg-hover: var(--theme-light-accent-fg-hover, var(--blue-12));
+  --accent-border: var(--theme-light-accent-border, var(--blue-6));
+  --accent-chroma: var(--theme-light-accent-chroma, var(--blue-9));
+
+  --cmp-fg: var(--theme-light-cmp-fg, var(--gray-12));
+  --cmp-fg-disabled: var(--theme-light-cmp-fg-disabled, var(--gray-8));
+  --cmp-fg-dimmed: var(--theme-light-cmp-fg-dimmed, var(--gray-6));
+  --cmp-bg: var(--theme-light-cmp-bg, var(--gray-3));
+  --cmp-bg-hover: var(--theme-light-cmp-bg-hover, var(--gray-4));
+  --cmp-border: var(--theme-light-cmp-border, var(--gray-6));
+  --cmp-border-focus: var(--theme-light-cmp-border-focus, var(--blue-5));
+  --cmp-border-shadow-focus: var(
+      --theme-light-cmp-border-shadow-focus,
+      0 0 0 2px var(--cmp-border-focus)
+  );
+
+  --popover-shadow: var(
+      --theme-light-popover-shadow,
+      0 0 0 0.5px var(--cmp-border),
+      0 10px 60px rgba(0, 0, 0, 0.17),
+      0 10px 32px -16px rgba(0, 0, 0, 0.35)
+  );
+
+  --highlight-reverse-bg: var(--theme-light-highlight-reverse-bg, var(--blue-9));
+  --highlight-reverse-fg: var(--theme-light-highlight-reverse-fg, white);
+
+  --canvas-fg: var(--theme-light-canvas-fg, var(--gray-12));
+  --canvas-bg: var(--theme-light-canvas-bg, white);
+  --canvas-bg-bright: var(--theme-light-canvas-bg-bright, white);
+  --canvas-bg2: var(--theme-light-canvas-bg2, white);
+
+  --green: var(--theme-light-green, var(--green-9));
+  --error-fg: var(--theme-light-error-fg, var(--red-9));
+  --warning-fg: var(--theme-light-warning-fg, var(--orange-9));
+}
+
