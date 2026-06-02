@@ -5,7 +5,6 @@ import { createDatabase } from './db/factory.js';
 import { createStorage } from './storage/storage.js';
 import { YjsCollaborationServer } from './collaboration/yjsCollaborationServer.js';
 import { verifyToken } from './utils/jwt.js';
-import { OpenRouterAIServer } from './ai/openRouterAiServer.js';
 import { createAIRoutes } from './routes/ai.js';
 import { createApp } from './app.js';
 import { SERVER_DEFAULTS } from './constants.js';
@@ -69,18 +68,8 @@ const main = async () => {
 
   const collaborationServer = new YjsCollaborationServer('/ws', autoSaveWriter, name => name, wsAuthenticator);
 
-  const openrouterApiKey = process.env['OPENROUTER_API_KEY'];
-  if (openrouterApiKey) {
-    const aiServer = new OpenRouterAIServer({
-      apiKey: openrouterApiKey,
-      defaultModel: process.env['OPENROUTER_MODEL'],
-      appName: 'ArchRegister'
-    });
-    app.use(createAIRoutes(aiServer));
-    console.log('AI routes enabled (OpenRouter)');
-  } else {
-    console.log('AI routes disabled (set OPENROUTER_API_KEY to enable)');
-  }
+  app.use(createAIRoutes(db));
+  console.log('AI routes enabled');
 
   const server = createServer(toNodeListener(app));
   collaborationServer.bind(server);

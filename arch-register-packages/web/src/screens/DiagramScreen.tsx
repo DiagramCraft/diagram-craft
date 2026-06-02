@@ -204,7 +204,7 @@ export const DiagramScreen = () => {
           await reconcilePublicProvider(document, publicSchemas);
         };
 
-        const { documentFactory, diagramFactory } = initializeDiagramCraft();
+        const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
         const includedPackages = getIncludedPackages();
 
         // Fetch project to get file info
@@ -314,7 +314,7 @@ export const DiagramScreen = () => {
     userColor,
   ]);
 
-  const { documentFactory, diagramFactory } = initializeDiagramCraft();
+  const { documentFactory, diagramFactory } = initializeDiagramCraft(workspaceId);
 
   if (loading) {
     return (

@@ -28,11 +28,32 @@ const noopAutosave = {
 };
 
 let initialized = false;
+let _currentWorkspaceId: string | undefined;
 let _documentFactory: DocumentFactory;
 let _diagramFactory: DiagramFactory;
 let _nodeRegistry: NodeDefinitionRegistry;
 
-const initializeDiagramCraft = () => {
+const initializeDiagramCraft = (workspaceId: string) => {
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+
+  if (workspaceId !== _currentWorkspaceId) {
+    AppConfig.set({
+      ...defaultAppConfig,
+      collaboration: {
+        backend: 'yjs',
+        config: { url: wsUrl },
+        forceLoadFromServer: () => false,
+        forceClearServerState: () => false
+      },
+      autosave: noopAutosave,
+      filesystem: { provider: 'none', endpoint: '' },
+      ai: { provider: 'remote', endpoint: `/api/${workspaceId}` }
+    });
+
+    _currentWorkspaceId = workspaceId;
+  }
+
   if (initialized) {
     return {
       documentFactory: _documentFactory,
@@ -41,27 +62,6 @@ const initializeDiagramCraft = () => {
       includedPackages: getIncludedPackages()
     };
   }
-
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
-
-  // Use defaultAppConfig and override only what's different for arch-register
-  AppConfig.set({
-    ...defaultAppConfig,
-    // Enable YJS collaboration
-    collaboration: {
-      backend: 'yjs',
-      config: { url: wsUrl },
-      forceLoadFromServer: () => false,
-      forceClearServerState: () => false
-    },
-    // Override autosave for embedded use (server-side auto-save handles persistence)
-    autosave: noopAutosave,
-    // Override filesystem for embedded use
-    filesystem: { provider: 'none', endpoint: '' },
-    // Enable AI (same-origin proxy)
-    ai: { provider: 'remote', endpoint: '' }
-  });
 
   // Initialize YJS collaboration backend
   CollaborationConfig.isNoOp = false;
