@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import type { DatabaseAdapter } from './database.js';
-import { runPostgresMigrations } from './migrate.js';
+import { getMigrationTables, runPostgresMigrations } from './migrate.js';
 import { normalizePostgresError, type PostgresSqlClient } from './postgresBase.js';
 import { PostgresAuditDatabase } from './postgresAudit.js';
 import { PostgresCatalogDatabase } from './postgresCatalog.js';
@@ -48,7 +48,16 @@ export class PostgresDatabase implements DatabaseAdapter {
       },
       reset: async () => {
         try {
+          // Drop schema_migrations first to allow clean migration re-run
           await this.sql`DROP TABLE IF EXISTS schema_migrations CASCADE`;
+          
+          // Drop tables created by migrations (in reverse order)
+          const migrationTables = await getMigrationTables('postgres');
+          for (const table of migrationTables) {
+            await this.sql`DROP TABLE IF EXISTS ${this.sql(table)} CASCADE`;
+          }
+          
+          // Drop base schema tables
           await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
           await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_ai_config CASCADE`;
@@ -66,11 +75,13 @@ export class PostgresDatabase implements DatabaseAdapter {
           await this.sql`DROP TABLE IF EXISTS workspace_lifecycle_state CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_owner CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace CASCADE`;
+          
+          // Recreate base schema and run migrations
           const schemaSql = await readFile(schemaPath, 'utf8');
           await this.sql.unsafe(schemaSql);
           await runPostgresMigrations(this.sql);
         } catch (error) {
-          return normalizePostgresError(error);
+          throw normalizePostgresError(error);
         }
       }
     };

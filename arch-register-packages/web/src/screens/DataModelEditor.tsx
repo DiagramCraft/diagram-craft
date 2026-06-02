@@ -2,19 +2,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import styles from './DataModelEditor.module.css';
 import { TypeBadge } from '../components/TypeBadge';
-import { Chip } from '../components/Chip';
 import { TbPlus, TbCode, TbGripVertical, TbTrash } from 'react-icons/tb';
 import { resolveSchemaColor, FIELD_TYPES, SCHEMA_COLORS, SCHEMA_ICONS } from '../api';
-import type { EntitySchema, SchemaField, FieldType } from '../api';
+import type { EntitySchema, SchemaField, FieldType, WorkspaceEnum } from '../api';
 import { ICON_MAP } from '../components/TypeBadge';
 import { useCreateSchema, useUpdateSchema, useDeleteSchema } from '../hooks/useSchemas';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EnumEditor } from './EnumEditor';
 
 export const DataModelEditor = () => {
   const navigate = useNavigate();
-  const { schema: selectedSchemaId } = useSearch({ strict: false }) as { schema?: string };
-  const { workspaceSlug, schemas, permissions } = useWorkspaceContext();
+  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums'; schema?: string; enumId?: string };
+  const selectedSchemaId = search.schema;
+  const activeTab = search.tab ?? 'types';
+  const { workspaceSlug, schemas, enums, permissions } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [name, setName] = useState('');
@@ -122,7 +124,7 @@ export const DataModelEditor = () => {
           case 'boolean':
             return { ...base, type: 'boolean' };
           case 'select':
-            return { ...base, type: 'select', options: [] };
+            return { ...base, type: 'select', enumId: enums[0]?.id ?? '', options: [] };
           case 'reference':
             return { ...base, type: 'reference', schemaId: '', minCount: 0, maxCount: -1 };
           case 'containment':
@@ -132,6 +134,10 @@ export const DataModelEditor = () => {
     );
     setDirty(true);
   };
+
+  if (activeTab === 'enums') {
+    return <EnumEditor />;
+  }
 
   return (
     <div className={styles.screen}>
@@ -283,6 +289,7 @@ export const DataModelEditor = () => {
                           key={f.id}
                           field={f}
                           schemas={schemas}
+                          enums={enums}
                           onUpdate={(patch) => updateField(f.id, patch)}
                           onChangeType={(t) => changeFieldType(f.id, t)}
                           onRemove={canEdit ? () => removeField(f.id) : undefined}
@@ -355,6 +362,7 @@ export const DataModelEditor = () => {
 const FieldRow = ({
   field,
   schemas,
+  enums,
   onUpdate,
   onChangeType,
   onRemove,
@@ -363,6 +371,7 @@ const FieldRow = ({
 }: {
   field: SchemaField;
   schemas: EntitySchema[];
+  enums: WorkspaceEnum[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
   onRemove?: () => void;
@@ -371,13 +380,18 @@ const FieldRow = ({
 }) => {
   const optionsDisplay = () => {
     if (field.type === 'select') {
-      if (field.options.length === 0) return <span className="dim">no options</span>;
       return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {field.options.map(o => (
-            <Chip key={o.value} tone="ghost">{o.label}</Chip>
+        <select
+          className={styles.inlineSelect}
+          value={field.enumId ?? ''}
+          disabled={!canEdit}
+          onChange={e => onUpdate({ enumId: e.target.value } as Partial<SchemaField>)}
+        >
+          <option value="">Select enum...</option>
+          {enums.map(e => (
+            <option key={e.id} value={e.id}>{e.name}</option>
           ))}
-        </div>
+        </select>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {

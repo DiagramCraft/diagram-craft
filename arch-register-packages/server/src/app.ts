@@ -6,6 +6,7 @@ import { createDataRoutes } from './routes/data.js';
 import { createProjectRoutes } from './routes/projects.js';
 import { createSearchRoutes } from './routes/search.js';
 import { createSchemaRoutes } from './routes/schemas.js';
+import { createEnumRoutes } from './routes/enums.js';
 import { createWorkspaceRoutes } from './routes/workspaces.js';
 import { createAuditRoutes } from './routes/audit.js';
 import { createWorkspaceConfigRoutes } from './routes/workspace-config.js';
@@ -59,6 +60,7 @@ export const createApp = (db: DatabaseAdapter, storage: StorageAdapter) => {
   app.use(createAuthProtectedRoutes(db));
   app.use(createWorkspaceRoutes(db, storage));
   app.use(createSchemaRoutes(db));
+  app.use(createEnumRoutes(db));
   app.use(createDataRoutes(db));
   app.use(createPublicRoutes(db));
   app.use(createSearchRoutes(db));

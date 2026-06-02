@@ -2,7 +2,8 @@ import { ErrorInput, HTTPError } from 'h3';
 
 const STATUS_TEXTS: Record<number, string> = {
   400: 'Bad Request',
-  404: 'Not Found'
+  404: 'Not Found',
+  409: 'Conflict'
 };
 
 type AssertType = {

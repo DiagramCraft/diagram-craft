@@ -14,6 +14,7 @@ import type {
   User,
   Workspace,
   WorkspaceAiConfig,
+  WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
   WorkspaceOwner
@@ -83,6 +84,15 @@ export const sqliteMappers = {
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
+    created_at: toDate(row['created_at']),
+    updated_at: toDate(row['updated_at'])
+  }),
+  workspaceEnum: (row: Record<string, unknown>): WorkspaceEnum => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    options: parseJson(row['options'], []),
+    sort_order: Number(row['sort_order'] ?? 0),
     created_at: toDate(row['created_at']),
     updated_at: toDate(row['updated_at'])
   }),

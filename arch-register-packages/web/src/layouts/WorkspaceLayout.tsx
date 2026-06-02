@@ -12,6 +12,7 @@ import { AddProjectDialog } from '../dialogs/AddProjectDialog';
 import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
 import { projectKeys } from '../hooks/useProjects';
 import { useSchemas } from '../hooks/useSchemas';
+import { useEnums } from '../hooks/useEnums';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
@@ -58,6 +59,7 @@ export const WorkspaceLayout = () => {
   const ws = workspaces.find(w => w.url_slug === workspaceSlug) ?? null;
 
   const { data: schemas = [] } = useSchemas(workspaceSlug, !!workspaceSlug);
+  const { data: enums = [] } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: projects = [] } = useProjects(workspaceSlug);
   const { lifecycleStates, teams } = useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
 
@@ -154,6 +156,7 @@ export const WorkspaceLayout = () => {
     workspace: ws,
     workspaceSlug,
     schemas,
+    enums,
     projects,
     lifecycleStates,
     teams,
@@ -172,7 +175,7 @@ export const WorkspaceLayout = () => {
     openAddProjectDialog: () => setAddProjectOpen(true),
     openAddEntityDialog: () => setAddEntityOpen(true),
   }), [
-    ws, workspaceSlug, schemas, projects, lifecycleStates, teams,
+    ws, workspaceSlug, schemas, enums, projects, lifecycleStates, teams,
     canManageWorkspaces, canViewSchemas, canEditSchemas, canManageTeams,
     canViewAudit, canCreateProjects, canCreateEntities, canManageMembers,
     availableSettingsSections, defaultSettingsSection,

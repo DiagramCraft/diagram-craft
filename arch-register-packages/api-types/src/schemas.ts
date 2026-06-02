@@ -17,6 +17,7 @@ export type SelectField = {
   name: string;
   type: 'select';
   options: Array<{ value: string; label: string }>;
+  enumId?: string;
 };
 
 export type ReferenceField = {
@@ -75,3 +76,23 @@ export type SchemaSearchResult = {
   name: string;
   fieldMatches: Array<{ fieldId: string; fieldName: string }>;
 };
+
+// ── Workspace Enum ────────────────────────────────────────────
+
+export type WorkspaceEnum = {
+  id: string;
+  workspace: string;
+  name: string;
+  options: Array<{ value: string; label: string }>;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateEnumRequest = {
+  name: string;
+  options?: Array<{ value: string; label: string }>;
+  sort_order?: number;
+};
+
+export type UpdateEnumRequest = CreateEnumRequest;

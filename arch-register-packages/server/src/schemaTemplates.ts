@@ -4,7 +4,7 @@ import type { SchemaField } from './types.js';
 
 type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' }
-  | { id: string; name: string; type: 'select'; options: Array<{ value: string; label: string }> }
+  | { id: string; name: string; type: 'select'; enumId: string }
   | { id: string; name: string; type: 'reference' | 'containment'; symSchemaId: string; minCount: number; maxCount: number };
 
 type TemplateSchema = {
@@ -54,17 +54,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-api)',
         icon: 'api',
         fields: [
-          {
-            id: 'api_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'openapi', label: 'OpenAPI' },
-              { value: 'grpc', label: 'gRPC' },
-              { value: 'graphql', label: 'GraphQL' },
-              { value: 'asyncapi', label: 'AsyncAPI' },
-            ],
-          },
+          { id: 'api_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 1, maxCount: 1 },
         ],
       },
@@ -75,17 +65,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-component)',
         icon: 'box',
         fields: [
-          {
-            id: 'kind',
-            name: 'Kind',
-            type: 'select',
-            options: [
-              { value: 'service', label: 'Service' },
-              { value: 'library', label: 'Library' },
-              { value: 'website', label: 'Website' },
-              { value: 'grpc', label: 'gRPC' },
-            ],
-          },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 1, maxCount: 1 },
           { id: 'provides_apis', name: 'Provided APIs', type: 'reference', symSchemaId: 'api', minCount: 0, maxCount: -1 },
@@ -99,18 +79,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-service)',
         icon: 'database',
         fields: [
-          {
-            id: 'kind',
-            name: 'Kind',
-            type: 'select',
-            options: [
-              { value: 'database', label: 'Database' },
-              { value: 'cache', label: 'Cache' },
-              { value: 'queue', label: 'Queue' },
-              { value: 'cdn', label: 'CDN' },
-              { value: 'blob-storage', label: 'Blob Storage' },
-            ],
-          },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'system', name: 'System', type: 'containment', symSchemaId: 'system', minCount: 0, maxCount: 1 },
         ],
       },
@@ -198,17 +167,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          {
-            id: 'tier',
-            name: 'Tier',
-            type: 'select',
-            options: [
-              { value: 'tier-0', label: 'Tier 0' },
-              { value: 'tier-1', label: 'Tier 1' },
-              { value: 'tier-2', label: 'Tier 2' },
-              { value: 'tier-3', label: 'Tier 3' },
-            ],
-          },
+          { id: 'tier', name: 'Tier', type: 'select', enumId: '' },
           { id: 'service', name: 'Business Service', type: 'containment', symSchemaId: 'business_service', minCount: 0, maxCount: 1 },
         ],
       },
@@ -230,27 +189,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-service)',
         icon: 'server',
         fields: [
-          {
-            id: 'host_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'virtual', label: 'Virtual' },
-              { value: 'physical', label: 'Physical' },
-              { value: 'container', label: 'Container' },
-              { value: 'serverless', label: 'Serverless' },
-            ],
-          },
-          {
-            id: 'environment',
-            name: 'Environment',
-            type: 'select',
-            options: [
-              { value: 'production', label: 'Production' },
-              { value: 'staging', label: 'Staging' },
-              { value: 'development', label: 'Development' },
-            ],
-          },
+          { id: 'host_type', name: 'Type', type: 'select', enumId: '' },
+          { id: 'environment', name: 'Environment', type: 'select', enumId: '' },
         ],
       },
     ],
@@ -283,18 +223,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-component)',
         icon: 'box',
         fields: [
-          {
-            id: 'kind',
-            name: 'Kind',
-            type: 'select',
-            options: [
-              { value: 'api', label: 'API' },
-              { value: 'worker', label: 'Worker' },
-              { value: 'frontend', label: 'Frontend' },
-              { value: 'mobile', label: 'Mobile' },
-              { value: 'data', label: 'Data' },
-            ],
-          },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'technology', name: 'Technology', type: 'text' },
           { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 0, maxCount: 1 },
           { id: 'depends_on', name: 'Depends On', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: -1 },
@@ -307,16 +236,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-api)',
         icon: 'zap',
         fields: [
-          {
-            id: 'event_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'command', label: 'Command' },
-              { value: 'event', label: 'Event' },
-              { value: 'query', label: 'Query' },
-            ],
-          },
+          { id: 'event_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'producer', name: 'Producer', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: 1 },
           { id: 'consumers', name: 'Consumers', type: 'reference', symSchemaId: 'service', minCount: 0, maxCount: -1 },
         ],
@@ -335,17 +255,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-system)',
         icon: 'users',
         fields: [
-          {
-            id: 'team_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'stream-aligned', label: 'Stream-aligned' },
-              { value: 'platform', label: 'Platform' },
-              { value: 'enabling', label: 'Enabling' },
-              { value: 'complicated-subsystem', label: 'Complicated Subsystem' },
-            ],
-          },
+          { id: 'team_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'cognitive_load', name: 'Cognitive Load Notes', type: 'longtext' },
         ],
       },
@@ -367,16 +277,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-api)',
         icon: 'arrow-right',
         fields: [
-          {
-            id: 'mode',
-            name: 'Mode',
-            type: 'select',
-            options: [
-              { value: 'collaboration', label: 'Collaboration' },
-              { value: 'x-as-a-service', label: 'X-as-a-Service' },
-              { value: 'facilitating', label: 'Facilitating' },
-            ],
-          },
+          { id: 'mode', name: 'Mode', type: 'select', enumId: '' },
           { id: 'from_team', name: 'From Team', type: 'reference', symSchemaId: 'team', minCount: 1, maxCount: 1 },
           { id: 'to_team', name: 'To Team', type: 'reference', symSchemaId: 'team', minCount: 1, maxCount: 1 },
           { id: 'expected_duration', name: 'Expected Duration', type: 'text' },
@@ -415,16 +316,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-component)',
         icon: 'box',
         fields: [
-          {
-            id: 'dp_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'source-aligned', label: 'Source-aligned' },
-              { value: 'aggregate', label: 'Aggregate' },
-              { value: 'consumer-aligned', label: 'Consumer-aligned' },
-            ],
-          },
+          { id: 'dp_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'slo', name: 'SLOs', type: 'longtext' },
           { id: 'domain', name: 'Domain', type: 'containment', symSchemaId: 'domain', minCount: 1, maxCount: 1 },
           { id: 'source_systems', name: 'Source Systems', type: 'reference', symSchemaId: 'source_system', minCount: 0, maxCount: -1 },
@@ -437,19 +329,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-api)',
         icon: 'table',
         fields: [
-          {
-            id: 'format',
-            name: 'Format',
-            type: 'select',
-            options: [
-              { value: 'parquet', label: 'Parquet' },
-              { value: 'delta', label: 'Delta' },
-              { value: 'iceberg', label: 'Iceberg' },
-              { value: 'csv', label: 'CSV' },
-              { value: 'json', label: 'JSON' },
-              { value: 'avro', label: 'Avro' },
-            ],
-          },
+          { id: 'format', name: 'Format', type: 'select', enumId: '' },
           { id: 'schema_url', name: 'Schema URL', type: 'text' },
           { id: 'data_product', name: 'Data Product', type: 'containment', symSchemaId: 'data_product', minCount: 1, maxCount: 1 },
         ],
@@ -501,17 +381,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'box',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          {
-            id: 'layer',
-            name: 'Layer',
-            type: 'select',
-            options: [
-              { value: 'presentation', label: 'Presentation' },
-              { value: 'business-logic', label: 'Business Logic' },
-              { value: 'data', label: 'Data' },
-              { value: 'integration', label: 'Integration' },
-            ],
-          },
+          { id: 'layer', name: 'Layer', type: 'select', enumId: '' },
           { id: 'realises', name: 'Realises Process', type: 'reference', symSchemaId: 'business_process', minCount: 0, maxCount: -1 },
         ],
       },
@@ -533,16 +403,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'server',
         fields: [
           { id: 'technology', name: 'Technology', type: 'text' },
-          {
-            id: 'kind',
-            name: 'Kind',
-            type: 'select',
-            options: [
-              { value: 'device', label: 'Device' },
-              { value: 'system-software', label: 'System Software' },
-              { value: 'artifact', label: 'Artifact' },
-            ],
-          },
+          { id: 'kind', name: 'Kind', type: 'select', enumId: '' },
           { id: 'hosts', name: 'Hosts', type: 'reference', symSchemaId: 'application_component', minCount: 0, maxCount: -1 },
         ],
       },
@@ -560,28 +421,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--tag-system)',
         icon: 'shield',
         fields: [
-          {
-            id: 'classification',
-            name: 'Classification',
-            type: 'select',
-            options: [
-              { value: 'public', label: 'Public' },
-              { value: 'internal', label: 'Internal' },
-              { value: 'confidential', label: 'Confidential' },
-              { value: 'secret', label: 'Secret' },
-            ],
-          },
-          {
-            id: 'asset_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'data', label: 'Data' },
-              { value: 'service', label: 'Service' },
-              { value: 'infrastructure', label: 'Infrastructure' },
-              { value: 'credential', label: 'Credential' },
-            ],
-          },
+          { id: 'classification', name: 'Classification', type: 'select', enumId: '' },
+          { id: 'asset_type', name: 'Type', type: 'select', enumId: '' },
         ],
       },
       {
@@ -591,19 +432,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--danger)',
         icon: 'alert-triangle',
         fields: [
-          {
-            id: 'stride_category',
-            name: 'STRIDE Category',
-            type: 'select',
-            options: [
-              { value: 'spoofing', label: 'Spoofing' },
-              { value: 'tampering', label: 'Tampering' },
-              { value: 'repudiation', label: 'Repudiation' },
-              { value: 'info-disclosure', label: 'Information Disclosure' },
-              { value: 'dos', label: 'Denial of Service' },
-              { value: 'elevation', label: 'Elevation of Privilege' },
-            ],
-          },
+          { id: 'stride_category', name: 'STRIDE Category', type: 'select', enumId: '' },
           { id: 'affected_assets', name: 'Affected Assets', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
           { id: 'description', name: 'Description', type: 'longtext' },
         ],
@@ -615,17 +444,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--ok)',
         icon: 'check-circle',
         fields: [
-          {
-            id: 'control_type',
-            name: 'Type',
-            type: 'select',
-            options: [
-              { value: 'preventive', label: 'Preventive' },
-              { value: 'detective', label: 'Detective' },
-              { value: 'corrective', label: 'Corrective' },
-              { value: 'deterrent', label: 'Deterrent' },
-            ],
-          },
+          { id: 'control_type', name: 'Type', type: 'select', enumId: '' },
           { id: 'mitigates', name: 'Mitigates', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
           { id: 'protects', name: 'Protects', type: 'reference', symSchemaId: 'asset', minCount: 0, maxCount: -1 },
         ],
@@ -637,28 +456,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: 'var(--warn)',
         icon: 'zap',
         fields: [
-          {
-            id: 'likelihood',
-            name: 'Likelihood',
-            type: 'select',
-            options: [
-              { value: 'low', label: 'Low' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'high', label: 'High' },
-              { value: 'critical', label: 'Critical' },
-            ],
-          },
-          {
-            id: 'impact',
-            name: 'Impact',
-            type: 'select',
-            options: [
-              { value: 'low', label: 'Low' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'high', label: 'High' },
-              { value: 'critical', label: 'Critical' },
-            ],
-          },
+          { id: 'likelihood', name: 'Likelihood', type: 'select', enumId: '' },
+          { id: 'impact', name: 'Impact', type: 'select', enumId: '' },
           { id: 'threat', name: 'Threat', type: 'reference', symSchemaId: 'threat', minCount: 0, maxCount: -1 },
           { id: 'controls', name: 'Controls', type: 'reference', symSchemaId: 'control', minCount: 0, maxCount: -1 },
         ],
@@ -684,7 +483,7 @@ export const instantiateTemplate = (workspaceId: string, templateId: string): Cr
         return { id: field.id, name: field.name, type: field.type, schemaId: resolvedId, minCount: field.minCount, maxCount: field.maxCount };
       }
       if (field.type === 'select') {
-        return { id: field.id, name: field.name, type: field.type, options: field.options };
+        return { id: field.id, name: field.name, type: field.type, enumId: field.enumId };
       }
       return { id: field.id, name: field.name, type: field.type };
     });

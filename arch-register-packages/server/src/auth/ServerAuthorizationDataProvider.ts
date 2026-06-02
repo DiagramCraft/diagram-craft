@@ -22,7 +22,7 @@ export class ServerDataProvider implements PermissionDataProvider {
   }
 
   async getSchemas(workspaceId: string): Promise<EntitySchema[]> {
-    return this.db.catalog.listSchemas(workspaceId);
+    return this.db.catalog.listSchemas(workspaceId) as unknown as EntitySchema[];
   }
 
   async getEntityGrants(workspaceId: string): Promise<EntityGrant[]> {

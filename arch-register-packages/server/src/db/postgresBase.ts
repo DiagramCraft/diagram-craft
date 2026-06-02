@@ -8,6 +8,7 @@ import type {
   ProjectFile,
   User,
   Workspace,
+  WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceRoleDefinition,
   WorkspaceOwner,
@@ -48,6 +49,7 @@ export type PostgresRowTypes = {
   owner: WorkspaceOwner;
   teamMembership: TeamMembership;
   schema: EntitySchema;
+  workspaceEnum: WorkspaceEnum;
   entity: Entity;
   entityGrant: EntityGrant;
   project: Project;

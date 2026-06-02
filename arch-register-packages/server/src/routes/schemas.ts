@@ -27,14 +27,16 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const authCtx = await buildApiAuthCtx(db, workspace, event as AuthenticatedEvent);
       requireWorkspaceCapability(authCtx, 'ws.view');
       try {
-        const [schemas, entities] = await Promise.all([
+        const [schemas, entities, enums] = await Promise.all([
           db.catalog.listSchemas(workspace),
-          db.catalog.listEntities(workspace)
+          db.catalog.listEntities(workspace),
+          db.catalog.listEnums(workspace)
         ]);
-        return schemas.map(schema => 
+        return schemas.map(schema =>
           toApiSchema(
             schema,
-            entities.filter(entity => entity.schema_id === schema.id).length
+            entities.filter(entity => entity.schema_id === schema.id).length,
+            enums
           )
         );
       } catch (e) {
@@ -52,14 +54,16 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
       const id = event.context.params?.['id'];
       httpAssert.string(id, { message: 'id is required' });
       try {
-        const [row, entities] = await Promise.all([
+        const [row, entities, enums] = await Promise.all([
           db.catalog.getSchema(workspace, id),
-          db.catalog.listEntities(workspace)
+          db.catalog.listEntities(workspace),
+          db.catalog.listEnums(workspace)
         ]);
         httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
         return toApiSchema(
           row,
-          entities.filter(entity => entity.schema_id === id).length
+          entities.filter(entity => entity.schema_id === id).length,
+          enums
         );
       } catch (e) {
         handleError(e, 'Failed to retrieve schema');
@@ -110,7 +114,8 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           }
         });
 
-        return toApiSchema(row, 0);
+        const enums = await db.catalog.listEnums(workspace);
+        return toApiSchema(row, 0, enums);
       } catch (e) {
         handleError(e, 'Failed to create schema');
       }
@@ -165,10 +170,14 @@ export function createSchemaRoutes(db: DatabaseAdapter) {
           changes
         });
 
-        const entities = await db.catalog.listEntities(workspace);
+        const [entities, enums] = await Promise.all([
+          db.catalog.listEntities(workspace),
+          db.catalog.listEnums(workspace)
+        ]);
         return toApiSchema(
           row!,
-          entities.filter(entity => entity.schema_id === id).length
+          entities.filter(entity => entity.schema_id === id).length,
+          enums
         );
       } catch (e) {
         handleError(e, 'Failed to update schema');
