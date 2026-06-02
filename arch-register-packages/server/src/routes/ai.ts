@@ -1,13 +1,16 @@
 import { defineHandler, EventHandlerRequest, H3, H3Event, HTTPError } from 'h3';
-import type { AIGenerateRequest, AIServer } from '../ai/aiServer.js';
+import type { AIGenerateRequest } from '../ai/aiServer.js';
 import { httpAssert } from '../utils/httpAssert.js';
+import type { DatabaseAdapter } from '../db/database.js';
+import { resolveAiConfig } from '../ai/tanstackAiAdapter.js';
+import { ConfiguredAIServer } from '../ai/configuredAiServer.js';
 
 // Constants
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024; // 1MB limit for AI requests
 const CONTENT_TYPE_JSON = 'application/json';
-const API_AI_PATH = '/api/ai';
+const API_AI_PATH = '/api/:workspace/ai';
 
-export const createAIRoutes = (aiServer: AIServer) => {
+export const createAIRoutes = (db: DatabaseAdapter) => {
   const router = new H3();
 
   // Helper function to validate content type and size
@@ -40,7 +43,7 @@ export const createAIRoutes = (aiServer: AIServer) => {
         throw new HTTPError({
           status: 504,
           statusText: 'Gateway Timeout',
-          message: 'OpenRouter request timed out'
+          message: 'AI request timed out'
         });
       }
 
@@ -59,11 +62,19 @@ export const createAIRoutes = (aiServer: AIServer) => {
     });
   };
 
-  // POST /api/ai/generate - Proxy to OpenRouter
+  // POST /api/:workspace/ai/generate
   router.post(
     `${API_AI_PATH}/generate`,
     defineHandler(async event => {
       validateRequest(event);
+
+      const workspace = event.context.params?.['workspace'];
+      httpAssert.string(workspace, { status: 400, message: 'workspace is required' });
+
+      const aiConfig = await resolveAiConfig(db, workspace);
+      if (!aiConfig) {
+        throw new HTTPError({ status: 503, message: 'AI is not configured for this workspace' });
+      }
 
       try {
         const body = (await event.req.json().catch(() => undefined)) as
@@ -86,7 +97,7 @@ export const createAIRoutes = (aiServer: AIServer) => {
           });
         }
 
-        // Prepare OpenRouter request
+        const aiServer = new ConfiguredAIServer(aiConfig);
         const result = await aiServer.generate(body);
 
         if (result.type === 'stream') {

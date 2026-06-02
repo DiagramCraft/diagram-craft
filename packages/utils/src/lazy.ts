@@ -122,9 +122,16 @@ export class Lazy<T> {
 export const lazySingleton = <T extends object>(factory: () => T): T => {
   let instance: T | undefined;
   return new Proxy({} as T, {
-    get(_target, prop, receiver) {
+    get(_target, prop) {
       instance ??= factory();
-      return Reflect.get(instance, prop, receiver);
+      const value = Reflect.get(instance, prop, instance);
+      // Bind methods to the instance so `this` inside the method is the real
+      // instance, not the Proxy. Without this, native private fields (#field)
+      // throw because the Proxy is not the declaring class's instance.
+      if (typeof value === 'function') {
+        return (value as (...args: unknown[]) => unknown).bind(instance);
+      }
+      return value;
     }
   });
 };

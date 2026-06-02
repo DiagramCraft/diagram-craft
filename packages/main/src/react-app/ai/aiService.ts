@@ -42,7 +42,7 @@ export class AIService {
   ): Promise<AIGenerateResponse> {
     const shouldStream = request.stream ?? true;
 
-    const response = await fetchWithTimeout(`${this.baseUrl}/api/ai/generate`, this.#fetchTimeout, {
+    const response = await fetchWithTimeout(`${this.baseUrl}/ai/generate`, this.#fetchTimeout, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

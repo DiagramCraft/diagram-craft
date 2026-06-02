@@ -1,19 +1,13 @@
 import { HTTPError } from 'h3';
 import type { AIGenerateRequest, AIResult, AIServer, AIMessage } from './aiServer.js';
-import { httpAssert } from '../utils/httpAssert';
+import { httpAssert } from '../utils/httpAssert.js';
+import type { EffectiveAiConfig } from './tanstackAiAdapter.js';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const REQUEST_TIMEOUT = 120000;
-const DEFAULT_MODEL = 'anthropic/claude-3.5-sonnet';
 
-type AIConfig = {
-  apiKey: string;
-  defaultModel?: string;
-  siteUrl?: string;
-  appName?: string;
-};
-
-type OpenRouterRequest = {
+type ProviderRequest = {
   model: string;
   messages: AIMessage[];
   stream?: boolean;
@@ -21,37 +15,47 @@ type OpenRouterRequest = {
   max_tokens?: number;
 };
 
-export class OpenRouterAIServer implements AIServer {
-  constructor(private readonly config: AIConfig) {}
+export class ConfiguredAIServer implements AIServer {
+  constructor(private readonly config: EffectiveAiConfig) {}
 
   async generate(request: AIGenerateRequest): Promise<AIResult> {
-    const openRouterRequest: OpenRouterRequest = {
-      model: this.config.defaultModel ?? DEFAULT_MODEL,
+    const providerRequest: ProviderRequest = {
+      model: this.config.model,
       messages: request.messages,
       stream: request.stream ?? true,
-      temperature: request.temperature ?? 0.7,
+      temperature: request.temperature ?? this.config.temperature,
       max_tokens: request.max_tokens
     };
+
+    const isOpenAI = this.config.provider === 'openai';
+    const url = isOpenAI
+      ? (this.config.baseUrl ?? OPENAI_API_URL)
+      : OPENROUTER_API_URL;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.config.apiKey}`
+    };
+
+    if (!isOpenAI) {
+      headers['HTTP-Referer'] = 'http://localhost';
+      headers['X-Title'] = 'ArchRegister';
+    }
 
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT);
 
     try {
-      const response = await fetch(OPENROUTER_API_URL, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.config.apiKey}`,
-          'HTTP-Referer': this.config.siteUrl ?? 'http://localhost',
-          'X-Title': this.config.appName ?? 'ArchRegister'
-        },
-        body: JSON.stringify(openRouterRequest),
+        headers,
+        body: JSON.stringify(providerRequest),
         signal: abortController.signal
       });
 
       if (!response.ok) {
         const errorBody = await response.text();
-        let errorMessage = 'OpenRouter API error';
+        let errorMessage = `${isOpenAI ? 'OpenAI' : 'OpenRouter'} API error`;
 
         try {
           const errorJson = JSON.parse(errorBody);
@@ -69,7 +73,7 @@ export class OpenRouterAIServer implements AIServer {
 
       if (request.stream ?? true) {
         httpAssert.present(response.body, {
-          message: 'OpenRouter returned an empty streaming response'
+          message: 'AI provider returned an empty streaming response'
         });
 
         return {
@@ -91,7 +95,7 @@ export class OpenRouterAIServer implements AIServer {
         throw new HTTPError({
           status: 504,
           statusText: 'Gateway Timeout',
-          message: 'OpenRouter request timed out'
+          message: 'AI request timed out'
         });
       }
 

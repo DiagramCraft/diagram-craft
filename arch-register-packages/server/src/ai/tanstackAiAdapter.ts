@@ -45,6 +45,7 @@ export const resolveAiConfig = async (
   };
 };
 
+
 export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.provider === 'openai') {
     if (config.apiKey === process.env['OPENAI_API_KEY']) {
