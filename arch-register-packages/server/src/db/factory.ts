@@ -12,7 +12,9 @@ export const createDatabase = async (): Promise<DatabaseAdapter> => {
     case 'postgres': {
       const connectionString = process.env['DATABASE_URL'];
       if (!connectionString) throw new Error('DATABASE_URL environment variable is not set');
-      return new PostgresDatabase(connectionString);
+      const db = new PostgresDatabase(connectionString);
+      await db.initialize();
+      return db;
     }
     case 'sqlite': {
       const filePath = resolve(process.env['SQLITE_PATH'] ?? DB_DEFAULTS.SQLITE_PATH);

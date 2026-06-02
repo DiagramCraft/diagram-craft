@@ -246,3 +246,8 @@ CREATE TABLE ai_message (
 );
 
 CREATE INDEX ai_message_conversation_idx ON ai_message(conversation_id, created_at);
+
+CREATE TABLE schema_migrations (
+  version    TEXT PRIMARY KEY,
+  applied_at TEXT NOT NULL
+);
