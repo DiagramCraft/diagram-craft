@@ -6,6 +6,7 @@ import type {
   ProjectFile,
   TeamMembership,
   Workspace,
+  WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
@@ -123,6 +124,23 @@ export const seedWorkspaceMembers: WorkspaceMember[] = [
   { workspace: 'default', user_id: 'workspaceviewer', role: 'viewer', created_at: now },
 ];
 
+export const seedEnums: WorkspaceEnum[] = [
+  {
+    id: '00000000-0000-0000-0000-e00000000001',
+    workspace: 'default',
+    name: 'API Type',
+    options: [
+      { value: 'openapi', label: 'OpenAPI' },
+      { value: 'grpc', label: 'gRPC' },
+      { value: 'graphql', label: 'GraphQL' },
+      { value: 'asyncapi', label: 'AsyncAPI' },
+    ],
+    sort_order: 0,
+    created_at: now,
+    updated_at: now,
+  },
+];
+
 export const seedSchemas: EntitySchema[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
@@ -213,12 +231,7 @@ export const seedSchemas: EntitySchema[] = [
         id: 'api_type',
         name: 'Type',
         type: 'select',
-        options: [
-          { value: 'openapi', label: 'OpenAPI' },
-          { value: 'grpc', label: 'gRPC' },
-          { value: 'graphql', label: 'GraphQL' },
-          { value: 'asyncapi', label: 'AsyncAPI' },
-        ],
+        enumId: '00000000-0000-0000-0000-e00000000001',
       },
       {
         id: 'system',

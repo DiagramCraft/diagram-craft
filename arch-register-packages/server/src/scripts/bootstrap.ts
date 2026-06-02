@@ -8,6 +8,7 @@ import {
   seedOwners,
   seedProjectFiles,
   seedProjects,
+  seedEnums,
   seedSchemas,
   seedTeamAssignments,
   seedWorkspaceMembers,
@@ -167,6 +168,9 @@ const seed = async (db: Awaited<ReturnType<typeof createDatabase>>) => {
       workspace.id,
       seedOwners.filter(owner => owner.workspace === workspace.id)
     );
+  }
+  for (const e of seedEnums) {
+    await db.catalog.createEnum(e);
   }
   for (const schema of seedSchemas) {
     await db.catalog.createSchema(schema);

@@ -12,7 +12,7 @@ import {
   TbUsers, TbFolderOpen,
   TbSettings, TbTrash, TbTag, TbHistory,
   TbShieldLock, TbPlus, TbPencil, TbCopy,
-  TbFolder, TbSparkles,
+  TbFolder, TbSparkles, TbTable,
 } from 'react-icons/tb';
 import { fetchEntityFacets, resolveSchemaColor } from '../api';
 import type { FileEntry } from '../api';
@@ -25,7 +25,7 @@ import {
   useRenameProjectFile,
   useMoveProjectFile,
 } from '../hooks/useProjectFiles';
-import type { EntityFacets, EntitySchema, Project, WorkspaceLifecycleState } from '../api';
+import type { EntityFacets, EntitySchema, Project, WorkspaceEnum, WorkspaceLifecycleState } from '../api';
 import { useWorkspaceContext } from '../layouts/WorkspaceContext';
 import { deriveActiveView } from '../layouts/deriveActiveView';
 import { AddDiagramDialog } from '../dialogs/AddDiagramDialog';
@@ -67,7 +67,7 @@ export const SidePanel = () => {
       />
     );
   } else if (view === 'data-model') {
-    body = <DataModelSidebar schemas={ctx.schemas} workspaceSlug={ctx.workspaceSlug} />;
+    body = <DataModelSidebar schemas={ctx.schemas} enums={ctx.enums} workspaceSlug={ctx.workspaceSlug} />;
   } else if (view === 'search') {
     body = <SearchSidebar />;
   } else if (view === 'workspace-settings') {
@@ -743,36 +743,86 @@ const EntitiesSidebar = ({
 
 const DataModelSidebar = ({
   schemas,
+  enums,
   workspaceSlug,
 }: {
   schemas: EntitySchema[];
+  enums: WorkspaceEnum[];
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { schema?: string };
+  const search = useSearch({ strict: false }) as { tab?: 'types' | 'enums'; schema?: string; enumId?: string };
+  const activeTab = search.tab ?? 'types';
   const schemaId = search.schema ?? null;
+  const enumId = search.enumId ?? null;
+
+  const activateTab = (tab: 'types' | 'enums') => {
+    navigate({
+      to: '/$workspaceSlug/model',
+      params: { workspaceSlug },
+      search: { tab },
+    });
+  };
 
   return (
     <>
-      <SectionHeader title="Types" />
-      <div className={styles.scroll}>
-        <GroupLabel>Entity types</GroupLabel>
-        {schemas.map((s, i) => (
-          <TreeRow
-            key={s.id}
-            icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
-            label={s.name}
-            active={schemaId === s.id}
-            onClick={() => navigate({
-              to: '/$workspaceSlug/model',
-              params: { workspaceSlug },
-              search: { schema: s.id },
-            })}
-            tagColor={resolveSchemaColor(s, i)}
-            trailing={<span className="dim mono">{s.fields.length}</span>}
-          />
-        ))}
+      <div className={`${styles.header} ${styles.tabHeader}`}>
+        <button
+          type="button"
+          className={`${styles.headerTab} ${activeTab === 'types' ? styles.headerTabActive : ''}`}
+          onClick={() => activateTab('types')}
+        >
+          Types
+        </button>
+        <button
+          type="button"
+          className={`${styles.headerTab} ${activeTab === 'enums' ? styles.headerTabActive : ''}`}
+          onClick={() => activateTab('enums')}
+        >
+          Enums
+        </button>
       </div>
+      {activeTab === 'types' ? (
+        <div className={styles.scroll}>
+          <GroupLabel>Entity types</GroupLabel>
+          {schemas.map((s, i) => (
+            <TreeRow
+              key={s.id}
+              icon={<TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />}
+              label={s.name}
+              active={schemaId === s.id}
+              onClick={() => navigate({
+                to: '/$workspaceSlug/model',
+                params: { workspaceSlug },
+                search: { tab: 'types', schema: s.id },
+              })}
+              tagColor={resolveSchemaColor(s, i)}
+              trailing={<span className="dim mono">{s.fields.length}</span>}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={styles.scroll}>
+          <GroupLabel>Enums</GroupLabel>
+          {enums.length === 0 && (
+            <div className={`${styles.emptyState} dim`}>No enums defined.</div>
+          )}
+          {enums.map(e => (
+            <TreeRow
+              key={e.id}
+              icon={<TbTable size={12} />}
+              label={e.name}
+              active={enumId === e.id}
+              onClick={() => navigate({
+                to: '/$workspaceSlug/model',
+                params: { workspaceSlug },
+                search: { tab: 'enums', enumId: e.id },
+              })}
+              trailing={<span className="dim mono">{e.options.length}</span>}
+            />
+          ))}
+        </div>
+      )}
     </>
   );
 };

@@ -24,6 +24,7 @@ import type {
   CreateWorkspaceRoleRequest,
   UpdateWorkspaceRoleRequest,
   ProjectTemplatesResponse,
+  WorkspaceEnum,
 } from '@arch-register/api-types';
 import type {
   SerializedDiagram,
@@ -55,6 +56,7 @@ export type {
   WorkspaceRoleDefinition,
   WorkspaceMemberInfo,
   WorkspaceUserInfo,
+  WorkspaceEnum,
 };
 
 export type FieldType = SchemaField['type'];

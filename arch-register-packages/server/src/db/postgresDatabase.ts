@@ -52,6 +52,8 @@ export class PostgresDatabase implements DatabaseAdapter {
           await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
           await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_ai_config CASCADE`;
+          await this.sql`DROP TABLE IF EXISTS workspace_enum CASCADE`;
+          await this.sql`DROP TABLE IF EXISTS oidc_auth_state CASCADE`;
           await this.sql`DROP TABLE IF EXISTS global_role_assignment CASCADE`;
           await this.sql`DROP TABLE IF EXISTS team_membership CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_member CASCADE`;
@@ -70,7 +72,7 @@ export class PostgresDatabase implements DatabaseAdapter {
           await this.sql.unsafe(schemaSql);
           await runPostgresMigrations(this.sql);
         } catch (error) {
-          return normalizePostgresError(error);
+          throw normalizePostgresError(error);
         }
       }
     };

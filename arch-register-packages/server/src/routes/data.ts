@@ -4,6 +4,7 @@ import {
   decodeRefs,
   type Entity,
   type EntityLink,
+  type EntitySchema as InternalEntitySchema,
   type SchemaField
 } from '../types.js';
 import { toApiEntity, toApiEntitySummary } from '../api/transforms.js';
@@ -18,7 +19,6 @@ import {
 } from '../auth/authorization.js';
 import type { AuthenticatedEvent } from '../middleware/auth.js';
 import {
-  EntitySchema,
   PermissionChecker
 } from '@arch-register/permissions';
 import { httpAssert } from '../utils/httpAssert';
@@ -46,7 +46,7 @@ const includesQuery = (value: unknown, query: string) =>
 const resolveCreateOwner = (
   explicitOwner: string | null,
   parentEntities: Entity[],
-  schema: EntitySchema,
+  schema: InternalEntitySchema,
   teamIds: Set<string>,
   fallbackOwner: string | null
 ) => {
@@ -60,13 +60,13 @@ const resolveCreateOwner = (
 };
 
 const getEntityParentsFromPayload = (
-  schema: EntitySchema,
+  schema: InternalEntitySchema,
   payload: Record<string, unknown>,
   entityLookup: Map<string, Entity>
 ) => {
   const parentIds = schema.fields
     .filter(
-      (field): field is Extract<EntitySchema['fields'][number], { type: 'containment' }> =>
+      (field): field is Extract<InternalEntitySchema['fields'][number], { type: 'containment' }> =>
         field.type === 'containment'
     )
     .flatMap(field => {

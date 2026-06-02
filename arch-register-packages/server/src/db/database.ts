@@ -13,6 +13,7 @@ import type {
   User,
   Workspace,
   WorkspaceAiConfig,
+  WorkspaceEnum,
   WorkspaceLifecycleState,
   WorkspaceMember,
   WorkspaceOwner,
@@ -59,6 +60,18 @@ export type UpdateSchemaInput = {
   color: string | null;
   icon: string | null;
   default_owner: string | null;
+  updated_at: Date;
+};
+
+export type CreateEnumInput = Omit<WorkspaceEnum, 'created_at' | 'updated_at'> & {
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type UpdateEnumInput = {
+  name: string;
+  options: Array<{ value: string; label: string }>;
+  sort_order: number;
   updated_at: Date;
 };
 
@@ -164,6 +177,12 @@ export type CatalogDatabase = {
   createSchema(input: CreateSchemaInput): Promise<EntitySchema>;
   updateSchema(ws: string, id: string, input: UpdateSchemaInput): Promise<EntitySchema | null>;
   deleteSchema(ws: string, id: string): Promise<EntitySchema | null>;
+
+  listEnums(ws: string): Promise<WorkspaceEnum[]>;
+  getEnum(ws: string, id: string): Promise<WorkspaceEnum | null>;
+  createEnum(input: CreateEnumInput): Promise<WorkspaceEnum>;
+  updateEnum(ws: string, id: string, input: UpdateEnumInput): Promise<WorkspaceEnum | null>;
+  deleteEnum(ws: string, id: string): Promise<WorkspaceEnum | null>;
 
   listEntities(ws: string): Promise<Entity[]>;
   getEntity(ws: string, id: string): Promise<Entity | null>;

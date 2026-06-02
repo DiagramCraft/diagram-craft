@@ -42,11 +42,15 @@ export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteS
 
 // Data model params
 export type ModelSearchParams = {
+  tab?: 'types' | 'enums';
   schema?: string;
+  enumId?: string;
 };
 
 export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchParams => ({
+  tab: raw.tab === 'types' || raw.tab === 'enums' ? raw.tab : undefined,
   schema: typeof raw.schema === 'string' ? raw.schema : undefined,
+  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
 });
 
 // Assistant params

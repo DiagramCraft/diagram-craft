@@ -1,8 +1,10 @@
 import type {
   CatalogDatabase,
+  CreateEnumInput,
   CreateEntityGrantInput,
   CreateEntityInput,
   CreateSchemaInput,
+  UpdateEnumInput,
   UpdateEntityInput,
   UpdateSchemaInput
 } from './database.js';
@@ -66,6 +68,62 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     try {
       const [row] = await this.sql<PostgresRowTypes['schema'][]>`
         DELETE FROM entity_schema
+        WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listEnums(workspace: string) {
+    return await this.sql<PostgresRowTypes['workspaceEnum'][]>`
+      SELECT * FROM workspace_enum WHERE workspace = ${workspace} ORDER BY sort_order, name
+    `;
+  }
+
+  async getEnum(workspace: string, id: string) {
+    const [row] = await this.sql<PostgresRowTypes['workspaceEnum'][]>`
+      SELECT * FROM workspace_enum WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ?? null;
+  }
+
+  async createEnum(input: CreateEnumInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['workspaceEnum'][]>`
+        INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return row!;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateEnum(workspace: string, id: string, input: UpdateEnumInput) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['workspaceEnum'][]>`
+        UPDATE workspace_enum
+        SET name = ${input.name},
+            options = ${this.json(input.options)},
+            sort_order = ${input.sort_order},
+            updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ?? null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteEnum(workspace: string, id: string) {
+    try {
+      const [row] = await this.sql<PostgresRowTypes['workspaceEnum'][]>`
+        DELETE FROM workspace_enum
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;

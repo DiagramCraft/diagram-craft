@@ -23,6 +23,9 @@ export type {
   CreateSchemaRequest,
   UpdateSchemaRequest,
   SchemaSearchResult,
+  WorkspaceEnum,
+  CreateEnumRequest,
+  UpdateEnumRequest,
 } from './schemas.js';
 
 // ── Entity Types ──────────────────────────────────────────────

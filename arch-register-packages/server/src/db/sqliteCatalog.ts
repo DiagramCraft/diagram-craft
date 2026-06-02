@@ -1,8 +1,10 @@
 import type {
   CatalogDatabase,
+  CreateEnumInput,
   CreateEntityGrantInput,
   CreateEntityInput,
   CreateSchemaInput,
+  UpdateEnumInput,
   UpdateEntityInput,
   UpdateSchemaInput
 } from './database.js';
@@ -71,6 +73,60 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const row = await this.getSchema(workspace, id);
     if (!row) return null;
     this.run('DELETE FROM entity_schema WHERE workspace = ? AND id = ?', [workspace, id]);
+    return row;
+  }
+
+  async listEnums(workspace: string) {
+    return this.all(
+      'SELECT * FROM workspace_enum WHERE workspace = ? ORDER BY sort_order, name',
+      [workspace],
+      sqliteMappers.workspaceEnum
+    );
+  }
+
+  async getEnum(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM workspace_enum WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      sqliteMappers.workspaceEnum
+    );
+  }
+
+  async createEnum(input: CreateEnumInput) {
+    this.run(
+      'INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.name,
+        JSON.stringify(input.options),
+        input.sort_order,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getEnum(input.workspace, input.id))!;
+  }
+
+  async updateEnum(workspace: string, id: string, input: UpdateEnumInput) {
+    this.run(
+      'UPDATE workspace_enum SET name = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      [
+        input.name,
+        JSON.stringify(input.options),
+        input.sort_order,
+        input.updated_at.toISOString(),
+        workspace,
+        id
+      ]
+    );
+    return await this.getEnum(workspace, id);
+  }
+
+  async deleteEnum(workspace: string, id: string) {
+    const row = await this.getEnum(workspace, id);
+    if (!row) return null;
+    this.run('DELETE FROM workspace_enum WHERE workspace = ? AND id = ?', [workspace, id]);
     return row;
   }
 

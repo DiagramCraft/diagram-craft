@@ -14,7 +14,7 @@ export type SelectField = {
   id: string;
   name: string;
   type: 'select';
-  options: Array<{ value: string; label: string }>;
+  enumId: string;
 };
 
 // Points to another entity of a given schema type; multiple values stored as comma-separated UUIDs.
@@ -61,6 +61,16 @@ export type EntitySchema = {
   color: string | null;
   icon: string | null;
   default_owner: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type WorkspaceEnum = {
+  id: string;
+  workspace: string;
+  name: string;
+  options: Array<{ value: string; label: string }>;
+  sort_order: number;
   created_at: Date;
   updated_at: Date;
 };
