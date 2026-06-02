@@ -341,6 +341,13 @@ export type AiMessage = {
   created_at: Date;
 };
 
+export type OidcAuthState = {
+  state: string;
+  nonce: string;
+  code_verifier: string;
+  expires_at: Date;
+};
+
 export type JWTPayload = {
   sub: string;
   email?: string;

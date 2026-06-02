@@ -131,4 +131,44 @@ export class PostgresIdentityAuthDatabase
       return normalizePostgresError(error);
     }
   }
+
+  async storeOidcAuthState(state: string, nonce: string, codeVerifier: string, expiresAt: Date) {
+    try {
+      await this.sql`
+        INSERT INTO oidc_auth_state (state, nonce, code_verifier, expires_at)
+        VALUES (${state}, ${nonce}, ${codeVerifier}, ${expiresAt})
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async getOidcAuthState(state: string) {
+    const [row] = await this.sql<{ nonce: string; code_verifier: string }[]>`
+      SELECT nonce, code_verifier
+      FROM oidc_auth_state
+      WHERE state = ${state}
+    `;
+    return row ?? null;
+  }
+
+  async deleteOidcAuthState(state: string) {
+    try {
+      await this.sql`
+        DELETE FROM oidc_auth_state WHERE state = ${state}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async cleanupExpiredOidcAuthStates() {
+    try {
+      await this.sql`
+        DELETE FROM oidc_auth_state WHERE expires_at < ${new Date()}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
 }

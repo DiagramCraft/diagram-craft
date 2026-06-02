@@ -11,36 +11,28 @@ import { getGlobalPermissionsForRoles, resolveWorkspaceRoleDefinitions } from '@
 import { AuthenticatedEvent } from '../middleware/auth';
 import { httpAssert } from '../utils/httpAssert.js';
 
-// In-memory store for OIDC state (in production, use Redis or similar)
-const oidcStateStore = new Map<
-  string,
-  {
-    state: string;
-    nonce: string;
-    codeVerifier: string;
-    expiresAt: number;
-  }
->();
-
-// Clean up expired states every 5 minutes
+// Clean up expired OIDC states every 5 minutes
 const cleanupTimer = setInterval(
-  () => {
-    const now = Date.now();
-    for (const [key, value] of oidcStateStore.entries()) {
-      if (value.expiresAt < now) {
-        oidcStateStore.delete(key);
-      }
+  async () => {
+    // This will be set when createAuthRoutes is called
+    if (cleanupDbAdapter) {
+      await cleanupDbAdapter.identityAuth.cleanupExpiredOidcAuthStates();
     }
   },
   5 * 60 * 1000
 );
 cleanupTimer.unref();
 
+let cleanupDbAdapter: DatabaseAdapter | null = null;
+
 const setTokenCookies = (event: H3Event, tokens: ReturnType<typeof generateTokenPair>) => {
   setAuthCookies(event, tokens.access_token, tokens.refresh_token, tokens.expires_in);
 };
 
 export const createAuthRoutes = (db: DatabaseAdapter) => {
+  // Set the cleanup adapter for the timer
+  cleanupDbAdapter = db;
+  
   const app = new H3();
 
   // GET /api/auth/config - Get authentication configuration
@@ -124,12 +116,8 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
       const { url, state, nonce, codeVerifier } = await generateAuthUrl();
 
       // Store state for callback validation (expires in 10 minutes)
-      oidcStateStore.set(state, {
-        state,
-        nonce,
-        codeVerifier,
-        expiresAt: Date.now() + 10 * 60 * 1000
-      });
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await db.identityAuth.storeOidcAuthState(state, nonce, codeVerifier, expiresAt);
 
       return { authorization_url: url };
     })
@@ -149,11 +137,11 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       httpAssert.string(state, { message: 'Missing state parameter' });
 
-      const storedState = oidcStateStore.get(state);
+      const storedState = await db.identityAuth.getOidcAuthState(state);
 
       httpAssert.present(storedState, { message: 'Invalid or expired state' });
 
-      oidcStateStore.delete(state);
+      await db.identityAuth.deleteOidcAuthState(state);
 
       // Construct the full callback URL with query parameters
       const redirectUri = process.env['OIDC_REDIRECT_URI'];
@@ -168,9 +156,9 @@ export const createAuthRoutes = (db: DatabaseAdapter) => {
 
       const claims = await handleCallback(
         callbackUrl.href,
-        storedState.state,
+        state,
         storedState.nonce,
-        storedState.codeVerifier
+        storedState.code_verifier
       );
 
       // Find or create user — use issuer:sub as ID to avoid collisions across providers
