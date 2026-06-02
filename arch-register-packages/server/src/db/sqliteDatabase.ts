@@ -62,7 +62,14 @@ export class SqliteDatabase implements DatabaseAdapter {
   }
 
   private initializeSchema() {
-    const schemaSql = readFileSync(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
-    this.db.exec(schemaSql);
+    // Check if workspace table exists - if not, initialize the base schema
+    const tableExists = this.db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='workspace'")
+      .get();
+    
+    if (!tableExists) {
+      const schemaSql = readFileSync(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
+      this.db.exec(schemaSql);
+    }
   }
 }
