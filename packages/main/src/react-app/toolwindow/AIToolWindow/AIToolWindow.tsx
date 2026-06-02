@@ -12,6 +12,7 @@ import { isEmptyString } from '@diagram-craft/utils/strings';
 import { extractJSON, filterJsonFromContent } from '../../ai/aiContentParser';
 import { useRedraw } from '../../hooks/useRedraw';
 import { useEventListener } from '../../hooks/useEventListener';
+import { markdownToHTML } from '@diagram-craft/markdown';
 
 interface ConversationMessage extends AIMessage {
   timestamp: number;
@@ -171,7 +172,15 @@ export const AIToolWindow = () => {
                 <div key={idx} className={styles.eMessage} data-role={msg.role}>
                   <div className={styles.eRole}>{msg.role === 'user' ? 'You' : 'AI'}</div>
                   <div className={styles.eContent}>
-                    {msg.role === 'assistant' ? filterJsonFromContent(msg.content) : msg.content}
+                    {msg.role === 'assistant' ? (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: markdownToHTML(filterJsonFromContent(msg.content), 'extended')
+                        }}
+                      />
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
@@ -180,7 +189,11 @@ export const AIToolWindow = () => {
                 <div className={styles.eMessage} data-role={'assistant'}>
                   <div className={styles.eRole}>AI</div>
                   <div className={styles.eContent}>
-                    {filterJsonFromContent(streamingContent)}
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: markdownToHTML(filterJsonFromContent(streamingContent), 'extended')
+                      }}
+                    />
                     <span className={styles.eCursor}>|</span>
                   </div>
                 </div>
