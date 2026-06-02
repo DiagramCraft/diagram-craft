@@ -1,4 +1,5 @@
 import { mkdir, readFile, rm } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import type { DatabaseAdapter } from './database.js';
@@ -26,6 +27,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.filePath = filePath;
     this.db = new Database(filePath);
     this.configure();
+    this.initializeSchema();
 
     this.workspaceAdmin = new SqliteWorkspaceAdminDatabase(() => this.db);
     this.catalog = new SqliteCatalogDatabase(() => this.db);
@@ -57,5 +59,10 @@ export class SqliteDatabase implements DatabaseAdapter {
   private configure() {
     this.db.pragma('foreign_keys = ON');
     this.db.pragma('journal_mode = WAL');
+  }
+
+  private initializeSchema() {
+    const schemaSql = readFileSync(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
+    this.db.exec(schemaSql);
   }
 }
