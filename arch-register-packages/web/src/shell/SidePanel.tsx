@@ -531,27 +531,25 @@ const ProjectsSidebar = ({
                     tagColor={p.color ?? undefined}
                   />
                   {isOpen && tree && (
-                    <>
-                      {tree.folders.map(folder => {
-                        const folderKey = `${p.id}:${folder.path}`;
-                        const folderOpen = expanded[folderKey] ?? true;
-                        return (
-                          <div key={folder.path}>
-                            <TreeRow
-                              depth={1}
-                              expandable
-                              expanded={folderOpen}
-                              onExpand={() => toggle(folderKey)}
-                              icon={<TbFolderOpen size={12} />}
-                              label={folder.path}
-                              active={isSelected && folderFilter === folder.path}
-                              onClick={() => navigateToProject(p, folder.path)}
-                              onContextMenu={e => openMenu(e, { type: 'folder', path: folder.path, projectId: p.id })}
-                            />
-                          </div>
-                        );
-                      })}
-                    </>
+                    tree.folders.map(folder => {
+                      const folderKey = `${p.id}:${folder.path}`;
+                      const folderOpen = expanded[folderKey] ?? true;
+                      return (
+                        <div key={folder.path}>
+                          <TreeRow
+                            depth={1}
+                            expandable
+                            expanded={folderOpen}
+                            onExpand={() => toggle(folderKey)}
+                            icon={<TbFolderOpen size={12} />}
+                            label={folder.path}
+                            active={isSelected && folderFilter === folder.path}
+                            onClick={() => navigateToProject(p, folder.path)}
+                            onContextMenu={e => openMenu(e, { type: 'folder', path: folder.path, projectId: p.id })}
+                          />
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               );

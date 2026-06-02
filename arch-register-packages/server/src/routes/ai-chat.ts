@@ -29,7 +29,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
         throw new HTTPError({ status: 503, message: 'AI is not configured for this workspace' });
       }
 
-      let body: any;
+      let body: unknown;
       try {
         body = await event.req.json();
       } catch {
@@ -70,7 +70,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
             textContent = typeof c === 'string'
               ? c
               : Array.isArray(c)
-                ? c.filter((p: any) => p.type === 'text').map((p: any) => p.content).join('')
+                ? (c as Array<{ type: string; content?: string }>).filter(p => p.type === 'text').map(p => p.content ?? '').join('')
                 : '';
           }
 
@@ -88,7 +88,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
             const conversation = await db.ai.getConversation(workspace, conversationId);
             if (conversation?.title === 'New conversation') {
               const title = textContent.length > 50
-                ? textContent.substring(0, 47) + '...'
+                ? `${textContent.substring(0, 47)}...`
                 : textContent;
               await db.ai.updateConversationTitle(workspace, conversationId, title);
             }

@@ -126,7 +126,7 @@ const AiMarkdown = ({
       }
       const parseRow = (row: string) =>
         row.split('|').slice(1, -1).map(c => c.trim());
-      const isSeparator = (row: string) => /^[\s|:\-]+$/.test(row);
+      const isSeparator = (row: string) => /^[\s|:-]+$/.test(row);
       const [headerRow, ...rest] = tableLines;
       const bodyRows = rest.filter(r => !isSeparator(r));
       const headers = headerRow ? parseRow(headerRow) : [];
@@ -467,7 +467,8 @@ export const AssistantScreen = () => {
     }));
   }, [chat.messages, historicalMessages]);
 
-  // Auto-scroll
+  // Auto-scroll — deps are triggers, not values consumed by the effect
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional trigger-only deps
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
@@ -530,7 +531,7 @@ export const AssistantScreen = () => {
     const cachedConvs = queryClient.getQueryData<AiConversation[]>(aiKeys.conversations(workspaceSlug));
     const conv = cachedConvs?.find(c => c.id === conversationId);
     if (conv?.title === 'New conversation') {
-      const title = text.length > 50 ? text.substring(0, 47) + '...' : text;
+      const title = text.length > 50 ? `${text.substring(0, 47)}...` : text;
       queryClient.setQueryData<AiConversation[]>(
         aiKeys.conversations(workspaceSlug),
         cachedConvs?.map(c => c.id === conversationId ? { ...c, title } : c)

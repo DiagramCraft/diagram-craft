@@ -48,18 +48,18 @@ export const resolveAiConfig = async (
 export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.provider === 'openai') {
     if (config.apiKey === process.env['OPENAI_API_KEY']) {
-      return openaiText(config.model as any, {
+      return openaiText(config.model as Parameters<typeof openaiText>[0], {
         ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
       });
     }
-    return createOpenaiChat(config.model as any, config.apiKey, {
+    return createOpenaiChat(config.model as Parameters<typeof createOpenaiChat>[0], config.apiKey, {
       ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
     });
   }
 
   // OpenRouter (default)
   if (config.apiKey === process.env['OPENROUTER_API_KEY']) {
-    return openRouterText(config.model as any);
+    return openRouterText(config.model as Parameters<typeof openRouterText>[0]);
   }
-  return createOpenRouterText(config.model as any, config.apiKey);
+  return createOpenRouterText(config.model as Parameters<typeof createOpenRouterText>[0], config.apiKey);
 };
