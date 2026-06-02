@@ -118,4 +118,31 @@ export class SqliteIdentityAuthDatabase
     tx();
     return await this.listGlobalRoleAssignments(userId);
   }
+
+  async storeOidcAuthState(state: string, nonce: string, codeVerifier: string, expiresAt: Date) {
+    this.run(
+      'INSERT INTO oidc_auth_state (state, nonce, code_verifier, expires_at) VALUES (?, ?, ?, ?)',
+      [state, nonce, codeVerifier, expiresAt.toISOString()]
+    );
+  }
+
+  async getOidcAuthState(state: string) {
+    const row = this.get(
+      'SELECT nonce, code_verifier FROM oidc_auth_state WHERE state = ?',
+      [state],
+      (row: Record<string, unknown>) => ({
+        nonce: row.nonce as string,
+        code_verifier: row.code_verifier as string
+      })
+    );
+    return row;
+  }
+
+  async deleteOidcAuthState(state: string) {
+    this.run('DELETE FROM oidc_auth_state WHERE state = ?', [state]);
+  }
+
+  async cleanupExpiredOidcAuthStates() {
+    this.run('DELETE FROM oidc_auth_state WHERE expires_at < ?', [new Date().toISOString()]);
+  }
 }

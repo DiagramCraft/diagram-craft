@@ -245,6 +245,11 @@ export type IdentityAuthDatabase = {
     roles: GlobalRole[],
     createdAt: Date
   ): Promise<GlobalRoleAssignment[]>;
+  
+  storeOidcAuthState(state: string, nonce: string, codeVerifier: string, expiresAt: Date): Promise<void>;
+  getOidcAuthState(state: string): Promise<{ nonce: string; code_verifier: string } | null>;
+  deleteOidcAuthState(state: string): Promise<void>;
+  cleanupExpiredOidcAuthStates(): Promise<void>;
 };
 
 export type UpsertAiConfigInput = {
