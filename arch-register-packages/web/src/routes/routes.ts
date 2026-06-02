@@ -41,9 +41,10 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginScreen,
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: (search.redirect as string) ?? undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const redirect = search.redirect as string | undefined;
+    return redirect ? { redirect } : {};
+  },
   beforeLoad: ({ context, search }) => {
     if (context.auth.isAuthenticated) {
       // If user is already authenticated and there's a redirect param, go there
@@ -61,7 +62,7 @@ const indexRoute = createRoute({
   path: '/',
   beforeLoad: async ({ context }) => {
     if (!context.auth.isAuthenticated) {
-      throw redirect({ to: '/login' });
+      throw redirect({ to: '/login', search: {} as { redirect?: string } });
     }
     const workspaces = await context.queryClient.ensureQueryData({
       queryKey: workspaceKeys.list(),
