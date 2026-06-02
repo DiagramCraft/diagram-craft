@@ -2,6 +2,7 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import type { DatabaseAdapter } from './database.js';
+import { runSqliteMigrations } from './migrate.js';
 import { SqliteAuditDatabase } from './sqliteAudit.js';
 import { SqliteCatalogDatabase } from './sqliteCatalog.js';
 import { SqliteIdentityAuthDatabase } from './sqliteIdentityAuth.js';
@@ -33,6 +34,8 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.identityAuth = new SqliteIdentityAuthDatabase(() => this.db);
     this.ai = new SqliteAiDatabase(() => this.db);
 
+    runSqliteMigrations(this.db);
+
     this.core = {
       driver: 'sqlite' as const,
       close: async () => {
@@ -46,6 +49,7 @@ export class SqliteDatabase implements DatabaseAdapter {
         this.configure();
         const schemaSql = await readFile(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
         this.db.exec(schemaSql);
+        runSqliteMigrations(this.db);
       }
     };
   }

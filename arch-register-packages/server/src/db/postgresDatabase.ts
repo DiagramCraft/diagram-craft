@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import type { DatabaseAdapter } from './database.js';
+import { runPostgresMigrations } from './migrate.js';
 import { normalizePostgresError, type PostgresSqlClient } from './postgresBase.js';
 import { PostgresAuditDatabase } from './postgresAudit.js';
 import { PostgresCatalogDatabase } from './postgresCatalog.js';
@@ -47,6 +48,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       },
       reset: async () => {
         try {
+          await this.sql`DROP TABLE IF EXISTS schema_migrations CASCADE`;
           await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
           await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
           await this.sql`DROP TABLE IF EXISTS workspace_ai_config CASCADE`;
@@ -66,10 +68,15 @@ export class PostgresDatabase implements DatabaseAdapter {
           await this.sql`DROP TABLE IF EXISTS workspace CASCADE`;
           const schemaSql = await readFile(schemaPath, 'utf8');
           await this.sql.unsafe(schemaSql);
+          await runPostgresMigrations(this.sql);
         } catch (error) {
           return normalizePostgresError(error);
         }
       }
     };
+  }
+
+  async initialize(): Promise<void> {
+    await runPostgresMigrations(this.sql);
   }
 }
