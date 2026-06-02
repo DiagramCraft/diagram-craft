@@ -212,6 +212,7 @@ CREATE TABLE workspace_ai_config (
   workspace       TEXT        PRIMARY KEY,
   provider        TEXT        NOT NULL DEFAULT 'openrouter',
   api_key_enc     TEXT,
+  base_url        TEXT,
   model           TEXT,
   temperature     REAL,
   system_prompt   TEXT,

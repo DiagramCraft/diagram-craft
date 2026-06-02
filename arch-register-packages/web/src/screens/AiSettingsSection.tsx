@@ -10,6 +10,7 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
   const [enabled, setEnabled] = useState(false);
   const [provider, setProvider] = useState<AiProvider>('openrouter');
   const [apiKey, setApiKey] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
   const [model, setModel] = useState('');
   const [temperature, setTemperature] = useState(0.7);
   const [systemPrompt, setSystemPrompt] = useState('');
@@ -18,6 +19,7 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
     if (config) {
       setEnabled(config.enabled);
       setProvider(config.provider);
+      setBaseUrl(config.base_url ?? '');
       setModel(config.model ?? '');
       setTemperature(config.temperature ?? 0.7);
       setSystemPrompt(config.system_prompt ?? '');
@@ -30,6 +32,7 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
     enabled !== config.enabled ||
     provider !== config.provider ||
     apiKey !== '' ||
+    baseUrl !== (config.base_url ?? '') ||
     model !== (config.model ?? '') ||
     temperature !== (config.temperature ?? 0.7) ||
     systemPrompt !== (config.system_prompt ?? '');
@@ -38,6 +41,7 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
     const data: UpsertAiConfigRequest = {
       enabled,
       provider,
+      base_url: provider === 'openai' ? (baseUrl || null) : null,
       model: model || null,
       temperature,
       system_prompt: systemPrompt || null,
@@ -47,12 +51,13 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
     }
     await updateConfig.mutateAsync(data);
     setApiKey('');
-  }, [enabled, provider, apiKey, model, temperature, systemPrompt, updateConfig]);
+  }, [enabled, provider, apiKey, baseUrl, model, temperature, systemPrompt, updateConfig]);
 
   const handleCancel = () => {
     if (config) {
       setEnabled(config.enabled);
       setProvider(config.provider);
+      setBaseUrl(config.base_url ?? '');
       setModel(config.model ?? '');
       setTemperature(config.temperature ?? 0.7);
       setSystemPrompt(config.system_prompt ?? '');
@@ -130,6 +135,26 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
             </div>
           </div>
 
+          {provider === 'openai' && (
+            <div className={styles.field}>
+              <div className={styles.fieldLeft}>
+                <div className={styles.fieldLabel}>Base URL</div>
+                <div className={styles.fieldHint}>
+                  Optional OpenAI-compatible API base URL, e.g. `https://api.openai.com/v1` or your provider endpoint.
+                </div>
+              </div>
+              <div className={styles.fieldRight}>
+                <input
+                  className={styles.input}
+                  value={baseUrl}
+                  onChange={e => setBaseUrl(e.target.value)}
+                  placeholder="https://api.openai.com/v1"
+                  style={{ maxWidth: 340 }}
+                />
+              </div>
+            </div>
+          )}
+
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>API Key</div>
@@ -155,7 +180,11 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>Model</div>
-              <div className={styles.fieldHint}>OpenRouter model identifier, e.g. anthropic/claude-sonnet-4-20250514</div>
+              <div className={styles.fieldHint}>
+                {provider === 'openai'
+                  ? 'OpenAI or OpenAI-compatible model identifier.'
+                  : 'OpenRouter model identifier, e.g. anthropic/claude-sonnet-4-20250514'}
+              </div>
             </div>
             <div className={styles.fieldRight}>
               <input
@@ -200,12 +229,12 @@ export const AiSettingsSection = ({ workspaceSlug }: { workspaceSlug: string }) 
             </div>
             <div className={styles.fieldRight}>
               <textarea
-                className={styles.input}
+                className={styles.textarea}
                 value={systemPrompt}
                 onChange={e => setSystemPrompt(e.target.value)}
                 placeholder="Optional extra instructions for the AI..."
                 rows={4}
-                style={{ maxWidth: 500, resize: 'vertical' }}
+                style={{ maxWidth: 500 }}
               />
             </div>
           </div>

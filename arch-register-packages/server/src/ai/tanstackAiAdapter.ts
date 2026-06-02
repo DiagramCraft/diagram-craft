@@ -8,6 +8,7 @@ import type { AiProvider } from '@arch-register/api-types';
 export type EffectiveAiConfig = {
   provider: AiProvider;
   apiKey: string;
+  baseUrl: string | null;
   model: string;
   temperature: number;
   systemPrompt: string | null;
@@ -37,6 +38,7 @@ export const resolveAiConfig = async (
   return {
     provider,
     apiKey,
+    baseUrl: wsConfig?.base_url ?? (provider === 'openai' ? process.env['OPENAI_BASE_URL'] ?? null : null),
     model: wsConfig?.model ?? (provider === 'openai' ? process.env['OPENAI_MODEL'] : process.env['OPENROUTER_MODEL']) ?? defaultModel,
     temperature: wsConfig?.temperature ?? DEFAULT_TEMPERATURE,
     systemPrompt: wsConfig?.system_prompt ?? null,
@@ -46,9 +48,13 @@ export const resolveAiConfig = async (
 export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.provider === 'openai') {
     if (config.apiKey === process.env['OPENAI_API_KEY']) {
-      return openaiText(config.model as any);
+      return openaiText(config.model as any, {
+        ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
+      });
     }
-    return createOpenaiChat(config.model as any, config.apiKey);
+    return createOpenaiChat(config.model as any, config.apiKey, {
+      ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
+    });
   }
 
   // OpenRouter (default)

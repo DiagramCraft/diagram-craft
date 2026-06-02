@@ -1,7 +1,7 @@
 import styles from './NavRail.module.css';
 import {
   TbHome, TbFolders, TbDatabase, TbCode, TbSearch,
-  TbSparkles, TbWand,
+  TbMessageCircleStar, TbFileAi,
 } from 'react-icons/tb';
 import type { ViewId } from '../layouts/viewId';
 
@@ -18,8 +18,8 @@ const ITEMS: NavItem[] = [
   { id: 'entities', icon: TbDatabase, title: 'Entities' },
   { id: 'model', icon: TbCode, title: 'Data model' },
   { id: 'search', icon: TbSearch, title: 'Search' },
-  { id: 'assistant', icon: TbSparkles, title: 'AI Assistant', separator: true },
-  { id: 'extract', icon: TbWand, title: 'AI Extract' },
+  { id: 'assistant', icon: TbMessageCircleStar, title: 'AI Assistant', separator: true },
+  { id: 'extract', icon: TbFileAi, title: 'AI Extract' },
 ];
 
 const VIEW_TO_RAIL: Record<string, string> = {

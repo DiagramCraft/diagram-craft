@@ -19,6 +19,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
         `UPDATE workspace_ai_config
          SET provider = COALESCE(?, provider),
              api_key_enc = COALESCE(?, api_key_enc),
+             base_url = ?,
              model = ?,
              temperature = ?,
              system_prompt = ?,
@@ -28,6 +29,7 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
         [
           input.provider ?? null,
           input.api_key_enc ?? null,
+          input.base_url !== undefined ? input.base_url : existing.base_url,
           input.model !== undefined ? input.model : existing.model,
           input.temperature !== undefined ? input.temperature : existing.temperature,
           input.system_prompt !== undefined ? input.system_prompt : existing.system_prompt,
@@ -38,12 +40,13 @@ export class SqliteAiDatabase extends SqliteDatabaseBase implements AiDatabase {
       );
     } else {
       this.run(
-        `INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, model, temperature, system_prompt, enabled, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, base_url, model, temperature, system_prompt, enabled, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           ws,
           input.provider ?? 'openrouter',
           input.api_key_enc ?? null,
+          input.base_url ?? null,
           input.model ?? null,
           input.temperature ?? null,
           input.system_prompt ?? null,

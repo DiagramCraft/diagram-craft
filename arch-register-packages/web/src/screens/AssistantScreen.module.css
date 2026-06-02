@@ -267,48 +267,6 @@
   margin-top: 2px;
 }
 
-.chatHeaderR {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.modelChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--fg-2);
-  font-family: var(--mono, var(--font-mono, monospace));
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 3px 9px;
-}
-
-.modelDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ok, #22c55e);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ok, #22c55e) 22%, transparent);
-}
-
-.newBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: var(--r);
-  color: var(--fg-1);
-  border: 1px solid var(--border);
-}
-
-.newBtn:hover {
-  background: var(--bg-3);
-  color: var(--fg-0);
-}
-
 /* ── Thread ── */
 
 .chatScroll {
@@ -365,6 +323,117 @@
 
 .msgBody p {
   margin: 0;
+}
+
+.approvalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  border-radius: var(--r-md, 8px);
+  padding: 12px;
+}
+
+.approvalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.approvalTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fg-0);
+}
+
+.approvalState {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.approvalStatePending {
+  color: var(--warning-strong, #a15c00);
+  background: color-mix(in oklch, var(--warning, #f2c066) 20%, var(--bg-2));
+}
+
+.approvalStateApproved {
+  color: var(--success-strong, #0a6b3f);
+  background: color-mix(in oklch, var(--success, #77d39d) 18%, var(--bg-2));
+}
+
+.approvalStateDeclined {
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 15%, var(--bg-2));
+}
+
+.approvalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px 12px;
+  font-size: 12px;
+}
+
+.approvalGrid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.approvalLabel {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-3);
+}
+
+.approvalFields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.approvalList {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--fg-1);
+  font-size: 12px;
+}
+
+.approvalResult {
+  font-size: 12px;
+  color: var(--fg-1);
+}
+
+.approvalActions {
+  display: flex;
+  gap: 8px;
+}
+
+.approvalApprove,
+.approvalDecline {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.approvalApprove {
+  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.approvalDecline {
+  color: var(--fg-1);
+  background: var(--bg-3);
 }
 
 /* ── Typing indicator ── */
@@ -479,6 +548,31 @@
   color: var(--fg-3);
 }
 
+.noConversation {
+  display: flex;
+  justify-content: center;
+  padding: 16px 24px 20px;
+}
+
+.newChatCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: var(--r);
+  background: color-mix(in oklch, var(--accent) 18%, var(--bg-3));
+  border: 1px solid color-mix(in oklch, var(--accent) 45%, var(--border));
+  color: var(--fg-0);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.newChatCta:hover {
+  background: color-mix(in oklch, var(--accent) 28%, var(--bg-3));
+  border-color: var(--accent);
+}
+
 /* ── Markdown rendering ── */
 
 .aiText {
@@ -546,6 +640,23 @@ ol.mdList li::before {
   border-radius: 3px;
   padding: 1px 5px;
   color: var(--fg-0);
+}
+
+.inlineEntityLink {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.inlineEntityLink:hover {
+  color: var(--accent-strong, var(--accent));
 }
 
 .codeBlock {

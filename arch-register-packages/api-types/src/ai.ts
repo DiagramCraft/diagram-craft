@@ -3,6 +3,7 @@ export type AiProvider = 'openrouter' | 'openai';
 export type WorkspaceAiConfig = {
   workspace: string;
   provider: AiProvider;
+  base_url: string | null;
   model: string | null;
   temperature: number | null;
   system_prompt: string | null;
@@ -15,6 +16,7 @@ export type WorkspaceAiConfig = {
 export type UpsertAiConfigRequest = {
   provider?: AiProvider;
   api_key?: string;
+  base_url?: string | null;
   model?: string | null;
   temperature?: number | null;
   system_prompt?: string | null;

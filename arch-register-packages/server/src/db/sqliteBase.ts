@@ -193,6 +193,7 @@ export const sqliteMappers = {
     workspace: String(row['workspace']),
     provider: String(row['provider']) as WorkspaceAiConfig['provider'],
     api_key_enc: row['api_key_enc'] == null ? null : String(row['api_key_enc']),
+    base_url: row['base_url'] == null ? null : String(row['base_url']),
     model: row['model'] == null ? null : String(row['model']),
     temperature: row['temperature'] == null ? null : Number(row['temperature']),
     system_prompt: row['system_prompt'] == null ? null : String(row['system_prompt']),

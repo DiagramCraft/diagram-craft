@@ -9,6 +9,7 @@ import { httpAssert } from '../utils/httpAssert.js';
 import { encrypt } from '../utils/encryption.js';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter.js';
 import { buildSystemPrompt } from '../ai/systemPromptBuilder.js';
+import { createAiChatTools } from '../ai/chatTools.js';
 
 const BASE = '/api/:workspace/ai';
 
@@ -28,40 +29,43 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
         throw new HTTPError({ status: 503, message: 'AI is not configured for this workspace' });
       }
 
-      const body = await event.req.json().catch(() => undefined);
+      let body: any;
+      try {
+        body = await event.req.json();
+      } catch {
+        throw new HTTPError({ status: 400, message: 'Invalid JSON in request body' });
+      }
       httpAssert.present(body, { message: 'Request body is required' });
 
       const params = await chatParamsFromRequestBody(body);
-
       const systemPrompt = await buildSystemPrompt(db, workspace, aiConfig.systemPrompt);
-
       const adapter = createAiTextAdapter(aiConfig);
       const abortController = new AbortController();
+      const tools = createAiChatTools(db, workspace, authCtx);
 
       const stream = chat({
         adapter,
         messages: params.messages,
         systemPrompts: [systemPrompt],
+        tools,
         temperature: aiConfig.temperature,
         threadId: params.threadId,
         runId: params.runId,
         abortController
       });
 
-      // Persist user message if a conversationId is provided in forwardedProps
       const conversationId = params.forwardedProps?.['conversationId'] as string | undefined;
+
       if (conversationId) {
         const lastUserMsg = [...params.messages].reverse().find(m => m.role === 'user');
         if (lastUserMsg) {
           let textContent = '';
           if ('parts' in lastUserMsg) {
-            // UIMessage: extract text from parts
             textContent = (lastUserMsg.parts as Array<{ type: string; content?: string }>)
               .filter(p => p.type === 'text')
               .map(p => p.content ?? '')
               .join('');
           } else if ('content' in lastUserMsg) {
-            // ModelMessage: content is string or array
             const c = lastUserMsg.content;
             textContent = typeof c === 'string'
               ? c
@@ -79,11 +83,68 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
               metadata: {},
               created_at: new Date()
             });
+
+            // Auto-generate conversation title from first message if still "New conversation"
+            const conversation = await db.ai.getConversation(workspace, conversationId);
+            if (conversation?.title === 'New conversation') {
+              const title = textContent.length > 50
+                ? textContent.substring(0, 47) + '...'
+                : textContent;
+              await db.ai.updateConversationTitle(workspace, conversationId, title);
+            }
           }
         }
       }
 
-      return toServerSentEventsResponse(stream, { abortController });
+      // Wrap stream to capture and persist the assistant message after it completes
+      let wrappedStream = stream;
+
+      if (conversationId) {
+        const capturedContent: string[] = [];
+        const capturedToolCalls: Array<{ name: string; args: string; result?: unknown }> = [];
+
+        const persistAssistant = async () => {
+          if (capturedContent.length === 0) return;
+          const content = capturedContent.join('');
+          const metadata: Record<string, unknown> = {};
+          if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
+          await db.ai.createMessage({
+            id: randomUUID(),
+            conversation_id: conversationId,
+            role: 'assistant',
+            content,
+            metadata,
+            created_at: new Date()
+          });
+        };
+
+        wrappedStream = (async function* () {
+          try {
+            for await (const chunk of stream) {
+              if ((chunk.type === 'TEXT_MESSAGE_CONTENT' || chunk.type === 'REASONING_MESSAGE_CONTENT') && 'delta' in chunk && chunk.delta) {
+                capturedContent.push(chunk.delta as string);
+              }
+              if (chunk.type === 'TOOL_CALL_START' && 'toolCallName' in chunk && chunk.toolCallName) {
+                capturedToolCalls.push({ name: chunk.toolCallName as string, args: '', result: undefined });
+              }
+              if (chunk.type === 'TOOL_CALL_ARGS' && 'delta' in chunk && capturedToolCalls.length > 0) {
+                capturedToolCalls[capturedToolCalls.length - 1]!.args += (chunk.delta as string ?? '');
+              }
+              if (chunk.type === 'TOOL_CALL_RESULT' && 'content' in chunk && capturedToolCalls.length > 0) {
+                capturedToolCalls[capturedToolCalls.length - 1]!.result = chunk.content;
+              }
+              yield chunk;
+            }
+            await persistAssistant();
+          } catch (error) {
+            const isAbort = error instanceof Error && (error.name === 'AbortError' || error.message.includes('aborted'));
+            if (isAbort) await persistAssistant().catch(() => undefined);
+            throw error;
+          }
+        })();
+      }
+
+      return toServerSentEventsResponse(wrappedStream, { abortController });
     })
   );
 
@@ -220,6 +281,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
         return {
           workspace,
           provider: 'openrouter',
+          base_url: null,
           model: null,
           temperature: null,
           system_prompt: null,
@@ -233,6 +295,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
       return {
         workspace: config.workspace,
         provider: config.provider,
+        base_url: config.base_url,
         model: config.model,
         temperature: config.temperature,
         system_prompt: config.system_prompt,
@@ -258,8 +321,8 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
       const input: Parameters<typeof db.ai.upsertAiConfig>[1] = {};
 
       if (body['provider'] !== undefined) {
-        httpAssert.true(body['provider'] === 'openrouter', {
-          message: 'provider must be "openrouter"'
+        httpAssert.true(body['provider'] === 'openrouter' || body['provider'] === 'openai', {
+          message: 'provider must be "openrouter" or "openai"'
         });
         input.provider = body['provider'] as string;
       }
@@ -278,6 +341,13 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
           httpAssert.string(body['model'], { message: 'model must be a string or null' });
         }
         input.model = body['model'] as string | null;
+      }
+
+      if (body['base_url'] !== undefined) {
+        if (body['base_url'] !== null) {
+          httpAssert.string(body['base_url'], { message: 'base_url must be a string or null' });
+        }
+        input.base_url = body['base_url'] as string | null;
       }
 
       if (body['temperature'] !== undefined) {
@@ -307,6 +377,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
       return {
         workspace: config.workspace,
         provider: config.provider,
+        base_url: config.base_url,
         model: config.model,
         temperature: config.temperature,
         system_prompt: config.system_prompt,
@@ -350,6 +421,8 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
         '## Instructions',
         '- Extract entities that match the available schemas.',
         '- For each entity, provide: name, schema_id, and field values.',
+        '- For reference and containment fields, provide the NAMES of related entities (not IDs).',
+        '- If multiple related entities, separate names with commas.',
         '- Include a confidence score (0-1) for each extracted entity.',
         '- Include the source text snippet that supports each extraction.',
         '- Return a JSON array of extracted entities.',
@@ -360,7 +433,7 @@ export const createAiChatRoutes = (db: DatabaseAdapter) => {
         '[{',
         '  "name": "Entity Name",',
         '  "schema_id": "schema-uuid",',
-        '  "fields": { "fieldName": "value" },',
+        '  "fields": { "fieldName": "value", "relationField": "RelatedEntity1, RelatedEntity2" },',
         '  "confidence": 0.85,',
         '  "source": "relevant text snippet"',
         '}]',

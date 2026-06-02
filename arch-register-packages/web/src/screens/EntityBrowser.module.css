@@ -161,7 +161,7 @@
 .tableWrap {
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
-  overflow: hidden;
+  overflow: visible;
   background: var(--bg-2);
 }
 

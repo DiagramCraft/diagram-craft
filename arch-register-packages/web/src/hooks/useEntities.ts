@@ -8,6 +8,7 @@ import {
   deleteEntity,
   cloneEntity,
 } from '../api';
+import { schemaKeys } from './useSchemas';
 
 // Query keys factory for better organization and type safety
 export const entityKeys = {
@@ -98,6 +99,8 @@ export const useDeleteEntity = (workspaceId: string) => {
     onSuccess: () => {
       // Invalidate all entity-related queries to refetch
       queryClient.invalidateQueries({ queryKey: entityKeys.all });
+      // Invalidate schema queries to update entity counts in sidebar
+      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
     },
   });
 };

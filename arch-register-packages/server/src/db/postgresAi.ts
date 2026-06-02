@@ -24,6 +24,7 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
           UPDATE workspace_ai_config
           SET provider = COALESCE(${input.provider ?? null}, provider),
               api_key_enc = COALESCE(${input.api_key_enc ?? null}, api_key_enc),
+              base_url = ${input.base_url !== undefined ? input.base_url : existing.base_url},
               model = ${input.model !== undefined ? input.model : existing.model},
               temperature = ${input.temperature !== undefined ? input.temperature : existing.temperature},
               system_prompt = ${input.system_prompt !== undefined ? input.system_prompt : existing.system_prompt},
@@ -36,11 +37,12 @@ export class PostgresAiDatabase extends PostgresDatabaseBase implements AiDataba
       }
 
       const [row] = await this.sql<AiConfigRow[]>`
-        INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, model, temperature, system_prompt, enabled, created_at, updated_at)
+        INSERT INTO workspace_ai_config (workspace, provider, api_key_enc, base_url, model, temperature, system_prompt, enabled, created_at, updated_at)
         VALUES (
           ${ws},
           ${input.provider ?? 'openrouter'},
           ${input.api_key_enc ?? null},
+          ${input.base_url ?? null},
           ${input.model ?? null},
           ${input.temperature ?? null},
           ${input.system_prompt ?? null},

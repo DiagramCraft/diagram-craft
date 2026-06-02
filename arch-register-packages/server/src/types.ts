@@ -314,6 +314,7 @@ export type WorkspaceAiConfig = {
   workspace: string;
   provider: AiProvider;
   api_key_enc: string | null;
+  base_url: string | null;
   model: string | null;
   temperature: number | null;
   system_prompt: string | null;
